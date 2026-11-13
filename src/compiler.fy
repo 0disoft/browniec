@@ -69,6 +69,8 @@ import body_source_work as body_work;
 import expression_source_work as expression_work;
 import call_operand_work as call_operand_work;
 import aggregate_call_source_work as aggregate_calls;
+import argument_source_work as argument_work;
+import argument_name_work as argument_names;
 import semantic_source_work as semantic_work;
 import metadata_budget as metadata_budget;
 import aggregate_probe_work as aggregate_work;
@@ -854,7 +856,7 @@ fn Result<usize,errors::Error> array_grouped_projection(ref u8[] source,ref mut 
 }
 // A nested result becomes an anonymous argument capture only after its CALL
 // succeeds. Later arguments and early exits then use the existing mixed cleanup.
-fn Result<usize,errors::Error> record_argument(ref u8[] source,ref mut lexer::State s,
+fn Result<usize,errors::Error> record_argument_raw(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref mut locals::Table names,ref functions::Table signatures,
     usize record,usize depth,u8 result_type,usize structure,ref mut loops::State loop_state){
     let usize at=s.begin;
@@ -865,7 +867,7 @@ fn Result<usize,errors::Error> record_argument(ref u8[] source,ref mut lexer::St
     let usize capture=locals::declare(names,at,at,144+id,false)?;return .ok(144+id);
 }
 
-fn Result<usize,errors::Error> array_argument(ref u8[] source,ref mut lexer::State s,
+fn Result<usize,errors::Error> array_argument_raw(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref mut locals::Table names,ref functions::Table signatures,
     u8 element,usize length,usize depth,u8 result_type,usize structure,ref mut loops::State loop_state) {
     if(s.kind==40 || arm_syntax::operand_kind(source,s)!=0){let usize at=s.begin;
@@ -910,11 +912,11 @@ fn Result<usize,errors::Error> array_argument(ref u8[] source,ref mut lexer::Sta
             return .ok(128+temporary);
         }
     }
-    return array_calls::capture(source,s,p,names,element,length);
+    return array_calls::capture_raw(source,s,p,names,element,length);
 }
 // A fresh literal or owned CALL result becomes a hidden owner before endpoints.
 // Publishing the owner first makes every lexical exit close the view before DROP.
-fn Result<slice_calls::Capture,errors::Error> slice_temporary(ref u8[] source,ref mut lexer::State s,
+fn Result<slice_calls::Capture,errors::Error> slice_temporary_raw(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref mut locals::Table names,ref functions::Table signatures,
     u8 encoded,usize at,usize depth,u8 result_type,usize structure,ref mut loops::State loop_state){
     let u8 element=encoded & 127;let bool exclusive=(encoded & 128)!=0;
@@ -953,6 +955,140 @@ fn Result<slice_calls::Capture,errors::Error> slice_temporary(ref u8[] source,re
 }
 // Keep endpoint parsing and its capture descriptor off the scalar CALL frame.
 // The root or parent is not newly borrowed until both endpoints complete.
+fn Result<usize,errors::Error> slice_argument_raw(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref mut locals::Table names,ref functions::Table signatures,
+    usize parameter,usize depth,u8 result_type,usize structure,ref mut loops::State loop_state){
+    let usize reference=s.begin;
+    let u8 encoded=slice_calls::prefix(source,s,signatures,parameter)?;
+    return slice_actual_raw(source,s,p,names,signatures,encoded,reference,depth,result_type,structure,loop_state);
+}
+fn Result<usize,errors::Error> slice_actual_raw(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref mut locals::Table names,ref functions::Table signatures,
+    u8 encoded,usize reference,usize depth,u8 result_type,usize structure,ref mut loops::State loop_state){
+    var lexer::State look=lexer::snapshot(s);
+    if((s.kind==2 || s.kind==5)){let usize next=lexer::next(source,ref mut look)?;}
+    let slice_calls::Capture captured=if(s.kind==91 || ((s.kind==2 || s.kind==5) && look.kind==40)){
+        slice_temporary_raw(source,s,p,names,signatures,encoded,reference,depth,result_type,structure,loop_state)?
+    }else{slice_calls::capture_raw(source,s,p,names,encoded,reference)?};
+    if(captured.root==16 && captured.parent==16){return .ok(captured.value);}
+    let usize at=captured.offset;
+    if(s.kind==44 || s.kind==41){
+        let usize lo=ir::integer(p,0,12,at)?;
+        let usize hi=arrays::length_value(p,captured.root,at)?;
+        return slice_calls::range_raw(p,names,ref captured,lo,hi);
+    }
+    let usize open=lexer::punctuation(source,s,91)?;
+    let usize lo=if(s.kind==46){ir::integer(p,0,12,at)?}
+        else{expression(source,s,p,names,signatures,1,depth+1,12,result_type,structure,loop_state)?};
+    if(p.types[lo]!=12){return .err(errors::make(3,at));}
+    let usize first=lexer::punctuation(source,s,46)?;let usize second=lexer::punctuation(source,s,46)?;
+    let usize hi=if(s.kind==93){if(captured.parent<16){ir::slice_length(p,captured.parent,at)?}else{arrays::length_value(p,captured.root,at)?}}
+        else{expression(source,s,p,names,signatures,1,depth+1,12,result_type,structure,loop_state)?};
+    if(p.types[hi]!=12){return .err(errors::make(3,at));}
+    let usize close=lexer::punctuation(source,s,93)?;
+    if(s.kind!=44 && s.kind!=41){return .err(errors::make(3,s.begin));}
+    return slice_calls::range_raw(p,names,ref captured,lo,hi);
+}
+// Image and universal view arguments join the same lexical suffix as native
+// owner/loan captures before later arguments and their nonlocal exits execute.
+fn Result<usize,errors::Error> reference_argument_raw(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref mut locals::Table names,ref functions::Table signatures,
+    usize parameter,usize depth,u8 result_type,usize structure,ref mut loops::State loop_state){
+    if(!reference_calls::image_argument_raw(source,s,names)? && !reference_calls::returned_atom_raw(source,s,names,signatures)?){
+        return slice_argument_raw(source,s,p,names,signatures,parameter,depth,result_type,structure,loop_state);
+    }
+    let usize at=s.begin;let usize prefix=lexer::word(source,s,b"ref")?;
+    let static_source::View value=static_view(source,s,p,names,signatures,depth,result_type,structure,loop_state)?;
+    if(value.kind!=1 || (s.kind!=44 && s.kind!=41)){return .err(errors::make(3,at));}
+    if(value.owned){
+        if(signatures.reference_returns){let usize roots=reference_results::publish(p,signatures,names,value.site,at)?;}
+        let usize hidden=locals::declare(names,at,at,192+value.site,false)?;
+    }
+    return .ok(192+value.site);
+}
+fn Result<usize,errors::Error> record_argument(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref mut locals::Table names,ref functions::Table signatures,
+    usize record,usize depth,u8 result_type,usize structure,ref mut loops::State loop_state){
+    let usize at=s.begin;
+    let record_expressions::Value value=record_value(source,s,p,names,signatures,false,at,depth,result_type,structure,loop_state)?;
+    if(value.tag!=0 || value.record!=record || (s.kind!=44 && s.kind!=41)){return .err(errors::make(3,at));}
+    if(record_expressions::whole(p,ref value) && !value.owned){return record_calls::capture_id(p,names,value.id,record,at);}
+    let usize id=record_expressions::materialize(p,names.function,ref value,false,at)?;
+    let usize capture=locals::declare(names,at,at,144+id,false)?;return .ok(144+id);
+}
+
+fn Result<usize,errors::Error> array_argument(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref mut locals::Table names,ref functions::Table signatures,
+    u8 element,usize length,usize depth,u8 result_type,usize structure,ref mut loops::State loop_state) {
+    if(s.kind==40 || arm_syntax::operand_kind(source,s)!=0){let usize at=s.begin;
+        let array_expressions::Value value=array_grouped_value(source,s,p,names,signatures,element,length,false,at,depth,result_type,structure,loop_state)?;
+        if(s.kind!=44 && s.kind!=41){return .err(errors::make(3,s.begin));}
+        if(!value.owned){return array_calls::capture_id(p,names,value.id,element,length,at);}
+        let usize captured=locals::declare(names,at,at,128+value.id,false)?;return .ok(128+value.id);
+    }
+    if(s.kind==91) {
+        let usize at=s.begin;
+        if(!array_locals::is_repeated(source,s)?){
+            let usize temporary=array_list_value(source,s,p,names,signatures,element,length,false,at,depth+1,result_type,structure,loop_state)?;
+            if(s.kind!=44 && s.kind!=41){return .err(errors::make(3,s.begin));}
+            let usize captured=locals::declare(names,at,at,128+temporary,false)?;
+            return .ok(128+temporary);
+        }
+        let usize temporary=repeated_argument(source,s,p,names,signatures,element,length,false,at,depth,result_type,structure,loop_state,1)?;
+        let usize captured=locals::declare(names,at,at,128+temporary,false)?;
+        return .ok(128+temporary);
+    }
+    if((s.kind==2 || s.kind==5)) {
+        var lexer::State look=lexer::snapshot(s);
+        let usize next=lexer::next(source,ref mut look)?;
+        if(look.kind==40) {
+            let usize at=s.begin;
+            if(argument_names::local(source,names,s.begin,s.end)?!=64) {return .err(errors::make(3,at));}
+            let usize target=argument_names::target(source,signatures,s.begin,s.end)?;
+            let usize temporary=array_results::destination(signatures,target,element,length,false,p,names.function,at)?;
+            let usize name=lexer::next(source,s)?;
+            let usize called=call_value(source,s,p,names,signatures,target,temporary,at,depth+1,result_type,structure,loop_state)?;
+            if(s.kind!=44 && s.kind!=41) {return .err(errors::make(3,s.begin));}
+            let usize captured=locals::declare(names,at,at,128+temporary,false)?;
+            return .ok(128+temporary);
+        }
+    }
+    return array_calls::capture(source,s,p,names,element,length);
+}
+// A fresh literal or owned CALL result becomes a hidden owner before endpoints.
+// Publishing the owner first makes every lexical exit close the view before DROP.
+fn Result<slice_calls::Capture,errors::Error> slice_temporary(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref mut locals::Table names,ref functions::Table signatures,
+    u8 encoded,usize at,usize depth,u8 result_type,usize structure,ref mut loops::State loop_state){
+    let u8 element=encoded & 127;let bool exclusive=(encoded & 128)!=0;
+    var usize id=16;
+    if(s.kind==91 && !array_locals::is_repeated(source,s)?){
+        id=array_list_value(source,s,p,names,signatures,element,0,exclusive,at,depth+1,result_type,structure,loop_state)?;
+    }else if(s.kind==91){
+        id=repeated_argument(source,s,p,names,signatures,element,0,exclusive,at,depth,result_type,structure,loop_state,2)?;
+    }else{
+        if((s.kind!=2 && s.kind!=5) || argument_names::local(source,names,s.begin,s.end)?!=64){return .err(errors::make(3,s.begin));}
+        let usize target=argument_names::target(source,signatures,s.begin,s.end)?;
+        if(target>=signatures.count){return .err(errors::make(3,s.begin));}
+        if(signatures.return_slice_elements[target]!=0){
+            if(signatures.return_slice_elements[target]!=encoded){return .err(errors::make(3,s.begin));}
+            let usize name=lexer::next(source,s)?;
+            let usize value=call_value(source,s,p,names,signatures,target,176,at,depth+1,result_type,structure,loop_state)?;
+            if(s.kind!=44 && s.kind!=41 && s.kind!=91){return .err(errors::make(3,s.begin));}
+            let usize retained=result_calls::publish(p,names,value,at)?;
+            let usize captured=locals::declare(names,at,at,value,exclusive)?;
+            return .ok(slice_calls::Capture{.value=value,.root=16,.parent=if(s.kind==91){value-160}else{16},.exclusive=exclusive,.offset=at});
+        }
+        id=array_results::destination(signatures,target,element,signatures.return_lengths[target],exclusive,p,names.function,at)?;
+        let usize name=lexer::next(source,s)?;
+        let usize called=call_value(source,s,p,names,signatures,target,id,at,depth+1,result_type,structure,loop_state)?;
+    }
+    if(s.kind!=91 && s.kind!=44 && s.kind!=41){return .err(errors::make(3,s.begin));}
+    let usize owner=locals::declare(names,at,at,128+id,exclusive)?;
+    return .ok(slice_calls::Capture{.value=0,.root=id,.parent=16,.exclusive=exclusive,.offset=at});
+}
+// Keep endpoint parsing and its capture descriptor off the scalar CALL frame.
+// The root or parent is not newly borrowed until both endpoints complete.
 fn Result<usize,errors::Error> slice_argument(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref mut locals::Table names,ref functions::Table signatures,
     usize parameter,usize depth,u8 result_type,usize structure,ref mut loops::State loop_state){
@@ -969,23 +1105,18 @@ fn Result<usize,errors::Error> slice_actual(ref u8[] source,ref mut lexer::State
         slice_temporary(source,s,p,names,signatures,encoded,reference,depth,result_type,structure,loop_state)?
     }else{slice_calls::capture(source,s,p,names,encoded,reference)?};
     if(captured.root==16 && captured.parent==16){return .ok(captured.value);}
-    let usize at=captured.offset;
-    if(s.kind==44 || s.kind==41){
-        let usize lo=ir::integer(p,0,12,at)?;
-        let usize hi=arrays::length_value(p,captured.root,at)?;
-        return slice_calls::range(p,names,ref captured,lo,hi);
-    }
-    let usize open=lexer::punctuation(source,s,91)?;
-    let usize lo=if(s.kind==46){ir::integer(p,0,12,at)?}
-        else{expression(source,s,p,names,signatures,1,depth+1,12,result_type,structure,loop_state)?};
-    if(p.types[lo]!=12){return .err(errors::make(3,at));}
-    let usize first=lexer::punctuation(source,s,46)?;let usize second=lexer::punctuation(source,s,46)?;
-    let usize hi=if(s.kind==93){if(captured.parent<16){ir::slice_length(p,captured.parent,at)?}else{arrays::length_value(p,captured.root,at)?}}
-        else{expression(source,s,p,names,signatures,1,depth+1,12,result_type,structure,loop_state)?};
-    if(p.types[hi]!=12){return .err(errors::make(3,at));}
-    let usize close=lexer::punctuation(source,s,93)?;
-    if(s.kind!=44 && s.kind!=41){return .err(errors::make(3,s.begin));}
-    return slice_calls::range(p,names,ref captured,lo,hi);
+    var argument_work::State w=argument_work::begin(*s,3,12,0,names.function,captured.offset);
+    w.root=captured.root;w.parent=captured.parent;
+    var metadata_budget::State meter=metadata_budget::empty();
+    while(!w.done){let usize allowance=metadata_budget::reset(ref mut meter,w.at)?;
+        let bool done=argument_work::advance(source,s,p,ref mut w,ref mut meter)?;
+        let u8 request=w.request;
+        if(request==1){let usize value=expression(source,s,p,names,signatures,1,depth+1,12,result_type,structure,loop_state)?;
+            let usize resumed=argument_work::resume(ref mut w,request,value)?;}
+        else if(request==2){let usize lo=w.lo;let usize hi=w.hi;
+            let usize value=slice_calls::range(p,names,ref captured,lo,hi)?;
+            let usize resumed=argument_work::resume(ref mut w,request,value)?;}
+    }return argument_work::prepared(ref w);
 }
 // Image and universal view arguments join the same lexical suffix as native
 // owner/loan captures before later arguments and their nonlocal exits execute.
@@ -1003,6 +1134,31 @@ fn Result<usize,errors::Error> reference_argument(ref u8[] source,ref mut lexer:
         let usize hidden=locals::declare(names,at,at,192+value.site,false)?;
     }
     return .ok(192+value.site);
+}
+fn Result<usize,errors::Error> repeated_argument(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref locals::Table names,ref functions::Table signatures,
+    u8 element,usize length,bool exclusive,usize at,usize depth,u8 result_type,usize structure,
+    ref mut loops::State flow,u8 mode){
+    var argument_work::State w=argument_work::begin(*s,mode,element,length,names.function,at);w.exclusive=exclusive;
+    var metadata_budget::State meter=metadata_budget::empty();while(!w.done){let usize allowance=metadata_budget::reset(ref mut meter,at)?;
+        let bool done=argument_work::advance(source,s,p,ref mut w,ref mut meter)?;
+        if(w.request==1){let usize value=expression(source,s,p,names,signatures,1,depth+1,element,result_type,structure,flow)?;
+            let usize resumed=argument_work::resume(ref mut w,1,value)?;}}
+    return argument_work::prepared(ref w);
+}
+// Internal raw/staged seam for acquisition IR, error, token and capture parity.
+pub fn Result<usize,errors::Error> acquire_argument(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref mut locals::Table names,ref functions::Table signatures,
+    u8 kind,usize parameter,u8 element,usize length,usize depth,u8 result_type,usize structure,
+    ref mut loops::State flow,bool staged){
+    if(kind==1){return if(staged){array_argument(source,s,p,names,signatures,element,length,depth,result_type,structure,flow)}
+        else{array_argument_raw(source,s,p,names,signatures,element,length,depth,result_type,structure,flow)};}
+    if(kind==2){return if(staged){record_argument(source,s,p,names,signatures,parameter,depth,result_type,structure,flow)}
+        else{record_argument_raw(source,s,p,names,signatures,parameter,depth,result_type,structure,flow)};}
+    if(kind==3){return if(staged){slice_argument(source,s,p,names,signatures,parameter,depth,result_type,structure,flow)}
+        else{slice_argument_raw(source,s,p,names,signatures,parameter,depth,result_type,structure,flow)};}
+    return if(staged){reference_argument(source,s,p,names,signatures,parameter,depth,result_type,structure,flow)}
+        else{reference_argument_raw(source,s,p,names,signatures,parameter,depth,result_type,structure,flow)};
 }
 // All result kinds share argument evaluation and capture cleanup. Destinations
 // 0..15 are dead array sites, 16 is scalar, and 144..159 are dead record sites.

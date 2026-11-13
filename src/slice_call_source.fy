@@ -6,6 +6,8 @@ import ir as ir;
 import slice_source as slices;
 import slice_builders as builders;
 import errors as errors;
+import slice_capture_source_work as work;
+import metadata_budget as budget;
 import array_source as arrays;
 import slice_reborrow_ir as reborrow;
 
@@ -38,11 +40,11 @@ fn Result<Capture,errors::Error> owned(ref u8[] source,ref mut lexer::State s,
     if(s.kind!=44 && s.kind!=41){return .err(errors::make(3,s.begin));}
     let usize lo=ir::integer(p,0,12,at)?;
     let usize hi=arrays::length_value(p,selected,at)?;
-    let usize value=open(p,names,selected,lo,hi,exclusive,at)?;
+    let usize value=open_raw(p,names,selected,lo,hi,exclusive,at)?;
     return .ok(Capture{.value=value,.root=16,.parent=16,.exclusive=exclusive,.offset=at});
 }
 // Endpoints have completed before this single acquisition/publication point.
-pub fn Result<usize,errors::Error> open(ref mut ir::Program p,ref mut locals::Table names,
+pub fn Result<usize,errors::Error> open_raw(ref mut ir::Program p,ref mut locals::Table names,
     usize root,usize lo,usize hi,bool exclusive,usize at){
     if(names.count>=64){return .err(errors::make(4,at));}
     let usize site=if(exclusive){ir::exclusive_slice(p,root,at)?}else{ir::slice(p,root,at)?};
@@ -52,10 +54,10 @@ pub fn Result<usize,errors::Error> open(ref mut ir::Program p,ref mut locals::Ta
 }
 // Exact-mode named ranges reuse lexical SUBSLICE/BEGIN and capture cleanup.
 // The anonymous child is not visible until both endpoint expressions complete.
-pub fn Result<usize,errors::Error> range(ref mut ir::Program p,ref mut locals::Table names,
+pub fn Result<usize,errors::Error> range_raw(ref mut ir::Program p,ref mut locals::Table names,
     ref Capture captured,usize lo,usize hi){
     let usize at=captured.offset;let usize parent=captured.parent;
-    if(parent==16){return open(p,names,captured.root,lo,hi,captured.exclusive,at);}
+    if(parent==16){return open_raw(p,names,captured.root,lo,hi,captured.exclusive,at);}
     if(names.count>=64){return .err(errors::make(4,at));}
     let usize site=if(captured.exclusive){reborrow::derived(p,parent,at)?}
         else if(p.slice_origins[parent]!=0){builders::derived(p,parent,names.function,at)?}
@@ -80,7 +82,7 @@ pub fn Result<u8, errors::Error> prefix(ref u8[] source, ref mut lexer::State s,
 }
 // Explicit access and scalar types match exactly. Named slices retain their
 // ticket; existing owned arrays acquire an anonymous call-scoped handle.
-pub fn Result<Capture, errors::Error> capture(ref u8[] source, ref mut lexer::State s,
+pub fn Result<Capture, errors::Error> capture_raw(ref u8[] source, ref mut lexer::State s,
     ref mut ir::Program p, ref mut locals::Table names, u8 encoded, usize at) {
     let u8 element = encoded & 127;
     let bool exclusive = (encoded & 128) != 0;
@@ -107,4 +109,27 @@ pub fn Result<Capture, errors::Error> capture(ref u8[] source, ref mut lexer::St
     if(s.kind==91){return .ok(Capture{.value=0,.root=16,.parent=site,.exclusive=exclusive,.offset=at});}
     if (s.kind != 44 && s.kind != 41) { return .err(errors::make(3, s.begin)); }
     return .ok(Capture{.value=160+site,.root=16,.parent=16,.exclusive=exclusive,.offset=at});
+}
+
+// Internal source acquisition remains synchronously drained by its owner.
+fn Result<usize,errors::Error> drain(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref mut locals::Table names,ref mut work::State w){
+    var budget::State meter=budget::empty();while(!w.done){let usize allowance=budget::reset(ref mut meter,w.at)?;
+        let bool done=work::advance(source,s,p,names,w,ref mut meter)?;}return .ok(w.value);
+}
+pub fn Result<Capture,errors::Error> capture(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref mut locals::Table names,u8 encoded,usize at){
+    var work::State w=work::begin(*s,0,encoded,at);let usize value=drain(source,s,p,names,ref mut w)?;
+    return .ok(Capture{.value=value,.root=w.root,.parent=w.parent,.exclusive=w.exclusive,.offset=at});
+}
+pub fn Result<usize,errors::Error> range(ref mut ir::Program p,ref mut locals::Table names,
+    ref Capture captured,usize lo,usize hi){
+    var lexer::State s=lexer::empty();var work::State w=work::begin(s,2,0,captured.offset);
+    w.root=captured.root;w.parent=captured.parent;w.exclusive=captured.exclusive;w.lo=lo;w.hi=hi;
+    return drain(b"",ref mut s,p,names,ref mut w);
+}
+pub fn Result<usize,errors::Error> open(ref mut ir::Program p,ref mut locals::Table names,
+    usize root,usize lo,usize hi,bool exclusive,usize at){
+    let Capture captured=Capture{.value=0,.root=root,.parent=16,.exclusive=exclusive,.offset=at};
+    return range(p,names,ref captured,lo,hi);
 }

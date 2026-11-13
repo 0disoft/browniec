@@ -7,6 +7,7 @@ import ir as ir;
 import errors as errors;
 import array_source as arrays;
 import cells as cells;
+import argument_name_work as names_work;
 import std::num as num;
 
 // Predeclare every parameter shape, including forward and mutually recursive
@@ -43,11 +44,24 @@ pub fn Result<usize,errors::Error> bind(ref functions::Table signatures,usize at
 // Source array arguments are bare names, with exact element and length matches.
 // An immutable owner is already stable. Mutable owners need a private snapshot
 // before any later argument executes. Empty name spans cannot match guest names.
-pub fn Result<usize,errors::Error> capture(ref u8[] source,ref mut lexer::State s,ref mut ir::Program p,
+pub fn Result<usize,errors::Error> capture_raw(ref u8[] source,ref mut lexer::State s,ref mut ir::Program p,
     ref mut locals::Table names,u8 element,usize length) {
     let usize at=s.begin;
     if(s.kind!=2) {return .err(errors::make(3,at));}
     let usize index=locals::find(source,names,s.begin,s.end);
+    if(!arrays::binding(names,index)) {return .err(errors::make(3,at));}
+    let usize id=names.registers[index]-128;
+    if(p.arrays.elements[id]!=element || p.arrays.lengths[id]!=length ||
+        p.array_functions[id] as usize!=names.function) {return .err(errors::make(3,at));}
+    let usize next=lexer::next(source,s)?;
+    if(s.kind!=44 && s.kind!=41) {return .err(errors::make(3,s.begin));}
+    return capture_id(p,names,id,element,length,at);
+}
+pub fn Result<usize,errors::Error> capture(ref u8[] source,ref mut lexer::State s,ref mut ir::Program p,
+    ref mut locals::Table names,u8 element,usize length) {
+    let usize at=s.begin;
+    if(s.kind!=2) {return .err(errors::make(3,at));}
+    let usize index=names_work::local(source,names,s.begin,s.end)?;
     if(!arrays::binding(names,index)) {return .err(errors::make(3,at));}
     let usize id=names.registers[index]-128;
     if(p.arrays.elements[id]!=element || p.arrays.lengths[id]!=length ||

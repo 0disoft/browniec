@@ -6,6 +6,7 @@ import ir as ir;
 import static_source as statics;
 import static_builders as builders;
 import errors as errors;
+import argument_name_work as names_work;
 
 pub fn bool parameter(ref functions::Table signatures,usize at){
     return signatures.reference_calls && at<128 && signatures.param_slices[at] && signatures.param_slice_elements[at]==10;
@@ -21,12 +22,21 @@ pub fn Result<usize,errors::Error> bind(ref functions::Table signatures,usize at
 }
 // Pure lookahead leaves ordinary rooted/formal/owned temporary captures on their
 // established path. Actual view lowering still requires explicit shared access.
-pub fn Result<bool,errors::Error> image_argument(ref u8[] source,ref lexer::State s,ref locals::Table names){
+pub fn Result<bool,errors::Error> image_argument_raw(ref u8[] source,ref lexer::State s,ref locals::Table names){
     if(s.kind!=2 || !lexer::equal(source[s.begin..s.end],b"ref")){return .ok(false);}
     var lexer::State look=lexer::snapshot(s);let usize prefix=lexer::next(source,ref mut look)?;
     if(look.kind==3 || look.kind==4 || look.kind==40){return .ok(true);}
     if(look.kind!=2){return .ok(false);}
     if(statics::binding(names,locals::find(source,names,look.begin,look.end))){return .ok(true);}
+    if(!lexer::equal(source[look.begin..look.end],b"text")){return .ok(false);}
+    let usize next=lexer::next(source,ref mut look)?;return .ok(look.kind==58);
+}
+pub fn Result<bool,errors::Error> image_argument(ref u8[] source,ref lexer::State s,ref locals::Table names){
+    if(s.kind!=2 || !lexer::equal(source[s.begin..s.end],b"ref")){return .ok(false);}
+    var lexer::State look=lexer::snapshot(s);let usize prefix=lexer::next(source,ref mut look)?;
+    if(look.kind==3 || look.kind==4 || look.kind==40){return .ok(true);}
+    if(look.kind!=2){return .ok(false);}
+    if(statics::binding(names,names_work::local(source,names,look.begin,look.end)?)){return .ok(true);}
     if(!lexer::equal(source[look.begin..look.end],b"text")){return .ok(false);}
     let usize next=lexer::next(source,ref mut look)?;return .ok(look.kind==58);
 }
@@ -40,11 +50,18 @@ pub fn Result<usize,errors::Error> promote(ref mut ir::Program p,usize pc,usize 
 pub fn bool result(ref functions::Table signatures,usize f){
     return signatures.reference_returns && f<signatures.count && signatures.return_slice_elements[f]==10;
 }
-pub fn Result<bool,errors::Error> returned_atom(ref u8[] source,ref lexer::State s,ref locals::Table names,ref functions::Table signatures){
+pub fn Result<bool,errors::Error> returned_atom_raw(ref u8[] source,ref lexer::State s,ref locals::Table names,ref functions::Table signatures){
     var lexer::State look=lexer::snapshot(s);
     if(look.kind==2 && lexer::equal(source[look.begin..look.end],b"ref")){let usize prefix=lexer::next(source,ref mut look)?;}
     if((look.kind!=2 && look.kind!=5) || locals::find(source,names,look.begin,look.end)!=64){return .ok(false);}
     let usize f=functions::find(source,signatures,look.begin,look.end);if(!result(signatures,f)){return .ok(false);}
+    let usize next=lexer::next(source,ref mut look)?;return .ok(look.kind==40);
+}
+pub fn Result<bool,errors::Error> returned_atom(ref u8[] source,ref lexer::State s,ref locals::Table names,ref functions::Table signatures){
+    var lexer::State look=lexer::snapshot(s);
+    if(look.kind==2 && lexer::equal(source[look.begin..look.end],b"ref")){let usize prefix=lexer::next(source,ref mut look)?;}
+    if((look.kind!=2 && look.kind!=5) || names_work::local(source,names,look.begin,look.end)?!=64){return .ok(false);}
+    let usize f=names_work::target(source,signatures,look.begin,look.end)?;if(!result(signatures,f)){return .ok(false);}
     let usize next=lexer::next(source,ref mut look)?;return .ok(look.kind==40);
 }
 pub fn Result<bool,errors::Error> declaration(ref u8[] source,ref lexer::State s,ref locals::Table names,ref functions::Table signatures){
