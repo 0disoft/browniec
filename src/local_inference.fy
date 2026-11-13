@@ -1,5 +1,6 @@
 module local_inference;
 import lexer as lexer;
+import declaration_name_work as headers;
 import locals as locals;
 import ir as ir;
 import types as types;
@@ -8,18 +9,22 @@ import errors as errors;
 pub struct Header { usize begin; usize end; }
 // One token of lookahead distinguishes a binder from an explicit type. It
 // never evaluates the initializer or changes the active lexer/IR.
-pub fn Result<bool,errors::Error> follows(ref u8[] source,ref lexer::State s){
+pub fn Result<bool,errors::Error> follows_raw(ref u8[] source,ref lexer::State s){
     if(s.kind!=2 || locals::reserved(source[s.begin..s.end])){return .ok(false);}
     var lexer::State look=lexer::snapshot(s);let usize next=lexer::next(source,ref mut look)?;
     return .ok(look.kind==61);
 }
-pub fn Result<Header,errors::Error> header(ref u8[] source,ref mut lexer::State s,ref locals::Table names){
+pub fn Result<Header,errors::Error> header_raw(ref u8[] source,ref mut lexer::State s,ref locals::Table names){
     if(s.kind!=2 || locals::reserved(source[s.begin..s.end])){return .err(errors::make(2,s.begin));}
     let usize begin=s.begin;let usize end=s.end;
     if(locals::find(source,names,begin,end)!=64){return .err(errors::make(3,begin));}
     if(names.count>=64){return .err(errors::make(4,begin));}
     let usize name=lexer::next(source,s)?;let usize equal=lexer::punctuation(source,s,61)?;
     return .ok(Header{.begin=begin,.end=end});
+}
+pub fn Result<bool,errors::Error> follows(ref u8[] source,ref lexer::State s){return headers::follows(source,s);}
+pub fn Result<Header,errors::Error> header(ref u8[] source,ref mut lexer::State s,ref locals::Table names){
+    let usize end=s.end;let usize begin=headers::prepare(source,s,names,false)?;return .ok(Header{.begin=begin,.end=end});
 }
 // Scalar/wrapper inference uses the already checked expression's exact type.
 // Publication follows complete initialization, just like annotated locals.

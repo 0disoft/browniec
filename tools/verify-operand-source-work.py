@@ -108,5 +108,9 @@ if '--destination-place-only' in sys.argv:
     bottom.DIRECTORY = 'build/operand-destination-place'
     bottom.MODULES = {'destination_record_lowering': None, 'destination_place_lowering': None,
                       'body_lowering': ['nested_call_depth_32_and_33_preserve_default_stack_and_raw_diagnostics']}
+if '--declaration-name-only' in sys.argv:
+    sys.argv.remove('--declaration-name-only')
+    bottom.DIRECTORY = 'build/operand-declaration-name'
+    bottom.MODULES = {'declaration_name_lowering': None}
 if __name__ == '__main__':
     bottom.main()
