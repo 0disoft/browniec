@@ -1,18 +1,19 @@
 ---
 title: Language Basics
-description: Supported Brownie C scalar and composite types, control flow, Option/Result handling, checked arithmetic, and language exclusions.
+description: Learn Brownie C bindings, supported types, functions, control flow, Option/Result, and excluded features.
 ---
 
-Brownie C shares a C-shaped surface syntax with a strict subset of Fairy C, tailored to small, deterministic rules inside a **4096-byte UTF-8 single-file** budget.
+Brownie C borrows Fairy C's clean C-shaped syntax while keeping the language small enough to compile and check quickly inside a single `.brc` file (up to 4096 UTF-8 bytes).
 
 Every public CLI program starts with `module main;` and a zero-argument `fn i32 main()`.
 
-## Bindings and Types
+## 1. Bindings and Types
 
-- **Bindings**: Use `let` for immutable variables and `var` for mutable variables. Types can be written explicitly or inferred on supported scalar, array, record, and constructor initializers.
-- **Scalars**: `i32`, `u32`, `i64`, `u64`, `isize`, `usize`, and `bool`.
-- **Fixed arrays and records**: Fixed arrays `T[N]` (`[21; 2]` or element lists) and plain nominal `struct` records holding copyable scalar/nested plain-record fields.
-- **Tagged wrappers**: `Option<T>` (`.some(v)` / `.none`) and `Result<T, E>` (`.ok(v)` / `.err(e)`).
+Use `let` for immutable variables and `var` for mutable ones. On supported initializers, you can let the compiler infer the type (`let x = 10;`).
+
+- **Scalars**: `i32`, `u32`, `i64`, `u64`, `isize`, `usize`, `bool`.
+- **Fixed arrays and records**: Fixed-length `T[N]` (`[21; 2]` or element lists) and plain `struct`s with copyable fields.
+- **Optional & error values**: `Option<T>` (`.some(v)` / `.none`) and `Result<T, E>` (`.ok(v)` / `.err(e)`).
 
 ```c
 module main;
@@ -25,12 +26,16 @@ fn Option<i32> check_positive(i32 value) {
 }
 ```
 
-## Functions, Control Flow, and Checked Arithmetic
+## 2. Functions, Control Flow, and Checked Math
 
-- **Branches and loops**: `if` / `else` (usable as value expressions when branch types match), `switch` statements and expressions, `while`, and `for` loops with `break` and `continue`.
-- **Void helpers and discards**: Helper functions returning `void` and explicit `_ = expr;` discards are supported.
-- **Checked arithmetic**: Signed and unsigned integer overflow and division by zero fail cleanly at runtime (`overflow`, `zero_divisor`, process exit code `5`) instead of wrapping silently.
-- **Result/Option propagation**: `?` unwraps `.some` / `.ok` or returns early on `.none` / `.err`, and `.is_ok` checks `Result` state without consuming it:
+- **`if` and `switch`**: Work both as statements and as value-returning expressions when branches match types.
+- **Loops**: `while` and `for` with `break` and `continue`.
+- **`void` helpers & discards**: Helper functions can return `void`, and `_ = expr;` discards an expression cleanly.
+- **Checked arithmetic**: Integer overflow and divide-by-zero halt cleanly (`overflow`, `zero_divisor`) instead of silently wrapping.
+
+## 3. Working with `Option` and `Result`
+
+Use `?` to unwrap `.some` / `.ok` or return early on `.none` / `.err`, and `.is_ok` to inspect a `Result` without consuming it:
 
 ```c
 fn Result<i32, bool> add(Result<i32, bool> left, Result<i32, bool> right) {
@@ -38,11 +43,11 @@ fn Result<i32, bool> add(Result<i32, bool> left, Result<i32, bool> right) {
 }
 ```
 
-## What Is Excluded by Design
+## 4. What Is Intentionally Excluded
 
-To keep compilation and VM verification deterministic and bounded, Brownie C intentionally excludes:
+To keep verification deterministic and self-contained, Brownie C omits:
 
-- Floating-point numbers (`f32`, `f64`)
-- User-defined `resource` types, `enum` declarations, and user generics
-- Raw pointers (`ptr`), arbitrary C FFI (`extern C`), and dynamic library loading
-- Closures, threads, maps, regex, garbage collection, and JIT compilation
+- Floats (`f32`, `f64`)
+- User `resource` types, `enum` declarations, and user generics
+- Raw pointers (`ptr`), arbitrary C FFI, and dynamic library loading
+- Closures, threads, maps, regex, GC, and JIT

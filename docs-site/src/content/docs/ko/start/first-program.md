@@ -1,13 +1,13 @@
 ---
 title: 첫 프로그램
-description: 공개 browniec CLI로 첫 .brc 파일을 검사하고 IR을 확인하며 실행하는 과정을 다룹니다.
+description: 5줄짜리 .brc 파일을 검사하고, IR을 살펴보고, 실행해 보면서 동작 방식을 익힙니다.
 ---
 
-Brownie C 공개 CLI는 최대 **4096바이트** UTF-8 단일 `.brc` 파일을 입력으로 받습니다. Fairy C처럼 패키지 디렉터리를 만드는 대신, `.brc` 파일 경로를 `check`, `run`, `inspect` 명령에 바로 전달합니다.
+Brownie C는 프로젝트 폴더 대신 **`.brc` 파일 하나**를 CLI에 바로 넘겨 실행합니다(최대 4096바이트 UTF-8). 아주 짧은 예제부터 실행해 봅시다.
 
-## 1. 최소 예제 (`examples/answer.brc`)
+## 1. 첫 코드 살펴보기 (`examples/answer.brc`)
 
-공개 CLI에서 실행할 모든 프로그램은 `module main;`과 인자 없는 `fn i32 main()`을 정의해야 합니다.
+공개 CLI에서 실행할 수 있는 모든 `.brc` 파일에는 `module main;`과 인자 없는 `fn i32 main()`이 있어야 합니다.
 
 ```c
 module main;
@@ -17,71 +17,63 @@ fn i32 main() {
 }
 ```
 
-## 2. 정적 검사와 검증 실행
+## 2. 검사(`check`)와 실행(`run`)
+
+먼저 문법과 타입에 문제가 없는지 확인해 봅시다.
 
 ```powershell
 ./build/browniec.exe check examples/answer.brc
 ```
 
-정상 통과 시 stderr에 다음이 출력되고 프로세스 종료 코드는 `0`이 됩니다.
-
-```text
-checked
-```
-
-`--json`을 붙이면 stderr 대신 stdout에 한 줄짜리 JSON 결과를 출력합니다.
-
-```powershell
-./build/browniec.exe check examples/answer.brc --json
-```
-
-## 3. 제한된 VM에서 실행
+문제가 없으면 `checked`가 출력됩니다. 이제 직접 실행해 볼까요?
 
 ```powershell
 ./build/browniec.exe run examples/answer.brc
 ```
 
-예상 출력:
+출력:
 
 ```text
 return_i32=42
 ```
 
-`--json`으로 실행하면 다음 JSON이 출력됩니다.
+프로그램에서 쓰기 좋은 한 줄짜리 JSON으로 결과를 받고 싶다면 `--json`을 붙입니다.
+
+```powershell
+./build/browniec.exe run examples/answer.brc --json
+```
 
 ```json
 {"schema":"browniec.result/v1","profile":"brownie.m1-scalar/1","command":"run","status":"completed","return_i32":42,"error":null}
 ```
 
-여기서 `return_i32=42`는 게스트가 반환한 **결과 데이터**이며, 실행이 정상 완료되었으므로 CLI 프로세스 자체의 종료 코드는 `0`입니다.
+여기서 재미있는 점 하나! Fairy C와 달리 Brownie C에서는 **`return 42;`가 OS 종료 코드 42를 뜻하지 않습니다.** 실행 자체는 정상 완료되었으므로 프로세스 종료 코드는 `0`이고, `42`는 결과 데이터(`return_i32`)로 돌려받습니다.
 
-## 4. 생성된 내부 IR 검사
+## 3. 생성된 IR 엿보기 (`inspect --ir`)
 
-실행하지 않고 컴파일된 레지스터 바이트코드 구조를 확인할 수 있습니다.
+코드를 실제로 돌리지 않고 VM용 명령어가 어떻게 만들어졌는지 구경할 수도 있습니다.
 
 ```powershell
 ./build/browniec.exe inspect examples/answer.brc --ir
 ```
 
-출력 상단 예시:
-
 ```text
 Brownie C private IR diagnostics; not reloadable
 profile=brownie.m1-scalar/1
 entry=0 instructions=4 registers=3 literal_bytes=0
+...
 ```
 
-## 5. 반복문·배열 실행 시 `--fuel` 지정
+## 4. 반복문에서 `--fuel` 늘려 보기
 
-기본 Fuel 한도는 **256**이므로 `answer.brc` 같은 짧은 스칼라 예제는 기본값으로 실행되지만, 반복 횟수가 많은 코드나 배열 코드는 `--fuel`을 크게 주어야 합니다(상한 `16000000`). 예를 들어 `examples/loops.brc`는 다음처럼 실행합니다.
+`examples/loops.brc`처럼 반복을 많이 도는 코드를 기본값(`256` Fuel) 그대로 실행하면 중간에 예산이 바닥나면서 에러(`fuel`)로 멈춥니다. `--fuel 1000`처럼 예산을 넉넉히 주면 정상 완료됩니다.
 
 ```powershell
 ./build/browniec.exe run examples/loops.brc --fuel 1000 --json
 ```
 
-## 처음 시작할 때 자주 겪는 실수
+## 처음 해 볼 때 자주 헷갈리는 점
 
-- **반환값 `42`가 프로세스 종료 코드가 된다고 오해**: 게스트 `i32`는 `return_i32` 데이터로 전달됩니다. 프로세스 종료 코드 `2`~`7`은 CLI 사용 오류, 컴파일 오류, 트랩, 입출력 실패를 뜻합니다.
-- **반복문이나 배열 코드에서 `--fuel` 생략**: 배열이 포함된 프로그램은 시작 전에 64 KiB 아레나 준비 비용 `65,537` Fuel이 들기 때문에, 기본값 `256`으로 실행하면 `fuel` 오류(종료 코드 `5`)가 납니다.
-- **미구현 플래그 전달**: `--isolated` 등 아직 공개되지 않은 플래그는 조용히 무시되지 않고 오류로 거부됩니다.
-- **4096바이트 초과**: 공개 단일 파일 입력은 UTF-8 기준 4096바이트를 넘길 수 없습니다.
+- **반환값이 exit code라고 생각함**: 게스트가 반환한 숫자는 `return_i32` 데이터로 나오고, 프로세스 exit code `2`~`7`은 에러 종류를 뜻합니다.
+- **배열·반복문에서 `--fuel`을 깜빡함**: 배열이 들어간 코드는 시작 준비에만 `65,537` Fuel을 쓰므로 `--fuel 100000` 이상을 주어야 합니다.
+- **4096바이트 초과 또는 미지원 옵션**: 단일 파일 크기 상한을 넘거나 `--isolated` 같은 미구현 플래그를 넘기면 오류로 거부됩니다.

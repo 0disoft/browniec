@@ -1,13 +1,13 @@
 ---
 title: First Program
-description: Check, inspect, and execute your first Brownie C rule file with the public CLI.
+description: Check, inspect, and execute your first .brc rule file with the browniec CLI.
 ---
 
-Brownie C operates on single `.brc` files up to **4096 bytes** of UTF-8 text. Unlike Fairy C packages, you pass the `.brc` file directly to `browniec check`, `browniec run`, or `browniec inspect`.
+Brownie C takes a single `.brc` file (up to 4096 UTF-8 bytes) directly—no package directory or manifest is needed for the public CLI.
 
-## 1. A Minimal Program (`examples/answer.brc`)
+## 1. A 5-Line Example (`examples/answer.brc`)
 
-Every runnable public program defines `module main;` and a zero-argument `fn i32 main()`:
+Every public `.brc` entry defines `module main;` and a zero-argument `fn i32 main()`:
 
 ```c
 module main;
@@ -17,79 +17,56 @@ fn i32 main() {
 }
 ```
 
-## 2. Check Syntax, Types, and Bytecode Verification
+## 2. Check and Run
+
+First check syntax, types, and verification rules:
 
 ```powershell
 ./build/browniec.exe check examples/answer.brc
 ```
 
-Expected output (written to stderr, exit code `0`):
-
-```text
-checked
-```
-
-Pass `--json` to emit structured JSON on stdout instead (with empty stderr):
-
-```powershell
-./build/browniec.exe check examples/answer.brc --json
-```
-
-## 3. Run Under the Bounded VM
-
-Execute `examples/answer.brc`:
+It prints `checked` and exits `0`. Now run it in the VM:
 
 ```powershell
 ./build/browniec.exe run examples/answer.brc
 ```
 
-Expected output:
+Output:
 
 ```text
 return_i32=42
 ```
 
-And with `--json`:
+Add `--json` for machine-readable output:
 
 ```powershell
 ./build/browniec.exe run examples/answer.brc --json
 ```
 
-Observed JSON output:
-
 ```json
 {"schema":"browniec.result/v1","profile":"brownie.m1-scalar/1","command":"run","status":"completed","return_i32":42,"error":null}
 ```
 
-Notice that `return_i32=42` is returned as **guest data**, while the `browniec` process exits with status `0` because the run completed cleanly.
+Notice that **`return 42;` does not set the OS exit code to 42.** The CLI exits `0` because the run succeeded, while `42` is returned inside `return_i32`.
 
-## 4. Inspect Generated Private IR
+## 3. Peek at the Compiled IR
 
-You can inspect the compiled register bytecode without executing it:
+To inspect the generated VM instructions without running anything:
 
 ```powershell
 ./build/browniec.exe inspect examples/answer.brc --ir
 ```
 
-Observed output begins with:
+## 4. Giving Loops More `--fuel`
 
-```text
-Brownie C private IR diagnostics; not reloadable
-profile=brownie.m1-scalar/1
-entry=0 instructions=4 registers=3 literal_bytes=0
-```
-
-## 5. Supplying More Fuel for Loops and Arrays
-
-The default Fuel limit is **256**, which covers short scalar computations like `answer.brc`, but loops and arrays need an explicit `--fuel` budget (up to `16000000`). For example, `examples/loops.brc` needs a larger budget such as `--fuel 1000`:
+The default Fuel budget is `256`. Running a loop like `examples/loops.brc` with default Fuel stops partway through with a `fuel` error, while passing `--fuel 1000` finishes cleanly:
 
 ```powershell
 ./build/browniec.exe run examples/loops.brc --fuel 1000 --json
 ```
 
-## Common Beginner Mistakes
+## Common Beginner Gotchas
 
-- **Expecting `return 42;` to set the OS exit code**: The guest `i32` is reported as `return_i32`. Nonzero CLI exit codes (`2`..`7`) indicate usage errors, compile errors, traps, or IO failures.
-- **Forgetting `--fuel` on loops or arrays**: Programs with arrays prepare a 64 KiB arena costing `65,537` Fuel before `main()` runs, so running them with the default `256` fails with a `fuel` error (exit code `5`).
-- **Passing unsupported CLI flags**: Options such as `--isolated` or project/input flags are rejected rather than ignored.
-- **Exceeding 4096 bytes**: Public single-file compilation rejects source files larger than 4096 bytes of UTF-8.
+- **Expecting `return 42;` to be the process exit code**: Guest returns are data (`return_i32`); non-zero process exit codes (`2`..`7`) indicate errors.
+- **Forgetting `--fuel` on arrays**: Array initialization costs `65,537` Fuel before `main()` runs, so pass `--fuel 100000` or higher.
+- **Exceeding 4096 bytes or passing `--isolated`**: Public CLI rejects oversized files and unimplemented flags instead of silently ignoring them.

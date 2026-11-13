@@ -1,44 +1,34 @@
 ---
 title: CLI Usage and Common Errors
-description: Public browniec CLI commands, JSON schemas, process exit codes, and error kinds.
+description: Public browniec commands, exit codes, and quick fixes for common errors.
 ---
 
-The public `browniec` CLI supports checking, inspecting, and executing single `.brc` files up to 4096 UTF-8 bytes.
+The public `browniec` CLI works directly on single `.brc` files with four core commands: `--version`, `check`, `run`, and `inspect`.
 
 ## Public Commands
 
 | Command | Purpose |
 | --- | --- |
-| `browniec --version [--json]` | Print active experimental profile names and capability metadata (`browniec.version/v1`) |
-| `browniec --help` | Print CLI usage summary |
-| `browniec check SOURCE [--json]` | Lexical, syntax, type, Flow, and bytecode verification checks without executing |
-| `browniec run SOURCE [--fuel N] [--json]` | Compile, verify, and run `fn i32 main()` under Fuel budget `N` (default `256`, range `0..16000000`) |
-| `browniec inspect SOURCE --ir [--json]` | Compile/verify and print private non-reloadable IR diagnostics (`inspect_ir: true`) |
+| `browniec --version [--json]` | Print active profiles and default/max Fuel settings |
+| `browniec check file.brc [--json]` | Check syntax, types, and borrows without executing |
+| `browniec run file.brc [--fuel N] [--json]` | Run `fn i32 main()` under Fuel budget `N` (default `256`, max `16000000`) |
+| `browniec inspect file.brc --ir [--json]` | Print generated private IR diagnostics without executing |
 
-## Text vs. `--json` Output
+Text mode writes status lines (`checked`, `return_i32=42`) to stderr and leaves stdout empty. Adding `--json` emits one JSON object (`browniec.result/v1`) to stdout with empty stderr.
 
-- **Text mode**: Keeps stdout empty; `check`, `run`, and errors write to stderr (for example, `checked`, `return_i32=42`, or `browniec: unavailable at byte 0`).
-- **`--json` mode**: Writes one JSON object plus a trailing newline to stdout and leaves stderr empty.
-  - `check` / `run` emit `"schema":"browniec.result/v1"` with `"command"`, `"profile"`, `"status"` (`"checked"`, `"completed"`, or `"error"`), numeric `"return_i32"` on completed runs, and `"error"` (`{"kind": ..., "byte_offset": ...}`) on failures.
+## Exit Codes
 
-## Process Exit Codes
-
-| Code | Meaning |
-| --- | --- |
-| `0` | Normal completion of `check`, `inspect`, or `run` (even when `return_i32` is non-zero) |
-| `2` | CLI command shape, missing argument, or option parsing error |
-| `3` | Lexical, syntax, type, Flow, or compile-limit failure |
-| `4` | Policy, grant, entry, host-binding rejection, or `unavailable` feature flag (for example `--isolated`) |
-| `5` | Guest trap or quota failure (`fuel`, `overflow`, `zero_divisor`, `bounds`, `frame_limit`, `array_limit`, `allocation`) |
-| `6` | Internal compiler or VM invariant verification failure |
-| `7` | Input file read or output-sink IO failure (`input_io`) |
+- **`0`**: Completed cleanly (even when guest `return_i32` is non-zero)
+- **`2`**: Bad CLI flags or `--fuel` out of `0..16000000`
+- **`3`**: Compile/type/borrow failure or `compile_limit` exceeded
+- **`4`**: Unimplemented flag (`--isolated` → `unavailable`)
+- **`5`**: Runtime trap or quota (`fuel`, `overflow`, `zero_divisor`, `bounds`, `frame_limit`)
+- **`6`**: Internal compiler/VM invariant error
+- **`7`**: Source file IO failure (`input_io`)
 
 ## Common Errors and Fixes
 
-| Error `kind` / Symptom | Cause & Fix |
-| --- | --- |
-| `fuel` (exit `5`) on array or loop code | Default `--fuel` is `256`, while array backing setup alone costs `65,537` Fuel. Re-run with `--fuel 1000` (loops), `--fuel 100000` (simple arrays), or `--fuel 1000000` (helper record/slice benchmarks). |
-| `unavailable` (exit `4`) | Passed an unimplemented flag such as `--isolated`. Unsupported options are rejected explicitly rather than ignored. |
-| `compile_limit` (exit `3`) | Exceeded single-file limits (`4096` UTF-8 bytes, `1024` tokens, `16` functions, `128` registers, `256` instructions, `16` array/record/slice sites). |
-| `overflow` / `zero_divisor` / `bounds` (exit `5`) | Arithmetic overflow, division by zero, or out-of-range array/slice index. |
-| `frame_limit` (exit `5`) | Call nesting exceeded the `32`-frame VM stack ceiling. |
+1. **`fuel` error (exit `5`) on loops or arrays**: Remember that array initialization costs `65,537` Fuel before `main()` runs. Pass `--fuel 100000` or `--fuel 1000000`.
+2. **`unavailable` (exit `4`) with `--isolated`**: Expected today—OS worker isolation is not enabled yet (`restricted: false`).
+3. **`compile_limit` (exit `3`) on larger files**: Public CLI input is capped at `4096` UTF-8 bytes, `1024` tokens, `16` functions, and `256` instructions.
+4. **Runtime trap (exit `5`)**: Check `error.kind` and `byte_offset` with `--json` to spot `overflow`, `zero_divisor`, or out-of-range `bounds`.

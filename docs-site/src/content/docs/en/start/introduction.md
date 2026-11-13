@@ -1,37 +1,21 @@
 ---
 title: Introduction
-description: What Brownie C is for, how it differs from Fairy C, and what is publicly usable vs. internal or planned.
+description: Why Brownie C exists, what syntax it shares with Fairy C, and what works in the public CLI today.
 ---
 
-Brownie C is an embedded rule and byte-transformation language and VM runtime being built in **Fairy C**. Its purpose is to check and run small, deterministic programs under strict compile and runtime budgets without ambient access to the filesystem, network, or arbitrary C functions.
+Sometimes an application needs to evaluate a small rule or byte check without letting that code touch files, open sockets, or spin forever in an infinite loop.
 
-## What Brownie C Focuses On
+Brownie C is a **bounded embedded rule and byte-transformation language + VM** built in Fairy C for exactly that kind of contained evaluation.
 
-- **Deterministic verification before execution**: Source syntax, types, array/slice borrows, and bytecode invariants are verified before VM dispatch.
-- **Checked arithmetic and bounded execution**: Integer overflow, division by zero, and out-of-bounds indices fail cleanly with defined error kinds rather than crashing the host process.
-- **Instruction-metered Fuel budgets**: `--fuel` meters VM operations deterministically so loops and array/record operations terminate when the budget runs out.
-- **Data-only guest integer return**: A guest `main()` returns an `i32` result value (`return_i32`), kept distinct from the CLI's own process exit code (`0` on completed execution).
+## What Makes Brownie C Different
 
-## Brownie C vs. Fairy C
+- **Familiar Fairy C-like syntax**: Uses `let`/`var`, `if`/`switch`, `for`/`while`, plain `struct`s, and `Option`/`Result`.
+- **Intentionally restricted**: Raw pointers (`ptr`), arbitrary C FFI, user `resource` types, floats, threads, and GC are excluded.
+- **Checked math and `--fuel` metering**: Integer overflow, divide-by-zero, and out-of-bounds array accesses stop cleanly, while `--fuel` caps total VM operations.
+- **Data return, not OS exit status**: Returning `42` from `fn i32 main()` reports `return_i32=42` while keeping the CLI process exit code at `0`.
 
-| Aspect | Brownie C (`.brc`) | Fairy C (`.fy`) |
-| --- | --- | --- |
-| Role | Embedded rule and byte-transformation language + VM | Native systems programming language |
-| Execution | Verifier + register bytecode VM inside `browniec` | Compiled via C11 to native executables |
-| Implementation language | Written in Fairy C | Stage 0 compiler written in Go |
-| Direct OS / C ABI access | Excluded (`ptr`, FFI, user `resource` disabled) | Supported via `unsafe extern C fn` and stdlib |
-| Budgeting | Explicit instruction `--fuel` cap (default 256, max 16,000,000) | Native OS execution (no VM Fuel meter) |
+## Public CLI vs. What Is Still Internal or Planned
 
-## Public CLI vs. Internal Engine vs. Design Goals
+Today's public `browniec` CLI works on single `.brc` files (up to 4096 UTF-8 bytes) via `check`, `run [--fuel N]`, and `inspect --ir`, supporting scalars, `Option`/`Result` with `?`, fixed arrays, plain structs, byte/text literals, and slices (`ref u8[]`, `ref mut T[]`).
 
-To avoid confusion while reading the repository, separate what works in the public CLI today from internal engine components and future milestones:
-
-1. **Available in the public CLI (`browniec`)**:
-   - Single-file `.brc` checking (`check`), running (`run [--fuel N]`), and IR inspection (`inspect --ir`), with optional `--json` output.
-   - Zero-argument `fn i32 main()` entry up to 4096 bytes of UTF-8 source.
-   - Bounded scalars, `Option`/`Result` predicates and `?` propagation, fixed arrays (`T[N]`), plain nominal `struct`s, UTF-8/byte literals, and scalar/byte slices (`ref u8[]`, `ref mut u8[]`).
-2. **Internal / private repository work (not exposed on the public CLI)**:
-   - Internal `Engine` / `Instance` stepping primitives, guest `Buffer` allocation, private multi-source project compilation, and host-wire codecs exist inside `src/` and native test harnesses only. You cannot drive `Engine` or guest `Buffer` workflows directly from the public `browniec` CLI yet.
-3. **Planned / unavailable today**:
-   - `--isolated` (AppContainer/Job worker isolation), `--project` / policy / grant files, guest `--input` bytes, guest stdout/output sinks, and the C embedding API (only the `bc_get_abi_info_v2` bootstrap symbol is exported in internal native tests; `restricted` and `embed` report `false` in `--version --json`).
-   - Also note: **Fuel is an instruction/operation counter, not a wall-clock timeout and not an OS-level security sandbox.**
+Internal `Engine`/`Instance` APIs, guest `Buffer`, `--isolated` AppContainer/Job workers, `--project`/`--input` flags, and the C embedding ABI (`embed: false`, `restricted: false`) are either internal repo components or planned milestones. Keep in mind that **Fuel counts VM operations—it is not a wall-clock timeout or an OS security sandbox.**

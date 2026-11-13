@@ -1,37 +1,28 @@
 ---
 title: Current Support and Limitations
-description: Observed browniec capabilities, fixed public compile/runtime capacities, OS verification status, and out-of-scope features.
+description: Public capacity caps, Windows vs. Linux status, and features permanently outside Brownie C's scope.
 ---
 
-Brownie C is an active prototype targeting deterministic embedded rules and byte transformations. Check `--version --json` on your binary to see its exact delivery flags.
+Brownie C keeps strict compile and runtime boundaries on purpose so guest evaluation stays small and predictable. Here is what the public CLI supports today.
 
-## Delivery Flags Reported Today
+## What Works Today
 
-Observed on `browniec --version --json`:
+In `browniec --version --json`, `"core": true` reflects the active public experimental subsets (scalars, fixed arrays, plain structs, byte/text literals, and checked slices)—not full language completion.
 
-- `"core": true`: Covers the currently shipped experimental public subsets (`brownie.m1-scalar/1`, `brownie.m2-array-*`, `brownie.m2-struct-*`, `brownie.m2-reference/1`), **not** full `safe/0.3` language completion.
-- `"restricted": false`: AppContainer/Job-based `--isolated` worker execution is **not** available yet.
-- `"embed": false`: The public C embedding library lifecycle is **not** available yet (only the bootstrap metadata symbol `bc_get_abi_info_v2` exists in internal native test harnesses).
-- `"inspect_ir": true`, `"fuel_default": 256`, `"fuel_limit": 16000000`.
+## Public CLI Capacities
 
-## Current Public Capacities
-
-| Resource | Public CLI Ceiling Today |
+| Item | Current Cap |
 | --- | --- |
-| Source input | 1 UTF-8 file, up to `4,096` bytes (`1,024` tokens) |
-| Entry signature | Fixed zero-argument `fn i32 main()` (no guest `--input` CLI flag yet) |
-| Functions & IR | Up to `16` functions, `128` global value registers, `256` instructions |
-| Call stack | `32` frames |
-| Arrays / records | Up to `16` array/record/slice sites, max `4,096` elements per array, `64 KiB` aggregate arena |
+| Source input | 1 UTF-8 `.brc` file up to `4,096` bytes (`1,024` tokens) |
+| Entry point | Zero-argument `fn i32 main()` (no CLI `--input` flag yet) |
+| Functions & IR | `16` functions, `128` global registers, `256` instructions |
+| Call frames | `32` nested frames |
+| Arrays & structs | `16` aggregate sites, up to `4,096` elements per array, `64 KiB` arena |
 | Fuel budget | Default `256`, max `16,000,000` |
 
-## Platform Status
+## Platform & Feature Status
 
-- **Windows 11 x64 (`MSVC` toolchain)**: Primary development and verification platform for `browniec.exe`.
-- **Linux**: `toolchain.json` includes a pinned Linux cross-built `fairyc` compiler entry, but native Linux setup, build, and `browniec` execution remain **unverified**.
-
-## Not Available Publicly Today
-
-- Multi-file `--project`, policy files, capability grants, and external `--input` byte streams on the public CLI.
-- Driving internal `Engine`, `Instance`, `step()`, guest `Buffer`, or staged guest output from the CLI.
-- Permanent exclusions in the first profile: JIT, garbage collection, floating point (`f32`/`f64`), raw pointers (`ptr`), arbitrary C FFI, closures, threads, and external bytecode loading.
+- **Windows 11 x64 (`MSVC`)**: Primary development and execution environment.
+- **Linux**: Pinned cross-build metadata exists in `toolchain.json`, but native Linux builds and execution remain unverified.
+- **Pending**: `--isolated` OS workers (`restricted: false`), C embedding (`embed: false`), `--project`, guest `--input`/output sinks, and CLI exposure for internal `Engine`/`Buffer` work.
+- **Out of scope**: JIT, GC, floating point (`f32`/`f64`), raw pointers (`ptr`), arbitrary C FFI, and threads.

@@ -1,13 +1,13 @@
 ---
 title: 공개 CLI 실행 예제
-description: 현재 공개 browniec CLI로 바로 검증하고 실행할 수 있는 규칙·바이트 처리 예제를 정리합니다.
+description: 현재 공개 browniec CLI로 바로 실행해 보며 문법을 익힐 수 있는 5가지 예제입니다.
 ---
 
-아래 예제는 모두 현재 단일 파일 `browniec` CLI(`./build/browniec.exe`, Windows 기준)에서 직접 실행해 결과를 확인할 수 있습니다.
+문법을 눈으로만 읽는 것보다 짧은 예제를 직접 돌려보는 게 가장 빠릅니다. 아래 예제는 모두 `browniec` 저장소의 `examples/` 폴더에 실제로 들어 있는 파일들입니다.
 
-## 1. 분기, 단락 평가, 재귀 (`examples/branches.brc`)
+## 1. 조건 분기·단락 평가·재귀 (`examples/branches.brc`)
 
-단락 평가(`||`, `&&`)로 0으로 나누기 분기를 피하면서 재귀 함수 `factorial(5)`를 평가하는 규칙 예제입니다.
+`||`와 `&&`의 단락 평가(앞에서 결정되면 뒤쪽은 실행하지 않음) 덕분에 `1 / 0` 분기를 밟지 않고 재귀 함수 `factorial(5)`를 계산하는 예제입니다.
 
 ```c
 module main;
@@ -29,21 +29,15 @@ fn i32 main() {
 }
 ```
 
-기본 Fuel(`256`)로 실행합니다.
-
 ```powershell
 ./build/browniec.exe run examples/branches.brc --json
 ```
 
-실측 출력:
+결과: `"status":"completed"`, `"return_i32":42`.
 
-```json
-{"schema":"browniec.result/v1","profile":"brownie.m1-scalar/1","command":"run","status":"completed","return_i32":42,"error":null}
-```
+## 2. `?` 연산자로 `Option`/`Result` 이어 쓰기 (`examples/propagation.brc`)
 
-## 2. `Option` / `Result` `?` 전파 (`examples/propagation.brc`)
-
-무작정 언래핑하지 않고 `?` 연산자로 실패/없음을 안전하게 전파하는 예제입니다.
+`positive` 함수에서 `value? > 0`으로 `Option<i32>` 값을 꺼내고, `add` 함수에서 `left? + right?`로 두 `Result`를 더합니다. 중간에 하나라도 `.none`이나 `.err`면 바로 빠져나옵니다.
 
 ```c
 module main;
@@ -72,17 +66,15 @@ fn i32 main() {
 }
 ```
 
-실행 명령:
-
 ```powershell
 ./build/browniec.exe run examples/propagation.brc --json
 ```
 
-결과: `"profile":"brownie.m1-scalar/1"`, `"return_i32":42`.
+결과: `"return_i32":42`.
 
-## 3. UTF-8 바이트 배열 검증 (`examples/array-utf8.brc`)
+## 3. UTF-8 바이트 검사 (`examples/array-utf8.brc`)
 
-가변 `u8[3]` 배열에 3바이트 UTF-8 시퀀스를 채운 뒤 `text::valid_utf8`로 유효성을 검사합니다.
+`var u8[3] bytes` 배열을 만들고 앞의 두 바이트를 고친 뒤, 올바른 UTF-8 문자열(`가` = `234, 176, 128`)인지 `text::valid_utf8`로 검사합니다.
 
 ```c
 module main;
@@ -96,25 +88,19 @@ fn i32 main() {
 }
 ```
 
-배열이 있는 프로그램은 시작 전 64 KiB 아레나 준비에만 `65,537` Fuel을 사용하므로 `--fuel 100000`을 지정합니다.
+배열 초기화에 `65,537` Fuel이 들기 때문에 `--fuel 100000`을 함께 넘겨 줍니다.
 
 ```powershell
 ./build/browniec.exe run examples/array-utf8.brc --fuel 100000 --json
 ```
 
-실측 출력:
+결과: `"return_i32":42`.
 
-```json
-{"schema":"browniec.result/v1","profile":"brownie.m2-array-write/1","command":"run","status":"completed","return_i32":42,"error":null}
-```
+## 4. 구조체 재귀와 가변 슬라이스 (`helper-records.brc`, `mutable-slice-reborrow.brc`)
 
-## 4. 레코드(`examples/helper-records.brc`) 및 가변 슬라이스(`examples/mutable-slice-reborrow.brc`)
-
-구조체 생성/선택이나 가변 슬라이스 재빌림은 단순 배열 읽기보다 더 큰 Fuel 예산이 필요합니다(예: `helper-records.brc`는 `--fuel 100000`에서 바이트 오프셋 `212` 지점에서 `fuel` 오류로 멈추며, `--fuel 1000000`에서 정상 완료됩니다).
+구조체를 여러 번 만들어 반환하거나(`examples/helper-records.brc`), 가변 슬라이스를 다시 빌려 수정할 때(`examples/mutable-slice-reborrow.brc`)는 연산량이 조금 더 많습니다. 예를 들어 `helper-records.brc`는 `--fuel 100000`에서는 중간에 Fuel이 다 떨어지지만 `--fuel 1000000`을 주면 무리 없이 `42`를 반환하고 끝납니다.
 
 ```powershell
 ./build/browniec.exe run examples/helper-records.brc --fuel 1000000 --json
 ./build/browniec.exe run examples/mutable-slice-reborrow.brc --fuel 1000000 --json
 ```
-
-두 예제 모두 종료 코드 `0`, `"return_i32":42`를 반환합니다(프로파일은 각각 `brownie.m2-struct-read/1`, `brownie.m2-array-write/1`).

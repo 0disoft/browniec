@@ -1,27 +1,22 @@
 ---
 title: Host Integration, Isolation, and Embedding
-description: Exact boundary between public CLI features, internal Engine/Buffer primitives in the repo, and planned isolation or C embedding work.
+description: Tell apart what the public CLI runs today, what lives in internal Engine code, and what is still planned.
 ---
 
-Brownie C's design separates untrusted rule execution from host resources through explicit policy ceilings, restricted workers, and a C embedding ABI. Because the project is built in increments, it is essential to separate **what the public CLI exposes today**, **what exists internally in repository modules**, and **what remains planned**.
+When reading the Brownie C repository, you will see components like `Engine`, `Instance`, `Buffer`, `--isolated`, and a C embedding ABI. Because features are rolled out incrementally, it helps to separate what you can actually run from the public CLI today from what stays internal or planned.
 
-## Three-Tier Status Matrix
+## Status Breakdown
 
-| Capability Area | Public CLI Today | Internal Repo Code (Private) | Planned / Unavailable |
+| Area | Public CLI Today | Internal Repo Code (Private) | Planned (`unavailable` today) |
 | --- | --- | --- | --- |
-| Compilation & execution | Single `.brc` file (`<= 4096` bytes), `fn i32 main()` | `Engine`, `Program`, `Instance`, step quanta (`1..4096`), anchored project loader | Public multi-file `--project` CLI and policy/grant files |
-| Guest input & output | None (zero-arg `main()`, `return_i32` only) | `1 MiB` `Snapshot` input adoption & `output::emit` staging in tests | Public CLI `--input`, `output_b64`, binary/text sinks |
-| Guest memory & bytes | Fixed arrays, structs, byte literals, scalar/byte slices | Owned guest `Buffer` (`bytes::empty`, `bytes::copy`) & `Result<Buffer, u8>` joins | Public guest `Buffer` admission & text allocation |
-| Host calls & policy | Denied by default; no host calls reachable | TLV codec (`host-wire`), request/reply coordinator, policy JSON parsers | Live VM host-dispatch bridge & capability grant enforcement |
-| OS isolation | **None** (`--isolated` fails with `unavailable`, exit `4`) | Design & boundary docs (`W01..W06`) | Windows AppContainer + Job object worker & broker (`restricted: true`) |
-| C embedding ABI | **None** (`embed: false`) | `bc_get_abi_info_v2` bootstrap + 64-slot handle table tests | Full Engine/Program/Instance C lifecycle exports (`E01..E04`) |
+| Compilation & run | Single `.brc` (`<= 4096` bytes), `fn i32 main()` | `Engine`, `Program`, `Instance`, step quanta, project loader | Public `--project` CLI and policy files |
+| Guest input/output | None (returns `return_i32` only) | `1 MiB` input `Snapshot` & `output::emit` in tests | CLI `--input`, `output_b64`, output sinks |
+| Byte buffers | Fixed arrays, plain structs, byte literals, slices | Guest `Buffer` (`bytes::empty`, `bytes::copy`) | Public `Buffer` compilation |
+| Host calls & policy | Denied by default (no host calls) | Host-wire TLV codec & policy JSON parsers | VM host dispatch & grant enforcement |
+| OS isolation | **Not yet** (`--isolated` exits `4`: `unavailable`) | AppContainer/Job design docs | Windows `--isolated` worker (`restricted: true`) |
+| C embedding ABI | **Not yet** (`embed: false`) | `bc_get_abi_info_v2` metadata & 64-slot handle tests | Full Engine/Program/Instance C exports |
 
-## Why Private Repo Components Are Not Public CLI Features
+## Two Practical Rules
 
-You may see references in engineering notes to `Engine`, `Instance`, `step()`, `Buffer`, `Snapshot`, `output::emit`, or `bc_get_abi_info_v2`. Those components are developed and regression-tested inside internal modules, but they are intentionally **gated off** from the public CLI until full policy binding, memory accounting, work-bounded cleanup, and security-boundary tests are complete.
-
-In particular:
-
-- **No silent unrestricted fallback**: Passing `--isolated` today always rejects with exit code `4` (`unavailable`) rather than silently running code without isolation.
-- **No ambient host authority**: Public `.brc` code cannot touch files, environment variables, clocks, sockets, or C functions.
-- **Fuel is not an OS sandbox**: Do not treat `--fuel` as a substitute for `--isolated` worker containment or OS deadlines.
+1. **Internal `Engine` / `Buffer` APIs are not public CLI features yet.** They remain gated inside internal modules and native test harnesses until policy binding and accounting are complete.
+2. **Unsupported safety flags fail closed.** Passing `--isolated` exits with code `4` (`unavailable`) instead of silently falling back to unisolated execution.

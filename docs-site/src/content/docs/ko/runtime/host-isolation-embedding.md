@@ -1,27 +1,22 @@
 ---
 title: 호스트 연동·격리·임베딩 범위
-description: 공개 CLI에서 가능한 범위, 저장소 내부 Engine/Buffer 구현, 그리고 아직 계획 단계인 격리·임베딩 범위를 정확히 구분합니다.
+description: 공개 CLI로 지금 쓸 수 있는 것, 저장소 내부 Engine 코드에만 있는 것, 앞으로 추가될 격리·임베딩 기능을 구분해 줍니다.
 ---
 
-Brownie C는 정책 상한, 제한된 워커 격리, C 임베딩 ABI를 통해 비신뢰 규칙 실행을 호스트 자원으로부터 분리하도록 설계되었습니다. 다만 기능들이 단계적으로 구현되고 있으므로, **현재 공개 CLI에서 실제 사용할 수 있는 것**, **내부 모듈/테스트에만 존재하는 것**, **아직 계획 단계인 것**을 명확히 구분해야 합니다.
+Brownie C 저장소 문서를 살펴보면 `Engine`, `Instance`, `Buffer`, `--isolated`, C 임베딩 ABI 같은 단어가 자주 보입니다. 이 기능들은 한꺼번에 공개되는 것이 아니라 단계별로 붙고 있어서, **"지금 CLI에서 바로 써볼 수 있는가?"**를 구분해서 이해하는 편이 좋습니다.
 
-## 현재 단계별 범위 비교
+## 한눈에 보는 현재 단계
 
-| 영역 | 현재 공개 CLI | 저장소 내부 구현 (비공개 경로) | 계획·미구현 (`unavailable`) |
+| 영역 | 지금 공개 CLI에서 가능한 것 | 내부 코드/테스트에만 있는 것 | 앞으로 추가될 예정 (`unavailable`) |
 | --- | --- | --- | --- |
-| 컴파일·실행 | 단일 `.brc` (`<= 4096`B), 인자 없는 `fn i32 main()` | `Engine`, `Program`, `Instance`, `1..4096` 스텝 실행, 앵커 프로젝트 로더 | 공개 `--project` CLI, 정책/권한 파일 로더 |
-| 게스트 입출력 | 없음 (`return_i32` 정수 반환만 가능) | 테스트용 `1 MiB` 입력 스냅샷 및 `output::emit` 스테이징 | 공개 `--input`, `output_b64`, 바이너리/텍스트 싱크 |
-| 바이트 버퍼 | 고정 배열, 평범한 `struct`, 바이트/텍스트 리터럴, 슬라이스 | 소유형 `Buffer` (`bytes::empty`, `bytes::copy`) 및 `Result<Buffer, u8>` | 공개 CLI에서의 게스트 `Buffer` 허용 |
-| 호스트 호출·정책 | 기본 거부 (게스트가 호스트 호출 불가) | TLV 코덱(`host-wire`), 요청/응답 조정기, 정책 JSON 파서 | VM 호스트 디스패치 연동 및 런타임 권한 강제 |
-| OS 격리 | **미제공** (`--isolated`는 종료 코드 `4`로 거부) | 설계·경계 문서(`W01..W06`) | Windows AppContainer + Job 워커 및 브로커 (`restricted: true`) |
-| C 임베딩 ABI | **미제공** (`embed: false`) | `bc_get_abi_info_v2` 부트스트랩 및 64슬롯 핸들 테이블 테스트 | 전체 Engine/Program/Instance C 수명주기 API (`E01..E04`) |
+| 실행 방식 | 단일 `.brc` 파일 (`<= 4096`B), `fn i32 main()` | `Engine`, `Program`, `Instance`, 스텝 실행, 다중 파일 로더 | 공개 `--project` CLI 및 정책/권한 파일 |
+| 데이터 입출력 | 인자 없음 (`return_i32` 정수 반환만 가능) | `1 MiB` 입력 스냅샷, `output::emit` 바이트 출력 | CLI `--input`, `output_b64` 출력 싱크 |
+| 바이트 다루기 | 고정 배열, 평범한 `struct`, 바이트 리터럴, 슬라이스 | 동적 소유형 `Buffer` (`bytes::empty`, `bytes::copy`) | 공개 CLI에서의 `Buffer` 문법 개방 |
+| 호스트 호출 | 기본 차단 (파일·네트워크·C 호출 불가) | TLV 코덱, 요청/응답 조정기, 정책 파서 | VM 호스트 호출 브리지 및 권한 강제 |
+| OS 프로세스 격리 | **미제공** (`--isolated`는 `unavailable`로 거부) | Windows AppContainer/Job 설계 | 실제 `--isolated` 격리 워커 (`restricted: true`) |
+| C 임베딩 API | **미제공** (`embed: false`) | `bc_get_abi_info_v2` 정보 조회 + 64슬롯 핸들 테이블 테스트 | 전체 Engine/Program/Instance C 라이브러리 (`embed: true`) |
 
-## 내부 Engine·Buffer 기능을 공개 기능으로 착각하지 않기
+## 꼭 알아둘 두 가지
 
-저장소의 엔지니어링 문서나 테스트에 `Engine`, `Instance`, `step()`, `Buffer`, `Snapshot`, `output::emit`, `bc_get_abi_info_v2` 등이 등장하더라도, 이들은 현재 **공개 `browniec` CLI에 열려 있지 않습니다.** 전체 정책 결합, 메모리 회계, 작업량 제한 정리, OS 경계 테스트가 끝나기 전까지는 의도적으로 분리되어 있습니다.
-
-특히 다음 사항에 유의하세요.
-
-- **비격리 대체 실행 없음**: 현재 `--isolated`를 지정하면 조용히 일반 실행으로 넘어가며 속이지 않고, 즉시 `unavailable` 오류(종료 코드 `4`)로 실패합니다.
-- **호스트 권한 차단**: 공개 `.brc` 프로그램은 파일, 환경 변수, 시계, 네트워크, 임의의 C 함수에 접근할 수 없습니다.
-- **Fuel != 보안 격리**: `--fuel`은 연산량 예산일 뿐, OS 수준의 프로세스 격리(`--isolated`)나 실시간 마감(deadline)을 대신할 수 없습니다.
+1. **내부 `Engine`이나 `Buffer`는 아직 CLI로 부를 수 없습니다.** 설계와 내부 모듈 구현이 진행 중이지만, 정책 검사와 메모리 회계가 다 맞물리기 전까지는 공개 CLI에서 의도적으로 닫아 둔 상태입니다.
+2. **`--isolated`를 주면 몰래 일반 실행으로 넘기지 않고 바로 거부합니다.** 미지원 옵션을 조용히 무시했다가 "격리된 줄 알고 안심하는 사고"가 나지 않도록 종료 코드 `4`(`unavailable`)로 확실하게 막아 줍니다.
