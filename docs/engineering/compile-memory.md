@@ -132,3 +132,10 @@ binder/header cursors and a small scalar result. Existing SDK heap classes,
 Semantic/Bank/Pratt fields, scratch slot caps and working reservations remain
 unchanged. Its evidence retains final owning Engine allocator/compile fixtures;
 the standalone 28-group memory gate was not rerun.
+
+The [typed/value traversal checkpoint](compiler-typed-source-walk.md) adds inline
+private source cursors without SDK heap classes, binding/Bank/Pratt/Semantic
+fields or scratch/working reservation changes. Its changed modules are outside
+the owning Engine closure. All 367 Engine inputs and the complete closure match
+the earlier passed receipt, so that evidence is reused; this is not a new
+allocator or physical peak measurement for the value source compiler.

@@ -1,0 +1,263 @@
+{
+  "schema": "browniec.compiler-typed-source-walk-evidence/v1",
+  "status": "passed",
+  "recordedAt": "2026-11-13T16:14:15.091158+00:00",
+  "verifiedCommit": "8530356bb31ee3af83cc64e506be747b38c5d552",
+  "implementationCommits": [
+    "89dcbd18c56e3399ad0ae358cfa6b367135e5a5f",
+    "8530356bb31ee3af83cc64e506be747b38c5d552"
+  ],
+  "toolchain": {
+    "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+    "sha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+    "version": "Fairy C Stage 0\ncompiler: v0.0.0-20261031093456-eb274643bfcf\nsdk: fairyc-sdk-stdlib/0 0.0.0-stage0.87\nlanguage: fairyc-language/20\nruntime: fairyc-runtime/0\nrevision: eb274643bfcfe746617121ddc6f130b018978b53\nmodified: false"
+  },
+  "msvc": {
+    "version": "14.51.36231",
+    "sdk": "10.0.26100.0",
+    "compilerSha256": "dc8426b8760d92cf757df3d10b9f0244a95b454ff43194a58161568a0ec70d53",
+    "overrides": false
+  },
+  "nativeVerification": [
+    {
+      "slice": "probe",
+      "profile": "development",
+      "receipt": {
+        "path": "build/operand-typed-probe/development/receipt.json",
+        "sha256": "af7f064108f0a85c0e79287a95d2fbe55059926f9a0131612643706c55d3a209"
+      },
+      "verifiedCommit": "89dcbd18c56e3399ad0ae358cfa6b367135e5a5f",
+      "nativeGroups": 3,
+      "inputCount": 367,
+      "allInputsMatchCommit": true,
+      "compilerOverrides": false
+    },
+    {
+      "slice": "probe",
+      "profile": "release",
+      "receipt": {
+        "path": "build/operand-typed-probe/release/receipt.json",
+        "sha256": "d2598dc8ef760f394ae76a4a101559098243590a0d592f617a9dd2c7cc97a26b"
+      },
+      "verifiedCommit": "89dcbd18c56e3399ad0ae358cfa6b367135e5a5f",
+      "nativeGroups": 3,
+      "inputCount": 367,
+      "allInputsMatchCommit": true,
+      "compilerOverrides": false
+    },
+    {
+      "slice": "walk",
+      "profile": "development",
+      "receipt": {
+        "path": "build/operand-typed-walk/development/receipt.json",
+        "sha256": "c09d18c72957a074e8ea60acd7d27fe0056d021395b98084a0215770c4b83c47"
+      },
+      "verifiedCommit": "8530356bb31ee3af83cc64e506be747b38c5d552",
+      "nativeGroups": 11,
+      "inputCount": 372,
+      "allInputsMatchCommit": true,
+      "compilerOverrides": false
+    },
+    {
+      "slice": "walk",
+      "profile": "release",
+      "receipt": {
+        "path": "build/operand-typed-walk/release/receipt.json",
+        "sha256": "46e3e0d63c516e200c73fe0637ceb492f16c084ad163b6cd0670ef2d886df8b5"
+      },
+      "verifiedCommit": "8530356bb31ee3af83cc64e506be747b38c5d552",
+      "nativeGroups": 11,
+      "inputCount": 372,
+      "allInputsMatchCommit": true,
+      "compilerOverrides": false
+    }
+  ],
+  "commands": [
+    "build/toolchain/fairyc.exe check",
+    "python tools/verify-operand-source-work.py --typed-probe-only --profile development",
+    "python tools/verify-operand-source-work.py --typed-probe-only --profile release",
+    "python tools/verify-operand-source-work.py --typed-walk-only --profile development",
+    "python tools/verify-operand-source-work.py --typed-walk-only --profile release"
+  ],
+  "incompleteAttempt": {
+    "receipt": {
+      "path": "build/value-walk-review/initial-walk-development-incomplete.json",
+      "sha256": "dd581718d54c81bfd43dc8b13b55219416f53b59e862244afc36a87e4a6fdf42"
+    },
+    "status": "incomplete",
+    "productionMatchesFinalWalkCommit": true,
+    "reason": "Frontend rejected a comparison fixture whose short-circuit assertion could leave Result unconsumed. Split assertions; production unchanged. Not a native pass."
+  },
+  "developmentCorrections": [
+    "Pinned root check caught a missing Result propagation in the scope adapter; fixed before native execution.",
+    "Separated Result comparison and success assertions in a test fixture before native execution."
+  ],
+  "rawTraversalAudit": {
+    "baselineCommit": "646ec84da154cf77c3801773448d88e4cb7c7861",
+    "receipt": {
+      "path": "build/value-walk-review/raw-helper-audit.json",
+      "sha256": "d2317dbbcd2d179f799a4ff85197eb7ecbc50330f0a19db7463b73b5b959370f"
+    },
+    "status": "passed",
+    "functions": [
+      "buffer_call",
+      "expression",
+      "converted",
+      "constructor",
+      "call",
+      "atom",
+      "view_index",
+      "primary",
+      "declaration",
+      "assignment",
+      "value_condition_paths",
+      "if_value",
+      "block",
+      "selection",
+      "switch_value",
+      "conditional",
+      "selected_arm",
+      "selection_paths",
+      "checked_post",
+      "control_loop",
+      "scope",
+      "lower"
+    ],
+    "rule": "Original helper bodies and raw program/scope loops are byte-identical after removing only the invocation routing parameter/arguments and renaming raw loop functions."
+  },
+  "kernels": {
+    "logicalAllowance": 4096,
+    "sourceLimitBytes": 4096,
+    "probe": "One token decision or bounded lexer child for postfix receiver, tail control/expression, assignment and pure classic-for lookahead. Never publishes real lexer on success/error. Oversized helpers keep raw compatibility.",
+    "program": "Program header, one function result row, first-token child, closing-offset validation and function index updates are distinct stages. Explicit children: result enforcement, function admission, body, implicit return cleanup/emission, function finalization.",
+    "scope": "Depth/lexical mark, one semantic statement child, terminal/tail-yield checks and cleanup child. Pending/denied advances do not mutate/charge; each resume consumes once; completed advances do not replay.",
+    "ownership": "Inline cursors/Outcome only; no new SDK heap class or binding/Bank/Pratt/Semantic field. Raw recursive loops use an invocation routing bit through existing helpers; no retry or public Pending compiler."
+  },
+  "sourceChecks": {
+    "root": {
+      "sourceFiles": 369,
+      "mirFunctions": 3949,
+      "lockUpdated": true
+    },
+    "production": {
+      "count": 361,
+      "allLF": true,
+      "allHashesMatchFinalProfiles": true
+    }
+  },
+  "engineEvidenceReuse": {
+    "rerun": false,
+    "reason": "Current complete source closure and every owning Engine input match the prior passed receipt and final implementation commit; changed private source modules are outside that closure.",
+    "receipt": {
+      "path": "build/runtime-engine/20261113T154320017625Z/receipt.json",
+      "sha256": "fa188a2956e43fcabb6c9feae8921fb9da7c0c65896ccce9b81f198f7ac6d197"
+    },
+    "originalVerifiedCommit": "afaab3ce31464561738ab056aefdcf7190e8a97b",
+    "inputCount": 367,
+    "allInputHashesMatchCurrentAndFinalCommit": true,
+    "closureCount": 352,
+    "closureAndTransportUnchanged": true,
+    "excludedChangedSources": [
+      "src/value_probe_work.fy",
+      "src/value_walk_work.fy",
+      "src/value_source.fy",
+      "src/value_source_context.fy",
+      "src/value_source_headers.fy"
+    ],
+    "compilerOverrides": false,
+    "profiles": [
+      {
+        "profile": "development",
+        "artifact": {
+          "path": "build/runtime-engine/20261113T154320017625Z/development/runtime-engine.exe",
+          "sha256": "c224be1198abdfe4d11326716da0e25cd9f01f2a5a90edfa874f3a75d02b3062",
+          "bytes": 11759616,
+          "stackReserve": 1048576,
+          "stackCommit": 4096
+        },
+        "exit": 0,
+        "liveHeapAllocationsAtExit": 0,
+        "controlMetrics": {
+          "cases": 6,
+          "smallHeapBytes": 7872,
+          "maximumHeapBytes": 62976,
+          "ownerBytes": 736
+        },
+        "arrayFillMetrics": {
+          "arrayWorkBytes": 360,
+          "cursorBytes": 1184,
+          "machineBytes": 1792,
+          "coreBytes": 172400,
+          "pendingVecExtraBytes": 2880,
+          "callWorkBytes": 536,
+          "callPendingVecExtraBytes": 4288,
+          "returnWorkBytes": 48,
+          "returnPendingVecExtraBytes": 384,
+          "combinedPendingVecExtraBytes": 7552
+        }
+      },
+      {
+        "profile": "release",
+        "artifact": {
+          "path": "build/runtime-engine/20261113T154320017625Z/release/runtime-engine.exe",
+          "sha256": "64c0003f8092a37e5595b6062e8730fd743d895c87c3600663b6807debc4dd0f",
+          "bytes": 4256768,
+          "stackReserve": 1048576,
+          "stackCommit": 4096
+        },
+        "exit": 0,
+        "liveHeapAllocationsAtExit": 0,
+        "controlMetrics": {
+          "cases": 6,
+          "smallHeapBytes": 7872,
+          "maximumHeapBytes": 62976,
+          "ownerBytes": 736
+        },
+        "arrayFillMetrics": {
+          "arrayWorkBytes": 360,
+          "cursorBytes": 1184,
+          "machineBytes": 1792,
+          "coreBytes": 172400,
+          "pendingVecExtraBytes": 2880,
+          "callWorkBytes": 536,
+          "callPendingVecExtraBytes": 4288,
+          "returnWorkBytes": 48,
+          "returnPendingVecExtraBytes": 384,
+          "combinedPendingVecExtraBytes": 7552
+        }
+      }
+    ]
+  },
+  "workingReservation": {
+    "loweringBytes": 66630144,
+    "ordinaryWorkingBytes": 66804544,
+    "inputWorkingBytes": 66804928,
+    "additionalHeapClasses": false,
+    "scratch": {
+      "bank": {
+        "type": "fy_struct_140",
+        "bytes": 37792,
+        "slotBound": 40000
+      },
+      "expression": {
+        "type": "fy_struct_142",
+        "bytes": 5736,
+        "slotBound": 6000
+      },
+      "conditional": {
+        "type": "fy_struct_101",
+        "bytes": 14720,
+        "slotBound": 15000
+      }
+    },
+    "conservativeReservationNotPhysicalPeak": true
+  },
+  "limitations": [
+    "Private typed/value source traversal for <=4096 bytes only; owning adapters drain synchronously and oversized direct compiles use original raw traversal",
+    "Semantic statement/expression evaluation and recursive control/ownership/CFG helpers remain explicit synchronous child boundaries, not transitively bounded",
+    "Catalog interning, origin inference, function admission/finalization and cleanup internals, entry/final metadata remain outside named bounds",
+    "Prior Engine evidence is reused for unchanged inputs; no new typed/value allocator/heap/stack/CPU/time improvement measurement or R02-R05 closure",
+    "Standalone memory, broad publicCLI and full release gates were not rerun; broader completion paused",
+    "Local only; no push, release, deploy or version bump"
+  ]
+}

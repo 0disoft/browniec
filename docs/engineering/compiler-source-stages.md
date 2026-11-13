@@ -849,3 +849,15 @@ checks are explicit children; lexical publication still follows initialization.
 The [evidence](../evidence/compiler-declaration-header-windows-20261114.json)
 records raw token/error comparisons, focused snapshots and final owning Engine
 integration. Other routing/walker/catalog/final-metadata exclusions remain.
+
+## Typed/value source traversal (2026-11-14)
+
+The [typed/value walk checkpoint](compiler-typed-source-walk.md) adds token-level
+advisory cursors and program/scope drivers to the separate value dialect.
+Function result mapping, body-token acquisition, source iteration and exit
+checks advance separately; semantic work and cleanup are explicit children.
+The [evidence](../evidence/compiler-typed-source-walk-windows-20261114.json)
+compares raw IR/catalogs/failure candidates and retains depth-32/33 fixtures.
+The unchanged owning Engine inputs reuse their prior passed receipt. Recursive
+semantic helpers and catalog/origin/entry/final/cleanup internals remain outside
+these named traversal bounds.
