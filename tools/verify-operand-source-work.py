@@ -118,5 +118,9 @@ if '--declaration-header-only' in sys.argv:
     bottom.MODULES = {'declaration_name_lowering': None, 'declaration_header_lowering': None,
                       'semantic_lowering': ['annotated_bindings_publish_only_after_initializer_and_terminator'],
                       'body_lowering': ['nested_call_depth_32_and_33_preserve_default_stack_and_raw_diagnostics', 'annotated_semantics_keep_raw_ir_publication_and_diagnostics']}
+if '--typed-probe-only' in sys.argv:
+    sys.argv.remove('--typed-probe-only')
+    bottom.DIRECTORY = 'build/operand-typed-probe'
+    bottom.MODULES = {'value_probe_lowering': None}
 if __name__ == '__main__':
     bottom.main()

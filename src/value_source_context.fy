@@ -5,6 +5,7 @@ import value_source_bindings as bindings;
 import value_source_ops as ops;
 import value_view_bindings as views;
 import lexer as lexer;
+import value_probe_work as probes;
 import locals as locals;
 import ir as ir;
 import errors as errors;
@@ -71,7 +72,7 @@ pub fn u8 precedence(u8 kind){
         else if(kind==134 || kind==135){8}else if(kind==43 || kind==45){9}
         else if(kind==42 || kind==47 || kind==37){10}else{0};
 }
-pub fn Result<bool,errors::Error> postfix_receiver(ref u8[] source,ref lexer::State cursor){
+pub fn Result<bool,errors::Error> postfix_receiver_raw(ref u8[] source,ref lexer::State cursor){
     var lexer::State look=lexer::snapshot(cursor);var usize parens=0;var usize braces=0;var bool started=false;var bool control=false;
     while(look.kind!=0){
         if(parens==0 && braces==0){
@@ -100,7 +101,7 @@ pub fn u8 compound(u8 token){
 
 // Distinguish a final control expression from earlier statement control inside
 // a value arm. Only lexical lookahead is performed; the real parser emits once.
-pub fn Result<bool,errors::Error> tail_control(ref u8[] source,ref lexer::State cursor){
+pub fn Result<bool,errors::Error> tail_control_raw(ref u8[] source,ref lexer::State cursor){
     var lexer::State look=lexer::snapshot(cursor);var usize parens=0;var usize braces=0;
     var bool body=false;
     while(look.kind!=0){
@@ -120,7 +121,7 @@ pub fn Result<bool,errors::Error> tail_control(ref u8[] source,ref lexer::State 
 }
 
 // Earlier void calls are statements and must not inherit the arm's value type.
-pub fn Result<bool,errors::Error> tail_expression(ref u8[] source,ref lexer::State cursor){
+pub fn Result<bool,errors::Error> tail_expression_raw(ref u8[] source,ref lexer::State cursor){
     var lexer::State look=lexer::snapshot(cursor);var usize parens=0;var usize braces=0;
     while(look.kind!=0){
         if(parens==0 && braces==0){
@@ -172,7 +173,7 @@ pub fn Result<Value,errors::Error> predicate(ref u8[] source,ref mut lexer::Stat
     let usize boolean=intern(unit,1,2,0,at)?;return .ok(scalar(boolean,result));
 }
 
-pub fn Result<bool,errors::Error> assignment_ahead(ref u8[] source,ref lexer::State s){
+pub fn Result<bool,errors::Error> assignment_ahead_raw(ref u8[] source,ref lexer::State s){
     if(s.kind!=2 || word(source,s,b"_")){return .ok(false);}var lexer::State look=lexer::snapshot(s);
     let usize next=lexer::next(source,ref mut look)?;
     return .ok(look.kind==61 || (look.kind>=136 && look.kind<=145));
@@ -222,3 +223,19 @@ pub fn Result<Value,errors::Error> joined(ref mut values::Program unit,ref mut b
 }
 
 fn u8 register_type(ref values::Program unit,usize index){let ref ir::Program body=ref unit.body;return body.types[index];}
+
+pub fn Result<bool,errors::Error> postfix_receiver(ref u8[] source,ref lexer::State cursor){
+    if(source.len>4096){return postfix_receiver_raw(source,cursor);}return .ok(probes::prepare(source,cursor,0,0)?==1);
+}
+
+pub fn Result<bool,errors::Error> tail_control(ref u8[] source,ref lexer::State cursor){
+    if(source.len>4096){return tail_control_raw(source,cursor);}return .ok(probes::prepare(source,cursor,1,0)?==1);
+}
+
+pub fn Result<bool,errors::Error> tail_expression(ref u8[] source,ref lexer::State cursor){
+    if(source.len>4096){return tail_expression_raw(source,cursor);}return .ok(probes::prepare(source,cursor,2,0)?==1);
+}
+
+pub fn Result<bool,errors::Error> assignment_ahead(ref u8[] source,ref lexer::State cursor){
+    if(source.len>4096){return assignment_ahead_raw(source,cursor);}return .ok(probes::prepare(source,cursor,3,0)?==1);
+}
