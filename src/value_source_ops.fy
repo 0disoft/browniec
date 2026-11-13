@@ -2,6 +2,7 @@ module value_source_ops;
 import value_ir as values;
 import value_source_bindings as bindings;
 import value_properties as properties;
+import value_source_properties as source_properties;
 import errors as errors;
 
 pub struct Case { usize instruction; usize payload; }
@@ -13,7 +14,7 @@ fn u8 byte(usize value){var u8 result=0;var usize i=0;while(i<value){result+=1;i
 // Function ends are finalized by the caller after lowering the complete body.
 pub fn Result<properties::Plan,errors::Error> preflight(ref values::Program unit,ref bindings::State state,usize at){
     let usize checked=bindings::authenticate(unit,state,at)?;
-    let properties::Plan plan=switch(properties::inspect(ref unit.catalog)){
+    let properties::Plan plan=switch(source_properties::inspect(ref unit.catalog)){
         case .ok(v):{v}case .err(_):{return .err(invalid(at));}
     };
     if(unit.body.count>=256 || unit.body.registers>128){return .err(errors::make(4,at));}

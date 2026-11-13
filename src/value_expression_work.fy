@@ -14,7 +14,7 @@ import metadata_budget as budget;
 // Recursive operands, ownership and CFG services are explicit children.
 pub struct Scratch { tokens::State token; annotations::State annotation; }
 pub fn Scratch scratch(){return Scratch{.token=tokens::begin(lexer::empty()),.annotation=annotations::begin(lexer::empty())};}
-pub struct State { context::Value left; context::Value child; 
+pub struct State { context::Value left; context::Value child;
     boolean::Pending pending; propagation::Expanded expanded; usize exact; usize depth; usize at; usize a; usize number;
     usize expected; usize child_depth; u8 child_mode; u8 child_minimum; u8 minimum; u8 mode; u8 phase; u8 resume;
     u8 request; u8 operation; u8 priority; u8 tag; bool lexing; bool typing; bool done; }

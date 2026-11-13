@@ -1,6 +1,7 @@
 module value_source_context;
 import value_ir as values;
 import value_properties as properties;
+import value_source_properties as source_properties;
 import value_source_bindings as bindings;
 import value_source_ops as ops;
 import value_view_bindings as views;
@@ -29,7 +30,7 @@ pub fn Result<usize,errors::Error> intern(ref mut values::Program unit,u8 kind,u
     if(unit.catalog.count>=64){return .err(errors::make(4,at));}
     let usize id=unit.catalog.count;unit.catalog.nodes[id]=properties::Node{.kind=kind,.first=first,.second=second,.extent=0};
     unit.catalog.count+=1;
-    if(!properties::inspect(ref unit.catalog).is_ok){return .err(wrong(at));}return .ok(id);
+    if(!source_properties::inspect(ref unit.catalog).is_ok){return .err(wrong(at));}return .ok(id);
 }
 pub fn Result<Value,errors::Error> expected(Value value,usize exact,usize at){
     if(value.bottom){return .ok(value);}

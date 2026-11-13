@@ -1,6 +1,7 @@
 module value_source_calls;
 import value_ir as values;
 import value_properties as properties;
+import value_source_properties as source_properties;
 import value_source_bindings as bindings;
 import value_source_functions as functions;
 import value_source_context as context;
@@ -103,7 +104,7 @@ pub fn Result<context::Value,errors::Error> finish(ref mut values::Program unit,
     var budget::State meter=budget::empty();while(!w.done){let usize reset=budget::reset(ref mut meter,at)?;
         let bool done=advance_finish(unit,plan,ref proof,arguments,captures,ref mut w,ref mut meter)?;let u8 request=w.request;
         if(request!=0){if(request==1){let Reserved prepared=reserve_result(unit,state,table,plan,target,arguments,captures,count,has_values,at)?;w.returned=prepared.returned;w.extended=prepared.extended;}
-            else if(request==2){proof=switch(properties::inspect(ref unit.catalog)){case .ok(p):{p}case .err(_):{return .err(wrong(at));}};}
+            else if(request==2){proof=switch(source_properties::inspect(ref unit.catalog)){case .ok(p):{p}case .err(_):{return .err(wrong(at));}};}
             else if(request==3){let usize closed=bindings::close_view(unit,state,captures[w.row]-17,at)?;}
             else if(request==4){let usize handled=bindings::handle(unit,state,captures[w.row],at)?;}
             else if(request==5){let usize id=captures[w.row];if(proof.properties[values::type_id(unit,id)].copyable){let usize dropped=bindings::drop(unit,state,id,at)?;}

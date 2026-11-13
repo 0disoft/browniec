@@ -151,5 +151,13 @@ if '--typed-depth-only' in sys.argv:
     sys.argv.remove('--typed-depth-only')
     bottom.DIRECTORY = 'build/operand-typed-depth'
     bottom.MODULES = {'value_depth_probe': None}
+if '--typed-properties-only' in sys.argv:
+    sys.argv.remove('--typed-properties-only')
+    bottom.DIRECTORY = 'build/operand-typed-properties'
+    bottom.MODULES = {'value_source_properties': None, 'value_properties_work': None,
+                      'value_walk_lowering': ['typed_source_walks_preserve_raw_ir_catalogs_calls_scopes_and_owned_control', 'typed_source_walk_failures_keep_raw_partial_candidates_and_diagnostics', 'typed_calls_keep_depth_32_and_33_on_default_stack_and_match_raw_prefixes'],
+                      'value_view_call_source': ['returned_selected_ranges_forward_multiple_inputs_and_survive_caller_capture_cleanup'],
+                      'value_source_bindings': ['whole_types_select_copy_or_move_including_inactive_buffer_and_verify_actual_ir'],
+                      'value_bottom_source': ['short_circuit_bottom_keeps_skip_edge_and_never_replays_effects']}
 if __name__ == '__main__':
     bottom.main()

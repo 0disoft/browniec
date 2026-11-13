@@ -1,6 +1,7 @@
 module value_source_bindings;
 import value_ir as values;
 import value_properties as properties;
+import value_source_properties as source_properties;
 import locals as locals;
 import lexer as lexer;
 import errors as errors;
@@ -86,7 +87,7 @@ fn Result<usize,errors::Error> slot(ref values::Program unit,ref State state,usi
     return .ok(id);
 }
 fn Result<bool,errors::Error> copyable(ref values::Program unit,usize id,usize at){
-    let properties::Plan plan=switch(properties::inspect(ref unit.catalog)){
+    let properties::Plan plan=switch(source_properties::inspect(ref unit.catalog)){
         case .ok(v):{v}case .err(_):{return .err(invalid(at));}
     };return .ok(plan.properties[values::type_id(unit,id)].copyable);
 }
@@ -155,7 +156,7 @@ fn void append(ref mut values::Program unit,u8 op,usize dst,usize source,usize a
 pub fn Result<usize,errors::Error> allocate(ref mut values::Program unit,ref mut State state,usize exact_type,usize at){
     let usize checked=header(unit,state,at)?;
     if(state.next==16){return .err(errors::make(4,at));}
-    let properties::Plan plan=switch(properties::inspect(ref unit.catalog)){
+    let properties::Plan plan=switch(source_properties::inspect(ref unit.catalog)){
         case .ok(v):{v}case .err(_):{return .err(invalid(at));}
     };
     if(exact_type>=plan.count){return .err(invalid(at));}
@@ -265,7 +266,7 @@ pub fn Result<usize,errors::Error> move_value(ref mut values::Program unit,ref m
     if(((state.reads|state.writes)&(bit(source)|bit(destination)))!=0 ||
         (state.live&bit(source))==0 || ((state.live|state.maybe)&bit(destination))!=0 ||
         unit.types[source]!=unit.types[destination]){return .err(invalid(at));}
-    let properties::Plan plan=switch(properties::inspect(ref unit.catalog)){
+    let properties::Plan plan=switch(source_properties::inspect(ref unit.catalog)){
         case .ok(v):{v}case .err(_):{return .err(invalid(at));}
     };
     if(unit.body.count>=256){return .err(errors::make(4,at));}
@@ -284,7 +285,7 @@ pub fn Result<usize,errors::Error> assign(ref mut values::Program unit,ref mut S
     if(((state.reads|state.writes)&(bit(source)|bit(destination)))!=0 ||
         !state.names.mutable[index] || (state.live&bit(source))==0 || (state.maybe&bit(destination))!=0 ||
         unit.types[source]!=unit.types[destination]){return .err(invalid(at));}
-    let properties::Plan plan=switch(properties::inspect(ref unit.catalog)){
+    let properties::Plan plan=switch(source_properties::inspect(ref unit.catalog)){
         case .ok(v):{v}case .err(_):{return .err(invalid(at));}
     };
     var usize seen=0;var usize i=0;while(i<state.names.count){
