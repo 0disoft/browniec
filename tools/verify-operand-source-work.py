@@ -159,5 +159,11 @@ if '--typed-properties-only' in sys.argv:
                       'value_view_call_source': ['returned_selected_ranges_forward_multiple_inputs_and_survive_caller_capture_cleanup'],
                       'value_source_bindings': ['whole_types_select_copy_or_move_including_inactive_buffer_and_verify_actual_ir'],
                       'value_bottom_source': ['short_circuit_bottom_keeps_skip_edge_and_never_replays_effects']}
+if '--typed-buffer-only' in sys.argv:
+    sys.argv.remove('--typed-buffer-only')
+    bottom.DIRECTORY = 'build/operand-typed-buffer'
+    bottom.MODULES = {'value_buffer_view_lowering': None, 'value_buffer_source': ['six_buffer_operations_execute_with_exact_bytes_lengths_and_private_results', 'buffer_borrows_compose_with_forward_calls_control_flow_and_result_obligations', 'invalid_buffer_receivers_types_moves_shadowing_and_overlapping_loans_reject'],
+                      'value_walk_lowering': ['typed_calls_keep_depth_32_and_33_on_default_stack_and_match_raw_prefixes'],
+                      'value_source_control': ['admitted_32_deep_conditionals_execute_and_33_reject_without_native_stack_override']}
 if __name__ == '__main__':
     bottom.main()

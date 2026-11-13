@@ -29,6 +29,7 @@ import std::vec as vec;
 import value_walk_work as walk;
 import value_expression_work as evaluation;
 import value_call_source_work as call_work;
+import value_buffer_call_work as buffer_work;
 import operand_preflight_work as preflight;
 import argument_name_work as name_work;
 import metadata_budget as budget;
@@ -50,12 +51,12 @@ fn u8 register_type(ref values::Program unit,usize index){let ref ir::Program bo
 fn usize name_count(ref bindings::State state){let ref locals::Table names=ref state.names;return names.count;}
 fn usize function_id(ref bindings::State state){let ref locals::Table names=ref state.names;return names.function;}
 
-fn Result<context::Value,errors::Error> buffer_call(ref u8[] source,ref mut lexer::State s,
+fn Result<context::Value,errors::Error> buffer_call_raw(ref u8[] source,ref mut lexer::State s,
     ref mut values::Program unit,ref mut bindings::State state,ref signatures::Table table,
     ref functions::Plan plan,ref mut vec::Vec<bindings::Snapshot> paths,ref mut looping::State flow,
     usize exact,usize depth,bool staged){
     let usize at=s.begin;let u8 op=buffers::operation(source,s,state)?;
-    if(op==95){let usize close=lexer::punctuation(source,s,41)?;return buffers::empty(unit,state,exact,at);}
+    if(op==95){let usize close=lexer::punctuation(source,s,41)?;return buffers::empty_raw(unit,state,exact,at);}
     let usize type=context::intern(unit,4,0,0,at)?;let bool writing=op>=101 && op<=104;
     let usize prefix=buffers::prefix(source,s,writing)?;
     let usize input_type=if(op==105){64}else{type};
@@ -97,7 +98,7 @@ fn Result<context::Value,errors::Error> buffer_call(ref u8[] source,ref mut lexe
     let usize close=lexer::punctuation(source,s,41)?;
     if(op==105){return buffer_copy::finish(unit,state,paths,flow,first,exact,at);}
     if(op==106){return view_source::begin(unit,state,first,exact,at);}
-    return buffers::finish(unit,state,op,first,second,index,value,exact,at);
+    return buffers::finish_raw(unit,state,op,first,second,index,value,exact,at);
 }
 
 fn Result<context::Value,errors::Error> expression_raw(ref u8[] source,ref mut lexer::State s,ref mut values::Program unit,
@@ -962,4 +963,34 @@ fn Result<context::Value,errors::Error> raw_postfix_suffix(ref u8[] source,ref m
         }
     }
     return .ok(value);
+}
+
+fn Result<context::Value,errors::Error> buffer_call(ref u8[] source,ref mut lexer::State s,
+    ref mut values::Program unit,ref mut bindings::State state,ref signatures::Table table,
+    ref functions::Plan plan,ref mut vec::Vec<bindings::Snapshot> paths,ref mut looping::State flow,
+    usize exact,usize depth,bool staged){
+    if(!staged || source.len>4096){return buffer_call_raw(source,s,unit,state,table,plan,paths,flow,exact,depth,false);}
+    return buffer_call_staged(source,s,unit,state,table,plan,paths,flow,exact,depth);
+}
+fn Result<context::Value,errors::Error> buffer_call_staged(ref u8[] source,ref mut lexer::State s,
+    ref mut values::Program unit,ref mut bindings::State state,ref signatures::Table table,
+    ref functions::Plan plan,ref mut vec::Vec<bindings::Snapshot> paths,ref mut looping::State flow,usize exact,usize depth){
+    var buffer_work::State w=buffer_work::begin(exact,depth,s.begin);var budget::State meter=budget::empty();
+    while(!w.done){let usize reset=budget::reset(ref mut meter,s.begin)?;let bool done=buffer_work::advance(source,s,ref mut w,ref mut meter)?;
+        let u8 request=w.request;if(request!=0){var context::Value child=w.child;var usize number=0;
+            if(request==1){child=expression(source,s,unit,state,table,plan,paths,flow,w.expected,1,depth+1,true)?;}
+            else if(request==2){number=context::intern(unit,w.kind,w.tag,0,w.at)?;}
+            else if(request==3){w.first=buffers::begin(unit,state,child,w.writing,w.at)?;}
+            else if(request==4){w.second=buffers::begin(unit,state,child,false,w.at)?;}
+            else if(request==5){number=context::as_scalar(unit,state,child,w.at)?;}
+            else if(request==7){number=name_work::local(source,ref state.names,s.begin,s.end)?;}
+            else if(request==8){number=view_source::capture(unit,state,child,w.at)?;}
+            else if(request==9){child=buffer_copy::finish_view(unit,state,paths,flow,w.number,exact,w.at)?;}
+            else if(request==11){child=buffers::empty(unit,state,exact,w.at)?;}
+            else if(w.op==105){child=buffer_copy::finish(unit,state,paths,flow,w.first,exact,w.at)?;}
+            else if(w.op==106){child=view_source::begin(unit,state,w.first,exact,w.at)?;}
+            else{child=buffers::finish(unit,state,w.op,w.first,w.second,w.index,w.value,exact,w.at)?;}
+            let usize resumed=buffer_work::resume(ref mut w,request,child,number)?;
+        }
+    }return buffer_work::prepared(ref w);
 }
