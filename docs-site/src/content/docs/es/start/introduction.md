@@ -14,6 +14,15 @@ Brownie C es un **lenguaje embebido de reglas y transformación de bytes + VM ac
 - **Aritmética verificada y medición con `--fuel`**: El desbordamiento de enteros, la división por cero y los accesos fuera de rango en arrays se detienen limpiamente, mientras que `--fuel` limita el total de operaciones de la VM.
 - **Retorno de datos, no código de salida del sistema operativo**: Devolver `77` desde `fn i32 main()` informa `return_i32=77` manteniendo el código de salida del proceso CLI en `0`.
 
+## ¿En qué se diferencia de Lua o Python?
+
+Aunque Lua y Python también se utilizan para ejecutar scripts embebidos dentro de un programa anfitrión, Brownie C apuesta por un enfoque muy distinto:
+
+- **Comprobación estática antes de ejecutar**: Lua y Python validan tipos dinámicamente en tiempo de ejecución, mientras que Brownie C rechaza mezclas implícitas de enteros, casos faltantes en `switch` y conflictos de préstamos `ref`/`ref mut` antes de arrancar la VM.
+- **Sin GC, sin flotantes ni E/S ambiental**: Los lenguajes de scripting generales incluyen recolector de basura, aritmética de punto flotante y módulos del sistema operativo; Brownie C los omite para que las reglas sobre enteros y bytes sean deterministas.
+- **Medición de Fuel integrada**: En lugar de montar hooks o temporizadores externos para cortar bucles infinitos, la VM de Brownie C descuenta `--fuel` en cada operación y se detiene limpiamente al agotarse el presupuesto (recordando que Fuel es un contador de operaciones, no un timeout de reloj ni un sandbox del SO).
+- **Alcance y madurez**: Lua y Python cuentan con ecosistemas maduros y amplias bibliotecas, mientras que Brownie C es hoy una implementación temprana centrada en archivos `.brc` individuales (de hasta 4096 bytes), con la ABI de incrustación en C y el aislamiento de SO aún planificados.
+
 ## CLI pública frente a lo que sigue siendo interno o planificado
 
 La CLI pública actual de `browniec` trabaja sobre archivos `.brc` individuales (de hasta 4096 bytes en UTF-8) mediante `check`, `run [--fuel N]` e `inspect --ir`, con soporte para escalares, `Option`/`Result` con `?`, arrays de tamaño fijo, structs simples, literales de bytes y texto, y slices (`ref u8[]`, `ref mut T[]`).
