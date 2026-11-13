@@ -877,3 +877,15 @@ attempts separately. Unchanged owning Engine inputs reuse prior evidence.
 Specialized Buffer/view, propagation, recursive CFG, catalog/origin/function and
 other cleanup internals remain beyond these named kernels. Owners drain
 synchronously; no public Pending compiler or measured physical peak is claimed.
+
+## Typed/value Buffer and view internals (2026-11-14)
+
+The [typed Buffer/view checkpoint](compiler-typed-buffer-view.md) stages namespace
+and operand work, loans, Buffer results, view ranges/endpoints/effects and copy
+construction/cleanup. Ownership and CFG services remain explicit children.
+The [evidence](../evidence/compiler-typed-buffer-view-windows-20261114.json)
+connects 8/9/8 development/O2 groups to exact commits, including complete raw
+candidates, default-stack actual special CALL32/33, retained views and copy
+Result handling. Owners drain synchronously; common fixed metadata primitives,
+propagation, recursive CFG/join/snapshot release and later metadata retain their
+stated boundaries. The unchanged Engine inputs reuse prior passed evidence.

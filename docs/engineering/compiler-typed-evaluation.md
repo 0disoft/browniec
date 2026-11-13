@@ -112,3 +112,8 @@ General source helpers over 4096 bytes retain their raw parser routes. The
 standalone memory, broad public-CLI and full release gates were not rerun.
 Broader completion stays paused. Local only: no push, release, deployment or
 version change.
+
+The subsequent [typed Buffer/view checkpoint](compiler-typed-buffer-view.md)
+stages the specialized operand, view effect and copy boundaries named above.
+Propagation, recursive control/CFG services and remaining metadata/cleanup
+internals retain their separate boundaries.

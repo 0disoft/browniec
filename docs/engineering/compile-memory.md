@@ -150,3 +150,13 @@ fixtures pass after four recorded incomplete attempts; this is not a measured
 physical peak or performance result. The unchanged complete owning Engine closure
 and all 367 inputs reuse prior evidence, not a new typed/value allocator measure.
 The standalone memory gate was not rerun.
+
+The [typed Buffer/view checkpoint](compiler-typed-buffer-view.md) uses inline
+operand/effect/copy States and existing snapshot storage. Staged special operands
+share inactive lexer/type scratch; raw scalar routing and namespace dispatch
+avoid retaining unrelated frames. Actual special CALL32/33 passes on default
+stacks; pre-correction assembly does not measure a final physical peak. Ledger,
+Bank/Pratt/Semantic fields, SDK heap classes, scratch caps and working reservations
+are unchanged. Complete Engine closure and all 367 input hashes match prior
+passed evidence; this is not a new typed allocator measurement. Standalone memory
+was not rerun.

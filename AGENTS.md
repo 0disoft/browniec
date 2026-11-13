@@ -1,44 +1,42 @@
-- Latest typed/value evaluation and ownership checkpoint (2026-11-14):
-  [typed/value evaluation](docs/engineering/compiler-typed-evaluation.md).
-  View/value authentication advances descriptor/name/dependency, value slot,
-  view/owner pair and lexical rows separately. Read-only cursors preserve error
-  precedence; a value-slot check can also scan at most 64 owner names.
-  Capture separates allocation/COPY-MOVE, capture/read/DROP, roots/aliases and
-  explicit handling/discard. Expression continuations cover precedence, casts,
-  postfix/group/unary/ref operands, signed minima and bottom/short-circuit work.
-  Arguments and constructors stage evaluation/capture/delimiters; CALL maps one
-  actual per stage, emits once, proves properties, then releases captures and
-  initializes the returned slot. Private property inspection composes existing
-  record/layout/catalog cursors; common/runtime inspection is unchanged.
-  Owners still drain synchronously with the existing 4096 logical allowance.
-  No SDK heap class or binding/Bank/Pratt/Semantic field is added.
-  Raw/staged actual CALL depth 32 passes on default stacks; 33 retains its depth
-  diagnostic. Four earlier overflow attempts are incomplete, never passes.
-  Raw routing/post-child services avoid large recursive frames. Staged intrinsic
-  modes use three inline suspended control States and shared token/type scratch;
-  actual recursive operands retain separate control and depth checks.
-  Implementation: `692b701` authentication, `4f72411` evaluation/capture,
-  `519f5ff` CALL/constructor/default-stack correction, `f59db4e` property adapter.
-  Each slice passes 5/12/16/8 groups respectively in development/O2, with every
-  receipt input matching its named commit. Full raw/staged IR/catalog/failure
-  comparisons, ownership/returned origins, accepted VM42 and control 32/33 remain.
-  No compiler/optimization/stack/timeout overrides. Root: 372 sources / 4018 MIR;
-  all 364 production modules are LF and match the final focused inputs.
-  Owning Engine was not rerun: its complete 352-source closure, transport and all
-  367 input hashes match the final implementation commit and prior passed
-  `afaab3c` development/O2 evidence. Default 1MiB/4KiB stacks and zero SDK exit
-  heap are retained; this is not a new typed/value allocator or physical peak
-  measurement. Ordinary lowering/ordinary working/input working reservations
-  remain 66,630,144/66,804,544/66,804,928; scratch widths/slot caps remain
-  37792/40000, 5736/6000, 14720/15000. No public Pending compiler or measured
-  CPU/time/heap/stack improvement or R02-R05 closure.
-  See [typed evaluation evidence](docs/evidence/compiler-typed-evaluation-windows-20261114.json).
-  Named parser bounds cover private sources <=4096 bytes. Specialized Buffer/view,
-  propagation, recursive CFG services, catalog interning/origin inference,
-  function admission/finalization and entry/final/other cleanup internals remain
-  explicit synchronous children or outside the named kernels. Broader completion
-  stays paused. Standalone memory, broad public-CLI and full-release gates were
-  not rerun. Local only; no push/release/deployment/version change.
+- Latest typed/value Buffer/view checkpoint (2026-11-14):
+  [typed Buffer/view operations](docs/engineering/compiler-typed-buffer-view.md).
+  Namespace/name/prefix/delimiter work, recursive Buffer operands, first/second
+  loans, scalar capture and result preparation advance separately. Finalization
+  separates result types, emission and temporary drops with explicit services.
+  Views capture receivers before endpoints. Advisory range walks never publish
+  the real lexer. Whole view/length/index/range effects request authentication,
+  emission, close and type services. Lexical roots scan one owner/name row.
+  Copy uses 37 phases for result/destination/empty root, one APPEND104 or
+  APPEND_VIEW112, anonymous view close, success/error CFG and reverse cleanup.
+  Denied/waiting/completed advances do not replay; duplicate services reject.
+  All owners still drain synchronously with logical allowance 4096. Existing
+  fixed metadata helpers retain 16/24/64-row bounds inside explicit children.
+  No new SDK heap class or ledger/Bank/Pratt/Semantic field is added.
+  Actual special and ordinary CALL32/33 retain default stacks. The new special
+  fixture exposed raw overflow; scalar raw routing avoids the common large
+  Buffer frame, namespace dispatch avoids the primary leaf, staged operands
+  share inactive token/type scratch and isolate nonrecursive services. Final
+  combined candidates match raw IR/catalogs/errors, accept32/reject33 and run42.
+  Pre-correction assembly is diagnostic only, not a physical peak measurement.
+  Implementation: `e54aab5` Buffer, `5e66969` views/default-stack correction,
+  `79b0b42` copy/cleanup. Each slice passes 8/9/8 native groups respectively in
+  development/O2 with all input hashes matching its named commit. Fixture and
+  overflow failures remain incomplete. No compiler/optimization/stack/timeout
+  overrides. Root: 374 sources / 4069 MIR;
+  all 366 production sources are LF and match final focused inputs.
+  Owning Engine was not rerun: its complete 352-source closure, transport and
+  all 367 inputs match the final implementation commit and prior `afaab3c`
+  passed development/O2 evidence. Default 1MiB/4KiB stacks and zero SDK exit heap
+  are reused, not a new typed allocator measurement. Lowering/ordinary/input
+  working reservations remain 66,630,144/66,804,544/66,804,928; scratch widths/caps
+  remain 37792/40000, 5736/6000, 14720/15000. No public Pending compiler,
+  measured CPU/time/heap/stack gain or R02-R05 closure.
+  See [evidence](docs/evidence/compiler-typed-buffer-view-windows-20261114.json).
+  Named parser bounds cover private sources <=4096 bytes. Propagation, recursive
+  CFG/join/snapshot release, interning/origin/function/entry/final and other
+  cleanup internals remain explicit synchronous children or outside these bounds.
+  Broader completion stays paused. Standalone memory, broad public-CLI and full
+  release gates were not rerun. Local only; no push/release/deploy/version bump.
 
 # Brownie C agent guidance
 

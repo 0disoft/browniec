@@ -1,0 +1,314 @@
+{
+  "schema": "browniec.compiler-typed-buffer-view-evidence/v1",
+  "status": "passed",
+  "recordedAt": "2026-11-13T19:00:51.813301+00:00",
+  "verifiedCommit": "79b0b42e1f91f14d7ac4c5c3e676c228ea5d2f43",
+  "implementationCommits": [
+    "e54aab51a1792fc0597c79b8d24642589c2f5cea",
+    "5e669697a35316258cab3e771c6c321d6e64ad9b",
+    "79b0b42e1f91f14d7ac4c5c3e676c228ea5d2f43"
+  ],
+  "toolchain": {
+    "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+    "sha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+    "version": "Fairy C Stage 0\ncompiler: v0.0.0-20261031093456-eb274643bfcf\nsdk: fairyc-sdk-stdlib/0 0.0.0-stage0.87\nlanguage: fairyc-language/20\nruntime: fairyc-runtime/0\nrevision: eb274643bfcfe746617121ddc6f130b018978b53\nmodified: false"
+  },
+  "msvc": {
+    "version": "14.51.36231",
+    "sdk": "10.0.26100.0",
+    "compilerSha256": "dc8426b8760d92cf757df3d10b9f0244a95b454ff43194a58161568a0ec70d53",
+    "overrides": false
+  },
+  "nativeVerification": [
+    {
+      "slice": "buffer",
+      "profile": "development",
+      "receipt": {
+        "path": "build/operand-typed-buffer/development/receipt.json",
+        "sha256": "812931e57fe8a68b57e511682283ecd14049a6ba553be4cf78bf8c55e6283d52"
+      },
+      "verifiedCommit": "e54aab51a1792fc0597c79b8d24642589c2f5cea",
+      "nativeGroups": 8,
+      "inputCount": 375,
+      "allInputsMatchCommit": true,
+      "compilerOverrides": false
+    },
+    {
+      "slice": "buffer",
+      "profile": "release",
+      "receipt": {
+        "path": "build/operand-typed-buffer/release/receipt.json",
+        "sha256": "0c0adc8083b47b15f76e69073780fff243a57f751d4f97010b001cdf94204503"
+      },
+      "verifiedCommit": "e54aab51a1792fc0597c79b8d24642589c2f5cea",
+      "nativeGroups": 8,
+      "inputCount": 375,
+      "allInputsMatchCommit": true,
+      "compilerOverrides": false
+    },
+    {
+      "slice": "view",
+      "profile": "development",
+      "receipt": {
+        "path": "build/operand-typed-view/development/receipt.json",
+        "sha256": "e297406d5d173b9c260cde7be7f5d69804ccc1ad8e8a25196dc53e0bbb6d5f53"
+      },
+      "verifiedCommit": "5e669697a35316258cab3e771c6c321d6e64ad9b",
+      "nativeGroups": 9,
+      "inputCount": 377,
+      "allInputsMatchCommit": true,
+      "compilerOverrides": false
+    },
+    {
+      "slice": "view",
+      "profile": "release",
+      "receipt": {
+        "path": "build/operand-typed-view/release/receipt.json",
+        "sha256": "73a4b584a7ce72103cbf614da6936609162ae88aaff8b1820b0fb113975a4aa4"
+      },
+      "verifiedCommit": "5e669697a35316258cab3e771c6c321d6e64ad9b",
+      "nativeGroups": 9,
+      "inputCount": 377,
+      "allInputsMatchCommit": true,
+      "compilerOverrides": false
+    },
+    {
+      "slice": "copy",
+      "profile": "development",
+      "receipt": {
+        "path": "build/operand-typed-buffer-copy/development/receipt.json",
+        "sha256": "0d6110e167ecfd3da4f120b50a1d79ee0cdee4c7a9951eaa729ee1f3f642b921"
+      },
+      "verifiedCommit": "79b0b42e1f91f14d7ac4c5c3e676c228ea5d2f43",
+      "nativeGroups": 8,
+      "inputCount": 375,
+      "allInputsMatchCommit": true,
+      "compilerOverrides": false
+    },
+    {
+      "slice": "copy",
+      "profile": "release",
+      "receipt": {
+        "path": "build/operand-typed-buffer-copy/release/receipt.json",
+        "sha256": "08f048d4bce5f4b3198510905c997221e2ebb1b99cbda87758999a6b57b64dac"
+      },
+      "verifiedCommit": "79b0b42e1f91f14d7ac4c5c3e676c228ea5d2f43",
+      "nativeGroups": 8,
+      "inputCount": 375,
+      "allInputsMatchCommit": true,
+      "compilerOverrides": false
+    }
+  ],
+  "commands": [
+    "build/toolchain/fairyc.exe check",
+    "python tools/verify-operand-source-work.py --typed-buffer-only --profile development",
+    "python tools/verify-operand-source-work.py --typed-buffer-only --profile release",
+    "python tools/verify-operand-source-work.py --typed-view-only --profile development",
+    "python tools/verify-operand-source-work.py --typed-view-only --profile release",
+    "python tools/verify-operand-source-work.py --typed-buffer-copy-only --profile development",
+    "python tools/verify-operand-source-work.py --typed-buffer-copy-only --profile release"
+  ],
+  "kernels": {
+    "allowance": 4096,
+    "parserSourceLimit": 4096,
+    "buffer": "Separate namespace/name shadow lookup, tokens/prefixes/delimiters, operand evaluation, first/second loans, scalar capture and finalization. Result finalization separates each type, emission and temporary drop; final owning/property services are explicit pending children.",
+    "view": "Advisory range cursor never publishes its copied lexer. Receiver capture precedes lower/upper evaluation. Token/type/scalar/endpoints and indexed result are separate children. Whole view/length/range/read effects have explicit service requests. Lexical roots authenticate before owner/name rows, one row per stage.",
+    "copy": "37 stages preserve original result types, expected context, destination/empty root, one APPEND104 or APPEND_VIEW112, anonymous view close, success/error CFG, impossible mismatch trap, joins and reverse cleanup. Each original CFG/ownership action is an explicit child; whole CFG services are not billed as a single bounded internal action.",
+    "continuations": "All inline and synchronously drained. Denied/waiting/completed advances do not publish/replay. Duplicate service/resume is rejected. No public Pending compiler or cross-invocation cache."
+  },
+  "stackCorrection": {
+    "diagnosticReceipt": {
+      "path": "build/operand-typed-buffer-depth/development/receipt.json",
+      "sha256": "a9d52ab0835ab49feaa87e153bd73cc720a994243e3fb29ec5ca97bc7d25482c"
+    },
+    "diagnosticProfile": "development",
+    "nativeGroups": 2,
+    "verifiedCommit": "5e669697a35316258cab3e771c6c321d6e64ad9b",
+    "allInputsMatchCommit": true,
+    "rawDiagnostic": {
+      "transport": {
+        "path": "build/typed-buffer-view-review/private-before.c",
+        "sha256": "cefa63c55df5621d7e18f7cb5afc7a6b14db42d67458e9ce64f79aebe17f24f4"
+      },
+      "assembly": {
+        "path": "build/typed-buffer-view-review/private-before.asm",
+        "sha256": "b14c4575a1728a1fd5c1906273741adbf15ba32f6e803136c499cfdd414ed089"
+      },
+      "function": "fy_fn_359",
+      "frameBytes": 9208,
+      "diagnosticOnly": true
+    },
+    "correction": "Separate raw scalar-argument path from unrelated operation branches; bypass large primary leaf frame for namespaces. Staged special operands share inactive token/type scratch through existing evaluator and isolate nonrecursive services. Final combined raw/staged fixtures accept32/reject33 with matching diagnostics and execute32 to42. No compiler/stack/timeout/optimization override. Assembly is a pre-correction diagnostic, not final physical peak evidence."
+  },
+  "incompleteAttempts": [
+    {
+      "receipt": {
+        "path": "build/typed-buffer-view-review/buffer-comparison-incomplete.json",
+        "sha256": "ede962fd2b3e566d51e38bae68f3cc1559bbd7c9caa59a5a04395908051b02b5"
+      },
+      "status": "incomplete"
+    },
+    {
+      "receipt": {
+        "path": "build/typed-buffer-view-review/buffer-expectation-probe-incomplete.json",
+        "sha256": "3382970b9db86e40e53401370d044043b3647ba0d3e91974601ffdff8e5373b5"
+      },
+      "status": "incomplete"
+    },
+    {
+      "receipt": {
+        "path": "build/typed-buffer-view-review/buffer-fixture-incomplete.json",
+        "sha256": "67ac582a870954242eab4504f99c07b8ea1a388a5b1e4abce750b5dc78f9acab"
+      },
+      "status": "incomplete"
+    },
+    {
+      "receipt": {
+        "path": "build/typed-buffer-view-review/depth-raw-stack-incomplete.json",
+        "sha256": "89b705d505f4f229d84ea270805f046090b5fbed2b1a47605dbfcfa2d54db7ca"
+      },
+      "status": "incomplete"
+    },
+    {
+      "receipt": {
+        "path": "build/typed-buffer-view-review/view-comparison-incomplete.json",
+        "sha256": "eecb802ed51f6d65226a4bef261ac53896c45a64a33ed888ced59550e676d96d"
+      },
+      "status": "incomplete"
+    },
+    {
+      "receipt": {
+        "path": "build/typed-buffer-view-review/view-expectation-probe-incomplete.json",
+        "sha256": "10f3509abeb325667fa8fff6c4db152a48744a220dcb3760dd5114220f37b0b9"
+      },
+      "status": "incomplete"
+    },
+    {
+      "receipt": {
+        "path": "build/typed-buffer-view-review/view-fixture-incomplete.json",
+        "sha256": "5980cb9cf783d386f39dc31fd2143696c90134f6a92de0b74426f50d78fac300"
+      },
+      "status": "incomplete"
+    },
+    {
+      "receipt": {
+        "path": "build/typed-buffer-view-review/view-special-depth-stack-incomplete.json",
+        "sha256": "fde537639a8be307375fa239c1c6eda063775bde49e6ee53fb0bb8fc24d72a61"
+      },
+      "status": "incomplete"
+    }
+  ],
+  "incompleteNotes": [
+    "Initial comparison fixture had duplicate imports; fixed before executing it",
+    "A nonlast argument with one returning arm still continues on the other arm. Incorrect reject expectation was split into an accepted case and an all-terminal rejected case; raw/staged candidates already matched",
+    "A temporary stdout marker diagnostic first lacked console effect annotation; corrected for diagnosis then removed",
+    "New actual nested special CALL fixture exposed raw native stack overflow. All failed/incomplete attempts remain separate from passes",
+    "The lexical-root comparison fixture initially reassigned an unconsumed Result; scalar error facts replaced it before native execution",
+    "An all-terminal view endpoint already returns from the function. A trailing return is unreachable; accepted and rejected fixtures were split. Raw/staged candidates matched before the mistaken success expectation"
+  ],
+  "sourceChecks": {
+    "root": {
+      "sourceFiles": 374,
+      "mirFunctions": 4069,
+      "output": "check ok: 2 instance(s), 374 source file(s), 4069 MIR function(s), lock updated"
+    },
+    "production": {
+      "count": 366,
+      "allLF": true,
+      "allHashesMatchFinalProfiles": true
+    },
+    "unchangedLedgers": [
+      {
+        "path": "src/value_source_bindings.fy",
+        "sha256": "fb73c1c6a7a529708ed29d719f3a206e3bdadc61ba786bff21fb0ecc92db8583"
+      },
+      {
+        "path": "src/value_view_bindings.fy",
+        "sha256": "9de06c292493a293b6f0e121ce2c201681652e77e7b63d785471f596452f70e4"
+      },
+      {
+        "path": "src/value_source_loops.fy",
+        "sha256": "b6c2468536f1a81fce500a3f5c2add0f361bb882efad0f247f7d9527ff0df67b"
+      }
+    ]
+  },
+  "engineEvidenceReuse": {
+    "rerun": false,
+    "receipt": {
+      "path": "build/runtime-engine/20261113T154320017625Z/receipt.json",
+      "sha256": "fa188a2956e43fcabb6c9feae8921fb9da7c0c65896ccce9b81f198f7ac6d197"
+    },
+    "originalVerifiedCommit": "afaab3ce31464561738ab056aefdcf7190e8a97b",
+    "inputCount": 367,
+    "completeSourceClosure": 352,
+    "allInputsMatchCurrentAndFinalCommit": true,
+    "closureAndTransportUnchanged": true,
+    "excludedChangedSources": [
+      "src/value_source.fy",
+      "src/value_buffer_source.fy",
+      "src/value_buffer_call_work.fy",
+      "src/value_view_source.fy",
+      "src/value_view_source_work.fy",
+      "src/value_buffer_copy_source.fy"
+    ],
+    "profiles": [
+      {
+        "profile": "development",
+        "artifact": {
+          "path": "build/runtime-engine/20261113T154320017625Z/development/runtime-engine.exe",
+          "sha256": "c224be1198abdfe4d11326716da0e25cd9f01f2a5a90edfa874f3a75d02b3062",
+          "bytes": 11759616,
+          "stackReserve": 1048576,
+          "stackCommit": 4096
+        },
+        "exit": 0,
+        "liveHeapAllocationsAtExit": 0
+      },
+      {
+        "profile": "release",
+        "artifact": {
+          "path": "build/runtime-engine/20261113T154320017625Z/release/runtime-engine.exe",
+          "sha256": "64c0003f8092a37e5595b6062e8730fd743d895c87c3600663b6807debc4dd0f",
+          "bytes": 4256768,
+          "stackReserve": 1048576,
+          "stackCommit": 4096
+        },
+        "exit": 0,
+        "liveHeapAllocationsAtExit": 0
+      }
+    ]
+  },
+  "reservation": {
+    "loweringBytes": 66630144,
+    "ordinaryWorkingBytes": 66804544,
+    "inputWorkingBytes": 66804928,
+    "scratch": {
+      "bank": {
+        "type": "fy_struct_140",
+        "bytes": 37792,
+        "slotBound": 40000
+      },
+      "expression": {
+        "type": "fy_struct_142",
+        "bytes": 5736,
+        "slotBound": 6000
+      },
+      "conditional": {
+        "type": "fy_struct_101",
+        "bytes": 14720,
+        "slotBound": 15000
+      }
+    },
+    "newSdkHeapClass": false,
+    "newLedgerOrBankOrPrattOrSemanticField": false,
+    "conservativeNotPhysicalPeak": true
+  },
+  "limitations": [
+    "Private typed/value source only. Sources over4096 bytes keep raw parser routes. No public dialect promotion, failed-compile retry or Pending API",
+    "Existing authentication/property cursors compose inside children. Fixed bound helpers still handle up to16 views/roots,64 names or24 origin bits; full microstep staging of every fixed metadata primitive is not claimed",
+    "Propagation, recursive control/CFG join and snapshot release, interning/origin/function/entry/final/other cleanup internals remain explicit synchronous services or outside named kernels",
+    "Engine evidence is reused for identical inputs, not a new typed allocator/CPU/time/physical stack or heap peak measurement. No R02-R05 closure",
+    "Standalone memory, broad publicCLI and full-release gates were not rerun. Broader completion remains paused",
+    "Local commits only; no push/release/deployment/version bump"
+  ]
+}
