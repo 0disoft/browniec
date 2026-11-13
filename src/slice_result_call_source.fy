@@ -8,6 +8,8 @@ import slice_builders as builders;
 import slice_reborrow_ir as reborrow;
 import slice_result_call_ir as calls;
 import std::num as num;
+import slice_result_dependency_work as work;
+import metadata_budget as budget;
 
 fn Result<u8,errors::Error> byte(usize value,usize at){
     let i64 wide=switch(num::i64_from_usize(value)){case .ok(v):{v}case .err(_):{return .err(errors::make(4,at));}};
@@ -42,7 +44,7 @@ fn Result<usize,errors::Error> retain(ref ir::Program p,ref locals::Table captur
 // anonymous view and its temporary owner, or end an anonymous exclusive child
 // and bind the returned view under its surviving parent. Hints only guide this
 // construction: independent recipe/definition/CFG proof remains mandatory.
-pub fn Result<usize,errors::Error> finish(ref mut ir::Program p,ref locals::Table names,
+pub fn Result<usize,errors::Error> finish_raw(ref mut ir::Program p,ref locals::Table names,
     ref locals::Table captures,ref functions::Table signatures,usize target,ref usize[] args,usize zero,usize at){
     let usize chosen=signatures.return_slice_inputs[target] as usize;
     if(chosen==0 || chosen>args.len || signatures.return_slice_elements[target]==0 || p.return_types[target]!=12){return .err(errors::make(3,at));}
@@ -80,7 +82,7 @@ pub fn Result<usize,errors::Error> finish(ref mut ir::Program p,ref locals::Tabl
 // Called only after CALL/cleanup/finalizer and the complete initializer finish.
 // Recover the retained anonymous parent/owner from the finalizer, keeping every
 // recursive scalar CALL's lexical table shared and its stack frame unchanged.
-pub fn Result<usize,errors::Error> publish(ref ir::Program p,ref mut locals::Table names,usize value,usize at){
+pub fn Result<usize,errors::Error> publish_raw(ref ir::Program p,ref mut locals::Table names,usize value,usize at){
     if(p.count==0 || p.code[(p.count-1)*8]!=67 || value!=160+p.code[(p.count-1)*8+1] as usize){return .err(errors::make(3,at));}
     var usize parent=p.code[(p.count-1)*8+2] as usize;var usize[16] chain=[16;16];var usize count=0;
     while(parent<16 && captured(names,0,160+parent)==64){
@@ -91,4 +93,29 @@ pub fn Result<usize,errors::Error> publish(ref ir::Program p,ref mut locals::Tab
         if(root!=0 && captured(names,0,127+root)==64){let usize owner=locals::declare(names,at,at,127+root,p.arrays.mutable[root-1])?;}
         let usize view=locals::declare(names,at,at,160+site,ir::exclusive(p,site))?;
     }return .ok(total);
+}
+
+// The adapter drains private work synchronously. The requested builder and
+// release operations retain their original checks and mutation order.
+pub fn Result<usize,errors::Error> finish(ref mut ir::Program p,ref locals::Table names,
+    ref locals::Table captures,ref functions::Table signatures,usize target,ref usize[] args,usize zero,usize at){
+    var work::State w=work::finish_begin(names.count,captures.count,target,zero,at);
+    var budget::State meter=budget::empty();
+    while(!w.done){let usize allowance=budget::reset(ref mut meter,at)?;
+        let bool done=work::finish_advance(p,names,captures,signatures,args,ref mut w,ref mut meter)?;
+        if(w.request==1){let usize root=p.slice_roots[w.parent] as usize;
+            let usize site=if(ir::exclusive(p,w.parent)){reborrow::derived(p,w.parent,at)?}
+                else if(p.slice_origins[w.parent]!=0){builders::derived(p,w.parent,names.function,at)?}
+                else{ir::slice(p,root-1,at)?};let usize resumed=work::resume(ref mut w,site)?;}
+        else if(w.request==2){let usize pc=p.count;let usize value=ir::call(p,target,args,at)?;
+            let usize resumed=work::resume(ref mut w,pc)?;}
+        else if(w.request==3){let usize released=arrays::release_at(captures,p,w.index,at)?;
+            let usize resumed=work::resume(ref mut w,released)?;}
+    }return work::prepared(ref w);
+}
+pub fn Result<usize,errors::Error> publish(ref ir::Program p,ref mut locals::Table names,usize value,usize at){
+    var work::State w=work::publish_begin(value,at);var budget::State meter=budget::empty();
+    while(!w.done){let usize allowance=budget::reset(ref mut meter,at)?;
+        let bool done=work::publish_advance(p,names,ref mut w,ref mut meter)?;}
+    return work::prepared(ref w);
 }

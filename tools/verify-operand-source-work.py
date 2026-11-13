@@ -85,5 +85,9 @@ if '--acquisition-only' in sys.argv:
     sys.argv.remove('--acquisition-only')
     bottom.DIRECTORY = 'build/operand-acquisition'
     bottom.MODULES = {'argument_acquisition_lowering': None, 'body_lowering': ['specialized_aggregate_calls_preserve_destinations_and_execute', 'staged_aggregate_copy_bodies_preserve_snapshots_and_owned_children', 'captured_scalar_results_keep_prefix_order_and_lexical_cleanup', 'nested_call_depth_32_and_33_preserve_default_stack_and_raw_diagnostics']}
+if '--returned-dependencies-only' in sys.argv:
+    sys.argv.remove('--returned-dependencies-only')
+    bottom.DIRECTORY = 'build/operand-returned-dependencies'
+    bottom.MODULES = {'returned_dependency_lowering': None}
 if __name__ == '__main__':
     bottom.main()
