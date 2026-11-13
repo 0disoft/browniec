@@ -1,5 +1,5 @@
 ---
-title: 2. Control Flow and Switch
+title: Control Flow and Switch
 description: Learn if/else statements and expressions, for and while loops, break/continue, and switch expressions in Brownie C.
 ---
 
@@ -64,5 +64,5 @@ fn Result<i32, bool> answer(Option<i32> value) {
 
 ---
 
-- Previous: [1. Variables, Types, and Functions](../basics/)
-- Next: [3. Structs, Option/Result, and ?](../structs-and-error-handling/)
+- Previous: [Variables, Types, and Functions](../basics/)
+- Next: [Structs, Option/Result, and ?](../structs-and-error-handling/)

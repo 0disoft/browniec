@@ -1,5 +1,5 @@
 ---
-title: 1. Variables, Types, and Functions
+title: Variables, Types, and Functions
 description: Learn module main, let vs var bindings, scalar and bool types, bitwise ops, explicit as casts, and functions in Brownie C.
 ---
 
@@ -71,4 +71,4 @@ To intentionally discard a non-`void` expression's result, acknowledge it with `
 
 ---
 
-Next: [2. Control Flow and Switch](../control-flow-and-switch/)
+Next: [Control Flow and Switch](../control-flow-and-switch/)

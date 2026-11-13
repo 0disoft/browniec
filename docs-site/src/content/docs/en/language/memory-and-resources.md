@@ -1,5 +1,5 @@
 ---
-title: 5. Borrows, Reborrowing, and Lifetimes
+title: Borrows, Reborrowing, and Lifetimes
 description: Understand shared ref vs exclusive ref mut borrows, block-scoped reborrowing, return origins, and excluded memory features in Brownie C.
 ---
 
@@ -61,5 +61,5 @@ To keep VM verification small and predictable, these features are intentionally 
 
 ---
 
-- Previous: [4. Arrays, Slices, and UTF-8](../arrays-slices-and-utf8/)
+- Previous: [Arrays, Slices, and UTF-8](../arrays-slices-and-utf8/)
 - Next: [Public CLI Examples](../../examples/cli-examples/)

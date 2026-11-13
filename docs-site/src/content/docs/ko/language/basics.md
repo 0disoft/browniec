@@ -1,5 +1,5 @@
 ---
-title: 1. 변수, 타입, 연산자와 함수
+title: 변수, 타입, 연산자와 함수
 description: Brownie C의 module main, let/var, 정수·bool 타입, 비트 연산과 as 형변환, fn 함수와 void 함수 문법을 배웁니다.
 ---
 
@@ -72,4 +72,4 @@ fn void touch(ref mut i32 value) {
 ---
 
 다음 장에서는 `if / else`, `for`, `while`, 그리고 값을 바로 만들어 내는 `switch` 표현식을 살펴봅니다.
-- 다음: [2. 조건문, 반복문, switch](../control-flow-and-switch/)
+- 다음: [조건문, 반복문, switch](../control-flow-and-switch/)

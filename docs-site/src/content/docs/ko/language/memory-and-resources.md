@@ -1,5 +1,5 @@
 ---
-title: 5. 빌림(ref), 재빌림과 수명
+title: 빌림(ref), 재빌림과 수명
 description: Brownie C의 읽기·쓰기 빌림 규칙, 블록 스코프 기반 재빌림(reborrow), 참조 반환 origin 규칙을 배웁니다.
 ---
 
@@ -66,5 +66,5 @@ Brownie C는 가볍고 검증 가능한 실행을 목표로 하므로, 다음 �
 
 각 예제를 실제로 실행해 보려면 다음 장의 공개 CLI 예제로 넘어가 보세요.
 
-- 이전: [4. 배열, 슬라이스, UTF-8 리터럴](../arrays-slices-and-utf8/)
+- 이전: [배열, 슬라이스, UTF-8 리터럴](../arrays-slices-and-utf8/)
 - 다음: [공개 CLI 예제](../../examples/cli-examples/)

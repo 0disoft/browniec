@@ -1,5 +1,5 @@
 ---
-title: 2. 조건문, 반복문, switch
+title: 조건문, 반복문, switch
 description: Brownie C의 if/else, for/while 루프, break/continue, 그리고 값을 돌려주는 switch 표현식 문법을 익힙니다.
 ---
 
@@ -65,5 +65,5 @@ fn Result<i32, bool> answer(Option<i32> value) {
 ---
 
 다음 장에서는 여러 값을 묶는 `struct`와 `.field` 단축 문법, 그리고 `Option`·`Result`·`?` 에러 전파를 배웁니다.
-- 이전: [1. 변수, 타입, 연산자와 함수](../basics/)
-- 다음: [3. 구조체, Option/Result, ?](../structs-and-error-handling/)
+- 이전: [변수, 타입, 연산자와 함수](../basics/)
+- 다음: [구조체, Option/Result, ?](../structs-and-error-handling/)

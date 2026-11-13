@@ -1,5 +1,5 @@
 ---
-title: 4. 배열, 슬라이스, UTF-8 리터럴
+title: 배열, 슬라이스, UTF-8 리터럴
 description: Brownie C의 고정 배열 T[N], .len, 슬라이스 뷰 ref T[] / ref mut T[], text::valid_utf8, 바이트·문자열 리터럴을 배웁니다.
 ---
 
@@ -76,5 +76,5 @@ let i32 first = sig[0] as i32;   // 79 ('O')
 ---
 
 다음 장에서는 Brownie C가 빌림(`ref`/`ref mut`)과 재빌림(Reborrow), 그리고 함수에서의 참조 반환을 어떻게 검증하는지 정리합니다.
-- 이전: [3. 구조체, Option/Result, ?](../structs-and-error-handling/)
-- 다음: [5. 빌림(ref), 재빌림과 수명](../memory-and-resources/)
+- 이전: [구조체, Option/Result, ?](../structs-and-error-handling/)
+- 다음: [빌림(ref), 재빌림과 수명](../memory-and-resources/)

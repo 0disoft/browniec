@@ -1,5 +1,5 @@
 ---
-title: 3. 구조체, Option/Result, ?
+title: 구조체, Option/Result, ?
 description: Brownie C의 struct 선언과 필드 단축 문법(.x), 중첩 구조체, Option/Result 및 ? 에러 전파 연산자를 익힙니다.
 ---
 
@@ -74,5 +74,5 @@ fn Result<i32, bool> add(Result<i32, bool> left, Result<i32, bool> right) {
 ---
 
 다음 장에서는 고정 배열 `T[N]`, 슬라이스 뷰 `ref T[]`/`ref mut T[]`, UTF-8 검증, 그리고 `b"..."` / `"..."` 리터럴을 다룹니다.
-- 이전: [2. 조건문, 반복문, switch](../control-flow-and-switch/)
-- 다음: [4. 배열, 슬라이스, UTF-8 리터럴](../arrays-slices-and-utf8/)
+- 이전: [조건문, 반복문, switch](../control-flow-and-switch/)
+- 다음: [배열, 슬라이스, UTF-8 리터럴](../arrays-slices-and-utf8/)

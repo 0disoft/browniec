@@ -1,5 +1,5 @@
 ---
-title: 3. Structs, Option/Result, and ?
+title: Structs, Option/Result, and ?
 description: Learn Brownie C structs, field shorthand (.x), nested records, Option<T>, Result<T, E>, and ? error propagation.
 ---
 
@@ -70,5 +70,5 @@ If you only need a quick boolean check on a `Result`, `.is_ok` is also supported
 
 ---
 
-- Previous: [2. Control Flow and Switch](../control-flow-and-switch/)
-- Next: [4. Arrays, Slices, and UTF-8](../arrays-slices-and-utf8/)
+- Previous: [Control Flow and Switch](../control-flow-and-switch/)
+- Next: [Arrays, Slices, and UTF-8](../arrays-slices-and-utf8/)

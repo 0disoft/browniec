@@ -1,5 +1,5 @@
 ---
-title: 4. Arrays, Slices, and UTF-8
+title: Arrays, Slices, and UTF-8
 description: Learn fixed arrays T[N], .len, mutable/shared slice views ref T[] / ref mut T[], text::valid_utf8, and byte/text literals in Brownie C.
 ---
 
@@ -75,5 +75,5 @@ let i32 first = sig[0] as i32;   // 79 ('O')
 
 ---
 
-- Previous: [3. Structs, Option/Result, and ?](../structs-and-error-handling/)
-- Next: [5. Borrows, Reborrowing, and Lifetimes](../memory-and-resources/)
+- Previous: [Structs, Option/Result, and ?](../structs-and-error-handling/)
+- Next: [Borrows, Reborrowing, and Lifetimes](../memory-and-resources/)
