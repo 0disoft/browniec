@@ -89,5 +89,9 @@ if '--returned-dependencies-only' in sys.argv:
     sys.argv.remove('--returned-dependencies-only')
     bottom.DIRECTORY = 'build/operand-returned-dependencies'
     bottom.MODULES = {'returned_dependency_lowering': None}
+if '--record-metadata-only' in sys.argv:
+    sys.argv.remove('--record-metadata-only')
+    bottom.DIRECTORY = 'build/operand-record-metadata'
+    bottom.MODULES = {'record_metadata_lowering': None, 'record_declaration_lowering': None, 'body_lowering': ['staged_record_field_evaluation_keeps_slot_order_shorthand_and_failures', 'staged_aggregate_copy_bodies_preserve_snapshots_and_owned_children']}
 if __name__ == '__main__':
     bottom.main()

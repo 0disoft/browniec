@@ -8,18 +8,23 @@ import errors as errors;
 import source_context as context;
 import aggregate_copy_source_work as copies;
 import metadata_budget as budget;
+import record_location_work as locations;
+import struct_layout_work as layout_work;
+import record_leaf_source_work as leaf_work;
+import record_field_source_work as field_work;
+import record_path_source_work as path_work;
 
 // 144..159 are function-owned struct sites, disjoint from scalars and arrays.
 pub fn bool binding(ref locals::Table names, usize index) {
     return index < names.count && names.registers[index] >= 144 && names.registers[index] < 160;
 }
-pub fn Result<usize, errors::Error> named(ref u8[] source, ref lexer::State s,ref context::Table scope) {
+pub fn Result<usize, errors::Error> named_raw(ref u8[] source, ref lexer::State s,ref context::Table scope) {
     let source_types::Location found = source_types::locate_scoped(source,scope,s.begin,s.end,32)?;
     return .ok(found.record);
 }
 // The immutable catalog has already passed struct_source::scan. Reparse only
 // bounded declaration names; path resolution converts field indices to leaf ordinals.
-pub fn Result<usize, errors::Error> field(ref u8[] source, ref ir::Program p, usize record, usize begin, usize end,ref context::Table scope) {
+pub fn Result<usize, errors::Error> field_raw(ref u8[] source, ref ir::Program p, usize record, usize begin, usize end,ref context::Table scope) {
     let source_types::Location found = source_types::locate_scoped(source,scope,begin,end,record)?;
     if (record >= p.records.layouts.count || found.record != record) { return .err(errors::make(3, begin)); }
     var lexer::State s=context::state(source,scope,found.body)?;
@@ -34,7 +39,7 @@ pub fn Result<usize, errors::Error> field(ref u8[] source, ref ir::Program p, us
     return .err(errors::make(3, begin));
 }
 pub struct Header { usize record; usize begin; usize end; bool mutable; }
-pub fn Result<usize,errors::Error> declaration_limit(ref ir::Program p,ref locals::Table names,
+pub fn Result<usize,errors::Error> declaration_limit_raw(ref ir::Program p,ref locals::Table names,
     usize record,u8 terminator,u8 result_type,usize at){
     if (names.function >= p.function_count || result_type == 0 || terminator != 59 || record >= p.records.layouts.count) { return .err(errors::make(3, at)); }
     let layouts::Plan plan = switch (layouts::plan(ref p.records.layouts, 18446744073709551615)) {
@@ -60,32 +65,32 @@ pub fn Result<Header, errors::Error> header(ref u8[] source, ref mut lexer::Stat
 pub struct Leaf { usize ordinal; u8 tag; usize record; }
 // Resolve one already-tokenized field without requiring adjacent source bytes.
 // Grouped prefixes keep the same nominal catalog and depth-first leaf order.
-pub fn Result<Leaf,errors::Error> project(ref u8[] source,ref ir::Program p,
+pub fn Result<Leaf,errors::Error> project_raw(ref u8[] source,ref ir::Program p,
     Leaf parent,usize begin,usize end,ref context::Table scope){
     if(parent.tag!=0 || parent.ordinal>=128 || begin>=end || end>source.len || parent.record>=p.records.layouts.count){return .err(errors::make(3,begin));}
-    let usize selected=field(source,p,parent.record,begin,end,scope)?;
+    let usize selected=field_raw(source,p,parent.record,begin,end,scope)?;
     var usize ordinal=parent.ordinal;var usize i=0;
     while(i<selected){let usize slot=parent.record*16+i;
-        let usize leaves=if(p.records.layouts.kinds[slot]==0){1}else{leaf_count(p,p.records.layouts.types[slot] as usize,begin)?};
+        let usize leaves=if(p.records.layouts.kinds[slot]==0){1}else{leaf_count_raw(p,p.records.layouts.types[slot] as usize,begin)?};
         if(leaves>127-ordinal){return .err(errors::make(3,begin));}ordinal+=leaves;i+=1;}
     let usize slot=parent.record*16+selected;let bool scalar=p.records.layouts.kinds[slot]==0;
     return .ok(Leaf{.ordinal=ordinal,.tag=if(scalar){p.records.layouts.types[slot]}else{0},
         .record=if(scalar){parent.record}else{p.records.layouts.types[slot] as usize}});
 }
 // Scalar ordinals are depth-first leaf positions, never field or byte offsets.
-pub fn Result<Leaf, errors::Error> path(ref u8[] source, ref mut lexer::State s,
+pub fn Result<Leaf, errors::Error> path_raw(ref u8[] source, ref mut lexer::State s,
     ref ir::Program p, usize root, usize at,ref context::Table scope) {
     var usize record = root; var usize ordinal = 0; var usize depth = 0;
     while (s.kind == 46) {
         if (depth >= 16) { return .err(errors::make(4, s.begin)); } depth += 1;
         let usize dot = lexer::next(source, s)?;
         if (s.kind != 2) { return .err(errors::make(2, s.begin)); }
-        let usize selected = field(source, p, record, s.begin, s.end,scope)?;
+        let usize selected = field_raw(source, p, record, s.begin, s.end,scope)?;
         var usize i = 0;
         while (i < selected) {
             let usize slot = record*16+i;
             if (p.records.layouts.kinds[slot] == 0) { ordinal += 1; }
-            else { ordinal += leaf_count(p, p.records.layouts.types[slot] as usize, at)?; }
+            else { ordinal += leaf_count_raw(p, p.records.layouts.types[slot] as usize, at)?; }
             i += 1;
         }
         let usize slot = record*16+selected;
@@ -186,7 +191,7 @@ pub fn Result<usize, errors::Error> assign(ref u8[] source, ref mut lexer::State
 }
 
 // Keep source staging at sixteen scalar leaves; private VM roots allow 128.
-pub fn Result<usize, errors::Error> leaf_count(ref ir::Program p, usize root, usize at) {
+pub fn Result<usize, errors::Error> leaf_count_raw(ref ir::Program p, usize root, usize at) {
     var usize count = 0;
     var usize[16] records = [0; 16]; var usize[16] fields = [0; 16];
     records[0] = root; var usize depth = 1; var usize visits = 0;
@@ -442,4 +447,41 @@ pub fn Result<usize,errors::Error> stage_part(ref u8[] source,ref mut lexer::Sta
     var copies::State w=copies::begin(1,id,child,part.ordinal,first,0,false,false,at,at);
     let usize[1] input=[0];let usize count=copy_work(p,ref input,slots,ref mut w)?;
     let usize finished=advance(source,s,p,state)?;return .ok(count);
+}
+
+// The raw loops remain independent parity oracles; owning metadata adapters
+// drain private continuations and expose no partial result or guest authority.
+pub fn Result<usize,errors::Error> named(ref u8[] source,ref lexer::State s,ref context::Table scope){
+    var locations::State w=locations::begin(s.begin,s.end,32);var budget::State meter=budget::empty();
+    while(!w.done){let usize allowance=budget::reset(ref mut meter,s.begin)?;
+        let bool done=locations::advance(source,scope,ref mut w,ref mut meter)?;}return .ok(w.record);
+}
+pub fn Result<usize,errors::Error> declaration_limit(ref ir::Program p,ref locals::Table names,
+    usize record,u8 terminator,u8 result_type,usize at){
+    if(names.function>=p.function_count || result_type==0 || terminator!=59 || record>=p.records.layouts.count){return .err(errors::make(3,at));}
+    var layout_work::State w=layout_work::empty();let usize started=switch(layout_work::begin(ref mut w,18446744073709551615)){
+        case .ok(v):{v}case .err(_):{return .err(errors::make(3,at));}};
+    var budget::State meter=budget::empty();while(!w.done){let usize allowance=budget::reset(ref mut meter,at)?;
+        switch(layout_work::advance(ref mut w,ref p.records.layouts,ref mut meter)){case .ok(_):{}case .err(_):{return .err(errors::make(3,at));}};}
+    if(w.plan.bytes[record]>128){return .err(errors::make(4,at));}return .ok(record);
+}
+pub fn Result<usize,errors::Error> leaf_count(ref ir::Program p,usize root,usize at){
+    var leaf_work::State w=leaf_work::begin(root,at);var budget::State meter=budget::empty();
+    while(!w.done){let usize allowance=budget::reset(ref mut meter,at)?;let bool done=leaf_work::advance(p,ref mut w,ref mut meter)?;}
+    return leaf_work::prepared(ref w);
+}
+pub fn Result<usize,errors::Error> field(ref u8[] source,ref ir::Program p,usize record,usize begin,usize end,ref context::Table scope){
+    var field_work::State w=field_work::begin(record,begin,end);var budget::State meter=budget::empty();
+    while(!w.done){let usize allowance=budget::reset(ref mut meter,begin)?;let bool done=field_work::advance(source,p,scope,ref mut w,ref mut meter)?;}
+    return field_work::prepared(ref w);
+}
+pub fn Result<Leaf,errors::Error> path(ref u8[] source,ref mut lexer::State s,ref ir::Program p,usize root,usize at,ref context::Table scope){
+    var path_work::State w=path_work::begin_path(root,at);var budget::State meter=budget::empty();
+    while(!w.done){let usize allowance=budget::reset(ref mut meter,at)?;let bool done=path_work::advance(source,s,p,scope,ref mut w,ref mut meter)?;}
+    return path_work::prepared(ref w);
+}
+pub fn Result<Leaf,errors::Error> project(ref u8[] source,ref ir::Program p,Leaf parent,usize begin,usize end,ref context::Table scope){
+    var lexer::State s=lexer::empty();var path_work::State w=path_work::begin_project(parent,begin,end);var budget::State meter=budget::empty();
+    while(!w.done){let usize allowance=budget::reset(ref mut meter,begin)?;let bool done=path_work::advance(source,ref mut s,p,scope,ref mut w,ref mut meter)?;}
+    return path_work::prepared(ref w);
 }
