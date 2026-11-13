@@ -430,7 +430,7 @@ pub fn Result<usize,errors::Error> copy_work(ref mut ir::Program p,ref usize[] i
 }
 pub fn Result<usize,errors::Error> extract_part(ref mut ir::Program p,usize function,usize source_id,Leaf part,
     bool mutable,usize offset,usize at,bool consume){
-    var copies::State w=copies::begin(2,source_id,part.record,part.ordinal,0,function,mutable,consume,offset,at);
+    var copies::State w=copies::begin(7,source_id,part.record,part.ordinal,0,function,mutable,consume,offset,at);
     let usize[1] input=[0];var usize[1] slots=[0];return copy_work(p,ref input,ref mut slots,ref mut w);
 }
 pub fn Result<usize,errors::Error> stage_part(ref u8[] source,ref mut lexer::State s,ref mut ir::Program p,

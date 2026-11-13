@@ -54,13 +54,13 @@ fn void result(Result<usize,errors::Error> x,Result<usize,errors::Error> y,bool 
     case .ok(v):{assert(success);switch(y){case .ok(z):{assert(v==z);}case .err(_):{assert(false);}};}
     case .err(e):{assert(!success);switch(y){case .ok(_):{assert(false);}case .err(z):{assert(e.kind==z.kind && e.offset==z.offset);}};}};}
 @test fn void materialization_and_extraction_match_raw_failure_prefixes(){
-    var usize mode=0;while(mode<6){var ir::Program a=fixture();var ir::Program b=fixture();
+    var usize mode=0;while(mode<7){var ir::Program a=fixture();var ir::Program b=fixture();
         let expressions::Value value=expressions::Value{.id=if(mode==0){16}else{0},.owned=mode==2,.record=0,.ordinal=0,.tag=0,.slots=[0;16],.depth=0};
         if(mode==3){a.records.count=16;b.records.count=16;}if(mode==4){a.count=256;b.count=256;}if(mode==5){a.registers=127;b.registers=127;}
         let Result<usize,errors::Error> x=if(mode<2){expressions::materialize_raw(ref mut a,0,ref value,false,7)}else{
-            records::extract_part_raw(ref mut a,0,0,records::Leaf{.ordinal=0,.tag=0,.record=0},false,9,7,mode==2)};
+            records::extract_part_raw(ref mut a,0,if(mode==6){16}else{0},records::Leaf{.ordinal=0,.tag=0,.record=0},false,9,7,mode==2)};
         let Result<usize,errors::Error> y=if(mode<2){expressions::materialize(ref mut b,0,ref value,false,7)}else{
-            records::extract_part(ref mut b,0,0,records::Leaf{.ordinal=0,.tag=0,.record=0},false,9,7,mode==2)};
+            records::extract_part(ref mut b,0,if(mode==6){16}else{0},records::Leaf{.ordinal=0,.tag=0,.record=0},false,9,7,mode==2)};
         same(ref a,ref b);result(x,y,mode<3);mode+=1;}
 }
 @test fn void child_staging_preserves_slots_delimiters_and_error_order(){
