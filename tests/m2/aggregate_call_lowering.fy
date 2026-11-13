@@ -81,6 +81,12 @@ fn void compare(ref u8[] source,usize destination,bool success){
         turns+=1;}
     assert(calls::prepared(ref w).is_ok && w.value==128 && p.count==4 && p.code[8]==9 && p.code[9]==128 && p.code[17]==1 && p.code[25]==0);
     let usize total=meter.total;assert(work::advance(source,ref mut s,ref mut p,ref signatures,0,ref mut w,ref mut meter).is_ok && meter.total==total);
+}
+
+@test fn void returned_view_request_waits_for_close_token_lexing(){
+    let ref u8[] source=b"(42)";var lexer::State s=lexer::empty();
+    let locals::Table names=locals::empty();var functions::Table signatures=functions::empty();signatures.count=1;signatures.arities[0]=1;signatures.param_types[0]=1;
+    var ir::Program p=ir::empty();var calls::State w=calls::empty();var budget::State meter=budget::empty();
     s=lexer::empty();assert(lexer::next(source,ref mut s).is_ok);w=calls::begin(ref names,s,0,0,0);
     var bool finished_token=false;var bool finalized=false;
     while(!w.done){let bool lexing=w.lexing;let u8 phase=w.phase;let usize count=p.count;

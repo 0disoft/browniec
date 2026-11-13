@@ -76,7 +76,7 @@ if '--aggregate-call-only' in sys.argv:
 if '--aggregate-copy-only' in sys.argv:
     sys.argv.remove('--aggregate-copy-only')
     bottom.DIRECTORY = 'build/operand-aggregate-copy'
-    bottom.MODULES = {'aggregate_copy_lowering': None, 'body_lowering': ['staged_aggregate_copy_bodies_preserve_snapshots_and_owned_children', 'staged_record_field_evaluation_keeps_slot_order_shorthand_and_failures', 'specialized_aggregate_calls_preserve_destinations_and_execute', 'captured_scalar_results_keep_prefix_order_and_lexical_cleanup', 'nested_call_depth_32_and_33_preserve_default_stack_and_raw_diagnostics']}
+    bottom.MODULES = {'aggregate_copy_lowering': None, 'static_bindings_source': ['owned_projection_temporaries_survive_index_exits_without_leaking'], 'body_lowering': ['staged_aggregate_copy_bodies_preserve_snapshots_and_owned_children', 'staged_record_field_evaluation_keeps_slot_order_shorthand_and_failures', 'specialized_aggregate_calls_preserve_destinations_and_execute', 'captured_scalar_results_keep_prefix_order_and_lexical_cleanup', 'nested_call_depth_32_and_33_preserve_default_stack_and_raw_diagnostics']}
 if '--aggregate-special-only' in sys.argv:
     sys.argv.remove('--aggregate-special-only')
     bottom.DIRECTORY = 'build/operand-aggregate-special'
