@@ -861,3 +861,19 @@ compares raw IR/catalogs/failure candidates and retains depth-32/33 fixtures.
 The unchanged owning Engine inputs reuse their prior passed receipt. Recursive
 semantic helpers and catalog/origin/entry/final/cleanup internals remain outside
 these named traversal bounds.
+
+## Typed/value evaluation and ownership (2026-11-14)
+
+The [typed evaluation checkpoint](compiler-typed-evaluation.md) stages private
+view/value authentication, expression operands, captures, CALL arguments and
+finalization, constructors and property proofs. Token/type work and one-row
+metadata children retain the existing 4096 allowance. Intrinsic expression modes
+use inline suspended control States and shared inactive lexical/type scratch;
+actual recursive operands retain depth checks. Full raw/staged comparisons keep
+CALL 32/33, ownership/returned origins, bottom and default-stack control fixtures.
+The [evidence](../evidence/compiler-typed-evaluation-windows-20261114.json) binds
+four development/O2 slices to exact commits and records four incomplete overflow
+attempts separately. Unchanged owning Engine inputs reuse prior evidence.
+Specialized Buffer/view, propagation, recursive CFG, catalog/origin/function and
+other cleanup internals remain beyond these named kernels. Owners drain
+synchronously; no public Pending compiler or measured physical peak is claimed.

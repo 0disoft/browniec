@@ -1,48 +1,44 @@
-- Latest typed/value source walk checkpoint (2026-11-14):
-  [typed/value traversal](docs/engineering/compiler-typed-source-walk.md).
-  `value_probe_work` stages postfix receiver, tail control/expression, assignment
-  and pure classic-for-header lookahead. One token decision or bounded lexer
-  child advances per stage; real lexer/IR/catalog/bindings are never published
-  by advisory walks, including failures. Independent raw comparisons cover
-  else chains, range/member ambiguity, pure-header restrictions and offsets.
-  `value_walk_work` stages one function result row, first body token acquisition,
-  closing-offset validation, function index updates and scope iteration.
-  Result enforcement, function admission, body/statement semantics, implicit
-  return cleanup/emission, scope cleanup and function finalization are explicit
-  child requests. Waiting/denied advances do not mutate/charge; resume consumes
-  once and completed advances do not replay. Terminal/yield checks keep the old
-  source error order and cleanup behavior. Owners still drain synchronously.
-  Raw program/scope loops remain at every recursive level via an invocation-local
-  routing bit. No binding/Bank/Pratt/Semantic field or SDK heap class was added.
-  Original helper/raw-loop bodies (22 functions) match after removing only routing
-  arguments/parameters and raw function names. No automatic failed-compile retry.
-  Named bounds cover <=4096-byte private value-dialect source. Oversized helpers
-  and direct compiles keep their original raw paths outside the bounded profile.
-  Implementation: `89dcbd1` advisory probes, `8530356` program/scope traversal.
-  Probe snapshot passes three groups in development/O2; final traversal snapshot
-  passes eleven in development/O2, with every receipt input matching its named
-  commit. Raw comparisons include all IR fields, catalogs, value metadata and
-  failure candidates; accepted fixtures verify/run to 42. Existing nested bottom
-  tails, classic-for transfers, terminal loop arms and depth-32/33 conditionals
-  retain default stacks. A frontend must-use rejection in the comparison fixture
-  was fixed without production changes; that incomplete attempt is not a pass.
-  No compiler/optimization/stack/timeout overrides. Root: 369 sources / 3949 MIR;
-  all 361 production modules are LF and match the final focused inputs.
+- Latest typed/value evaluation and ownership checkpoint (2026-11-14):
+  [typed/value evaluation](docs/engineering/compiler-typed-evaluation.md).
+  View/value authentication advances descriptor/name/dependency, value slot,
+  view/owner pair and lexical rows separately. Read-only cursors preserve error
+  precedence; a value-slot check can also scan at most 64 owner names.
+  Capture separates allocation/COPY-MOVE, capture/read/DROP, roots/aliases and
+  explicit handling/discard. Expression continuations cover precedence, casts,
+  postfix/group/unary/ref operands, signed minima and bottom/short-circuit work.
+  Arguments and constructors stage evaluation/capture/delimiters; CALL maps one
+  actual per stage, emits once, proves properties, then releases captures and
+  initializes the returned slot. Private property inspection composes existing
+  record/layout/catalog cursors; common/runtime inspection is unchanged.
+  Owners still drain synchronously with the existing 4096 logical allowance.
+  No SDK heap class or binding/Bank/Pratt/Semantic field is added.
+  Raw/staged actual CALL depth 32 passes on default stacks; 33 retains its depth
+  diagnostic. Four earlier overflow attempts are incomplete, never passes.
+  Raw routing/post-child services avoid large recursive frames. Staged intrinsic
+  modes use three inline suspended control States and shared token/type scratch;
+  actual recursive operands retain separate control and depth checks.
+  Implementation: `692b701` authentication, `4f72411` evaluation/capture,
+  `519f5ff` CALL/constructor/default-stack correction, `f59db4e` property adapter.
+  Each slice passes 5/12/16/8 groups respectively in development/O2, with every
+  receipt input matching its named commit. Full raw/staged IR/catalog/failure
+  comparisons, ownership/returned origins, accepted VM42 and control 32/33 remain.
+  No compiler/optimization/stack/timeout overrides. Root: 372 sources / 4018 MIR;
+  all 364 production modules are LF and match the final focused inputs.
   Owning Engine was not rerun: its complete 352-source closure, transport and all
-  367 receipt inputs are unchanged and match the final implementation commit.
-  Reused `afaab3c` development/O2 evidence retains default 1MiB/4KiB stacks and
-  zero SDK exit heap; it is not a new typed/value allocator measurement.
-  Ordinary lowering reservation stays 66,630,144 bytes; ordinary/input working
-  reservations stay 66,804,544/66,804,928. Scratch widths/slot caps remain
-  37792/40000, 5736/6000, 14720/15000. Allowance stays 4096; reservations are
-  conservative bounds, not physical peaks. No public Pending compiler or measured
+  367 input hashes match the final implementation commit and prior passed
+  `afaab3c` development/O2 evidence. Default 1MiB/4KiB stacks and zero SDK exit
+  heap are retained; this is not a new typed/value allocator or physical peak
+  measurement. Ordinary lowering/ordinary working/input working reservations
+  remain 66,630,144/66,804,544/66,804,928; scratch widths/slot caps remain
+  37792/40000, 5736/6000, 14720/15000. No public Pending compiler or measured
   CPU/time/heap/stack improvement or R02-R05 closure.
-  See [typed walk evidence](docs/evidence/compiler-typed-source-walk-windows-20261114.json).
-  Semantic statement/expression and recursive control/ownership/CFG helpers remain
-  explicit synchronous children. Catalog/origin preparation, function admission/
-  finalization, entry/final metadata and cleanup internals remain outside these
-  named traversal bounds. Broader completion stays paused. Local only;
-  standalone memory, broad public-CLI and full-release gates were not rerun.
+  See [typed evaluation evidence](docs/evidence/compiler-typed-evaluation-windows-20261114.json).
+  Named parser bounds cover private sources <=4096 bytes. Specialized Buffer/view,
+  propagation, recursive CFG services, catalog interning/origin inference,
+  function admission/finalization and entry/final/other cleanup internals remain
+  explicit synchronous children or outside the named kernels. Broader completion
+  stays paused. Standalone memory, broad public-CLI and full-release gates were
+  not rerun. Local only; no push/release/deployment/version change.
 
 # Brownie C agent guidance
 

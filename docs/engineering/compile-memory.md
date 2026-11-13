@@ -139,3 +139,14 @@ fields or scratch/working reservation changes. Its changed modules are outside
 the owning Engine closure. All 367 Engine inputs and the complete closure match
 the earlier passed receipt, so that evidence is reused; this is not a new
 allocator or physical peak measurement for the value source compiler.
+
+The [typed/value evaluation checkpoint](compiler-typed-evaluation.md) adds inline
+authentication/capture/operand/CALL/constructor cursors and a private property
+adapter. Intrinsic expression modes share inactive token/type scratch and keep
+three suspended control States instead of multiple host frames; actual recursive
+operands retain their depth checks. No SDK heap class, ledger/Bank/Pratt/Semantic
+field, scratch slot cap or working reservation changes. Default-stack CALL 32/33
+fixtures pass after four recorded incomplete attempts; this is not a measured
+physical peak or performance result. The unchanged complete owning Engine closure
+and all 367 inputs reuse prior evidence, not a new typed/value allocator measure.
+The standalone memory gate was not rerun.

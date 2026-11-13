@@ -1,0 +1,306 @@
+{
+  "schema": "browniec.compiler-typed-evaluation-evidence/v1",
+  "status": "passed",
+  "recordedAt": "2026-11-13T17:46:06.382415+00:00",
+  "verifiedCommit": "f59db4e1576a12a0af583fe0d9f3a3aa438a8850",
+  "implementationCommits": [
+    "692b7017eb9d994a7cc655a1258ea27ac7318fe0",
+    "4f7241133ba32fc0cc81aa7e4bbaca07068c5d2f",
+    "519f5ffda32d4849c1e33c4701d971eb7b2d0b2b",
+    "f59db4e1576a12a0af583fe0d9f3a3aa438a8850"
+  ],
+  "toolchain": {
+    "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+    "sha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+    "version": "Fairy C Stage 0\ncompiler: v0.0.0-20261031093456-eb274643bfcf\nsdk: fairyc-sdk-stdlib/0 0.0.0-stage0.87\nlanguage: fairyc-language/20\nruntime: fairyc-runtime/0\nrevision: eb274643bfcfe746617121ddc6f130b018978b53\nmodified: false"
+  },
+  "msvc": {
+    "version": "14.51.36231",
+    "sdk": "10.0.26100.0",
+    "compilerSha256": "dc8426b8760d92cf757df3d10b9f0244a95b454ff43194a58161568a0ec70d53",
+    "overrides": false
+  },
+  "nativeVerification": [
+    {
+      "slice": "ownership",
+      "profile": "development",
+      "receipt": {
+        "path": "build/operand-typed-ownership/development/receipt.json",
+        "sha256": "fe6400d1d385f8ba7f2035916c272ab66fcc035cc1a4c73f4f637fa0e6082207"
+      },
+      "verifiedCommit": "692b7017eb9d994a7cc655a1258ea27ac7318fe0",
+      "nativeGroups": 5,
+      "inputCount": 369,
+      "allInputsMatchCommit": true,
+      "compilerOverrides": false
+    },
+    {
+      "slice": "ownership",
+      "profile": "release",
+      "receipt": {
+        "path": "build/operand-typed-ownership/release/receipt.json",
+        "sha256": "c767238f13f0e209e214b70e2a01d12d7855d6802e207b8eb40e67c3571dfd69"
+      },
+      "verifiedCommit": "692b7017eb9d994a7cc655a1258ea27ac7318fe0",
+      "nativeGroups": 5,
+      "inputCount": 369,
+      "allInputsMatchCommit": true,
+      "compilerOverrides": false
+    },
+    {
+      "slice": "evaluation",
+      "profile": "development",
+      "receipt": {
+        "path": "build/operand-typed-evaluation/development/receipt.json",
+        "sha256": "ad30ac2141f89f13decfd47d0c7cf3b292e2cbee711a0a4ed4ddfcdb11ca67a4"
+      },
+      "verifiedCommit": "4f7241133ba32fc0cc81aa7e4bbaca07068c5d2f",
+      "nativeGroups": 12,
+      "inputCount": 373,
+      "allInputsMatchCommit": true,
+      "compilerOverrides": false
+    },
+    {
+      "slice": "evaluation",
+      "profile": "release",
+      "receipt": {
+        "path": "build/operand-typed-evaluation/release/receipt.json",
+        "sha256": "f58621ca53421bfd38dafa1ace61516eab7ef4d5527607dc9ccf640ea7a6484a"
+      },
+      "verifiedCommit": "4f7241133ba32fc0cc81aa7e4bbaca07068c5d2f",
+      "nativeGroups": 12,
+      "inputCount": 373,
+      "allInputsMatchCommit": true,
+      "compilerOverrides": false
+    },
+    {
+      "slice": "call",
+      "profile": "development",
+      "receipt": {
+        "path": "build/operand-typed-call-evaluation/development/receipt.json",
+        "sha256": "61e5312c0f4866e11370a90a2344f531bcb661b3cd0f1eebd4a91d5ffd74a826"
+      },
+      "verifiedCommit": "519f5ffda32d4849c1e33c4701d971eb7b2d0b2b",
+      "nativeGroups": 16,
+      "inputCount": 376,
+      "allInputsMatchCommit": true,
+      "compilerOverrides": false
+    },
+    {
+      "slice": "call",
+      "profile": "release",
+      "receipt": {
+        "path": "build/operand-typed-call-evaluation/release/receipt.json",
+        "sha256": "157009733859a555c897e3a0ee64fb7de07cc6b0c94ed51cb0f9e0354277dc78"
+      },
+      "verifiedCommit": "519f5ffda32d4849c1e33c4701d971eb7b2d0b2b",
+      "nativeGroups": 16,
+      "inputCount": 376,
+      "allInputsMatchCommit": true,
+      "compilerOverrides": false
+    },
+    {
+      "slice": "properties",
+      "profile": "development",
+      "receipt": {
+        "path": "build/operand-typed-properties/development/receipt.json",
+        "sha256": "dd9709650c9b839cfc13ae3d641b25b5cca22cef6e4bb6cae98c969d08aa985a"
+      },
+      "verifiedCommit": "f59db4e1576a12a0af583fe0d9f3a3aa438a8850",
+      "nativeGroups": 8,
+      "inputCount": 376,
+      "allInputsMatchCommit": true,
+      "compilerOverrides": false
+    },
+    {
+      "slice": "properties",
+      "profile": "release",
+      "receipt": {
+        "path": "build/operand-typed-properties/release/receipt.json",
+        "sha256": "84ff71c14a73102a041814fb830326838a8416efe95e2670359b10acd2c5f249"
+      },
+      "verifiedCommit": "f59db4e1576a12a0af583fe0d9f3a3aa438a8850",
+      "nativeGroups": 8,
+      "inputCount": 376,
+      "allInputsMatchCommit": true,
+      "compilerOverrides": false
+    }
+  ],
+  "commands": [
+    "build/toolchain/fairyc.exe check",
+    "python tools/verify-operand-source-work.py --typed-ownership-only --profile development",
+    "python tools/verify-operand-source-work.py --typed-ownership-only --profile release",
+    "python tools/verify-operand-source-work.py --typed-evaluation-only --profile development",
+    "python tools/verify-operand-source-work.py --typed-evaluation-only --profile release",
+    "python tools/verify-operand-source-work.py --typed-call-evaluation-only --profile development",
+    "python tools/verify-operand-source-work.py --typed-call-evaluation-only --profile release",
+    "python tools/verify-operand-source-work.py --typed-properties-only --profile development",
+    "python tools/verify-operand-source-work.py --typed-properties-only --profile release"
+  ],
+  "incompleteAttempts": [
+    {
+      "receipt": {
+        "path": "build/typed-evaluation-review/call-development-after-split-stack-incomplete.json",
+        "sha256": "341d4421bb062e901312b0568ca5e2717287e7c8118d66148b5269670cb3aea9"
+      },
+      "status": "incomplete",
+      "reason": "Native CALL-depth fixture stopped with stack overflow and no valid trap control. Never counted as passed."
+    },
+    {
+      "receipt": {
+        "path": "build/typed-evaluation-review/call-development-stack-incomplete.json",
+        "sha256": "17559d76b781b30fa8ad4133c9b991649375fecd309fd24cac274f623cc88a58"
+      },
+      "status": "incomplete",
+      "reason": "Native CALL-depth fixture stopped with stack overflow and no valid trap control. Never counted as passed."
+    },
+    {
+      "receipt": {
+        "path": "build/typed-evaluation-review/depth-after-dispatch-stack-incomplete.json",
+        "sha256": "8c117c7c2ba2fea5037902260729b9dc52019ab5112be45bcb4a6518e7ea0645"
+      },
+      "status": "incomplete",
+      "reason": "Native CALL-depth fixture stopped with stack overflow and no valid trap control. Never counted as passed."
+    },
+    {
+      "receipt": {
+        "path": "build/typed-evaluation-review/depth-after-split-stack-incomplete.json",
+        "sha256": "b9767433e34a408c0b02e77ebf0384ffe97b442365dbc824cf146062cdee4246"
+      },
+      "status": "incomplete",
+      "reason": "Native CALL-depth fixture stopped with stack overflow and no valid trap control. Never counted as passed."
+    }
+  ],
+  "stackCorrection": {
+    "diagnosticSelection": {
+      "receipt": {
+        "path": "build/operand-typed-depth/development/receipt.json",
+        "sha256": "de5663a82df69eedf4451415a0444f0fa2e461b6d0f37d1f933748bb6222e01b"
+      },
+      "profile": "development",
+      "nativeGroups": 2,
+      "verifiedCommit": "519f5ffda32d4849c1e33c4701d971eb7b2d0b2b",
+      "allInputsMatchCommit": true
+    },
+    "reason": "Actual CALL depth32 overflow was localized in raw route before staged could run independently. Raw dispatch avoids stateful/large primary frames; nonrecursive post-child services are isolated; Catalog projections are borrowed. Staged intrinsic expression/cast/postfix/primary modes use three inline suspended control States and one shared token/type scratch; actual recursive operands retain depth checks. Final full raw/staged comparison accepts32, rejects33 and executes to42. No compiler/stack/timeout/optimization override or new heap storage. Earlier local-aggregate/assembly diagnostics described incomplete attempts, not final physical peaks."
+  },
+  "ledgers": [
+    {
+      "path": "src/value_source_bindings.fy",
+      "declarationSha256": "ad5ffb0ed88b46330689ad2b09dfece930d883c753b95a602a6f84a5a724bcb6",
+      "fieldsUnchanged": true
+    },
+    {
+      "path": "src/value_view_bindings.fy",
+      "declarationSha256": "752805f5919372f4d974837998d5eec44be2e60c71ead1be5e35ec7ae6d96b10",
+      "fieldsUnchanged": true
+    }
+  ],
+  "kernels": {
+    "logicalAllowance": 4096,
+    "parserSourceLimit": 4096,
+    "authentication": "View descriptors/names/dependencies, value rows, view/owner pairs and lexical rows advance separately. A slot check can scan at most64 owner names. Read-only guards preserve raw precedence.",
+    "capture": "Separate allocation/COPY-MOVE, capture/read/DROP, roots/alias and discard/handle/DROP children; preserves partial state on rejection.",
+    "expression": "Separate recursive operands, token/annotation work, capture/type/IR, casts/postfix/group/unary/ref and signed minima; raw cast preflight before primary probing. Left capture precedes RHS evaluation. Bottom skips enclosing work without replay.",
+    "call": "Per-argument delimiters/evaluation/capture, per-row map publication, CALL emission, properties proof and per-capture handling/drop/consume. Obligation transfers only after CALL; returned slot initializes last. Borrowed returned origins retain existing semantics.",
+    "constructor": "Variant/context, payload evaluation, closing delimiter, inferred interning, payload capture, tag construction and temporary drop are separate. Bottom skips construction.",
+    "properties": "Private source ownership helpers drain existing record/layout and catalog-node property cursors. Runtime/common inspect remains unchanged. Independent raw Plan/error comparisons cover maximum64-node catalogs, reserved tails, records, arrays, invalid dependency order and depth/size errors.",
+    "ownership": "All new continuations inline. Fixed setup and synchronous drains remain atomic. No new SDK heap class, ledger/Bank/Pratt/Semantic field or public Pending compiler."
+  },
+  "sourceChecks": {
+    "root": {
+      "sourceFiles": 372,
+      "mirFunctions": 4018,
+      "lockUpdated": true,
+      "output": "check ok: 2 instance(s), 372 source file(s), 4018 MIR function(s), lock updated"
+    },
+    "production": {
+      "count": 364,
+      "allLF": true,
+      "allHashesMatchFinalProfiles": true
+    }
+  },
+  "engineEvidenceReuse": {
+    "rerun": false,
+    "reason": "Complete owning Engine closure and every input match its prior passed receipt/current checkout/final implementation commit; changed private source files are outside that closure.",
+    "receipt": {
+      "path": "build/runtime-engine/20261113T154320017625Z/receipt.json",
+      "sha256": "fa188a2956e43fcabb6c9feae8921fb9da7c0c65896ccce9b81f198f7ac6d197"
+    },
+    "originalVerifiedCommit": "afaab3ce31464561738ab056aefdcf7190e8a97b",
+    "inputCount": 367,
+    "allInputHashesMatchCurrentAndFinalCommit": true,
+    "closureCount": 352,
+    "closureAndTransportUnchanged": true,
+    "excludedChangedSources": [
+      "src/value_view_bindings.fy",
+      "src/value_source_bindings.fy",
+      "src/value_source_context.fy",
+      "src/value_source.fy",
+      "src/value_expression_work.fy",
+      "src/value_call_source_work.fy",
+      "src/value_source_calls.fy",
+      "src/value_source_ops.fy",
+      "src/value_source_properties.fy"
+    ],
+    "compilerOverrides": false,
+    "profiles": [
+      {
+        "profile": "development",
+        "artifact": {
+          "path": "build/runtime-engine/20261113T154320017625Z/development/runtime-engine.exe",
+          "sha256": "c224be1198abdfe4d11326716da0e25cd9f01f2a5a90edfa874f3a75d02b3062",
+          "bytes": 11759616,
+          "stackReserve": 1048576,
+          "stackCommit": 4096
+        },
+        "exit": 0,
+        "liveHeapAllocationsAtExit": 0
+      },
+      {
+        "profile": "release",
+        "artifact": {
+          "path": "build/runtime-engine/20261113T154320017625Z/release/runtime-engine.exe",
+          "sha256": "64c0003f8092a37e5595b6062e8730fd743d895c87c3600663b6807debc4dd0f",
+          "bytes": 4256768,
+          "stackReserve": 1048576,
+          "stackCommit": 4096
+        },
+        "exit": 0,
+        "liveHeapAllocationsAtExit": 0
+      }
+    ]
+  },
+  "workingReservation": {
+    "loweringBytes": 66630144,
+    "ordinaryWorkingBytes": 66804544,
+    "inputWorkingBytes": 66804928,
+    "additionalHeapClasses": false,
+    "scratch": {
+      "bank": {
+        "type": "fy_struct_140",
+        "bytes": 37792,
+        "slotBound": 40000
+      },
+      "expression": {
+        "type": "fy_struct_142",
+        "bytes": 5736,
+        "slotBound": 6000
+      },
+      "conditional": {
+        "type": "fy_struct_101",
+        "bytes": 14720,
+        "slotBound": 15000
+      }
+    },
+    "conservativeReservationNotPhysicalPeak": true
+  },
+  "limitations": [
+    "Private named typed/value kernels only; <=4096-byte parser profile, oversized direct parser helpers retain raw routes. No cross-invocation cache or retry",
+    "Specialized Buffer/view operations, propagation and recursive control/CFG services retain synchronous child boundaries; their complete internal staging is not claimed",
+    "Catalog interning/origin inference/function admission-finalization/entry-final metadata and unrelated cleanup remain outside named kernels",
+    "Prior Engine evidence reused for unchanged inputs, not a new typed allocator measurement; C local declarations do not measure physical stack/heap peak, CPU/time improvement or R02-R05 closure",
+    "Standalone memory, broad publicCLI and full release gates were not rerun; broader completion paused",
+    "Local only; no push, release, deploy or version bump"
+  ]
+}
