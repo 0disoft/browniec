@@ -126,3 +126,9 @@ inline States, reusing existing metadata and nominal range/copy cursors without
 new SDK heap classes or Bank/Pratt fields. Working reservations and scratch slot
 caps are unchanged. Its evidence records final owning Engine allocator/compile
 fixtures; it does not rerun the standalone 28-group memory gate.
+
+The [declaration header checkpoint](compiler-declaration-header.md) adds inline
+binder/header cursors and a small scalar result. Existing SDK heap classes,
+Semantic/Bank/Pratt fields, scratch slot caps and working reservations remain
+unchanged. Its evidence retains final owning Engine allocator/compile fixtures;
+the standalone 28-group memory gate was not rerun.

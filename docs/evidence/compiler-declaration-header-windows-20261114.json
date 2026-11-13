@@ -1,0 +1,320 @@
+{
+  "schema": "browniec.compiler-declaration-header-evidence/v1",
+  "status": "passed",
+  "recordedAt": "2026-11-13T15:47:02.699049+00:00",
+  "verifiedCommit": "afaab3ce31464561738ab056aefdcf7190e8a97b",
+  "implementationCommits": [
+    "9d04dc81df5a299938b835491ea8588986870915",
+    "0979d0e50776a36abd63e4e33fcb55cd4340690d",
+    "afaab3ce31464561738ab056aefdcf7190e8a97b"
+  ],
+  "toolchain": {
+    "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+    "sha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+    "version": "Fairy C Stage 0\ncompiler: v0.0.0-20261031093456-eb274643bfcf\nsdk: fairyc-sdk-stdlib/0 0.0.0-stage0.87\nlanguage: fairyc-language/20\nruntime: fairyc-runtime/0\nrevision: eb274643bfcfe746617121ddc6f130b018978b53\nmodified: false"
+  },
+  "msvc": {
+    "version": "14.51.36231",
+    "sdk": "10.0.26100.0",
+    "compilerSha256": "dc8426b8760d92cf757df3d10b9f0244a95b454ff43194a58161568a0ec70d53",
+    "overrides": false
+  },
+  "nativeVerification": [
+    {
+      "slice": "name",
+      "profile": "development",
+      "receipt": {
+        "path": "build/operand-declaration-name/development/receipt.json",
+        "sha256": "38b6a324813e7455170dbdaacec8b129b1b21139cebcc49ec89c19664320b5dc"
+      },
+      "verifiedCommit": "9d04dc81df5a299938b835491ea8588986870915",
+      "nativeGroups": 3,
+      "inputCount": 365,
+      "allInputsMatchCommit": true,
+      "compilerOverrides": false
+    },
+    {
+      "slice": "name",
+      "profile": "release",
+      "receipt": {
+        "path": "build/operand-declaration-name/release/receipt.json",
+        "sha256": "e066e22a03c6ffb009e2c220b5b3fff40a5054793c4af35292d0d9014cf2f032"
+      },
+      "verifiedCommit": "9d04dc81df5a299938b835491ea8588986870915",
+      "nativeGroups": 3,
+      "inputCount": 365,
+      "allInputsMatchCommit": true,
+      "compilerOverrides": false
+    },
+    {
+      "slice": "header",
+      "profile": "development",
+      "receipt": {
+        "path": "build/operand-declaration-header/development/receipt.json",
+        "sha256": "e2168e653a4120bab57a08700aed4e587d1721acf47605d6cdab0d14e416ad83"
+      },
+      "verifiedCommit": "0979d0e50776a36abd63e4e33fcb55cd4340690d",
+      "nativeGroups": 10,
+      "inputCount": 369,
+      "allInputsMatchCommit": true,
+      "compilerOverrides": false
+    },
+    {
+      "slice": "header",
+      "profile": "release",
+      "receipt": {
+        "path": "build/operand-declaration-header/release/receipt.json",
+        "sha256": "75863789bc3fd0281ecfb5a24fdec804824adff7e26fdadd0d8b8eb0569b9a41"
+      },
+      "verifiedCommit": "0979d0e50776a36abd63e4e33fcb55cd4340690d",
+      "nativeGroups": 10,
+      "inputCount": 369,
+      "allInputsMatchCommit": true,
+      "compilerOverrides": false
+    }
+  ],
+  "commands": [
+    "build/toolchain/fairyc.exe check",
+    "python tools/verify-operand-source-work.py --declaration-name-only --profile development",
+    "python tools/verify-operand-source-work.py --declaration-name-only --profile release",
+    "python tools/verify-operand-source-work.py --declaration-header-only --profile development",
+    "python tools/verify-operand-source-work.py --declaration-header-only --profile release",
+    "python tools/review-runtime-engine-transport.py",
+    "python build/declaration-header-review/audit.py",
+    "python tools/verify-runtime-engine.py"
+  ],
+  "incompleteAttempt": {
+    "receipt": {
+      "path": "build/declaration-header-review/initial-header-development-incomplete.json",
+      "sha256": "3b42bf54cce614995350c98efc8c72318d519454b86ad54393df1f8b0e06558b"
+    },
+    "status": "incomplete",
+    "productionMatchesFinalHeaderCommit": true,
+    "reason": "Frontend rejected an oversized mutable fixed-array compatibility fixture before native execution. Rebuilt fixture from bytes.Buffer chunks; production did not change. Not counted as a native pass."
+  },
+  "developmentCorrections": [
+    "Captured the next phase before taking the header State mutable borrow; the pinned checker rejected the original overlapping expression before native execution.",
+    "Replaced the oversized mutable array compatibility fixture with buffer chunks before native execution; production input hashes remained identical."
+  ],
+  "kernels": {
+    "logicalAllowance": 4096,
+    "name": "Binder validation, first-match lookup by one row or <=64 spelling bytes, duplicate-before-capacity guards, name and equals tokens. Advisory follows uses a private cursor; errors never publish it. General source>4096 helper calls retain raw compatibility paths outside the bounded claim.",
+    "header": "Existing annotation/token/binder children compose scalar/wrapper/array, nominal record, lexical slice and static byte/text headers. Array context/error offsets and distinct reference/static restrictions remain raw-equivalent. Record layout/size validation is explicit child1 before type-token consumption; pending advances do not charge/mutate and resume consumes once.",
+    "semantic": "Explicit header child3 after annotation; resume_header installs checked spans without enlarging semantic State. Initializer evaluates once; lexical binding publishes after initialization/type/terminator. No new SDK heap class or Bank/Pratt fields.",
+    "ownership": "Two inline States and one small Prepared result. Fixed setup and synchronous owning drains remain atomic; no public Pending compiler or measured CPU/time/physical-heap/stack improvement."
+  },
+  "sourceChecks": {
+    "root": {
+      "sourceFiles": 367,
+      "mirFunctions": 3923,
+      "lockUpdated": true
+    },
+    "engineMirror": {
+      "sourceFiles": 360,
+      "mirFunctions": 4538,
+      "locked": true
+    },
+    "engineClosure": 352
+  },
+  "engineVerification": {
+    "receipt": {
+      "path": "build/runtime-engine/20261113T154320017625Z/receipt.json",
+      "sha256": "fa188a2956e43fcabb6c9feae8921fb9da7c0c65896ccce9b81f198f7ac6d197"
+    },
+    "verifiedCommit": "afaab3ce31464561738ab056aefdcf7190e8a97b",
+    "inputCount": 367,
+    "allInputHashesMatchCommit": true,
+    "compilerOverrides": false,
+    "profiles": [
+      {
+        "profile": "development",
+        "artifact": {
+          "path": "build/runtime-engine/20261113T154320017625Z/development/runtime-engine.exe",
+          "sha256": "c224be1198abdfe4d11326716da0e25cd9f01f2a5a90edfa874f3a75d02b3062",
+          "bytes": 11759616,
+          "stackReserve": 1048576,
+          "stackCommit": 4096
+        },
+        "exit": 0,
+        "controlMetrics": {
+          "cases": 6,
+          "smallHeapBytes": 7872,
+          "maximumHeapBytes": 62976,
+          "ownerBytes": 736
+        },
+        "preparationMetrics": {
+          "cacheBytes": 2248,
+          "storedBytes": 24264,
+          "previousStoredBytes": 22016,
+          "retainedVecExtraBytes": 17984,
+          "capturePlanBytes": 900,
+          "previousCacheBytes": 1344,
+          "capturePlanVecExtraBytes": 7232
+        },
+        "arrayFillMetrics": {
+          "arrayWorkBytes": 360,
+          "cursorBytes": 1184,
+          "machineBytes": 1792,
+          "coreBytes": 172400,
+          "pendingVecExtraBytes": 2880,
+          "callWorkBytes": 536,
+          "callPendingVecExtraBytes": 4288,
+          "returnWorkBytes": 48,
+          "returnPendingVecExtraBytes": 384,
+          "combinedPendingVecExtraBytes": 7552
+        },
+        "liveHeapAllocationsAtExit": 0,
+        "assertions": "native Fairy and C, no parsed trace",
+        "objects": [
+          {
+            "path": "build/runtime-engine/20261113T154320017625Z/development/transport.obj",
+            "sha256": "4a5349663453f723ec0b0df501cc80f7aa25e6c9411e1a3e9aed8a867a10204b"
+          },
+          {
+            "path": "build/runtime-engine/20261113T154320017625Z/development/runtime.obj",
+            "sha256": "668e91fa8d6b6f0e78098734663422f8c3316f8fc3c22ee06725a7ef60051521"
+          },
+          {
+            "path": "build/runtime-engine/20261113T154320017625Z/development/abi_thread_identity.obj",
+            "sha256": "3f942d1d8a1ee34afcf3cf4c57b21e6331095baf8890ea71017ddac925d643ab"
+          },
+          {
+            "path": "build/runtime-engine/20261113T154320017625Z/development/input_reader.obj",
+            "sha256": "e68c976996d58287560bc092959fb6bee8b8a17210cf9ad05055989a03fa464a"
+          },
+          {
+            "path": "build/runtime-engine/20261113T154320017625Z/development/input_adoption.obj",
+            "sha256": "54ed0c27893082abfb34ec92783ce82c06953f82af0e147d3c90ee4ee215e965"
+          }
+        ]
+      },
+      {
+        "profile": "release",
+        "artifact": {
+          "path": "build/runtime-engine/20261113T154320017625Z/release/runtime-engine.exe",
+          "sha256": "64c0003f8092a37e5595b6062e8730fd743d895c87c3600663b6807debc4dd0f",
+          "bytes": 4256768,
+          "stackReserve": 1048576,
+          "stackCommit": 4096
+        },
+        "exit": 0,
+        "controlMetrics": {
+          "cases": 6,
+          "smallHeapBytes": 7872,
+          "maximumHeapBytes": 62976,
+          "ownerBytes": 736
+        },
+        "preparationMetrics": {
+          "cacheBytes": 2248,
+          "storedBytes": 24264,
+          "previousStoredBytes": 22016,
+          "retainedVecExtraBytes": 17984,
+          "capturePlanBytes": 900,
+          "previousCacheBytes": 1344,
+          "capturePlanVecExtraBytes": 7232
+        },
+        "arrayFillMetrics": {
+          "arrayWorkBytes": 360,
+          "cursorBytes": 1184,
+          "machineBytes": 1792,
+          "coreBytes": 172400,
+          "pendingVecExtraBytes": 2880,
+          "callWorkBytes": 536,
+          "callPendingVecExtraBytes": 4288,
+          "returnWorkBytes": 48,
+          "returnPendingVecExtraBytes": 384,
+          "combinedPendingVecExtraBytes": 7552
+        },
+        "liveHeapAllocationsAtExit": 0,
+        "assertions": "native Fairy and C, no parsed trace",
+        "objects": [
+          {
+            "path": "build/runtime-engine/20261113T154320017625Z/release/transport.obj",
+            "sha256": "7eb7ea6c702606552913f8dfb9a6310cb62a4f01fd28e28780e4f0e0c064552d"
+          },
+          {
+            "path": "build/runtime-engine/20261113T154320017625Z/release/runtime.obj",
+            "sha256": "57ac8bb2adc87e7acb02e7f684f3806c3f667390cc06abe49abebc013ee2524f"
+          },
+          {
+            "path": "build/runtime-engine/20261113T154320017625Z/release/abi_thread_identity.obj",
+            "sha256": "9e53623faea8c79de189d2375f63e3024270ab1b06cec140d5ee1bcec0aa771f"
+          },
+          {
+            "path": "build/runtime-engine/20261113T154320017625Z/release/input_reader.obj",
+            "sha256": "c8b62e6c211c8564e05dfcd916025ae6f92e99a59d295faa3d721df0bbbc1c93"
+          },
+          {
+            "path": "build/runtime-engine/20261113T154320017625Z/release/input_adoption.obj",
+            "sha256": "f58496b9ba41803f45c75483aec482e6cdb6dff7539c001c3e9f877a97b19a40"
+          }
+        ]
+      }
+    ]
+  },
+  "transportReview": {
+    "receipt": {
+      "path": "build/declaration-header-review/audit.json",
+      "sha256": "5c106a6d887d454ff84d58173e02a79f0131358ed935522dade5e66ea3466bb5"
+    },
+    "auditScript": {
+      "path": "build/declaration-header-review/audit.py",
+      "sha256": "9eef8ea49d76cfddf6dd05f20843e4f6175cb9b81b71565c8ab9696d0489e3c5"
+    },
+    "status": "passed",
+    "typedBindings": 36,
+    "equivalentDeclarations": 36,
+    "rawEquivalentReviewedLayouts": 51,
+    "beforeDefinitions": 530,
+    "afterDefinitions": 533,
+    "beforeArrays": 116,
+    "afterArrays": 116,
+    "addedDefinitionShapes": 3,
+    "addedTypes": [
+      "fy_struct_103",
+      "fy_struct_104",
+      "fy_struct_106"
+    ],
+    "allPriorUniquePhysicalShapesRetained": true,
+    "retainedPriorDefinitions": 530,
+    "allowedChange": "Two private declaration header States and one small Prepared result only. All 530 previous recursive definitions and ABI roots remain unchanged without masking; SDK scratch widths and caps remain unchanged.",
+    "candidateSha256": "3ba50df8504a9616be0baf8c40620d494320f0f66a862b5b4ba3ab4f4da3512c",
+    "sourceInputs": 352
+  },
+  "workingReservation": {
+    "loweringBytes": 66630144,
+    "ordinaryWorkingBytes": 66804544,
+    "inputWorkingBytes": 66804928,
+    "additionalHeapClasses": false,
+    "scratch": {
+      "bank": {
+        "type": "fy_struct_140",
+        "bytes": 37792,
+        "slotBound": 40000
+      },
+      "expression": {
+        "type": "fy_struct_142",
+        "bytes": 5736,
+        "slotBound": 6000
+      },
+      "conditional": {
+        "type": "fy_struct_101",
+        "bytes": 14720,
+        "slotBound": 15000
+      }
+    },
+    "conservativeReservationNotPhysicalPeak": true
+  },
+  "productionSources": {
+    "count": 359,
+    "allLF": true,
+    "allHashesMatchFinalProfiles": true
+  },
+  "limitations": [
+    "Only named ordinary source declaration headers for <=4096-byte lowering inputs; complete transitive evaluation, advisory static/reference routing, typed/value source walks, catalogs/origins, entry/final metadata and unrelated implicit cleanup remain outside these bounds",
+    "Oversized helper calls retain raw synchronous compatibility; no global source/metadata bound or cross-invocation cache",
+    "Private synchronous drains and fixed inline setup remain atomic; no public Pending compiler or R02-R05 closure",
+    "Standalone28-group memory, broad publicCLI and full release gates were not rerun; final owning Engine retains allocator/compile/retention fixtures",
+    "Local only; no push, release, deploy or version bump; broader completion remains paused"
+  ]
+}

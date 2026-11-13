@@ -839,3 +839,13 @@ errors, partial IR and pre-RHS destination capture remain unchanged. The
 [evidence](../evidence/compiler-destination-context-windows-20261113.json) records
 focused snapshots, the initial combined O2 build limit and final Engine proof.
 Other named exclusions, including typed/value and entry/final metadata, remain.
+
+## Declaration headers (2026-11-14)
+
+The [declaration header checkpoint](compiler-declaration-header.md) composes
+bounded binder lookup, token and annotation cursors for inferred, typed/array,
+record, slice and static headers. Semantic binder preparation and record layout
+checks are explicit children; lexical publication still follows initialization.
+The [evidence](../evidence/compiler-declaration-header-windows-20261114.json)
+records raw token/error comparisons, focused snapshots and final owning Engine
+integration. Other routing/walker/catalog/final-metadata exclusions remain.

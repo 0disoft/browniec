@@ -1,51 +1,53 @@
-- Latest assignment destination checkpoint (2026-11-13):
-  [destination contexts](docs/engineering/compiler-destination-context.md).
-  `destination_record_work` reuses layout/metadata/copy/range cursors to prepare
-  scalar field and aggregate nominal destinations. Scalar SELECT/old-value
-  READ/STORE share the staged shape adapter and keep kind-3 source diagnostics;
-  aggregate destinations keep their original layout-only proof and kind-5
-  diagnostics, without extra checks on unrelated binding rows. Operand checks
-  precede layout scans; nominal walks keep internal 128-leaf support and <=16
-  visits per child stage. Fixed child State scratch avoids nested borrow conflicts
-  without cloning a whole layout plan; its width is reviewed in the evidence.
-  `destination_place_work` validates the pending mask, inspects one free-ID bit,
-  requests record metadata explicitly, emits one SELECT and publishes the pending
-  bit in separate stages. All five ordinary source place kinds are covered.
-  Pending advances do not charge/mutate; resume consumes each child result once.
-  Owning adapters finish before RHS evaluation. No new binding/owner/register,
-  SDK heap class or Bank/Pratt field was added. Both States are inline; fixed
-  setup and synchronous drains remain atomic, with logical allowance 4096.
+- Latest declaration header checkpoint (2026-11-14):
+  [declaration headers](docs/engineering/compiler-declaration-header.md).
+  `declaration_name_work` stages binder validation, first-match lookup by one row
+  or <=64 spelling bytes, duplicate-before-capacity checks, name and equals tokens.
+  Advisory inference lookahead uses a private cursor; failures leave the caller's
+  lexer unchanged. `declaration_header_work` composes annotation, token and binder
+  children for ordinary scalar/wrapper/array, record, slice and static byte/text
+  headers. Array length/context errors and distinct reference/static grammar
+  retain their raw offsets and precedence. Record layout/size validation is an
+  explicit child before consuming the type token; resume consumes it once.
+  Semantic declarations issue explicit header child3 after annotation. Checked
+  spans resume without growing Semantic State; initializer/type/terminator checks
+  still finish before lexical publication. No new owner, binding or IR is emitted
+  by header preparation. Pending/denied/completed advances do not mutate/replay.
+  Both States are inline, plus one small Prepared result. No SDK heap class or
+  Bank/Pratt/Semantic field was added. Allowance remains 4096; fixed setup and
+  synchronous drains remain atomic. Oversized helper calls (>4096 source bytes)
+  retain raw compatibility paths outside this bounded lowering profile.
   Lowering remains 66,630,144 bytes; ordinary/input working reservations remain
   66,804,544/66,804,928 bytes, conservative reservations rather than physical peaks.
   Scratch widths remain 37792/5736/14720 against 40000/6000/15000 slot caps.
-  Implementation: `ee9f3f0` record metadata, `4d003b3` isolated checks,
-  `a2c1179` place selection/publication, `11e5330` scalar READ/STORE shapes.
-  Isolated record snapshot passes three groups in development/O2; final snapshot
-  passes nine groups in development/O2, with every receipt input matching its
-  named commit. Earlier combined six-group and parent eight-group development
-  snapshots also pass. The combined six-group O2 attempt hit the pinned compiler's
-  default 60-second MSVC build limit; it is recorded as incomplete, never a pass.
-  No compiler/optimization/stack/timeout override. Tests cover raw SELECT/READ/
-  STORE bytes/errors, pending masks, child waiting, delayed publication, full
-  slots, late IR exhaustion, 128 leaves and >16-visit nominal walks. Ordinary
-  mixed array/slice/record assignments and returned records verify/run to 42;
-  CALL depth 32/33 retains default-stack diagnostics.
-  Final Engine integration: `64f6cbe`, development/O2, zero SDK exit heap,
-  default 1MiB/4KiB stacks. All 365 Engine input hashes match that
-  commit; all 357 production modules are LF and match final focused inputs.
-  Root checks: 365 sources / 3902 MIR; Engine mirror: 358 / 4517.
+  Implementation: `9d04dc8` binder/lookahead, `0979d0e` composed headers.
+  Binder snapshot passes three groups in development/O2; final header snapshot
+  passes ten groups in development/O2. Every receipt input matches its named
+  commit. Tests cover raw lexer/error/span comparisons, typed/array/reference/
+  record forms, duplicate/capacity priority, invalid lengths/annotations/delimiters,
+  lexical errors, 200-byte spelling chunks, oversized-helper compatibility,
+  budget/child/resume/terminal guards and delayed name publication. Source
+  fixtures verify/run to 42, reject initializer self-reference, and retain wrapper
+  annotation plus 32 nested controls and exact CALL depth 32/33 diagnostics on
+  default stacks. Initial header native selection stopped at frontend rejection
+  of its oversized mutable-array fixture; buffer chunks fixed the fixture without
+  changing production. The incomplete attempt is never counted as a native pass.
+  No compiler/optimization/stack/timeout overrides.
+  Final Engine integration: `afaab3c`, development/O2, zero SDK exit heap,
+  default 1MiB/4KiB stacks. All 367 Engine inputs match that commit;
+  all 359 production modules are LF and match final focused inputs.
+  Root checks: 367 sources / 3923 MIR; Engine mirror: 360 / 4538.
   Transport keeps 36 equivalent declarations, 51 raw-equivalent reviewed layouts
-  and all 528 previous recursive definitions without masking. Two inline States
-  bring definitions to 530; arrays stay 116. Core/Cursor/Machine remain
+  and all 530 previous recursive definitions without masking. Two States and
+  Prepared bring definitions to 533; arrays stay 116. Core/Cursor/Machine remain
   172400/1184/1792 bytes; inline Engine stays 736 bytes.
-  See [destination evidence](docs/evidence/compiler-destination-context-windows-20261113.json).
-  Complete transitive evaluation, typed/value source walks, declaration headers,
-  catalogs/origins, entry/final metadata and unrelated implicit cleanup remain
-  outside these named bounds. Other metadata consumers and aggregate STORE
-  proofs retain their protocols. No public Pending compiler, measured CPU/time/
-  physical-heap/stack improvement or R02-R05 closure. Broader completion stays
-  paused. Local only; standalone 28-group memory, broad/public-CLI/full-release
-  gates were not rerun; final Engine retains its allocator/compile fixtures.
+  See [declaration evidence](docs/evidence/compiler-declaration-header-windows-20261114.json).
+  Complete transitive evaluation, advisory static/reference routing, typed/value
+  source walkers, catalogs/origins, entry/final metadata and unrelated implicit
+  cleanup remain outside these named header bounds. No public Pending compiler,
+  measured CPU/time/physical-heap/stack improvement or R02-R05 closure. Broader
+  completion remains paused. Local only; standalone 28-group memory,
+  broad/public-CLI/full-release gates were not rerun; final Engine retains its
+  owning allocator/compile fixtures.
 
 # Brownie C agent guidance
 
