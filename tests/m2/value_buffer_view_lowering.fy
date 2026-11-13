@@ -6,6 +6,9 @@ import value_source_bindings as bindings;
 import metadata_budget as budget;
 import lexer as lexer;
 import value_source as source;
+import value_buffer_copy_source as copies;
+import value_source_loops as looping;
+import std::vec as vec;
 import value_view_source_work as view_work;
 import value_view_source as views;
 import value_ir as values;
@@ -107,7 +110,9 @@ fn void compare_kind(ref u8[] input,bool success,u8 kind){var values::Program a=
     var values::Program p=empty();p.body.function_count=1;var bindings::State s=bindings::empty();var buffers::Finish w=buffers::finishing(95,buffers::none(),buffers::none(),0,0,64,7);var budget::State meter=budget::empty();var usize turns=0;
     while(!w.done){let u8 phase=w.phase;let usize count=p.body.count;assert(budget::reset(ref mut meter,7).is_ok && budget::admit(ref mut meter,1,7).is_ok);
         assert(buffers::advance_finish(ref mut p,ref mut s,ref mut w,ref mut meter).is_ok && phase==w.phase && p.body.count==count);
-        assert(budget::reset(ref mut meter,7).is_ok && buffers::advance_finish(ref mut p,ref mut s,ref mut w,ref mut meter).is_ok);turns+=1;assert(turns<10);}
+        assert(budget::reset(ref mut meter,7).is_ok && buffers::advance_finish(ref mut p,ref mut s,ref mut w,ref mut meter).is_ok && w.request==1);
+        assert(budget::reset(ref mut meter,7).is_ok && buffers::advance_finish(ref mut p,ref mut s,ref mut w,ref mut meter).is_ok && meter.last==0);
+        assert(buffers::service_finish(ref mut p,ref mut s,ref mut w).is_ok && !buffers::service_finish(ref mut p,ref mut s,ref mut w).is_ok);turns+=1;assert(turns<10);}
     assert(turns==3 && p.body.count==1 && s.next==1 && s.live==1);let usize total=meter.total;assert(buffers::advance_finish(ref mut p,ref mut s,ref mut w,ref mut meter).is_ok && total==meter.total && p.body.count==1);
 }
 
@@ -157,4 +162,29 @@ fn void lexical_same(ref bindings::State s){let Result<usize,errors::Error> a=vi
         while(i<depth){assert(bytes::append(ref mut input,b"bytes::read(ref b,").is_ok);i+=1;}assert(bytes::append(ref mut input,b"0").is_ok);i=0;
         while(i<depth){assert(bytes::append(ref mut input,b")").is_ok);if(i+1<depth){assert(bytes::append(ref mut input,b" as usize").is_ok);}i+=1;}
         assert(bytes::append(ref mut input,b"==0){return 42;}return 0;}").is_ok);compare_kind(bytes::view(ref input),depth==32,4);depth+=1;}
+}
+
+@test fn void copy_operations_keep_raw_ir_failure_prefixes_and_independent_owners(){
+    compare(b"module main;fn i32 main(){var b=bytes::empty();_ = bytes::push(ref mut b,42);let Result<Buffer,u8> r=bytes::copy(ref b);switch(r){case .ok(c):{return if(bytes::read(ref c,0)==42 && bytes::read(ref b,0)==42){42}else{0};}case .err(_):{return 0;}}}",true);
+    compare(b"module main;fn i32 main(){var b=bytes::empty();_ = bytes::push(ref mut b,42);let v=bytes::view(ref b);let r=bytes::copy(ref v[0..1]);switch(r){case .ok(c):{return if(bytes::read(ref c,0)==42 && v[0]==42){42}else{0};}case .err(_):{return 0;}}}",true);
+    compare(b"module main;fn i32 main(){let r=bytes::copy(ref bytes::empty());switch(r){case .ok(c):{return if(bytes::len(ref c)==0){42}else{0};}case .err(_):{return 0;}}}",true);
+    compare(b"module main;fn i32 main(){let usize r=bytes::copy(ref bytes::empty());return 42;}",false);
+    compare(b"module main;fn i32 main(){let r=bytes::copy(ref bytes::view(ref bytes::empty())[0..]);_ = r;return 42;}",true);
+    compare(b"module main;fn i32 main(){let r=bytes::copy(ref bytes::empty();return 42;}",false);
+    compare(b"module main;fn i32 main(){let b=bytes::empty();let r=bytes::copy(ref mut b);_ = r;return 42;}",false);
+}
+@test fn void copy_cursor_waits_and_publishes_each_child_only_once(){
+    var values::Program p=empty();p.body.function_count=1;var bindings::State ledger=bindings::empty();
+    let context::Value buffer=switch(buffers::empty(ref mut p,ref mut ledger,64,7)){case .ok(v):{v}case .err(_):{assert(false);context::nothing()}};
+    let buffers::Reference loan=switch(buffers::begin(ref p,ref mut ledger,buffer,false,7)){case .ok(v):{v}case .err(_):{assert(false);buffers::none()}};
+    var copies::Copy w=copies::copying(loan.slot,false,loan.temporary,64,7,loan,true);var budget::State meter=budget::empty();var vec::Vec<bindings::Snapshot> paths=vec::empty<bindings::Snapshot>();var looping::State flow=looping::empty();var usize services=0;
+    assert(!copies::prepared(ref w).is_ok);
+    while(!w.done){let u8 phase=w.phase;let usize count=p.body.count;assert(budget::reset(ref mut meter,7).is_ok && budget::admit(ref mut meter,1,7).is_ok);
+        assert(copies::advance(ref mut p,ref mut ledger,ref mut paths,ref mut flow,ref mut w,ref mut meter).is_ok && phase==w.phase && count==p.body.count);
+        assert(budget::reset(ref mut meter,7).is_ok && copies::advance(ref mut p,ref mut ledger,ref mut paths,ref mut flow,ref mut w,ref mut meter).is_ok && w.request==1 && count==p.body.count);
+        assert(budget::reset(ref mut meter,7).is_ok && copies::advance(ref mut p,ref mut ledger,ref mut paths,ref mut flow,ref mut w,ref mut meter).is_ok && meter.last==0 && phase==w.phase);
+        assert(copies::service(ref mut p,ref mut ledger,ref mut paths,ref mut flow,ref mut w).is_ok && !copies::service(ref mut p,ref mut ledger,ref mut paths,ref mut flow,ref mut w).is_ok);services+=1;assert(services<50);}
+    assert(services==37 && ledger.next==6 && ledger.live==2 && ledger.reads==0 && vec::len<bindings::Snapshot>(ref paths)==0 && copies::prepared(ref w).is_ok);
+    var usize i=0;var usize appended=0;while(i<p.body.count){if(p.body.code[i*8]==104){appended+=1;}i+=1;}assert(appended==1);
+    let usize total=meter.total;let usize count=p.body.count;assert(copies::advance(ref mut p,ref mut ledger,ref mut paths,ref mut flow,ref mut w,ref mut meter).is_ok && total==meter.total && count==p.body.count);
 }

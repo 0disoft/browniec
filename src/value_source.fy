@@ -76,7 +76,7 @@ fn Result<context::Value,errors::Error> buffer_other_raw(ref u8[] source,ref mut
     if(op==105 && view_source::reference(receiver)){
         let usize close=lexer::punctuation(source,s,41)?;
         let usize captured=view_source::capture(unit,state,receiver,at)?;
-        return buffer_copy::finish_view(unit,state,paths,flow,captured,exact,at);
+        return buffer_copy::finish_view_raw(unit,state,paths,flow,captured,exact,at);
     }
     let buffers::Reference first=buffers::begin(unit,state,receiver,writing,at)?;
     var buffers::Reference second=buffers::none();var usize index=0;var usize value=0;
@@ -104,7 +104,7 @@ fn Result<context::Value,errors::Error> buffer_other_raw(ref u8[] source,ref mut
         value=context::as_scalar(unit,state,argument,at)?;
     }
     let usize close=lexer::punctuation(source,s,41)?;
-    if(op==105){return buffer_copy::finish(unit,state,paths,flow,first,exact,at);}
+    if(op==105){return buffer_copy::finish_raw(unit,state,paths,flow,first,exact,at);}
     if(op==106){return view_source::begin_raw(unit,state,first,exact,at);}
     return buffers::finish_raw(unit,state,op,first,second,index,value,exact,at);
 }

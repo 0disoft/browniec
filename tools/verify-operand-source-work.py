@@ -173,5 +173,11 @@ if '--typed-view-only' in sys.argv:
                       'value_view_copy_source': ['selected_nested_empty_and_temporary_views_copy_to_independent_owners'],
                       'value_view_call_source': ['returned_selected_ranges_forward_multiple_inputs_and_survive_caller_capture_cleanup'],
                       'value_walk_lowering': ['typed_calls_keep_depth_32_and_33_on_default_stack_and_match_raw_prefixes']}
+if '--typed-buffer-copy-only' in sys.argv:
+    sys.argv.remove('--typed-buffer-copy-only')
+    bottom.DIRECTORY = 'build/operand-typed-buffer-copy'
+    bottom.MODULES = {'value_buffer_view_lowering': ['copy_operations_keep_raw_ir_failure_prefixes_and_independent_owners', 'copy_cursor_waits_and_publishes_each_child_only_once', 'buffer_finish_separates_children_and_completion_is_inert', 'view_index_cursor_captures_before_endpoints_and_waits_once', 'special_buffer_call_depth_32_and_33_match_raw_on_default_stack'],
+                      'value_buffer_copy': ['copy_results_compose_with_switch_propagation_forward_calls_and_explicit_handling'],
+                      'value_view_copy_source': ['selected_nested_empty_and_temporary_views_copy_to_independent_owners', 'copied_results_compose_with_return_propagation_loops_and_early_endpoints']}
 if __name__ == '__main__':
     bottom.main()
