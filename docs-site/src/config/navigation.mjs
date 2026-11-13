@@ -26,10 +26,29 @@ export const pages = {
 		link: '/start/installation/',
 	}),
 	firstProgram: page({ label: '첫 프로그램', en: 'First Program', link: '/start/first-program/' }),
-	languageBasics: page({ label: '언어 기초', en: 'Language Basics', link: '/language/basics/' }),
+	languageBasics: page({
+		label: '1. 변수, 타입, 연산자와 함수',
+		en: '1. Variables, Types, and Functions',
+		link: '/language/basics/',
+	}),
+	controlFlowAndSwitch: page({
+		label: '2. 조건문, 반복문, switch',
+		en: '2. Control Flow and Switch',
+		link: '/language/control-flow-and-switch/',
+	}),
+	structsAndErrorHandling: page({
+		label: '3. 구조체, Option/Result, ?',
+		en: '3. Structs, Option/Result, and ?',
+		link: '/language/structs-and-error-handling/',
+	}),
+	arraysSlicesAndUtf8: page({
+		label: '4. 배열, 슬라이스, UTF-8 리터럴',
+		en: '4. Arrays, Slices, and UTF-8',
+		link: '/language/arrays-slices-and-utf8/',
+	}),
 	memoryAndResources: page({
-		label: '메모리, 배열과 빌림',
-		en: 'Memory, Arrays, and Borrows',
+		label: '5. 빌림(ref), 재빌림과 수명',
+		en: '5. Borrows, Reborrowing, and Lifetimes',
 		link: '/language/memory-and-resources/',
 	}),
 	cliExamples: page({ label: '공개 CLI 예제', en: 'Public CLI Examples', link: '/examples/cli-examples/' }),
@@ -63,7 +82,13 @@ export const sidebarSections = [
 	group({
 		label: '언어 배우기',
 		en: 'Learn Language',
-		items: [pages.languageBasics, pages.memoryAndResources],
+		items: [
+			pages.languageBasics,
+			pages.controlFlowAndSwitch,
+			pages.structsAndErrorHandling,
+			pages.arraysSlicesAndUtf8,
+			pages.memoryAndResources,
+		],
 	}),
 	group({
 		label: '예제',

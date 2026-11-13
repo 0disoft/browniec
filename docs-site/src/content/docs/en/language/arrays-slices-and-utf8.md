@@ -1,0 +1,79 @@
+---
+title: 4. Arrays, Slices, and UTF-8
+description: Learn fixed arrays T[N], .len, mutable/shared slice views ref T[] / ref mut T[], text::valid_utf8, and byte/text literals in Brownie C.
+---
+
+Because Brownie C focuses on rule evaluation and byte processing, arrays and slice views are central to day-to-day code.
+
+## 1. Fixed Arrays (`T[N]`) and `.len`
+
+Declare fixed-size arrays as `Type[Count]`, using either explicit elements `[10, 20, 12]` or repeat syntax `[0; 4]`:
+
+```c
+module main;
+
+fn i32 main() {
+    var i32[4] values = [0; 4];
+    let i32[3] fixed = [10, 20, 12];
+
+    for (var usize i = 0; i < fixed.len; i = i + 1) {
+        values[i] = fixed[i];
+    }
+    return values[0] + values[1] + values[2]; // 42
+}
+```
+
+- `.len` returns the array length as `usize`.
+- Out-of-bounds reads or writes trap cleanly with `bounds` instead of reading arbitrary memory.
+
+## 2. Slice Views (`ref T[]`, `ref mut T[]`)
+
+Borrow all or part of an array without copying it into a new array:
+
+```c
+fn i32 update(ref mut i32[] selected) {
+    selected[0] = 42;
+    return selected[0];
+}
+
+fn i32 main() {
+    var i32[4] values = [0; 4];
+    let ref mut i32[] parent = ref mut values[1..4];   // elements 1, 2, 3
+    return update(ref mut parent[1..2]);               // writes values[2]
+}
+```
+
+- `ref T[]`: Read-only slice view.
+- `ref mut T[]`: Exclusive mutable slice view.
+- Half-open ranges support `arr[start..end]`, `arr[..end]`, and `arr[start..]`.
+
+## 3. UTF-8 Validation and Byte/Text Literals
+
+Check whether a byte array holds valid UTF-8 with built-in `text::valid_utf8`:
+
+```c
+module main;
+
+fn i32 main() {
+    var u8[3] bytes = [128; 3];
+    bytes[0] = 234;
+    bytes[1] = 176;
+    if (text::valid_utf8(bytes)) { return 42; }
+    return 0;
+}
+```
+
+You can also bind static byte (`b"..."`) and text (`"..."`) literals directly as immutable `ref u8[]` or `ref str` views:
+
+```c
+let ref u8[] sig = b"OK";
+let i32 first = sig[0] as i32;   // 79 ('O')
+```
+
+- Programs using byte/text literals enter the retained-reference profile (`brownie.m2-reference/1`), so pass a larger budget such as `--fuel 1000000` (the default `256` is too small for entry/leave costs).
+- Use `text::bytes(...)` to obtain bytes from a text view and `text::equal(...)` to compare two immutable byte views.
+
+---
+
+- Previous: [3. Structs, Option/Result, and ?](../structs-and-error-handling/)
+- Next: [5. Borrows, Reborrowing, and Lifetimes](../memory-and-resources/)

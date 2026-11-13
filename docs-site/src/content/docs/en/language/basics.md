@@ -1,53 +1,74 @@
 ---
-title: Language Basics
-description: Learn Brownie C bindings, supported types, functions, control flow, Option/Result, and excluded features.
+title: 1. Variables, Types, and Functions
+description: Learn module main, let vs var bindings, scalar and bool types, bitwise ops, explicit as casts, and functions in Brownie C.
 ---
 
-Brownie C borrows Fairy C's clean C-shaped syntax while keeping the language small enough to compile and check quickly inside a single `.brc` file (up to 4096 UTF-8 bytes).
+Brownie C shares Fairy C's clean C-like syntax while keeping the language surface focused on deterministic, verifiable VM execution.
 
-Every public CLI program starts with `module main;` and a zero-argument `fn i32 main()`.
+## 1. Module Header and Bindings (`let`, `var`)
 
-## 1. Bindings and Types
-
-Use `let` for immutable variables and `var` for mutable ones. On supported initializers, you can let the compiler infer the type (`let x = 10;`).
-
-- **Scalars**: `i32`, `u32`, `i64`, `u64`, `isize`, `usize`, `bool`.
-- **Fixed arrays and records**: Fixed-length `T[N]` (`[21; 2]` or element lists) and plain `struct`s with copyable fields.
-- **Optional & error values**: `Option<T>` (`.some(v)` / `.none`) and `Result<T, E>` (`.ok(v)` / `.err(e)`).
+Every `.brc` source file begins with `module main;`. Use `let` for bindings that stay fixed and `var` for variables you reassign.
 
 ```c
 module main;
 
-struct Point { i32 x; i32 y; }
-
-fn Option<i32> check_positive(i32 value) {
-    if (value > 0) { return .some(value); }
-    return .none;
+fn i32 main() {
+    let i32 base = 40;      // cannot be reassigned
+    var i32 bonus = 1;      // mutable local variable
+    bonus = bonus + 1;
+    return base + bonus;    // 42
 }
 ```
 
-## 2. Functions, Control Flow, and Checked Math
+Every variable must have an initializer, and the type can be omitted when clear from the initializer (`let x = 10;`).
 
-- **`if` and `switch`**: Work both as statements and as value-returning expressions when branches match types.
-- **Loops**: `while` and `for` with `break` and `continue`.
-- **`void` helpers & discards**: Helper functions can return `void`, and `_ = expr;` discards an expression cleanly.
-- **Checked arithmetic**: Integer overflow and divide-by-zero halt cleanly (`overflow`, `zero_divisor`) instead of silently wrapping.
+## 2. Supported Scalar Types and Explicit `as` Casts
 
-## 3. Working with `Option` and `Result`
+The public CLI supports integers and booleans (floating-point `f32`/`f64` are deliberately excluded so behavior stays identical across hosts):
 
-Use `?` to unwrap `.some` / `.ok` or return early on `.none` / `.err`, and `.is_ok` to inspect a `Result` without consuming it:
+| Type | Description | Common Uses |
+| --- | --- | --- |
+| `i32`, `i64` | Signed integers | General arithmetic, 64-bit values |
+| `u8`, `u32`, `usize` | Unsigned integers | Byte values (`u8`), array lengths & indexes (`usize`) |
+| `bool` | Boolean (`true`, `false`) | Conditions and flags |
+
+Different integer types never mix implicitly; use `as` for value-preserving widening casts:
 
 ```c
-fn Result<i32, bool> add(Result<i32, bool> left, Result<i32, bool> right) {
-    return .ok(left? + right?);
+let u8 byte_val = 21;
+let u32 wide = byte_val as u32;
+let usize count = wide as usize;
+let i64 big = byte_val as i64;
+```
+
+## 3. Operators and Runtime Safety Checks
+
+- **Arithmetic**: `+`, `-`, `*`, `/`, `%`. Overflow and division by zero stop safely (`overflow`, `zero_divisor`) instead of wrapping silently.
+- **Bitwise**: `&`, `|`, `^`, `~`, `<<`, `>>` on integer types (`u8`, `u32`, `i32`, etc.).
+- **Logical**: `&&`, `||`, `!` with short-circuit evaluation.
+
+```c
+let u8 flags = 21;
+let u8 selected = (flags & 31) << 1; // 42
+```
+
+## 4. Functions (`fn`), Recursion, and `_ = expr;`
+
+Declare functions with `fn ReturnType name(Params)` (supporting recursion), or `fn void` when no value is returned:
+
+```c
+fn i32 factorial(i32 n) {
+    if (n <= 1) { return 1; }
+    return n * factorial(n - 1);
+}
+
+fn void touch(ref mut i32 value) {
+    *value += 1;
 }
 ```
 
-## 4. What Is Intentionally Excluded
+To intentionally discard a non-`void` expression's result, acknowledge it with `_ = expr;`.
 
-To keep verification deterministic and self-contained, Brownie C omits:
+---
 
-- Floats (`f32`, `f64`)
-- User `resource` types, `enum` declarations, and user generics
-- Raw pointers (`ptr`), arbitrary C FFI, and dynamic library loading
-- Closures, threads, maps, regex, GC, and JIT
+Next: [2. Control Flow and Switch](../control-flow-and-switch/)
