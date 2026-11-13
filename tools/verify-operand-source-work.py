@@ -122,5 +122,12 @@ if '--typed-probe-only' in sys.argv:
     sys.argv.remove('--typed-probe-only')
     bottom.DIRECTORY = 'build/operand-typed-probe'
     bottom.MODULES = {'value_probe_lowering': None}
+if '--typed-walk-only' in sys.argv:
+    sys.argv.remove('--typed-walk-only')
+    bottom.DIRECTORY = 'build/operand-typed-walk'
+    bottom.MODULES = {'value_walk_lowering': None, 'value_probe_lowering': None,
+                      'value_source_control': ['admitted_32_deep_conditionals_execute_and_33_reject_without_native_stack_override'],
+                      'value_bottom_source': ['nested_bottom_tails_and_else_if_suffixes_compose', 'all_terminal_loop_value_arms_retain_break_continue_and_outer_mutations'],
+                      'value_source_loops_source': ['classic_for_headers_post_transfers_nested_loops_and_terminal_value_arms_execute']}
 if __name__ == '__main__':
     bottom.main()
