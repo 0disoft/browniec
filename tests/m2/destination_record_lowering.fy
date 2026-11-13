@@ -54,3 +54,15 @@ fn void compare(ir::Program p,u8 kind,usize place,usize root,usize nominal,usize
         if(w.copy.range.visits>=visits){assert(w.copy.range.visits-visits<=16);}if(w.copy.range.visits>maximum){maximum=w.copy.range.visits;}turns+=1;}
     assert(maximum>16 && p.count==0 && work::prepared(ref w).is_ok);
 }
+
+@test fn void scalar_old_value_and_store_recheck_metadata_with_raw_prefixes(){
+    var u8 operation=0;while(operation<2){var usize mode=0;while(mode<11){var ir::Program a=fixture();a.registers=1;a.types[0]=2;
+        var usize place=0;var usize ordinal=0;var usize value=0;
+        if(mode==1){place=16;}if(mode==2){ordinal=128;}if(mode==3){a.records.layouts.types[31]=2;}
+        if(mode==4){a.registers=128;}if(mode==5){a.count=256;}if(mode==6){a.records.mutable[0]=false;}
+        if(mode==7){value=128;}if(mode==8){a.slots[0]=true;}if(mode==9){a.records.records[15]=1;}if(mode==10){a.function_count=0;}
+        var ir::Program b=a;
+        let Result<usize,errors::Error> x=if(operation==0){scalar::read_raw(ref mut a,place,0,ordinal,73)}else{scalar::store_raw(ref mut a,place,0,ordinal,value,73)};
+        let Result<usize,errors::Error> y=if(operation==0){scalar::read(ref mut b,place,0,ordinal,73)}else{scalar::store(ref mut b,place,0,ordinal,value,73)};
+        result(x,y);same(ref a,ref b);mode+=1;}operation+=1;}
+}
