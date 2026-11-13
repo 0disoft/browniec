@@ -1,51 +1,51 @@
-- Latest record/copy metadata checkpoint (2026-11-13):
-  [record/copy source metadata](docs/engineering/compiler-record-copy-metadata.md).
-  `record_leaf_source_work` stages one DFS visit, preserving source limits of
-  16 leaves, depth 16 and 4096 visits. `record_field_source_work` reuses bounded
-  declaration location/scoped cursor children and compares <=64 spelling bytes.
-  `record_path_source_work` stages sibling counts, selected hops and lookahead,
-  retaining distinct path/project ordinal checks, double-dot cursor behavior
-  and diagnostic offsets. Nominal lookup and declaration size checks reuse
-  record_location_work/struct_layout_work with the original error mapping.
-  `record_initializer_source_work` stages field/constructor lookup, closing
-  tokens and caller-owned initializer mutations at their original commit points.
-  `record_read_source_work` authenticates/flattens the entire catalog before
-  owner/leaf checks, SREAD and tag assignment. Catalog errors remain kind 5 at
-  offset 0 before invalid-operand errors; internal reads retain 128-leaf support.
-  Parent aggregate_copy_source_work delegates explicit source-count/read child
-  requests instead of charging a whole catalog scan as one copy transition.
-  Pending advances do not charge/mutate; resumes consume each child result once.
-  All five new states are inline; the allowance remains 4096. No SDK heap class
-  or Bank/Pratt field was added. Lowering remains 66,630,144 bytes; ordinary/input
-  working reservations remain 66,804,544/66,804,928 bytes, conservative rather
-  than physical peaks. Scratch widths remain 37792/5736/14720 against
-  40000/6000/15000 slot caps.
-  Implementation commits: `0bd5a6d` (source metadata), `5d28a39`
-  (initializer/read metadata), `f3d5a70` (explicit parent read requests).
-  Source snapshot passes seven groups in development/O2; intermediate copy
-  snapshot passes eleven development groups; final copy snapshot passes twelve
-  groups in development/O2. Every receipt input matches its named commit, with
-  no compiler/stack/timeout overrides. Tests compare raw IR, tokens, initializer
-  mutation/error prefixes, cycles/depth/leaf limits, 200-byte scoped field names,
-  budget denial, publication and terminal guards, plus CALL depth 32/33.
-  Final Engine integration: `3bde222`, development/O2, zero SDK exit
-  heap and default 1MiB/4KiB stacks. All 363 Engine input hashes match
-  that commit; all 355 production modules are LF and match final copy inputs.
-  Root checks: 363 sources / 3886 MIR; Engine mirror: 356 /
-  4501. Transport keeps 36 equivalent declarations, 51 raw-equivalent
-  reviewed layouts and all 523 retained recursive definitions without masking.
-  The obsolete emitted struct_source::Location disappears; five new inline
-  State shapes bring definitions from 524 to 528. Arrays stay 116.
-  Core/Cursor/Machine remain 172400/1184/1792 bytes; inline Engine stays 736.
-  See [record/copy evidence](docs/evidence/compiler-record-copy-metadata-windows-20261113.json).
-  Complete transitive record/group/static evaluation, general destination-context
-  preparation, typed/value walkers, catalogs/origins, entry/final metadata and
-  unrelated implicit cleanup remain outside these named bounds. Other general
-  struct_meta::prepare callers retain their protocols. Adapters still drain
-  synchronously; no public Pending compiler, measured CPU/time/physical-heap/
-  stack improvement or R02-R05 closure. Broader completion remains paused.
-  Local only; standalone 28-group memory, broad/public-CLI/full-release gates
-  were not rerun; final Engine retains its owning allocator/compile fixtures.
+- Latest assignment destination checkpoint (2026-11-13):
+  [destination contexts](docs/engineering/compiler-destination-context.md).
+  `destination_record_work` reuses layout/metadata/copy/range cursors to prepare
+  scalar field and aggregate nominal destinations. Scalar SELECT/old-value
+  READ/STORE share the staged shape adapter and keep kind-3 source diagnostics;
+  aggregate destinations keep their original layout-only proof and kind-5
+  diagnostics, without extra checks on unrelated binding rows. Operand checks
+  precede layout scans; nominal walks keep internal 128-leaf support and <=16
+  visits per child stage. Fixed child State scratch avoids nested borrow conflicts
+  without cloning a whole layout plan; its width is reviewed in the evidence.
+  `destination_place_work` validates the pending mask, inspects one free-ID bit,
+  requests record metadata explicitly, emits one SELECT and publishes the pending
+  bit in separate stages. All five ordinary source place kinds are covered.
+  Pending advances do not charge/mutate; resume consumes each child result once.
+  Owning adapters finish before RHS evaluation. No new binding/owner/register,
+  SDK heap class or Bank/Pratt field was added. Both States are inline; fixed
+  setup and synchronous drains remain atomic, with logical allowance 4096.
+  Lowering remains 66,630,144 bytes; ordinary/input working reservations remain
+  66,804,544/66,804,928 bytes, conservative reservations rather than physical peaks.
+  Scratch widths remain 37792/5736/14720 against 40000/6000/15000 slot caps.
+  Implementation: `ee9f3f0` record metadata, `4d003b3` isolated checks,
+  `a2c1179` place selection/publication, `11e5330` scalar READ/STORE shapes.
+  Isolated record snapshot passes three groups in development/O2; final snapshot
+  passes nine groups in development/O2, with every receipt input matching its
+  named commit. Earlier combined six-group and parent eight-group development
+  snapshots also pass. The combined six-group O2 attempt hit the pinned compiler's
+  default 60-second MSVC build limit; it is recorded as incomplete, never a pass.
+  No compiler/optimization/stack/timeout override. Tests cover raw SELECT/READ/
+  STORE bytes/errors, pending masks, child waiting, delayed publication, full
+  slots, late IR exhaustion, 128 leaves and >16-visit nominal walks. Ordinary
+  mixed array/slice/record assignments and returned records verify/run to 42;
+  CALL depth 32/33 retains default-stack diagnostics.
+  Final Engine integration: `64f6cbe`, development/O2, zero SDK exit heap,
+  default 1MiB/4KiB stacks. All 365 Engine input hashes match that
+  commit; all 357 production modules are LF and match final focused inputs.
+  Root checks: 365 sources / 3902 MIR; Engine mirror: 358 / 4517.
+  Transport keeps 36 equivalent declarations, 51 raw-equivalent reviewed layouts
+  and all 528 previous recursive definitions without masking. Two inline States
+  bring definitions to 530; arrays stay 116. Core/Cursor/Machine remain
+  172400/1184/1792 bytes; inline Engine stays 736 bytes.
+  See [destination evidence](docs/evidence/compiler-destination-context-windows-20261113.json).
+  Complete transitive evaluation, typed/value source walks, declaration headers,
+  catalogs/origins, entry/final metadata and unrelated implicit cleanup remain
+  outside these named bounds. Other metadata consumers and aggregate STORE
+  proofs retain their protocols. No public Pending compiler, measured CPU/time/
+  physical-heap/stack improvement or R02-R05 closure. Broader completion stays
+  paused. Local only; standalone 28-group memory, broad/public-CLI/full-release
+  gates were not rerun; final Engine retains its allocator/compile fixtures.
 
 # Brownie C agent guidance
 

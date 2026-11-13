@@ -828,3 +828,14 @@ limits. The [evidence](../evidence/compiler-record-copy-metadata-windows-2026111
 records focused development/O2 checks and final owning Engine integration.
 These named metadata loops supersede the preceding checkpoint's exclusion;
 complete transitive evaluation and other remaining work stay outside the bound.
+
+## Assignment destination contexts (2026-11-13)
+
+The [destination context checkpoint](compiler-destination-context.md) stages
+record shape/range preparation, first-free place selection, explicit metadata
+children, SELECT emission and pending publication for ordinary source kinds 0..4.
+Scalar record SELECT/READ/STORE share the bounded metadata adapter. Existing
+errors, partial IR and pre-RHS destination capture remain unchanged. The
+[evidence](../evidence/compiler-destination-context-windows-20261113.json) records
+focused snapshots, the initial combined O2 build limit and final Engine proof.
+Other named exclusions, including typed/value and entry/final metadata, remain.

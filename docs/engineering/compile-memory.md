@@ -120,3 +120,9 @@ existing bounded layout/flattening work with inline source cursors. It adds no
 SDK heap class, Bank/Pratt field or working reservation. Its evidence records
 focused source/copy checks and final owning Engine allocator/compile fixtures;
 the standalone 28-group memory gate was not rerun.
+
+The [assignment destination checkpoint](compiler-destination-context.md) adds two
+inline States, reusing existing metadata and nominal range/copy cursors without
+new SDK heap classes or Bank/Pratt fields. Working reservations and scratch slot
+caps are unchanged. Its evidence records final owning Engine allocator/compile
+fixtures; it does not rerun the standalone 28-group memory gate.
