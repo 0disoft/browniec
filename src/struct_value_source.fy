@@ -13,6 +13,7 @@ import struct_layout_work as layout_work;
 import record_leaf_source_work as leaf_work;
 import record_field_source_work as field_work;
 import record_path_source_work as path_work;
+import record_initializer_source_work as initializer_work;
 
 // 144..159 are function-owned struct sites, disjoint from scalars and arrays.
 pub fn bool binding(ref locals::Table names, usize index) {
@@ -143,12 +144,12 @@ pub fn Result<Leaf, errors::Error> writable(ref u8[] source, ref mut lexer::Stat
 
 // Constructor syntax and bare-name copies are separate initializer forms.
 // Inspect the following token so a local sharing a type name stays unambiguous.
-pub fn Result<bool, errors::Error> constructor(ref u8[] source, ref mut lexer::State s, usize record,ref context::Table scope) {
+pub fn Result<bool, errors::Error> constructor_raw(ref u8[] source, ref mut lexer::State s, usize record,ref context::Table scope) {
     if ((s.kind!=2 && s.kind!=5)) { return .err(errors::make(3, s.begin)); }
     var lexer::State look = lexer::snapshot(s);
     let usize next = lexer::next(source, ref mut look)?;
     if (look.kind != 123) { return .ok(false); }
-    if (named(source, s,scope)? != record) { return .err(errors::make(3, s.begin)); }
+    if (named_raw(source, s,scope)? != record) { return .err(errors::make(3, s.begin)); }
     let usize name = lexer::next(source, s)?;
     let usize open = lexer::punctuation(source, s, 123)?;
     return .ok(true);
@@ -233,7 +234,7 @@ pub fn void consumed_shorthand(ref mut Initializer state) {
     state.is_shorthand = false; state.shorthand = lexer::empty();
 }
 // A completed scalar or child constructor advances exactly one enclosing field.
-pub fn Result<usize, errors::Error> advance(ref u8[] source, ref mut lexer::State s,
+pub fn Result<usize, errors::Error> advance_raw(ref u8[] source, ref mut lexer::State s,
     ref ir::Program p, ref mut Initializer state) {
     state.is_shorthand = false; state.shorthand = lexer::empty();
     let usize level = state.depth-1; state.fields[level] += 1;
@@ -244,7 +245,7 @@ pub fn Result<usize, errors::Error> advance(ref u8[] source, ref mut lexer::Stat
 }
 // Iteratively enter child constructors or close completed records. The caller
 // parses/records one scalar expression at a time in depth-first source order.
-pub fn Result<u8, errors::Error> next_leaf(ref u8[] source, ref mut lexer::State s,
+pub fn Result<u8, errors::Error> next_leaf_raw(ref u8[] source, ref mut lexer::State s,
     ref ir::Program p, ref mut Initializer state, usize at,ref context::Table scope) {
     while (state.depth > 0) {
         let usize level = state.depth-1; let usize record = state.records[level];
@@ -252,10 +253,10 @@ pub fn Result<u8, errors::Error> next_leaf(ref u8[] source, ref mut lexer::State
         if (selected >= p.records.layouts.fields[record] as usize) {
             if (s.kind == 44) { let usize comma = lexer::next(source, s)?; }
             let usize close = lexer::punctuation(source, s, 125)?; state.depth -= 1;
-            if (state.depth > 0) { let usize finished = advance(source,s,p,state)?; }
+            if (state.depth > 0) { let usize finished = advance_raw(source,s,p,state)?; }
         } else {
             let usize dot = lexer::punctuation(source,s,46)?;
-            let usize found = field(source,p,record,s.begin,s.end,scope)?;
+            let usize found = field_raw(source,p,record,s.begin,s.end,scope)?;
             if (s.kind != 2 || found != selected) { return .err(errors::make(3,s.begin)); }
             let lexer::State member = lexer::snapshot(s);
             let usize name = lexer::next(source,s)?;
@@ -273,8 +274,8 @@ pub fn Result<u8, errors::Error> next_leaf(ref u8[] source, ref mut lexer::State
             if (short) { state.shorthand = member; state.is_shorthand = true; return .ok(255); }
             if(s.kind==40){return .ok(255);}
             if(s.kind==2 || s.kind==5){var lexer::State value=lexer::snapshot(s);let usize next=lexer::next(source,ref mut value)?;
-                if(value.kind==123 && named(source,s,scope)?!=child){return .ok(255);}}
-            if (!constructor(source,s,child,scope)?) { return .ok(255); }
+                if(value.kind==123 && named_raw(source,s,scope)?!=child){return .ok(255);}}
+            if (!constructor_raw(source,s,child,scope)?) { return .ok(255); }
             if (state.depth >= 16) { return .err(errors::make(4,at)); }
             let usize depth = state.depth; state.records[depth] = child; state.fields[depth] = 0; state.depth += 1;
         }
@@ -484,4 +485,27 @@ pub fn Result<Leaf,errors::Error> project(ref u8[] source,ref ir::Program p,Leaf
     var lexer::State s=lexer::empty();var path_work::State w=path_work::begin_project(parent,begin,end);var budget::State meter=budget::empty();
     while(!w.done){let usize allowance=budget::reset(ref mut meter,begin)?;let bool done=path_work::advance(source,ref mut s,p,scope,ref mut w,ref mut meter)?;}
     return path_work::prepared(ref w);
+}
+
+pub fn Result<bool, errors::Error> constructor(ref u8[] source, ref mut lexer::State s, usize record,ref context::Table scope) {
+    if ((s.kind!=2 && s.kind!=5)) { return .err(errors::make(3, s.begin)); }
+    var lexer::State look = lexer::snapshot(s);
+    let usize next = lexer::next(source, ref mut look)?;
+    if (look.kind != 123) { return .ok(false); }
+    if (named(source, s,scope)? != record) { return .err(errors::make(3, s.begin)); }
+    let usize name = lexer::next(source, s)?;
+    let usize open = lexer::punctuation(source, s, 123)?;
+    return .ok(true);
+}
+pub fn Result<u8,errors::Error> next_leaf(ref u8[] source,ref mut lexer::State s,ref ir::Program p,
+    ref mut Initializer init,usize at,ref context::Table scope){
+    var initializer_work::State w=initializer_work::begin_next(at);var budget::State meter=budget::empty();
+    while(!w.done){let usize allowance=budget::reset(ref mut meter,at)?;
+        let bool done=initializer_work::advance(source,s,p,init,scope,ref mut w,ref mut meter)?;}return initializer_work::prepared(ref w);
+}
+pub fn Result<usize,errors::Error> advance(ref u8[] source,ref mut lexer::State s,ref ir::Program p,ref mut Initializer init){
+    let context::Table scope=context::empty();var initializer_work::State w=initializer_work::begin_advance();var budget::State meter=budget::empty();
+    while(!w.done){let usize allowance=budget::reset(ref mut meter,s.begin)?;
+        let bool done=initializer_work::advance(source,s,p,init,ref scope,ref mut w,ref mut meter)?;}
+    let u8 ready=initializer_work::prepared(ref w)?;return .ok(0);
 }

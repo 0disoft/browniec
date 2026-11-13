@@ -93,5 +93,11 @@ if '--record-metadata-only' in sys.argv:
     sys.argv.remove('--record-metadata-only')
     bottom.DIRECTORY = 'build/operand-record-metadata'
     bottom.MODULES = {'record_metadata_lowering': None, 'record_declaration_lowering': None, 'body_lowering': ['staged_record_field_evaluation_keeps_slot_order_shorthand_and_failures', 'staged_aggregate_copy_bodies_preserve_snapshots_and_owned_children']}
+if '--copy-metadata-only' in sys.argv:
+    sys.argv.remove('--copy-metadata-only')
+    bottom.DIRECTORY = 'build/operand-copy-metadata'
+    bottom.MODULES = {'record_copy_metadata_lowering': None, 'record_metadata_edges': None, 'initializer_metadata_lowering': None,
+                      'aggregate_copy_lowering': ['materialization_and_extraction_match_raw_failure_prefixes', 'child_staging_preserves_slots_delimiters_and_error_order'],
+                      'body_lowering': ['nested_call_depth_32_and_33_preserve_default_stack_and_raw_diagnostics']}
 if __name__ == '__main__':
     bottom.main()

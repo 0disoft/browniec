@@ -4,6 +4,8 @@ import errors as errors;
 import types as types;
 import array_meta as arrays;
 import struct_meta as records;
+import record_read_source_work as record_reads;
+import metadata_budget as metadata_budget;
 import std::num as num;
 
 // Private eight-byte instructions: op,dst,a,b,0,0,0,0. Scalar tags are in types.fy.
@@ -379,11 +381,17 @@ pub fn Result<usize, errors::Error> record_parameter(ref mut Program p, usize fu
 pub fn Result<usize, errors::Error> record_copy(ref mut Program p, usize dst, usize source, usize offset) {
     return raw(p, 42, dst, source, 0, offset);
 }
-pub fn Result<usize, errors::Error> record_read(ref mut Program p, usize id, usize leaf, usize offset) {
+pub fn Result<usize, errors::Error> record_read_raw(ref mut Program p, usize id, usize leaf, usize offset) {
     let records::Prepared shapes = records::prepare(ref p.records)?;
     if (id >= p.records.count || leaf >= shapes.leaves[id]) { return .err(errors::make(3, offset)); }
     let usize result = emit(p, 43, id, leaf, offset)?;
     p.types[result] = shapes.tags[id * 128 + leaf]; return .ok(result);
+}
+// Metadata preparation and emission remain private until a complete read.
+pub fn Result<usize,errors::Error> record_read(ref mut Program p,usize id,usize leaf,usize offset){
+    var record_reads::State w=record_reads::begin(id,leaf,offset);var metadata_budget::State meter=metadata_budget::empty();
+    while(!w.done){let usize allowance=metadata_budget::reset(ref mut meter,offset)?;
+        let bool done=record_reads::advance(p,ref mut w,ref mut meter)?;}return record_reads::prepared(ref w);
 }
 pub fn Result<usize, errors::Error> record_write(ref mut Program p, usize id, usize leaf, usize value, usize offset) {
     return raw(p, 44, id, leaf, value, offset);
