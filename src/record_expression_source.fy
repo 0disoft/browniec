@@ -6,6 +6,7 @@ import functions as functions;
 import ir as ir;
 import struct_value_source as records;
 import errors as errors;
+import aggregate_copy_source_work as copies;
 
 // Advisory only. Zero kind is a scalar/unrecognized expression; 1 constructor,
 // 2 named owner, 3 record CALL. No source classification grants IR authority.
@@ -68,7 +69,7 @@ pub fn Result<usize,errors::Error> scalar(ref mut ir::Program p,ref Value value,
     return .ok(result);
 }
 // Materialize only contexts requiring an independent complete record value.
-pub fn Result<usize,errors::Error> materialize(ref mut ir::Program p,usize function,ref Value value,bool mutable,usize at){
+pub fn Result<usize,errors::Error> materialize_raw(ref mut ir::Program p,usize function,ref Value value,bool mutable,usize at){
     if(value.tag!=0){return .err(errors::make(3,at));}
     if(value.id==16){let usize count=records::leaf_count(p,value.record,at)?;let usize first=p.registers;
         var usize i=0;while(i<count){let usize read=ir::emit(p,17,value.slots[value.ordinal+i],0,at)?;i+=1;}
@@ -79,13 +80,13 @@ pub fn Result<usize,errors::Error> materialize(ref mut ir::Program p,usize funct
         let usize id=ir::record_in(p,function,value.record,mutable,at)?;
         let usize copied=ir::record_copy(p,id,value.id,at)?;return .ok(id);}
     let records::Leaf leaf=records::Leaf{.ordinal=value.ordinal,.tag=0,.record=value.record};
-    return records::extract_part(p,function,value.id,leaf,mutable,at,at,value.owned);
+    return records::extract_part_raw(p,function,value.id,leaf,mutable,at,at,value.owned);
 }
 pub fn Result<usize,errors::Error> assign(ref mut ir::Program p,usize destination,records::Leaf target,ref Value value,usize at){
     if(destination>=p.records.count || !p.records.mutable[destination] || target.tag!=0 || value.tag!=0 || target.record!=value.record){return .err(errors::make(3,at));}
     let bool root=target.ordinal==0 && p.records.records[destination] as usize==target.record;
-    if(value.id==16){let usize count=records::leaf_count(p,value.record,at)?;let usize first=p.registers;
-        var usize i=0;while(i<count){let usize loaded=ir::emit(p,17,value.slots[value.ordinal+i],0,at)?;i+=1;}
+    if(value.id==16){var copies::State w=copies::begin(6,16,value.record,value.ordinal,0,0,false,false,at,at);
+        var usize[1] slots=[0];let usize first=records::copy_work(p,ref value.slots,ref mut slots,ref mut w)?;
         return if(root){ir::record_replace(p,destination,first,target.record,at)}else{ir::record_subreplace(p,destination,first,target.record,target.ordinal,at)};
     }
     let usize assigned=if(root && whole(p,value)){ir::record_assign(p,destination,value.id,at)?}
@@ -94,13 +95,13 @@ pub fn Result<usize,errors::Error> assign(ref mut ir::Program p,usize destinatio
 }
 // Unpublished constructor slots can feed a parent directly. They cannot be named
 // or changed by a later guest field expression, so no second staging copy exists.
-pub fn Result<usize,errors::Error> stage(ref u8[] source,ref mut lexer::State s,
+pub fn Result<usize,errors::Error> stage_raw(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref mut records::Initializer state,ref mut usize[] slots,usize first,ref Value value,usize at){
     if(state.depth==0 || value.tag!=0){return .err(errors::make(3,at));}
     let usize level=state.depth-1;let usize expected=p.records.layouts.types[state.records[level]*16+state.fields[level]] as usize;
     if(value.record!=expected){return .err(errors::make(3,at));}
     if(value.id!=16){let records::Leaf leaf=records::Leaf{.ordinal=value.ordinal,.tag=0,.record=value.record};
-        let usize count=records::stage_part(source,s,p,state,slots,first,value.id,leaf,at)?;
+        let usize count=records::stage_part_raw(source,s,p,state,slots,first,value.id,leaf,at)?;
         if(value.owned){let usize dropped=ir::record_drop(p,value.id,at)?;}return .ok(count);}
     if(s.kind!=44 && s.kind!=125){return .err(errors::make(2,s.begin));}
     let usize count=records::leaf_count(p,value.record,at)?;
@@ -112,4 +113,27 @@ pub fn Result<usize,errors::Error> stage(ref u8[] source,ref mut lexer::State s,
 pub fn Result<Plan,errors::Error> inspect(ref u8[] source,ref lexer::State s,ref ir::Program p,ref locals::Table names,ref functions::Table signatures){
     let probes::Plan plan=probes::inspect(source,*s,p,names,signatures,1)?;
     return .ok(Plan{.kind=plan.kind,.groups=plan.groups,.record=plan.record,.tag=plan.tag,.suffix=plan.suffix});
+}
+
+pub fn Result<usize,errors::Error> materialize(ref mut ir::Program p,usize function,ref Value value,bool mutable,usize at){
+    if(value.tag!=0){return .err(errors::make(3,at));}
+    if(value.id==16){var copies::State w=copies::begin(2,16,value.record,value.ordinal,0,function,mutable,false,at,at);
+        var usize[1] slots=[0];return records::copy_work(p,ref value.slots,ref mut slots,ref mut w);}
+    if(whole(p,value)){if(value.owned){return .ok(value.id);}
+        var copies::State w=copies::begin(4,value.id,value.record,0,0,function,mutable,false,at,at);return copies::clone(p,ref mut w);}
+    let records::Leaf leaf=records::Leaf{.ordinal=value.ordinal,.tag=0,.record=value.record};
+    return records::extract_part(p,function,value.id,leaf,mutable,at,at,value.owned);
+}
+pub fn Result<usize,errors::Error> stage(ref u8[] source,ref mut lexer::State s,ref mut ir::Program p,
+    ref mut records::Initializer state,ref mut usize[] slots,usize first,ref Value value,usize at){
+    if(state.depth==0 || value.tag!=0){return .err(errors::make(3,at));}
+    let usize level=state.depth-1;let usize expected=p.records.layouts.types[state.records[level]*16+state.fields[level]] as usize;
+    if(value.record!=expected){return .err(errors::make(3,at));}
+    if(value.id!=16){let records::Leaf leaf=records::Leaf{.ordinal=value.ordinal,.tag=0,.record=value.record};
+        let usize count=records::stage_part(source,s,p,state,slots,first,value.id,leaf,at)?;
+        if(value.owned){let usize dropped=ir::record_drop(p,value.id,at)?;}return .ok(count);}
+    if(s.kind!=44 && s.kind!=125){return .err(errors::make(2,s.begin));}
+    var copies::State w=copies::begin(3,16,value.record,value.ordinal,first,0,false,false,at,at);
+    let usize count=records::copy_work(p,ref value.slots,slots,ref mut w)?;
+    let usize advanced=records::advance(source,s,p,state)?;return .ok(count);
 }

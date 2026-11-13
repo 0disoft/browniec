@@ -437,3 +437,11 @@ fn void literal_compare(ref u8[] source,bool success){
     captured(b"module main;fn i32[1] make(i32 n){return [n;1];}fn i32 main(){let i32[1] a=make(true);return a[0];}",false);
     captured(b"module main;struct P{i32 x;}fn P make(i32 n){return P{.x=n};}fn i32 main(){return make(42,).x;}",false);
 }
+
+@test fn void staged_aggregate_copy_bodies_preserve_snapshots_and_owned_children(){
+    captured(b"module main;struct P{i32 x;}fn i32 take(P a,i32 n,P b){return a.x*10+n+b.x;}fn i32 main(){var P p=P{.x=2};return take(p,if(true){p.x=4;18}else{0},p);}",true);
+    captured(b"module main;struct I{i32 x;}struct P{I i;i32 y;}fn P make(){return P{.i=I{.x=20},.y=0};}fn i32 main(){let I i=make().i;return i.x+22;}",true);
+    captured(b"module main;struct I{i32 x;}struct P{I i;i32 y;}fn I make(){return I{.x=42};}fn i32 main(){let P p=P{.i=make(),.y=0};return p.i.x;}",true);
+    captured(b"module main;struct I{i32 x;}struct P{I i;i32 y;}fn i32 main(){let I i=I{.x=42};let P p=P{.i=(i),.y=0};return p.i.x;}",true);
+    captured(b"module main;struct I{i32 x;}struct P{I i;i32 y;}fn i32 main(){var P p=P{.i=I{.x=0},.y=0};p.i=(I{.x=42});return p.i.x;}",true);
+}

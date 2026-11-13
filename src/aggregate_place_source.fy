@@ -6,6 +6,7 @@ import locals as locals;
 import record_expression_source as expressions;
 import struct_value_source as records;
 import errors as errors;
+import aggregate_copy_source_work as copies;
 
 // Parser callers select into their lexical snapshot BEFORE evaluating RHS.
 // End the captured destination before releasing any anonymous result owner.
@@ -33,8 +34,10 @@ pub fn Result<usize,errors::Error> record(ref mut ir::Program p,ref mut locals::
     var usize stored=0;
     if(value.id==16){let usize count=records::leaf_count(p,value.record,at)?;
         if(value.ordinal>16 || count>16-value.ordinal){return .err(errors::make(4,at));}
-        let usize first=p.registers;var usize i=0;
-        while(i<count){let usize loaded=ir::emit(p,17,value.slots[value.ordinal+i],0,at)?;i+=1;}
+        var copies::State w=copies::begin(6,16,value.record,value.ordinal,0,0,false,false,at,at);
+        // Reuse the validated count rather than scanning metadata a second time.
+        w.count=count;w.phase=1;var usize[1] slots=[0];
+        let usize first=records::copy_work(p,ref value.slots,ref mut slots,ref mut w)?;
         stored=stores::replace_record(p,place,root,target.record,target.ordinal,first,at)?;
     }else{stored=stores::store_record(p,place,root,value.id,target.record,target.ordinal,value.ordinal,at)?;}
     let usize ended=places::end(p,names,place,at)?;

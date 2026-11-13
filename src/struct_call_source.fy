@@ -7,6 +7,7 @@ import errors as errors;
 import struct_value_source as values;
 import cells as cells;
 import std::num as num;
+import aggregate_copy_source_work as copies;
 
 // Reserve formals before any body so forward and mutual calls have stable sites.
 // Sites stay ordered by formal position within each owning function. Binding
@@ -69,8 +70,8 @@ pub fn Result<usize,errors::Error> capture_id(ref mut ir::Program p,ref mut loca
     var usize id=source;
     if(p.records.mutable[id]) {
         if(names.count>=64){return .err(errors::make(4,at));}
-        let usize destination=ir::record_in(p,names.function,record,false,at)?;
-        let usize copied=ir::record_copy(p,destination,id,at)?;
+        var copies::State w=copies::begin(4,id,record,0,0,names.function,false,false,at,at);
+        let usize destination=copies::clone(p,ref mut w)?;
         let usize anonymous=locals::declare(names,at,at,144+destination,false)?;
         id=destination;
     }

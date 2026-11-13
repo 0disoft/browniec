@@ -1,4 +1,5 @@
 module array_source;
+import aggregate_copy_source_work as copies;
 
 import lexer as lexer;
 import locals as locals;
@@ -75,7 +76,7 @@ pub fn u8 profile(ref ir::Program p) {
     }
     return if (p.arrays.count != 0) { 1 } else { 0 };
 }
-pub fn Result<usize, errors::Error> copy(ref mut ir::Program p, usize function, usize source, u8 tag, usize length, bool mutable, usize offset) {
+pub fn Result<usize, errors::Error> copy_raw(ref mut ir::Program p, usize function, usize source, u8 tag, usize length, bool mutable, usize offset) {
     if (source >= 16 || source >= p.arrays.count || p.arrays.elements[source] != tag ||
         p.arrays.lengths[source] != length || p.array_functions[source] as usize != function) { return .err(errors::make(3, offset)); }
     let usize id = ir::array_in(p, function, tag, length, mutable, offset)?;
@@ -134,4 +135,9 @@ pub fn Result<usize,errors::Error> release_at(ref locals::Table table,ref mut ir
     if(table.registers[i]>=160 && table.registers[i]<176){let usize closed=slice_cleanup::close(p,table.registers[i]-160,offset)?;return .ok(1);}
     if(table.registers[i]>=144 && table.registers[i]<160){let usize dropped=ir::record_drop(p,table.registers[i]-144,offset)?;return .ok(1);}
     return .ok(0);
+}
+
+pub fn Result<usize,errors::Error> copy(ref mut ir::Program p,usize function,usize source,u8 tag,usize length,bool mutable,usize offset){
+    var copies::State w=copies::begin(5,source,0,0,0,function,mutable,false,offset,offset);w.element=tag;w.length=length;
+    return copies::clone(p,ref mut w);
 }

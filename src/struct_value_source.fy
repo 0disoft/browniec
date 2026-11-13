@@ -6,6 +6,8 @@ import locals as locals;
 import ir as ir;
 import errors as errors;
 import source_context as context;
+import aggregate_copy_source_work as copies;
+import metadata_budget as budget;
 
 // 144..159 are function-owned struct sites, disjoint from scalars and arrays.
 pub fn bool binding(ref locals::Table names, usize index) {
@@ -300,7 +302,7 @@ pub fn Result<usize, errors::Error> stage_call_child(ref u8[] source,ref mut lex
 }
 // Snapshot a selected child into scalar staging slots before any later field
 // expression. Call results and visible child bindings share this leaf encoder.
-pub fn Result<usize, errors::Error> stage_part(ref u8[] source, ref mut lexer::State s,
+pub fn Result<usize, errors::Error> stage_part_raw(ref u8[] source, ref mut lexer::State s,
     ref mut ir::Program p, ref mut Initializer state, ref mut usize[] slots,
     usize first, usize id, Leaf part, usize at) {
     if(state.depth==0 || id>=p.records.count) {return .err(errors::make(3,at));}
@@ -373,7 +375,7 @@ pub fn Result<usize, errors::Error> extracted_call(ref u8[] source,ref mut lexer
     } else {let usize end=lexer::punctuation(source,s,59)?;}
     return extract_part(p,function,source_id,part,mutable,at,at,true);
 }
-pub fn Result<usize, errors::Error> extract_part(ref mut ir::Program p,usize function,
+pub fn Result<usize, errors::Error> extract_part_raw(ref mut ir::Program p,usize function,
     usize source_id,Leaf part,bool mutable,usize offset,usize at,bool consume) {
     let usize count = leaf_count(p,part.record,at)?;
     let usize first = p.registers;
@@ -417,4 +419,27 @@ pub fn Result<usize, errors::Error> assign_part(ref u8[] source, ref mut lexer::
     if (origin.tag != 0 || origin.record != target.record) { return .err(errors::make(3,at)); }
     let usize end = lexer::punctuation(source,s,59)?;
     return ir::record_subassign(p,dst,from,target.record,target.ordinal,origin.ordinal,at);
+}
+
+// Metadata stays explicit; only the copy's scalar/owner transitions are charged.
+pub fn Result<usize,errors::Error> copy_work(ref mut ir::Program p,ref usize[] input,ref mut usize[] slots,ref mut copies::State w){
+    var budget::State meter=budget::empty();while(!w.done){let usize allowance=budget::reset(ref mut meter,w.at)?;
+        let bool done=copies::advance(p,input,slots,w,ref mut meter)?;
+        if(w.request==1){let usize count=leaf_count(p,w.record,w.at)?;let usize resumed=copies::resume(w,count)?;}}
+    return copies::prepared(w);
+}
+pub fn Result<usize,errors::Error> extract_part(ref mut ir::Program p,usize function,usize source_id,Leaf part,
+    bool mutable,usize offset,usize at,bool consume){
+    var copies::State w=copies::begin(2,source_id,part.record,part.ordinal,0,function,mutable,consume,offset,at);
+    let usize[1] input=[0];var usize[1] slots=[0];return copy_work(p,ref input,ref mut slots,ref mut w);
+}
+pub fn Result<usize,errors::Error> stage_part(ref u8[] source,ref mut lexer::State s,ref mut ir::Program p,
+    ref mut Initializer state,ref mut usize[] slots,usize first,usize id,Leaf part,usize at){
+    if(state.depth==0 || id>=p.records.count){return .err(errors::make(3,at));}
+    let usize level=state.depth-1;let usize child=p.records.layouts.types[state.records[level]*16+state.fields[level]] as usize;
+    if(part.tag!=0 || part.record!=child){return .err(errors::make(3,at));}
+    if(s.kind!=44 && s.kind!=125){return .err(errors::make(2,s.begin));}
+    var copies::State w=copies::begin(1,id,child,part.ordinal,first,0,false,false,at,at);
+    let usize[1] input=[0];let usize count=copy_work(p,ref input,slots,ref mut w)?;
+    let usize finished=advance(source,s,p,state)?;return .ok(count);
 }
