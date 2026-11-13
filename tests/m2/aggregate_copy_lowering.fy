@@ -92,9 +92,11 @@ fn void result(Result<usize,errors::Error> x,Result<usize,errors::Error> y,bool 
         assert(budget::reset(ref mut meter,0).is_ok && budget::admit(ref mut meter,1,0).is_ok);let usize total=meter.total;
         assert(work::advance(ref mut p,ref input,ref mut slots,ref mut w,ref mut meter).is_ok && w.phase==phase && w.row==row && w.visits==visits && p.count==count && meter.total==total);
         assert(budget::reset(ref mut meter,0).is_ok && work::advance(ref mut p,ref input,ref mut slots,ref mut w,ref mut meter).is_ok && p.count-count<=1);
-        if(w.request!=0){assert(w.request==1);let usize cursor=w.visits;
+        if(w.request!=0){assert(w.request==1 || w.request==2);let usize cursor=w.visits;
             assert(budget::reset(ref mut meter,0).is_ok && work::advance(ref mut p,ref input,ref mut slots,ref mut w,ref mut meter).is_ok && w.visits==cursor && meter.last==0);
-            assert(work::resume(ref mut w,2).is_ok && !work::resume(ref mut w,2).is_ok);}turns+=1;}
+            let usize value=if(w.request==1){2}else{
+                switch(ir::record_read(ref mut p,w.source,w.ordinal+w.row,w.at)){case .ok(register):{register}case .err(error):{assert(false);0}}};
+            assert(work::resume(ref mut w,value).is_ok && !work::resume(ref mut w,value).is_ok);}turns+=1;}
     assert(w.value==2 && p.count==4 && slots[0]==1 && slots[1]==3);
     let usize total=meter.total;assert(work::advance(ref mut p,ref input,ref mut slots,ref mut w,ref mut meter).is_ok && meter.total==total);
     let usize[16] staged=[11,12,0,0,0,0,0,0,0,0,0,0,0,0,0,0];

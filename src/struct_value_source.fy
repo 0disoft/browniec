@@ -427,11 +427,14 @@ pub fn Result<usize, errors::Error> assign_part(ref u8[] source, ref mut lexer::
     return ir::record_subassign(p,dst,from,target.record,target.ordinal,origin.ordinal,at);
 }
 
-// Metadata stays explicit; only the copy's scalar/owner transitions are charged.
+// Metadata children drain their own bounded protocols; the parent copy does
+// not account whole source/catalog scans as one scalar/owner transition.
 pub fn Result<usize,errors::Error> copy_work(ref mut ir::Program p,ref usize[] input,ref mut usize[] slots,ref mut copies::State w){
     var budget::State meter=budget::empty();while(!w.done){let usize allowance=budget::reset(ref mut meter,w.at)?;
         let bool done=copies::advance(p,input,slots,w,ref mut meter)?;
-        if(w.request==1){let usize count=leaf_count(p,w.record,w.at)?;let usize resumed=copies::resume(w,count)?;}}
+        if(w.request==1){let usize count=leaf_count(p,w.record,w.at)?;let usize resumed=copies::resume(w,count)?;}
+        else if(w.request==2){let usize source=w.source;let usize leaf=w.ordinal+w.row;let usize at=w.at;
+            let usize value=ir::record_read(p,source,leaf,at)?;let usize resumed=copies::resume(w,value)?;}}
     return copies::prepared(w);
 }
 pub fn Result<usize,errors::Error> extract_part(ref mut ir::Program p,usize function,usize source_id,Leaf part,

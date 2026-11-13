@@ -97,7 +97,7 @@ if '--copy-metadata-only' in sys.argv:
     sys.argv.remove('--copy-metadata-only')
     bottom.DIRECTORY = 'build/operand-copy-metadata'
     bottom.MODULES = {'record_copy_metadata_lowering': None, 'record_metadata_edges': None, 'initializer_metadata_lowering': None,
-                      'aggregate_copy_lowering': ['materialization_and_extraction_match_raw_failure_prefixes', 'child_staging_preserves_slots_delimiters_and_error_order'],
+                      'aggregate_copy_lowering': ['materialization_and_extraction_match_raw_failure_prefixes', 'child_staging_preserves_slots_delimiters_and_error_order', 'copy_rows_wait_for_metadata_and_emit_one_operation_per_step'],
                       'body_lowering': ['nested_call_depth_32_and_33_preserve_default_stack_and_raw_diagnostics']}
 if __name__ == '__main__':
     bottom.main()
