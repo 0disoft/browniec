@@ -1,71 +1,123 @@
 /** @typedef {Record<string, string>} Translations */
 
 /**
- * Build a Starlight i18n translations object with an optional English label.
- * @param {{ en?: string }} options
+ * Build a Starlight i18n translations object for sidebar entries.
+ * @param {Translations} [labels]
  * @returns {{ translations: Translations } | {}}
  */
-const translated = ({ en } = {}) => {
+const translated = (labels = {}) => {
 	/** @type {Translations} */
 	const translations = {};
-	if (en) {
-		translations.en = en;
+	for (const [key, value] of Object.entries(labels)) {
+		if (!value) continue;
+		translations[key] = value;
+		if (key === 'zh' && !labels['zh-CN']) {
+			translations['zh-CN'] = value;
+		}
 	}
 	return Object.keys(translations).length > 0 ? { translations } : {};
 };
 
-const page = ({ label, en, link }) => ({ label, ...translated({ en }), link });
-const group = ({ label, en, items }) => ({ label, ...translated({ en }), items });
+const page = ({ label, link, ...translations }) => ({ label, ...translated(translations), link });
+const group = ({ label, items, ...translations }) => ({ label, ...translated(translations), items });
 
 export const pages = {
-	overview: page({ label: '개요', en: 'Overview', link: '/' }),
-	introduction: page({ label: '소개', en: 'Introduction', link: '/start/introduction/' }),
+	overview: page({
+		label: '개요',
+		en: 'Overview',
+		zh: '概览',
+		es: 'Resumen',
+		link: '/',
+	}),
+	introduction: page({
+		label: '소개',
+		en: 'Introduction',
+		zh: '简介',
+		es: 'Introducción',
+		link: '/start/introduction/',
+	}),
 	installation: page({
 		label: '설치와 환경 준비',
 		en: 'Installation and Setup',
+		zh: '安装与环境准备',
+		es: 'Instalación y configuración',
 		link: '/start/installation/',
 	}),
-	firstProgram: page({ label: '첫 프로그램', en: 'First Program', link: '/start/first-program/' }),
+	firstProgram: page({
+		label: '첫 프로그램',
+		en: 'First Program',
+		zh: '第一个程序',
+		es: 'Primer programa',
+		link: '/start/first-program/',
+	}),
 	languageBasics: page({
 		label: '변수, 타입, 연산자와 함수',
 		en: 'Variables, Types, and Functions',
+		zh: '变量、类型、运算符与函数',
+		es: 'Variables, tipos y funciones',
 		link: '/language/basics/',
 	}),
 	controlFlowAndSwitch: page({
 		label: '조건문, 반복문, switch',
 		en: 'Control Flow and Switch',
+		zh: '控制流与 switch',
+		es: 'Control de flujo y switch',
 		link: '/language/control-flow-and-switch/',
 	}),
 	structsAndErrorHandling: page({
 		label: '구조체, Option/Result, ?',
 		en: 'Structs, Option/Result, and ?',
+		zh: '结构体、Option/Result 与 ?',
+		es: 'Structs, Option/Result y ?',
 		link: '/language/structs-and-error-handling/',
 	}),
 	arraysSlicesAndUtf8: page({
 		label: '배열, 슬라이스, UTF-8 리터럴',
 		en: 'Arrays, Slices, and UTF-8',
+		zh: '数组、切片与 UTF-8 字面量',
+		es: 'Arreglos, slices y UTF-8',
 		link: '/language/arrays-slices-and-utf8/',
 	}),
 	memoryAndResources: page({
 		label: '빌림(ref), 재빌림과 수명',
 		en: 'Borrows, Reborrowing, and Lifetimes',
+		zh: '借用(ref)、重借用与生命周期',
+		es: 'Préstamos (ref), représtamo y vida',
 		link: '/language/memory-and-resources/',
 	}),
-	cliExamples: page({ label: '공개 CLI 예제', en: 'Public CLI Examples', link: '/examples/cli-examples/' }),
-	fuelAndLimits: page({ label: 'Fuel과 한계', en: 'Fuel and Limits', link: '/runtime/fuel-and-limits/' }),
+	cliExamples: page({
+		label: '공개 CLI 예제',
+		en: 'Public CLI Examples',
+		zh: '公开 CLI 示例',
+		es: 'Ejemplos del CLI público',
+		link: '/examples/cli-examples/',
+	}),
+	fuelAndLimits: page({
+		label: 'Fuel과 한계',
+		en: 'Fuel and Limits',
+		zh: 'Fuel 与执行限制',
+		es: 'Fuel y límites de ejecución',
+		link: '/runtime/fuel-and-limits/',
+	}),
 	hostIsolationEmbedding: page({
 		label: '호스트 연동·격리·임베딩',
 		en: 'Host, Isolation, and Embedding',
+		zh: '宿主集成、隔离与嵌入',
+		es: 'Host, aislamiento e incrustación',
 		link: '/runtime/host-isolation-embedding/',
 	}),
 	cliCommandsAndErrors: page({
 		label: 'CLI 사용법과 오류',
 		en: 'CLI and Errors',
+		zh: 'CLI 用法与常见错误',
+		es: 'CLI y errores comunes',
 		link: '/cli/commands-and-errors/',
 	}),
 	supportStatusAndLimits: page({
 		label: '지원 범위와 제한',
 		en: 'Support and Limits',
+		zh: '当前支持范围与限制',
+		es: 'Soporte y limitaciones',
 		link: '/support/status-and-limits/',
 	}),
 };
@@ -77,11 +129,15 @@ export const sidebarSections = [
 	group({
 		label: '시작',
 		en: 'Start',
+		zh: '开始',
+		es: 'Comenzar',
 		items: [pages.overview, pages.introduction, pages.installation, pages.firstProgram],
 	}),
 	group({
 		label: '언어 배우기',
 		en: 'Learn Language',
+		zh: '学习语言',
+		es: 'Aprender el lenguaje',
 		items: [
 			pages.languageBasics,
 			pages.controlFlowAndSwitch,
@@ -93,11 +149,15 @@ export const sidebarSections = [
 	group({
 		label: '예제',
 		en: 'Examples',
+		zh: '示例',
+		es: 'Ejemplos',
 		items: [pages.cliExamples],
 	}),
 	group({
 		label: '런타임·CLI·지원 현황',
 		en: 'Runtime, CLI, and Support',
+		zh: '运行时、CLI 与支持状态',
+		es: 'Runtime, CLI y soporte',
 		items: [
 			pages.fuelAndLimits,
 			pages.hostIsolationEmbedding,
