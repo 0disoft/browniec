@@ -2,6 +2,7 @@ module value_view_bindings;
 import value_ir as values;
 import ir as ir;
 import errors as errors;
+import metadata_budget as budget;
 
 // Compiler metadata, never runtime authority. Dead IDs are reusable within an
 // activation; the independent CFG verifier proves every destination is Dead.
@@ -115,7 +116,7 @@ pub fn Result<usize,errors::Error> merge(ref mut State state,ref State other,usi
         let usize mask=left|right;represent(state,i,mask);represent_retention(state,i,mask,retained);
     }i+=1;}return .ok(a);
 }
-pub fn Result<usize,errors::Error> validate(ref State state,usize at){
+pub fn Result<usize,errors::Error> validate_raw(ref State state,usize at){
     if(state.function>=16 || state.retained>=65536 || state.reserved>=65536){return .err(invalid(at));}
     var usize i=0;while(i<16){if(!descriptor(state,i) || !retention_descriptor(state,i)){
             return .err(invalid(at));}
@@ -180,8 +181,8 @@ fn Result<usize,errors::Error> origin_function(ref values::Program unit,usize f,
 }
 // Authenticate the whole compile-only view state against its current function.
 // Closed/reused entry IDs need not still describe the original formal itself.
-pub fn Result<usize,errors::Error> authenticate(ref values::Program unit,ref State state,usize at){
-    let usize checked=validate(state,at)?;let usize f=function(unit,state,at)?;
+pub fn Result<usize,errors::Error> authenticate_raw(ref values::Program unit,ref State state,usize at){
+    let usize checked=validate_raw(state,at)?;let usize f=function(unit,state,at)?;
     var usize dependencies=0;var usize i=0;
     while(i<16){dependencies|=mask_of(state,i);i+=1;}
     i=0;while(i<24){if((dependencies&bit(i))!=0){
@@ -359,3 +360,32 @@ pub fn Result<usize,errors::Error> relocate(ref mut State state,usize source,usi
         }
     }i+=1;}return .ok(destination);
 }
+
+// Read-only cursor: one descriptor/name/dependency per stage, no authority.
+pub struct Auth { usize at; usize row; usize seen; usize count; usize dependencies; usize function; u8 phase; bool program; bool done; }
+pub fn Auth auth(usize at,bool program){return Auth{.at=at,.row=0,.seen=0,.count=0,.dependencies=0,.function=0,.phase=0,.program=program,.done=false};}
+pub fn Result<usize,errors::Error> auth_result(ref Auth w){if(!w.done){return .err(errors::make(5,w.at));}return .ok(if(w.program){w.function}else{w.count});}
+pub fn Result<bool,errors::Error> advance_auth(ref State state,ref mut Auth w,ref mut budget::State meter){
+    if(w.done){return .ok(true);}if(meter.last!=0){return .ok(false);}if(!budget::admit(meter,4096,w.at)?){return .ok(false);}
+    let usize i=w.row;let usize at=w.at;
+    if(w.phase==0){if(state.function>=16 || state.retained>=65536 || state.reserved>=65536){return .err(invalid(at));}w.phase=1;return .ok(false);}
+    if(w.phase==1){if(i==16){w.row=0;w.phase=2;return .ok(false);}if(!descriptor(state,i) || !retention_descriptor(state,i)){return .err(invalid(at));}w.row+=1;return .ok(false);}
+    if(w.phase==2){if(i==64){w.row=0;w.phase=3;return .ok(false);}let usize encoded=state.names[i] as usize;
+        if(encoded!=0){if(encoded>16){return .err(invalid(at));}let usize id=encoded-1;
+            if(!live(state,id) || (w.seen&bit(id))!=0){return .err(invalid(at));}w.seen|=bit(id);}w.row+=1;return .ok(false);}
+    if(w.phase==3){if(i==16){w.row=0;if(w.program){w.phase=4;}else{w.done=true;}return .ok(w.done);}
+        if(state.origins[i]!=0){w.count+=1;}w.row+=1;return .ok(false);}
+    return .err(errors::make(5,at));
+}
+pub fn Result<bool,errors::Error> advance_program_auth(ref values::Program unit,ref State state,ref mut Auth w,ref mut budget::State meter){
+    if(w.done){return .ok(true);}if(meter.last!=0){return .ok(false);}if(w.phase<4){return advance_auth(state,w,meter);}
+    if(!budget::admit(meter,4096,w.at)?){return .ok(false);}let usize i=w.row;
+    if(w.phase==4){w.function=function(unit,state,w.at)?;w.phase=5;return .ok(false);}
+    if(w.phase==5){if(i==16){w.row=0;w.phase=6;return .ok(false);}w.dependencies|=mask_of(state,i);w.row+=1;return .ok(false);}
+    if(w.phase==6){if(i==24){w.done=true;return .ok(true);}if((w.dependencies&bit(i))!=0){let usize checked=origin_function(unit,w.function,i,w.at)?;}w.row+=1;return .ok(false);}
+    return .err(errors::make(5,w.at));
+}
+pub fn Result<usize,errors::Error> validate(ref State state,usize at){var Auth w=auth(at,false);var budget::State meter=budget::empty();
+    while(!w.done){let usize reset=budget::reset(ref mut meter,at)?;let bool done=advance_auth(state,ref mut w,ref mut meter)?;}return auth_result(ref w);}
+pub fn Result<usize,errors::Error> authenticate(ref values::Program unit,ref State state,usize at){var Auth w=auth(at,true);var budget::State meter=budget::empty();
+    while(!w.done){let usize reset=budget::reset(ref mut meter,at)?;let bool done=advance_program_auth(unit,state,ref mut w,ref mut meter)?;}return auth_result(ref w);}

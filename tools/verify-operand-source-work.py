@@ -129,5 +129,9 @@ if '--typed-walk-only' in sys.argv:
                       'value_source_control': ['admitted_32_deep_conditionals_execute_and_33_reject_without_native_stack_override'],
                       'value_bottom_source': ['nested_bottom_tails_and_else_if_suffixes_compose', 'all_terminal_loop_value_arms_retain_break_continue_and_outer_mutations'],
                       'value_source_loops_source': ['classic_for_headers_post_transfers_nested_loops_and_terminal_value_arms_execute']}
+if '--typed-ownership-only' in sys.argv:
+    sys.argv.remove('--typed-ownership-only')
+    bottom.DIRECTORY = 'build/operand-typed-ownership'
+    bottom.MODULES = {'value_ownership_lowering': None, 'value_source_bindings': ['whole_types_select_copy_or_move_including_inactive_buffer_and_verify_actual_ir', 'cleanup_is_reverse_live_only_and_capacity_rejection_is_atomic', 'alternatives_restore_entry_liveness_keep_distinct_slots_and_verify_exclusive_cfg_moves']}
 if __name__ == '__main__':
     bottom.main()
