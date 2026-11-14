@@ -1,0 +1,91 @@
+{
+  "schema": "browniec.root-authentication/v1",
+  "status": "passed",
+  "baselineCommit": "2233345",
+  "scope": "native typed/value root store preflight; public CLI admission unchanged",
+  "source": "src/value_roots.fy",
+  "sourceSha256": "72996f0a9b3c076f0986ec06e79bc457a9956acd8da9a224bbae5910ae3ca286",
+  "profiles": [
+    {
+      "profile": "development",
+      "nativeGroups": 6,
+      "receipt": "build/value-root-authentication/development/receipt.json",
+      "receiptSha256": "0fead5c4ae72aa4900da1d81dc2affc94ff5c725b3d06d47439c52d121aec5ad",
+      "allInputHashesMatch": true
+    },
+    {
+      "profile": "release",
+      "nativeGroups": 6,
+      "receipt": "build/value-root-authentication/release/receipt.json",
+      "receiptSha256": "7c4b0f6cffe3aa9e7a4a79ad05687292cb0cda0ec972acdf4942d41997b952cc",
+      "allInputHashesMatch": true
+    }
+  ],
+  "inputCount": 376,
+  "inputSetSha256": "ec346be63d7f46e5ef0e72950e086ad795b5aa00147e81fa145dcf0c97145c47",
+  "structuralCounts": {
+    "tableSlots": 16,
+    "liveRoots": 16,
+    "readyFullTableValidationsBefore": 17,
+    "readyFullTableValidationsAfter": 1,
+    "readFullTableValidationsBefore": 19,
+    "readFullTableValidationsAfter": 3,
+    "readValidationSlotVisitsBefore": 304,
+    "readValidationSlotVisitsAfter": 48,
+    "reductionPercent": 84.21052631578948,
+    "byteReadIterations": 4096,
+    "loopValidationSlotVisitsBefore": 1245184,
+    "loopValidationSlotVisitsAfter": 196608,
+    "eliminatedLoopValidationSlotVisits": 1048576,
+    "byteReadFuel": 257,
+    "loopByteReadFuel": 1052672,
+    "addedHeapAllocations": 0,
+    "tableValidationComplexityBefore": "O(n*M)",
+    "tableValidationComplexityAfter": "O(M)",
+    "unchangedSerialBindingDuplicateChecks": "O(n^2)",
+    "measuredWallClockOrNativePeak": false
+  },
+  "equivalence": {
+    "healthyRootCounts": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16
+    ],
+    "mutationCases": 1280,
+    "mutationModes": 20,
+    "mutationRootCounts": [
+      0,
+      1,
+      8,
+      16
+    ],
+    "allSlotsExercised": true,
+    "frozenOriginalMatchesBaseline": true
+  },
+  "initialFixtureAttempt": {
+    "status": "incomplete",
+    "compilerError": "E2101",
+    "reason": "Nested-field read/write loan conflict in test fixture; resolved by reading fields into locals before assignment.",
+    "receipt": "build/root-auth-review/fixture-incomplete.json"
+  },
+  "limitations": [
+    "Counts cover full-table validation only, not all metadata work or measured machine instructions; compiler optimization can affect actual work.",
+    "Full Engine, standalone memory, public CLI and release gates not rerun; no current-revision full Engine pass claimed.",
+    "No cache across operations, new ownership authority, native layout, state/ledger field, memory reservation, public Pending API or R02-R05 closure.",
+    "Local only; no push/release/deploy/version bump."
+  ]
+}

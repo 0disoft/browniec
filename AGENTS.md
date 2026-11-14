@@ -1,24 +1,25 @@
 - Latest maintenance checkpoint (2026-11-14):
-  [sparse view proof scheduling](docs/engineering/value-flow-pending.md).
-  The private typed/value view verifier replaces repeated full pending-PC sweeps
-  with four 64-bit words while preserving ascending round order, duplicate and
-  backward/same-PC requeue, exact errors, preflight and the 98,560-step cap.
-  Immediate successors bypass binary search. Pending payload is 32 logical
-  bytes rather than 256; no new heap allocation or ledger/scratch carrier field.
-  These are structural counts, not measured CPU/time or native peak gains.
-  Six native groups pass in development/O2: scheduler/original-flag parity,
-  frozen original-verifier parity, multi-round origin widening and actual
-  source loop/terminal cleanup with VM execution. Every final receipt input
-  matches current bytes. The initial broader build was stopped/incomplete.
-  Root: 375 sources / 4074 MIR; all 367 production sources are LF.
-  Full Engine, standalone memory, public CLI and release gates were not rerun.
-  Prior Engine evidence is historical, not a current-revision pass. Compile
-  reservations and scratch widths/caps are unchanged. No public Pending API,
-  R02-R05 closure, push/release/deploy/version bump; broader completion stays paused.
-  See [evidence](docs/evidence/value-flow-pending-windows-20261114.json).
-  Previous typed/value checkpoint details remain in
+  [one-pass root authentication](docs/engineering/value-root-authentication.md).
+  Native typed/value root preflight reuses the complete owner-table validation
+  already performed by accounted, then checks each bounded row's live flag and
+  generation directly under the same immutable synchronous borrow. All ledger,
+  duplicate, tail, live-slot and native extent checks remain; no cross-call cache.
+  At 16 live roots, successful byte reads need three full owner-table validations
+  rather than 19 (304 to 48 validation-slot visits). This is a source-level
+  structural count, not measured CPU/time/heap/stack improvement. Fuel is unchanged.
+  Six native groups pass in development/O2: frozen original preflight parity,
+  1280 metadata variants/all 16 slots, exact-price leased reads and rejection,
+  existing root-store removal/Fuel/corruption and all six VM Buffer opcodes.
+  All final receipt inputs match current bytes. Initial E2101 fixture failure
+  remains incomplete evidence. Root: 375 sources / 4074 MIR; 367 production
+  sources are LF. No new allocation class, native layout, state/ledger field,
+  conservative reservation or public Pending API. Full Engine, standalone memory,
+  public CLI and release gates were not rerun. Broader completion stays paused;
+  local only, no push/release/deploy/version bump or R02-R05 closure claim.
+  See [evidence](docs/evidence/value-root-authentication-windows-20261114.json).
+  Previous [view proof scheduling](docs/engineering/value-flow-pending.md),
   [typed Buffer/view operations](docs/engineering/compiler-typed-buffer-view.md)
-  and [stable loop compaction](docs/engineering/compiler-loop-compaction.md).
+  and [loop compaction](docs/engineering/compiler-loop-compaction.md) retain history.
 
 # Brownie C agent guidance
 

@@ -77,7 +77,11 @@ fn Result<usize,Error> ready(ref State s,ref vec::Vec<bytes::Buffer> roots,ref v
         if(i<count){
             if(row.serial==0 || row.binding>=512 || row.slot>=16 || row.generation==0 ||
                 (s.next!=0 && row.serial>=s.next) || (occupied&(one<<row.slot))!=0){return .err(.State);}
-            if(!owners::describe(ref s.table,owners::Token{.slot=row.slot,.generation=row.generation}).is_ok){return .err(.State);}
+            // accounted authenticated every table slot above. Immutable s and
+            // synchronous checks keep that proof valid throughout this scan;
+            // only the row's identity remains to be matched, not the full table.
+            let owners::Owner owner=s.table.slots[row.slot];
+            if(!owner.live || owner.generation!=row.generation){return .err(.State);}
             occupied|=one<<row.slot;var usize j=0;
             while(j<i){if(s.rows[j].serial==row.serial || s.rows[j].binding==row.binding){return .err(.State);}j+=1;}
         }else if(row.serial!=0 || row.binding!=512 || row.slot!=16 || row.generation!=0){return .err(.State);}
