@@ -20,18 +20,22 @@ Current guest slices remain u8-only; source parameter integration is pending.
 ## Atomic admission
 
 `borrow_arguments(pool, sources, owners, capacity)` first rejects more than eight
-inputs and validates every incoming ticket against the original pool. It saves
-their checked selected lengths before constructing any child. This ordering is
+inputs, validates the pool once and checks every incoming ticket against that
+original pool before constructing any child. This ordering is
 necessary: a fabricated later ticket for a currently free slot must not become
 valid merely because an earlier staged child would occupy that slot.
 
 After preflight, the operation stages a fixed-size pool copy, creates whole-range
-children using the existing `subslice` operation, and commits the pool only after
+children by copying the checked views and shared leases, and commits the pool only after
 all children exist. Any stale ticket/session, invalid range/backing or capacity
 failure leaves both original tables unchanged, including slot generations. In
 particular, two available slots cannot partially admit a three-argument batch.
 No read session is opened: every accepted argument already retains one, so the
 owner table is shared and unchanged throughout admission.
+
+The [single-preflight refactor](slice-argument-preflight.md) records the current
+admission algorithm, structural cost reduction and focused verification. Earlier
+integration status and evidence below describe the original foundation.
 
 ## Atomic cleanup
 
@@ -58,8 +62,9 @@ payload scan/copy or heap allocation path. Existing sixteen-handle and owner
 ceilings stay unchanged. Eight caller handles plus eight argument handles can
 fill the pool. Source payload bytes, owner depth/order and arena use are unchanged.
 
-For A arguments, D pool slots and O owner slots, metadata work is bounded
-O(A*D*O + A*A), with A<=8 and D=O=16. Cleanup duplicate detection compares at
+For A arguments, D pool slots and O owner slots, the original admission metadata
+work was bounded O(A*D*O + A*A), with A<=8 and D=O=16. Current admission reuses
+one pool preflight; see the linked refactor for detailed counts. Cleanup duplicate detection compares at
 most 28 pairs. Staging copies at most one sixteen-slot pool and, during cleanup,
 one sixteen-owner table plus its fixed order/arena metadata. This is structural
 accounting, not a timing, allocator instrumentation or process-memory result.

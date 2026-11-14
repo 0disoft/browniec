@@ -1,0 +1,81 @@
+{
+  "schema": "browniec.slice-argument-preflight/v1",
+  "status": "passed",
+  "clientDate": "2026-11-15",
+  "baselineCommit": "f2c1c57",
+  "implementationCommit": "8e6fc5f32290929c6b1b9ed2f2eba22ad3b03aa7",
+  "source": "src/array_slices.fy",
+  "sourceSha256": "53c5fdc5059d3a179a3a3f0a70828f9ffa42d4e7c4265ca22c2a741d8c2ef935",
+  "profiles": [
+    {
+      "profile": "development",
+      "nativeGroups": 6,
+      "receipt": "build/slice-argument-preflight/development/receipt.json",
+      "receiptSha256": "03e97cb0b83ed658e30fd0931d32d034b977474faf8be3725381921974b1f235",
+      "allInputHashesMatch": true
+    },
+    {
+      "profile": "release",
+      "nativeGroups": 6,
+      "receipt": "build/slice-argument-preflight/release/receipt.json",
+      "receiptSha256": "a28d4631338bbdda3f4b09608433cd7189e2dbecdc1143ea465e452a148eea9e",
+      "allInputHashesMatch": true
+    }
+  ],
+  "inputCount": 377,
+  "inputSetSha256": "894b8c44f08c2e16bb6facdb4d045637f6736cb0e5e8c55edb649bcaeee027bd",
+  "structuralCounts": {
+    "initialSharedViews": 8,
+    "arguments": 8,
+    "retainedOwnerDepth": 16,
+    "ownerSlots": 16,
+    "poolValidationsBefore": 17,
+    "poolValidationsAfter": 1,
+    "fullOwnerValidationsBefore": 172,
+    "fullOwnerValidationsAfter": 8,
+    "ownerChainAndSlotVisitsBefore": 5504,
+    "ownerChainAndSlotVisitsAfter": 256,
+    "ownerValidationReductionPercent": 95.35,
+    "ownerValidationComplexityBefore": "O((V*(1+K)+K*K)*(D+16))",
+    "ownerValidationComplexityAfter": "O(V*(D+16))",
+    "freeSlotSearchesUnchanged": "O(K*16)",
+    "fuelPricesChanged": false,
+    "addedHeapAllocations": 0,
+    "removedLogicalUsizeScratchElements": 8,
+    "measuredThroughputOrNativePeak": false
+  },
+  "coverage": {
+    "healthyPoolOccupancies": "0..16",
+    "healthyGenerationVariants": 3,
+    "sourcePatterns": 2,
+    "inputLengths": "0..9",
+    "healthyComparisons": 1020,
+    "metadataPoolOccupancies": [
+      1,
+      8,
+      16
+    ],
+    "mutationSlots": 16,
+    "mutationModes": 20,
+    "mutationContexts": 4,
+    "mutationComparisons": 3840,
+    "futureAndStaleSourceComparisons": 48,
+    "totalOriginalAlgorithmComparisons": 4908,
+    "allPoolFieldsAndBatchEntriesCompared": true,
+    "failedPoolRollback": true,
+    "existingRegressionGroups": 4
+  },
+  "admissionProof": [
+    "The original pool and owner table remain unchanged throughout preflight and staged publication.",
+    "Every source identity and readonly mode is checked against the original pool before creating any child.",
+    "Whole-range clones preserve the authenticated descriptor and read epoch, including nonzero offsets and empty ranges.",
+    "The private free-slot search and publication order match subslice; only a complete batch commits.",
+    "Ordinary resolve/length/subslice remain independently validated; no unchecked public API or cross-call cache."
+  ],
+  "limitations": [
+    "Structural validation and metadata-entry counts, not measured throughput or physical memory peaks.",
+    "Counts 17/172/5504 use a successful all-shared eight-view/eight-argument batch and full sixteen-owner table.",
+    "Full Engine, standalone memory, public CLI and release gates not rerun; public admission unchanged.",
+    "Local only; no push/release/deploy/version bump."
+  ]
+}

@@ -1,24 +1,26 @@
 - Latest maintenance checkpoint (2026-11-15):
-  [shared array lease authentication](docs/engineering/array-lease-authentication.md).
-  leased_read/leased_length/leased_utf8 reuse one owner-table authentication
-  within an immutable synchronous call. Private shape/payload helpers retain
-  token/table/epoch/view/shape/index error order; raw view APIs still resolve
-  independently. At 16 retained allocations, table validation drops from two
-  passes to one: 64 to 32 chain/slot visits per successful leased operation.
-  This is structural work, not measured time/heap/stack improvement. Fuel,
-  quotas, payload decoding, UTF-8 scans and reservations are unchanged; no
-  new allocation, public unchecked API, stored field or admission expansion.
-  Development/O2 each pass six groups: 1920 table/combined-fault scenarios
-  compared for all three operations, healthy counts 1..16, descriptor/epoch
-  faults, all six maximum scalar arrays, lease write exclusion and VM slice
-  scanning/Fuel/failure atomicity. All 377 receipt inputs match bccd7c9.
-  Root check: 375 sources / 4078 MIR. Full Engine, standalone memory, public
-  CLI and release gates were not rerun. Broader completion remains paused;
-  no R02-R05 closure, push/release/deploy/version bump.
-  See [evidence](docs/evidence/array-lease-authentication-windows-20261115.json).
-  Prior [integer-array validation](docs/engineering/value-integer-array-validation.md),
-  [view lookup](docs/engineering/value-view-lookup.md) and
-  [root authentication](docs/engineering/value-root-authentication.md) retain history.
+  [shared slice argument preflight](docs/engineering/slice-argument-preflight.md).
+  borrow_arguments authenticates the original pool once, checks every source's
+  identity/mode before publication, then stages whole-range view/lease copies.
+  The same free-slot order, diagnostics, rollback, root-relative bounds and read
+  epochs are preserved. Private lookup is identity-only; ordinary resolve,
+  length and subslice still authenticate independently. No unchecked public API,
+  cross-call cache, stored field, allocation or admission expansion is added.
+  For eight live shared views/eight arguments and sixteen retained owners, pool
+  validations drop 17 to 1, owner validations 172 to 8 and chain/slot visits
+  5504 to 256. These are structural counts, not measured throughput or physical
+  heap/stack peaks. Fuel, quotas and conservative reservations are unchanged.
+  Development/O2 each pass six groups: 4908 original-algorithm comparisons with
+  all pool/batch fields, occupancy/arity/generation boundaries, metadata faults,
+  forged later sources and rollback; existing partial-capacity, maximum-array,
+  exclusive-conflict and exact-Fuel CALL/frame-reuse regressions. All 377 receipt
+  inputs match implementation 8e6fc5f. Root check: 375 sources / 4079 MIR.
+  Full Engine, standalone memory, public CLI and release gates were not rerun.
+  Broader completion remains paused; no R02-R05 closure, push/release/deploy/bump.
+  See [evidence](docs/evidence/slice-argument-preflight-windows-20261115.json).
+  Prior [lease authentication](docs/engineering/array-lease-authentication.md),
+  [integer-array validation](docs/engineering/value-integer-array-validation.md)
+  and [root authentication](docs/engineering/value-root-authentication.md) retain history.
 
 # Brownie C agent guidance
 
