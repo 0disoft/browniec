@@ -50,12 +50,17 @@ fn Result<usize, owners::Error> validate(ref Pool pool, ref owners::Table table,
 }
 // Private staged cleanup preflight; no pool or owner mutation.
 pub fn Result<usize,owners::Error> inspect_cleanup(ref Pool pool,ref owners::Table table,usize capacity){return validate(pool,table,capacity);}
-fn Result<usize, owners::Error> resolve(ref Pool pool, Ticket ticket, ref owners::Table table, usize capacity) {
+// Identity only. Batch admission uses this after validating the immutable pool.
+fn Result<usize, owners::Error> lookup(ref Pool pool, Ticket ticket) {
     if (ticket.slot >= 16 || ticket.generation == 0) { return .err(.Token); }
     let Slot entry = pool.slots[ticket.slot];
     if (!entry.live || entry.generation != ticket.generation) { return .err(.Token); }
-    let usize count = validate(pool, table, capacity)?;
     return .ok(ticket.slot);
+}
+fn Result<usize, owners::Error> resolve(ref Pool pool, Ticket ticket, ref owners::Table table, usize capacity) {
+    let usize index = lookup(pool, ticket)?;
+    let usize count = validate(pool, table, capacity)?;
+    return .ok(index);
 }
 fn Result<usize, owners::Error> free_slot(ref Pool pool) {
     var usize i = 0;
@@ -219,18 +224,22 @@ pub fn Result<Arguments, owners::Error> borrow_arguments(ref mut Pool pool,
     ref Ticket[] sources, ref owners::Table table, usize capacity) {
     if (sources.len > 8) { return .err(.Length); }
     let usize checked = validate(pool, table, capacity)?;
-    var usize[8] lengths = [0; 8];
     var usize i = 0;
     while (i < sources.len) {
-        lengths[i] = length(pool, sources[i], table, capacity)?;
-        if (pool.slots[sources[i].slot].exclusive) { return .err(.State); }
+        let usize source = lookup(pool, sources[i])?;
+        if (pool.slots[source].exclusive) { return .err(.State); }
         i += 1;
     }
     var Pool planned = Pool { .slots = pool.slots };
     var Arguments result = empty_arguments();
     i = 0;
     while (i < sources.len) {
-        let Ticket child = subslice(ref mut planned, sources[i], table, 0, lengths[i], capacity)?;
+        let usize index = free_slot(ref planned)?;
+        // Every source belongs to the validated ORIGINAL pool. Whole-range
+        // cloning preserves its root-relative bounds and shared read epoch.
+        // Publishing children changes neither original slots nor owner state.
+        let Slot entry = pool.slots[sources[i].slot];
+        let Ticket child = publish(ref mut planned, index, entry.view, entry.lease, false);
         result.tickets[i] = child;
         i += 1;
     }
