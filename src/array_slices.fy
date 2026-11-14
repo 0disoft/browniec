@@ -177,6 +177,14 @@ pub fn Result<Ticket, owners::Error> rotate_exclusive(ref mut Pool pool, Ticket 
 pub fn Result<usize, owners::Error> close(ref mut Pool pool, Ticket ticket,
     ref mut owners::Table table, usize capacity) {
     let usize index = resolve(pool, ticket, table, capacity)?;
+    return close_prepared(pool, index, table, capacity);
+}
+// The caller authenticated this live slot and the entire pool. Retiring one
+// slot preserves every remaining descriptor: only the last reader ends its
+// root session, and a validated writer has no peers. Owner end APIs still
+// authenticate independently. No callback or outside mutation may intervene.
+fn Result<usize, owners::Error> close_prepared(ref mut Pool pool, usize index,
+    ref mut owners::Table table, usize capacity) {
     let Slot entry = pool.slots[index];
     if (entry.exclusive) {
         let owners::WriteLease lease = writer(ref entry);
@@ -209,8 +217,7 @@ pub fn Result<usize, owners::Error> clear(ref mut Pool pool, ref mut owners::Tab
         i -= 1;
         let Slot entry = planned.slots[i];
         if (entry.live) {
-            let usize closed = close(ref mut planned, Ticket { .slot = i, .generation = entry.generation },
-                ref mut planned_table, capacity)?;
+            let usize closed = close_prepared(ref mut planned, i, ref mut planned_table, capacity)?;
         }
     }
     pool.slots = planned.slots;
@@ -276,7 +283,9 @@ pub fn Result<usize, owners::Error> close_arguments(ref mut Pool pool,
     i = count;
     while (i > 0) {
         i -= 1;
-        let usize closed = close(ref mut planned, arguments.tickets[i], ref mut planned_table, capacity)?;
+        // Stale batch tickets retain their original reverse-order error point.
+        let usize index = lookup(ref planned, arguments.tickets[i])?;
+        let usize closed = close_prepared(ref mut planned, index, ref mut planned_table, capacity)?;
     }
     pool.slots = planned.slots;
     table.slots = planned_table.slots;
