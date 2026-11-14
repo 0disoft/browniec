@@ -28,6 +28,7 @@ fn i32 main() {
 ```
 
 - You can mix explicit `.x = 20` and shorthand `.y` in the same constructor, provided every field appears in declaration order.
+- Struct fields may contain scalar types and nested `struct`s, but not fixed arrays (`T[N]`) or `Option`/`Result` wrappers.
 - Plain structs copy as independent values when assigned or passed around, so later mutations to source variables do not affect the constructed copy.
 
 Structs can also nest or be returned from helper functions cleanly:

@@ -19,7 +19,7 @@ fn i32 sign(i32 n) {
 }
 ```
 
-표현식으로 쓸 때는 두 갈래(`if`와 `else`)가 모두 같은 타입의 값을 내놓아야 합니다.
+표현식으로 쓸 때는 `else if (...) { ... }` 연쇄도 가능하며, 모든 갈래(`if`, `else if`, `else`)가 같은 타입의 값을 내놓아야 합니다.
 
 ## 2. 반복문: `for`, `while`, `break`, `continue`
 
@@ -44,7 +44,7 @@ fn i32 main() {
 
 ## 3. `switch` 문과 `switch` 표현식
 
-Brownie C의 `switch`는 `Option<T>`나 `Result<T, E>` 값을 안전하게 풀 때 씁니다. C의 `switch`와 달리 `break`를 적을 필요가 없고, 빠진 분기(`.none`이나 `.err` 등)가 있으면 컴파일러가 바로 알려 줍니다.
+Brownie C의 `switch`는 `Option<T>`나 `Result<T, E>` 값을 안전하게 풀 때 씁니다(C처럼 임의의 정수나 사용자 정의 `enum` 분기에는 쓰지 않습니다). C의 `switch`와 달리 `break`를 적을 필요가 없고, 빠진 분기(`.none`이나 `.err` 등)가 있으면 컴파일러가 바로 알려 줍니다.
 
 ```c
 fn Result<i32, bool> answer(Option<i32> value) {

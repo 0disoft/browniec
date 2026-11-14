@@ -19,7 +19,7 @@ fn i32 sign(i32 n) {
 }
 ```
 
-Cuando `if` produce un valor, ambas ramas deben devolver exactamente el mismo tipo.
+Cuando `if` produce un valor, también se admiten cadenas `else if (...) { ... }`, y todas las ramas deben devolver exactamente el mismo tipo.
 
 ## 2. Bucles: `for`, `while`, `break`, `continue`
 
@@ -44,7 +44,7 @@ Recuerda que la VM mide el trabajo de ejecución con **Fuel**: los bucles largos
 
 ## 3. Sentencias y expresiones `switch`
 
-Brownie C utiliza bloques `switch` exhaustivos para hacer coincidir valores de `Option<T>` y `Result<T, E>` sin errores por caída entre casos (fallthrough):
+Brownie C utiliza bloques `switch` exhaustivos exclusivamente para inspeccionar valores de `Option<T>` y `Result<T, E>` (no enteros arbitrarios ni `enum` personalizados), sin errores por caída entre casos (fallthrough):
 
 ```c
 fn Result<i32, bool> answer(Option<i32> value) {

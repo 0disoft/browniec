@@ -19,7 +19,7 @@ fn i32 sign(i32 n) {
 }
 ```
 
-When `if` produces a value, both branches must return the exact same type.
+When `if` produces a value, `else if (...) { ... }` chains are supported as well, and every branch must return the exact same type.
 
 ## 2. Loops: `for`, `while`, `break`, `continue`
 
@@ -44,7 +44,7 @@ Remember that the VM meters execution work with **Fuel**—long or infinite loop
 
 ## 3. `switch` Statements and Expressions
 
-Brownie C uses exhaustive `switch` blocks to match `Option<T>` and `Result<T, E>` without fallthrough bugs:
+Brownie C uses exhaustive `switch` blocks exclusively to inspect `Option<T>` and `Result<T, E>` values (not arbitrary integers or custom `enum`s), with no fallthrough bugs:
 
 ```c
 fn Result<i32, bool> answer(Option<i32> value) {

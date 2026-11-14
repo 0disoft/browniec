@@ -19,7 +19,7 @@ fn i32 sign(i32 n) {
 }
 ```
 
-当 `if` 用作表达式返回值时，两个分支必须返回完全相同的类型。
+当 `if` 用作表达式返回值时，也支持 `else if (...) { ... }` 链式分支，并且所有分支必须返回完全相同的类型。
 
 ## 2. 循环：`for`、`while`、`break`、`continue`
 
@@ -44,7 +44,7 @@ fn i32 main() {
 
 ## 3. `switch` 语句与表达式
 
-Brownie C 使用穷举式的 `switch` 块来匹配 `Option<T>` 和 `Result<T, E>`，不存在隐式穿透（fallthrough）漏洞：
+Brownie C 使用穷举式的 `switch` 块专门匹配 `Option<T>` 和 `Result<T, E>` 值（不支持任意整数或自定义 `enum`），不存在隐式穿透（fallthrough）漏洞：
 
 ```c
 fn Result<i32, bool> answer(Option<i32> value) {

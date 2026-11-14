@@ -28,6 +28,7 @@ fn i32 main() {
 ```
 
 - Puedes mezclar `.x = 20` explícito y la abreviatura `.y` en el mismo constructor, siempre que cada campo aparezca en orden de declaración.
+- Los campos de un `struct` admiten tipos escalares y otros `struct` anidados, pero no arreglos fijos (`T[N]`) ni envoltorios `Option`/`Result`.
 - Los structs simples se copian como valores independientes al asignarse o pasarse a funciones, de modo que las mutaciones posteriores en las variables de origen no afectan a la copia construida.
 
 Los structs también pueden anidarse o devolverse limpiamente desde funciones auxiliares:
