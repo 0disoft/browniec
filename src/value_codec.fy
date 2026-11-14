@@ -94,8 +94,13 @@ pub fn Result<Active,Error> inspect(ref Layout layout,usize id,ref u8[] data){
         }else{
             let ref u8[] selected=data[base..base+p.bytes];
             if(n.kind==1){if(!scalar::decode(n.first,selected).is_ok){return .err(.Value);}}
-            else if(n.kind==2){let usize stride=scalar::width(n.first);var usize at=0;
-                while(at<p.bytes){if(!scalar::decode(n.first,selected[at..at+stride]).is_ok){return .err(.Value);}at+=stride;}
+            else if(n.kind==2){
+                // retain proved the integer tag/extent and inspect checked the
+                // exact byte length. Every integer bit pattern is canonical;
+                // only bool arrays have invalid payload bytes (anything >1).
+                if(n.first==2){var usize at=0;
+                    while(at<p.bytes){if(selected[at]>1){return .err(.Value);}at+=1;}
+                }
             }else if(n.kind==3){let usize checked=record(layout,n.first as usize,selected)?;}
             else if(n.kind==4){
                 let i64 cell=switch(scalar::decode(12,selected)){case .ok(v):{v}case .err(_):{return .err(.Value);}};
