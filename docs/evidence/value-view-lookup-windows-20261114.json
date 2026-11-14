@@ -1,0 +1,76 @@
+{
+  "schema": "browniec.view-lookup/v1",
+  "status": "passed",
+  "baselineCommit": "9256469",
+  "implementationCommit": "760e00e7bdd7394c5ea542ce518d94553d3d6cbf",
+  "scope": "private typed/value view registry lookup; public CLI admission unchanged",
+  "source": "src/value_buffer_views.fy",
+  "sourceSha256": "4fe1da05aab3d6fccb350dd028c5553842dc793a9e5caece9d1fa1e13bc30f66",
+  "profiles": [
+    {
+      "profile": "development",
+      "nativeGroups": 6,
+      "receipt": "build/value-view-lookup/development/receipt.json",
+      "receiptSha256": "adf32ed3dfaea342ab49a154f666244c603703970fa56bff5027d506d3b881c3",
+      "allInputHashesMatch": true
+    },
+    {
+      "profile": "release",
+      "nativeGroups": 6,
+      "receipt": "build/value-view-lookup/release/receipt.json",
+      "receiptSha256": "cac3200e2916a2804fdbe86d8a3ce27e0a16236d5f19dbe24b4895bb8ca3c267",
+      "allInputHashesMatch": true
+    }
+  ],
+  "inputCount": 376,
+  "inputSetSha256": "b7216ad27f7fb4d2288bf237e582f9b24dc4126bda58110f4fab092e371d10fc",
+  "structuralCounts": {
+    "fullPoolRows": 32,
+    "rowPairsPerFullHeader": 496,
+    "successfulLookupHeaderPassesBefore": 2,
+    "successfulLookupHeaderPassesAfter": 1,
+    "lookupThenReadHeaderPassesBefore": 3,
+    "lookupThenReadHeaderPassesAfter": 2,
+    "lookupThenReadOuterRowsBefore": 96,
+    "lookupThenReadOuterRowsAfter": 64,
+    "lookupThenReadPairsBefore": 1488,
+    "lookupThenReadPairsAfter": 992,
+    "headerWorkReductionPercent": 33.333333333333336,
+    "readIterations": 4096,
+    "eliminatedPairVisits": 2031616,
+    "lookupFuel": 0,
+    "viewReadFuel": 513,
+    "loopReadFuel": 2101248,
+    "addedHeapAllocations": 0,
+    "headerComplexityUnchanged": "O(D^2)",
+    "invalidPoolExtraSafeMetadataReadsAtMost": 32,
+    "measuredWallClockOrNativePeak": false
+  },
+  "equivalence": {
+    "healthyPoolSizesInclusive": [
+      0,
+      32
+    ],
+    "healthyBindingHitComparisons": 528,
+    "healthyStandardQueryComparisons": 198,
+    "registryMutationSizes": [
+      0,
+      1,
+      8,
+      32
+    ],
+    "mutationModes": 16,
+    "all32RowsExercised": true,
+    "queriesPerMutation": 6,
+    "registryFaultComparisons": 12288,
+    "rootFaultComparisons": 120,
+    "frozenOriginalMatchesBaseline": true
+  },
+  "limitations": [
+    "Counts cover header traversals only, not total runtime work or measured machine instructions; compiler optimization can affect actual work.",
+    "Malformed pools may require up to 32 bounded metadata reads before header rejection; exact prior diagnostic and validation-before-native-access preserved.",
+    "Full Engine, standalone memory, public CLI and release gates not rerun; no current-revision full Engine pass claimed.",
+    "No cross-call cache, unchecked-ticket API, new authority, state field, conservative memory reservation, public Pending API or R02-R05 closure.",
+    "Local only; no push/release/deploy/version bump."
+  ]
+}

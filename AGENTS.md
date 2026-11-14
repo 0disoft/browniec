@@ -1,25 +1,26 @@
 - Latest maintenance checkpoint (2026-11-14):
-  [one-pass root authentication](docs/engineering/value-root-authentication.md).
-  Native typed/value root preflight reuses the complete owner-table validation
-  already performed by accounted, then checks each bounded row's live flag and
-  generation directly under the same immutable synchronous borrow. All ledger,
-  duplicate, tail, live-slot and native extent checks remain; no cross-call cache.
-  At 16 live roots, successful byte reads need three full owner-table validations
-  rather than 19 (304 to 48 validation-slot visits). This is a source-level
-  structural count, not measured CPU/time/heap/stack improvement. Fuel is unchanged.
-  Six native groups pass in development/O2: frozen original preflight parity,
-  1280 metadata variants/all 16 slots, exact-price leased reads and rejection,
-  existing root-store removal/Fuel/corruption and all six VM Buffer opcodes.
-  All final receipt inputs match current bytes. Initial E2101 fixture failure
-  remains incomplete evidence. Root: 375 sources / 4074 MIR; 367 production
-  sources are LF. No new allocation class, native layout, state/ledger field,
-  conservative reservation or public Pending API. Full Engine, standalone memory,
-  public CLI and release gates were not rerun. Broader completion stays paused;
-  local only, no push/release/deploy/version bump or R02-R05 closure claim.
-  See [evidence](docs/evidence/value-root-authentication-windows-20261114.json).
-  Previous [view proof scheduling](docs/engineering/value-flow-pending.md),
-  [typed Buffer/view operations](docs/engineering/compiler-typed-buffer-view.md)
-  and [loop compaction](docs/engineering/compiler-loop-compaction.md) retain history.
+  [single-header view lookup](docs/engineering/value-view-lookup.md).
+  Successful private typed/value view lookup now relies on resolve's complete
+  header/root/lease/backing validation rather than checking the header twice.
+  Bounded metadata search grants no authority; invalid bindings/misses validate
+  before returning Binding, preserving the old State-before-Binding priority.
+  No unchecked-ticket API, cross-call cache, native layout or state field is added.
+  At 32 live views, lookup-then-read needs two header passes rather than three:
+  992 rather than 1488 row-pair visits. These are structural source counts, not
+  measured CPU/time/heap/stack gains; Fuel and O(D^2) header checks are unchanged.
+  Six native groups pass in development/O2: original header/resolver/lookup parity,
+  all pool sizes 0..32, 12288 registry fault and 120 root fault comparisons,
+  4096 full-pool reads with exact Fuel and final-lease cleanup, three existing
+  registry regressions and real nested-view VM execution. All final input hashes
+  match implementation 760e00e. Root: 375 sources / 4074 MIR; all 367 production
+  sources are LF. Full Engine, standalone memory, public CLI and release gates
+  were not rerun. No new allocation class, conservative reservation, public
+  Pending API or R02-R05 closure. Broader completion stays paused; local only,
+  no push/release/deploy/version bump.
+  See [evidence](docs/evidence/value-view-lookup-windows-20261114.json).
+  Prior [root authentication](docs/engineering/value-root-authentication.md),
+  [view proof scheduling](docs/engineering/value-flow-pending.md) and
+  [typed Buffer/view work](docs/engineering/compiler-typed-buffer-view.md) retain history.
 
 # Brownie C agent guidance
 
