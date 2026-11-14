@@ -1,25 +1,26 @@
-- Latest maintenance checkpoint (2026-11-14):
-  [single-header view lookup](docs/engineering/value-view-lookup.md).
-  Successful private typed/value view lookup now relies on resolve's complete
-  header/root/lease/backing validation rather than checking the header twice.
-  Bounded metadata search grants no authority; invalid bindings/misses validate
-  before returning Binding, preserving the old State-before-Binding priority.
-  No unchecked-ticket API, cross-call cache, native layout or state field is added.
-  At 32 live views, lookup-then-read needs two header passes rather than three:
-  992 rather than 1488 row-pair visits. These are structural source counts, not
-  measured CPU/time/heap/stack gains; Fuel and O(D^2) header checks are unchanged.
-  Six native groups pass in development/O2: original header/resolver/lookup parity,
-  all pool sizes 0..32, 12288 registry fault and 120 root fault comparisons,
-  4096 full-pool reads with exact Fuel and final-lease cleanup, three existing
-  registry regressions and real nested-view VM execution. All final input hashes
-  match implementation 760e00e. Root: 375 sources / 4074 MIR; all 367 production
-  sources are LF. Full Engine, standalone memory, public CLI and release gates
-  were not rerun. No new allocation class, conservative reservation, public
-  Pending API or R02-R05 closure. Broader completion stays paused; local only,
-  no push/release/deploy/version bump.
-  See [evidence](docs/evidence/value-view-lookup-windows-20261114.json).
-  Prior [root authentication](docs/engineering/value-root-authentication.md),
-  [view proof scheduling](docs/engineering/value-flow-pending.md) and
+- Latest maintenance checkpoint (2026-11-15):
+  [integer-array shape validation](docs/engineering/value-integer-array-validation.md).
+  The private typed/value codec no longer decodes every integer-array element:
+  retained immutable layout proves an admitted fixed-width integer tag/extent,
+  and exact input length is checked before active payload selection. All integer
+  bit patterns are canonical. Bool arrays still check every byte <=1. Records,
+  scalar values, wrapper tags/padding/inactive bytes and Buffer authority guards
+  remain unchanged. Maximum 4096-element integer leaf inspection eliminates
+  a 32768-byte payload scan and 4096 scalar decodes; O(N*W) validation becomes O(1).
+  This is structural work, not measured CPU/time/heap/stack improvement; copying,
+  Fuel prices, quotas and memory reservations are unchanged. No new allocation,
+  unchecked-layout API, native layout, state/ledger field or public Pending API.
+  Six groups pass development/O2: 637 original-array-branch comparisons, integer
+  extremes/all u8 and bool bytes, maximum/short/oversized arrays, bool copy rollback,
+  inactive integer payload/padding/snapshot independence, records/opaque words,
+  actual frame copies/moves and maximum arrays through four wrappers. Every final
+  input hash matches implementation be38901. Root: 375 sources / 4074 MIR; 367
+  production sources are LF. Full Engine, standalone memory, public CLI and
+  release gates were not rerun. Broader completion stays paused; no R02-R05
+  closure, push/release/deploy/version bump.
+  See [evidence](docs/evidence/value-integer-array-validation-windows-20261115.json).
+  Prior [view lookup](docs/engineering/value-view-lookup.md),
+  [root authentication](docs/engineering/value-root-authentication.md) and
   [typed Buffer/view work](docs/engineering/compiler-typed-buffer-view.md) retain history.
 
 # Brownie C agent guidance

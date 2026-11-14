@@ -1,0 +1,89 @@
+{
+  "schema": "browniec.integer-array-validation/v1",
+  "status": "passed",
+  "clientDate": "2026-11-15",
+  "baselineCommit": "1dc64da",
+  "implementationCommit": "be389016379aa08c486b8d7eb34258175ba33546",
+  "scope": "private typed/value codec validation of retained scalar arrays; public CLI admission unchanged",
+  "source": "src/value_codec.fy",
+  "sourceSha256": "f458fe6250204d61a4e5d3727942b8a27dd7c4c489a68faac8937d714fd2539f",
+  "profiles": [
+    {
+      "profile": "development",
+      "nativeGroups": 6,
+      "receipt": "build/value-integer-array-validation/development/receipt.json",
+      "receiptSha256": "047a46d3c7063e474fcfe35061c4d413f2d613d561defe54c51a9365b0d31d29",
+      "allInputHashesMatch": true
+    },
+    {
+      "profile": "release",
+      "nativeGroups": 6,
+      "receipt": "build/value-integer-array-validation/release/receipt.json",
+      "receiptSha256": "d20e7f318ba6b1f302e7858a5ee6701be2f0fadd565dbce93d92be4e8600003c",
+      "allInputHashesMatch": true
+    }
+  ],
+  "inputCount": 376,
+  "inputSetSha256": "82b572f0d3c6c5f66dcc37220c5781123e9aab547614344280596db74221a33c",
+  "structuralCounts": {
+    "maximumElements": 4096,
+    "maximumIntegerWidth": 8,
+    "maximumIntegerArrayBytes": 32768,
+    "integerLeafScalarDecodesBefore": 4096,
+    "integerLeafScalarDecodesAfter": 0,
+    "usizeLeafPayloadByteReadsBefore": 32768,
+    "i64LeafPayloadByteReadsBefore": 36864,
+    "integerLeafPayloadByteReadsAfter": 0,
+    "integerLeafValidationBefore": "O(N*W)",
+    "integerLeafValidationAfter": "O(1)",
+    "boolValidation": "O(N), every byte <=1",
+    "copyComplexityUnchanged": "O(N*W)",
+    "fuelPricesChanged": false,
+    "addedHeapAllocations": 0,
+    "measuredWallClockOrNativePeak": false
+  },
+  "admissionProof": [
+    "Retained private Layout snapshots independently validated Catalog and shapes.",
+    "Only i32,i64,u8,u32,usize,bool are admitted as scalar-array elements; array length is 1..4096 with exact scalar stride.",
+    "Exact input byte length precedes active wrapper traversal and array selection.",
+    "All integer bit patterns are valid; only bool has invalid element byte patterns; arrays have no padding or owner serial authority."
+  ],
+  "coverage": {
+    "integerTags": [
+      1,
+      9,
+      10,
+      11,
+      12
+    ],
+    "arrayLengths": [
+      1,
+      17,
+      4096
+    ],
+    "integerPatterns": 6,
+    "integerPatternComparisons": 90,
+    "lengthErrorComparisons": 30,
+    "allU8ByteValues": 256,
+    "allBoolByteValues": 256,
+    "maximumBoolComparisons": 5,
+    "totalOriginalBranchComparisons": 637,
+    "invalidBoolIndices": [
+      0,
+      2048,
+      4095
+    ],
+    "boolCopyCases": 256,
+    "inactiveIntegerPayloadAndPadding": true,
+    "retainedSnapshotAfterCatalogMutation": true,
+    "recordAndBufferGuards": true,
+    "actualFrameCopiesMovesAndFourWrappers": true
+  },
+  "limitations": [
+    "Structural payload reads/decode counts, not measured compiler-optimized machine instructions or wall-clock speedup.",
+    "Integer-array leaves only: copies, bool arrays, record checks and inactive/tag-padding zero checks can still traverse bytes.",
+    "Full Engine, standalone memory, public CLI and release gates not rerun; no current-revision full Engine pass claimed.",
+    "No unchecked Layout API, allocation class, native layout, ledger field, conservative memory reservation, public Pending API or R02-R05 closure.",
+    "Local only; no push/release/deploy/version bump."
+  ]
+}
