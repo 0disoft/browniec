@@ -97,13 +97,16 @@ fn Result<Row,Error> resolve(ref Pool pool,ref roots::State store,ref vec::Vec<b
 // ticket or serial. Authenticate the exact lease/root/backing before returning.
 pub fn Result<Ticket,Error> lookup(ref Pool pool,ref roots::State store,
     ref vec::Vec<bytes::Buffer> data,ref vec::Vec<bytes::Buffer> scratch,usize selected){
-    let usize checked=header(pool)?;
-    if(selected>=512){return .err(.Binding);}var usize i=0;
+    // resolve checks the complete header before any ticket/root/native access.
+    // The bounded search only reads metadata; avoid validating twice on a hit.
+    if(selected>=512){let usize checked=header(pool)?;return .err(.Binding);}var usize i=0;
     while(i<32){let Row row=get(pool,i);if(row.live && row.binding==selected){
         let Ticket ticket=Ticket{.slot=i,.generation=row.generation};
         let Row authenticated=resolve(pool,store,data,scratch,ticket,selected)?;
         return .ok(ticket);
-    }i+=1;}return .err(.Binding);
+    }i+=1;}
+    // Preserve State-before-Binding diagnostics when no row matches as well.
+    let usize checked=header(pool)?;return .err(.Binding);
 }
 fn Ticket publish(ref mut Pool pool,usize slot,usize destination,usize serial,usize owner_binding,
     owners::Token owner,usize start,usize length){
