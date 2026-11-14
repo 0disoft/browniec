@@ -1,47 +1,24 @@
-- Latest typed/value Buffer/view checkpoint (2026-11-14):
-  [typed Buffer/view operations](docs/engineering/compiler-typed-buffer-view.md).
-  Namespace/name/prefix/delimiter work, recursive Buffer operands, first/second
-  loans, scalar capture and result preparation advance separately. Finalization
-  separates result types, emission and temporary drops with explicit services.
-  Views capture receivers before endpoints. Advisory range walks never publish
-  the real lexer. Whole view/length/index/range effects request authentication,
-  emission, close and type services. Lexical roots scan one owner/name row.
-  Copy uses 37 phases for result/destination/empty root, one APPEND104 or
-  APPEND_VIEW112, anonymous view close, success/error CFG and reverse cleanup.
-  Denied/waiting/completed advances do not replay; duplicate services reject.
-  All owners still drain synchronously with logical allowance 4096. Existing
-  fixed metadata helpers retain 16/24/64-row bounds inside explicit children.
-  No new SDK heap class or ledger/Bank/Pratt/Semantic field is added.
-  Actual special and ordinary CALL32/33 retain default stacks. The new special
-  fixture exposed raw overflow; scalar raw routing avoids the common large
-  Buffer frame, namespace dispatch avoids the primary leaf, staged operands
-  share inactive token/type scratch and isolate nonrecursive services. Final
-  combined candidates match raw IR/catalogs/errors, accept32/reject33 and run42.
-  Pre-correction assembly is diagnostic only, not a physical peak measurement.
-  Implementation: `e54aab5` Buffer, `5e66969` views/default-stack correction,
-  `79b0b42` copy/cleanup. Each slice passes 8/9/8 native groups respectively in
-  development/O2 with all input hashes matching its named commit. Fixture and
-  overflow failures remain incomplete. No compiler/optimization/stack/timeout
-  overrides. Root: 374 sources / 4070 MIR;
-  all 366 production sources are LF and match final focused inputs.
-  Owning Engine was not rerun: its complete 352-source closure, transport and
-  all 367 inputs match the final implementation commit and prior `afaab3c`
-  passed development/O2 evidence. Default 1MiB/4KiB stacks and zero SDK exit heap
-  are reused, not a new typed allocator measurement. Lowering/ordinary/input
-  working reservations remain 66,630,144/66,804,544/66,804,928; scratch widths/caps
-  remain 37792/40000, 5736/6000, 14720/15000. No public Pending compiler,
-  measured CPU/time/heap/stack gain or R02-R05 closure.
-  See [evidence](docs/evidence/compiler-typed-buffer-view-windows-20261114.json).
-  Follow-up: [stable loop compaction](docs/engineering/compiler-loop-compaction.md)
-  replaces per-snapshot transfer scans with a bounded relocation map; worst
-  transfer-row visits fall from 65,536 to 512, without new heap allocation.
-  Original ordering/error/oversized-pool behavior matches; six groups pass in
-  development/O2. This is a structural count, not a measured time/peak claim.
-  Named parser bounds cover private sources <=4096 bytes. Propagation, recursive
-  CFG/join/snapshot release, interning/origin/function/entry/final and other
-  cleanup internals remain explicit synchronous children or outside these bounds.
-  Broader completion stays paused. Standalone memory, broad public-CLI and full
-  release gates were not rerun. Local only; no push/release/deploy/version bump.
+- Latest maintenance checkpoint (2026-11-14):
+  [sparse view proof scheduling](docs/engineering/value-flow-pending.md).
+  The private typed/value view verifier replaces repeated full pending-PC sweeps
+  with four 64-bit words while preserving ascending round order, duplicate and
+  backward/same-PC requeue, exact errors, preflight and the 98,560-step cap.
+  Immediate successors bypass binary search. Pending payload is 32 logical
+  bytes rather than 256; no new heap allocation or ledger/scratch carrier field.
+  These are structural counts, not measured CPU/time or native peak gains.
+  Six native groups pass in development/O2: scheduler/original-flag parity,
+  frozen original-verifier parity, multi-round origin widening and actual
+  source loop/terminal cleanup with VM execution. Every final receipt input
+  matches current bytes. The initial broader build was stopped/incomplete.
+  Root: 375 sources / 4074 MIR; all 367 production sources are LF.
+  Full Engine, standalone memory, public CLI and release gates were not rerun.
+  Prior Engine evidence is historical, not a current-revision pass. Compile
+  reservations and scratch widths/caps are unchanged. No public Pending API,
+  R02-R05 closure, push/release/deploy/version bump; broader completion stays paused.
+  See [evidence](docs/evidence/value-flow-pending-windows-20261114.json).
+  Previous typed/value checkpoint details remain in
+  [typed Buffer/view operations](docs/engineering/compiler-typed-buffer-view.md)
+  and [stable loop compaction](docs/engineering/compiler-loop-compaction.md).
 
 # Brownie C agent guidance
 

@@ -1,0 +1,68 @@
+{
+  "schema": "browniec.value-flow-pending/v1",
+  "status": "passed",
+  "baselineCommit": "0fe8017",
+  "scope": "private typed/value view ownership verifier, not public CLI admission",
+  "sources": [
+    {
+      "path": "src/value_view_flow.fy",
+      "sha256": "8f07581e4374bd847abe6533ce53c6b15e63459399674f5aa129c22477b3353e"
+    },
+    {
+      "path": "src/value_flow_pending.fy",
+      "sha256": "96144e4471f6915d6c2c12ee68474404fae6c7ecc5e86f39d1da4dd0071e47d6"
+    }
+  ],
+  "profiles": [
+    {
+      "profile": "development",
+      "nativeGroups": 6,
+      "receipt": "build/value-flow-pending/development/receipt.json",
+      "receiptSha256": "c18a00fb6749e55f2917bff24f68fb9e4b85e2f1c8cf4c821dda78a277d889af",
+      "allInputHashesMatch": true
+    },
+    {
+      "profile": "release",
+      "nativeGroups": 6,
+      "receipt": "build/value-flow-pending/release/receipt.json",
+      "receiptSha256": "eb9325077e218d0529057db27fc0daad628135e76853c331a27d368594f2a1da",
+      "allInputHashesMatch": true
+    }
+  ],
+  "inputCount": 377,
+  "inputSetSha256": "a2033f4eb1d8f5d2b64a6eac706c928ec572f85ebcef7ffeb363e4ad4c136d4f",
+  "structuralCounts": {
+    "pcLimit": 256,
+    "pendingBytesBefore": 256,
+    "pendingBytesAfter": 32,
+    "pendingPayloadReductionPercent": 87.5,
+    "addedHeapAllocations": 0,
+    "wordTestsPerTakeAtMost": 4,
+    "binaryTestsPerSearch": 6,
+    "directSuccessorBitTests": 1,
+    "selectionWordBitTestBound": "16*U+10",
+    "oldFlagPollCount": "N*R",
+    "sparseExample": {
+      "sweeps": 1000,
+      "onlyPendingPC": 255,
+      "oldNonemptySweepFlagPolls": 256000,
+      "newNonemptySweepWordAndBitTests": 11000,
+      "oldFinalEmptySweepFlagPolls": 256,
+      "newFinalEmptySelectionTestsAtMost": 10
+    },
+    "measuredWallClockSpeedupOrNativePeak": false
+  },
+  "compatibility": "Ascending round order, deduplication, same-PC and backward requeue, exact error kind/offset, existing 98560-step cap and preflight unchanged; dense immediate successors bypass binary search.",
+  "preliminaryAttempt": {
+    "status": "incomplete",
+    "groupsSelected": 25,
+    "reason": "Stopped the owned preliminary native build after narrowing final validation and adding the direct-successor path; never counted as passing evidence.",
+    "receipt": "build/view-flow-pending-review/preliminary-incomplete.json"
+  },
+  "limitations": [
+    "Structural scheduling counts, not measured compiler throughput; bit operations/call overhead remain.",
+    "The 32KiB origin table and conservative compile-memory reservations remain unchanged; no physical peak claim.",
+    "Full Engine, standalone memory, public CLI and release gates not rerun; earlier Engine receipt is historical, not current-revision evidence.",
+    "No public Pending API, R02-R05 closure, push, deploy, release or version bump."
+  ]
+}

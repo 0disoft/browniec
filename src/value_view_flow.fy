@@ -2,6 +2,7 @@ module value_view_flow;
 import value_ir as values;
 import ir as ir;
 import errors as errors;
+import value_flow_pending as queue;
 
 // Independent origin sets, never guest encodings: low bits0..15 identify local
 // Buffer slots, bits16..23 identify formal argument ordinals. Zero is Dead.
@@ -19,7 +20,7 @@ fn Result<usize,errors::Error> unpinned(ref usize[] origins,usize owner,usize pc
 // A descriptor must be live on every incoming edge or dead on every edge.
 // Only its candidate roots widen. Check all live sets before publishing a union.
 fn Result<usize,errors::Error> merge(ref mut usize[] states,ref mut bool[] seen,
-    ref mut bool[] pending,usize target,ref usize[] origins,usize start,usize end,usize pc,bool back){
+    ref mut queue::State pending,usize target,ref usize[] origins,usize start,usize end,usize pc,bool back){
     if(target<start || target>=end || (back && !seen[target])){return .err(invalid(pc));}
     var usize i=0;while(i<16){
         if(seen[target] && (states[target*16+i]==0)!=(origins[i]==0)){return .err(invalid(pc));}i+=1;
@@ -28,13 +29,13 @@ fn Result<usize,errors::Error> merge(ref mut usize[] states,ref mut bool[] seen,
         let usize joined=states[target*16+i]|origins[i];
         if(joined!=states[target*16+i]){changed=true;states[target*16+i]=joined;}i+=1;
     }
-    seen[target]=true;if(changed){pending[target]=true;}return .ok(target);
+    seen[target]=true;if(changed){queue::add(pending,target);}return .ok(target);
 }
 fn Result<usize,errors::Error> function(ref values::Program unit,ref values::Prepared proof,usize f){
     let ref ir::Program p=ref unit.body;let usize start=p.starts[f];let usize end=p.ends[f];
     // 32KiB states plus bounded worklist flags; no recursion/native stack override.
     var usize[4096] states=[0;4096];var bool[256] seen=[false;256];
-    var bool[256] pending=[false;256];seen[start]=true;pending[start]=true;
+    var queue::State pending=queue::empty();seen[start]=true;queue::add(ref mut pending,start);
     var usize arg=0;
     while(arg<p.arities[f]){let usize formal=unit.parameters[p.register_starts[f]+arg] as usize;
         if(formal>=17){states[start*16+formal-17]=bit(16+arg);}arg+=1;
@@ -42,9 +43,11 @@ fn Result<usize,errors::Error> function(ref values::Program unit,ref values::Pre
     // Ascending pending-PC worklist, repeated after a backedge widens an input.
     // Each PC is discovered once and can gain at most16*24 origin bits. Every
     // changed successor is queued, including an already processed forward PC.
-    var usize steps=0;var bool again=true;var usize pc=start;
-    while(again){again=false;pc=start;
-    while(pc<end){if(!pending[pc]){pc+=1;continue;}pending[pc]=false;again=true;
+    var usize steps=0;var usize pc=start;
+    while(true){
+        var usize next=queue::take(ref mut pending,pc,end);
+        if(next==256){next=queue::take(ref mut pending,start,end);}
+        if(next==256){break;}pc=next;
         steps+=1;if(steps>98560){return .err(invalid(pc));} // 256*(1+16*24)
         let usize at=pc*8;let u8 op=p.code[at];
         let usize dst=p.code[at+1] as usize;let usize a=p.code[at+2] as usize;
@@ -111,7 +114,7 @@ fn Result<usize,errors::Error> function(ref values::Program unit,ref values::Pre
             if(op==19){pc+=1;continue;}
         }
         let usize checked=merge(ref mut states,ref mut seen,ref mut pending,pc+1,ref origins,start,end,pc,false)?;pc+=1;
-    }}
+    }
     // Canonical code cannot hide unreachable instructions behind a valid path.
     pc=start;while(pc<end){if(!seen[pc]){return .err(invalid(pc));}pc+=1;}
     return .ok(end-start);
