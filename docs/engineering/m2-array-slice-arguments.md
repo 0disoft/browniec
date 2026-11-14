@@ -42,6 +42,9 @@ integration status and evidence below describe the original foundation.
 `close_arguments(pool, batch, owners, capacity)` checks count, live-ticket shape,
 unique used slots and canonical unused entries (`slot=16,generation=0`). It then
 stages both metadata tables and closes the tickets in reverse argument order.
+The [cleanup preflight refactor](slice-cleanup-preflight.md) reuses the initial
+pool authentication while private closes preserve the validity of all remaining
+handles; owner session-end operations still authenticate independently.
 A late stale-ticket or backing failure discards all staged changes, preserving
 the original batch for diagnosis or corrected cleanup. Success commits the tables
 and resets the batch to canonical empty state.

@@ -1,0 +1,98 @@
+{
+  "schema": "browniec.slice-cleanup-preflight/v1",
+  "status": "passed",
+  "clientDate": "2026-11-15",
+  "baselineCommit": "2b4fe75",
+  "implementationCommit": "10f45c87b4fb18d0acb09512d8c2cdf18784e74a",
+  "source": "src/array_slices.fy",
+  "sourceSha256": "2362626f6b381d55d6a16dcc1b0d3c00651bb09767b4aca5d932d28b924f2432",
+  "profiles": [
+    {
+      "profile": "development",
+      "nativeGroups": 6,
+      "receipt": "build/slice-cleanup-preflight/development/receipt.json",
+      "receiptSha256": "b505861f7b25ba560c17b5b1632cb3056c8a722d06bf991ae7716cad1feeaf75",
+      "allInputHashesMatch": true
+    },
+    {
+      "profile": "release",
+      "nativeGroups": 6,
+      "receipt": "build/slice-cleanup-preflight/release/receipt.json",
+      "receiptSha256": "9e509a42d3da45a552425020bc966720a0bc0f67dd916a59438774e76557469c",
+      "allInputHashesMatch": true
+    }
+  ],
+  "inputCount": 378,
+  "inputSetSha256": "9ad4e45aed499a4513da4c15fd45ee26641e925c266554c900a01ec899ac1bc7",
+  "structuralCounts": {
+    "fullClear": {
+      "liveSharedHandles": 16,
+      "endedSessions": 16,
+      "retainedOwnerDepth": 16,
+      "poolValidationsBefore": 17,
+      "poolValidationsAfter": 1,
+      "ownerValidationsBefore": 168,
+      "ownerValidationsAfter": 32,
+      "ownerEntryVisitsBefore": 5376,
+      "ownerEntryVisitsAfter": 1024,
+      "reductionPercent": 80.95
+    },
+    "peerRetainingBatch": {
+      "liveSharedHandles": 16,
+      "batchHandles": 8,
+      "endedSessions": 0,
+      "retainedOwnerDepth": 16,
+      "poolValidationsBefore": 9,
+      "poolValidationsAfter": 1,
+      "ownerValidationsBefore": 116,
+      "ownerValidationsAfter": 16,
+      "ownerEntryVisitsBefore": 3712,
+      "ownerEntryVisitsAfter": 512,
+      "reductionPercent": 86.21
+    },
+    "fullClearOwnerValidationComplexityBefore": "O(V*V*(D+16))",
+    "fullClearOwnerValidationComplexityAfter": "O((V+E)*(D+16))",
+    "rootPeerSearchesUnchanged": "O(V*16)",
+    "fuelPricesChanged": false,
+    "addedHeapAllocations": 0,
+    "measuredThroughputOrPhysicalPeak": false
+  },
+  "coverage": {
+    "healthyPoolOccupancies": "0..16",
+    "healthyModes": [
+      "distinct readers",
+      "shared aliases",
+      "mixed readers and writers"
+    ],
+    "generationVariants": 2,
+    "healthyClearComparisons": 102,
+    "healthyBatchComparisons": 1836,
+    "metadataPoolOccupancies": [
+      1,
+      8,
+      16
+    ],
+    "mutationSlots": 16,
+    "mutationModes": 20,
+    "metadataClearComparisons": 960,
+    "metadataBatchComparisons": 3840,
+    "lateStaleOrOutOfRangeBatchComparisons": 16,
+    "totalOriginalAlgorithmComparisons": 6754,
+    "allPoolOwnerAndBatchFieldsCompared": true,
+    "failedStateRollback": true,
+    "existingRegressionGroups": 4
+  },
+  "admissionProof": [
+    "One synchronous staged cleanup authenticates all live handles before mutation.",
+    "A shared owner session ends only on the last peer; a validated exclusive owner has no peers.",
+    "Retirement canonicalizes an inactive slot and preserves every remaining live descriptor and lease.",
+    "Owner end_read/end_write still validate independently and mutate only session flags and epoch.",
+    "Batch lookup retains reverse-order stale-ticket diagnostics and staged rollback; public close still fully authenticates."
+  ],
+  "limitations": [
+    "Source-level structural counts, not elapsed throughput, machine instructions or physical memory measurements.",
+    "Initial fixture compile failed because copied Slot lacked its module qualifier; corrected before final verification.",
+    "Full Engine, standalone memory, public CLI and release gates not rerun; no public admission expansion.",
+    "Local only; no push/release/deploy/version bump."
+  ]
+}

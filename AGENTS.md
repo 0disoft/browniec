@@ -1,26 +1,26 @@
 - Latest maintenance checkpoint (2026-11-15):
-  [shared slice argument preflight](docs/engineering/slice-argument-preflight.md).
-  borrow_arguments authenticates the original pool once, checks every source's
-  identity/mode before publication, then stages whole-range view/lease copies.
-  The same free-slot order, diagnostics, rollback, root-relative bounds and read
-  epochs are preserved. Private lookup is identity-only; ordinary resolve,
-  length and subslice still authenticate independently. No unchecked public API,
+  [slice cleanup preflight](docs/engineering/slice-cleanup-preflight.md).
+  clear/close_arguments reuse one initial pool authentication while private
+  close_prepared preserves the validated remainder. Last-reader and unique-writer
+  session rules, canonical retirement and independent owner-end validation remain.
+  Batch tickets are still checked in reverse order; late failures discard staged
+  tables/batch. Public close still authenticates independently. No unchecked API,
   cross-call cache, stored field, allocation or admission expansion is added.
-  For eight live shared views/eight arguments and sixteen retained owners, pool
-  validations drop 17 to 1, owner validations 172 to 8 and chain/slot visits
-  5504 to 256. These are structural counts, not measured throughput or physical
-  heap/stack peaks. Fuel, quotas and conservative reservations are unchanged.
-  Development/O2 each pass six groups: 4908 original-algorithm comparisons with
-  all pool/batch fields, occupancy/arity/generation boundaries, metadata faults,
-  forged later sources and rollback; existing partial-capacity, maximum-array,
-  exclusive-conflict and exact-Fuel CALL/frame-reuse regressions. All 377 receipt
-  inputs match implementation 8e6fc5f. Root check: 375 sources / 4079 MIR.
+  Full clear of sixteen distinct shared roots: owner validations 168 to 32 and
+  chain/slot visits 5376 to 1024. Eight peer-retaining argument closes from sixteen
+  live views: owner validations 116 to 16. Root-peer searches remain bounded;
+  no whole-cleanup linearity or measured throughput/physical peak claim. Fuel,
+  quotas and conservative reservations are unchanged.
+  Development/O2 each pass six groups: 6754 original-loop comparisons with all
+  pool/owner/batch fields, distinct/aliased/mixed roots, empty/offset ranges,
+  maximum ticket/session generations, faults and reverse-order stale failures;
+  existing batch, external-session, both-mode and actual CALL cleanup regressions.
+  All 378 receipt inputs match 10f45c8. Root check: 375 sources / 4080 MIR.
   Full Engine, standalone memory, public CLI and release gates were not rerun.
   Broader completion remains paused; no R02-R05 closure, push/release/deploy/bump.
-  See [evidence](docs/evidence/slice-argument-preflight-windows-20261115.json).
-  Prior [lease authentication](docs/engineering/array-lease-authentication.md),
-  [integer-array validation](docs/engineering/value-integer-array-validation.md)
-  and [root authentication](docs/engineering/value-root-authentication.md) retain history.
+  See [evidence](docs/evidence/slice-cleanup-preflight-windows-20261115.json).
+  Prior [argument preflight](docs/engineering/slice-argument-preflight.md) and
+  [lease authentication](docs/engineering/array-lease-authentication.md) retain history.
 
 # Brownie C agent guidance
 
