@@ -22,7 +22,32 @@ fn usize position(ref values::Program unit){let ref ir::Program body=ref unit.bo
 // Branch-local scratch may end before its break/for-continue edge is resolved.
 // Keep those escaping exits in the same bounded pool, compacting their indices;
 // ancestor entries and ordinary branch exits below mark stay byte-identical.
+// The admitted snapshot pool has <=128 rows. Build its stable relocation map
+// once, then rewrite each pending edge once; no per-snapshot transfer scans.
 pub fn Result<usize,errors::Error> release(ref mut vec::Vec<bindings::Snapshot> paths,
+    ref mut State loops,usize mark,usize at){
+    let usize count=branches::mark(paths);if(mark>count){return .err(invalid(at));}
+    // Preserve the legacy helper's behavior for manually supplied oversized pools.
+    if(mark==count){return .ok(mark);}
+    if(count>128 || count-mark==1){return release_unbounded(paths,loops,mark,at);}
+    var usize[128] remap=[0;128];var bool retained=false;var usize pc=0;
+    while(pc<256){let usize prior=loops.paths[pc];
+        if(loops.owners[pc]!=0 && prior>mark && prior<=count){remap[prior-1]=1;retained=true;}pc+=1;}
+    if(!retained){return branches::release(paths,mark,at);}
+    var usize write=mark;var usize read=mark;
+    while(read<count){if(remap[read]!=0){
+        if(write!=read){
+            let bindings::Snapshot saved=bindings::snapshot(ref vec::at<bindings::Snapshot>(paths,read).state);
+            let ref mut bindings::Snapshot target=vec::at_mut<bindings::Snapshot>(paths,write);target.state=saved.state;
+        }
+        remap[read]=write+1;write+=1;
+    }read+=1;}
+    pc=0;while(pc<256){let usize prior=loops.paths[pc];
+        if(loops.owners[pc]!=0 && prior>mark && prior<=count){loops.paths[pc]=remap[prior-1];}pc+=1;}
+    return branches::release(paths,write,at);
+}
+// Out-of-profile callers retain the original general Vec behavior.
+fn Result<usize,errors::Error> release_unbounded(ref mut vec::Vec<bindings::Snapshot> paths,
     ref mut State loops,usize mark,usize at){
     let usize count=branches::mark(paths);if(mark>count){return .err(invalid(at));}
     var usize write=mark;var usize read=mark;

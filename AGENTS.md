@@ -22,7 +22,7 @@
   `79b0b42` copy/cleanup. Each slice passes 8/9/8 native groups respectively in
   development/O2 with all input hashes matching its named commit. Fixture and
   overflow failures remain incomplete. No compiler/optimization/stack/timeout
-  overrides. Root: 374 sources / 4069 MIR;
+  overrides. Root: 374 sources / 4070 MIR;
   all 366 production sources are LF and match final focused inputs.
   Owning Engine was not rerun: its complete 352-source closure, transport and
   all 367 inputs match the final implementation commit and prior `afaab3c`
@@ -32,6 +32,11 @@
   remain 37792/40000, 5736/6000, 14720/15000. No public Pending compiler,
   measured CPU/time/heap/stack gain or R02-R05 closure.
   See [evidence](docs/evidence/compiler-typed-buffer-view-windows-20261114.json).
+  Follow-up: [stable loop compaction](docs/engineering/compiler-loop-compaction.md)
+  replaces per-snapshot transfer scans with a bounded relocation map; worst
+  transfer-row visits fall from 65,536 to 512, without new heap allocation.
+  Original ordering/error/oversized-pool behavior matches; six groups pass in
+  development/O2. This is a structural count, not a measured time/peak claim.
   Named parser bounds cover private sources <=4096 bytes. Propagation, recursive
   CFG/join/snapshot release, interning/origin/function/entry/final and other
   cleanup internals remain explicit synchronous children or outside these bounds.

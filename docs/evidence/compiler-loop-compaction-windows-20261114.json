@@ -1,0 +1,50 @@
+{
+  "schema": "browniec.loop-snapshot-compaction/v1",
+  "status": "passed",
+  "source": "src/value_source_loops.fy",
+  "sourceSha256": "517207ce03684a81e20ca64c34865d1f6b090b69d60d0d5e9fe566a964ae75b5",
+  "scope": "private typed/value compiler metadata; not public CLI execution",
+  "profiles": [
+    {
+      "profile": "development",
+      "nativeGroups": 6,
+      "receipt": "build/value-loop-compaction/development/receipt.json",
+      "receiptSha256": "51fd92c49ca6f2970515951cfdc94cb413380b383199573a60ed648a77a49ac2",
+      "allInputHashesMatch": true
+    },
+    {
+      "profile": "release",
+      "nativeGroups": 6,
+      "receipt": "build/value-loop-compaction/release/receipt.json",
+      "receiptSha256": "169662cfa0f073d734118953fbaf74692b427dc5bb7936189f63050444304c44",
+      "allInputHashesMatch": true
+    }
+  ],
+  "inputCount": 375,
+  "inputSetSha256": "39819772fe9ecd5b4f4385e26d658c941daa9843732a82de1f7af5d5f0c0c73b",
+  "structuralCounts": {
+    "snapshotLimit": 128,
+    "transferRows": 256,
+    "worstOldTransferRowVisits": 65536,
+    "worstNewTransferRowVisits": 512,
+    "reductionFactor": 128,
+    "oldComplexity": "O(S*P)",
+    "newAdmittedComplexity": "O(S+P)",
+    "logicalMapBytes": 1024,
+    "addedHeapAllocations": 0,
+    "measuredWallClockOrPhysicalPeak": false
+  },
+  "compatibility": "Stable snapshot order and all metadata, protected prefix, owner-zero/stale/duplicate/ancestor references, invalid mark error and original oversized Vec behavior retained. Empty and one-row suffixes use short paths.",
+  "engineEvidenceReused": {
+    "sourceClosure": 352,
+    "inputCount": 367,
+    "allHashesUnchanged": true,
+    "rerun": false
+  },
+  "limitations": [
+    "Fast relocation map applies to admitted <=128-row pools; oversized manually supplied pools keep original algorithm",
+    "One KiB is logical auxiliary array storage; generated native temporaries/stack peak not measured",
+    "No changed SDK heap class, ledger/Bank/Pratt/Semantic field, scratch reservation, public Pending API or R02-R05 claim",
+    "Standalone memory, publicCLI and full release gates not rerun; no push/deploy/version bump"
+  ]
+}
