@@ -46,9 +46,11 @@ Actualmente `as` admite solo siete pares estrictamente de ampliación (`u8 -> i3
 ## 3. Operadores y comprobaciones de seguridad en tiempo de ejecución
 
 - **Aritmética**: `+`, `-`, `*`, `/`, `%`. El desbordamiento y la división por cero detienen la ejecución de forma segura (`overflow`, `zero_divisor`) en lugar de desbordarse en silencio.
+- **Asignación compuesta**: `+=`, `-=`, `*=`, `/=`, `%=`, `<<=`, `>>=`, `&=`, `^=`, `|=` sobre enlaces `var` o ubicaciones mutables.
+- **Operadores unarios**: `-`, `+`, `!`, `~` (el `-` unario se rechaza en tipos sin signo como `u8`, `u32` y `usize`).
 - **Bit a bit**: `&`, `|`, `^`, `~`, `<<`, `>>` sobre tipos enteros (`u8`, `u32`, `i32`, etc.).
 - **Lógicos y comparaciones**: `&&`, `||`, `!` con evaluación en cortocircuito. Se rechazan las comparaciones encadenadas (`0 < x < 10`) —escribe `(0 < x) && (x < 10)`— y las condiciones en `if`/`while` deben ser de tipo `bool`.
-- **Comentarios**: Se admiten comentarios de línea (`//`) y comentarios de bloque anidados (`/* ... */`).
+- **Literales enteros y comentarios**: Los literales enteros aceptan solo dígitos decimales (aún no se admiten `1_000`, `0xFF` ni `0b1010`). Se admiten comentarios de línea (`//`) y comentarios de bloque anidados (`/* ... */`).
 
 ```c
 let u8 flags = 72;

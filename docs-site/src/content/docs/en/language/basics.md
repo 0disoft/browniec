@@ -46,9 +46,11 @@ Currently `as` admits only seven strictly widening pairs (`u8 -> i32/i64/u32/usi
 ## 3. Operators and Runtime Safety Checks
 
 - **Arithmetic**: `+`, `-`, `*`, `/`, `%`. Overflow and division by zero stop safely (`overflow`, `zero_divisor`) instead of wrapping silently.
+- **Compound assignments**: `+=`, `-=`, `*=`, `/=`, `%=`, `<<=`, `>>=`, `&=`, `^=`, `|=` on `var` bindings or mutable places.
+- **Unary operators**: `-`, `+`, `!`, `~` (note that unary `-` is rejected on unsigned integers such as `u8`, `u32`, and `usize`).
 - **Bitwise**: `&`, `|`, `^`, `~`, `<<`, `>>` on integer types (`u8`, `u32`, `i32`, etc.).
 - **Logical and comparisons**: `&&`, `||`, `!` with short-circuit evaluation. Chained comparisons (`0 < x < 10`) are rejected—write `(0 < x) && (x < 10)`—and conditions in `if`/`while` must be `bool`.
-- **Comments**: Line comments (`//`) and nested block comments (`/* ... */`) are supported.
+- **Integer literals and comments**: Integer literals are decimal digits only (`1_000`, `0xFF`, and `0b1010` are not accepted yet). Line comments (`//`) and nested block comments (`/* ... */`) are supported.
 
 ```c
 let u8 flags = 72;

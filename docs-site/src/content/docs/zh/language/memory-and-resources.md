@@ -25,6 +25,21 @@ fn i32 main() {
 
 只要共享视图还处于活跃状态，任何修改底层所有者的操作都会在编译期被拒绝。
 
+除了切片之外，单个标量或结构体也可以通过 `ref` / `ref mut` 借用，并使用 `*r` 解引用读写：
+
+```c
+fn void bump(ref mut i32 target, ref i32 delta) {
+    *target += *delta;
+}
+
+fn i32 main() {
+    var i32 total = 70;
+    let i32 step = 7;
+    bump(ref mut total, ref step);
+    return total; // 77
+}
+```
+
 ## 2. 作用域重借用（Scoped Reborrowing）
 
 当你借用了整个切片（`parent`），需要把其中更窄的子切片（`child`）传给辅助函数进行修改，之后又要再次读取 `parent` 时，请把子借用放进独立的 `{ ... }` 代码块中：

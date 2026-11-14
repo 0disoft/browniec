@@ -50,7 +50,7 @@ fn Answer make_answer(i32 v) {
 - <strong>`Option<T>`</strong>：`.some(value)` 或 `.none`
 - <strong>`Result<T, E>`</strong>：`.ok(value)` 或 `.err(error)`
 
-当预期的返回类型或变量类型已知时，可以省略类型前缀，直接写 `.some(77)` 或 `.err(false)`。
+当预期的返回类型或变量类型已知时，可以省略类型前缀，直接写 `.some(77)` 或 `.err(false)`。（在当前公开 CLI 中，`Option<T>` 和 `Result<T, E>` 的类型参数支持 `i32` 与 `bool`。）
 
 ## 3. 使用 `?` 简洁传播错误
 
@@ -66,7 +66,7 @@ fn Result<i32, bool> add(Result<i32, bool> left, Result<i32, bool> right) {
 }
 ```
 
-如果你只想对 `Result` 做一个简单的布尔检查，也可以使用 `.is_ok`。
+如果你只想对 `Result<T, E>` 做一个简单的布尔检查，也可以使用 `.is_ok`（`Option<T>` 需使用 `switch` 或 `?`）。
 
 ---
 

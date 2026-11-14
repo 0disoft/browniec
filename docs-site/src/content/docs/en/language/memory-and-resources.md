@@ -25,6 +25,21 @@ fn i32 main() {
 
 While a shared view is alive, mutating the underlying owner is rejected at compile time.
 
+Single scalars and structs can also be borrowed with `ref` / `ref mut` and accessed with `*r` dereferencing:
+
+```c
+fn void bump(ref mut i32 target, ref i32 delta) {
+    *target += *delta;
+}
+
+fn i32 main() {
+    var i32 total = 70;
+    let i32 step = 7;
+    bump(ref mut total, ref step);
+    return total; // 77
+}
+```
+
 ## 2. Scoped Reborrowing
 
 When you borrow a whole slice (`parent`), pass a narrower sub-slice (`child`) to a helper function to mutate, and then read `parent` again afterward, wrap the child borrow in its own `{ ... }` block:

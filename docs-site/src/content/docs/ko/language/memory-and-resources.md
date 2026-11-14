@@ -25,6 +25,21 @@ fn i32 main() {
 
 읽기 전용 뷰를 빌려 둔 상태에서 원본 배열을 수정하려고 하면 컴파일 시점에 거절됩니다.
 
+슬라이스뿐 아니라 단일 스칼라나 구조체도 `ref` / `ref mut`로 빌린 뒤 역참조(`*r`)로 읽거나 고칠 수 있습니다.
+
+```c
+fn void bump(ref mut i32 target, ref i32 delta) {
+    *target += *delta;
+}
+
+fn i32 main() {
+    var i32 total = 70;
+    let i32 step = 7;
+    bump(ref mut total, ref step);
+    return total; // 77
+}
+```
+
 ## 2. 재빌림(Reborrow)으로 부모·자식 순서 지키기
 
 실무에서는 큰 버퍼 전체(`parent`)를 빌려 온 뒤, 잠깐 일부 구간(`child`)만 도우미 함수에 넘겨 수정하고, 다시 `parent`를 읽어야 하는 경우가 많습니다. 이럴 때 중괄호 `{ ... }` 스코프로 재빌림 구간을 감싸면 깔끔합니다.

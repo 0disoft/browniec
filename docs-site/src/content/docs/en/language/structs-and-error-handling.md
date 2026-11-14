@@ -50,7 +50,7 @@ While custom `enum` declarations are not in Brownie C, the built-in tagged wrapp
 - **`Option<T>`**: `.some(value)` or `.none`
 - **`Result<T, E>`**: `.ok(value)` or `.err(error)`
 
-When the expected return or variable type is known, omit the prefix and write `.some(77)` or `.err(false)`.
+When the expected return or variable type is known, omit the prefix and write `.some(77)` or `.err(false)`. (In the current public CLI, `Option<T>` and `Result<T, E>` type parameters support `i32` and `bool`.)
 
 ## 3. Clean Error Propagation with `?`
 
@@ -66,7 +66,7 @@ fn Result<i32, bool> add(Result<i32, bool> left, Result<i32, bool> right) {
 }
 ```
 
-If you only need a quick boolean check on a `Result`, `.is_ok` is also supported.
+If you only need a quick boolean check on a `Result<T, E>`, `.is_ok` is also supported (`Option<T>` uses `switch` or `?` instead).
 
 ---
 

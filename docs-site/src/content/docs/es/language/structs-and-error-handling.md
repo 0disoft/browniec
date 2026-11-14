@@ -50,7 +50,7 @@ Aunque no existen declaraciones `enum` personalizadas en Brownie C, los envoltor
 - **`Option<T>`**: `.some(value)` o `.none`
 - **`Result<T, E>`**: `.ok(value)` o `.err(error)`
 
-Cuando el tipo de retorno o de variable esperado ya se conoce, omite el prefijo y escribe `.some(77)` o `.err(false)`.
+Cuando el tipo de retorno o de variable esperado ya se conoce, omite el prefijo y escribe `.some(77)` o `.err(false)`. (En la CLI pública actual, los parámetros de tipo de `Option<T>` y `Result<T, E>` admiten `i32` y `bool`.)
 
 ## 3. Propagación limpia de errores con `?`
 
@@ -66,7 +66,7 @@ fn Result<i32, bool> add(Result<i32, bool> left, Result<i32, bool> right) {
 }
 ```
 
-Si solo necesitas una comprobación booleana rápida sobre un `Result`, también se admite `.is_ok`.
+Si solo necesitas una comprobación booleana rápida sobre un `Result<T, E>`, también se admite `.is_ok` (`Option<T>` usa `switch` o `?`).
 
 ---
 

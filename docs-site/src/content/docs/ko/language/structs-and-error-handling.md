@@ -51,7 +51,7 @@ fn Answer make_answer(i32 v) {
 - **`Option<T>`**: 값이 있으면 `.some(값)`, 없으면 `.none`
 - **`Result<T, E>`**: 성공하면 `.ok(값)`, 실패하면 `.err(오류값)`
 
-함수 반환 타입으로 `Option<i32>`나 `Result<i32, bool>`을 적으면, `return .some(77);`나 `return .err(false);`처럼 앞의 타입 이름을 생략하고 짧게 쓸 수 있습니다.
+함수 반환 타입으로 `Option<i32>`나 `Result<i32, bool>`을 적으면, `return .some(77);`나 `return .err(false);`처럼 앞의 타입 이름을 생략하고 짧게 쓸 수 있습니다. (현재 공개 CLI에서는 `Option<T>`와 `Result<T, E>`의 payload·오류 타입으로 `i32`와 `bool`만 지원합니다.)
 
 ## 3. `?` 연산자로 깔끔하게 에러 전파하기
 
@@ -69,7 +69,7 @@ fn Result<i32, bool> add(Result<i32, bool> left, Result<i32, bool> right) {
 
 `left?`는 `left`가 `.ok(x)`면 `x`를 꺼내어 `+ right?` 계산으로 이어 가고, `.err(e)`면 즉시 `add` 함수를 종료하면서 `.err(e)`를 호출자에게 돌려줍니다.
 
-성공 여부만 간단히 확인하고 싶을 때는 `.is_ok` 속성도 사용할 수 있습니다.
+`Result<T, E>` 값의 성공 여부만 간단히 확인하고 싶을 때는 `.is_ok` 속성도 사용할 수 있습니다(`Option<T>`에는 적용되지 않습니다).
 
 ---
 

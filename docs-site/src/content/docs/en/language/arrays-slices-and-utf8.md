@@ -24,6 +24,7 @@ fn i32 main() {
 ```
 
 - `.len` returns the array length as `usize`.
+- Matching mutable arrays (`var T[N]`) support whole-array copy assignment (`values = other;`).
 - Out-of-bounds reads or writes trap cleanly with `bounds` instead of reading arbitrary memory.
 
 ## 2. Slice Views (`ref T[]`, `ref mut T[]`)
@@ -46,6 +47,7 @@ fn i32 main() {
 - `ref T[]`: Read-only slice view.
 - `ref mut T[]`: Exclusive mutable slice view.
 - Half-open ranges support `arr[start..end]`, `arr[..end]`, and `arr[start..]`.
+- You can also borrow a slice directly from a temporary array returned by a function call (`update(ref mut make()[1..2])`).
 
 ## 3. UTF-8 Validation and Byte/Text Literals
 
@@ -68,10 +70,12 @@ You can also bind static byte (`b"..."`) and text (`"..."`) literals directly as
 ```c
 let ref u8[] sig = b"OK";
 let i32 first = sig[0] as i32;   // 79 ('O')
+let bool same = text::equal(text::bytes("OK"), sig);
 ```
 
 - Programs using byte/text literals enter the retained-reference profile (`brownie.m2-reference/1`), so pass a larger budget such as `--fuel 1000000` (the default `256` is too small for entry/leave costs).
-- Use `text::bytes(...)` to obtain bytes from a text view and `text::equal(...)` to compare two immutable byte views.
+- Use `text::bytes("OK")` to obtain a byte view from text, and `text::equal(a, b)` to compare two immutable byte views.
+- Both literal kinds support `\\`, `\"`, `\n`, `\r`, `\t`, `\0`, and `\xHH` escapes, while `"..."` also accepts `\u{...}` Unicode scalar escapes (`c"..."` C-string literals are rejected).
 
 ---
 

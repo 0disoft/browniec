@@ -25,6 +25,21 @@ fn i32 main() {
 
 Mientras haya una vista compartida activa, modificar el propietario subyacente se rechaza en tiempo de compilación.
 
+Además de slices, los escalares individuales y los `struct` también pueden tomarse prestados con `ref` / `ref mut` y accederse mediante desreferencia `*r`:
+
+```c
+fn void bump(ref mut i32 target, ref i32 delta) {
+    *target += *delta;
+}
+
+fn i32 main() {
+    var i32 total = 70;
+    let i32 step = 7;
+    bump(ref mut total, ref step);
+    return total; // 77
+}
+```
+
 ## 2. Représtamo por ámbito de bloque
 
 Cuando tomas prestado un slice completo (`parent`), pasas un sub-slice más estrecho (`child`) a una función auxiliar para modificarlo y luego vuelves a leer `parent`, envuelve el préstamo hijo en su propio bloque `{ ... }`:

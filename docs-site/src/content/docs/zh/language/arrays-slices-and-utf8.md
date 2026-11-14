@@ -24,6 +24,7 @@ fn i32 main() {
 ```
 
 - `.len` 以 `usize` 类型返回数组长度。
+- 相同元素类型与长度的可变数组（`var T[N]`）支持整组按值复制赋值（`values = other;`）。
 - 越界读取或写入会安全触发 `bounds` 陷阱，而不会访问任意内存。
 
 ## 2. 切片视图（`ref T[]`、`ref mut T[]`）
@@ -46,6 +47,7 @@ fn i32 main() {
 - `ref T[]`：只读切片视图。
 - `ref mut T[]`：独占可变切片视图。
 - 半开区间切片支持 `arr[start..end]`、`arr[..end]` 和 `arr[start..]`。
+- 也可以直接从函数返回的临时数组中借用切片并传入调用参数（例如 `update(ref mut make()[1..2])`）。
 
 ## 3. UTF-8 校验与字节/文本字面量
 
@@ -68,10 +70,12 @@ fn i32 main() {
 ```c
 let ref u8[] sig = b"OK";
 let i32 first = sig[0] as i32;   // 79 ('O')
+let bool same = text::equal(text::bytes("OK"), sig);
 ```
 
 - 使用字节/文本字面量的程序会进入保留引用配置（`brownie.m2-reference/1`），因此需要传入更大的预算，例如 `--fuel 1000000`（默认的 `256` 不足以支付进入/退出开销）。
-- 使用 `text::bytes(...)` 从文本视图获取字节，并使用 `text::equal(...)` 比较两个不可变字节视图。
+- 使用 `text::bytes("OK")` 可以从文本获取字节视图，使用 `text::equal(a, b)` 可以比较两个不可变字节视图。
+- 两种字面量均支持 `\\`、`\"`、`\n`、`\r`、`\t`、`\0` 和 `\xHH` 转义，`"..."` 还额外支持 `\u{...}` Unicode 标量转义（`c"..."` C 字符串字面量会被拒绝）。
 
 ---
 

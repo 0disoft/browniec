@@ -24,6 +24,7 @@ fn i32 main() {
 ```
 
 - `.len` devuelve la longitud del array como `usize`.
+- Los arrays mutables con el mismo tipo de elemento y longitud (`var T[N]`) admiten asignación de copia completa (`values = other;`).
 - Las lecturas o escrituras fuera de rango se detienen limpiamente con `bounds` en lugar de leer memoria arbitraria.
 
 ## 2. Vistas slice (`ref T[]`, `ref mut T[]`)
@@ -46,6 +47,7 @@ fn i32 main() {
 - `ref T[]`: Vista slice de solo lectura.
 - `ref mut T[]`: Vista slice mutable exclusiva.
 - Los rangos semiabiertos admiten `arr[start..end]`, `arr[..end]` y `arr[start..]`.
+- También puedes tomar prestado un slice directamente de un array temporal devuelto por una función (`update(ref mut make()[1..2])`).
 
 ## 3. Validación UTF-8 y literales de bytes y texto
 
@@ -68,10 +70,12 @@ También puedes enlazar literales estáticos de bytes (`b"..."`) y de texto (`".
 ```c
 let ref u8[] sig = b"OK";
 let i32 first = sig[0] as i32;   // 79 ('O')
+let bool same = text::equal(text::bytes("OK"), sig);
 ```
 
 - Los programas que usan literales de bytes o texto entran en el perfil de referencias retenidas (`brownie.m2-reference/1`), así que pasa un presupuesto mayor como `--fuel 1000000` (el valor predeterminado `256` es demasiado pequeño para los costos de entrada y salida).
-- Usa `text::bytes(...)` para obtener los bytes de una vista de texto y `text::equal(...)` para comparar dos vistas inmutables de bytes.
+- Usa `text::bytes("OK")` para obtener una vista de bytes desde texto, y `text::equal(a, b)` para comparar dos vistas inmutables de bytes.
+- Ambos tipos de literales admiten secuencias de escape `\\`, `\"`, `\n`, `\r`, `\t`, `\0` y `\xHH`, mientras que `"..."` también acepta `\u{...}` (los literales `c"..."` se rechazan).
 
 ---
 
