@@ -1,27 +1,24 @@
 - Latest maintenance checkpoint (2026-11-15):
-  [integer-array shape validation](docs/engineering/value-integer-array-validation.md).
-  The private typed/value codec no longer decodes every integer-array element:
-  retained immutable layout proves an admitted fixed-width integer tag/extent,
-  and exact input length is checked before active payload selection. All integer
-  bit patterns are canonical. Bool arrays still check every byte <=1. Records,
-  scalar values, wrapper tags/padding/inactive bytes and Buffer authority guards
-  remain unchanged. Maximum 4096-element integer leaf inspection eliminates
-  a 32768-byte payload scan and 4096 scalar decodes; O(N*W) validation becomes O(1).
-  This is structural work, not measured CPU/time/heap/stack improvement; copying,
-  Fuel prices, quotas and memory reservations are unchanged. No new allocation,
-  unchecked-layout API, native layout, state/ledger field or public Pending API.
-  Six groups pass development/O2: 637 original-array-branch comparisons, integer
-  extremes/all u8 and bool bytes, maximum/short/oversized arrays, bool copy rollback,
-  inactive integer payload/padding/snapshot independence, records/opaque words,
-  actual frame copies/moves and maximum arrays through four wrappers. Every final
-  input hash matches implementation be38901. Root: 375 sources / 4074 MIR; 367
-  production sources are LF. Full Engine, standalone memory, public CLI and
-  release gates were not rerun. Broader completion stays paused; no R02-R05
-  closure, push/release/deploy/version bump.
-  See [evidence](docs/evidence/value-integer-array-validation-windows-20261115.json).
-  Prior [view lookup](docs/engineering/value-view-lookup.md),
-  [root authentication](docs/engineering/value-root-authentication.md) and
-  [typed Buffer/view work](docs/engineering/compiler-typed-buffer-view.md) retain history.
+  [shared array lease authentication](docs/engineering/array-lease-authentication.md).
+  leased_read/leased_length/leased_utf8 reuse one owner-table authentication
+  within an immutable synchronous call. Private shape/payload helpers retain
+  token/table/epoch/view/shape/index error order; raw view APIs still resolve
+  independently. At 16 retained allocations, table validation drops from two
+  passes to one: 64 to 32 chain/slot visits per successful leased operation.
+  This is structural work, not measured time/heap/stack improvement. Fuel,
+  quotas, payload decoding, UTF-8 scans and reservations are unchanged; no
+  new allocation, public unchecked API, stored field or admission expansion.
+  Development/O2 each pass six groups: 1920 table/combined-fault scenarios
+  compared for all three operations, healthy counts 1..16, descriptor/epoch
+  faults, all six maximum scalar arrays, lease write exclusion and VM slice
+  scanning/Fuel/failure atomicity. All 377 receipt inputs match bccd7c9.
+  Root check: 375 sources / 4078 MIR. Full Engine, standalone memory, public
+  CLI and release gates were not rerun. Broader completion remains paused;
+  no R02-R05 closure, push/release/deploy/version bump.
+  See [evidence](docs/evidence/array-lease-authentication-windows-20261115.json).
+  Prior [integer-array validation](docs/engineering/value-integer-array-validation.md),
+  [view lookup](docs/engineering/value-view-lookup.md) and
+  [root authentication](docs/engineering/value-root-authentication.md) retain history.
 
 # Brownie C agent guidance
 

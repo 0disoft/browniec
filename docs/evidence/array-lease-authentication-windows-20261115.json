@@ -1,0 +1,77 @@
+{
+  "schema": "browniec.array-lease-authentication/v1",
+  "status": "passed",
+  "clientDate": "2026-11-15",
+  "baselineCommit": "b292981",
+  "implementationCommit": "bccd7c9ea939b64900c885745c869fbec46f1e8a",
+  "source": "src/array_owners.fy",
+  "sourceSha256": "b8f0adc6b09af061350de86c48952d8fe6e7fde1dd0ba0d0de31fc2fae84be01",
+  "profiles": [
+    {
+      "profile": "development",
+      "nativeGroups": 6,
+      "receipt": "build/array-lease-authentication/development/receipt.json",
+      "receiptSha256": "333a48edd4d488c2ede0fa3bb5c65657146a201e6de8d9b86bf46993e9ddcec6",
+      "allInputHashesMatch": true
+    },
+    {
+      "profile": "release",
+      "nativeGroups": 6,
+      "receipt": "build/array-lease-authentication/release/receipt.json",
+      "receiptSha256": "ff0946668ea8910db992ade52a5825bd9d1fc4a72ca2ca020277dbd7d53625ca",
+      "allInputHashesMatch": true
+    }
+  ],
+  "inputCount": 377,
+  "inputSetSha256": "1fd21e8d5daa0608fe87d4374adf9bbb6ed52394b393b0538ca41e2729558868",
+  "structuralCounts": {
+    "ownerSlots": 16,
+    "maximumRetainedAllocations": 16,
+    "fullTableValidationsBefore": 2,
+    "fullTableValidationsAfter": 1,
+    "fullTableEntryVisitsBefore": 64,
+    "fullTableEntryVisitsAfter": 32,
+    "leasedReads": 4096,
+    "loopEntryVisitsBefore": 262144,
+    "loopEntryVisitsAfter": 131072,
+    "metadataComplexityUnchanged": "O(D+16)",
+    "utf8ComplexityUnchanged": "O(selected bytes)",
+    "fuelPricesChanged": false,
+    "addedHeapAllocations": 0,
+    "measuredWallClockOrNativePeak": false
+  },
+  "coverage": {
+    "healthyOwnerCounts": "1..16",
+    "mutationOwnerCounts": [
+      1,
+      8,
+      16
+    ],
+    "mutationSlots": 16,
+    "mutationModes": 20,
+    "mutationScenariosIncludingCombinedFaults": 1920,
+    "operationsCompared": [
+      "read",
+      "length",
+      "utf8"
+    ],
+    "descriptorLeaseVariants": 14,
+    "scalarTags": [
+      1,
+      9,
+      10,
+      11,
+      12,
+      2
+    ],
+    "maximumElements": 4096,
+    "existingLeaseAndVmGroups": 4
+  },
+  "limitations": [
+    "Structural source-level validation counts, not elapsed throughput or machine instruction measurements.",
+    "Validation reuse is private and confined to one immutable synchronous call; raw view entry points still authenticate.",
+    "Full Engine, standalone memory, public CLI and release gates not rerun; no admission expansion.",
+    "Initial test compilation failed because a fixed array exceeded 4096 elements; final fixture uses an SDK buffer.",
+    "Local only; no push/release/deploy/version bump."
+  ]
+}
