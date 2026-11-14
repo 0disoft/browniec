@@ -152,19 +152,22 @@ pub fn Result<usize, Error> end_read(ref mut Table table, ReadLease lease, usize
     return .ok(lease.root.slot);
 }
 pub fn Result<i64, Error> leased_read(ref Table table, ReadLease lease, ref View view, usize index, ref u8[] bytes) {
-    let Owner owner = resolve_read(table, lease, bytes.len)?;
-    if (view.root.slot != lease.root.slot || view.root.generation != lease.root.generation) { return .err(.Token); }
-    return view_read(table, view, index, bytes);
+    let Owner owner = resolve_leased_view(table, lease, view, bytes.len)?;
+    return read_view_prepared(table, ref owner, view, index, bytes);
 }
 pub fn Result<bool, Error> leased_utf8(ref Table table, ReadLease lease, ref View view, ref u8[] bytes) {
-    let Owner owner = resolve_read(table, lease, bytes.len)?;
-    if (view.root.slot != lease.root.slot || view.root.generation != lease.root.generation) { return .err(.Token); }
-    return view_utf8(table, view, bytes);
+    let Owner owner = resolve_leased_view(table, lease, view, bytes.len)?;
+    return utf8_view_prepared(ref owner, view, bytes);
 }
 pub fn Result<usize, Error> leased_length(ref Table table, ReadLease lease, ref View view, usize capacity) {
+    let Owner owner = resolve_leased_view(table, lease, view, capacity)?;
+    return .ok(view.end - view.start);
+}
+fn Result<Owner, Error> resolve_leased_view(ref Table table, ReadLease lease, ref View view, usize capacity) {
     let Owner owner = resolve_read(table, lease, capacity)?;
     if (view.root.slot != lease.root.slot || view.root.generation != lease.root.generation) { return .err(.Token); }
-    return view_length(table, view, capacity);
+    // Same immutable table/root: resolve_read already authenticated every slot.
+    return view_shape(ref owner, view);
 }
 pub fn Result<WriteLease, Error> begin_write(ref mut Table table, Token root,
     usize start, usize end, usize capacity) {
@@ -422,10 +425,14 @@ pub fn Result<bool,Error> utf8_valid(ref Table table,Token token,usize length,re
 }
 fn Result<Owner, Error> resolve_view(ref Table table, ref View view, usize capacity) {
     let Owner owner = resolve(table, view.root, capacity)?;
+    return view_shape(ref owner, view);
+}
+// Only private resolvers call this with an authenticated owner from this call.
+fn Result<Owner, Error> view_shape(ref Owner owner, ref View view) {
     if (view.element != owner.element) { return .err(.Type); }
     if (view.length != owner.length) { return .err(.Length); }
     if (view.start > view.end || view.end > owner.length) { return .err(.Bounds); }
-    return .ok(owner);
+    return .ok(*owner);
 }
 pub fn Result<View, Error> view(ref Table table, Token token, usize start, usize end, usize capacity) {
     let Owner owner = resolve(table, token, capacity)?;
@@ -444,6 +451,9 @@ pub fn Result<View, Error> subview(ref Table table, ref View parent, usize start
 }
 pub fn Result<i64, Error> view_read(ref Table table, ref View view, usize index, ref u8[] bytes) {
     let Owner owner = resolve_view(table, view, bytes.len)?;
+    return read_view_prepared(table, ref owner, view, index, bytes);
+}
+fn Result<i64, Error> read_view_prepared(ref Table table, ref Owner owner, ref View view, usize index, ref u8[] bytes) {
     if (index >= view.end - view.start) { return .err(.Bounds); }
     let layouts::Array layout = switch (layouts::scalar(owner.element, owner.length)) {
         case .ok(value): { value } case .err(_): { return .err(.State); }
@@ -454,6 +464,9 @@ pub fn Result<i64, Error> view_read(ref Table table, ref View view, usize index,
 }
 pub fn Result<bool, Error> view_utf8(ref Table table, ref View view, ref u8[] bytes) {
     let Owner owner = resolve_view(table, view, bytes.len)?;
+    return utf8_view_prepared(ref owner, view, bytes);
+}
+fn Result<bool, Error> utf8_view_prepared(ref Owner owner, ref View view, ref u8[] bytes) {
     if (owner.element != 10) { return .err(.Type); }
     // Valid u8 layout proves both additions are bounded by the initialized end.
     return .ok(text::validate_utf8(bytes[owner.base + view.start..owner.base + view.end]).is_ok);
