@@ -1,0 +1,116 @@
+{
+  "schema": "browniec.record-create-plan/v1",
+  "status": "passed",
+  "clientDate": "2026-11-15",
+  "baselineCommit": "ce99a01",
+  "implementationCommit": "a891091bf24d99005c5d5022b38d6f7036a0f614",
+  "sources": [
+    {
+      "path": "src/array_owners.fy",
+      "sha256": "75361b8d324fed4d0e56eff90f1e0b377689208e7489740f97433fcfbf279326"
+    },
+    {
+      "path": "src/struct_nested_storage.fy",
+      "sha256": "9a8b1e34b486a48bc3a543867f39444ad174f84ca6ae00d9120bfa320d4f115a"
+    }
+  ],
+  "rootCheck": "check ok: 2 instances, 375 sources, 4093 MIR functions; lock updated",
+  "profiles": [
+    {
+      "profile": "development",
+      "nativeGroups": 6,
+      "receipt": "build/record-create-plan/development/receipt.json",
+      "receiptSha256": "853830efb0db2a5ada1efac0e3c54df3a8090c5f235b8276b4d847343adde82d",
+      "allInputHashesMatch": true,
+      "nativeInputMirrorVerified": true
+    },
+    {
+      "profile": "release",
+      "nativeGroups": 6,
+      "receipt": "build/record-create-plan/release/receipt.json",
+      "receiptSha256": "888eaaf26eb1d73b47b77848c46ea0b21529bd217d8b15907e753e941ebd65a6",
+      "allInputHashesMatch": true,
+      "nativeInputMirrorVerified": true
+    }
+  ],
+  "testedInputIdentity": {
+    "inputCount": 377,
+    "allReceiptInputsMatchWorkingBytes": true,
+    "rawGitBlobMatches": 376,
+    "lineEndingOnlyDifferences": [
+      {
+        "path": "tests/m2/struct_vm.fy",
+        "workingSha256": "c91054149203a96853299ef586c4be0e22f4d06a05c68e2e00d6eb4ba2675e0c",
+        "gitBlobSha256": "4fa15ab51c92e4940e1dbb6af07a123590ae3a187c3a0e9a27a9795a05bfa3a2",
+        "lfNormalizedSha256": "4fa15ab51c92e4940e1dbb6af07a123590ae3a187c3a0e9a27a9795a05bfa3a2"
+      }
+    ],
+    "allLfNormalizedGitBlobsMatch": true
+  },
+  "structuralCounts": {
+    "sourceLevelOnly": true,
+    "plansBefore": 2,
+    "plansAfter": 1,
+    "fixedFieldSlotsBefore": 1024,
+    "fixedFieldSlotsAfter": 512,
+    "fixedRecordRowsBefore": 64,
+    "fixedRecordRowsAfter": 32,
+    "removedDependencyPlanningPasses": 1,
+    "loopCreations": 4096,
+    "loopFieldSlotsBefore": 4194304,
+    "loopFieldSlotsAfter": 2097152,
+    "loopRecordRowsBefore": 262144,
+    "loopRecordRowsAfter": 131072,
+    "tableValidationsBefore": 1,
+    "tableValidationsAfter": 1,
+    "payloadScratchBytesBefore": 128,
+    "payloadScratchBytesAfter": 128,
+    "payloadWorkChanged": false,
+    "addedHeapAllocations": 0,
+    "addedCheckedNativeStorageFunctions": 1,
+    "addedReceiptTypes": 1,
+    "rawInitializeSignatureChanged": false,
+    "fuelPricesChanged": false,
+    "measuredThroughputOrPhysicalPeak": false
+  },
+  "coverage": {
+    "frozenOracleCommit": "ce99a01",
+    "frozenOwnerHelperBodiesCompared": 6,
+    "initializationValidationReservationEncodingBodyCompared": true,
+    "fieldSlotCorruptions": 1024,
+    "recordRowCorruptions": 32,
+    "ownerMutationAndCompetingErrorContexts": 448,
+    "firstMatrixInputs": 1534,
+    "depthAndBoundaryInputs": 21,
+    "totalDifferentialInputs": 1555,
+    "all256BackingBytesCompared": true,
+    "allOwnerOrderAndArenaFieldsCompared": true,
+    "failedCreatesPreserveOriginalBytesAndTable": true,
+    "exactPublishedShapeGolden": true,
+    "nominalDepthsOneThroughSixteen": true,
+    "depthSeventeenRejected": true,
+    "maximum128BytePayload": true,
+    "fullOwnerCount": 16,
+    "generationRetirement": true,
+    "exactFuelAndOneLessRejection": true,
+    "existingRegressionGroups": 4
+  },
+  "admissionProof": [
+    "Complete table and free-slot checks precede fresh full-catalog, record, quota and payload checks.",
+    "All fallible validation, checked reservation and scalar encoding precede backing and cursor publication.",
+    "Owner publication uses the published base, size and alignment without another fallible operation.",
+    "Initialized describes a completed operation; no caller-supplied Plan, cache or persistent proof grants authority.",
+    "Compatible raw initialize and new checked native entry both freshly authenticate current metadata; public Brownie admission unchanged."
+  ],
+  "guidanceTailUnchanged": true,
+  "guidanceTailSha256": "82ab2d55e85b7132a647bf4b08cae4df5eef0599abbfd29bca3df43281ed4d4d",
+  "limitations": [
+    "Source-level counts only; throughput, CPU instructions and physical peaks not measured.",
+    "Only owner creation and its checked storage result changed; payload work and other operations unchanged.",
+    "Frozen owner oracle shares compatible raw initialization; independent byte and receipt goldens cover encoding and shape.",
+    "Full Engine, standalone memory, public CLI, Linux and full release gates not rerun.",
+    "Line-ending-only differences have matching normalized bytes; both raw hashes recorded.",
+    "Previously recorded legacy struct_subassign_source failure not rerun or claimed fixed.",
+    "Local only; no push, release, deploy or version bump."
+  ]
+}

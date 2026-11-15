@@ -1,28 +1,26 @@
 - Latest maintenance checkpoint (2026-11-15):
-  [shared whole-record assignment preflight](docs/engineering/record-assign-preflight.md).
-  Whole-record assignment authenticates destination token, complete immutable
-  table and record kind, then one fresh plan checks both owner shapes. Source
-  token/kind/shape and nominal equality remain mandatory. Existing private
-  prepared lookup reuses the initial full table validation; raw storage still
-  independently plans and stages canonical bytes before publication.
-  Plans three to two per assignment; fixed catalog slots 1536 to 1024 and rows
-  96 to 64. Full table validation two to one; at sixteen retained owners,
-  table-entry visits 64 to 32. Source counts only, not measured throughput,
-  machine instructions or physical stack/memory peaks. Payload scratch remains
-  128 bytes; no new API, heap allocation, owner, reservation or Fuel price.
-  Development/O2 each pass six groups: 1618 differential inputs, exact results
-  and all 256 backing bytes, catalog/owner/ledger faults, nominal mismatches,
-  diagnostic order, bool/self-copy/padding atomicity, all nominal depths 1..16,
-  depth-17 rejection, full owner/backing limits and exact/one-less direct VM Fuel.
-  All 376 inputs match tested working bytes. Implementation 1326600 has
-  375 raw Git matches and one line-ending-only difference in the unchanged
-  struct_vm test; normalized bytes match and both hashes are in the evidence.
-  Root check: 375 sources / 4092 MIR; production LF retained.
+  [single-plan record creation](docs/engineering/record-create-plan.md).
+  Owner creation validates the complete table and free slot, then delegates
+  fresh full-catalog planning and staged initialization to checked storage.
+  The completed result returns published base, size and alignment for owner
+  publication. Raw initialize retains its signature and diagnostic order.
+  Successful creation plans two to one; fixed catalog slots 1024 to 512 and
+  rows 64 to 32. Payload scratch remains 128 bytes. Source counts only;
+  throughput, CPU instructions and physical peaks were not measured.
+  No caller-provided Plan, cross-call cache, heap allocation or Fuel change.
+  Development/O2 each pass six groups, including 1555 differential inputs,
+  all 256 backing bytes and complete owner/order/arena state, failed-create
+  atomicity, exact receipt shape, catalog/owner faults, depth and size limits,
+  generation retirement, quota/owner pressure and exact/one-less VM Fuel.
+  All 377 receipt inputs match tested working bytes. Implementation a891091
+  has 376 raw Git matches and one line-ending-only difference;
+  normalized bytes and both raw hashes are verified in the evidence.
+  Root check: 375 sources / 4093 MIR; production LF retained.
   Full Engine, public CLI, standalone memory and full release gates not rerun.
-  Prior legacy source failure remains recorded, not retested or claimed fixed.
+  Prior legacy source failure not retested or claimed fixed.
   Public admission unchanged; broader completion paused; local commits only.
-  See [evidence](docs/evidence/record-assign-preflight-windows-20261115.json).
-  Prior [aggregate selection](docs/engineering/aggregate-record-select-plan.md)
+  See [evidence](docs/evidence/record-create-plan-windows-20261115.json).
+  Prior [whole-record assignment](docs/engineering/record-assign-preflight.md)
   retains its history.
 
 # Brownie C agent guidance
