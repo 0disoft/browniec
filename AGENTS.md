@@ -1,25 +1,25 @@
 - Latest maintenance checkpoint (2026-11-15):
-  [shared subrecord owner-table preflight](docs/engineering/subrecord-assign-preflight.md).
-  Subrecord assignment authenticates the complete immutable owner table once
-  before private source identity/kind/shape lookup. Destination catalog/shape
-  checks still precede source identity errors; unrelated table faults and
-  retained dead owners preserve their previous diagnostics. No new public
-  unchecked API, supplied Plan, persistent proof, cache or heap allocation.
-  Complete table validations fall from two to one. At sixteen retained owners,
-  loop entries fall 64 to 32 and reservation checks 32 to 16. Two catalog plans, both
-  nominal range walks, raw staged storage, 128-byte scratch and Fuel unchanged.
+  [single-plan mixed CALL record snapshots](docs/engineering/call-record-snapshot-plan.md).
+  Mixed CALL copy supplies expected owner size/alignment to checked storage.
+  One fresh full catalog plan authenticates shape, root extent and exact scratch
+  before canonical staging. Raw snapshot signature/order and its private byte
+  body are preserved. Binding is metadata; no external Plan, cache or proof.
+  Eight record arguments plan 16 to 8; fixed field slots 8192 to 4096 and rows
+  512 to 256. The 1024-byte snapshot bank, original sources, transactional
+  publication, owner generations, quota, payload work and Fuel are unchanged.
   Source counts only; throughput and physical peaks were not measured.
-  Development/O2 each pass seven groups, including 1358 differential inputs
-  with all 256 backing bytes, 33 added proof-reuse cases, full sixteen owners,
-  128 leaves, depth sixteen, sibling/self copies, canonical padding and exact/
-  one-less VM Fuel. The unchanged old oracle resolves both owners independently.
-  All 376 receipt inputs match tested working bytes; implementation 8412f8f.
-  Root check: 375 sources / 4094 MIR; production LF and guidance body retained.
+  Development/O2 each pass nine groups: 1069 pre-scratch rejections, 149 raw/
+  bound comparisons across all 128 scratch bytes, 128 invalid bool positions,
+  six scalar tags, depths 1..16 and depth-17 rejection; mixed atomic failures,
+  eight 128-byte copies filling sixteen owners/2048 bytes and exact/one-less
+  mixed VM Fuel. The corrected fixture has fresh receipts for both profiles.
+  All 376 receipt inputs match tested working bytes; implementation 7fe905c.
+  Root check: 375 sources / 4096 MIR; production LF and guidance body retained.
   Full Engine, public CLI, standalone memory and full release gates not rerun.
   Known legacy source failure not retested or claimed fixed.
   Public admission unchanged; broader completion paused; local commits only.
-  See [evidence](docs/evidence/subrecord-assign-preflight-windows-20261115.json).
-  Prior [whole-record replacement](docs/engineering/record-replace-plan.md) retains history.
+  See [evidence](docs/evidence/call-record-snapshot-plan-windows-20261115.json).
+  Prior [subrecord preflight](docs/engineering/subrecord-assign-preflight.md) retains history.
 
 # Brownie C agent guidance
 

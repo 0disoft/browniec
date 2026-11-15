@@ -1,0 +1,104 @@
+{
+  "schema": "browniec.call-record-snapshot-plan/v1",
+  "status": "passed",
+  "clientDate": "2026-11-15",
+  "baselineCommit": "4d8384ceec10b2f4f4e3480f14100d02f108ffb5",
+  "implementationCommit": "7fe905c6a8b7b0bc24aef1c90bec18480a35d190",
+  "command": "python -B tools/verify-call-record-snapshot-plan.py --profile all",
+  "profiles": [
+    {
+      "profile": "development",
+      "nativeGroups": 9,
+      "receipt": "build/call-record-snapshot-plan/development/receipt.json",
+      "receiptSha256": "acfd4e04c75ce324eefdf79ad33ba3977e7a4910ef6594cd1e151db685b1e108",
+      "allInputHashesMatch": true,
+      "nativeInputMirrorVerified": true,
+      "nativeOverrides": false
+    },
+    {
+      "profile": "release",
+      "nativeGroups": 9,
+      "receipt": "build/call-record-snapshot-plan/release/receipt.json",
+      "receiptSha256": "6ee39d921d3239509dd7462567f0c1017e01655f24235d61244c2b1b7ab3f875",
+      "allInputHashesMatch": true,
+      "nativeInputMirrorVerified": true,
+      "nativeOverrides": false
+    }
+  ],
+  "rootCheck": "check ok: 2 instance(s), 375 source file(s), 4096 MIR function(s), lock updated",
+  "productionProof": {
+    "onlyOwnerFunctionChanged": "copy_call_arguments",
+    "privateSnapshotBodyMatchesBaseline": true,
+    "otherStorageFunctionsUnchanged": true,
+    "productionLfRetained": true,
+    "sourceHashes": [
+      {
+        "path": "src/array_owners.fy",
+        "sha256": "50dcce427f2e4805df694887cb93d807dedb78e95f8402b58bb40162b0156160"
+      },
+      {
+        "path": "src/struct_nested_storage.fy",
+        "sha256": "513fca9f97854ff1e4cb79f267651a36b31be5352f39962fb3dee0d795f99342"
+      }
+    ]
+  },
+  "testedInputIdentity": {
+    "inputCount": 376,
+    "allReceiptInputsMatchWorkingBytes": true,
+    "rawGitBlobMatches": 376,
+    "lineEndingOnlyDifferences": [],
+    "allLfNormalizedGitBlobsMatch": true
+  },
+  "structuralCounts": {
+    "sourceLevelOnly": true,
+    "recordArguments": 8,
+    "plansBefore": 16,
+    "plansAfter": 8,
+    "fieldSlotsBefore": 8192,
+    "fieldSlotsAfter": 4096,
+    "recordRowsBefore": 512,
+    "recordRowsAfter": 256,
+    "removedPlanningPasses": 8,
+    "loopCalls": 4096,
+    "loopPlansRemoved": 32768,
+    "loopFieldSlotsBefore": 33554432,
+    "loopFieldSlotsAfter": 16777216,
+    "snapshotBankBytesBefore": 1024,
+    "snapshotBankBytesAfter": 1024,
+    "addedHeapAllocations": 0,
+    "payloadWorkChanged": false,
+    "fuelPricesChanged": false,
+    "measuredThroughputOrPhysicalPeak": false
+  },
+  "coverage": {
+    "metadataAndExtentRejections": 1069,
+    "catalogSlotMutations": 1024,
+    "catalogRowMutations": 32,
+    "rawAndBoundDifferentialInputs": 149,
+    "all128ScratchBytesCompared": true,
+    "invalidBoolPositions": 128,
+    "scalarTags": 6,
+    "nominalDepths": 16,
+    "depthSeventeenRejected": true,
+    "maximumOwners": 16,
+    "maximumBackingBytes": 2048,
+    "maximumRecordArguments": 8,
+    "maximumLeavesPerRecord": 128,
+    "exactFuelAndOneLessRejection": true,
+    "failedBatchesPreserveTableAndBacking": true
+  },
+  "guidanceTailUnchanged": true,
+  "guidanceTailSha256": "82ab2d55e85b7132a647bf4b08cae4df5eef0599abbfd29bca3df43281ed4d4d",
+  "initialAttempt": {
+    "status": "aborted-before-completion",
+    "directory": "build/call-record-snapshot-plan-initial-fixture",
+    "reason": "Oversized fixture corrected from 64-byte flat to 256-byte nested record.",
+    "resultReused": false
+  },
+  "limitations": [
+    "Source-level counts only; throughput, CPU instructions and physical peaks not measured.",
+    "Full Engine, public CLI, standalone memory, Linux and full release gates not rerun.",
+    "Known legacy source-test failure not retested or claimed fixed.",
+    "Local commits only; no push, release, deploy or version bump."
+  ]
+}
