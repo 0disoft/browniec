@@ -1,24 +1,25 @@
 - Latest maintenance checkpoint (2026-11-16):
-  [authenticated root copy-out](docs/engineering/value-root-resolution.md#copy-out-after-authentication-2026-11-16).
-  Root copy-out reuses the resolver's full table/token/native-backing proof.
-  Complete subtraction-based range checks precede native views and output writes;
-  immutable borrows and no callback keep the proof local. Raw owner APIs and the
-  256+output-length Fuel charge/order are unchanged. Successful copies reduce
-  full owner-table validations two to one; 4096 copies remove 65536 validation-slot
-  visits. Complexity stays O(n^2+m), n<=16 roots and m output bytes, with O(1)
-  auxiliary storage and no new API/cache/state/allocation. Throughput and physical
-  peaks were not measured. Development/O2 each pass fourteen native groups:
-  raw-owner copy and metadata-fault oracles, source lengths 0/1/63/64/65/4096,
-  output lengths 0/1/63/64/65, six starts in both lease phases (360 exact-Fuel
-  comparisons plus 360 short-Fuel rejections), full-store 4096 repeated copies,
-  leases/mutations, nested view copies/rollback, and eight-alias CALL regression.
-  Sentinel output, unchanged accounting/descriptors/source bytes and zero-Fuel
-  cleanup are checked. All 379 tested input hashes match implementation
-  afe3dff and the Git index. Root check: 375 sources / 4103 MIR; all 367
-  production files retain LF. Full Engine/public CLI/memory/release gates and
-  known legacy failures not rerun. Broader completion remains paused.
-  No push or deployment performed here.
-  See [evidence](docs/evidence/value-root-copy-out-windows-20261116.json).
+  [direct root content writes](docs/engineering/value-buffer.md#direct-content-writes-2026-11-16).
+  Content-only writes borrow the authenticated vector element directly and keep
+  the unchanged write kernel, writable/lease/quota/bounds checks and 256+m Fuel
+  admission. No root extraction, scratch traffic or escaping native view occurs.
+  For n roots at index i, vector push/pop calls fall from 4*(n-1-i)+2 to zero:
+  62 to zero for the first of 16 roots, removing 253952 calls over 4096 writes.
+  Target selection changes O(n-i) transfers to O(1) borrowing; total O(n^2+m)
+  root preflight/payload work and O(1) auxiliary storage stay unchanged. No new
+  API/cache/state/allocation. Throughput and physical peaks were not measured.
+  Development/O2 each pass nine native groups, including 240 comparisons at all
+  sixteen positions against the counted original transfer sequence, 4096 paired
+  writes, empty roots, bounds/quota/Fuel/lease/generation cases, metadata-fault
+  oracles and actual frame writes. All root payloads/untouched bytes, vector
+  order/capacity, settled accounting and zero-Fuel cleanup are checked.
+  All 378 tested input hashes match implementation db7ae27 and the Git index.
+  Root check: 375 sources / 4103 MIR; all 367 production files retain LF.
+  Two initial native attempts failed on a test-only if/dereference separator;
+  corrected fixture and preserved logs are recorded under build/value-root-write.
+  Full Engine/public CLI/memory/release gates and known legacy failures not rerun.
+  Broader completion remains paused. No push or deployment performed here.
+  See [evidence](docs/evidence/value-root-write-windows-20261116.json).
 
 # Brownie C agent guidance
 

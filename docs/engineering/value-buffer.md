@@ -19,8 +19,10 @@ writes preserve extent/generation. No native ownership authority comes from byte
 Shared native read leases permit length/read/copy-out; all mutations, including
 empty append and reserve within existing capacity, require writable ownership.
 
-The two owning vectors remain one invocation-local store. Pre-reserved vector
-transfers expose a local mutable root without unsafe resource-field projection.
+The two owning vectors remain one invocation-local store. Content-only writes
+borrow the authenticated vector element directly. Operations that replace or
+transfer ownership still use pre-reserved vector transfers to expose a local
+mutable root without unsafe resource-field projection.
 Growth uses the existing old-plus-new capacity/owner reservation and exact
 minimum-capacity fallback. It stages a separate allocation, destroys the old root
 before refund and publishes the new generation only after success. Rejected
@@ -66,3 +68,37 @@ delivery remain separate obligations. The [private instruction successor](value-
 independent proof/dispatch and prepaid allocator Results. Source methods/borrows/
 views, public AllocError types and I/O remain implementation work. Local only; no push,
 release or deployment.
+
+## Direct content writes (2026-11-16)
+
+Compared with 524ca70, `value_roots::write` no longer extracts the selected
+owning Buffer, moves its vector tail into scratch, and restores that tail after
+`buffer_write::within_length`. Content writes change neither the Buffer's length
+nor capacity, token, binding or allocation. After the unchanged writable root
+resolution, the method passes `vec::at_mut(roots, i)` to the unchanged write
+kernel. The exclusive borrow ends within the call and no native view escapes.
+
+For n roots and selected index i, extraction/restoration formerly made
+`4*(n-1-i)+2` vector push/pop calls, including on range/quota rejection after
+authentication. Direct borrowing makes zero such calls. With 16 roots, writing
+the first root removes 62 calls per operation; 4,096 one-byte writes remove
+253,952 calls. Selecting the buffer changes from O(n-i) transfer work to O(1).
+The complete operation still includes O(n^2) root preflight and O(m) byte writes
+for m input bytes. Both implementations allocate nothing during content writes;
+throughput and physical memory were not measured.
+
+Fuel remains `256+m`. Read leases still reject writes including empty writes;
+the original owner, backing, quota and subtraction-based range checks and error
+mapping are retained. Other ownership-changing operations keep their existing
+transfer paths.
+
+Run `python -B tools/verify-value-root-write.py --profile all`. Nine selected
+native groups cover all sixteen target positions against the counted original
+transfer sequence, 240 boundary/identity/Fuel/quota/lease/generation comparisons,
+4,096 exact-price one-byte write pairs, empty native buffers, metadata faults,
+growth/retirement regressions and actual frame writes. Payload checks include
+all roots and untouched bytes, vector order/capacity, settled accounting and
+zero-Fuel cleanup. Results and input identities are recorded in the
+[Windows evidence](../evidence/value-root-write-windows-20261116.json). Full
+Engine transport, public CLI, standalone memory and full release gates remain
+outside this change; known legacy compiler/stack failures are not claimed fixed.

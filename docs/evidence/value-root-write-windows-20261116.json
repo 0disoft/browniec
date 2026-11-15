@@ -1,0 +1,139 @@
+{
+  "schema": "browniec.value-root-write/v1",
+  "status": "passed",
+  "clientDate": "2026-11-16",
+  "baselineCommit": "524ca7062a349b8f56ff9582452298c1bb18f2df",
+  "implementationCommit": "db7ae271a40f7c7dface718d9e9cf0ab98c0f2a5",
+  "command": "python -B tools/verify-value-root-write.py --profile all",
+  "profiles": [
+    {
+      "profile": "development",
+      "nativeGroups": 9,
+      "receipt": "build/value-root-write/development/receipt.json",
+      "receiptSha256": "9bb98fcfb882d5c5b38b2c0aa792080a2a842fa1491e664a9c4daf8e8be8688c",
+      "nativeInputMirrorVerified": true,
+      "nativeOverrides": false
+    },
+    {
+      "profile": "release",
+      "nativeGroups": 9,
+      "receipt": "build/value-root-write/release/receipt.json",
+      "receiptSha256": "fec62430f2ed8de09b31e355fd426bfcd1dc25394f2cea9e64331f683369b8e5",
+      "nativeInputMirrorVerified": true,
+      "nativeOverrides": false
+    }
+  ],
+  "rootCheck": "check ok: 2 instance(s), 375 source file(s), 4103 MIR function(s), lock updated",
+  "testedInputIdentity": {
+    "nativeInputCount": 378,
+    "exactGitIndexBlobMatches": 378,
+    "exactImplementationCommitBlobMatches": 378,
+    "profilesUseSameInputs": true,
+    "allReceiptInputsMatchWorkingBytes": true
+  },
+  "productionProof": {
+    "onlyRootWriteBodyChanged": true,
+    "writableRootAuthenticationRetained": true,
+    "standaloneWriteKernelAndErrorMappingUnchanged": true,
+    "fuelCost256PlusInputLengthAndOrderRetained": true,
+    "inputDistinctBorrowPreconditionUnchanged": true,
+    "noRootExtractionOrScratchTraffic": true,
+    "noEscapingNativeBorrow": true,
+    "noNewApiStateCacheOrAllocation": true,
+    "allProductionLf": true,
+    "productionFiles": 367
+  },
+  "structuralCounts": {
+    "sourceLevelCallsWithInstrumentedOriginalOracle": true,
+    "formulaBefore": "4*(n-1-i)+2 push/pop calls for n roots at selected index i",
+    "vectorPushPopCallsAfter": 0,
+    "originalCallsFor16RootsByIndex": [
+      62,
+      58,
+      54,
+      50,
+      46,
+      42,
+      38,
+      34,
+      30,
+      26,
+      22,
+      18,
+      14,
+      10,
+      6,
+      2
+    ],
+    "firstOf16RootWriteCount": 4096,
+    "originalVectorCallsForRepeatedWrites": 253952,
+    "vectorCallsAfterRepeatedWrites": 0,
+    "selectionComplexity": "O(n-i) owning-vector transfers to O(1) mutable element borrow",
+    "wholeOperationComplexity": "Unchanged O(n^2+m), n<=16 roots and m input bytes; O(1) auxiliary storage",
+    "throughputMeasured": false,
+    "physicalPeaksMeasured": false
+  },
+  "coverage": {
+    "nativeGroupsPerProfile": 9,
+    "fullStoreSelectedPositions": 16,
+    "newBoundaryOraclePairs": 240,
+    "originalAndDirectWritePairs": 4096,
+    "shortFuelCases": 16,
+    "readLeaseRejectionCases": 32,
+    "terminalGenerationSuccessCases": 16,
+    "objectAndInstanceQuotaRejection": true,
+    "quotaBeforeBoundsPriority": true,
+    "emptyInitializedRoot": true,
+    "allRootPayloadsAndUntouchedBytes": true,
+    "vectorOrderAndCapacity": true,
+    "settledAccounting": true,
+    "allMetadataSlotsAndHandleErrorPriorities": true,
+    "actualFrameWrites": true,
+    "zeroFuelCleanup": true
+  },
+  "initialAttempts": {
+    "reason": "New test oracle omitted the statement separator between an if block and the following dereference assignment; E1008/E1006 at lines 27 then 28",
+    "resolution": "Use an explicit local available Fuel value and terminate the if statement before assigning through the reference; production code was unchanged by these fixture corrections",
+    "attempts": [
+      {
+        "status": "failed test compilation; receipt remains incomplete",
+        "logs": "build/value-root-write/first-attempt",
+        "profiles": [
+          {
+            "profile": "development",
+            "receipt": "build/value-root-write/first-attempt/development/receipt.json",
+            "receiptSha256": "c323270558071e8cc8edc6e5401e3c875055a359294afdb372678dea648d8cbb"
+          },
+          {
+            "profile": "release",
+            "receipt": "build/value-root-write/first-attempt/release/receipt.json",
+            "receiptSha256": "785266b0d8f311f349da7a0ff635d7ede2b926ffbe240cd16a816e52f174e6f7"
+          }
+        ]
+      },
+      {
+        "status": "failed test compilation; receipt remains incomplete",
+        "logs": "build/value-root-write/second-attempt",
+        "profiles": [
+          {
+            "profile": "development",
+            "receipt": "build/value-root-write/second-attempt/development/receipt.json",
+            "receiptSha256": "b31e2f5ebf1035a335a0bcd778a15e5fa6cff104591373bda10fac4dffce0828"
+          },
+          {
+            "profile": "release",
+            "receipt": "build/value-root-write/second-attempt/release/receipt.json",
+            "receiptSha256": "c0c96a848c0b903f8cfb5619af7a787d7cfef2ea270af304e428770f5c7ed0ca"
+          }
+        ]
+      }
+    ]
+  },
+  "skipped": [
+    "Full Engine transport",
+    "Public CLI",
+    "Standalone memory and full release gates",
+    "Known legacy retained CALL stack exhaustion and release compiler timeout not retested or claimed fixed"
+  ],
+  "remote": "No push, publication, release or deployment performed for this maintenance"
+}
