@@ -1,27 +1,25 @@
 - Latest maintenance checkpoint (2026-11-15):
-  [single-plan record creation](docs/engineering/record-create-plan.md).
-  Owner creation validates the complete table and free slot, then delegates
-  fresh full-catalog planning and staged initialization to checked storage.
-  The completed result returns published base, size and alignment for owner
-  publication. Raw initialize retains its signature and diagnostic order.
-  Successful creation plans two to one; fixed catalog slots 1024 to 512 and
-  rows 64 to 32. Payload scratch remains 128 bytes. Source counts only;
-  throughput, CPU instructions and physical peaks were not measured.
-  No caller-provided Plan, cross-call cache, heap allocation or Fuel change.
-  Development/O2 each pass six groups, including 1555 differential inputs,
-  all 256 backing bytes and complete owner/order/arena state, failed-create
-  atomicity, exact receipt shape, catalog/owner faults, depth and size limits,
-  generation retirement, quota/owner pressure and exact/one-less VM Fuel.
-  All 377 receipt inputs match tested working bytes. Implementation a891091
-  has 376 raw Git matches and one line-ending-only difference;
-  normalized bytes and both raw hashes are verified in the evidence.
-  Root check: 375 sources / 4093 MIR; production LF retained.
+  [single-plan whole-record replacement](docs/engineering/record-replace-plan.md).
+  Constructor replacement authenticates token, complete table and record kind,
+  then checked storage plans the full catalog once to authenticate owner shape
+  and exact nominal identity. The existing private writer checks the complete
+  root extent and stages all values before publishing. Binding is metadata;
+  no external Plan, cache, persistent proof, heap allocation or Fuel change.
+  Successful wrapper calls plan two to one; fixed slots 1024 to 512, rows
+  64 to 32. Payload scratch remains 128 bytes; source counts only, without
+  measured throughput, CPU instructions or physical peaks.
+  Development/O2 each pass six groups: 1344 differential inputs, all 256 backing
+  bytes, diagnostic order and failed-write atomicity; 17 checked-storage cases;
+  all scalar/padding goldens, depths 1..16 / depth-17 rejection, full sixteen
+  owners and 2048-byte backing, and exact/one-less opcode-48 Fuel (46145).
+  All 376 inputs match tested working bytes; implementation acf190e.
+  Git input identity and any line-ending-only differences are in the evidence.
+  Root check: 375 sources / 4094 MIR; production LF and guidance body retained.
   Full Engine, public CLI, standalone memory and full release gates not rerun.
   Prior legacy source failure not retested or claimed fixed.
   Public admission unchanged; broader completion paused; local commits only.
-  See [evidence](docs/evidence/record-create-plan-windows-20261115.json).
-  Prior [whole-record assignment](docs/engineering/record-assign-preflight.md)
-  retains its history.
+  See [evidence](docs/evidence/record-replace-plan-windows-20261115.json).
+  Prior [record creation](docs/engineering/record-create-plan.md) retains history.
 
 # Brownie C agent guidance
 

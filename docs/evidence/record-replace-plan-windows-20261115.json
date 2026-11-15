@@ -1,0 +1,108 @@
+{
+  "schema": "browniec.record-replace-plan/v1",
+  "status": "passed",
+  "clientDate": "2026-11-15",
+  "baselineCommit": "1279629",
+  "implementationCommit": "acf190e9c73d162168a1f0ed0ee29dc57dbf4d31",
+  "sources": [
+    {
+      "path": "src/array_owners.fy",
+      "sha256": "9d0155c47c931d9080d0b2c82e9246558b0fdbecb07c6fed1a1476786383aaad"
+    },
+    {
+      "path": "src/struct_nested_storage.fy",
+      "sha256": "5466e959ec782b76138386a944540804213d73cc934884fc3b9caf7a92652b81"
+    }
+  ],
+  "rootCheck": "check ok: 2 instance(s), 375 source file(s), 4094 MIR function(s), lock updated",
+  "rootCheckSha256": "90d307529f8478ecab33b0b9f95e959b3bcab295e1ec7777a34bf5b5665860b1",
+  "profiles": [
+    {
+      "profile": "development",
+      "nativeGroups": 6,
+      "receipt": "build/record-replace-plan/development/receipt.json",
+      "receiptSha256": "c39aee10058e32fea44298ff61ba9079da506d3dcacae9aceaa619c0d33d6742",
+      "allInputHashesMatch": true,
+      "nativeInputMirrorVerified": true
+    },
+    {
+      "profile": "release",
+      "nativeGroups": 6,
+      "receipt": "build/record-replace-plan/release/receipt.json",
+      "receiptSha256": "aeb1ae4cad6810fc52f675defd343dd2a4f808d92a1b58f70f23a37400d54ba8",
+      "allInputHashesMatch": true,
+      "nativeInputMirrorVerified": true
+    }
+  ],
+  "testedInputIdentity": {
+    "inputCount": 376,
+    "allReceiptInputsMatchWorkingBytes": true,
+    "rawGitBlobMatches": 376,
+    "lineEndingOnlyDifferences": [],
+    "allLfNormalizedGitBlobsMatch": true
+  },
+  "structuralCounts": {
+    "sourceLevelOnly": true,
+    "plansBefore": 2,
+    "plansAfter": 1,
+    "fixedFieldSlotsBefore": 1024,
+    "fixedFieldSlotsAfter": 512,
+    "fixedRecordRowsBefore": 64,
+    "fixedRecordRowsAfter": 32,
+    "removedDependencyPlanningPasses": 1,
+    "loopReplacements": 4096,
+    "loopFieldSlotsBefore": 4194304,
+    "loopFieldSlotsAfter": 2097152,
+    "tableValidationsBefore": 1,
+    "tableValidationsAfter": 1,
+    "payloadScratchBytesBefore": 128,
+    "payloadScratchBytesAfter": 128,
+    "payloadWorkChanged": false,
+    "addedHeapAllocations": 0,
+    "addedCheckedNativeStorageFunctions": 1,
+    "rawReplaceValuesUnchanged": true,
+    "fuelPricesChanged": false,
+    "opcode48Fuel": 46145,
+    "measuredThroughputOrPhysicalPeak": false
+  },
+  "coverage": {
+    "frozenOracleCommit": "1279629",
+    "frozenOracleBodyCompared": true,
+    "unchangedOwnerFunctionsCompared": 4,
+    "unchangedStorageFunctionsCompared": 2,
+    "fieldSlotCorruptions": 1024,
+    "recordRowCorruptions": 32,
+    "catalogAndCompetingErrorContexts": 36,
+    "ownerMutations": 192,
+    "firstMatrixInputs": 1327,
+    "nominalDepthsOneThroughSixteen": true,
+    "depthSeventeenRejected": true,
+    "depthDifferentialInputs": 17,
+    "totalDifferentialInputs": 1344,
+    "directCheckedStorageCases": 17,
+    "all256BackingBytesCompared": true,
+    "failedWritesPreserveOriginalBytes": true,
+    "existingRegressionGroups": 4,
+    "fullOwnerCount": 16,
+    "fullBackingBytes": 2048,
+    "maximumLeaves": 128,
+    "exactFuelAndOneLessRejection": true
+  },
+  "admissionProof": [
+    "Token, complete owner table and record kind are checked before full catalog/owner shape, nominal identity, extent and scalar values.",
+    "Binding is expected metadata; the checked native entry builds a fresh full plan and cannot accept an external Plan.",
+    "Only the fresh local plan enters the existing private writer, which checks quota, arena, alignment and whole root extent.",
+    "Unchanged zeroed 128-byte scratch stages every scalar before publication; old bool payload is not read.",
+    "Raw storage API, tokens, owner state, arena, Fuel prices and public Brownie admission are unchanged."
+  ],
+  "guidanceTailUnchanged": true,
+  "guidanceTailSha256": "82ab2d55e85b7132a647bf4b08cae4df5eef0599abbfd29bca3df43281ed4d4d",
+  "limitations": [
+    "Source-level counts only; throughput, CPU instructions and physical peaks not measured.",
+    "Only whole-record constructor replacement changed; other copy/assignment/replacement operations unchanged.",
+    "Full Engine, standalone memory, public CLI, Linux and full release gates not rerun.",
+    "Line-ending-only input differences, if any, have matching normalized bytes and both raw hashes recorded.",
+    "Prior legacy struct_subassign_source failure not rerun or claimed fixed.",
+    "Local only; no push, release, deploy or version bump."
+  ]
+}
