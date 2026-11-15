@@ -1,27 +1,27 @@
 - Latest maintenance checkpoint (2026-11-15):
-  [single-plan subrecord replacement](docs/engineering/subrecord-replace-plan.md).
-  Constructor replacement authenticates token, full table and record kind, then
-  uses one fresh checked storage plan for expected owner shape, nominal range
-  and private staged encoding. Whole-root extent precedes base+offset, including
-  direct storage callers. Binding is metadata, not authority; no unchecked Plan
-  API or retained cache. Raw replacement still independently plans its inputs.
-  Plans three to one per owner replacement; fixed field slots 1536 to 512 and
-  record rows 96 to 32. Payload work and 128-byte scratch persist. Source counts
-  only, not measured native throughput or physical stack/memory peaks.
-  No new heap allocation, owner, reservation, persistent field or Fuel price.
-  Development/O2 each pass six groups: 1671 differential inputs, 18 direct
-  storage cases, all catalog slots/rows, owner/range/shape faults, scalar edges,
-  every bool position, depth 16/17, full owner/backing pressure and exact VM Fuel.
-  Failure preserves all backing; successful selected padding is canonical.
-  All 376 inputs match tested bytes and implementation 4c77778
+  [single-plan aggregate record selection](docs/engineering/aggregate-record-select-plan.md).
+  Captured whole-record/subrecord destinations authenticate token, complete
+  table and record kind, then reuse one fresh plan for owner ID/size/alignment,
+  nominal range and selected bounds. Saved-place revalidation independently
+  repeats this checked selection before either store; no retained Plan or cache.
+  Plans two to one per selection; fixed field slots 1024 to 512 and record rows
+  64 to 32. Capture plus constructor store five to three plans; capture plus
+  record copy six to four, excluding RHS evaluation. Source counts only;
+  no measured native throughput, instructions or physical stack/memory peaks.
+  No new API, heap allocation, owner, reservation, persistent field or Fuel price.
+  Development/O2 each pass six groups: 1651 differential inputs, exact selection
+  fields/errors and validation/store lengths/errors, all 256 backing bytes,
+  catalog/owner/snapshot corruption, bool payload independence, depths 16/17,
+  generation expiry, full owner/backing limits and exact/one-less VM Fuel.
+  All 376 inputs match tested bytes and implementation dcdcb23
   (376 raw Git matches; 0 line-ending-only differences).
   Root check: 375 sources / 4092 MIR; production LF retained.
   Full Engine, public CLI, standalone memory and full release gates not rerun.
   Prior legacy source failure remains recorded, not retested or claimed fixed.
   Public admission unchanged; broader completion paused; local commits only.
-  See [evidence](docs/evidence/subrecord-replace-plan-windows-20261115.json).
-  Prior [scalar record places](docs/engineering/record-place-plan.md) retain
-  their history.
+  See [evidence](docs/evidence/aggregate-record-select-plan-windows-20261115.json).
+  Prior [subrecord replacement](docs/engineering/subrecord-replace-plan.md)
+  retains its history.
 
 # Brownie C agent guidance
 

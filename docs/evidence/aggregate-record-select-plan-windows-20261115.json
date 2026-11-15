@@ -1,0 +1,113 @@
+{
+  "schema": "browniec.aggregate-record-select-plan/v1",
+  "status": "passed",
+  "clientDate": "2026-11-15",
+  "baselineCommit": "d944ec5",
+  "implementationCommit": "dcdcb235f578fbe6bbf64b4c4391a031c419cc90",
+  "sources": [
+    {
+      "path": "src/aggregate_places.fy",
+      "sha256": "f731ec2da744b0b65a66d4b7d3c3a56de4b2a4009e61153e645336964c386c25"
+    }
+  ],
+  "rootCheck": "check ok: 2 instances, 375 sources, 4092 MIR functions; lock updated",
+  "profiles": [
+    {
+      "profile": "development",
+      "nativeGroups": 6,
+      "receipt": "build/aggregate-record-select-plan/development/receipt.json",
+      "receiptSha256": "9a97879cd1c893721146cd230892557d2424ece76a55dc03490cc44e5da6e305",
+      "allInputHashesMatch": true
+    },
+    {
+      "profile": "release",
+      "nativeGroups": 6,
+      "receipt": "build/aggregate-record-select-plan/release/receipt.json",
+      "receiptSha256": "a181949c4aa80d8036809420b8372ef5671a780577297b9bf1d429ab3ceda4de",
+      "allInputHashesMatch": true
+    }
+  ],
+  "inputCount": 376,
+  "inputSetSha256": "912f2e9e608bc13f3b16ec4c4e63a37d3b6adfaf3f897a74ba851c3ca55bc0c0",
+  "compilerSha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+  "commitInputComparison": {
+    "rawByteMatches": 376,
+    "lineEndingOnlyDifferences": []
+  },
+  "structuralCounts": {
+    "layoutPlansPerSelectionBefore": 2,
+    "layoutPlansPerSelectionAfter": 1,
+    "fieldSlotInspectionsPerSelectionBefore": 1024,
+    "fieldSlotInspectionsPerSelectionAfter": 512,
+    "recordRowsPerSelectionBefore": 64,
+    "recordRowsPerSelectionAfter": 32,
+    "selections": 4096,
+    "loopFieldSlotInspectionsBefore": 4194304,
+    "loopFieldSlotInspectionsAfter": 2097152,
+    "dependencyPlanningPassesRemovedPerLoop": 4096,
+    "captureAndConstructorStorePlansBefore": 5,
+    "captureAndConstructorStorePlansAfter": 3,
+    "captureAndConstructorFieldSlotsBefore": 2560,
+    "captureAndConstructorFieldSlotsAfter": 1536,
+    "captureAndCopyStorePlansBefore": 6,
+    "captureAndCopyStorePlansAfter": 4,
+    "captureAndCopyFieldSlotsBefore": 3072,
+    "captureAndCopyFieldSlotsAfter": 2048,
+    "countsExcludeRhsEvaluation": true,
+    "addedHeapAllocations": 0,
+    "addedPublicApis": 0,
+    "ownerTableValidationChanged": false,
+    "payloadWorkChanged": false,
+    "fuelPricesChanged": false,
+    "selectedConstructorStoreFuel": 128162,
+    "selectedCopyStoreFuel": 172129,
+    "selectedRecordSelectFuel": 41057,
+    "measuredThroughputOrPhysicalPeak": false
+  },
+  "coverage": {
+    "frozenOracleCommit": "d944ec5",
+    "frozenOracleBoundaries": 5,
+    "frozenOracleBodiesCompared": true,
+    "fieldSlotCorruptions": 1024,
+    "recordRowCorruptions": 32,
+    "catalogDiagnosticContexts": 36,
+    "ownerMutations": 192,
+    "invalidOrArrayTokens": 4,
+    "nominalOrdinalCombinations": 49,
+    "fieldCounts": 6,
+    "capacities": 4,
+    "oldBoolEncodings": 4,
+    "competingFailures": 3,
+    "validTableShapeFaults": 2,
+    "snapshotMutations": 13,
+    "validWideRootAndSubtrees": 9,
+    "invalidBoolRootAndSubtreeCases": 256,
+    "admittedNominalDepths": 16,
+    "depthSeventeen": 1,
+    "totalDifferentialInputs": 1651,
+    "resultPairsPerInput": 4,
+    "all256BackingBytesCompared": true,
+    "failedWritesPreserveOriginalBytes": true,
+    "existingRegressionGroups": 4,
+    "fullOwnerCount": 16,
+    "maximumLeaves": 128,
+    "frame": 31,
+    "exactFuelAndOneLessRejection": true
+  },
+  "admissionProof": [
+    "Token/table/kind precede the fresh full catalog plan, owner shape, nominal range and selected bounds.",
+    "Root ID is checked before plan indexing; offset_prepared proves the nominal ID before size indexing.",
+    "Offset precedes owner.length-offset, preserving underflow-safe range checks.",
+    "Each saved-place use independently reselects current metadata and compares shape/reservation.",
+    "Selection reads no payload; raw copy/constructor storage retains independent checks and staged publication.",
+    "No new Plan-taking API, retained proof, cross-call cache, owner state or Fuel price is introduced."
+  ],
+  "guidanceTailUnchanged": true,
+  "guidanceTailSha256": "82ab2d55e85b7132a647bf4b08cae4df5eef0599abbfd29bca3df43281ed4d4d",
+  "limitations": [
+    "Source-level planning counts only; elapsed throughput, machine instructions and physical memory not measured.",
+    "Full Engine, public CLI, standalone memory, Linux and full release gates not rerun; public admission unchanged.",
+    "Previously recorded legacy source failure not rerun or claimed fixed.",
+    "Local only; no push, release, deploy or version bump."
+  ]
+}
