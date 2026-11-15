@@ -1082,7 +1082,9 @@ pub fn Result<RecordWork,Error> validate_record_work(ref records::Catalog catalo
         current.source_base!=work.source_base || current.source_end!=work.source_end){return .err(.State);}
     let RecordWork window=record_window_prepared(catalog,ref plan,ref current)?;
     if(work.written>window.bytes || work.written>work.total || work.last>work.total){return .err(.State);}
-    let record_storage::Staging staging=switch(record_storage::staging(catalog,work.nominal)){
+    // The fresh plan above still covers this immutable catalog. Share it only
+    // within this validation; the next chunk must authenticate metadata again.
+    let record_storage::Staging staging=switch(record_storage::staging_prepared(catalog,ref plan,work.nominal)){
         case .ok(s):{s}case .err(e):{return .err(record_error(e));}
     };
     let usize admission=staging.size+staging.scalar_bytes+

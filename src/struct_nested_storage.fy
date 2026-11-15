@@ -67,14 +67,21 @@ pub fn Result<Staging, Error> staging(ref layouts::Catalog catalog, usize record
     let layouts::Plan plan = switch (layouts::plan(catalog,18446744073709551615)) {
         case .ok(p): { p } case .err(_): { return .err(.Layout); }
     };
-    let usize size = selected(ref plan,record)?;
+    return staging_prepared(catalog,ref plan,record);
+}
+// Internal metadata composition only: the caller freshly planned this exact
+// immutable catalog in this operation. Never retain or accept a guest plan.
+// No payload access, reservation or owner publication occurs here.
+pub fn Result<Staging, Error> staging_prepared(ref layouts::Catalog catalog,
+    ref layouts::Plan plan, usize record) {
+    let usize size = selected(plan,record)?;
     var Staging result = Staging { .size = size, .alignment = plan.alignments[record],
         .leaves = 0, .scalar_bytes = 0, .bools = 0 };
     var Cursor cursor = Cursor { .depth = 1, .records = [0;16], .fields = [0;16], .bases = [0;16] };
     cursor.records[0] = record;
     var bool done = false;
     while (!done) {
-        let Leaf leaf = next(catalog,ref plan,ref mut cursor);
+        let Leaf leaf = next(catalog,plan,ref mut cursor);
         if (leaf.tag == 0) { done = true; }
         else {
             result.leaves += 1;
