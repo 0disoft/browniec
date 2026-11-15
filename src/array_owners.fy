@@ -910,9 +910,10 @@ pub fn Result<usize, Error> assign_record(ref records::Catalog catalog, Token de
 // The table is read-only; callers establish mutability and prepay VM work.
 pub fn Result<usize, Error> replace_record(ref records::Catalog catalog, Token destination,
     usize nominal, ref i64[] fields, ref mut u8[] bytes, ref Table table) {
-    let Owner target = resolve_record(catalog,table,destination,bytes.len)?;
-    if (target.record != nominal) { return .err(.Type); }
-    return switch (record_storage::replace_values(catalog,nominal,target.base,fields,bytes,ref table.arena)) {
+    let Owner target = inspect_record_owner(table,destination,bytes.len)?;
+    let record_storage::Binding binding = record_storage::Binding { .bytes = target.length, .alignment = target.alignment };
+    return switch (record_storage::replace_record_bound(catalog,target.record,target.base,
+        binding,nominal,fields,bytes,ref table.arena)) {
         case .ok(n): { .ok(n) } case .err(error): { .err(record_error(error)) }
     };
 }

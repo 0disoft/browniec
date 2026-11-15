@@ -216,6 +216,18 @@ pub fn Result<usize, Error> replace_values(ref layouts::Catalog catalog, usize r
     };
     return replace_values_prepared(catalog,ref plan,record,destination,fields,storage,arena);
 }
+// Authenticate expected owner shape and exact nominal identity with one fresh
+// plan, then stage the whole root. Binding is metadata, never write authority.
+pub fn Result<usize, Error> replace_record_bound(ref layouts::Catalog catalog, usize root,
+    usize base, Binding binding, usize nominal, ref i64[] fields,
+    ref mut u8[] storage, ref arenas::Arena arena) {
+    let layouts::Plan plan = switch (layouts::plan(catalog,18446744073709551615)) {
+        case .ok(p): { p } case .err(_): { return .err(.Layout); }
+    };
+    if (!binding_matches(ref plan,root,binding)) { return .err(.Layout); }
+    if (root != nominal) { return .err(.Type); }
+    return replace_values_prepared(catalog,ref plan,root,base,fields,storage,arena);
+}
 // Expected owner shape is metadata, never authority. Rebuild the whole catalog
 // before nominal selection, then prove the whole root before adding its offset.
 pub fn Result<usize, Error> replace_subrecord_bound(ref layouts::Catalog catalog, usize root,
