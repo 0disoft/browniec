@@ -1,0 +1,107 @@
+{
+  "schema": "browniec.record-result-validation/v1",
+  "status": "passed",
+  "clientDate": "2026-11-15",
+  "baselineCommit": "ab423bb",
+  "implementationCommit": "01d499e4327887a0857ffd0e5b36afd0e8e9a220",
+  "sources": [
+    {
+      "path": "src/array_owners.fy",
+      "sha256": "122b83a817077c915bce2d3f80c9d4724a8fde445b50f7dcd51ec8022355ecb0"
+    },
+    {
+      "path": "src/struct_nested_storage.fy",
+      "sha256": "ccb966bcbb1983f27f1b7b6b6588dd53be73643dde2c874951e894164f408b08"
+    },
+    {
+      "path": "src/struct_result_vm.fy",
+      "sha256": "2ee2b7f9bf639cf0d10efc6ec269a9a6974f242ed1b9bd2239cfe44570fe1258"
+    }
+  ],
+  "rootCheck": "check ok: 2 instances, 375 sources, 4087 MIR functions; lock updated",
+  "profiles": [
+    {
+      "profile": "development",
+      "nativeGroups": 6,
+      "receipt": "build/record-result-validation/development/receipt.json",
+      "receiptSha256": "96dbdf64d4f0e8868c46ffcb4a01a63469018e0b5c1e9072c472b8afdc025c91",
+      "allInputHashesMatch": true
+    },
+    {
+      "profile": "release",
+      "nativeGroups": 6,
+      "receipt": "build/record-result-validation/release/receipt.json",
+      "receiptSha256": "7bb946392502d77d1585a3e7566d3de96d542d48c65a85d9a2bd7db5fca78d90",
+      "allInputHashesMatch": true
+    }
+  ],
+  "inputCount": 376,
+  "inputSetSha256": "7dda91ca26ce44c9b5025a94ca1fee76928f2dde55a8dba653e73571150c4172",
+  "commitInputComparison": {
+    "rawByteMatches": 376,
+    "lineEndingOnlyDifferences": []
+  },
+  "structuralCounts": {
+    "layoutPlansBefore": 2,
+    "layoutPlansAfter": 1,
+    "fieldSlotInspectionsBefore": 1024,
+    "fieldSlotInspectionsAfter": 512,
+    "recordRowInspectionsBefore": 64,
+    "recordRowInspectionsAfter": 32,
+    "payloadReadsBefore": "Q+N",
+    "payloadReadsAfter": "N bool bytes",
+    "full128ByteIntegerReadsBefore": 128,
+    "full128ByteIntegerReadsAfter": 0,
+    "full128BoolReadsBefore": 256,
+    "full128BoolReadsAfter": 128,
+    "snapshotScratchBytesBefore": 128,
+    "snapshotScratchBytesAfter": 0,
+    "full128ByteIntegerScratchStoresBefore": 384,
+    "full128ByteIntegerScratchStoresAfter": 0,
+    "loopValidations": 4096,
+    "loopIntegerPayloadByteReadsRemoved": 524288,
+    "loopFixedFieldSlotInspectionsRemoved": 2097152,
+    "addedHeapAllocations": 0,
+    "retainedFuelPrice": 42113,
+    "ownerTableValidationChanged": false,
+    "measuredThroughputOrPhysicalPeak": false,
+    "sourceCountsMayDifferFromNativeDeadStoreBehavior": true
+  },
+  "coverage": {
+    "fieldSlotCorruptions": 1024,
+    "recordRowCorruptions": 32,
+    "catalogDiagnosticContexts": 36,
+    "ownerMutations": 192,
+    "requestedNominals": 4,
+    "invalidTokens": 3,
+    "boolPayloadValues": 4,
+    "capacities": 4,
+    "competingErrors": 5,
+    "integerPatternComparisons": 1280,
+    "maximumBoolComparisons": 258,
+    "depthSixteenComparisons": 2,
+    "depthSeventeenComparison": 1,
+    "totalDifferentialInputs": 2845,
+    "directCheckedStorageCases": 12,
+    "allBackingBytesUnchanged": true,
+    "existingRegressionGroups": 4,
+    "existingFailedTransferScenarios": 18,
+    "fullOwnerCount": 16,
+    "directRetFrame": 31,
+    "remainingFuelAndTokenGenerationPreservation": true
+  },
+  "admissionProof": [
+    "Token/table/kind precede fresh storage planning, bound shape, requested nominal, extent and bool checks.",
+    "Binding is expected metadata, not authority; no supplied Plan, unchecked location or retained cache.",
+    "All admitted integer bit patterns are valid; only bool payload can fail. Padding stays untouched.",
+    "Raw snapshots retain independent checks and padding normalization for actual copies.",
+    "Legacy Fuel charging and token publication after successful validation remain unchanged."
+  ],
+  "limitations": [
+    "Source-level counts, not native throughput, machine instructions, dead-store behavior or physical peak memory.",
+    "Initial fixture compilation rejected usize-to-u8 cast; final generator uses bounded u8 increments. Not a pass.",
+    "Full Engine, public CLI, standalone memory and full release gates not rerun; public admission unchanged.",
+    "Previously recorded legacy source failure was not rerun or claimed fixed.",
+    "Local only; no push, release, deploy or version bump."
+  ]
+}

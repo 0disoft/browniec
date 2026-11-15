@@ -1,28 +1,28 @@
 - Latest maintenance checkpoint (2026-11-15):
-  [shared subrecord assignment planning](docs/engineering/subrecord-assign-plan.md).
-  assign_subrecord authenticates destination token/table/kind, plans the exact
-  immutable catalog once, checks both owner shapes and uses prepared nominal
-  range selection. Source identity/table still follows destination shape checks.
-  Raw storage independently replans and stages canonical bytes before writing.
-  Successful layout plans drop five to two; fixed field-slot checks 2560 to 1024
-  (60 percent fewer). No new public Plan authority, retained cache or heap
-  allocation. Owner validation, errors, tokens, padding, Fuel and quotas persist.
-  Development/O2 each pass six groups, including 1325 differential inputs,
-  all field slots/record rows, owner/token faults, depth sixteen, 128 leaves,
-  all six scalar types, self/sibling copy, full owners and exact direct VM Fuel.
-  All 376 inputs match tested bytes and implementation f3bc2ec
+  [validation-only record results](docs/engineering/record-result-validation.md).
+  Record RET validates the unique owner without a discarded snapshot. Token,
+  table and kind precede one fresh plan, expected size/alignment and bound ID,
+  requested nominal, root extent and bool checks. Binding is expected metadata,
+  not authority; no new unchecked Plan API. Raw snapshots still normalize copies.
+  Layout plans two to one (field slots 1024 to 512). Payload reads Q+N to N:
+  128 to zero for 16 i64 fields, 256 to 128 for 128 bool leaves. Snapshot-only
+  scratch 128 to zero bytes. Source counts, not measured native throughput,
+  dead-store behavior or physical peak memory. No heap allocation added.
+  Legacy Fuel 42113, table, tokens, generations, quota and backing persist.
+  Development/O2 each pass six groups: 2845 differential inputs, 12 direct
+  storage checks, all metadata slots/rows, owner faults, five integer domains,
+  every bool position, depth 16/17, full owner pressure, direct RET frame 31,
+  unchanged backing/padding, failed transfers and remaining Fuel.
+  All 376 inputs match tested bytes and implementation 01d499e
   (376 raw Git matches; 0 line-ending-only differences).
-  An initially selected legacy source/VM test fails on both this source and
-  original ef0a258 in development. It is recorded, not repaired or counted as
-  passing; final selection uses the direct VM Fuel boundary. Initial fixture
-  E2101 was corrected before final runs. Root check: 375 sources / 4085 MIR.
-  Production LF retained. Full Engine, standalone memory, public CLI and
-  release gates not rerun; public admission unchanged. No throughput or native
-  peak-memory claim. Broader completion remains paused; local commits only.
-  See [evidence](docs/evidence/subrecord-assign-plan-windows-20261115.json).
-  Prior [record access](docs/engineering/record-access-plan.md),
-  [cleanup](docs/engineering/slice-cleanup-preflight.md) and
-  [arguments](docs/engineering/slice-argument-preflight.md) retain history.
+  Root check: 375 sources / 4087 MIR; production LF retained. Initial fixture
+  cast failure corrected before final runs, not counted as a pass.
+  Full Engine, public CLI, standalone memory and release gates not rerun.
+  Prior legacy source failure remains recorded, not retested or claimed fixed.
+  Public admission unchanged; broader completion paused; local commits only.
+  See [evidence](docs/evidence/record-result-validation-windows-20261115.json).
+  Prior [subrecord planning](docs/engineering/subrecord-assign-plan.md) and
+  [record access](docs/engineering/record-access-plan.md) retain their history.
 
 # Brownie C agent guidance
 
