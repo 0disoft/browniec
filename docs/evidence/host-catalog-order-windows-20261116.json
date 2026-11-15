@@ -1,0 +1,87 @@
+{
+  "schema": "browniec.host-catalog-order/v1",
+  "status": "passed",
+  "clientDate": "2026-11-16",
+  "baselineCommit": "e9b636d54e7272888546f83b2360834f83cc9f6f",
+  "implementationCommit": "b62bfdaf0557997bcad22b767cf5cacca7405fe5",
+  "command": "python -B tools/verify-host-catalog-order.py --profile all",
+  "profiles": [
+    {
+      "profile": "development",
+      "nativeGroups": 15,
+      "receipt": "build/host-catalog-order/development/receipt.json",
+      "receiptSha256": "fd0acfdeb3a2e572a7205fe68eeb578838a5ae2ef866b037fcb9b8471fa71fb8",
+      "nativeInputMirrorVerified": true,
+      "nativeOverrides": false,
+      "allInputHashesMatch": true
+    },
+    {
+      "profile": "release",
+      "nativeGroups": 15,
+      "receipt": "build/host-catalog-order/release/receipt.json",
+      "receiptSha256": "8084f26efdf710c3e718f2abbfcac2311a7c15644e3d5f86c4c515fe08f2fe68",
+      "nativeInputMirrorVerified": true,
+      "nativeOverrides": false,
+      "allInputHashesMatch": true
+    }
+  ],
+  "rootCheck": "check ok: 2 instance(s), 375 source file(s), 4102 MIR function(s), lock updated",
+  "productionProof": {
+    "onlyDuplicateScanRelocationAndCommentsChanged": true,
+    "originalDuplicateFirstOracleGuardMatchesBaseline": true,
+    "originalOrderingComparatorUnchanged": true,
+    "entryAndLimitErrorsStillPrecedeNameAdmission": true,
+    "duplicateAndOrderKindsAndOffsetsPreserved": true,
+    "productionLfRetained": true,
+    "noNewApiAllocationStateOrCallerProof": true
+  },
+  "testedInputIdentity": {
+    "inputCount": 383,
+    "allReceiptInputsMatchWorkingBytes": true,
+    "exactGitBlobMatches": 383,
+    "lineEndingOnlyDifferences": 0
+  },
+  "structuralCounts": {
+    "sourceLevelOnly": true,
+    "imports": 64,
+    "duplicatePairComparisonsBefore": 2016,
+    "duplicatePairComparisonsAfter": 0,
+    "sameModuleDuplicateByteEqualCallsBefore": 4032,
+    "sameModuleDuplicateByteEqualCallsAfter": 0,
+    "adjacentOrderComparisonsBefore": 63,
+    "adjacentOrderComparisonsAfter": 63,
+    "terminalFailureScanMaximum": 63,
+    "nameAdmissionBefore": "O(N^2 * L)",
+    "nameAdmissionAfter": "O(N * L)",
+    "completeParseAfter": "O(S + N * L)",
+    "auxiliarySpace": "O(1)",
+    "throughputMeasured": false,
+    "physicalPeaksMeasured": false
+  },
+  "referenceChecks": {
+    "schema": "browniec.host-catalog-reference-verification/v1",
+    "status": "passed",
+    "admissionVectors": 144,
+    "nativeLiteralCases": 145,
+    "sha256KnownAnswers": 13,
+    "referenceCanonicalHex": "4252432d434154414c4f472d310a01000000000000000d000000686f73743a3a6578616d706c6505000000636865636b0f000000526573756c743c6933322c7533323e040000007265616412000000686f73742e6578616d706c652e636865636b01000000310200000003000000693332080000007265662075385b5d",
+    "referenceSha256": "bfec9acc23d667b2fe2bd5a11e801c4e2c42ffad6b58a5632d39583098092f94",
+    "inputEncoding": "All admission fixtures replay their exact input_hex bytes in native assertions."
+  },
+  "newCases": {
+    "threeEntryLiteralAndEscapedSequences": 1024,
+    "maximumSortedImports": 64,
+    "terminalDuplicatePositions": 63,
+    "exactErrorKindsAndOffsets": true
+  },
+  "initialFixtureFailure": "Returned conditional borrows had multiple origins; replaced with slices of one static byte table. Failed attempt is not passing evidence.",
+  "scope": "host-owned catalog metadata admission; host dispatch and public CLI unchanged",
+  "skipped": [
+    "Full Engine transport",
+    "public CLI",
+    "standalone memory",
+    "full release gates",
+    "Known legacy struct_subassign_source failure not retested or fixed"
+  ],
+  "remote": "local only; not pushed, published, released or deployed"
+}

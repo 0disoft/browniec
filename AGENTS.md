@@ -1,23 +1,25 @@
 - Latest maintenance checkpoint (2026-11-16):
-  [single-write wrapper construction](docs/engineering/value-wrap-writes.md).
-  Raw wrap_at and native build_tag clear only header/tail padding, then
-  write the tag and full payload once; none still clears all inactive bytes.
-  Only initialization loops/comments change. Bounds, overlap, canonical
-  pre/postchecks, Fuel, publication, root handoff and cleanup are unchanged.
-  A 32776-byte wrapper with 32768 payload bytes uses 65545 to 32776
-  staging/destination stores; staging plus publication uses 98321 to 65552.
-  Both remain O(B), O(1) extra space. Source counts only; throughput and
-  physical peaks were not measured. No added API, state or allocation.
-  Development/O2 each pass ten groups: frozen original byte/error oracles,
-  mutated and maximum payloads, dirty staging, padding, exact Fuel, overlap,
-  recursive native ownership and VM wrappers. Initial fixture cast was
-  corrected before final runs; failed attempts are not passing evidence.
-  All 377 input hashes match tested bytes and implementation 1950e6a.
+  [linear host-catalog name admission](docs/engineering/host-catalog-order.md).
+  The private accepted prefix is strictly increasing; check its final name
+  first and scan earlier names only to classify a terminal ordering failure.
+  Decoded duplicate priority and exact entry offsets are preserved.
+  Only the duplicate scan moves. Entry/limit errors, name comparator,
+  publication, descriptor ownership, canonical bytes and hashes are unchanged.
+  For 64 sorted imports, duplicate-pair comparisons fall from 2016 to zero;
+  adjacent-order comparisons remain 63. A rejected entry scans at most 63 pairs.
+  Name admission is O(N * L), formerly O(N^2 * L); extra space remains O(1).
+  Source counts only; throughput and physical peaks were not measured.
+  Development/O2 each pass fifteen native groups, including 1024 literal
+  and escaped three-entry sequences checked against the original algorithm,
+  the 64-entry boundary, all 63 terminal duplicate positions, grammar,
+  canonical/hash vectors, owned accessors and real wire composition.
+  Initial fixture borrow failure was corrected before final passing runs.
+  All 383 input hashes match tested bytes and implementation b62bfda.
   Root check: 375 sources / 4102 MIR; production LF and guidance body retained.
   Full Engine transport, public CLI, standalone memory and release gates not rerun.
   Known legacy source failure not retested or claimed fixed.
   Broader completion remains paused; local commits only.
-  See [evidence](docs/evidence/value-wrap-writes-windows-20261116.json).
+  See [evidence](docs/evidence/host-catalog-order-windows-20261116.json).
 
 # Brownie C agent guidance
 
