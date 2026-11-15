@@ -11,7 +11,16 @@ Brownie C 역시 별도 설치 프로그램 없이 저장소에서 바로 `brown
 2. **Python 3.10+**: 툴체인 준비 스크립트 실행용(`python3` 또는 `py -3`)입니다.
 3. **Go (`go1.27.1`) 및 Git**: 이미 검증된 `--compiler-file`을 넘기지 않고 소스에서 컴파일러를 빌드할 때 필요합니다(같은 상위 폴더에 `../fairyc`가 있으면 우선 사용하고, 없으면 원격 Git에서 가져옵니다).
 
-## 1. 컴파일러 준비하고 `browniec.exe` 빌드하기
+## 1. 저장소 내려받고 이동하기
+
+아직 소스 코드가 없다면 [browniec GitHub 저장소](https://github.com/0disoft/browniec)를 복제한 뒤 저장소 루트로 이동합니다.
+
+```powershell
+git clone https://github.com/0disoft/browniec.git
+cd browniec
+```
+
+## 2. 컴파일러 준비하고 `browniec.exe` 빌드하기
 
 `browniec` 저장소 루트에서 아래 두 명령을 차례대로 실행합니다.
 
@@ -24,7 +33,7 @@ python3 tools/setup-toolchain.py
 
 > **참고:** Linux 환경에 대한 설정 정보는 들어 있지만, 실제 Linux 호스트에서의 빌드와 `browniec` 실행은 아직 검증되지 않았습니다.
 
-## 2. 잘 빌드됐는지 확인하기
+## 3. 잘 빌드됐는지 확인하기
 
 ```powershell
 ./build/browniec.exe --version

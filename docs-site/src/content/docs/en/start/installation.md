@@ -11,7 +11,16 @@ Brownie C does not ship a prebuilt installer yet. Instead, a helper script provi
 2. **Python 3.10+** (`python3` or `py -3`) to run `tools/setup-toolchain.py`.
 3. **Go (`go1.27.1`) and Git** if bootstrapping the pinned `fairyc` compiler from source instead of supplying `--compiler-file path/to/fairyc.exe`.
 
-## 1. Provision `fairyc` and Build `browniec.exe`
+## 1. Clone the Repository
+
+If you do not have the source locally yet, clone the [browniec GitHub repository](https://github.com/0disoft/browniec) and move into the repository root:
+
+```powershell
+git clone https://github.com/0disoft/browniec.git
+cd browniec
+```
+
+## 2. Provision `fairyc` and Build `browniec.exe`
 
 From the `browniec` repository root:
 
@@ -24,7 +33,7 @@ This prepares `build/toolchain/fairyc.exe` and compiles `./build/browniec.exe`.
 
 > **Note:** Linux toolchain hashes exist in `toolchain.json`, but native Linux builds and execution of `browniec` remain unverified.
 
-## 2. Verify the Binary
+## 3. Verify the Binary
 
 ```powershell
 ./build/browniec.exe --version

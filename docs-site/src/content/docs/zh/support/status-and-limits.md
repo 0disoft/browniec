@@ -5,6 +5,8 @@ description: 公开容量上限、Windows 与 Linux 支持现状，以及永久�
 
 Brownie C 刻意保持严格的编译期与运行期边界，使 Guest 代码的求值保持小巧且可预测。以下是当前公开 CLI 的支持范围。
 
+> <strong>验证基线</strong>：`2026-11-16` · 提交 [`f5e13f9`](https://github.com/0disoft/browniec/commit/f5e13f9)
+
 ## 当前可用功能
 
 在 `browniec --version --json` 的输出中，`"core": true` 表示当前已启用的公开实验性子集（标量、定长数组、普通结构体、字节/文本字面量以及受检切片），并不代表语言功能已全部完成。

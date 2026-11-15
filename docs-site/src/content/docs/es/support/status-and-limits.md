@@ -5,6 +5,8 @@ description: Límites de capacidad públicos, estado en Windows frente a Linux y
 
 Brownie C mantiene límites estrictos de compilación y tiempo de ejecución a propósito para que la evaluación del código huésped siga siendo pequeña y predecible. Esto es lo que soporta hoy la CLI pública.
 
+> **Referencia verificada**: `2026-11-16` · commit [`f5e13f9`](https://github.com/0disoft/browniec/commit/f5e13f9)
+
 ## Qué funciona hoy
 
 En `browniec --version --json`, `"core": true` refleja los subconjuntos experimentales públicos activos (escalares, arrays fijos, structs simples, literales de bytes y texto, y slices verificados), no la finalización completa del lenguaje.

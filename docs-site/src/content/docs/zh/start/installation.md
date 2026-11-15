@@ -11,7 +11,16 @@ Brownie C 目前尚未提供预编译安装包。你可以通过仓库内置的�
 2. <strong>Python 3.10+</strong>（`python3` 或 `py -3`），用于运行 `tools/setup-toolchain.py`。
 3. <strong>Go（`go1.27.1`）和 Git</strong>：如果你选择从源码引导编译锁定版本的 `fairyc` 编译器，而不是通过 `--compiler-file path/to/fairyc.exe` 直接指定已有二进制文件，则需要安装它们。
 
-## 1. 配置 `fairyc` 并构建 `browniec.exe`
+## 1. 克隆并进入源码仓库
+
+如果本地尚未获取源码，请先从 [browniec GitHub 仓库](https://github.com/0disoft/browniec)克隆并进入仓库根目录：
+
+```powershell
+git clone https://github.com/0disoft/browniec.git
+cd browniec
+```
+
+## 2. 配置 `fairyc` 并构建 `browniec.exe`
 
 在 `browniec` 仓库根目录下执行：
 
@@ -24,7 +33,7 @@ python3 tools/setup-toolchain.py
 
 > <strong>注意：</strong>`toolchain.json` 中包含 Linux 工具链的哈希配置，但原生 Linux 下的构建与运行尚未经过验证。
 
-## 2. 验证可执行文件
+## 3. 验证可执行文件
 
 ```powershell
 ./build/browniec.exe --version

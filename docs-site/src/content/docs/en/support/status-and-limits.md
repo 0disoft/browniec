@@ -5,6 +5,8 @@ description: Public capacity caps, Windows vs. Linux status, and features perman
 
 Brownie C keeps strict compile and runtime boundaries on purpose so guest evaluation stays small and predictable. Here is what the public CLI supports today.
 
+> **Verified snapshot**: `2026-11-16` · commit [`f5e13f9`](https://github.com/0disoft/browniec/commit/f5e13f9)
+
 ## What Works Today
 
 In `browniec --version --json`, `"core": true` reflects the active public experimental subsets (scalars, fixed arrays, plain structs, byte/text literals, and checked slices)—not full language completion.
