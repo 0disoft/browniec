@@ -852,15 +852,15 @@ pub fn Result<i64, Error> read_record(ref records::Catalog catalog, ref Table ta
     };
 }
 // Validate a unique nominal result without reserving or writing payload. The
-// bounded snapshot checks every scalar leaf, including nested canonical bools;
-// its normalized padding is deliberately discarded when rehoming the owner.
+// checked storage validator authenticates shape/nominal identity and nested
+// bools without copying integer bytes or normalizing discarded scratch.
 pub fn Result<usize, Error> validate_record_result(ref records::Catalog catalog,
     ref Table table, Token token, usize nominal, ref u8[] bytes) {
-    let Owner owner = resolve_record(catalog, table, token, bytes.len)?;
-    if (owner.record != nominal) { return .err(.Type); }
-    var u8[128] scratch = [0; 128];
-    return switch (record_storage::snapshot_into(catalog, nominal, owner.base,
-        bytes, ref table.arena, ref mut scratch[..owner.length])) {
+    let Owner owner = resolve_any(table, token, bytes.len)?;
+    if (owner.element != 0) { return .err(.Type); }
+    let record_storage::Binding binding = record_storage::Binding { .bytes = owner.length, .alignment = owner.alignment };
+    return switch (record_storage::validate_result(catalog, owner.record, owner.base,
+        binding, nominal, bytes, ref table.arena)) {
         case .ok(n): { .ok(n) } case .err(e): { .err(record_error(e)) }
     };
 }

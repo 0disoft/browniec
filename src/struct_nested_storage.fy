@@ -20,6 +20,10 @@ pub struct Staging { usize size; usize alignment; usize leaves; usize scalar_byt
 fn bool valid(ref arenas::Arena arena, usize capacity) {
     return arena.used <= arena.limit && arena.limit <= capacity;
 }
+fn bool binding_matches(ref layouts::Plan plan, usize record, Binding expected) {
+    return record < plan.count && plan.bytes[record] == expected.bytes &&
+        plan.alignments[record] == expected.alignment;
+}
 fn Error codec_error(codec::Error error) {
     return switch (error) {
         case .Type: { .Type } case .Width: { .Bounds } case .Value: { .Value }
@@ -216,8 +220,7 @@ fn Result<Leaf, Error> address(ref layouts::Catalog catalog, usize record, usize
     };
     // Owner shape must fail before extent/path checks, including unknown IDs.
     switch(binding){case .none:{}case .some(expected):{
-        if(record>=plan.count){return .err(.Layout);}
-        if(plan.bytes[record]!=expected.bytes || plan.alignments[record]!=expected.alignment){return .err(.Layout);}
+        if(!binding_matches(ref plan,record,expected)){return .err(.Layout);}
     }};
     let usize size = extent(ref plan, record, base, capacity, arena)?;
     if (path.len == 0 || path.len > 16) { return .err(.Bounds); }
@@ -315,6 +318,26 @@ fn Result<usize, Error> snapshot(ref layouts::Catalog catalog, ref layouts::Plan
         }
     }
     return .ok(plan.bytes[record]);
+}
+// Checked unique-result validation: expected metadata is never authority. A
+// fresh full plan checks owner shape before nominal identity and root extent.
+// Integer bit patterns and padding need no payload read; only bools can fail.
+pub fn Result<usize, Error> validate_result(ref layouts::Catalog catalog, usize record, usize base,
+    Binding binding, usize nominal, ref u8[] storage, ref arenas::Arena arena) {
+    let layouts::Plan plan = switch (layouts::plan(catalog,18446744073709551615)) {
+        case .ok(p): { p } case .err(_): { return .err(.Layout); }
+    };
+    if (!binding_matches(ref plan,record,binding)) { return .err(.Layout); }
+    if (record != nominal) { return .err(.Type); }
+    let usize size = extent(ref plan,record,base,storage.len,arena)?;
+    var Cursor cursor = Cursor { .depth = 1, .records = [0;16], .fields = [0;16], .bases = [0;16] };
+    cursor.records[0] = record; var bool done = false;
+    while (!done) {
+        let Leaf leaf = next(catalog,ref plan,ref mut cursor);
+        if (leaf.tag == 0) { done = true; }
+        else if (leaf.tag == 2 && storage[base+leaf.offset] > 1) { return .err(.Value); }
+    }
+    return .ok(size);
 }
 // Copy canonical bytes into caller-owned scratch without changing backing or
 // arena state. Scratch may be partially changed on error; it is never published.

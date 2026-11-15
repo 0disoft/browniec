@@ -8,8 +8,9 @@ import array_owners as owners;
 import std::bytes as bytes;
 
 pub fn usize cost() {
-    // Two complete layout plans, one bounded scalar snapshot, scratch/codec
-    // work, both child token sets and owner metadata. No payload copy/reserve.
+    // Retain legacy conservative prepayment for two plans and snapshot work.
+    // Checked result validation now needs one plan and bool reads only; child
+    // token checks and owner authentication remain. No payload copy/reserve.
     return 2 * 18432 + 4096 + 1024 + 129;
 }
 
