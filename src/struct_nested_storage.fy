@@ -408,11 +408,27 @@ pub fn Result<usize, Error> snapshot_into(ref layouts::Catalog catalog, usize re
     let layouts::Plan plan = switch (layouts::plan(catalog, 18446744073709551615)) {
         case .ok(p): { p } case .err(_): { return .err(.Layout); }
     };
-    let usize size = extent(ref plan, record, source, storage.len, arena)?;
+    return snapshot_into_prepared(catalog,ref plan,record,source,storage,arena,encoded);
+}
+// Expected owner shape is metadata, never authority. One fresh full plan
+// authenticates it before checking the extent or touching private scratch.
+pub fn Result<usize, Error> snapshot_into_bound(ref layouts::Catalog catalog, usize record, usize source,
+    Binding binding, ref u8[] storage, ref arenas::Arena arena, ref mut u8[] encoded) {
+    let layouts::Plan plan = switch (layouts::plan(catalog,18446744073709551615)) {
+        case .ok(p): { p } case .err(_): { return .err(.Layout); }
+    };
+    if (!binding_matches(ref plan,record,binding)) { return .err(.Layout); }
+    return snapshot_into_prepared(catalog,ref plan,record,source,storage,arena,encoded);
+}
+// Private composition with the fresh local plan; scratch may be partial on
+// scalar failure and must not be published by the caller until success.
+fn Result<usize, Error> snapshot_into_prepared(ref layouts::Catalog catalog, ref layouts::Plan plan,
+    usize record, usize source, ref u8[] storage, ref arenas::Arena arena, ref mut u8[] encoded) {
+    let usize size = extent(plan, record, source, storage.len, arena)?;
     if (encoded.len != size) { return .err(.Bounds); }
     var usize i = 0;
     while (i < size) { encoded[i] = 0; i += 1; }
-    return snapshot(catalog, ref plan, record, source, storage, encoded);
+    return snapshot(catalog, plan, record, source, storage, encoded);
 }
 pub fn Result<usize, Error> copy(ref layouts::Catalog catalog, usize record, usize source,
     ref mut u8[] storage, ref mut arenas::Arena arena) {

@@ -653,9 +653,9 @@ pub fn Result<Copies, Error> copy_call_arguments(ref records::Catalog catalog,
         if (argument.element == 0) {
             if (argument.length != 0) { return .err(.Metadata); }
             if (owner.record != argument.record) { return .err(.Type); }
-            let usize checked = record_metadata(catalog, ref owner)?;
-            let usize staged = switch (record_storage::snapshot_into(catalog, owner.record, owner.base,
-                bytes, ref table.arena, ref mut snapshots[i * 128..i * 128 + owner.length])) {
+            let record_storage::Binding binding = record_storage::Binding { .bytes = owner.length, .alignment = owner.alignment };
+            let usize staged = switch (record_storage::snapshot_into_bound(catalog, owner.record, owner.base,
+                binding, bytes, ref table.arena, ref mut snapshots[i * 128..i * 128 + owner.length])) {
                 case .ok(n): { n } case .err(e): { return .err(record_error(e)); }
             };
         } else {
