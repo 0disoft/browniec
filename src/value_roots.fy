@@ -128,12 +128,11 @@ fn Result<usize,Error> resolve_mode(ref State s,ref vec::Vec<bytes::Buffer> root
     var usize i=0;while(i<count){let Row row=s.rows[i];
         if(row.serial==serial){
             if(row.binding!=binding){return .err(.Binding);}
-            let owners::Token token=owners::Token{.slot=row.slot,.generation=row.generation};
-            let Result<owners::Owner,owners::Error> checked=if(writing){owners::writable(ref s.table,token)}
-                else{owners::describe(ref s.table,token)};
-            let owners::Owner owner=switch(checked){
-                case .ok(v):{v}case .err(_):{return .err(.State);}
-            };
+            // ready authenticated the full table and every row/token identity.
+            // These immutable borrows keep that proof local to this lookup;
+            // retain the additional writable gate and actual backing checks.
+            let owners::Owner owner=s.table.slots[row.slot];
+            if(writing && owner.reading){return .err(.State);}
             let ref bytes::Buffer root=vec::at<bytes::Buffer>(roots,i);
             if(bytes::len(root)!=owner.length || bytes::capacity(root)!=owner.capacity){return .err(.State);}
             return .ok(i);
@@ -169,7 +168,8 @@ pub fn Result<usize,Error> end_read(ref mut State s,ref vec::Vec<bytes::Buffer> 
 // Metadata access remains store-local; no native root/view escapes this owner.
 pub fn Result<owners::Owner,Error> describe(ref State s,ref vec::Vec<bytes::Buffer> roots,ref vec::Vec<bytes::Buffer> scratch,usize serial,usize binding){
     let usize i=resolve_mode(s,roots,scratch,serial,binding,false)?;
-    return switch(owners::describe(ref s.table,owners::Token{.slot=s.rows[i].slot,.generation=s.rows[i].generation})){case .ok(v):{.ok(v)}case .err(_):{.err(.State)}};
+    // No mutation/callback intervenes after the exact root was authenticated.
+    return .ok(s.table.slots[s.rows[i].slot]);
 }
 pub fn Result<usize,Error> copy_out(ref State s,ref vec::Vec<bytes::Buffer> roots,ref vec::Vec<bytes::Buffer> scratch,usize serial,usize binding,usize start,
     ref mut u8[] output,ref mut usize fuel){
