@@ -8,8 +8,12 @@ import errors as errors;
 // fixed-width u32 descriptors. Liveness and owning image proof stay separate.
 pub struct Span { usize start; usize length; }
 fn errors::Error invalid(usize offset){return errors::make(5,offset);}
+// Validate coordinates without encoding a word that the caller will discard.
+fn bool bounded(usize start,usize length,usize payload){
+    return payload<=4096 && start<=payload && length<=payload-start;
+}
 pub fn Result<u32,errors::Error> pack(usize start,usize length,usize payload,usize offset){
-    if(payload>4096 || start>payload || length>payload-start){return .err(invalid(offset));}
+    if(!bounded(start,length,payload)){return .err(invalid(offset));}
     // The pinned SDK has no usize-to-u32 narrowing operation. Both fields are
     // bounded above; this exact conversion performs at most 26 iterations.
     var usize rest=start*8192+length;var u32 word=0;var u32 power=1;
@@ -19,7 +23,7 @@ pub fn Result<u32,errors::Error> pack(usize start,usize length,usize payload,usi
 pub fn Result<Span,errors::Error> unpack(u32 word,usize payload,usize offset){
     if(word>=67108864){return .err(invalid(offset));}
     let usize start=(word/8192) as usize;let usize length=(word%8192) as usize;
-    if(payload>4096 || start>payload || length>payload-start){return .err(invalid(offset));}
+    if(!bounded(start,length,payload)){return .err(invalid(offset));}
     return .ok(Span{.start=start,.length=length});
 }
 // Independently admitted Sites supplies the maximum image window and exact
@@ -48,7 +52,7 @@ pub fn Result<Span,errors::Error> inspect(ref statics::Sites sites,usize site,us
     let usize lo=sites.spans[site].start;let usize hi=sites.spans[site].end;
     if(hi<lo || hi>4096 || sites.spans[site].literal>=16){return .err(invalid(offset));}
     let usize base=sites.starts[site];let usize size=hi-lo;
-    let u32 bounded=pack(base,size,payload,offset)?;
+    if(!bounded(base,size,payload)){return .err(invalid(offset));}
     let Span actual=unpack(word,payload,offset)?;
     if(actual.start<base || actual.start>base+size || actual.length>base+size-actual.start ||
         (sites.kinds[site]==2 && (actual.start!=base || actual.length!=size))){return .err(invalid(offset));}
@@ -65,7 +69,7 @@ pub fn Result<Span,errors::Error> live(ref statics::Sites sites,usize site,usize
 // The VM must prepay its complete instruction before invoking this endpoint
 // operation or publishing the returned word. No caller storage is mutated here.
 pub fn Result<u32,errors::Error> crop(ref Span parent,usize lo,usize hi,usize payload,usize offset){
-    let u32 valid=pack(parent.start,parent.length,payload,offset)?;
+    if(!bounded(parent.start,parent.length,payload)){return .err(invalid(offset));}
     if(lo>hi || hi>parent.length){return .err(errors::make(14,offset));}
     return pack(parent.start+lo,hi-lo,payload,offset);
 }
