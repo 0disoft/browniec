@@ -1,0 +1,173 @@
+{
+  "schema": "browniec.subrecord-assign-plan/v1",
+  "status": "passed",
+  "clientDate": "2026-11-15",
+  "baselineCommit": "ef0a258",
+  "implementationCommit": "f3bc2ec378c73f6c738a4866bc11e23bb6efcff8",
+  "sources": [
+    {
+      "path": "src/array_owners.fy",
+      "sha256": "044d2b68e4d26221fc9645db9f2c8a199f174ba560735e241affd6474a6353e0"
+    }
+  ],
+  "rootCheck": "check ok: 2 instances, 375 sources, 4085 MIR functions; lock updated",
+  "profiles": [
+    {
+      "profile": "development",
+      "nativeGroups": 6,
+      "receipt": "build/subrecord-assign-plan/development/receipt.json",
+      "receiptSha256": "213c3801b948118284d79544278c4b5106d4f8e3785b474d0993d75fac001813",
+      "allInputHashesMatch": true
+    },
+    {
+      "profile": "release",
+      "nativeGroups": 6,
+      "receipt": "build/subrecord-assign-plan/release/receipt.json",
+      "receiptSha256": "379c88c92c1db016bf5b7ebd7ffcd169fa4daa4c26bbcc2d73aa62696db40473",
+      "allInputHashesMatch": true
+    }
+  ],
+  "inputCount": 376,
+  "inputSetSha256": "deb80e77776105a7f1e7cfc31d5da72206eddf0a986535a836f13ffb582c4dfb",
+  "commitInputComparison": {
+    "rawByteMatches": 376,
+    "lineEndingOnlyDifferences": [],
+    "contentMatchesAfterRepositoryLfNormalization": true
+  },
+  "structuralCounts": {
+    "layoutPlansBefore": 5,
+    "layoutPlansAfter": 2,
+    "planReductionPercent": 60,
+    "fixedCatalogRows": 32,
+    "fixedCatalogSlots": 512,
+    "fieldSlotInspectionsBefore": 2560,
+    "fieldSlotInspectionsAfter": 1024,
+    "rowInspectionsBefore": 160,
+    "rowInspectionsAfter": 64,
+    "loopCount": 4096,
+    "loopFieldSlotInspectionsBefore": 10485760,
+    "loopFieldSlotInspectionsAfter": 4194304,
+    "loopFieldSlotInspectionsRemoved": 6291456,
+    "addedHeapAllocations": 0,
+    "fuelPricesChanged": false,
+    "ownerTableValidationsChanged": false,
+    "measuredThroughputOrPhysicalPeak": false,
+    "complexityUnchanged": "O(T+S+R+F+V+B), T=owner table, S=512, R<=32, F<=512, V=range walks, B<=128"
+  },
+  "coverage": {
+    "fieldSlotCorruptions": 1024,
+    "recordRowCorruptions": 32,
+    "catalogDiagnosticContexts": 36,
+    "ownerMutations": 192,
+    "invalidTokenAndArrayContexts": 8,
+    "competingErrorBackingBoolCases": 7,
+    "maximumLeavesOrdinalBoolCases": 8,
+    "depthSixteenNominalNodes": 16,
+    "differentRootScalarCopies": 2,
+    "totalDifferentialInputs": 1325,
+    "allBackingBytesAndFailureRollback": true,
+    "existingRegressionGroups": 4,
+    "actualDirectVmFuelBoundary": true
+  },
+  "preExistingFailure": {
+    "identity": "tests::m2::struct_subassign_source::writes_reuse_sites_owners_and_payload_without_copy_or_init",
+    "baselineCommit": "ef0a258",
+    "baselineProfile": "development",
+    "baselineExit": 5,
+    "trapCategory": "assertion-failed",
+    "baselineCheckedFiles": 371,
+    "baselineRawGitBytesMatch": true,
+    "baselineReportSha256": "e16812b1168ee41960a91d8f48e52b2ab94d8d829f6fc050671d35038309e2ed",
+    "baselineReport": {
+      "schemaVersion": "fairyc.test-report/v4",
+      "engine": "native",
+      "target": "x86_64-windows-msvc",
+      "profile": "development",
+      "tests": [
+        {
+          "identity": "tests::m2::struct_subassign_source::writes_reuse_sites_owners_and_payload_without_copy_or_init",
+          "outcome": "failed",
+          "trapCategory": "assertion-failed",
+          "stdoutBase64": "",
+          "stderrBase64": ""
+        }
+      ],
+      "count": 1,
+      "passed": 0,
+      "failed": 1,
+      "status": "failed",
+      "lock": "verified"
+    },
+    "changedSourceAttemptSha256": "2fa686d3ef4d8682901888cd4fbaa0948620357a5b235802abc27a4111daabfe",
+    "changedSourceAttempt": {
+      "schemaVersion": "fairyc.test-report/v4",
+      "engine": "native",
+      "target": "x86_64-windows-msvc",
+      "profile": "development",
+      "tests": [
+        {
+          "identity": "tests::m2::struct_subassign_owners::full_owner_table_and_padding_normalization_use_no_extra_extent",
+          "outcome": "passed",
+          "trapCategory": null,
+          "stdoutBase64": "",
+          "stderrBase64": ""
+        },
+        {
+          "identity": "tests::m2::struct_subassign_owners::invalid_bool_nominal_range_metadata_and_stale_tokens_do_not_write",
+          "outcome": "passed",
+          "trapCategory": null,
+          "stdoutBase64": "",
+          "stderrBase64": ""
+        },
+        {
+          "identity": "tests::m2::struct_subassign_owners::subrecord_ranges_copy_siblings_and_self_without_owners_or_neighbors",
+          "outcome": "passed",
+          "trapCategory": null,
+          "stdoutBase64": "",
+          "stderrBase64": ""
+        },
+        {
+          "identity": "tests::m2::struct_subassign_source::writes_reuse_sites_owners_and_payload_without_copy_or_init",
+          "outcome": "failed",
+          "trapCategory": "assertion-failed",
+          "stdoutBase64": "",
+          "stderrBase64": ""
+        },
+        {
+          "identity": "tests::m2::subrecord_assign_plan::shared_plan_matches_original_catalog_owner_faults_and_diagnostic_precedence",
+          "outcome": "passed",
+          "trapCategory": null,
+          "stdoutBase64": "",
+          "stderrBase64": ""
+        },
+        {
+          "identity": "tests::m2::subrecord_assign_plan::shared_plan_preserves_maximum_leaves_depth_and_different_root_scalar_layouts",
+          "outcome": "passed",
+          "trapCategory": null,
+          "stdoutBase64": "",
+          "stderrBase64": ""
+        }
+      ],
+      "count": 6,
+      "passed": 5,
+      "failed": 1,
+      "status": "failed",
+      "lock": "verified"
+    },
+    "disposition": "Not repaired or counted as passing; final focused selection uses direct VM Fuel boundary."
+  },
+  "admissionProof": [
+    "Destination token/table/kind precede catalog and owner-shape checks; source authentication remains later.",
+    "The same exact immutable catalog/plan validates both owner shapes and both nominal ranges.",
+    "Private shape helper grants no authority; no new public supplied-plan or unchecked API.",
+    "Raw assignment independently plans, validates selected extents and stages all scalar bytes before writing.",
+    "Nominal identity, padding normalization, invalid bool and self-copy failures preserve prior behavior."
+  ],
+  "limitations": [
+    "Source-level operation counts, not measured throughput, machine instructions or physical peak memory.",
+    "Initial development fixture compilation failed E2101; corrected by reading a copied owner before mutation.",
+    "A separate legacy source test fails in development on both original baseline and changed production; not fixed here.",
+    "Full Engine, standalone memory, public CLI and release gates not rerun; public admission unchanged.",
+    "Local commits only; no push, release, deploy or version bump."
+  ]
+}

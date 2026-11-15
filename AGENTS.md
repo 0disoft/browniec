@@ -1,28 +1,28 @@
 - Latest maintenance checkpoint (2026-11-15):
-  [single-plan record field access](docs/engineering/record-access-plan.md).
-  read_record/write_record authenticate token/table/kind, then checked bound
-  storage computes one full catalog plan for expected owner size/alignment,
-  nominal ID, root extent and scalar path. Binding is expected metadata, not
-  authority. Raw storage and resolve_record retain independent checks; token,
-  table, kind, catalog/shape, extent, path and codec diagnostics keep their order.
-  Successful field access builds one plan instead of two: fixed catalog slot
-  inspections 1024 to 512, removing 2097152 inspections over 4096 accesses plus
-  repeated dependency/offset planning. Complexity remains O(S+R+F+P); no measured
-  throughput/physical peak claim. No heap allocation, retained cache or unchecked
-  Plan API is added. Fuel, quotas, owner validation and reservations are unchanged.
-  Development/O2 each pass six groups: 1257 read/write input comparisons (2514
-  operations), every field slot/record row, owner and catalog faults, bool/scalar
-  errors and byte rollback; direct forged Bindings, depth sixteen, 128 leaves,
-  raw storage and actual VM dispatch/Fuel. All 377 receipt inputs match tested
-  working bytes; at e3eec80, 376 match Git raw bytes and struct_vm differs only
-  by existing checkout CRLF (both hashes recorded; tested file left unchanged).
-  Root check: 375 sources / 4084 MIR; changed production sources retain LF.
-  Full Engine, standalone memory, public CLI and release gates were not rerun.
-  Broader completion remains paused; no admission expansion, R02-R05 closure,
-  push/release/deploy/version bump.
-  See [evidence](docs/evidence/record-access-plan-windows-20261115.json).
-  Prior [cleanup preflight](docs/engineering/slice-cleanup-preflight.md) and
-  [argument preflight](docs/engineering/slice-argument-preflight.md) retain history.
+  [shared subrecord assignment planning](docs/engineering/subrecord-assign-plan.md).
+  assign_subrecord authenticates destination token/table/kind, plans the exact
+  immutable catalog once, checks both owner shapes and uses prepared nominal
+  range selection. Source identity/table still follows destination shape checks.
+  Raw storage independently replans and stages canonical bytes before writing.
+  Successful layout plans drop five to two; fixed field-slot checks 2560 to 1024
+  (60 percent fewer). No new public Plan authority, retained cache or heap
+  allocation. Owner validation, errors, tokens, padding, Fuel and quotas persist.
+  Development/O2 each pass six groups, including 1325 differential inputs,
+  all field slots/record rows, owner/token faults, depth sixteen, 128 leaves,
+  all six scalar types, self/sibling copy, full owners and exact direct VM Fuel.
+  All 376 inputs match tested bytes and implementation f3bc2ec
+  (376 raw Git matches; 0 line-ending-only differences).
+  An initially selected legacy source/VM test fails on both this source and
+  original ef0a258 in development. It is recorded, not repaired or counted as
+  passing; final selection uses the direct VM Fuel boundary. Initial fixture
+  E2101 was corrected before final runs. Root check: 375 sources / 4085 MIR.
+  Production LF retained. Full Engine, standalone memory, public CLI and
+  release gates not rerun; public admission unchanged. No throughput or native
+  peak-memory claim. Broader completion remains paused; local commits only.
+  See [evidence](docs/evidence/subrecord-assign-plan-windows-20261115.json).
+  Prior [record access](docs/engineering/record-access-plan.md),
+  [cleanup](docs/engineering/slice-cleanup-preflight.md) and
+  [arguments](docs/engineering/slice-argument-preflight.md) retain history.
 
 # Brownie C agent guidance
 
