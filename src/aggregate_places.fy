@@ -30,10 +30,15 @@ pub fn Result<Place,owners::Error> select_array(ref owners::Table table,
 }
 pub fn Result<Place,owners::Error> select_record(ref records::Catalog catalog,
     ref owners::Table table,owners::Token root,usize nominal,usize ordinal,usize capacity){
-    let owners::Owner owner=owners::resolve_record(catalog,table,root,capacity)?;
+    let owners::Owner owner=owners::inspect_record_owner(table,root,capacity)?;
     let records::Plan plan=switch(records::plan(catalog,18446744073709551615)){
         case .ok(v):{v}case .err(_):{return .err(.Metadata);}
     };
+    // Same fresh plan authenticates the owner before selecting its nominal child.
+    if(owner.record>=plan.count){return .err(.Metadata);}
+    if(plan.bytes[owner.record]!=owner.length || plan.alignments[owner.record]!=owner.alignment){
+        return .err(.Metadata);
+    }
     let usize offset=switch(ranges::offset_prepared(catalog,ref plan,owner.record,nominal,ordinal)){
         case .ok(v):{v}case .err(_):{return .err(.Type);}
     };
