@@ -1,24 +1,23 @@
 - Latest maintenance checkpoint (2026-11-15):
-  [single-plan retained value layouts](docs/engineering/value-retain-plan.md).
-  Checked inspection returns value shapes and their fresh record plan together;
-  codec retention no longer plans the same immutable record catalog twice.
-  No caller-supplied Plan, cache, retained-field, ownership or admission change.
-  Raw inspect/error order, scalar-sized property-loop errors and equivalence
-  classification are preserved. Successful retention plans 2 to 1, fixed field
-  slots 1024 to 512 and record rows 64 to 32. Source counts only; throughput
-  and physical peaks not measured. The joint result is transient.
-  Development/O2 each pass seventeen groups: 1312 metadata mutations, all
-  property fields and record offsets, full 64-node DAG, six scalar tags, maximum
-  arrays/records, record depths 1..16 with four wrappers, nominal identity,
-  depth-17/fifth-wrapper/oversized rejection, immutable input snapshots and
-  canonical codec/frame ownership behavior.
-  All 378 input hashes match tested bytes and implementation 9c77ad4.
-  Root check: 375 sources / 4099 MIR; production LF and guidance body retained.
-  Full Engine, public CLI, standalone memory and full release gates not rerun.
+  [single-scan tag selection](docs/engineering/value-selection-scan.md).
+  Native tag predicates and case extraction share one fresh canonical scan
+  for active-root metadata and branch selection, including mismatches.
+  Byte errors precede Owner errors, then deferred branch Type errors;
+  raw select keeps its Type-first contract. No caller-supplied proof/cache.
+  Payload extraction, root handoff, consumption and Fuel prices are unchanged.
+  Successful wrapper selection scans 2 to 1; a 32776-byte inactive Option
+  validates 65552 to 32776 bytes. Both remain O(Q * B), O(1) extra space.
+  Source operation counts only; throughput and physical peaks not measured.
+  Development/O2 each pass fourteen groups: byte mutations against separate
+  inspect/select oracles, nested Buffer metadata, maximum inactive padding,
+  late bools, native error order, exact Fuel and recursive ownership behavior.
+  All 376 input hashes match tested bytes and implementation a5103f0.
+  Root check: 375 sources / 4102 MIR; production LF and guidance body retained.
+  Full Engine transport, public CLI, standalone memory and release gates not rerun.
   Known legacy source failure not retested or claimed fixed.
   Broader completion remains paused; local commits only.
-  See [evidence](docs/evidence/value-retain-plan-windows-20261115.json).
-  Prior [record work](docs/engineering/record-work-plan.md) retains history.
+  See [evidence](docs/evidence/value-selection-scan-windows-20261115.json).
+  Prior [retained layouts](docs/engineering/value-retain-plan.md) retain history.
 
 # Brownie C agent guidance
 

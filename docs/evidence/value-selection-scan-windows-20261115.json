@@ -1,0 +1,67 @@
+{
+  "schema": "browniec.value-selection-scan/v1",
+  "status": "passed",
+  "clientDate": "2026-11-15",
+  "baselineCommit": "71d48271ddad52d15341a9566c32aac897fb03c6",
+  "implementationCommit": "a5103f0c1b2a76f04fb5e7a41afdef9fcf7733f3",
+  "profiles": [
+    {
+      "profile": "development",
+      "nativeGroups": 14,
+      "receipt": "build/value-selection-scan/development/receipt.json",
+      "receiptSha256": "07b5a0b082995d690f64cf67f9a85cd3acb6a009784f606531f0170e0f4aed93",
+      "nativeInputMirrorVerified": true,
+      "nativeOverrides": false,
+      "allInputHashesMatch": true
+    },
+    {
+      "profile": "release",
+      "nativeGroups": 14,
+      "receipt": "build/value-selection-scan/release/receipt.json",
+      "receiptSha256": "3affc080702aecd6a81b22cd6831cedd6c410b5d742f77df09bf7f2ac1bb7f23",
+      "nativeInputMirrorVerified": true,
+      "nativeOverrides": false,
+      "allInputHashesMatch": true
+    }
+  ],
+  "command": "python -B tools/verify-value-selection-scan.py --profile all",
+  "rootCheck": "check ok: 2 instance(s), 375 source file(s), 4102 MIR function(s), lock updated",
+  "productionProof": {
+    "originalInspectionAndOtherCodecFunctionsUnchanged": true,
+    "rawSelectPreflightUnchanged": true,
+    "selectionBodyEquivalent": true,
+    "otherFrameFunctionsUnchanged": true,
+    "matchedBranchBodyUnchanged": true,
+    "byteOwnerBranchErrorOrderPreserved": true,
+    "fuelPriceUnchanged": true,
+    "productionLfRetained": true,
+    "noCallerSuppliedProofOrPersistentCache": true
+  },
+  "testedInputIdentity": {
+    "inputCount": 376,
+    "allReceiptInputsMatchWorkingBytes": true,
+    "exactGitBlobMatches": 376,
+    "lineEndingOnlyDifferences": 0
+  },
+  "structuralCounts": {
+    "sourceLevelOnly": true,
+    "canonicalScansBefore": 2,
+    "canonicalScansAfter": 1,
+    "example": "canonical none of Option<i64[4096]>",
+    "exampleWidth": 32776,
+    "validationByteReadsBefore": 65552,
+    "validationByteReadsAfter": 32776,
+    "auxiliarySpace": "O(1)",
+    "throughputMeasured": false,
+    "physicalPeaksMeasured": false
+  },
+  "scope": "private retained-value tag predicates and case extraction; no public CLI admission change",
+  "skipped": [
+    "Full Engine transport",
+    "public CLI",
+    "standalone memory",
+    "full release gates",
+    "Known legacy struct_subassign_source failure not retested or fixed"
+  ],
+  "remote": "local only; not pushed, published, released or deployed"
+}
