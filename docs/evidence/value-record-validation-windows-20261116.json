@@ -1,0 +1,80 @@
+{
+  "schema": "browniec.value-record-validation/v1",
+  "status": "passed",
+  "clientDate": "2026-11-16",
+  "baselineCommit": "eb4df78289d20d468bf5183b11cbf4f843debb51",
+  "implementationCommit": "752ee0f59f147b96e5717d97b0cfbe399fca5fbe",
+  "command": "python -B tools/verify-value-record-validation.py --profile all",
+  "profiles": [
+    {
+      "profile": "development",
+      "nativeGroups": 11,
+      "receipt": "build/value-record-validation/development/receipt.json",
+      "receiptSha256": "9863a609e6848b8d09d1f554b750d2efad62fb33257d7090184cf3ebdcaeceaf",
+      "nativeInputMirrorVerified": true,
+      "nativeOverrides": false,
+      "allInputHashesMatch": true
+    },
+    {
+      "profile": "release",
+      "nativeGroups": 11,
+      "receipt": "build/value-record-validation/release/receipt.json",
+      "receiptSha256": "1ff279bc8f3278623f2423e2840fc850146b7dc5970eb440de3c8fd9b5b0550f",
+      "nativeInputMirrorVerified": true,
+      "nativeOverrides": false,
+      "allInputHashesMatch": true
+    }
+  ],
+  "rootCheck": "check ok: 2 instance(s), 375 source file(s), 4102 MIR function(s), lock updated",
+  "productionProof": {
+    "onlyIntegerRecordValidationBranchAndCommentsChanged": true,
+    "originalRecordWalkerAndZeroOracleMatchBaseline": true,
+    "completeLayoutAndExactExtentAdmissionRetained": true,
+    "boolAndAllNestedPaddingChecksRetained": true,
+    "cursorDepthErrorOrderPublicationAndOwnershipUnchanged": true,
+    "productionLfRetained": true,
+    "noNewApiAllocationStateOrCallerProof": true
+  },
+  "testedInputIdentity": {
+    "inputCount": 377,
+    "allReceiptInputsMatchWorkingBytes": true,
+    "exactGitBlobMatches": 377,
+    "lineEndingOnlyDifferences": 0
+  },
+  "structuralCounts": {
+    "sourceLevelOnly": true,
+    "recordBytes": 4096,
+    "i64Fields": 512,
+    "visitedFields": 546,
+    "i64DecoderCallsBefore": 512,
+    "i64DecoderCallsAfter": 0,
+    "byteAccumulationIterationsBefore": 4096,
+    "byteAccumulationIterationsAfter": 0,
+    "signByteReadsBefore": 512,
+    "signByteReadsAfter": 0,
+    "u8DecoderCallsBefore": 4096,
+    "u8DecoderCallsAfter": 0,
+    "overallComplexity": "O(F + P), unchanged since B <= 8F",
+    "auxiliarySpace": "O(1), existing fixed depth-16 cursor",
+    "throughputMeasured": false,
+    "physicalPeaksMeasured": false
+  },
+  "newCases": {
+    "integerTags": 5,
+    "patternsPerIntegerTag": 6,
+    "nestedMixedBytes": 96,
+    "exhaustiveSingleByteMutations": 24576,
+    "recordDepth": 16,
+    "wrapperDepth": 4,
+    "exactResultAndErrorParity": true
+  },
+  "scope": "private retained-value canonical record inspection; public CLI and scalar value reads unchanged",
+  "skipped": [
+    "Full Engine transport",
+    "public CLI",
+    "standalone memory",
+    "full release gates",
+    "Known legacy struct_subassign_source failure not retested or fixed"
+  ],
+  "remote": "local only; not pushed, published, released or deployed"
+}

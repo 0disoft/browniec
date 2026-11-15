@@ -1,25 +1,21 @@
 - Latest maintenance checkpoint (2026-11-16):
-  [linear host-catalog name admission](docs/engineering/host-catalog-order.md).
-  The private accepted prefix is strictly increasing; check its final name
-  first and scan earlier names only to classify a terminal ordering failure.
-  Decoded duplicate priority and exact entry offsets are preserved.
-  Only the duplicate scan moves. Entry/limit errors, name comparator,
-  publication, descriptor ownership, canonical bytes and hashes are unchanged.
-  For 64 sorted imports, duplicate-pair comparisons fall from 2016 to zero;
-  adjacent-order comparisons remain 63. A rejected entry scans at most 63 pairs.
-  Name admission is O(N * L), formerly O(N^2 * L); extra space remains O(1).
+  [record domain validation](docs/engineering/value-record-validation.md).
+  Retained scalar/record layouts prove integer widths; inspect proves the
+  exact byte extent. Only bool needs a scalar payload check in the record walker.
+  Every nested/interior/tail padding check and the depth-16 cursor are retained.
+  A 4096-byte i64 record eliminates 512 decodes and 4096 accumulation steps;
+  its 546 field visits remain. Overall O(F + P) and extra state are unchanged.
   Source counts only; throughput and physical peaks were not measured.
-  Development/O2 each pass fifteen native groups, including 1024 literal
-  and escaped three-entry sequences checked against the original algorithm,
-  the 64-entry boundary, all 63 terminal duplicate positions, grammar,
-  canonical/hash vectors, owned accessors and real wire composition.
-  Initial fixture borrow failure was corrected before final passing runs.
-  All 383 input hashes match tested bytes and implementation b62bfda.
+  Development/O2 each pass eleven native groups, including the exact original
+  record oracle, all 24576 nested-byte mutations, five integer tags at maximum
+  size, exact lengths, bool/padding atomicity, depth16 plus four wrappers,
+  retained snapshot isolation, scalar round trips and frame copy/cleanup.
+  All 377 input hashes match tested bytes and implementation 752ee0f.
   Root check: 375 sources / 4102 MIR; production LF and guidance body retained.
   Full Engine transport, public CLI, standalone memory and release gates not rerun.
   Known legacy source failure not retested or claimed fixed.
   Broader completion remains paused; local commits only.
-  See [evidence](docs/evidence/host-catalog-order-windows-20261116.json).
+  See [evidence](docs/evidence/value-record-validation-windows-20261116.json).
 
 # Brownie C agent guidance
 
