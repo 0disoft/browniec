@@ -1,0 +1,86 @@
+{
+  "schema": "browniec.subrecord-assign-preflight/v1",
+  "status": "passed",
+  "clientDate": "2026-11-15",
+  "baselineCommit": "5721e499b3f6bb3e09418aed5f7c30cc5b540bfd",
+  "implementationCommit": "8412f8f843d02441fccbb24a8dcaa713388e2363",
+  "command": "python -B tools/verify-subrecord-assign-preflight.py --profile all",
+  "rootCheck": "check ok: 2 instance(s), 375 source file(s), 4094 MIR function(s), lock updated",
+  "profiles": [
+    {
+      "profile": "development",
+      "nativeGroups": 7,
+      "receipt": "build/subrecord-assign-preflight/development/receipt.json",
+      "receiptSha256": "6b2ca557c5d2e45ff40a298f5366bbf669a9e3b3612fddbc3199ef9df3d24701",
+      "allInputHashesMatch": true,
+      "nativeInputMirrorVerified": true,
+      "nativeOverrides": false
+    },
+    {
+      "profile": "release",
+      "nativeGroups": 7,
+      "receipt": "build/subrecord-assign-preflight/release/receipt.json",
+      "receiptSha256": "eb11f0a5cc4bb1637b0adab8bff89bff825aedf913fac82033bf8caf0904b61b",
+      "allInputHashesMatch": true,
+      "nativeInputMirrorVerified": true,
+      "nativeOverrides": false
+    }
+  ],
+  "productionDelta": {
+    "path": "src/array_owners.fy",
+    "function": "assign_subrecord",
+    "beforeSha256": "9d0155c47c931d9080d0b2c82e9246558b0fdbecb07c6fed1a1476786383aaad",
+    "afterSha256": "9eec389be40640612098b40ff1d095517507cc67479f1b87d6a215b834ce52cc",
+    "onlyFunctionChangeVerified": true,
+    "allOtherProductionSourcesUnchanged": true,
+    "originalOracleUnchanged": true
+  },
+  "testedInputIdentity": {
+    "inputCount": 376,
+    "allReceiptInputsMatchWorkingBytes": true,
+    "rawGitBlobMatches": 376,
+    "lineEndingOnlyDifferences": [],
+    "allLfNormalizedGitBlobsMatch": true
+  },
+  "structuralCounts": {
+    "sourceLevelOnly": true,
+    "tableValidationsBefore": 2,
+    "tableValidationsAfter": 1,
+    "retainedOwnerCount": 16,
+    "tableLoopEntriesBefore": 64,
+    "tableLoopEntriesAfter": 32,
+    "reservationChecksBefore": 32,
+    "reservationChecksAfter": 16,
+    "loopAssignments": 4096,
+    "loopTableEntriesBefore": 262144,
+    "loopTableEntriesAfter": 131072,
+    "loopReservationChecksBefore": 131072,
+    "loopReservationChecksAfter": 65536,
+    "catalogPlansBefore": 2,
+    "catalogPlansAfter": 2,
+    "payloadScratchBytes": 128,
+    "addedHeapAllocations": 0,
+    "measuredThroughputOrPhysicalPeak": false,
+    "fuelPricesChanged": false
+  },
+  "coverage": {
+    "nativeGroupsPerProfile": 7,
+    "existingDifferentialInputs": 1325,
+    "addedProofReuseInputs": 33,
+    "totalDifferentialInputs": 1358,
+    "all256BackingBytesCompared": true,
+    "failedWritesPreserveOriginalBytes": true,
+    "fullOwnerCount": 16,
+    "maximumLeaves": 128,
+    "maximumDepth": 16,
+    "exactFuelAndOneLessRejection": true
+  },
+  "guidanceTailUnchanged": true,
+  "guidanceTailSha256": "82ab2d55e85b7132a647bf4b08cae4df5eef0599abbfd29bca3df43281ed4d4d",
+  "limitations": [
+    "Source-level counts only; throughput and physical peaks not measured.",
+    "Full Engine, public CLI, standalone memory, Linux and full release gates not rerun.",
+    "Known legacy struct_subassign_source failure not retested or claimed fixed.",
+    "Local commits only; no push, deploy, release or version bump."
+  ]
+}

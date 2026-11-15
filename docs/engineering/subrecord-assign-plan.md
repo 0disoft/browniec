@@ -1,5 +1,8 @@
 # Share subrecord assignment layout planning
 
+Follow-up: [shared owner-table preflight](subrecord-assign-preflight.md) removes
+the second complete table validation. The results below describe f3bc2ec.
+
 `array_owners::assign_subrecord`, used by private nominal subrecord assignment,
 previously built the same complete catalog layout five times: once for each
 owner, once for each nominal range, and once in raw storage assignment. Catalog,

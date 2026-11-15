@@ -1,25 +1,25 @@
 - Latest maintenance checkpoint (2026-11-15):
-  [single-plan whole-record replacement](docs/engineering/record-replace-plan.md).
-  Constructor replacement authenticates token, complete table and record kind,
-  then checked storage plans the full catalog once to authenticate owner shape
-  and exact nominal identity. The existing private writer checks the complete
-  root extent and stages all values before publishing. Binding is metadata;
-  no external Plan, cache, persistent proof, heap allocation or Fuel change.
-  Successful wrapper calls plan two to one; fixed slots 1024 to 512, rows
-  64 to 32. Payload scratch remains 128 bytes; source counts only, without
-  measured throughput, CPU instructions or physical peaks.
-  Development/O2 each pass six groups: 1344 differential inputs, all 256 backing
-  bytes, diagnostic order and failed-write atomicity; 17 checked-storage cases;
-  all scalar/padding goldens, depths 1..16 / depth-17 rejection, full sixteen
-  owners and 2048-byte backing, and exact/one-less opcode-48 Fuel (46145).
-  All 376 inputs match tested working bytes; implementation acf190e.
-  Git input identity and any line-ending-only differences are in the evidence.
+  [shared subrecord owner-table preflight](docs/engineering/subrecord-assign-preflight.md).
+  Subrecord assignment authenticates the complete immutable owner table once
+  before private source identity/kind/shape lookup. Destination catalog/shape
+  checks still precede source identity errors; unrelated table faults and
+  retained dead owners preserve their previous diagnostics. No new public
+  unchecked API, supplied Plan, persistent proof, cache or heap allocation.
+  Complete table validations fall from two to one. At sixteen retained owners,
+  loop entries fall 64 to 32 and reservation checks 32 to 16. Two catalog plans, both
+  nominal range walks, raw staged storage, 128-byte scratch and Fuel unchanged.
+  Source counts only; throughput and physical peaks were not measured.
+  Development/O2 each pass seven groups, including 1358 differential inputs
+  with all 256 backing bytes, 33 added proof-reuse cases, full sixteen owners,
+  128 leaves, depth sixteen, sibling/self copies, canonical padding and exact/
+  one-less VM Fuel. The unchanged old oracle resolves both owners independently.
+  All 376 receipt inputs match tested working bytes; implementation 8412f8f.
   Root check: 375 sources / 4094 MIR; production LF and guidance body retained.
   Full Engine, public CLI, standalone memory and full release gates not rerun.
-  Prior legacy source failure not retested or claimed fixed.
+  Known legacy source failure not retested or claimed fixed.
   Public admission unchanged; broader completion paused; local commits only.
-  See [evidence](docs/evidence/record-replace-plan-windows-20261115.json).
-  Prior [record creation](docs/engineering/record-create-plan.md) retains history.
+  See [evidence](docs/evidence/subrecord-assign-preflight-windows-20261115.json).
+  Prior [whole-record replacement](docs/engineering/record-replace-plan.md) retains history.
 
 # Brownie C agent guidance
 
