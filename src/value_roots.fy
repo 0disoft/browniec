@@ -274,11 +274,11 @@ pub fn Result<usize,Error> write(ref State s,ref mut vec::Vec<bytes::Buffer> roo
     ref u8[] input,growth::Limits limits,ref mut usize fuel){
     let usize cost=write_cost(input.len)?;let usize paid=pay(cost,fuel)?;
     let usize i=resolve(s,roots,scratch,serial,binding)?;
-    var bytes::Buffer root=take(roots,scratch,i);
+    // Content writes preserve the Buffer's extent and ownership. Borrow its
+    // authenticated slot directly; no root extraction or scratch traffic.
     let Result<usize,buffer_write::Error> result=buffer_write::within_length(ref s.table,
         owners::Token{.slot=s.rows[i].slot,.generation=s.rows[i].generation},start,
-        ref mut root,input,limits,ref s.ledger);
-    push(roots,root);restore(roots,scratch);
+        vec::at_mut<bytes::Buffer>(roots,i),input,limits,ref s.ledger);
     return switch(result){case .ok(v):{.ok(v)}case .err(e):{.err(switch(e){
         case .Quota:{.Quota}case .Overflow:{.Bounds}case .Bounds:{.Bounds}
         case .Owners:{.Owners}case .Token:{.State}case .State:{.State}})}};
