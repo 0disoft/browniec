@@ -10,6 +10,8 @@ pub enum Error { Layout; Bounds; Fields; State; Alignment; Quota; Overflow; Valu
 struct Cursor { usize depth; usize[16] records; usize[16] fields; usize[16] bases; }
 // A checked scalar location is metadata, never a pointer or ownership proof.
 pub struct Leaf { u8 tag; usize offset; }
+// Expected owner metadata, not a retained plan or authority. Rechecked per call.
+pub struct Binding { usize bytes; usize alignment; }
 // Bounded staging accounting, derived by the same validated scalar iterator.
 // Metadata visits are separate from byte work; bool validation reads separately
 // from the scalar transfer made by snapshot_into.
@@ -208,10 +210,15 @@ pub fn Result<usize, Error> replace_values(ref layouts::Catalog catalog, usize r
 // Check the whole published root, then resolve a scalar-only field path.
 // Neither a base nor a path establishes ownership, lifetime or write authority.
 fn Result<Leaf, Error> address(ref layouts::Catalog catalog, usize record, usize base,
-    ref usize[] path, usize capacity, ref arenas::Arena arena) {
+    ref usize[] path, usize capacity, ref arenas::Arena arena, Option<Binding> binding) {
     let layouts::Plan plan = switch (layouts::plan(catalog, 18446744073709551615)) {
         case .ok(value): { value } case .err(_): { return .err(.Layout); }
     };
+    // Owner shape must fail before extent/path checks, including unknown IDs.
+    switch(binding){case .none:{}case .some(expected):{
+        if(record>=plan.count){return .err(.Layout);}
+        if(plan.bytes[record]!=expected.bytes || plan.alignments[record]!=expected.alignment){return .err(.Layout);}
+    }};
     let usize size = extent(ref plan, record, base, capacity, arena)?;
     if (path.len == 0 || path.len > 16) { return .err(.Bounds); }
     var usize current = record;
@@ -233,7 +240,17 @@ fn Result<Leaf, Error> address(ref layouts::Catalog catalog, usize record, usize
 }
 pub fn Result<i64, Error> read(ref layouts::Catalog catalog, usize record, usize base,
     ref usize[] path, ref u8[] storage, ref arenas::Arena arena) {
-    let Leaf leaf = address(catalog, record, base, path, storage.len, arena)?;
+    let Leaf leaf = address(catalog, record, base, path, storage.len, arena, .none)?;
+    return read_leaf(ref leaf,storage);
+}
+// Checked owner-bound access authenticates shape and selects a field from one
+// local plan. No caller-supplied plan or unchecked location enters these APIs.
+pub fn Result<i64, Error> read_bound(ref layouts::Catalog catalog, usize record, usize base,
+    Binding binding, ref usize[] path, ref u8[] storage, ref arenas::Arena arena) {
+    let Leaf leaf=address(catalog,record,base,path,storage.len,arena,.some(binding))?;
+    return read_leaf(ref leaf,storage);
+}
+fn Result<i64, Error> read_leaf(ref Leaf leaf,ref u8[] storage){
     let usize width = codec::width(leaf.tag);
     return switch (codec::decode(leaf.tag, storage[leaf.offset..leaf.offset + width])) {
         case .ok(value): { .ok(value) } case .err(error): { .err(codec_error(error)) }
@@ -241,7 +258,15 @@ pub fn Result<i64, Error> read(ref layouts::Catalog catalog, usize record, usize
 }
 pub fn Result<usize, Error> write(ref layouts::Catalog catalog, usize record, usize base,
     ref usize[] path, i64 value, ref mut u8[] storage, ref arenas::Arena arena) {
-    let Leaf leaf = address(catalog, record, base, path, storage.len, arena)?;
+    let Leaf leaf = address(catalog, record, base, path, storage.len, arena, .none)?;
+    return write_leaf(ref leaf,value,storage);
+}
+pub fn Result<usize, Error> write_bound(ref layouts::Catalog catalog, usize record, usize base,
+    Binding binding, ref usize[] path, i64 value, ref mut u8[] storage, ref arenas::Arena arena) {
+    let Leaf leaf=address(catalog,record,base,path,storage.len,arena,.some(binding))?;
+    return write_leaf(ref leaf,value,storage);
+}
+fn Result<usize, Error> write_leaf(ref Leaf leaf,i64 value,ref mut u8[] storage){
     let usize width = codec::width(leaf.tag);
     return switch (codec::encode(leaf.tag, value, storage[leaf.offset..leaf.offset + width])) {
         case .ok(written): { .ok(written) } case .err(error): { .err(codec_error(error)) }

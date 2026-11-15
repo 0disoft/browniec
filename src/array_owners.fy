@@ -838,8 +838,10 @@ fn Result<usize, Error> record_metadata(ref records::Catalog catalog, ref Owner 
 }
 pub fn Result<i64, Error> read_record(ref records::Catalog catalog, ref Table table,
     Token token, ref usize[] path, ref u8[] bytes) {
-    let Owner owner = resolve_record(catalog, table, token, bytes.len)?;
-    return switch (record_storage::read(catalog, owner.record, owner.base, path, bytes, ref table.arena)) {
+    let Owner owner = resolve_any(table, token, bytes.len)?;
+    if(owner.element!=0){return .err(.Type);}
+    let record_storage::Binding binding=record_storage::Binding{.bytes=owner.length,.alignment=owner.alignment};
+    return switch (record_storage::read_bound(catalog, owner.record, owner.base, binding, path, bytes, ref table.arena)) {
         case .ok(value): { .ok(value) } case .err(error): { .err(record_error(error)) }
     };
 }
@@ -858,8 +860,10 @@ pub fn Result<usize, Error> validate_record_result(ref records::Catalog catalog,
 }
 pub fn Result<usize, Error> write_record(ref records::Catalog catalog, ref Table table,
     Token token, ref usize[] path, i64 value, ref mut u8[] bytes) {
-    let Owner owner = resolve_record(catalog, table, token, bytes.len)?;
-    return switch (record_storage::write(catalog, owner.record, owner.base, path, value, bytes, ref table.arena)) {
+    let Owner owner = resolve_any(table, token, bytes.len)?;
+    if(owner.element!=0){return .err(.Type);}
+    let record_storage::Binding binding=record_storage::Binding{.bytes=owner.length,.alignment=owner.alignment};
+    return switch (record_storage::write_bound(catalog, owner.record, owner.base, binding, path, value, bytes, ref table.arena)) {
         case .ok(value): { .ok(value) } case .err(error): { .err(record_error(error)) }
     };
 }
