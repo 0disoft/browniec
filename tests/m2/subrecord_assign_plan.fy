@@ -122,3 +122,42 @@ fn records::Catalog catalog(){
     assert(compare(ref c,ref t,p,q,1,1,0,ref data,256)==0);
     assert(compare(ref c,ref t,q,p,1,0,1,ref data,256)==0);
 }
+
+// Exercise the full-table proof reused by the private source lookup. The old
+// independent resolver remains the oracle, including competing source faults.
+@test fn void shared_table_preflight_preserves_ledger_holes_and_source_error_order(){
+    let records::Catalog clean=catalog();var owners::Table table=owners::empty(256);var u8[256] data=[85;256];
+    let i64[5] a=[17,42,1,0,0];let i64[5] b=[9,-9223372036854775808,0,9223372036854775807,1];
+    let owners::Token p=token(owners::create_record(ref clean,0,ref a,ref mut data,ref mut table));
+    let owners::Token q=token(owners::create_record(ref clean,0,ref b,ref mut data,ref mut table));
+    let arrays::Array shape=switch(arrays::scalar(10,1)){case .ok(s):{s}case .err(_):{assert(false);arrays::Array{.element=10,.length=1,.stride=1,.alignment=1,.bytes=1}}};
+    let owners::Token scalar=token(owners::create(ref shape,42,ref mut data,ref mut table));
+    let owners::Token bad=owners::Token{.slot=16,.generation=1};
+    let owners::Token stale=owners::Token{.slot=q.slot,.generation=q.generation+1};
+    assert(compare(ref clean,ref table,p,q,1,1,3,ref data,256)==0);var usize count=1;
+    var records::Catalog corrupt=clean;corrupt.types[511]=2;
+    assert(compare(ref corrupt,ref table,p,bad,32,128,128,ref data,256)==6);
+    assert(compare(ref corrupt,ref table,scalar,bad,32,128,128,ref data,256)==4);
+    assert(compare(ref corrupt,ref table,bad,q,32,128,128,ref data,256)==1);count+=3;
+    assert(compare(ref clean,ref table,p,bad,32,128,128,ref data,256)==1);
+    assert(compare(ref clean,ref table,p,scalar,1,1,3,ref data,256)==4);count+=2;
+    var usize mode=0;while(mode<10){var owners::Table t=table;
+        if(mode==0){t.depth=17;}else if(mode==1){t.depth=0;}else if(mode==2){t.order[1]=16;}
+        else if(mode==3){t.order[1]=table.order[0];}else if(mode==4){t.order[0]=1;}
+        else if(mode==5){t.arena.used=80;}else if(mode==6){t.arena.limit=80;}else if(mode==7){t.arena.limit=257;}
+        else if(mode==8){t.slots[scalar.slot].record=1;}else{t.slots[15].live=true;}
+        assert(compare(ref clean,ref t,p,q,1,1,3,ref data,256)==3);
+        assert(compare(ref clean,ref t,p,stale,1,1,3,ref data,256)==3);mode+=1;count+=2;
+    }
+    mode=0;while(mode<3){var owners::Table t=table;
+        if(mode==0){t.slots[q.slot].record=31;}else if(mode==1){t.slots[q.slot].record=2;}else{t.slots[q.slot].alignment=4;}
+        assert(compare(ref clean,ref t,p,q,32,128,128,ref data,256)==6);mode+=1;count+=1;
+    }
+    var owners::Table hole=table;assert(owners::release(ref mut hole,q,256).is_ok);
+    assert(compare(ref clean,ref hole,p,q,1,1,3,ref data,256)==1);
+    assert(compare(ref clean,ref hole,p,p,1,1,3,ref data,256)==0);count+=2;
+    data[table.slots[p.slot].base+16]=255;
+    assert(compare(ref clean,ref table,p,q,1,1,3,ref data,256)==0);count+=1;
+    data[table.slots[q.slot].base+32]=255;
+    assert(compare(ref clean,ref table,p,q,1,1,3,ref data,256)==11);count+=1;assert(count==33);
+}

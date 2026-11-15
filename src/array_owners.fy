@@ -928,8 +928,8 @@ pub fn Result<usize, Error> assign_subrecord(ref records::Catalog catalog,
         case .ok(p): { p } case .err(_): { return .err(.Metadata); }
     };
     let usize target_checked = record_metadata_prepared(ref plan,ref target)?;
-    let Owner origin = resolve_any(table,source,bytes.len)?;
-    let usize source_checked = record_metadata_prepared(ref plan,ref origin)?;
+    // Destination admission already validated the complete immutable table.
+    let Owner origin = record_owner_prepared(table,ref plan,source)?;
     // Both owners and nominal paths share this local plan; raw assignment below
     // still independently validates storage before snapshotting or writing.
     let usize target_offset = switch(record_range::offset_prepared(catalog,ref plan,target.record,nominal,target_leaf)) {
