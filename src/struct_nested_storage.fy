@@ -4,6 +4,7 @@ import struct_layout as layouts;
 import array_storage as arenas;
 import scalar_codec as codec;
 import aggregate_copy as copying;
+import struct_range as ranges;
 
 // Private nested storage. Replan caller metadata at every public boundary.
 pub enum Error { Layout; Bounds; Fields; State; Alignment; Quota; Overflow; Value; Type; }
@@ -203,9 +204,30 @@ pub fn Result<usize, Error> replace_values(ref layouts::Catalog catalog, usize r
     let layouts::Plan plan = switch (layouts::plan(catalog,18446744073709551615)) {
         case .ok(value): { value } case .err(_): { return .err(.Layout); }
     };
-    let usize size = extent(ref plan,record,destination,storage.len,arena)?;
+    return replace_values_prepared(catalog,ref plan,record,destination,fields,storage,arena);
+}
+// Expected owner shape is metadata, never authority. Rebuild the whole catalog
+// before nominal selection, then prove the whole root before adding its offset.
+pub fn Result<usize, Error> replace_subrecord_bound(ref layouts::Catalog catalog, usize root,
+    usize base, Binding binding, usize nominal, usize ordinal, ref i64[] fields,
+    ref mut u8[] storage, ref arenas::Arena arena) {
+    let layouts::Plan plan = switch (layouts::plan(catalog,18446744073709551615)) {
+        case .ok(p): { p } case .err(_): { return .err(.Layout); }
+    };
+    if (!binding_matches(ref plan,root,binding)) { return .err(.Layout); }
+    let usize offset = switch (ranges::offset_prepared(catalog,ref plan,root,nominal,ordinal)) {
+        case .ok(n): { n } case .err(_): { return .err(.Type); }
+    };
+    if (offset > binding.bytes) { return .err(.Bounds); }
+    let usize size = extent(ref plan,root,base,storage.len,arena)?;
+    return replace_values_prepared(catalog,ref plan,nominal,base+offset,fields,storage,arena);
+}
+// Only this call's freshly validated plan enters this private staged writer.
+fn Result<usize, Error> replace_values_prepared(ref layouts::Catalog catalog, ref layouts::Plan plan,
+    usize record, usize destination, ref i64[] fields, ref mut u8[] storage, ref arenas::Arena arena) {
+    let usize size = extent(plan,record,destination,storage.len,arena)?;
     var u8[128] encoded = [0; 128];
-    let usize staged = encode_fields(catalog,ref plan,record,fields,ref mut encoded[..size])?;
+    let usize staged = encode_fields(catalog,plan,record,fields,ref mut encoded[..size])?;
     var usize byte = 0;
     while (byte < staged) { storage[destination+byte] = encoded[byte]; byte += 1; }
     return .ok(staged);
