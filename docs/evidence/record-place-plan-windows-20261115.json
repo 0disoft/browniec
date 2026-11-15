@@ -1,0 +1,107 @@
+{
+  "schema": "browniec.record-place-plan/v1",
+  "status": "passed",
+  "clientDate": "2026-11-15",
+  "baselineCommit": "06d6683",
+  "implementationCommit": "b307617769a034dc1b65c62000371970125f6f1e",
+  "sources": [
+    {
+      "path": "src/array_owners.fy",
+      "sha256": "865d058e927c6e635bf6401197989fa675578adb7ecc4a5e6e655c077a5c7b38"
+    },
+    {
+      "path": "src/record_places.fy",
+      "sha256": "863f9063ba5d0b6757061791aca1e924520597a5b53ef68cdcccb88812be5952"
+    },
+    {
+      "path": "src/struct_nested_storage.fy",
+      "sha256": "5e393b010fdf17f305dd4fd0c6b6ffc1330ca286efed9ea8af9f37b14b3cebcf"
+    }
+  ],
+  "rootCheck": "check ok: 2 instances, 375 sources, 4090 MIR functions; lock updated",
+  "profiles": [
+    {
+      "profile": "development",
+      "nativeGroups": 6,
+      "receipt": "build/record-place-plan/development/receipt.json",
+      "receiptSha256": "6c73ac0969b0abbfed734691ffa8cb9ec47ba16230022f771f6dc7962a772397",
+      "allInputHashesMatch": true
+    },
+    {
+      "profile": "release",
+      "nativeGroups": 6,
+      "receipt": "build/record-place-plan/release/receipt.json",
+      "receiptSha256": "2126fd8afe11eec1608af0b2f721852aaea251835f877fe5766296a0f15fb97f",
+      "allInputHashesMatch": true
+    }
+  ],
+  "inputCount": 376,
+  "inputSetSha256": "13f324f26e8521a899725687fe600b0a1477a760cccd3f4e28fe2f25cb4ed227",
+  "compilerSha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+  "commitInputComparison": {
+    "rawByteMatches": 376,
+    "lineEndingOnlyDifferences": []
+  },
+  "structuralCounts": {
+    "layoutPlansPerOperationBefore": 2,
+    "layoutPlansPerOperationAfter": 1,
+    "fieldSlotInspectionsPerOperationBefore": 1024,
+    "fieldSlotInspectionsPerOperationAfter": 512,
+    "recordRowsPerOperationBefore": 64,
+    "recordRowsPerOperationAfter": 32,
+    "compoundAssignmentPlansBefore": 6,
+    "compoundAssignmentPlansAfter": 3,
+    "compoundAssignmentFieldSlotInspectionsBefore": 3072,
+    "compoundAssignmentFieldSlotInspectionsAfter": 1536,
+    "compoundAssignmentLoopIterations": 4096,
+    "loopFieldSlotInspectionsBefore": 12582912,
+    "loopFieldSlotInspectionsAfter": 6291456,
+    "addedHeapAllocations": 0,
+    "ownerTableValidationChanged": false,
+    "payloadWorkChanged": false,
+    "fuelPricesChanged": false,
+    "measuredThroughputOrPhysicalPeak": false
+  },
+  "coverage": {
+    "fieldSlotCorruptions": 1024,
+    "recordRowCorruptions": 32,
+    "competingDiagnosticContexts": 32,
+    "ownerMutations": 192,
+    "savedPlaceMutations": 13,
+    "capacities": 4,
+    "arrayToken": 1,
+    "scalarDomains": 6,
+    "scalarValueComparisons": 48,
+    "boolPayloadComparisons": 4,
+    "depthSixteen": 1,
+    "depthSeventeen": 1,
+    "leafOrdinalComparisons": 128,
+    "totalDifferentialInputs": 1480,
+    "operationsPerDifferentialInput": [
+      "selection",
+      "read",
+      "store"
+    ],
+    "directCheckedStorageCases": 13,
+    "fullBackingCompared": true,
+    "failedWritesPreserveOriginalBytes": true,
+    "existingRegressionGroups": 3,
+    "fullOwnerCount": 16,
+    "exactPrepaidVmPrices": true
+  },
+  "admissionProof": [
+    "Token/table/kind precede fresh catalog/shape planning, ordinal, whole extent, saved-place equality and codec.",
+    "Binding is expected metadata, not authority. Only private iterator composition accepts the local plan.",
+    "Raw scalar_location preserves ordinal-before-catalog error order; bound storage preserves catalog/shape-before-ordinal.",
+    "Read and store independently reauthenticate; no proof is reused across RHS evaluation or separate instructions.",
+    "Existing resolve_record, VM execution gates and conservative Fuel prices remain unchanged."
+  ],
+  "guidanceTailUnchanged": true,
+  "guidanceTailSha256": "82ab2d55e85b7132a647bf4b08cae4df5eef0599abbfd29bca3df43281ed4d4d",
+  "limitations": [
+    "Source-level counts only; native throughput, machine instructions and physical memory not measured.",
+    "Full Engine, public CLI, standalone memory and full release gates not rerun; public admission unchanged.",
+    "Previously recorded legacy source failure not rerun or claimed fixed.",
+    "Local only; no push, release, deploy or version bump."
+  ]
+}

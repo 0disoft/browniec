@@ -1,28 +1,28 @@
 - Latest maintenance checkpoint (2026-11-15):
-  [validation-only record results](docs/engineering/record-result-validation.md).
-  Record RET validates the unique owner without a discarded snapshot. Token,
-  table and kind precede one fresh plan, expected size/alignment and bound ID,
-  requested nominal, root extent and bool checks. Binding is expected metadata,
-  not authority; no new unchecked Plan API. Raw snapshots still normalize copies.
-  Layout plans two to one (field slots 1024 to 512). Payload reads Q+N to N:
-  128 to zero for 16 i64 fields, 256 to 128 for 128 bool leaves. Snapshot-only
-  scratch 128 to zero bytes. Source counts, not measured native throughput,
-  dead-store behavior or physical peak memory. No heap allocation added.
-  Legacy Fuel 42113, table, tokens, generations, quota and backing persist.
-  Development/O2 each pass six groups: 2845 differential inputs, 12 direct
-  storage checks, all metadata slots/rows, owner faults, five integer domains,
-  every bool position, depth 16/17, full owner pressure, direct RET frame 31,
-  unchanged backing/padding, failed transfers and remaining Fuel.
-  All 376 inputs match tested bytes and implementation 01d499e
+  [single-plan scalar record places](docs/engineering/record-place-plan.md).
+  Selection and each read/store revalidation authenticate token, full table and
+  record kind, then check catalog and expected owner shape in one fresh storage
+  plan before ordinal/extent and unchanged place/codec checks. Binding is
+  expected metadata, not authority; no unchecked Plan API or retained cache.
+  Raw ordinal-before-catalog error order remains unchanged.
+  Plans two to one per operation; compound assignment six to three. Fixed field
+  slots 1024 to 512 per operation, 3072 to 1536 per compound assignment.
+  Source counts only, not measured native throughput or physical memory.
+  No new heap allocation, persistent field, owner, quota, reservation or Fuel
+  change. Bool repair and failed encoding remain byte-atomic.
+  Development/O2 each pass six groups: 1480 differential scenarios comparing
+  selection/read/store, all catalog slots/rows, owner and saved-place faults,
+  six scalar domains, every leaf, depth 16/17, full owner/backing pressure and
+  exact prepaid VM prices. Thirteen direct storage boundary cases also pass.
+  All 376 inputs match tested bytes and implementation b307617
   (376 raw Git matches; 0 line-ending-only differences).
-  Root check: 375 sources / 4087 MIR; production LF retained. Initial fixture
-  cast failure corrected before final runs, not counted as a pass.
-  Full Engine, public CLI, standalone memory and release gates not rerun.
+  Root check: 375 sources / 4090 MIR; production LF retained.
+  Full Engine, public CLI, standalone memory and full release gates not rerun.
   Prior legacy source failure remains recorded, not retested or claimed fixed.
   Public admission unchanged; broader completion paused; local commits only.
-  See [evidence](docs/evidence/record-result-validation-windows-20261115.json).
-  Prior [subrecord planning](docs/engineering/subrecord-assign-plan.md) and
-  [record access](docs/engineering/record-access-plan.md) retain their history.
+  See [evidence](docs/evidence/record-place-plan-windows-20261115.json).
+  Prior [validation-only results](docs/engineering/record-result-validation.md)
+  retain their history.
 
 # Brownie C agent guidance
 
