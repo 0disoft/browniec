@@ -1,26 +1,28 @@
 - Latest maintenance checkpoint (2026-11-15):
-  [slice cleanup preflight](docs/engineering/slice-cleanup-preflight.md).
-  clear/close_arguments reuse one initial pool authentication while private
-  close_prepared preserves the validated remainder. Last-reader and unique-writer
-  session rules, canonical retirement and independent owner-end validation remain.
-  Batch tickets are still checked in reverse order; late failures discard staged
-  tables/batch. Public close still authenticates independently. No unchecked API,
-  cross-call cache, stored field, allocation or admission expansion is added.
-  Full clear of sixteen distinct shared roots: owner validations 168 to 32 and
-  chain/slot visits 5376 to 1024. Eight peer-retaining argument closes from sixteen
-  live views: owner validations 116 to 16. Root-peer searches remain bounded;
-  no whole-cleanup linearity or measured throughput/physical peak claim. Fuel,
-  quotas and conservative reservations are unchanged.
-  Development/O2 each pass six groups: 6754 original-loop comparisons with all
-  pool/owner/batch fields, distinct/aliased/mixed roots, empty/offset ranges,
-  maximum ticket/session generations, faults and reverse-order stale failures;
-  existing batch, external-session, both-mode and actual CALL cleanup regressions.
-  All 378 receipt inputs match 10f45c8. Root check: 375 sources / 4080 MIR.
+  [single-plan record field access](docs/engineering/record-access-plan.md).
+  read_record/write_record authenticate token/table/kind, then checked bound
+  storage computes one full catalog plan for expected owner size/alignment,
+  nominal ID, root extent and scalar path. Binding is expected metadata, not
+  authority. Raw storage and resolve_record retain independent checks; token,
+  table, kind, catalog/shape, extent, path and codec diagnostics keep their order.
+  Successful field access builds one plan instead of two: fixed catalog slot
+  inspections 1024 to 512, removing 2097152 inspections over 4096 accesses plus
+  repeated dependency/offset planning. Complexity remains O(S+R+F+P); no measured
+  throughput/physical peak claim. No heap allocation, retained cache or unchecked
+  Plan API is added. Fuel, quotas, owner validation and reservations are unchanged.
+  Development/O2 each pass six groups: 1257 read/write input comparisons (2514
+  operations), every field slot/record row, owner and catalog faults, bool/scalar
+  errors and byte rollback; direct forged Bindings, depth sixteen, 128 leaves,
+  raw storage and actual VM dispatch/Fuel. All 377 receipt inputs match tested
+  working bytes; at e3eec80, 376 match Git raw bytes and struct_vm differs only
+  by existing checkout CRLF (both hashes recorded; tested file left unchanged).
+  Root check: 375 sources / 4084 MIR; changed production sources retain LF.
   Full Engine, standalone memory, public CLI and release gates were not rerun.
-  Broader completion remains paused; no R02-R05 closure, push/release/deploy/bump.
-  See [evidence](docs/evidence/slice-cleanup-preflight-windows-20261115.json).
-  Prior [argument preflight](docs/engineering/slice-argument-preflight.md) and
-  [lease authentication](docs/engineering/array-lease-authentication.md) retain history.
+  Broader completion remains paused; no admission expansion, R02-R05 closure,
+  push/release/deploy/version bump.
+  See [evidence](docs/evidence/record-access-plan-windows-20261115.json).
+  Prior [cleanup preflight](docs/engineering/slice-cleanup-preflight.md) and
+  [argument preflight](docs/engineering/slice-argument-preflight.md) retain history.
 
 # Brownie C agent guidance
 

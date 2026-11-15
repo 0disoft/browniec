@@ -31,6 +31,9 @@ The field path is then
 resolved through the existing nested storage helpers against the complete
 published root. Array-only read/write/fill/copy/assignment/argument/result
 helpers reject record tokens with `Type`.
+The [single-plan access refactor](record-access-plan.md) combines the owner-shape
+and nested-storage checks in one checked layout plan per field access. The
+original foundation evidence below remains historical.
 
 The trusted caller must bind one immutable record catalog and stable backing
 region to the table lifetime. There is no catalog-identity hash or cross-table/

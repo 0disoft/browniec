@@ -1,0 +1,93 @@
+{
+  "schema": "browniec.record-access-plan/v1",
+  "status": "passed",
+  "clientDate": "2026-11-15",
+  "baselineCommit": "b992a2d",
+  "implementationCommit": "e3eec80fba3047de4cc8ca430fbddfc92ba31291",
+  "sources": [
+    {
+      "path": "src/array_owners.fy",
+      "sha256": "f84480dc179770dda12712255192095c08bb880a398b69faa7ee09e9a7820e43"
+    },
+    {
+      "path": "src/struct_nested_storage.fy",
+      "sha256": "ce1b87134ec682a823f34553766c643eba751596df7af101574851cde31ab1d7"
+    }
+  ],
+  "profiles": [
+    {
+      "profile": "development",
+      "nativeGroups": 6,
+      "receipt": "build/record-access-plan/development/receipt.json",
+      "receiptSha256": "fa4c83726b41fe4cd619ededb7e7d1ba004d73f800543d661e70710baf6fbc9a",
+      "allInputHashesMatch": true
+    },
+    {
+      "profile": "release",
+      "nativeGroups": 6,
+      "receipt": "build/record-access-plan/release/receipt.json",
+      "receiptSha256": "f8d3c574a5c4d88df28a91f7e586d51cbf0bb6cd9b5a8b5a74334a35409d931f",
+      "allInputHashesMatch": true
+    }
+  ],
+  "inputCount": 377,
+  "inputSetSha256": "c8d91cc95dfa0e64e6cfc0fe6be981d55d7af9886bdbf4fcee7537152b272159",
+  "commitInputComparison": {
+    "rawByteMatches": 376,
+    "lineEndingOnlyDifferences": [
+      {
+        "path": "tests/m2/struct_vm.fy",
+        "testedSha256": "c91054149203a96853299ef586c4be0e22f4d06a05c68e2e00d6eb4ba2675e0c",
+        "gitBlobSha256": "4fa15ab51c92e4940e1dbb6af07a123590ae3a187c3a0e9a27a9795a05bfa3a2",
+        "reason": "existing checkout CRLF versus Git LF; tested bytes left unchanged"
+      }
+    ],
+    "contentMatchesAfterRepositoryLfNormalization": true
+  },
+  "structuralCounts": {
+    "layoutPlansPerSuccessfulAccessBefore": 2,
+    "layoutPlansPerSuccessfulAccessAfter": 1,
+    "fixedCatalogRecordRows": 32,
+    "fixedCatalogFieldSlots": 512,
+    "fixedFieldSlotInspectionsPerAccessBefore": 1024,
+    "fixedFieldSlotInspectionsPerAccessAfter": 512,
+    "accessLoopCount": 4096,
+    "loopFixedFieldSlotInspectionsBefore": 4194304,
+    "loopFixedFieldSlotInspectionsAfter": 2097152,
+    "complexityUnchanged": "O(S+R+F+P), S=512, R<=32, F<=512, P<=16",
+    "fuelPricesChanged": false,
+    "addedHeapAllocations": 0,
+    "measuredThroughputOrPhysicalPeak": false
+  },
+  "coverage": {
+    "fieldSlotCorruptions": 1024,
+    "recordRowCorruptions": 32,
+    "catalogChangesWithDiagnosticContexts": 36,
+    "ownerVariations": 128,
+    "pathAndBackingFaults": 6,
+    "scalarCandidateCases": 30,
+    "corruptBoolPayloadCases": 1,
+    "totalReadWriteComparisonInputs": 1257,
+    "totalComparedOperations": 2514,
+    "directBindingSizeAlignmentAndRecordChecks": true,
+    "allBackingBytesAndFailureRollback": true,
+    "maximumLeaves": 128,
+    "maximumPathDepth": 16,
+    "existingRegressionGroups": 4,
+    "actualVmDispatchAndFuel": true
+  },
+  "admissionProof": [
+    "Token/table and record-kind checks still precede any catalog planning.",
+    "Checked bound storage computes its own full catalog plan and compares nominal ID, size and alignment before extent/path checks.",
+    "Binding contains expected metadata, not authority; no supplied Plan, unchecked location or cross-call cache is admitted.",
+    "Unbound raw storage preserves independent validation and missing-record Bounds diagnostics; bound mismatches map Layout to owner Metadata.",
+    "Whole-root extent, path, scalar codec, and failed-write byte preservation are retained."
+  ],
+  "limitations": [
+    "Source-level structural plan and metadata visit counts, not elapsed throughput, machine instructions or physical memory peaks.",
+    "The first fixture compilation failed on unsupported default switch syntax; final tests use explicit enum cases.",
+    "Existing struct_vm test checkout has CRLF while its Git object is LF; receipts preserve tested bytes and record both hashes.",
+    "Full Engine, standalone memory, public CLI and release gates not rerun; public admission unchanged.",
+    "Local only; no push/release/deploy/version bump."
+  ]
+}
