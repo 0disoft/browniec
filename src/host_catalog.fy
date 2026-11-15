@@ -117,16 +117,19 @@ fn Result<usize,Error> imports(ref u8[] source,ref mut json::State s,ref mut byt
     while(true){
         let usize at=s.begin;if(table.count==import_limit()){return .err(error(.Limit,at));}
         let usize expected=table.count;
-        let Entry item=entry(source,s,pool,expected,ref mut table.parameters[expected*32..expected*32+32])?;var usize i=0;
-        // Check all earlier entries so a nonadjacent duplicate is not hidden by ordering.
-        while(i<table.count){
-            if(bytes::equal(view(pool,table.entries[i].scope),view(pool,item.scope)) &&
-                bytes::equal(view(pool,table.entries[i].symbol),view(pool,item.symbol))){return .err(error(.Duplicate,at));}i+=1;
-        }
+        let Entry item=entry(source,s,pool,expected,ref mut table.parameters[expected*32..expected*32+32])?;
         if(table.count>0){
             let usize previous=table.count-1;
             if(!names::before(view(pool,table.entries[previous].scope),view(pool,table.entries[previous].symbol),
-                view(pool,item.scope),view(pool,item.symbol))){return .err(error(.Order,at));}
+                view(pool,item.scope),view(pool,item.symbol))){
+                // The accepted prefix is strictly increasing. A later item
+                // cannot duplicate it; scan only to classify an ordering failure.
+                var usize i=0;while(i<table.count){
+                    if(bytes::equal(view(pool,table.entries[i].scope),view(pool,item.scope)) &&
+                        bytes::equal(view(pool,table.entries[i].symbol),view(pool,item.symbol))){return .err(error(.Duplicate,at));}i+=1;
+                }
+                return .err(error(.Order,at));
+            }
         }
         let usize slot=table.count;table.entries[slot]=item;table.count=slot+1;
         if(s.kind==93){break;}let usize comma=take(source,s,44)?;
