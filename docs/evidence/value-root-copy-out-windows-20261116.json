@@ -1,0 +1,99 @@
+{
+  "schema": "browniec.value-root-copy-out/v1",
+  "status": "passed",
+  "clientDate": "2026-11-16",
+  "baselineCommit": "f5d5cf07e75a2d9b32436a6c2a838f48a9866314",
+  "implementationCommit": "afe3dff557dd87e986522e268ce7e808f93a29ee",
+  "command": "python -B tools/verify-value-root-copy-out.py --profile all",
+  "profiles": [
+    {
+      "profile": "development",
+      "nativeGroups": 14,
+      "receipt": "build/value-root-copy-out/development/receipt.json",
+      "receiptSha256": "fdd03fc6be8c8a3eccbd4a53b329cb594fb21cceec20f370cd4db362d367eab8",
+      "nativeInputMirrorVerified": true,
+      "nativeOverrides": false
+    },
+    {
+      "profile": "release",
+      "nativeGroups": 14,
+      "receipt": "build/value-root-copy-out/release/receipt.json",
+      "receiptSha256": "5e32682553086df5522d7854ca0dd280d8b984cc74240c3018b713a7c05ce524",
+      "nativeInputMirrorVerified": true,
+      "nativeOverrides": false
+    }
+  ],
+  "rootCheck": "check ok: 2 instance(s), 375 source file(s), 4103 MIR function(s), lock updated",
+  "testedInputIdentity": {
+    "nativeInputCount": 379,
+    "exactGitIndexBlobMatches": 379,
+    "exactImplementationCommitBlobMatches": 379,
+    "profilesUseSameInputs": true,
+    "allReceiptInputsMatchWorkingBytes": true
+  },
+  "productionProof": {
+    "onlyRootCopyOutBodyChanged": true,
+    "fullStoreTokenAndBackingAuthenticationRetained": true,
+    "completeRangeCheckBeforeNativeViewOrWrites": true,
+    "immutableStateAndBackingWithNoInterveningCallback": true,
+    "rawOwnerApiUnchanged": true,
+    "fuelCost256PlusOutputLengthAndErrorOrderRetained": true,
+    "noNewApiCacheStateOrAllocation": true,
+    "allProductionLf": true,
+    "productionFiles": 367
+  },
+  "structuralCounts": {
+    "sourceLevelOnly": true,
+    "ownerSlots": 16,
+    "successfulCopyFullValidationsBefore": 2,
+    "successfulCopyFullValidationsAfter": 1,
+    "validationSlotVisitsPerCopyBefore": 32,
+    "validationSlotVisitsPerCopyAfter": 16,
+    "copyCount": 4096,
+    "validationSlotVisitsBefore": 131072,
+    "validationSlotVisitsAfter": 65536,
+    "removedValidationSlotVisits": 65536,
+    "complexity": "Unchanged O(n^2 + m) for n<=16 roots and m output bytes; unchanged O(1) auxiliary storage",
+    "throughputMeasured": false,
+    "physicalPeaksMeasured": false
+  },
+  "coverage": {
+    "nativeGroupsPerProfile": 14,
+    "newSourceLengths": [
+      0,
+      1,
+      63,
+      64,
+      65,
+      4096
+    ],
+    "newOutputLengths": [
+      0,
+      1,
+      63,
+      64,
+      65
+    ],
+    "readLeasePhases": 2,
+    "startPositionsPerPhase": 6,
+    "newExactFuelBoundaryCases": 360,
+    "newShortFuelBoundaryCases": 360,
+    "originalRawOwnerCopyOracle": true,
+    "allMetadataSlotsAndHandleErrorPriorities": true,
+    "reusedSlotsAndTerminalGenerations": true,
+    "fullStore4096CopiesOf65Bytes": true,
+    "rejectionWritesNoOutput": true,
+    "untouchedOutputTailOnSuccess": true,
+    "unchangedAccountingDescriptorsAndSourceBytes": true,
+    "nestedViewCopyAndFailureRollback": true,
+    "eightAliasCallRegression": true,
+    "zeroFuelLeaseAndStoreCleanup": true
+  },
+  "skipped": [
+    "Full Engine transport",
+    "Public CLI",
+    "Standalone memory and full release gates",
+    "Known legacy retained CALL stack exhaustion and release compiler timeout not retested or claimed fixed"
+  ],
+  "remote": "No push, publication, release or deployment performed for this maintenance"
+}

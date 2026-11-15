@@ -90,10 +90,51 @@ group independently checks bytes/errors and raw-owner parity for lengths
 0, 1, 63, 64, 65 and 4096, before and during a read lease. It covers the first, middle
 and final byte, initialized-length and allocation-capacity boundaries, maximum
 usize, exact/short Fuel, unchanged accounting and zero-Fuel cleanup.
-The original resolver verifier now discovers nine groups because it also picks
-up this boundary case; only discovery was rerun through that older entry point.
+At that checkpoint, the original resolver verifier discovered nine groups
+including this boundary case; only discovery was rerun through that entry point.
 
 Results and scope are recorded in the
 [Windows evidence](../evidence/value-root-read-windows-20261116.json). Full Engine
 transport, public CLI, standalone memory and full release gates are outside
 this focused change.
+
+## Copy-out after authentication (2026-11-16)
+
+The next operation-local change removes the redundant raw owner lookup from
+`value_roots::copy_out`. Previously, the root resolver authenticated the complete
+table, row/token identity and native Buffer extent, then `owners::copy_out`
+repeated table and backing validation before copying. The root operation now
+uses its authenticated immutable Buffer directly. No callback or mutation
+intervenes, no view escapes, and the standalone owner API is unchanged.
+
+The overflow guard and Fuel admission still precede resolution; the logical
+price remains `256 + output.len`. The complete range is checked before the
+native view or any output write: `start <= length` followed by
+`output.len <= length - start`. Empty copies at the initialized end still
+succeed; empty copies beyond it still fail. The distinct caller-owned output
+contract and byte-copy loop retain their previous behavior.
+
+Compared with f5d5cf0, one successful root copy reduces full owner-table
+validations from two to one, or 32 to 16 validation-slot visits. The 4,096-copy
+fixture removes 65,536 such visits (131,072 to 65,536). These are source-level
+counts, excluding accounting summation, row scans, duplicate checks and payload
+copying. Complexity stays O(n^2 + m) for n live roots (n <= 16) and m output
+bytes, with O(1) auxiliary storage. No state, allocation, API or cache is added.
+Throughput and physical memory peaks were not measured.
+
+Run `python -B tools/verify-value-root-copy-out.py --profile all`. Its fourteen
+selected native groups cover the frozen resolver/raw-owner copy oracle, all
+metadata slots and handle error priorities, reused/terminal generations, root
+leases/mutations, Buffer growth and retirement, nested view ranges and failure
+rollback, and the eight-alias CALL regression. The new boundary group covers
+source lengths 0/1/63/64/65/4096, output lengths 0/1/63/64/65, six start
+positions and both lease phases: 360 exact-Fuel oracle comparisons plus 360
+short-Fuel rejections. Sentinel bytes verify complete output preservation on
+rejection and the untouched tail on success. A full 16-root store also copies
+65 bytes 4,096 times under a read lease at the exact price, then cleans up with
+zero Fuel. Accounting, descriptor fields and source bytes are checked.
+
+The [Windows evidence](../evidence/value-root-copy-out-windows-20261116.json)
+records results and input identity. Full Engine transport, public CLI, standalone
+memory and full release gates remain outside this focused change; known legacy
+CALL stack exhaustion and release compiler timeout are not claimed fixed.
