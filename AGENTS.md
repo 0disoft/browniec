@@ -1,23 +1,22 @@
-- Latest maintenance checkpoint (2026-11-15):
-  [single-scan tag selection](docs/engineering/value-selection-scan.md).
-  Native tag predicates and case extraction share one fresh canonical scan
-  for active-root metadata and branch selection, including mismatches.
-  Byte errors precede Owner errors, then deferred branch Type errors;
-  raw select keeps its Type-first contract. No caller-supplied proof/cache.
-  Payload extraction, root handoff, consumption and Fuel prices are unchanged.
-  Successful wrapper selection scans 2 to 1; a 32776-byte inactive Option
-  validates 65552 to 32776 bytes. Both remain O(Q * B), O(1) extra space.
-  Source operation counts only; throughput and physical peaks not measured.
-  Development/O2 each pass fourteen groups: byte mutations against separate
-  inspect/select oracles, nested Buffer metadata, maximum inactive padding,
-  late bools, native error order, exact Fuel and recursive ownership behavior.
-  All 376 input hashes match tested bytes and implementation a5103f0.
+- Latest maintenance checkpoint (2026-11-16):
+  [authenticated root resolution reuse](docs/engineering/value-root-resolution.md).
+  Only resolve_mode and describe reuse the fresh full preflight within
+  immutable synchronous borrows; no caller-supplied proof or persistent cache.
+  Full preflight, raw owner APIs, identity/backing checks and write lease
+  rejection remain; other root functions and Fuel prices are unchanged.
+  Successful full validations: describe 3 to 1, len 2 to 1, read 3 to 2;
+  frame Buffer reads 6 to 3, or 393216 to 196608 validation slot visits
+  for 4096 reads. Existing duplicate checks remain O(n^2), n <= 16.
+  Source counts only; throughput and physical peaks were not measured.
+  Development/O2 each pass eight groups: original resolver/raw owner oracles,
+  metadata corruption with combined handle faults, reused slots, terminal
+  generations, exact Fuel, native bytes, lease rejection and growth rollback.
+  All 377 input hashes match tested bytes and implementation bbbbb95.
   Root check: 375 sources / 4102 MIR; production LF and guidance body retained.
   Full Engine transport, public CLI, standalone memory and release gates not rerun.
   Known legacy source failure not retested or claimed fixed.
   Broader completion remains paused; local commits only.
-  See [evidence](docs/evidence/value-selection-scan-windows-20261115.json).
-  Prior [retained layouts](docs/engineering/value-retain-plan.md) retain history.
+  See [evidence](docs/evidence/value-root-resolution-windows-20261116.json).
 
 # Brownie C agent guidance
 

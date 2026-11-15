@@ -1,0 +1,75 @@
+{
+  "schema": "browniec.value-root-resolution/v1",
+  "status": "passed",
+  "clientDate": "2026-11-16",
+  "baselineCommit": "0f3472e1e2dc5c8563f6864799c56d35266512c0",
+  "implementationCommit": "bbbbb9547dab32bb831e02efc41ea855103eac0e",
+  "profiles": [
+    {
+      "profile": "development",
+      "nativeGroups": 8,
+      "receipt": "build/value-root-resolution/development/receipt.json",
+      "receiptSha256": "cc5e412e9add0c9c293d374dc9b10945de88c261f829f00e1c94fdeb1613d5dd",
+      "nativeInputMirrorVerified": true,
+      "nativeOverrides": false,
+      "allInputHashesMatch": true
+    },
+    {
+      "profile": "release",
+      "nativeGroups": 8,
+      "receipt": "build/value-root-resolution/release/receipt.json",
+      "receiptSha256": "81c9529cb47124d893b556ca86b1fae2b19be74917c12bb079ca43c8f88ba320",
+      "nativeInputMirrorVerified": true,
+      "nativeOverrides": false,
+      "allInputHashesMatch": true
+    }
+  ],
+  "command": "python -B tools/verify-value-root-resolution.py --profile all",
+  "rootCheck": "check ok: 2 instance(s), 375 source file(s), 4102 MIR function(s), lock updated",
+  "productionProof": {
+    "onlyResolverAndDescribeChanged": true,
+    "originalResolverOracleMatchesBaseline": true,
+    "fullPreflightAndRawOwnerApisUnchanged": true,
+    "backingExtentAndWriteLeaseGatesRetained": true,
+    "otherRootOperationsAndFuelUnchanged": true,
+    "framesUnchanged": true,
+    "productionLfRetained": true,
+    "noCallerSuppliedProofOrPersistentCache": true
+  },
+  "testedInputIdentity": {
+    "inputCount": 377,
+    "allReceiptInputsMatchWorkingBytes": true,
+    "exactGitBlobMatches": 377,
+    "lineEndingOnlyDifferences": 0
+  },
+  "structuralCounts": {
+    "sourceLevelOnly": true,
+    "ownerSlots": 16,
+    "describeFullValidationsBefore": 3,
+    "describeFullValidationsAfter": 1,
+    "lenFullValidationsBefore": 2,
+    "lenFullValidationsAfter": 1,
+    "readFullValidationsBefore": 3,
+    "readFullValidationsAfter": 2,
+    "frameByteReadFullValidationsBefore": 6,
+    "frameByteReadFullValidationsAfter": 3,
+    "repeatedReads": 4096,
+    "directReadValidationSlotVisitsBefore": 196608,
+    "directReadValidationSlotVisitsAfter": 131072,
+    "frameReadValidationSlotVisitsBefore": 393216,
+    "frameReadValidationSlotVisitsAfter": 196608,
+    "wholePreflightDuplicateChecks": "O(n^2), n <= 16, unchanged",
+    "auxiliarySpace": "O(1)",
+    "throughputMeasured": false,
+    "physicalPeaksMeasured": false
+  },
+  "scope": "private native root resolution; public CLI admission unchanged",
+  "skipped": [
+    "Full Engine transport",
+    "public CLI",
+    "standalone memory",
+    "full release gates",
+    "Known legacy struct_subassign_source failure not retested or fixed"
+  ],
+  "remote": "local only; not pushed, published, released or deployed"
+}
