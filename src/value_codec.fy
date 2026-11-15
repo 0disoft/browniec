@@ -65,10 +65,13 @@ fn Result<usize,Error> record(ref Layout layout,usize id,ref u8[] data){
             let usize width=if(nested){layout.records.bytes[tag as usize]}else{scalar::width(tag)};
             if(!zero(data,base+c.ends[level],base+at)){return .err(.Value);}
             c.fields[level]+=1;c.ends[level]=at+width;
+            // retain proved the scalar tag/width and inspect checked the exact
+            // extent. All integer bit patterns are canonical; only bool has
+            // invalid payload bytes. Keep every nested padding check above.
             if(nested){let usize child=c.depth;
                 if(child>=16){return .err(.Layout);}
                 c.records[child]=tag as usize;c.fields[child]=0;c.bases[child]=base+at;c.ends[child]=0;c.depth+=1;
-            }else if(!scalar::decode(tag,data[base+at..base+at+width]).is_ok){return .err(.Value);}
+            }else if(tag==2 && data[base+at]>1){return .err(.Value);}
         }
     }return .ok(data.len);
 }
