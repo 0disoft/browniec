@@ -142,11 +142,13 @@ pub fn Result<usize,Error> wrap_at(ref Layout layout,usize id,u8 variant,
     var usize size=0;
     if(present){let usize child=if(variant==1){n.first as usize}else{n.second as usize};size=layout.shapes.properties[child].bytes;
         if(!window(source,size,data.len)){return .err(.Bounds);}
-        // Whole target zeroing must not destroy the source before copying it.
+        // Preserve disjoint-source construction before any target writes.
         if(source<destination+p.bytes && destination<source+size){return .err(.Overlap);}
         let Active active=inspect(layout,child,data[source..source+size])?;
     }else if(source!=0){return .err(.Bounds);}
-    var usize i=0;while(i<p.bytes){data[destination+i]=0;i+=1;}
+    // The validated payload is copied in full below; only clear its padding.
+    var usize i=1;while(i<p.payload_offset){data[destination+i]=0;i+=1;}
+    i=p.payload_offset+size;while(i<p.bytes){data[destination+i]=0;i+=1;}
     data[destination]=if(n.kind==6){if(variant==1){0}else{1}}else{variant};
     if(present){copy(source,destination+p.payload_offset,size,data);}
     return .ok(p.bytes);

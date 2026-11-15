@@ -337,8 +337,11 @@ pub fn Result<usize,Error> build_tag(ref layouts::Plan plan,ref mut State state,
         if(!switch(codec::same(layouts::layout(plan),child,src.type_id)){case .ok(v):{v}case .err(_):{false}}){return .err(.Type);}
         active=inspected(plan,state,frames,source,src,root_state,roots,root_scratch)?;
     }
-    {let ref mut u8[] temp=bytes::view_mut(vec::at_mut<bytes::Buffer>(scratch,0));var usize i=0;
-        while(i<dst.width){temp[i]=0;i+=1;}
+    {let ref mut u8[] temp=bytes::view_mut(vec::at_mut<bytes::Buffer>(scratch,0));
+        // Payload bytes are overwritten by copy; initialize only the padding.
+        let usize size=if(payload){src.width}else{0};var usize i=1;
+        while(i<p.payload_offset){temp[i]=0;i+=1;}
+        i=p.payload_offset+size;while(i<dst.width){temp[i]=0;i+=1;}
         temp[0]=if(n.kind==6){if(variant==1){0}else{1}}else{variant};
         if(payload){let ref u8[] data=bytes::view(vec::at<bytes::Buffer>(frames,source.frame));
             copy(data[src.offset..src.offset+src.width],temp[p.payload_offset..p.payload_offset+src.width]);}

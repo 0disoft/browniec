@@ -7,6 +7,7 @@ import value_roots as owners;
 import buffer_growth as growth;
 import scalar_codec as scalar;
 import cells as cells;
+import value_codec as codec;
 import std::bytes as bytes;
 import std::vec as vec;
 
@@ -288,6 +289,47 @@ fn layouts::Plan wide_plan(){
     return switch(layouts::retain(ref c,ref types,ref functions,1)){
         case .ok(v):{v}case .err(_):{assert(false);wide_plan()}
     };
+}
+fn void dirty_scratch(ref mut vec::Vec<bytes::Buffer> scratch){
+    let ref mut u8[] raw=bytes::view_mut(vec::at_mut<bytes::Buffer>(scratch,0));var usize i=0;
+    while(i<raw.len){raw[i]=173;i+=1;}
+}
+@test fn void dirty_tag_scratch_preserves_full_small_and_absent_payloads_at_exact_fuel(){
+    let layouts::Plan p=wide_plan();var vec::Vec<bytes::Buffer> data=vec::empty<bytes::Buffer>();
+    var vec::Vec<bytes::Buffer> scratch=vec::empty<bytes::Buffer>();var vec::Vec<bytes::Buffer> roots=vec::empty<bytes::Buffer>();
+    var vec::Vec<bytes::Buffer> root_scratch=vec::empty<bytes::Buffer>();var usize fuel=10000000;
+    var owners::State r=root_open(ref mut roots,ref mut root_scratch,ref mut fuel);
+    var frames::State s=opened(ref p,ref mut data,ref mut scratch,ref r,ref mut fuel);
+    let frames::Token t=entered(ref p,ref mut s,ref mut data,ref r,ref mut fuel);
+    var bytes::Buffer array=switch(bytes::with_capacity(32768)){case .ok(v):{v}case .err(_):{assert(false);bytes::empty()}};
+    assert(bytes::resize_zeroed(ref mut array,32768).is_ok);
+    {let ref mut u8[] raw=bytes::view_mut(ref mut array);var usize i=0;var u8 value=3;
+        while(i<raw.len){raw[i]=value;if(value==250){value=0;}else{value+=1;}i+=1;}}
+    assert(ok(frames::initialize(ref p,ref mut s,ref mut data,at(t,0),bytes::view(ref array),ref mut fuel))==32768);
+    dirty_scratch(ref mut scratch);let usize cost=measured(meter::operation_cost(32776));fuel=cost-1;
+    assert(is_fuel(frames::build_tag(ref p,ref mut s,ref mut data,ref mut scratch,at(t,3),at(t,0),1,ref mut r,ref mut roots,ref mut root_scratch,ref mut fuel)));
+    assert(fuel==cost-1 && s.frames[t.frame].live==1 && s.frames[t.frame].next==2);
+    {let ref u8[] raw=bytes::view(vec::at<bytes::Buffer>(ref scratch,0));var usize i=0;while(i<raw.len){assert(raw[i]==173);i+=1;}}
+    fuel=cost;assert(ok(frames::build_tag(ref p,ref mut s,ref mut data,ref mut scratch,at(t,3),at(t,0),1,ref mut r,ref mut roots,ref mut root_scratch,ref mut fuel))==32776 && fuel==0);
+    {let usize offset=placed(layouts::offset(ref p,3));let ref u8[] raw=bytes::view(vec::at<bytes::Buffer>(ref data,t.frame));
+        assert(codec::inspect(layouts::layout(ref p),2,raw[offset..offset+32776]).is_ok);
+        assert(bytes::equal(raw[offset+8..offset+32776],bytes::view(ref array)));}
+    value_bytes(ref p,ref data,at(t,0),bytes::view(ref array));fuel=1000000;
+    assert(ok(frames::drop(ref p,ref mut s,ref mut data,at(t,3),ref mut r,ref mut roots,ref mut root_scratch,ref mut fuel))==32776);
+    let usize serial=ok(frames::buffer_value(ref p,ref mut s,ref mut data,at(t,2),b"live",ref mut r,ref mut roots,ref mut root_scratch,limits(),ref mut fuel));
+    let usize used=r.ledger.used;let usize peak=r.ledger.peak;dirty_scratch(ref mut scratch);fuel=cost;
+    assert(ok(frames::build_tag(ref p,ref mut s,ref mut data,ref mut scratch,at(t,3),at(t,2),0,ref mut r,ref mut roots,ref mut root_scratch,ref mut fuel))==32776 && fuel==0);
+    {let usize offset=placed(layouts::offset(ref p,3));let ref u8[] raw=bytes::view(vec::at<bytes::Buffer>(ref data,t.frame));
+        assert(codec::inspect(layouts::layout(ref p),2,raw[offset..offset+32776]).is_ok);assert(raw[offset]==1);
+        var usize i=offset+16;while(i<offset+32776){assert(raw[i]==0);i+=1;}}
+    assert(r.ledger.used==used && r.ledger.peak==peak);content(ref r,ref roots,ref root_scratch,serial,3,b"live");
+    dirty_scratch(ref mut scratch);fuel=measured(meter::operation_cost(32784));
+    assert(ok(frames::build_tag(ref p,ref mut s,ref mut data,ref mut scratch,at(t,4),frames::Address{.frame=31,.generation=0,.slot=99},0,
+        ref mut r,ref mut roots,ref mut root_scratch,ref mut fuel))==32784 && fuel==0);
+    {let usize offset=placed(layouts::offset(ref p,4));let ref u8[] raw=bytes::view(vec::at<bytes::Buffer>(ref data,t.frame));
+        var usize i=offset;while(i<offset+32784){assert(raw[i]==0);i+=1;}}
+    assert(ok(frames::abort(ref mut s,ref mut data,ref mut scratch,ref mut r,ref mut roots,ref mut root_scratch))==0);
+    assert(r.ledger.used==0 && r.ledger.engine_used==0 && fuel==0);
 }
 @test fn void maximum_array_and_four_wrappers_preserve_late_bytes_and_sole_active_root(){
     let layouts::Plan p=wide_plan();var vec::Vec<bytes::Buffer> data=vec::empty<bytes::Buffer>();
