@@ -1,28 +1,27 @@
 - Latest maintenance checkpoint (2026-11-15):
-  [single-plan scalar record places](docs/engineering/record-place-plan.md).
-  Selection and each read/store revalidation authenticate token, full table and
-  record kind, then check catalog and expected owner shape in one fresh storage
-  plan before ordinal/extent and unchanged place/codec checks. Binding is
-  expected metadata, not authority; no unchecked Plan API or retained cache.
-  Raw ordinal-before-catalog error order remains unchanged.
-  Plans two to one per operation; compound assignment six to three. Fixed field
-  slots 1024 to 512 per operation, 3072 to 1536 per compound assignment.
-  Source counts only, not measured native throughput or physical memory.
-  No new heap allocation, persistent field, owner, quota, reservation or Fuel
-  change. Bool repair and failed encoding remain byte-atomic.
-  Development/O2 each pass six groups: 1480 differential scenarios comparing
-  selection/read/store, all catalog slots/rows, owner and saved-place faults,
-  six scalar domains, every leaf, depth 16/17, full owner/backing pressure and
-  exact prepaid VM prices. Thirteen direct storage boundary cases also pass.
-  All 376 inputs match tested bytes and implementation b307617
+  [single-plan subrecord replacement](docs/engineering/subrecord-replace-plan.md).
+  Constructor replacement authenticates token, full table and record kind, then
+  uses one fresh checked storage plan for expected owner shape, nominal range
+  and private staged encoding. Whole-root extent precedes base+offset, including
+  direct storage callers. Binding is metadata, not authority; no unchecked Plan
+  API or retained cache. Raw replacement still independently plans its inputs.
+  Plans three to one per owner replacement; fixed field slots 1536 to 512 and
+  record rows 96 to 32. Payload work and 128-byte scratch persist. Source counts
+  only, not measured native throughput or physical stack/memory peaks.
+  No new heap allocation, owner, reservation, persistent field or Fuel price.
+  Development/O2 each pass six groups: 1671 differential inputs, 18 direct
+  storage cases, all catalog slots/rows, owner/range/shape faults, scalar edges,
+  every bool position, depth 16/17, full owner/backing pressure and exact VM Fuel.
+  Failure preserves all backing; successful selected padding is canonical.
+  All 376 inputs match tested bytes and implementation 4c77778
   (376 raw Git matches; 0 line-ending-only differences).
-  Root check: 375 sources / 4090 MIR; production LF retained.
+  Root check: 375 sources / 4092 MIR; production LF retained.
   Full Engine, public CLI, standalone memory and full release gates not rerun.
   Prior legacy source failure remains recorded, not retested or claimed fixed.
   Public admission unchanged; broader completion paused; local commits only.
-  See [evidence](docs/evidence/record-place-plan-windows-20261115.json).
-  Prior [validation-only results](docs/engineering/record-result-validation.md)
-  retain their history.
+  See [evidence](docs/evidence/subrecord-replace-plan-windows-20261115.json).
+  Prior [scalar record places](docs/engineering/record-place-plan.md) retain
+  their history.
 
 # Brownie C agent guidance
 

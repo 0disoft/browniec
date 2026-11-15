@@ -1,0 +1,105 @@
+{
+  "schema": "browniec.subrecord-replace-plan/v1",
+  "status": "passed",
+  "clientDate": "2026-11-15",
+  "baselineCommit": "05a0a02",
+  "implementationCommit": "4c777784fc6a9763ba2a5cd3c370575edf2d0dff",
+  "sources": [
+    {
+      "path": "src/array_owners.fy",
+      "sha256": "34ac9548d78449869454109e042e66d6d2c86db32055692f1aa4a504a784d1d4"
+    },
+    {
+      "path": "src/struct_nested_storage.fy",
+      "sha256": "4a9af24e01c3af988cca8d0e2c276860a3294fe1842c6599702274c1163e432a"
+    }
+  ],
+  "rootCheck": "check ok: 2 instances, 375 sources, 4092 MIR functions; lock updated",
+  "profiles": [
+    {
+      "profile": "development",
+      "nativeGroups": 6,
+      "receipt": "build/subrecord-replace-plan/development/receipt.json",
+      "receiptSha256": "b90defe95da2b031185208f7e45fdc10f2b225d522d5fbe0d64e197b24835160",
+      "allInputHashesMatch": true
+    },
+    {
+      "profile": "release",
+      "nativeGroups": 6,
+      "receipt": "build/subrecord-replace-plan/release/receipt.json",
+      "receiptSha256": "d369e044d35053f6c88980298b49a0b3a84c8d5595310c56fcdc1de358beeecd",
+      "allInputHashesMatch": true
+    }
+  ],
+  "inputCount": 376,
+  "inputSetSha256": "48e9239cafa98ae6b8684aaaec093f2478248e90d3bc4505b2146aafccf6faf7",
+  "compilerSha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+  "commitInputComparison": {
+    "rawByteMatches": 376,
+    "lineEndingOnlyDifferences": []
+  },
+  "structuralCounts": {
+    "layoutPlansBefore": 3,
+    "layoutPlansAfter": 1,
+    "fieldSlotInspectionsBefore": 1536,
+    "fieldSlotInspectionsAfter": 512,
+    "recordRowsBefore": 96,
+    "recordRowsAfter": 32,
+    "replacementLoopIterations": 4096,
+    "loopFieldSlotInspectionsBefore": 6291456,
+    "loopFieldSlotInspectionsAfter": 2097152,
+    "dependencyPlanningPassesRemovedPerLoop": 8192,
+    "scratchBytesBefore": 128,
+    "scratchBytesAfter": 128,
+    "addedHeapAllocations": 0,
+    "addedWholeRootExtentChecks": 1,
+    "ownerTableValidationChanged": false,
+    "payloadWorkChanged": false,
+    "selectedConstructorStoreFuel": 128162,
+    "fuelPricesChanged": false,
+    "measuredThroughputOrPhysicalPeak": false
+  },
+  "coverage": {
+    "fieldSlotCorruptions": 1024,
+    "recordRowCorruptions": 32,
+    "catalogDiagnosticContexts": 36,
+    "ownerMutations": 192,
+    "invalidOrArrayTokens": 4,
+    "nominalOrdinalCombinations": 49,
+    "fieldCounts": 6,
+    "capacities": 4,
+    "oldBoolEncodings": 4,
+    "competingFailures": 3,
+    "validTableShapeFaults": 2,
+    "scalarCodecEdges": 48,
+    "wideRootAndSubtreeBoolCases": 265,
+    "depthSixteen": 1,
+    "depthSeventeen": 1,
+    "totalDifferentialInputs": 1671,
+    "directCheckedStorageCases": 18,
+    "all256BackingBytesCompared": true,
+    "failedWritesPreserveOriginalBytes": true,
+    "existingRegressionGroups": 3,
+    "frame": 31,
+    "fullOwnerCount": 16,
+    "maximumLeaves": 128,
+    "exactFuelAndOneLessRejection": true
+  },
+  "admissionProof": [
+    "Token/table/kind precede one fresh catalog/owner-shape plan, nominal range, whole-root extent and scalar staging.",
+    "Whole-root extent proves base+offset is bounded by initialized arena storage before the addition.",
+    "Only private staged composition accepts the local plan. Binding is expected metadata, not authority.",
+    "Raw replace_values still independently plans and checks its inputs before the same staged writer.",
+    "Catalog/shape errors precede nominal/ordinal errors, which precede field-count and codec failures.",
+    "No selected byte publishes until every field encodes; old invalid bool payload does not block replacement.",
+    "Destination selection/revalidation, constructor evaluation, conservative VM Fuel and public admission are unchanged."
+  ],
+  "guidanceTailUnchanged": true,
+  "guidanceTailSha256": "82ab2d55e85b7132a647bf4b08cae4df5eef0599abbfd29bca3df43281ed4d4d",
+  "limitations": [
+    "Source-level planning counts only; elapsed throughput, machine instructions and physical memory not measured.",
+    "Full Engine, public CLI, standalone memory and full release gates not rerun; public admission unchanged.",
+    "Previously recorded legacy source failure not rerun or claimed fixed.",
+    "Local only; no push, release, deploy or version bump."
+  ]
+}
