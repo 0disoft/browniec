@@ -48,8 +48,30 @@ fn Result<usize,store::Error> read(ref store::State s,ref vec::Vec<bytes::Buffer
     return switch(owners::read(ref s.table,owners::Token{.slot=row.slot,.generation=row.generation},index,vec::at<bytes::Buffer>(roots,i))){
         case .ok(v):{.ok(v as usize)}case .err(e):{.err(switch(e){case .Bounds:{.Bounds}case .Owners:{.Owners}case .Token:{.State}case .State:{.State}})}};
 }
+// Frozen raw-owner copy path: keep independent table/backing/range checks.
+fn Result<usize,store::Error> copied(ref store::State s,ref vec::Vec<bytes::Buffer> roots,
+    ref vec::Vec<bytes::Buffer> scratch,usize serial,usize binding,usize start,ref mut u8[] output){
+    let usize i=original(s,roots,scratch,serial,binding,false)?;let store::Row row=s.rows[i];
+    return switch(owners::copy_out(ref s.table,owners::Token{.slot=row.slot,.generation=row.generation},start,
+        vec::at<bytes::Buffer>(roots,i),output)){case .ok(v):{.ok(v)}case .err(_):{.err(.Bounds)}};
+}
+fn void copy_boundary(ref store::State s,ref vec::Vec<bytes::Buffer> roots,
+    ref vec::Vec<bytes::Buffer> scratch,usize serial,usize binding,usize start,usize size){
+    var u8[65] expected=[253;65];var u8[65] actual=[253;65];
+    let Result<usize,store::Error> wanted=copied(s,roots,scratch,serial,binding,start,ref mut expected[..size]);
+    var usize fuel=256+size;
+    let Result<usize,store::Error> got=store::copy_out(s,roots,scratch,serial,binding,start,ref mut actual[..size],ref mut fuel);
+    same(wanted,got);assert(fuel==0 && bytes::equal(ref actual,ref expected));
+    if(!got.is_ok){let u8[65] untouched=[253;65];assert(bytes::equal(ref actual,ref untouched));}
+    var u8[65] short_output=[253;65];let u8[65] untouched=[253;65];fuel=255+size;
+    same(.err(.Fuel),store::copy_out(s,roots,scratch,serial,binding,start,ref mut short_output[..size],ref mut fuel));
+    assert(fuel==255+size && bytes::equal(ref short_output,ref untouched));
+}
 fn void parity(ref store::State s,ref mut vec::Vec<bytes::Buffer> roots,ref mut vec::Vec<bytes::Buffer> scratch,
     usize serial,usize binding){
+    copy_boundary(s,roots,scratch,serial,binding,0,3);
+    copy_boundary(s,roots,scratch,serial,binding,1,3);
+    copy_boundary(s,roots,scratch,serial,binding,18446744073709551615,0);
     let Result<owners::Owner,store::Error> expected=described(s,roots,scratch,serial,binding);
     let Result<owners::Owner,store::Error> actual=store::describe(s,roots,scratch,serial,binding);
     assert(switch(expected){case .err(x):{switch(actual){case .err(y):{code(x)==code(y)}case .ok(_):{false}}}
@@ -168,4 +190,42 @@ fn void read_boundary(ref store::State s,ref vec::Vec<bytes::Buffer> roots,
         assert(bytes::equal(bytes::view(vec::at<bytes::Buffer>(ref roots,n)),ref input[..length]));n+=1;
     }
     fuel=0;assert(ok(store::drain(ref mut s,ref mut roots,ref mut scratch))==0 && fuel==0 && s.ledger.used==0);
+}
+
+@test fn void authenticated_copies_match_raw_owner_ranges_leases_and_full_store_repetition(){
+    var vec::Vec<bytes::Buffer> roots=vec::empty<bytes::Buffer>();var vec::Vec<bytes::Buffer> scratch=vec::empty<bytes::Buffer>();
+    var usize fuel=1000000;var store::State s=opened(ref mut roots,ref mut scratch,ref mut fuel);
+    var u8[65] input=[0;65];var usize i=0;var u8 value=0;
+    while(i<input.len){input[i]=value;value+=1;i+=1;}
+    let usize[6] sizes=[0,1,63,64,65,4096];var u8[4096] large=[71;4096];var usize n=0;
+    while(n<sizes.len){let usize length=sizes[n];
+        let usize serial=ok(store::insert(ref mut s,ref mut roots,ref mut scratch,n,ref large[..length],limits(),ref mut fuel));
+        let usize cap=bytes::capacity(vec::at<bytes::Buffer>(ref roots,n));
+        let usize[6] starts=[0,length/2,if(length==0){0}else{length-1},length,cap,18446744073709551615];
+        let usize[5] outputs=[0,1,63,64,65];let store::Snapshot before=store::snapshot(ref s,ref roots);
+        let owners::Owner owner=s.table.slots[s.rows[n].slot];var usize phase=0;
+        let owners::Token token=owners::Token{.slot=s.rows[n].slot,.generation=s.rows[n].generation};
+        while(phase<2){
+            if(phase==1){assert(store::begin_read(ref mut s,ref roots,ref scratch,serial,n,ref mut fuel).is_ok);}
+            i=0;while(i<starts.len){var usize j=0;while(j<outputs.len){
+                copy_boundary(ref s,ref roots,ref scratch,serial,n,starts[i],outputs[j]);j+=1;}i+=1;}
+            assert(s.table.slots[token.slot].reading==(phase==1));
+            if(phase==1){fuel=0;assert(ok(store::end_read(ref mut s,ref roots,ref scratch,serial,n,token))==token.slot && fuel==0);}
+            fuel=1000000;phase+=1;
+        }
+        let store::Snapshot after=store::snapshot(ref s,ref roots);let owners::Owner current=s.table.slots[token.slot];
+        assert(before.count==after.count && before.used==after.used && before.peak==after.peak &&
+            before.next==after.next && before.closed==after.closed && vec::len<bytes::Buffer>(ref scratch)==0);
+        assert(owner.generation==current.generation && owner.live==current.live && owner.length==current.length &&
+            owner.capacity==current.capacity && owner.reading==current.reading);
+        assert(bytes::equal(bytes::view(vec::at<bytes::Buffer>(ref roots,n)),ref large[..length]));n+=1;
+    }
+    while(n<16){let usize serial=ok(store::insert(ref mut s,ref mut roots,ref mut scratch,n,ref input,limits(),ref mut fuel));n+=1;}
+    let store::Row row=s.rows[15];let owners::Token token=switch(store::begin_read(ref mut s,ref roots,ref scratch,row.serial,15,ref mut fuel)){
+        case .ok(v):{v}case .err(_):{assert(false);owners::Token{.slot=16,.generation=0}}};
+    fuel=4096*(256+65);i=0;var u8[65] output=[253;65];
+    while(i<4096){assert(ok(store::copy_out(ref s,ref roots,ref scratch,row.serial,15,0,ref mut output,ref mut fuel))==65);
+        assert(bytes::equal(ref output,ref input));i+=1;}
+    assert(fuel==0);assert(ok(store::end_read(ref mut s,ref roots,ref scratch,row.serial,15,token))==token.slot && fuel==0);
+    assert(ok(store::drain(ref mut s,ref mut roots,ref mut scratch))==0 && fuel==0 && s.ledger.used==0);
 }

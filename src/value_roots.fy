@@ -175,8 +175,15 @@ pub fn Result<usize,Error> copy_out(ref State s,ref vec::Vec<bytes::Buffer> root
     ref mut u8[] output,ref mut usize fuel){
     if(output.len>18446744073709551359){return .err(.Bounds);}
     let usize paid=pay(256+output.len,fuel)?;let usize i=resolve_mode(s,roots,scratch,serial,binding,false)?;
-    return switch(owners::copy_out(ref s.table,owners::Token{.slot=s.rows[i].slot,.generation=s.rows[i].generation},start,
-        vec::at<bytes::Buffer>(roots,i),output)){case .ok(v):{.ok(v)}case .err(_):{.err(.Bounds)}};
+    // The resolver authenticated this exact token/table/backing. Immutable
+    // borrows and no intervening callback keep that proof local to this copy.
+    let ref bytes::Buffer root=vec::at<bytes::Buffer>(roots,i);
+    let usize length=bytes::len(root);
+    if(start>length || output.len>length-start){return .err(.Bounds);}
+    let ref u8[] view=bytes::view(root);var usize j=0;
+    // The complete range is checked before any write; start+j cannot overflow.
+    while(j<output.len){output[j]=view[start+j];j+=1;}
+    return .ok(output.len);
 }
 // Input is copied from a trusted native borrow, never a supplied owner word or
 // descriptor. All fallible construction is staged; rejection publishes no root.
