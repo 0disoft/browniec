@@ -1,0 +1,118 @@
+{
+  "schema": "browniec.record-assign-preflight/v1",
+  "status": "passed",
+  "clientDate": "2026-11-15",
+  "baselineCommit": "37ba32f",
+  "implementationCommit": "1326600578c9fd3cfabe91b395b5c9ae4c341830",
+  "sources": [
+    {
+      "path": "src/array_owners.fy",
+      "sha256": "18c560b10a31312034579b86dbd96548fea06447e10501d24a96c2d36997a754"
+    }
+  ],
+  "rootCheck": "check ok: 2 instances, 375 sources, 4092 MIR functions; lock updated",
+  "profiles": [
+    {
+      "profile": "development",
+      "nativeGroups": 6,
+      "receipt": "build/record-assign-preflight/development/receipt.json",
+      "receiptSha256": "15e02ab865379edb3717548fbdb1dc137955c0537d54d30313fbbe022a493f7a",
+      "allInputHashesMatch": true
+    },
+    {
+      "profile": "release",
+      "nativeGroups": 6,
+      "receipt": "build/record-assign-preflight/release/receipt.json",
+      "receiptSha256": "c3ee71cbc6eac5f56256e3dbcfd7647eeb1b7cedad0454d92a336d849bba848b",
+      "allInputHashesMatch": true
+    }
+  ],
+  "inputCount": 376,
+  "inputSetSha256": "0697e64e96de58888608b7bc7ad4c143ded9d20e31193dadd917c0f3a27d530d",
+  "compilerSha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+  "commitInputComparison": {
+    "rawByteMatches": 375,
+    "lineEndingOnlyDifferences": [
+      {
+        "path": "tests/m2/struct_vm.fy",
+        "workingSha256": "c91054149203a96853299ef586c4be0e22f4d06a05c68e2e00d6eb4ba2675e0c",
+        "commitSha256": "4fa15ab51c92e4940e1dbb6af07a123590ae3a187c3a0e9a27a9795a05bfa3a2"
+      }
+    ]
+  },
+  "structuralCounts": {
+    "layoutPlansBefore": 3,
+    "layoutPlansAfter": 2,
+    "fieldSlotInspectionsBefore": 1536,
+    "fieldSlotInspectionsAfter": 1024,
+    "recordRowsBefore": 96,
+    "recordRowsAfter": 64,
+    "fullOwnerTableValidationsBefore": 2,
+    "fullOwnerTableValidationsAfter": 1,
+    "tableEntriesAtFullCapacityBefore": 64,
+    "tableEntriesAtFullCapacityAfter": 32,
+    "tokenIdentityLookupsBefore": 2,
+    "tokenIdentityLookupsAfter": 2,
+    "assignments": 4096,
+    "loopFieldSlotInspectionsBefore": 6291456,
+    "loopFieldSlotInspectionsAfter": 4194304,
+    "removedDependencyPlanningPasses": 4096,
+    "loopTableEntryVisitsAtFullCapacityBefore": 262144,
+    "loopTableEntryVisitsAtFullCapacityAfter": 131072,
+    "payloadScratchBytesBefore": 128,
+    "payloadScratchBytesAfter": 128,
+    "payloadWorkChanged": false,
+    "addedHeapAllocations": 0,
+    "addedPublicApis": 0,
+    "fuelPricesChanged": false,
+    "wholeRecordAssignFuel": 60545,
+    "measuredThroughputOrPhysicalPeak": false
+  },
+  "coverage": {
+    "frozenOracleCommit": "37ba32f",
+    "frozenOracleBodyCompared": true,
+    "fieldSlotCorruptions": 1024,
+    "recordRowCorruptions": 32,
+    "catalogDiagnosticContexts": 36,
+    "ownerMutations": 192,
+    "invalidOrArrayTokenContexts": 8,
+    "ledgerOrderArenaFaults": 10,
+    "sameLayoutNominalMismatches": 2,
+    "validTableShapeFaults": 4,
+    "competingFailures": 3,
+    "capacities": 4,
+    "boolAndSelfCopyCases": 8,
+    "invalidOldDestination": 1,
+    "noncanonicalPaddingCases": 2,
+    "validWideCopies": 3,
+    "invalidWideBoolAndSelfCopyCases": 256,
+    "depthNominalCombinations": 32,
+    "depthSeventeen": 1,
+    "totalDifferentialInputs": 1618,
+    "all256BackingBytesCompared": true,
+    "failedWritesPreserveOriginalBytes": true,
+    "existingRegressionGroups": 4,
+    "fullOwnerCount": 16,
+    "maximumLeaves": 128,
+    "exactFuelAndOneLessRejection": true
+  },
+  "admissionProof": [
+    "Destination token/full table/kind precede the fresh full catalog plan and destination owner shape.",
+    "Both immutable inputs remain unchanged while the private prepared helper checks source token/kind/shape.",
+    "Nominal equality follows both owner shapes, preserving exact error precedence.",
+    "One full-table preflight covers both identities and every unrelated reservation/ledger slot; both token lookups remain.",
+    "Raw storage independently replans and checks both extents/copy proof before canonical snapshot/publication.",
+    "Self-assignment still validates bools and normalizes padding; failed operations preserve the original backing.",
+    "No new API, caller-supplied Plan, cross-call cache, persistent metadata or Fuel price is introduced."
+  ],
+  "guidanceTailUnchanged": true,
+  "guidanceTailSha256": "82ab2d55e85b7132a647bf4b08cae4df5eef0599abbfd29bca3df43281ed4d4d",
+  "limitations": [
+    "Source-level planning/table visits only; native elapsed throughput, machine instructions and physical peaks not measured.",
+    "Only whole-record owner assignment is changed; other record/subrecord APIs retain their existing behavior.",
+    "Full Engine, standalone memory, public CLI, Linux and full release gates not rerun; public admission unchanged.",
+    "One unchanged test input differs from its Git blob only by CRLF/LF endings; normalized bytes and both hashes were verified.",
+    "Previously recorded legacy source failure not rerun or claimed fixed.",
+    "Local only; no push, release, deploy or version bump."
+  ]
+}

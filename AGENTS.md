@@ -1,26 +1,28 @@
 - Latest maintenance checkpoint (2026-11-15):
-  [single-plan aggregate record selection](docs/engineering/aggregate-record-select-plan.md).
-  Captured whole-record/subrecord destinations authenticate token, complete
-  table and record kind, then reuse one fresh plan for owner ID/size/alignment,
-  nominal range and selected bounds. Saved-place revalidation independently
-  repeats this checked selection before either store; no retained Plan or cache.
-  Plans two to one per selection; fixed field slots 1024 to 512 and record rows
-  64 to 32. Capture plus constructor store five to three plans; capture plus
-  record copy six to four, excluding RHS evaluation. Source counts only;
-  no measured native throughput, instructions or physical stack/memory peaks.
-  No new API, heap allocation, owner, reservation, persistent field or Fuel price.
-  Development/O2 each pass six groups: 1651 differential inputs, exact selection
-  fields/errors and validation/store lengths/errors, all 256 backing bytes,
-  catalog/owner/snapshot corruption, bool payload independence, depths 16/17,
-  generation expiry, full owner/backing limits and exact/one-less VM Fuel.
-  All 376 inputs match tested bytes and implementation dcdcb23
-  (376 raw Git matches; 0 line-ending-only differences).
+  [shared whole-record assignment preflight](docs/engineering/record-assign-preflight.md).
+  Whole-record assignment authenticates destination token, complete immutable
+  table and record kind, then one fresh plan checks both owner shapes. Source
+  token/kind/shape and nominal equality remain mandatory. Existing private
+  prepared lookup reuses the initial full table validation; raw storage still
+  independently plans and stages canonical bytes before publication.
+  Plans three to two per assignment; fixed catalog slots 1536 to 1024 and rows
+  96 to 64. Full table validation two to one; at sixteen retained owners,
+  table-entry visits 64 to 32. Source counts only, not measured throughput,
+  machine instructions or physical stack/memory peaks. Payload scratch remains
+  128 bytes; no new API, heap allocation, owner, reservation or Fuel price.
+  Development/O2 each pass six groups: 1618 differential inputs, exact results
+  and all 256 backing bytes, catalog/owner/ledger faults, nominal mismatches,
+  diagnostic order, bool/self-copy/padding atomicity, all nominal depths 1..16,
+  depth-17 rejection, full owner/backing limits and exact/one-less direct VM Fuel.
+  All 376 inputs match tested working bytes. Implementation 1326600 has
+  375 raw Git matches and one line-ending-only difference in the unchanged
+  struct_vm test; normalized bytes match and both hashes are in the evidence.
   Root check: 375 sources / 4092 MIR; production LF retained.
   Full Engine, public CLI, standalone memory and full release gates not rerun.
   Prior legacy source failure remains recorded, not retested or claimed fixed.
   Public admission unchanged; broader completion paused; local commits only.
-  See [evidence](docs/evidence/aggregate-record-select-plan-windows-20261115.json).
-  Prior [subrecord replacement](docs/engineering/subrecord-replace-plan.md)
+  See [evidence](docs/evidence/record-assign-preflight-windows-20261115.json).
+  Prior [aggregate selection](docs/engineering/aggregate-record-select-plan.md)
   retains its history.
 
 # Brownie C agent guidance
