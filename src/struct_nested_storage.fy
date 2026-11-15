@@ -13,6 +13,8 @@ struct Cursor { usize depth; usize[16] records; usize[16] fields; usize[16] base
 pub struct Leaf { u8 tag; usize offset; }
 // Expected owner metadata, not a retained plan or authority. Rechecked per call.
 pub struct Binding { usize bytes; usize alignment; }
+// Metadata of a completed checked initialization, not a reusable layout proof.
+pub struct Initialized { usize base; usize size; usize alignment; }
 // Bounded staging accounting, derived by the same validated scalar iterator.
 // Metadata visits are separate from byte work; bool validation reads separately
 // from the scalar transfer made by snapshot_into.
@@ -185,6 +187,13 @@ pub fn Result<usize, Error> encode_into(ref layouts::Catalog catalog, usize reco
 // The complete record, including padding, is staged before backing mutation.
 pub fn Result<usize, Error> initialize(ref layouts::Catalog catalog, usize record,
     ref i64[] fields, ref mut u8[] storage, ref mut arenas::Arena arena) {
+    let Initialized result = initialize_described(catalog,record,fields,storage,arena)?;
+    return .ok(result.base);
+}
+// Plan once and return the exact published shape for owner descriptor creation.
+// Every entry validates its catalog; callers cannot supply a Plan or a binding.
+pub fn Result<Initialized, Error> initialize_described(ref layouts::Catalog catalog, usize record,
+    ref i64[] fields, ref mut u8[] storage, ref mut arenas::Arena arena) {
     let layouts::Plan plan = switch (layouts::plan(catalog, 18446744073709551615)) {
         case .ok(value): { value } case .err(_): { return .err(.Layout); }
     };
@@ -194,7 +203,8 @@ pub fn Result<usize, Error> initialize(ref layouts::Catalog catalog, usize recor
     let Reservation reservation = reserve(size, plan.alignments[record], arena)?;
     var u8[128] encoded = [0; 128];
     let usize staged = encode_fields(catalog,ref plan,record,fields,ref mut encoded[..size])?;
-    return .ok(publish(ref encoded[..size], ref reservation, storage, arena));
+    let usize base = publish(ref encoded[..size], ref reservation, storage, arena);
+    return .ok(Initialized { .base = base, .size = size, .alignment = plan.alignments[record] });
 }
 
 // Replace an existing extent from scalar values. No reservation, allocation,

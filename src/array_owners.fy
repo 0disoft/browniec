@@ -789,16 +789,11 @@ pub fn Result<Token, Error> create_record(ref records::Catalog catalog, usize re
     ref i64[] fields, ref mut u8[] bytes, ref mut Table table) {
     if (!valid(table, bytes.len)) { return .err(.State); }
     let usize slot = free_slot(table)?;
-    let records::Plan plan = switch (records::plan(catalog, 18446744073709551615)) {
-        case .ok(value): { value } case .err(_): { return .err(.Metadata); }
-    };
-    if (record >= plan.count) { return .err(.Bounds); }
-    if (plan.bytes[record] > 128) { return .err(.Quota); }
     let usize mark = table.arena.used;
-    let usize base = switch (record_storage::initialize(catalog, record, fields, bytes, ref mut table.arena)) {
+    let record_storage::Initialized created = switch (record_storage::initialize_described(catalog, record, fields, bytes, ref mut table.arena)) {
         case .ok(value): { value } case .err(error): { return .err(record_error(error)); }
     };
-    return .ok(publish_record(table, slot, record, plan.bytes[record], plan.alignments[record], mark, base));
+    return .ok(publish_record(table, slot, record, created.size, created.alignment, mark, created.base));
 }
 // Record initialization/copy have completed every fallible operation.
 fn Token publish_record(ref mut Table table, usize slot, usize record, usize bytes,
