@@ -896,8 +896,14 @@ pub fn Result<Token, Error> copy_record(ref records::Catalog catalog, Token sour
 // physical layout. Assignment never reserves an owner/extent or changes tokens.
 pub fn Result<usize, Error> assign_record(ref records::Catalog catalog, Token destination,
     Token source, ref mut u8[] bytes, ref Table table) {
-    let Owner target = resolve_record(catalog, table, destination, bytes.len)?;
-    let Owner origin = resolve_record(catalog, table, source, bytes.len)?;
+    let Owner target = inspect_record_owner(table,destination,bytes.len)?;
+    let records::Plan plan = switch (records::plan(catalog,18446744073709551615)) {
+        case .ok(p): { p } case .err(_): { return .err(.Metadata); }
+    };
+    let usize target_checked = record_metadata_prepared(ref plan,ref target)?;
+    // Destination admission proved the complete immutable table. Reuse that
+    // validation and this fresh plan while still checking source identity/shape.
+    let Owner origin = record_owner_prepared(table,ref plan,source)?;
     if (target.record != origin.record) { return .err(.Type); }
     return switch (record_storage::assign(catalog, origin.record, target.base, origin.base, bytes, ref table.arena)) {
         case .ok(value): { .ok(value) } case .err(error): { .err(record_error(error)) }
@@ -959,6 +965,8 @@ pub fn Result<usize, Error> replace_subrecord(ref records::Catalog catalog,
 // Transient checked byte windows, never a second cursor or ownership proof.
 // target/source select the nominal subtree; cursor extents always retain roots.
 pub struct RecordWork { usize target; usize source; usize size; usize bytes; }
+// Private composition after complete table validation, using one fresh plan
+// for the exact catalog. Neither table nor catalog changes before this lookup.
 fn Result<Owner,Error> record_owner_prepared(ref Table table,ref records::Plan plan,Token token){
     let Owner owner=lookup(table,token)?;
     let usize checked=record_metadata_prepared(plan,ref owner)?;
