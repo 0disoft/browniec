@@ -830,6 +830,12 @@ fn Result<usize, Error> record_metadata(ref records::Catalog catalog, ref Owner 
     let records::Plan plan = switch (records::plan(catalog, 18446744073709551615)) {
         case .ok(value): { value } case .err(_): { return .err(.Metadata); }
     };
+    return record_metadata_prepared(ref plan,owner);
+}
+// Private composition only: plan was built from the exact immutable catalog
+// in this call. Owner identity/table validation remains the caller's job.
+fn Result<usize, Error> record_metadata_prepared(ref records::Plan plan, ref Owner owner) {
+    if (owner.element != 0) { return .err(.Type); }
     if (owner.record >= plan.count) { return .err(.Metadata); }
     if (plan.bytes[owner.record] != owner.length || plan.alignments[owner.record] != owner.alignment) {
         return .err(.Metadata);
@@ -908,12 +914,20 @@ pub fn Result<usize, Error> replace_record(ref records::Catalog catalog, Token d
 pub fn Result<usize, Error> assign_subrecord(ref records::Catalog catalog,
     Token destination, Token source, usize nominal, usize target_leaf, usize source_leaf,
     ref mut u8[] bytes, ref Table table) {
-    let Owner target = resolve_record(catalog,table,destination,bytes.len)?;
-    let Owner origin = resolve_record(catalog,table,source,bytes.len)?;
-    let usize target_offset = switch(record_range::offset(catalog,target.record,nominal,target_leaf)) {
+    let Owner target = resolve_any(table,destination,bytes.len)?;
+    if (target.element != 0) { return .err(.Type); }
+    let records::Plan plan = switch (records::plan(catalog,18446744073709551615)) {
+        case .ok(p): { p } case .err(_): { return .err(.Metadata); }
+    };
+    let usize target_checked = record_metadata_prepared(ref plan,ref target)?;
+    let Owner origin = resolve_any(table,source,bytes.len)?;
+    let usize source_checked = record_metadata_prepared(ref plan,ref origin)?;
+    // Both owners and nominal paths share this local plan; raw assignment below
+    // still independently validates storage before snapshotting or writing.
+    let usize target_offset = switch(record_range::offset_prepared(catalog,ref plan,target.record,nominal,target_leaf)) {
         case .ok(n): { n } case .err(_): { return .err(.Type); }
     };
-    let usize source_offset = switch(record_range::offset(catalog,origin.record,nominal,source_leaf)) {
+    let usize source_offset = switch(record_range::offset_prepared(catalog,ref plan,origin.record,nominal,source_leaf)) {
         case .ok(n): { n } case .err(_): { return .err(.Type); }
     };
     if (target_offset > target.length || source_offset > origin.length) { return .err(.Bounds); }
@@ -943,11 +957,7 @@ pub fn Result<usize, Error> replace_subrecord(ref records::Catalog catalog,
 pub struct RecordWork { usize target; usize source; usize size; usize bytes; }
 fn Result<Owner,Error> record_owner_prepared(ref Table table,ref records::Plan plan,Token token){
     let Owner owner=lookup(table,token)?;
-    if(owner.element!=0){return .err(.Type);}
-    if(owner.record>=plan.count){return .err(.Metadata);}
-    if(plan.bytes[owner.record]!=owner.length || plan.alignments[owner.record]!=owner.alignment){
-        return .err(.Metadata);
-    }
+    let usize checked=record_metadata_prepared(plan,ref owner)?;
     return .ok(owner);
 }
 fn Result<usize,Error> record_offset_prepared(ref records::Catalog catalog,ref records::Plan plan,
