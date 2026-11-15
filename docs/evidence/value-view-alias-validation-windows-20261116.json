@@ -1,0 +1,129 @@
+{
+  "schema": "browniec.value-view-alias-validation/v1",
+  "status": "passed",
+  "clientDate": "2026-11-16",
+  "baselineCommit": "f2f83690142e175dd3133108aa30c1f7bb417471",
+  "implementationCommit": "84a112dfd75f3426aad4262212923be4573ab2c1",
+  "command": "python -B tools/verify-value-view-alias-validation.py --profile all",
+  "profiles": [
+    {
+      "profile": "development",
+      "nativeGroups": 6,
+      "receipt": "build/value-view-alias-validation/development/receipt.json",
+      "receiptSha256": "798f3bc5a47d87737c22b76ef08680fa0892d8a8c6e3dd691c4d05d2a33d2cf3",
+      "nativeInputMirrorVerified": true,
+      "nativeOverrides": false,
+      "allInputHashesMatch": true
+    },
+    {
+      "profile": "release",
+      "nativeGroups": 6,
+      "receipt": "build/value-view-alias-validation/release/receipt.json",
+      "receiptSha256": "10f82cb37fa4b6b822ae7e75ad249c53fb24705fce41d245a4fee3b041e44f32",
+      "nativeInputMirrorVerified": true,
+      "nativeOverrides": false,
+      "allInputHashesMatch": true
+    }
+  ],
+  "rootCheck": "check ok: 2 instance(s), 375 source file(s), 4103 MIR function(s), lock updated",
+  "productionProof": {
+    "singleResolverReplacedByAuthenticatedRowRead": true,
+    "allOtherProductionCodeMatchesBaseline": true,
+    "fullFreshLookupAuthenticationPerArgumentRetained": true,
+    "originalPoolStoreAndVectorsUnchangedDuringBatch": true,
+    "stagedDestinationValidationAndSinglePublicationRetained": true,
+    "errorOrderFuelLeaseIdentityAndRollbackUnchanged": true,
+    "noNewApiCachePersistentStateOrHeapAllocation": true,
+    "productionLfFiles": 367
+  },
+  "testedInputIdentity": {
+    "nativeInputCount": 376,
+    "profilesUseSameInputs": true,
+    "allReceiptInputsMatchWorkingBytes": true,
+    "nativeGitBlobMatches": 376,
+    "discoveryOnlyToolGitBlobMatches": 2,
+    "totalGitBlobMatches": 378,
+    "committedTreeMatchesAuditedIndex": true
+  },
+  "structuralCounts": {
+    "sourceLevelOnly": true,
+    "successfulArguments": 8,
+    "originalLiveViews": 24,
+    "headerScansBefore": 25,
+    "headerScansAfter": 17,
+    "rootAuthenticationsBefore": 16,
+    "rootAuthenticationsAfter": 8,
+    "removedOuterRowVisits": 256,
+    "removedSourceLivePairChecks": 2208,
+    "completeHeaderLivePairChecksBefore": 7628,
+    "completeHeaderLivePairChecksAfter": 5420,
+    "overallComplexity": "Unchanged: quadratic header validation; fixed caps A<=8, D<=32 and R<=16 bound the full operation",
+    "auxiliaryState": "Unchanged existing staged Pool; no new heap allocation",
+    "aliasFuel": 4096,
+    "throughputMeasured": false,
+    "physicalPeaksMeasured": false
+  },
+  "newCase": {
+    "initialViews": 24,
+    "finalViews": 32,
+    "actualRootsAndReadLeases": 2,
+    "repeatedArguments": 8,
+    "shortFuel": 4095,
+    "exactFuel": 4096,
+    "originalRowsWindowsAndGenerationsPreserved": true,
+    "rootBytesAndLedgersPreserved": true,
+    "zeroFuelCleanup": true
+  },
+  "discoveryOnlyChecks": [
+    {
+      "command": [
+        "python",
+        "-B",
+        "tools/verify-value-view-calls.py",
+        "--batch",
+        "core",
+        "--discover"
+      ],
+      "groups": 7,
+      "status": "passed",
+      "toolSha256": "7600d5734c4bd9972c9a29ee5df501dad999e5f97efcbe208a08441a274fec9b"
+    },
+    {
+      "command": [
+        "python",
+        "-B",
+        "tools/verify-value-view-calls.py",
+        "--batch",
+        "regression",
+        "--discover"
+      ],
+      "groups": 6,
+      "status": "passed",
+      "toolSha256": "7600d5734c4bd9972c9a29ee5df501dad999e5f97efcbe208a08441a274fec9b"
+    },
+    {
+      "command": [
+        "python",
+        "-B",
+        "tools/verify-value-view-call-program.py",
+        "--batch",
+        "regression",
+        "--discover"
+      ],
+      "groups": 29,
+      "status": "passed",
+      "toolSha256": "3a7b4814f0a24cb2e69aebb765101ae55320822034e9466aa7533303440b6300"
+    }
+  ],
+  "scope": "private atomic native view CALL aliases and existing frame argument/return adapter",
+  "skipped": [
+    "Full Engine transport",
+    "retained/source CALL integration",
+    "public CLI",
+    "standalone memory",
+    "full release gates",
+    "Full native batches for discovery-only selectors",
+    "Known legacy Static integration and struct_subassign_source failures not retested or fixed"
+  ],
+  "remote": "local only; not pushed, published, released or deployed"
+}

@@ -1,22 +1,21 @@
 - Latest maintenance checkpoint (2026-11-16):
-  [coordinate-only Static preflight](docs/engineering/static-view-ranges.md#coordinate-only-preflight-maintenance-2026-11-16).
-  Concrete view inspection and crop parent validation no longer encode discarded
-  words. A private shared predicate retains ordered bounds before arithmetic.
-  Each inspection removes 0-26 conversion iterations; crop encodes only its child.
-  Both remain O(1) under the 4096-byte cap, without added state or heap allocation.
-  Source counts only; throughput and physical peaks were not measured.
-  Development/O2 each pass thirteen native groups, including the exact original
-  oracle, 24576 window and 32768 crop comparisons, all 4097 full-image suffixes,
-  byte/text/liveness boundaries, CALL/PARAM/RET and RANGE Fuel/publication gates.
-  All 377 input hashes match tested bytes and implementation 0e0f32a in both profiles.
+  [view CALL source authentication](docs/engineering/value-view-calls.md#source-authentication-reuse-2026-11-16).
+  aliases reads the exact row just authenticated by lookup, while its source
+  Pool/store/vectors remain unchanged and only the separate candidate changes.
+  Every source still receives fresh full authentication; no external proof/cache.
+  Eight arguments reduce total header scans 25 to 17 and root checks 16 to 8.
+  At 24 original live views, 2208 source pair checks are removed. Fixed bounds
+  and auxiliary state remain unchanged; throughput/physical peaks not measured.
+  Development/O2 each pass six native groups: full 24-to-32-row batch, two leases,
+  exact/short Fuel, byte/window/generation preservation, late atomic rejection,
+  zero-Fuel cleanup, actual frame handoff and the original lookup fault oracle.
+  All 376 native input hashes match tested bytes and implementation 84a112d.
+  Two discovery-only tools match Git too; selectors discover 7/6/29 groups.
   Root check: 375 sources / 4103 MIR; all 367 production files retain LF.
-  Initial broader development test exhausted the native stack, also reproduced
-  at baseline b6e054c; broader O2 compilation exceeded MSVC's 60-second timeout.
-  Those failures are not passes or fixes. Full retained invocation/recursive
-  execution, Engine transport, public CLI and full release gates are not verified.
-  Known legacy source failure not retested or claimed fixed.
+  Full Engine/retained-source CALL/public CLI/memory/release gates not rerun.
+  Known legacy Static integration and source failures not retested or claimed fixed.
   Broader completion remains paused; local commits only.
-  See [evidence](docs/evidence/static-view-validation-windows-20261116.json).
+  See [evidence](docs/evidence/value-view-alias-validation-windows-20261116.json).
 
 # Brownie C agent guidance
 
