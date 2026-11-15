@@ -1,0 +1,69 @@
+{
+  "schema": "browniec.value-wrap-writes/v1",
+  "status": "passed",
+  "clientDate": "2026-11-16",
+  "baselineCommit": "ed474cf366bb3b6f9738d2e9158bcc624ba10f9e",
+  "implementationCommit": "1950e6a8045908625706047a372d0c0243794516",
+  "profiles": [
+    {
+      "profile": "development",
+      "nativeGroups": 10,
+      "receipt": "build/value-wrap-writes/development/receipt.json",
+      "receiptSha256": "897f87221e76a17c8daa438349360ae82ac7ac7ed905eb6862240517ea25d477",
+      "nativeInputMirrorVerified": true,
+      "nativeOverrides": false,
+      "allInputHashesMatch": true
+    },
+    {
+      "profile": "release",
+      "nativeGroups": 10,
+      "receipt": "build/value-wrap-writes/release/receipt.json",
+      "receiptSha256": "bd79afcc2c83733173c514a539dde3930d738486a8fb286435b42c5032d4e189",
+      "nativeInputMirrorVerified": true,
+      "nativeOverrides": false,
+      "allInputHashesMatch": true
+    }
+  ],
+  "command": "python -B tools/verify-value-wrap-writes.py --profile all",
+  "rootCheck": "check ok: 2 instance(s), 375 source file(s), 4102 MIR function(s), lock updated",
+  "productionProof": {
+    "onlyPaddingInitializationLoopsAndCommentsChanged": true,
+    "originalWrapperAndCopyOraclesMatchBaseline": true,
+    "preflightAndErrorOrderUnchanged": true,
+    "overlapContractUnchanged": true,
+    "canonicalPostcheckAndPublicationUnchanged": true,
+    "handoffConsumptionFuelQuotaAndCleanupUnchanged": true,
+    "productionLfRetained": true,
+    "noNewApiAllocationStateOrCallerProof": true
+  },
+  "testedInputIdentity": {
+    "inputCount": 377,
+    "allReceiptInputsMatchWorkingBytes": true,
+    "exactGitBlobMatches": 377,
+    "lineEndingOnlyDifferences": 0
+  },
+  "structuralCounts": {
+    "sourceLevelOnly": true,
+    "wrapperBytes": 32776,
+    "payloadBytes": 32768,
+    "rawOrStagingWritesBefore": 65545,
+    "rawOrStagingWritesAfter": 32776,
+    "stagingAndPublicationWritesBefore": 98321,
+    "stagingAndPublicationWritesAfter": 65552,
+    "eliminatedStoresPerConstruction": 32769,
+    "wholeConstruction": "O(B), unchanged",
+    "auxiliarySpace": "O(1)",
+    "throughputMeasured": false,
+    "physicalPeaksMeasured": false
+  },
+  "initialFixtureFailure": "Unsupported usize-to-u8 cast replaced by bounded u8 counter; failed attempt not counted as passing evidence",
+  "scope": "private retained-value Option/Result construction; public CLI admission unchanged",
+  "skipped": [
+    "Full Engine transport",
+    "public CLI",
+    "standalone memory",
+    "full release gates",
+    "Known legacy struct_subassign_source failure not retested or fixed"
+  ],
+  "remote": "local only; not pushed, published, released or deployed"
+}

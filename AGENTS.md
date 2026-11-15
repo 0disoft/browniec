@@ -1,22 +1,23 @@
 - Latest maintenance checkpoint (2026-11-16):
-  [authenticated root resolution reuse](docs/engineering/value-root-resolution.md).
-  Only resolve_mode and describe reuse the fresh full preflight within
-  immutable synchronous borrows; no caller-supplied proof or persistent cache.
-  Full preflight, raw owner APIs, identity/backing checks and write lease
-  rejection remain; other root functions and Fuel prices are unchanged.
-  Successful full validations: describe 3 to 1, len 2 to 1, read 3 to 2;
-  frame Buffer reads 6 to 3, or 393216 to 196608 validation slot visits
-  for 4096 reads. Existing duplicate checks remain O(n^2), n <= 16.
-  Source counts only; throughput and physical peaks were not measured.
-  Development/O2 each pass eight groups: original resolver/raw owner oracles,
-  metadata corruption with combined handle faults, reused slots, terminal
-  generations, exact Fuel, native bytes, lease rejection and growth rollback.
-  All 377 input hashes match tested bytes and implementation bbbbb95.
+  [single-write wrapper construction](docs/engineering/value-wrap-writes.md).
+  Raw wrap_at and native build_tag clear only header/tail padding, then
+  write the tag and full payload once; none still clears all inactive bytes.
+  Only initialization loops/comments change. Bounds, overlap, canonical
+  pre/postchecks, Fuel, publication, root handoff and cleanup are unchanged.
+  A 32776-byte wrapper with 32768 payload bytes uses 65545 to 32776
+  staging/destination stores; staging plus publication uses 98321 to 65552.
+  Both remain O(B), O(1) extra space. Source counts only; throughput and
+  physical peaks were not measured. No added API, state or allocation.
+  Development/O2 each pass ten groups: frozen original byte/error oracles,
+  mutated and maximum payloads, dirty staging, padding, exact Fuel, overlap,
+  recursive native ownership and VM wrappers. Initial fixture cast was
+  corrected before final runs; failed attempts are not passing evidence.
+  All 377 input hashes match tested bytes and implementation 1950e6a.
   Root check: 375 sources / 4102 MIR; production LF and guidance body retained.
   Full Engine transport, public CLI, standalone memory and release gates not rerun.
   Known legacy source failure not retested or claimed fixed.
   Broader completion remains paused; local commits only.
-  See [evidence](docs/evidence/value-root-resolution-windows-20261116.json).
+  See [evidence](docs/evidence/value-wrap-writes-windows-20261116.json).
 
 # Brownie C agent guidance
 
