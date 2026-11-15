@@ -19,8 +19,8 @@ accounting or evidence of peak native stack/RAM usage.
 
 The pinned SDK has no usize-to-u32 narrowing helper. After complete bounds
 preflight, each pack performs at most 26 conversion iterations. Decoding does
-not repack the actual word; inspection separately validates the admitted maximum
-window through the bounded packer. Bounds are
+not repack the actual word. Inspection separately validates the admitted maximum
+window through a coordinate-only predicate; crop encodes only its result. Bounds are
 checked before multiplication/addition/subtraction, including host-sized forged
 values. Empty end ranges at absolute offset 4096 are representable.
 
@@ -71,3 +71,51 @@ follows complete Fuel and bounds preflight. The
 [source successor](static-range-source.md) now lowers computed endpoints and
 their nonlocal exit cleanup, with retained-image source execution cases. Existing prices and capacities are not
 changed by this preparation. The complete accepted objective remains open.
+
+## Coordinate-only preflight maintenance (2026-11-16)
+
+Every concrete image-backed READ/LEN/EQUAL and several CALL/RET checks reach
+`static_views::inspect`. Its maximum-window check used to call `pack` and discard
+the resulting word. `crop` similarly packed its parent only to validate it, then
+packed the actual result. Both now use the same private coordinate predicate as
+`pack` and `unpack`: payload <= 4096, start <= payload, length <= payload-start.
+Short-circuit evaluation retains the guard before subtraction and every later
+addition. Metadata errors still precede guest endpoint errors, preserving kind 5
+versus 14 and the original offset. Generic root traversal and byte/text rules
+are unchanged. No validity cache, caller proof, state or allocation is added.
+
+A concrete-window inspection removes one discarded encoding and its 0-26 bit
+conversion iterations. A window at start 2048 with length 2048 needs 25 such
+iterations in the original packer: 1024 inspections therefore remove 25600
+iterations. At the empty 4096-byte end the original conversion takes 26. Crop
+reduces pack calls from two to one; encoding the child remains necessary. The
+4096-byte cap makes both versions O(1) overall, with O(1) auxiliary space. These
+are source-level operation counts; throughput and physical peaks were not measured.
+
+Run `build/toolchain/fairyc.exe check`, then
+`python -B tools/verify-static-view-validation.py --profile all`. Its thirteen
+native groups run in development and release with byte-identical input mirrors
+and default native settings. An exact original implementation from `b6e054c`,
+with only local function/type aliases and visibility changed, provides the oracle:
+
+- 24576 concrete/generic window comparisons combine byte/text kinds, malformed
+  words, boundary coordinates and near-maximum host integers.
+- 32768 crop comparisons preserve parent/endpoint failure precedence; 512 pack
+  comparisons cover the same coordinate matrix. All 4097 full-image suffixes
+  and their empty ends remain representable. Successes and exact errors agree.
+- Existing tests cover range/frame/liveness isolation, bounds and text rejection,
+  CALL/PARAM/RET preflight, exact Fuel and RANGE failure atomicity before
+  publication. Full retained invocation and recursive execution are not covered
+  by this focused selection.
+
+See [Windows evidence](../evidence/static-view-validation-windows-20261116.json).
+Full Engine transport, public CLI, standalone memory and full release gates were
+not rerun. An initial nineteen-group attempt failed: development hit native
+stack exhaustion in `retained_calls_execute_narrowed_bytes_and_exact_text_at_exact_fuel`;
+release exceeded the compiler's default 60-second MSVC command timeout. The
+same development test reproduces the exact stack failure at unchanged baseline
+`b6e054c` in an isolated locked mirror. These are recorded failures, not passes.
+The final selection exercises the changed module and direct VM/transfer gates
+with default settings; it does not claim to fix either integration limitation.
+The known legacy source failure was not retested or claimed fixed.
+Broader completion remains paused; this change is local only.

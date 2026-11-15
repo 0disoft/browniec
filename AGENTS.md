@@ -1,21 +1,22 @@
 - Latest maintenance checkpoint (2026-11-16):
-  [record domain validation](docs/engineering/value-record-validation.md).
-  Retained scalar/record layouts prove integer widths; inspect proves the
-  exact byte extent. Only bool needs a scalar payload check in the record walker.
-  Every nested/interior/tail padding check and the depth-16 cursor are retained.
-  A 4096-byte i64 record eliminates 512 decodes and 4096 accumulation steps;
-  its 546 field visits remain. Overall O(F + P) and extra state are unchanged.
+  [coordinate-only Static preflight](docs/engineering/static-view-ranges.md#coordinate-only-preflight-maintenance-2026-11-16).
+  Concrete view inspection and crop parent validation no longer encode discarded
+  words. A private shared predicate retains ordered bounds before arithmetic.
+  Each inspection removes 0-26 conversion iterations; crop encodes only its child.
+  Both remain O(1) under the 4096-byte cap, without added state or heap allocation.
   Source counts only; throughput and physical peaks were not measured.
-  Development/O2 each pass eleven native groups, including the exact original
-  record oracle, all 24576 nested-byte mutations, five integer tags at maximum
-  size, exact lengths, bool/padding atomicity, depth16 plus four wrappers,
-  retained snapshot isolation, scalar round trips and frame copy/cleanup.
-  All 377 input hashes match tested bytes and implementation 752ee0f.
-  Root check: 375 sources / 4102 MIR; production LF and guidance body retained.
-  Full Engine transport, public CLI, standalone memory and release gates not rerun.
+  Development/O2 each pass thirteen native groups, including the exact original
+  oracle, 24576 window and 32768 crop comparisons, all 4097 full-image suffixes,
+  byte/text/liveness boundaries, CALL/PARAM/RET and RANGE Fuel/publication gates.
+  All 377 input hashes match tested bytes and implementation 0e0f32a in both profiles.
+  Root check: 375 sources / 4103 MIR; all 367 production files retain LF.
+  Initial broader development test exhausted the native stack, also reproduced
+  at baseline b6e054c; broader O2 compilation exceeded MSVC's 60-second timeout.
+  Those failures are not passes or fixes. Full retained invocation/recursive
+  execution, Engine transport, public CLI and full release gates are not verified.
   Known legacy source failure not retested or claimed fixed.
   Broader completion remains paused; local commits only.
-  See [evidence](docs/evidence/value-record-validation-windows-20261116.json).
+  See [evidence](docs/evidence/static-view-validation-windows-20261116.json).
 
 # Brownie C agent guidance
 

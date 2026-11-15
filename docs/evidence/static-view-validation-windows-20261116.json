@@ -1,0 +1,116 @@
+{
+  "schema": "browniec.static-view-validation/v1",
+  "status": "passed",
+  "clientDate": "2026-11-16",
+  "baselineCommit": "b6e054ca03b1f40f7f544874de7968e1f2c0e40c",
+  "implementationCommit": "0e0f32a889846762d59c7c275eaecea5bbde5a80",
+  "command": "python -B tools/verify-static-view-validation.py --profile all",
+  "profiles": [
+    {
+      "profile": "development",
+      "nativeGroups": 13,
+      "receipt": "build/static-view-validation/development/receipt.json",
+      "receiptSha256": "1d257c30ac9c375039ab4cb49431117279b7a8c7f9d273e2f21bb2190e7ea8d7",
+      "nativeInputMirrorVerified": true,
+      "nativeOverrides": false,
+      "allInputHashesMatch": true
+    },
+    {
+      "profile": "release",
+      "nativeGroups": 13,
+      "receipt": "build/static-view-validation/release/receipt.json",
+      "receiptSha256": "001c3724a939a87272586c4ec6669f74ca6798ec6a4c7fb45735424735c11c44",
+      "nativeInputMirrorVerified": true,
+      "nativeOverrides": false,
+      "allInputHashesMatch": true
+    }
+  ],
+  "rootCheck": "check ok: 2 instance(s), 375 source file(s), 4103 MIR function(s), lock updated",
+  "productionProof": {
+    "onlyStaticViewsChanged": true,
+    "sharedOrderedCoordinatePredicate": true,
+    "discardedInspectAndParentEncodingsRemoved": true,
+    "genericTraversalAndKindsUnchanged": true,
+    "metadataBeforeEndpointsAndExactErrorsRetained": true,
+    "productionLfFiles": 367,
+    "frozenOriginalOracleMatchesBaseline": true,
+    "noNewApiStateOrHeapAllocation": true
+  },
+  "testedInputIdentity": {
+    "inputCount": 377,
+    "allReceiptInputsMatchWorkingBytes": true,
+    "profilesUseSameInputs": true,
+    "exactGitBlobMatches": 377,
+    "committedTreeMatchesAuditedIndex": true
+  },
+  "structuralCounts": {
+    "sourceLevelOnly": true,
+    "concreteInspectDiscardedPackCallsBefore": 1,
+    "concreteInspectDiscardedPackCallsAfter": 0,
+    "removedConversionIterationsPerInspect": {
+      "minimum": 0,
+      "maximum": 26
+    },
+    "exampleWindow": {
+      "start": 2048,
+      "length": 2048,
+      "conversionIterationsBefore": 25,
+      "conversionIterationsAfter": 0,
+      "inspections": 1024,
+      "totalRemovedIterations": 25600
+    },
+    "cropPackCallsBefore": 2,
+    "cropPackCallsAfter": 1,
+    "overallComplexity": "O(1), unchanged under the 4096-byte cap",
+    "auxiliarySpace": "O(1), no new persistent state or heap allocation",
+    "throughputMeasured": false,
+    "physicalPeaksMeasured": false
+  },
+  "newCases": {
+    "windowOracleComparisons": 24576,
+    "cropOracleComparisons": 32768,
+    "packOracleComparisons": 512,
+    "fullImageSuffixes": 4097,
+    "emptyEnd": 4096,
+    "hostSizedForgeryAndErrorPrecedence": true
+  },
+  "initialBroaderAttempts": [
+    {
+      "profile": "development",
+      "status": "failed",
+      "selectedGroups": 19,
+      "receipt": "build/static-view-validation/initial/development/receipt.json",
+      "receiptSha256": "071e7ba921326d9474cf4d937c75ed211ca535318024b7a781fe8de49ce52a6a",
+      "error": "fairyc: build failed: native test tests::m2::static_call_execution::retained_calls_execute_narrowed_bytes_and_exact_text_at_exact_fuel exited with status -1073741571 without valid trap control"
+    },
+    {
+      "profile": "release",
+      "status": "failed",
+      "selectedGroups": 19,
+      "receipt": "build/static-view-validation/initial/release/receipt.json",
+      "receiptSha256": "2d3a1b5c04d8c70d78edd2cfe8dbca855dbfe8f3e2aedad0f932527ea050e528",
+      "error": "fairyc: build failed: compile generated unit: MSVC host command exceeded 1m0s"
+    }
+  ],
+  "baselineStackReproduction": {
+    "status": "reproduced",
+    "profile": "development",
+    "commit": "b6e054ca03b1f40f7f544874de7968e1f2c0e40c",
+    "test": "tests::m2::static_call_execution::retained_calls_execute_narrowed_bytes_and_exact_text_at_exact_fuel",
+    "exit": 6,
+    "error": "fairyc: build failed: native test tests::m2::static_call_execution::retained_calls_execute_narrowed_bytes_and_exact_text_at_exact_fuel exited with status -1073741571 without valid trap control",
+    "receipt": "build/static-view-validation/baseline-stack/receipt.json",
+    "receiptSha256": "64cfea5d79771d44c65bbeb5d54d5804f86d5bdd8c8977c133321231ab5a3006",
+    "nativeOverrides": false
+  },
+  "scope": "private Static view coordinate validation and direct CALL/PARAM/RET/RANGE gates",
+  "skipped": [
+    "Full retained invocation and recursive execution integration remains unverified after the initial failed attempts",
+    "Full Engine transport",
+    "public CLI",
+    "standalone memory",
+    "full release gates",
+    "Known legacy struct_subassign_source failure not retested or fixed"
+  ],
+  "remote": "local only; not pushed, published, released or deployed"
+}
