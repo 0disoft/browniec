@@ -163,7 +163,9 @@ pub fn Result<usize,Error> aliases(ref mut Pool pool,ref roots::State store,
     var Pool staged=*pool;var usize i=0;
     while(i<sources.len){
         let Ticket source=lookup(pool,store,data,scratch,sources[i])?;
-        let Row row=resolve(pool,store,data,scratch,source,sources[i])?;
+        // lookup authenticated this exact row against the immutable pool/store.
+        // Only staged changes below; no external ticket or cached proof enters.
+        let Row row=get(pool,source.slot);
         let usize slot=vacant(ref staged,destinations[i])?;
         let Ticket added=publish(ref mut staged,slot,destinations[i],row.serial,
             row.owner_binding,token(row),row.start,row.length);

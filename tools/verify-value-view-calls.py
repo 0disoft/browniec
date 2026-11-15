@@ -22,9 +22,9 @@ def discover(batch):
     regressions = {'value_view_copy_roots': None, 'value_view_copy_execution': None}
     runner.MODULES = core if batch == 'core' else regressions
     expected = runner.discover()
-    assert len(expected) == 6
+    assert len(expected) == (7 if batch == 'core' else 6)
     if batch == 'core':
-        assert sum('::value_view_call_pool::' in name for name in expected) == 3
+        assert sum('::value_view_call_pool::' in name for name in expected) == 4
         assert sum('::value_view_call_runtime::' in name for name in expected) == 3
     return expected
 

@@ -24,7 +24,7 @@ def discover(batch):
     }
     runner.MODULES = batches[batch]
     expected = runner.discover()
-    assert len(expected) == {'core': 9, 'source': 4, 'regression': 28}[batch]
+    assert len(expected) == {'core': 9, 'source': 4, 'regression': 29}[batch]
     return expected
 
 

@@ -248,3 +248,33 @@ fn void finish(ref mut views::Pool p,ref mut roots::State s,ref mut vec::Vec<byt
     fuel=256;ticket_error(views::handoff(ref mut p,ref mut s,ref data,ref scratch,returned,400,401,origin,10,ref mut fuel),2);assert(fuel==0);
     pool_unchanged(ref p,ref closed);unchanged(ref s,ref released);assert(root_ok(roots::drain(ref mut s,ref mut data,ref mut scratch))==0);
 }
+
+@test fn void eight_aliases_fill_last_rows_preserve_source_windows_and_shared_leases(){
+    var vec::Vec<bytes::Buffer> data=vec::empty<bytes::Buffer>();var vec::Vec<bytes::Buffer> scratch=vec::empty<bytes::Buffer>();var usize fuel=1000000;
+    var roots::State s=opened(ref mut data,ref mut scratch,ref mut fuel);
+    let usize a=insert(ref mut s,ref mut data,ref mut scratch,7,b"abcdef",ref mut fuel);
+    let usize b=insert(ref mut s,ref mut data,ref mut scratch,8,b"UVWXYZ",ref mut fuel);
+    var views::Pool p=pool_open(ref mut s,ref data,ref scratch,ref mut fuel);
+    let views::Ticket left=ticket(views::begin(ref mut p,ref mut s,ref data,ref scratch,a,7,10,1,5,ref mut fuel));
+    let views::Ticket right=ticket(views::begin(ref mut p,ref mut s,ref data,ref scratch,b,8,11,1,5,ref mut fuel));
+    var usize i=2;while(i<24){
+        let views::Ticket extra=ticket(views::alias(ref mut p,ref mut s,ref data,ref scratch,
+            if(i%2==0){left}else{right},if(i%2==0){10}else{11},20+i,ref mut fuel));i+=1;
+    }
+    assert(views::snapshot(ref p).live==24 && views::snapshot(ref p).roots==2);
+    let views::Pool initial=p;let roots::State held=s;
+    let usize[8] sources=[10,11,10,11,10,11,10,11];let usize[8] destinations=[100,101,102,103,104,105,106,107];
+    fuel=4095;error(views::aliases(ref mut p,ref s,ref data,ref scratch,ref sources,ref destinations,ref mut fuel),1);
+    assert(fuel==4095);pool_unchanged(ref p,ref initial);unchanged(ref s,ref held);
+    fuel=4096;assert(ok(views::aliases(ref mut p,ref s,ref data,ref scratch,ref sources,ref destinations,ref mut fuel))==8 && fuel==0);
+    assert(views::snapshot(ref p).live==32 && views::snapshot(ref p).roots==2);unchanged(ref s,ref held);
+    i=0;while(i<24){var views::Pool expected=p;expected.rows[i]=initial.rows[i];pool_unchanged(ref p,ref expected);i+=1;}
+    i=0;while(i<8){let views::Row row=p.rows[24+i];let views::Row source=initial.rows[i%2];
+        assert(row.live && row.binding==destinations[i] && row.generation==initial.rows[24+i].generation &&
+            row.serial==source.serial && row.owner_binding==source.owner_binding && row.owner_slot==source.owner_slot &&
+            row.owner_generation==source.owner_generation && row.start==source.start && row.length==source.length);
+        view_content(ref p,ref s,ref data,ref scratch,views::Ticket{.slot=24+i,.generation=row.generation},destinations[i],
+            if(i%2==0){b"bcde"}else{b"VWXY"});i+=1;
+    }
+    fuel=0;finish(ref mut p,ref mut s,ref mut data,ref mut scratch);assert(fuel==0);
+}
