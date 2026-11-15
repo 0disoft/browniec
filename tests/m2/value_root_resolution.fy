@@ -130,3 +130,42 @@ fn store::State fault(ref store::State clean,usize slot,usize mode){var store::S
     queries(ref s,ref mut roots,ref mut scratch,serial,3);
     assert(ok(store::drain(ref mut s,ref mut roots,ref mut scratch))==0);
 }
+
+fn void read_boundary(ref store::State s,ref vec::Vec<bytes::Buffer> roots,
+    ref vec::Vec<bytes::Buffer> scratch,usize serial,usize binding,usize index,ref u8[] expected){
+    let Result<usize,store::Error> wanted=read(s,roots,scratch,serial,binding,index);
+    var usize fuel=store::read_cost();
+    let Result<usize,store::Error> got=switch(store::read(s,roots,scratch,serial,binding,index,ref mut fuel)){
+        case .ok(v):{.ok(v as usize)}case .err(e):{.err(e)}};
+    same(wanted,got);assert(fuel==0);
+    if(index<expected.len){same(.ok(expected[index] as usize),got);}else{same(.err(.Bounds),got);}
+    fuel=store::read_cost()-1;
+    assert(switch(store::read(s,roots,scratch,0,512,index,ref mut fuel)){
+        case .ok(_):{false}case .err(e):{code(e)==1}});assert(fuel==store::read_cost()-1);
+}
+@test fn void direct_reads_match_raw_owner_at_empty_alignment_and_extreme_boundaries_with_leases(){
+    var vec::Vec<bytes::Buffer> roots=vec::empty<bytes::Buffer>();var vec::Vec<bytes::Buffer> scratch=vec::empty<bytes::Buffer>();
+    var usize fuel=1000000;var store::State s=opened(ref mut roots,ref mut scratch,ref mut fuel);
+    var u8[4096] input=[0;4096];var usize i=0;var u8 value=0;
+    while(i<4096){input[i]=value;value=if(value==250){0}else{value+1};i+=1;}
+    let usize[6] sizes=[0,1,63,64,65,4096];var usize n=0;
+    while(n<sizes.len){let usize length=sizes[n];fuel=1000000;
+        let usize serial=ok(store::insert(ref mut s,ref mut roots,ref mut scratch,n,ref input[..length],limits(),ref mut fuel));
+        let usize cap=bytes::capacity(vec::at<bytes::Buffer>(ref roots,n));
+        let usize[6] indices=[0,length/2,if(length==0){0}else{length-1},length,cap,18446744073709551615];
+        let store::Snapshot before=store::snapshot(ref s,ref roots);var usize phase=0;
+        let owners::Token token=owners::Token{.slot=s.rows[n].slot,.generation=s.rows[n].generation};
+        while(phase<2){
+            if(phase==1){assert(store::begin_read(ref mut s,ref roots,ref scratch,serial,n,ref mut fuel).is_ok);}
+            i=0;while(i<indices.len){read_boundary(ref s,ref roots,ref scratch,serial,n,indices[i],ref input[..length]);i+=1;}
+            assert(s.table.slots[token.slot].reading==(phase==1));
+            if(phase==1){fuel=0;assert(ok(store::end_read(ref mut s,ref roots,ref scratch,serial,n,token))==token.slot && fuel==0);}
+            phase+=1;
+        }
+        let store::Snapshot after=store::snapshot(ref s,ref roots);
+        assert(before.count==after.count && before.used==after.used && before.peak==after.peak &&
+            before.next==after.next && before.closed==after.closed);
+        assert(bytes::equal(bytes::view(vec::at<bytes::Buffer>(ref roots,n)),ref input[..length]));n+=1;
+    }
+    fuel=0;assert(ok(store::drain(ref mut s,ref mut roots,ref mut scratch))==0 && fuel==0 && s.ledger.used==0);
+}

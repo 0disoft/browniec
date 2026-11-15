@@ -254,11 +254,11 @@ pub fn Result<usize,Error> len(ref State s,ref vec::Vec<bytes::Buffer> roots,
 pub fn Result<u8,Error> read(ref State s,ref vec::Vec<bytes::Buffer> roots,
     ref vec::Vec<bytes::Buffer> scratch,usize serial,usize binding,usize index,ref mut usize fuel){
     let usize paid=pay(read_cost(),fuel)?;let usize i=resolve_mode(s,roots,scratch,serial,binding,false)?;
-    return switch(owners::read(ref s.table,owners::Token{.slot=s.rows[i].slot,.generation=s.rows[i].generation},
-        index,vec::at<bytes::Buffer>(roots,i))){
-        case .ok(v):{.ok(v)}case .err(e):{.err(switch(e){case .Bounds:{.Bounds}
-            case .Owners:{.Owners}case .Token:{.State}case .State:{.State}})}
-    };
+    // The resolver authenticated this exact token/table/backing. Immutable
+    // borrows and no intervening callback keep that proof local to this read.
+    let ref bytes::Buffer root=vec::at<bytes::Buffer>(roots,i);
+    if(index>=bytes::len(root)){return .err(.Bounds);}
+    let ref u8[] view=bytes::view(root);return .ok(view[index]);
 }
 // The coordinator supplies a distinct native input borrow, never a view of any
 // root backing. No view or owning Buffer is exposed by these operations.
