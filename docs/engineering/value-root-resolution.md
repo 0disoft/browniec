@@ -39,7 +39,8 @@ unchanged. Fuel prices and admission order, error mapping, mutation/publication,
 lease release, generation exhaustion and cleanup retain their existing bodies.
 The public CLI admission gate remains unchanged.
 
-`tools/verify-value-root-resolution.py` selects eight native groups:
+At the earlier checkpoint, `tools/verify-value-root-resolution.py` selected
+eight native groups:
 
 - Two new groups compare resolution, full descriptor fields, lengths, byte
   values/errors and no-op write admission against the original resolver and raw
@@ -62,3 +63,37 @@ native settings. The tracked [evidence](../evidence/value-root-resolution-window
 records the final results and implementation identity. Full Engine transport,
 public CLI, standalone memory and full release gates are outside this change;
 the known legacy source failure was not retested or claimed fixed.
+
+## Direct byte reads after authentication (2026-11-16)
+
+The preceding table records the earlier resolver-only change. The subsequent
+byte-read change removes the remaining raw owner revalidation from
+`value_roots::read`. Its unchanged resolver already authenticates the full
+owner table, exact slot/generation and selected native Buffer extent. Immutable
+state/backing borrows and no intervening callback keep that proof local to the
+read. The method checks the index against the initialized Buffer length before
+forming a native byte view; no view or proof escapes. Standalone owner APIs
+still authenticate independently. Fuel admission remains first and costs 257.
+
+Compared with f5e13f9, successful direct reads reduce full owner-table checks
+from two to one, or 32 to 16 validation-slot visits. Over 4096 reads this removes
+65536 visits (131072 to 65536). Typed frame Buffer reads reduce three full table
+checks to two. Root duplicate checks remain quadratic for at most 16 roots;
+auxiliary state, allocation and API signatures are unchanged. These are source
+operation counts, not measured throughput or physical-memory improvements.
+
+`python -B tools/verify-value-root-read.py --profile all` selects eleven native
+groups: the original raw-owner resolver oracle, full-store 4096-read and metadata
+fault oracles, root lease and mutation regressions, actual typed-frame byte
+access, and the existing eight-argument view CALL batch. The added boundary
+group independently checks bytes/errors and raw-owner parity for lengths
+0, 1, 63, 64, 65 and 4096, before and during a read lease. It covers the first, middle
+and final byte, initialized-length and allocation-capacity boundaries, maximum
+usize, exact/short Fuel, unchanged accounting and zero-Fuel cleanup.
+The original resolver verifier now discovers nine groups because it also picks
+up this boundary case; only discovery was rerun through that older entry point.
+
+Results and scope are recorded in the
+[Windows evidence](../evidence/value-root-read-windows-20261116.json). Full Engine
+transport, public CLI, standalone memory and full release gates are outside
+this focused change.

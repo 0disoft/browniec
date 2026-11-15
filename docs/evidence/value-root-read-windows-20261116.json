@@ -1,0 +1,104 @@
+{
+  "schema": "browniec.value-root-read/v1",
+  "status": "passed",
+  "clientDate": "2026-11-16",
+  "baselineCommit": "f5e13f9cb59f4e826284f46774645e6c0b098f71",
+  "implementationCommit": "ab059eb6fc8eeef6d991edc3a6319807481dcd3b",
+  "command": "python -B tools/verify-value-root-read.py --profile all",
+  "profiles": [
+    {
+      "profile": "development",
+      "nativeGroups": 11,
+      "receipt": "build/value-root-read/development/receipt.json",
+      "receiptSha256": "b2342f47341c4d1b6bae59654acc7d8c486b11e88eed7464b0e8aa2bc3efc0c3",
+      "nativeInputMirrorVerified": true,
+      "nativeOverrides": false
+    },
+    {
+      "profile": "release",
+      "nativeGroups": 11,
+      "receipt": "build/value-root-read/release/receipt.json",
+      "receiptSha256": "ed529b2617407265f878e5c1c1f3c30027e99ca80e77e8295d15d0618e68f614",
+      "nativeInputMirrorVerified": true,
+      "nativeOverrides": false
+    }
+  ],
+  "rootCheck": "check ok: 2 instance(s), 375 source file(s), 4103 MIR function(s), lock updated",
+  "testedInputIdentity": {
+    "nativeInputCount": 379,
+    "exactGitIndexBlobMatches": 379,
+    "exactImplementationCommitBlobMatches": 379,
+    "profilesUseSameInputs": true,
+    "allReceiptInputsMatchWorkingBytes": true
+  },
+  "productionProof": {
+    "onlyRootReadBodyChanged": true,
+    "fullStoreTokenAndBackingAuthenticationRetained": true,
+    "initializedLengthCheckBeforeNativeView": true,
+    "immutableStateAndBackingWithNoInterveningCallback": true,
+    "rawOwnerApiUnchanged": true,
+    "fuelCost257AndErrorOrderRetained": true,
+    "noNewApiCacheStateOrAllocation": true,
+    "allProductionLf": true,
+    "productionFiles": 367
+  },
+  "structuralCounts": {
+    "sourceLevelOnly": true,
+    "ownerSlots": 16,
+    "directReadFullValidationsBefore": 2,
+    "directReadFullValidationsAfter": 1,
+    "frameReadFullValidationsBefore": 3,
+    "frameReadFullValidationsAfter": 2,
+    "readCount": 4096,
+    "directReadValidationSlotVisitsBefore": 131072,
+    "directReadValidationSlotVisitsAfter": 65536,
+    "removedValidationSlotVisits": 65536,
+    "complexity": "Unchanged O(n^2) root duplicate preflight for n<=16; unchanged O(1) auxiliary state",
+    "throughputMeasured": false,
+    "physicalPeaksMeasured": false
+  },
+  "coverage": {
+    "nativeGroupsPerProfile": 11,
+    "newByteLengths": [
+      0,
+      1,
+      63,
+      64,
+      65,
+      4096
+    ],
+    "readLeasePhases": 2,
+    "boundaryIndicesPerPhase": 6,
+    "newExactFuelReadCases": 72,
+    "newShortFuelCases": 72,
+    "originalRawOwnerOracle": true,
+    "allMetadataSlotsAndErrorPriorities": true,
+    "existingFullStore4096Reads": true,
+    "actualTypedFrameByteRead": true,
+    "eightAliasCallRegression": true,
+    "zeroFuelCleanup": true
+  },
+  "discoveryOnly": {
+    "command": "python -B tools/verify-value-root-resolution.py --discover",
+    "groups": 9,
+    "toolSha256": "d3a0df9babda878bf9dd9ca8754a6feb4cb7944f6eb7717a502d7cc747d6c93e",
+    "fullNativeRerunThroughOlderEntryPoint": false
+  },
+  "initialAttempt": {
+    "status": "failed; corrected test fixture",
+    "reason": "Pinned compiler does not support usize-to-u8 narrowing cast in new test data generation",
+    "resolution": "Generate the same 0..250 byte pattern with a u8 counter; no compiler or production workaround",
+    "preservedLogs": "build/value-root-read/first-attempt",
+    "receiptSha256": {
+      "development": "f56a1bb103686147e7e9eccbc8d857eb3f14053670b8b5f6c52448b9fd9a8e7a",
+      "release": "4c6a9fddbf1ab2a2ba1c6235f3c009cebc84d33542dcbc5e184160330c573e6a"
+    }
+  },
+  "skipped": [
+    "Full Engine transport",
+    "Public CLI",
+    "Standalone memory and full release gates",
+    "Known legacy retained CALL stack exhaustion and release compiler timeout not retested or claimed fixed"
+  ],
+  "remote": "No push, publication, release or deployment performed for this maintenance"
+}

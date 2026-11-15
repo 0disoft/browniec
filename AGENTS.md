@@ -1,21 +1,24 @@
 - Latest maintenance checkpoint (2026-11-16):
-  [view CALL source authentication](docs/engineering/value-view-calls.md#source-authentication-reuse-2026-11-16).
-  aliases reads the exact row just authenticated by lookup, while its source
-  Pool/store/vectors remain unchanged and only the separate candidate changes.
-  Every source still receives fresh full authentication; no external proof/cache.
-  Eight arguments reduce total header scans 25 to 17 and root checks 16 to 8.
-  At 24 original live views, 2208 source pair checks are removed. Fixed bounds
-  and auxiliary state remain unchanged; throughput/physical peaks not measured.
-  Development/O2 each pass six native groups: full 24-to-32-row batch, two leases,
-  exact/short Fuel, byte/window/generation preservation, late atomic rejection,
-  zero-Fuel cleanup, actual frame handoff and the original lookup fault oracle.
-  All 376 native input hashes match tested bytes and implementation 84a112d.
-  Two discovery-only tools match Git too; selectors discover 7/6/29 groups.
+  [authenticated root byte reads](docs/engineering/value-root-resolution.md#direct-byte-reads-after-authentication-2026-11-16).
+  Root reads reuse the resolver's exact table/token/native-backing authentication.
+  Initialized-length bounds remain before native view access; immutable borrows
+  and no intervening callback keep the proof local. Raw owner APIs are unchanged.
+  Successful direct reads reduce owner-table validations two to one; 4096 reads
+  remove 65536 validation-slot visits. Frame reads reduce three checks to two.
+  Root duplicate scans remain quadratic with 16 roots maximum; no API/cache/state
+  or allocation added. Throughput and physical peaks were not measured.
+  Development/O2 each pass eleven native groups: raw-owner and metadata-fault
+  oracles, full-store 4096 reads, leases/mutations, actual frame byte access and
+  the existing eight-alias CALL regression. New lengths 0/1/63/64/65/4096 cover
+  byte/initialized-length/capacity/max-usize bounds, exact/short Fuel and cleanup.
+  All 379 tested input hashes match implementation ab059eb and the Git index.
+  The older resolver verifier discovers nine groups; its native batch not rerun.
   Root check: 375 sources / 4103 MIR; all 367 production files retain LF.
-  Full Engine/retained-source CALL/public CLI/memory/release gates not rerun.
-  Known legacy Static integration and source failures not retested or claimed fixed.
-  Broader completion remains paused; local commits only.
-  See [evidence](docs/evidence/value-view-alias-validation-windows-20261116.json).
+  The first native attempt rejected a test-only narrowing cast; the fixture now
+  uses a u8 counter. Failure logs are preserved under build/value-root-read.
+  Full Engine/public CLI/memory/release gates and known legacy failures not rerun.
+  Broader completion remains paused. No push or deployment performed here.
+  See [evidence](docs/evidence/value-root-read-windows-20261116.json).
 
 # Brownie C agent guidance
 
