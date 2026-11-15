@@ -349,9 +349,23 @@ pub fn Result<usize,Error> build_tag(ref layouts::Plan plan,ref mut State state,
     if(payload && !src.copyable){erase(frames,source,src);dead(state,source);}
     publish(state,destination);return .ok(dst.width);
 }
-// Read-only inspection of the whole live wrapper, including active Buffer root
-// authentication. codec::select repeats the canonical scan; the explicit price
-// covers both scans. Neither a match nor a mismatch extracts/consumes payloads.
+struct Selected { codec::Active active; codec::Selection selection; }
+// Derive both facts from one fresh scan. Byte errors precede owner errors, which
+// precede branch Type errors. No checked value survives this read-only preflight.
+fn Result<Selected,Error> selected(ref layouts::Plan plan,ref vec::Vec<bytes::Buffer> frames,
+    Address source,Slot src,u8 variant,ref owners::State root_state,
+    ref vec::Vec<bytes::Buffer> roots,ref vec::Vec<bytes::Buffer> root_scratch){
+    let ref u8[] data=bytes::view(vec::at<bytes::Buffer>(frames,source.frame));
+    let codec::InspectedSelection checked=switch(codec::inspect_selection(layouts::layout(plan),src.type_id,variant,data[src.offset..src.offset+src.width])){
+        case .ok(v):{v}case .err(_):{return .err(.Value);}
+    };
+    let codec::Active active=checked.active;
+    if(active.present && !owners::describe(root_state,roots,root_scratch,active.serial,src.binding).is_ok){return .err(.Owner);}
+    let codec::Selection choice=switch(checked.selection){case .ok(v):{v}case .err(_):{return .err(.Type);}};
+    return .ok(Selected{.active=active,.selection=choice});
+}
+// Read-only inspection of the whole live wrapper and active Buffer root. The
+// existing Fuel price is retained. Neither match nor mismatch consumes payloads.
 pub fn Result<bool,Error> tag_test(ref layouts::Plan plan,ref State state,
     ref vec::Vec<bytes::Buffer> frames,Address source,u8 variant,
     ref owners::State root_state,ref vec::Vec<bytes::Buffer> roots,
@@ -359,12 +373,8 @@ pub fn Result<bool,Error> tag_test(ref layouts::Plan plan,ref State state,
     let properties::Property p=declared(plan,state,source)?;
     let usize spent=paid(fuel::value_tag_test(p.bytes),remaining)?;
     let Slot src=address(plan,state,frames,source,true)?;
-    let codec::Active active=inspected(plan,state,frames,source,src,root_state,roots,root_scratch)?;
-    let codec::Selection selected=switch(codec::select(layouts::layout(plan),src.type_id,variant,
-        bytes::view(vec::at<bytes::Buffer>(frames,source.frame))[src.offset..src.offset+src.width])){
-        case .ok(v):{v}case .err(_):{return .err(.Type);}
-    };
-    return .ok(selected.matched);
+    let Selected choice=selected(plan,frames,source,src,variant,root_state,roots,root_scratch)?;
+    return .ok(choice.selection.matched);
 }
 pub fn Result<Case,Error> case_value(ref layouts::Plan plan,ref mut State state,
     ref mut vec::Vec<bytes::Buffer> frames,ref mut vec::Vec<bytes::Buffer> scratch,
@@ -372,11 +382,8 @@ pub fn Result<Case,Error> case_value(ref layouts::Plan plan,ref mut State state,
     ref mut vec::Vec<bytes::Buffer> roots,ref mut vec::Vec<bytes::Buffer> root_scratch,ref mut usize fuel){
     let properties::Property p=declared(plan,state,source)?;let usize spent=paid(operation(p.bytes)?,fuel)?;
     let Slot src=address(plan,state,frames,source,true)?;
-    let codec::Active active=inspected(plan,state,frames,source,src,root_state,roots,root_scratch)?;
-    let codec::Selection selected=switch(codec::select(layouts::layout(plan),src.type_id,variant,
-        bytes::view(vec::at<bytes::Buffer>(frames,source.frame))[src.offset..src.offset+src.width])){
-        case .ok(v):{v}case .err(_):{return .err(.Type);}
-    };
+    let Selected choice=selected(plan,frames,source,src,variant,root_state,roots,root_scratch)?;
+    let codec::Active active=choice.active;let codec::Selection selected=choice.selection;
     if(!selected.matched){return .ok(Case{.matched=false,.payload=false});}
     if(selected.payload){
         let Slot dst=address(plan,state,frames,destination,false)?;

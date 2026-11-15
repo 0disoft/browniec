@@ -16,6 +16,9 @@ pub enum Error { Layout; Type; Bounds; Value; Overlap; }
 // resolve it to the exact live native root before transferring or dropping it.
 pub struct Active { bool present; usize offset; usize serial; }
 pub struct Selection { bool matched; bool payload; usize type_id; usize offset; usize bytes; }
+// Fresh byte inspection plus a deferred branch decision. The owning store must
+// authenticate active before observing selection, including its Type error.
+pub struct InspectedSelection { Active active; Result<Selection,Error> selection; }
 struct Cursor { usize depth; usize[16] records; usize[16] fields; usize[16] bases; usize[16] ends; }
 fn bool equivalent(properties::Node a,properties::Node b,ref usize[] classes){
     if(a.kind!=b.kind || a.extent!=b.extent){return false;}
@@ -148,13 +151,26 @@ pub fn Result<usize,Error> wrap_at(ref Layout layout,usize id,u8 variant,
     if(present){copy(source,destination+p.payload_offset,size,data);}
     return .ok(p.bytes);
 }
+// Only called after inspect succeeds for these exact immutable bytes and after
+// the wrapper kind/variant checks. No caller-supplied proof enters this helper.
+fn Selection selection(ref Layout layout,properties::Node n,properties::Property p,u8 variant,ref u8[] data){
+    let u8 actual=if(n.kind==6){if(data[0]==0){1}else{0}}else{data[0]};
+    if(actual!=variant){return Selection{.matched=false,.payload=false,.type_id=0,.offset=0,.bytes=0};}
+    if(n.kind==5 && variant==0){return Selection{.matched=true,.payload=false,.type_id=0,.offset=0,.bytes=0};}
+    let usize child=if(variant==1){n.first as usize}else{n.second as usize};
+    return Selection{.matched=true,.payload=true,.type_id=child,.offset=p.payload_offset,.bytes=layout.shapes.properties[child].bytes};
+}
 pub fn Result<Selection,Error> select(ref Layout layout,usize id,u8 variant,ref u8[] data){
     let properties::Node n=node(layout,id)?;let properties::Property p=shape(layout,id)?;
     if((n.kind!=5 && n.kind!=6) || variant>1){return .err(.Type);}
     let Active active=inspect(layout,id,data)?;
-    let u8 actual=if(n.kind==6){if(data[0]==0){1}else{0}}else{data[0]};
-    if(actual!=variant){return .ok(Selection{.matched=false,.payload=false,.type_id=0,.offset=0,.bytes=0});}
-    if(n.kind==5 && variant==0){return .ok(Selection{.matched=true,.payload=false,.type_id=0,.offset=0,.bytes=0});}
-    let usize child=if(variant==1){n.first as usize}else{n.second as usize};
-    return .ok(Selection{.matched=true,.payload=true,.type_id=child,.offset=p.payload_offset,.bytes=layout.shapes.properties[child].bytes});
+    return .ok(selection(layout,n,p,variant,data));
+}
+// Store composition validates bytes first, then authenticates the active native
+// root, then reports a branch Type error. Raw select retains its Type-first API.
+pub fn Result<InspectedSelection,Error> inspect_selection(ref Layout layout,usize id,u8 variant,ref u8[] data){
+    let Active active=inspect(layout,id,data)?;
+    let properties::Node n=layout.catalog.nodes[id];let properties::Property p=layout.shapes.properties[id];
+    let Result<Selection,Error> selected=if((n.kind==5 || n.kind==6) && variant<=1){.ok(selection(layout,n,p,variant,data))}else{.err(.Type)};
+    return .ok(InspectedSelection{.active=active,.selection=selected});
 }

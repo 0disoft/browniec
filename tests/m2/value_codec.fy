@@ -29,6 +29,39 @@ fn codec::Active active(ref codec::Layout l,usize id,ref u8[] data){return switc
 fn codec::Selection selected(ref codec::Layout l,usize id,u8 variant,ref u8[] data){return switch(codec::select(l,id,variant,data)){
     case .ok(v):{v}case .err(_):{assert(false);codec::Selection{.matched=false,.payload=false,.type_id=0,.offset=0,.bytes=0}}
 };}
+fn u8 codec_error(codec::Error e){return switch(e){case .Layout:{1}case .Type:{2}case .Bounds:{3}case .Value:{4}case .Overlap:{5}};}
+fn void inspection_parity(ref codec::Layout l,usize id,u8 variant,ref u8[] data){
+    let Result<codec::InspectedSelection,codec::Error> combined=codec::inspect_selection(l,id,variant,data);
+    switch(codec::inspect(l,id,data)){
+        case .err(e):{assert(switch(combined){case .err(actual):{codec_error(actual)==codec_error(e)}case .ok(_):{false}});}
+        case .ok(owner):{
+            let codec::InspectedSelection checked=switch(combined){case .ok(v):{v}case .err(_):{assert(false);return;}};
+            assert(checked.active.present==owner.present && checked.active.offset==owner.offset && checked.active.serial==owner.serial);
+            switch(codec::select(l,id,variant,data)){
+                case .err(e):{assert(switch(checked.selection){case .err(actual):{codec_error(actual)==codec_error(e)}case .ok(_):{false}});}
+                case .ok(wanted):{let codec::Selection actual=switch(checked.selection){case .ok(v):{v}case .err(_):{assert(false);return;}};
+                    assert(actual.matched==wanted.matched && actual.payload==wanted.payload && actual.type_id==wanted.type_id &&
+                        actual.offset==wanted.offset && actual.bytes==wanted.bytes);}
+            };
+        }
+    };
+}
+@test fn void joint_selection_matches_independent_inspection_and_raw_selection_after_byte_mutations(){
+    let values::Catalog c=catalog();let codec::Layout l=retained(ref c);let u8[3] mutations=[1,2,255];
+    var usize id=0;while(id<c.count){let usize width=shape(ref l,id).bytes;
+        if(width<=40){var u8[40] data=[0;40];var u8 variant=0;while(variant<3){
+            inspection_parity(ref l,id,variant,ref data[..width]);var usize at=0;while(at<width){
+                var usize m=0;while(m<3){data[at]=mutations[m];inspection_parity(ref l,id,variant,ref data[..width]);m+=1;}
+                data[at]=0;at+=1;
+            }variant+=1;
+        }}id+=1;
+    }
+    var u8[40] nested=[0;40];nested[0]=1;nested[8]=1;nested[16]=1;nested[24]=1;nested[32]=7;
+    var u8 variant=0;while(variant<3){inspection_parity(ref l,14,variant,ref nested);variant+=1;}
+    let codec::InspectedSelection checked=switch(codec::inspect_selection(ref l,14,1,ref nested)){case .ok(v):{v}case .err(_):{assert(false);return;}};
+    assert(checked.active.present && checked.active.offset==32 && checked.active.serial==7);
+    assert(!codec::inspect_selection(ref l,14,1,ref nested[..39]).is_ok && !codec::inspect_selection(ref l,64,1,ref nested).is_ok);
+}
 @test fn void retained_layout_and_six_scalar_domains_preserve_exact_cells_and_canonical_bool(){
     var values::Catalog c=catalog();let codec::Layout l=retained(ref c);c.count=0;c.nodes[6].kind=0;
     assert(codec::count(ref l)==21 && shape(ref l,6).bytes==8 && !shape(ref l,7).copyable);
@@ -102,6 +135,23 @@ fn codec::Selection selected(ref codec::Layout l,usize id,u8 variant,ref u8[] da
 fn bytes::Buffer backing(usize size){var bytes::Buffer b=switch(bytes::with_capacity(size)){
     case .ok(v):{v}case .err(_):{assert(false);bytes::empty()}
 };assert(bytes::resize_zeroed(ref mut b,size).is_ok);return b;}
+@test fn void joint_selection_rechecks_maximum_inactive_padding_and_late_active_bool(){
+    var values::Catalog c=catalog();c.count=24;c.nodes[21]=node(5,10,0,0);
+    c.nodes[22]=node(2,2,0,4096);c.nodes[23]=node(5,22,0,0);
+    let codec::Layout l=retained(ref c);assert(shape(ref l,21).bytes==32776 && shape(ref l,23).bytes==4097);
+    var bytes::Buffer data=backing(32776);
+    inspection_parity(ref l,21,0,bytes::view(ref data));inspection_parity(ref l,21,1,bytes::view(ref data));
+    let usize[3] offsets=[7,8,32775];var usize i=0;while(i<3){
+        {let ref mut u8[] raw=bytes::view_mut(ref mut data);raw[offsets[i]]=1;}
+        assert(!codec::inspect_selection(ref l,21,0,bytes::view(ref data)).is_ok);
+        assert(!codec::inspect_selection(ref l,21,1,bytes::view(ref data)).is_ok);
+        {let ref mut u8[] raw=bytes::view_mut(ref mut data);raw[offsets[i]]=0;}i+=1;
+    }
+    {let ref mut u8[] raw=bytes::view_mut(ref mut data);raw[0]=1;raw[4096]=1;}
+    inspection_parity(ref l,23,1,bytes::view(ref data)[..4097]);
+    {let ref mut u8[] raw=bytes::view_mut(ref mut data);raw[4096]=2;}
+    assert(!codec::inspect_selection(ref l,23,1,bytes::view(ref data)[..4097]).is_ok);
+}
 @test fn void maximum_arrays_records_and_independent_depth_are_bounded_and_layout_snapshots_are_immutable(){
     var values::Catalog c=catalog();let codec::Layout l=retained(ref c);var bytes::Buffer a=backing(32776);
     assert(!active(ref l,11,bytes::view(ref a)).present); // ok0, i64[4096] payload, all zero

@@ -22,6 +22,8 @@ fn usize ok(Result<usize,errors::Error> r){return switch(r){case .ok(v):{v}case 
 fn usize native(Result<usize,frames::Error> r){return switch(r){case .ok(v):{v}case .err(_):{assert(false);0}};}
 fn usize measured(Result<usize,meter::Error> r){return switch(r){case .ok(v):{v}case .err(_):{assert(false);0}};}
 fn bool matched(Result<bool,frames::Error> r){return switch(r){case .ok(v):{v}case .err(_):{assert(false);false}};}
+fn u8 frame_error(frames::Error e){return switch(e){case .Fuel:{1}case .State:{2}case .Type:{3}case .Bounds:{4}
+    case .Quota:{5}case .Allocation:{6}case .Value:{7}case .Owner:{8}};}
 fn void rejected(Result<usize,errors::Error> r,u8 kind,usize at){
     assert(switch(r){case .ok(_):{false}case .err(e):{e.kind==kind && e.offset==at}});
 }
@@ -212,8 +214,23 @@ fn void native_boundary(bool active,bool result){
     state.frames[0].live=bits;
     if(root_count!=0){owned.rows[0].binding=999;
         assert(!frames::tag_test(ref p,ref state,ref data,at(t,source),variant,ref owned,ref roots,ref root_scratch,ref mut remaining).is_ok);
+        // Preserve byte -> owner -> branch-error priority, including mismatches.
+        assert(switch(frames::tag_test(ref p,ref state,ref data,at(t,source),2,ref owned,ref roots,ref root_scratch,ref mut remaining)){
+            case .err(e):{frame_error(e)==8}case .ok(_):{false}});
+        assert(switch(frames::case_value(ref p,ref mut state,ref mut data,ref mut scratch,at(t,source),2,at(t,0),
+            ref mut owned,ref mut roots,ref mut root_scratch,ref mut remaining)){case .err(e):{frame_error(e)==8}case .ok(_):{false}});
+        {let ref mut u8[] raw=bytes::view_mut(vec::at_mut<bytes::Buffer>(ref mut data,0));raw[offset]=2;}
+        assert(switch(frames::tag_test(ref p,ref state,ref data,at(t,source),2,ref owned,ref roots,ref root_scratch,ref mut remaining)){
+            case .err(e):{frame_error(e)==7}case .ok(_):{false}});
+        assert(switch(frames::case_value(ref p,ref mut state,ref mut data,ref mut scratch,at(t,source),2,at(t,0),
+            ref mut owned,ref mut roots,ref mut root_scratch,ref mut remaining)){case .err(e):{frame_error(e)==7}case .ok(_):{false}});
+        {let ref mut u8[] raw=bytes::view_mut(vec::at_mut<bytes::Buffer>(ref mut data,0));raw[offset]=original[0];}
         owned.rows[0].binding=binding;
     }
+    assert(switch(frames::tag_test(ref p,ref state,ref data,at(t,source),2,ref owned,ref roots,ref root_scratch,ref mut remaining)){
+        case .err(e):{frame_error(e)==3}case .ok(_):{false}});
+    assert(switch(frames::case_value(ref p,ref mut state,ref mut data,ref mut scratch,at(t,source),2,at(t,0),
+        ref mut owned,ref mut roots,ref mut root_scratch,ref mut remaining)){case .err(e):{frame_error(e)==3}case .ok(_):{false}});
     assert(state.frames[0].live==bits && state.frames[0].next==sequence && state.order[source]==order);
     assert(owned.ledger.used==used && owned.ledger.peak==peak && owned.rows[0].serial==serial && owned.rows[0].binding==binding);
     assert(vec::len<bytes::Buffer>(ref roots)==root_count && bytes::equal(ref original,bytes::view(vec::at<bytes::Buffer>(ref data,0))[offset..offset+16]));
