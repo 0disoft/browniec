@@ -16,6 +16,8 @@ pub struct Property {
     bool copyable; bool contains_buffer;
 }
 pub struct Plan { usize count; Property[64] properties; }
+// Both products of one fresh catalog inspection; never caller-supplied proof.
+pub struct Inspected { Plan shapes; records::Plan records; }
 pub enum Error { Metadata; Type; Depth; Size; }
 
 fn Property blank(){return Property{.bytes=0,.alignment=0,.payload_offset=0,
@@ -56,6 +58,12 @@ fn Result<usize,Error> inspect_into(ref Catalog catalog,ref mut Plan result){
     let records::Plan record_plan=switch(records::plan(ref catalog.records,4096)){
         case .ok(v):{v}case .err(_):{return .err(.Type);}
     };
+    return inspect_properties_into(catalog,ref record_plan,result);
+}
+// Private composition only: the caller just checked count and planned this
+// exact immutable record catalog. Scalar results keep row error exits small.
+fn Result<usize,Error> inspect_properties_into(ref Catalog catalog,
+    ref records::Plan record_plan,ref mut Plan result){
     result.count=catalog.count;
     var usize i=0;while(i<64){
         let Node node=catalog.nodes[i];
@@ -89,6 +97,17 @@ fn Result<usize,Error> inspect_into(ref Catalog catalog,ref mut Plan result){
 pub fn Result<Plan,Error> inspect(ref Catalog catalog){
     var Plan result=Plan{.count=0,.properties=[blank();64]};
     let usize checked=inspect_into(catalog,ref mut result)?;return .ok(result);
+}
+// Retain both checked products when the caller needs record offsets as well.
+// Preserve count/catalog/node error order and reject the complete catalog.
+pub fn Result<Inspected,Error> inspect_described(ref Catalog catalog){
+    if(catalog.count>64){return .err(.Metadata);}
+    let records::Plan record_plan=switch(records::plan(ref catalog.records,4096)){
+        case .ok(v):{v}case .err(_):{return .err(.Type);}
+    };
+    var Plan result=Plan{.count=0,.properties=[blank();64]};
+    let usize checked=inspect_properties_into(catalog,ref record_plan,ref mut result)?;
+    return .ok(Inspected{.shapes=result,.records=record_plan});
 }
 // Existing compact scalar/tagged cells keep their wire encoding and prices.
 // This maps their declared types, never their packed active payload, to the

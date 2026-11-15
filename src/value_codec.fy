@@ -24,17 +24,15 @@ fn bool equivalent(properties::Node a,properties::Node b,ref usize[] classes){
     return a.first==b.first && a.second==b.second;
 }
 pub fn Result<Layout,Error> retain(ref properties::Catalog catalog){
-    let properties::Plan shapes=switch(properties::inspect(catalog)){
+    let properties::Inspected checked=switch(properties::inspect_described(catalog)){
         case .ok(v):{v}case .err(_):{return .err(.Layout);}
     };
-    let records::Plan plain=switch(records::plan(ref catalog.records,4096)){
-        case .ok(v):{v}case .err(_):{return .err(.Layout);}
-    };
+    let ref properties::Plan shapes=ref checked.shapes;
     var Classes classes=Classes{.ids=[0;64]};var usize i=0;while(i<shapes.count){var usize identity=i;var usize j=0;
         while(j<i){if(equivalent(catalog.nodes[i],catalog.nodes[j],ref classes.ids)){identity=classes.ids[j];break;}j+=1;}
         classes.ids[i]=identity;i+=1;
     }
-    return .ok(Layout{.catalog=*catalog,.shapes=shapes,.records=plain,.classes=classes});
+    return .ok(Layout{.catalog=*catalog,.shapes=*shapes,.records=checked.records,.classes=classes});
 }
 pub fn usize count(ref Layout layout){return layout.shapes.count;}
 pub fn Result<properties::Property,Error> shape(ref Layout layout,usize id){
