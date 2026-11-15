@@ -1,0 +1,103 @@
+{
+  "schema": "browniec.record-work-plan/v1",
+  "status": "passed",
+  "clientDate": "2026-11-15",
+  "baselineCommit": "aa1c361f1aa70becae30345266301e73cfd46db7",
+  "implementationCommit": "19281f9955ce8fd26646a48c9a4675cb1bc5c8d6",
+  "command": "python -B tools/verify-record-work-plan.py --profile all",
+  "profiles": [
+    {
+      "profile": "development",
+      "nativeGroups": 8,
+      "receipt": "build/record-work-plan/development/receipt.json",
+      "receiptSha256": "c89f017691dbce7e019106def29c9bb776b8b9942a63467954e9e20a25837b74",
+      "allInputHashesMatch": true,
+      "nativeInputMirrorVerified": true,
+      "nativeOverrides": false
+    },
+    {
+      "profile": "release",
+      "nativeGroups": 8,
+      "receipt": "build/record-work-plan/release/receipt.json",
+      "receiptSha256": "dd327c71636ead688a7713364a069495dc9010fd75c36a707b8484e818db8bae",
+      "allInputHashesMatch": true,
+      "nativeInputMirrorVerified": true,
+      "nativeOverrides": false
+    }
+  ],
+  "rootCheck": "check ok: 2 instance(s), 375 source file(s), 4097 MIR function(s), lock updated",
+  "productionProof": {
+    "onlyOwnerFunctionChanged": "validate_record_work",
+    "stagingAccountingBodyMatchesBaseline": true,
+    "otherStorageFunctionsUnchanged": true,
+    "productionLfRetained": true,
+    "noCrossChunkPlanCache": true,
+    "rawStagingStillPlans": true,
+    "productionSourceHashes": [
+      {
+        "path": "src/array_owners.fy",
+        "sha256": "2ae825d0aac5ca616af8dd1b1b5b01e639cc8b35097fa34a84cc7d990f58100d"
+      },
+      {
+        "path": "src/struct_nested_storage.fy",
+        "sha256": "8165d80356d390f47f14d30df9a9ecd9fba4e14b0643bfe4f9031ecc71631e56"
+      }
+    ]
+  },
+  "testedInputIdentity": {
+    "inputCount": 376,
+    "allReceiptInputsMatchWorkingBytes": true,
+    "exactGitBlobMatches": 376,
+    "lineEndingOnlyDifferences": 0
+  },
+  "structuralCounts": {
+    "sourceLevelOnly": true,
+    "plansBefore": 2,
+    "plansAfter": 1,
+    "fieldSlotsBefore": 1024,
+    "fieldSlotsAfter": 512,
+    "recordRowsBefore": 64,
+    "recordRowsAfter": 32,
+    "maximumCopyBytes": 128,
+    "oneByteChunkValidations": 130,
+    "copyPlansBefore": 260,
+    "copyPlansAfter": 130,
+    "copyFieldSlotsBefore": 133120,
+    "copyFieldSlotsAfter": 66560,
+    "addedHeapAllocations": 0,
+    "retainedPlanBytesAdded": 0,
+    "stagingBankBytesBefore": 128,
+    "stagingBankBytesAfter": 128,
+    "payloadWorkChanged": false,
+    "fuelPricesChanged": false,
+    "measuredThroughputOrPhysicalPeak": false
+  },
+  "coverage": {
+    "catalogSlotMutations": 1024,
+    "catalogRowMutations": 32,
+    "ownerOccupancyMutations": 16,
+    "savedStateMutations": 25,
+    "scalarTags": 6,
+    "nominalDepths": 16,
+    "recordRecipes": 6,
+    "maximumRecordBytes": 128,
+    "oneByteChunks": true,
+    "delayedOwnerPublication": true,
+    "independentReturnAccountingAndMask": true,
+    "exactFuelAndOneLessRejection": true,
+    "diagnosticPrecedence": true
+  },
+  "guidanceTailUnchanged": true,
+  "guidanceTailSha256": "82ab2d55e85b7132a647bf4b08cae4df5eef0599abbfd29bca3df43281ed4d4d",
+  "initialAttempt": {
+    "status": "failed-test-fixture-loan-check",
+    "directory": "build/record-work-plan-initial-fixture",
+    "resultReused": false
+  },
+  "limitations": [
+    "Source counts only; throughput, CPU instructions and physical peaks not measured.",
+    "Full Engine, public CLI, standalone memory, Linux and full release gates not rerun.",
+    "Known legacy source-test failure not retested or claimed fixed.",
+    "Local commits only; no push, release, deploy or version bump."
+  ]
+}

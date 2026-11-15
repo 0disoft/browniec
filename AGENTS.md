@@ -1,25 +1,24 @@
 - Latest maintenance checkpoint (2026-11-15):
-  [single-plan mixed CALL record snapshots](docs/engineering/call-record-snapshot-plan.md).
-  Mixed CALL copy supplies expected owner size/alignment to checked storage.
-  One fresh full catalog plan authenticates shape, root extent and exact scratch
-  before canonical staging. Raw snapshot signature/order and its private byte
-  body are preserved. Binding is metadata; no external Plan, cache or proof.
-  Eight record arguments plan 16 to 8; fixed field slots 8192 to 4096 and rows
-  512 to 256. The 1024-byte snapshot bank, original sources, transactional
-  publication, owner generations, quota, payload work and Fuel are unchanged.
-  Source counts only; throughput and physical peaks were not measured.
-  Development/O2 each pass nine groups: 1069 pre-scratch rejections, 149 raw/
-  bound comparisons across all 128 scratch bytes, 128 invalid bool positions,
-  six scalar tags, depths 1..16 and depth-17 rejection; mixed atomic failures,
-  eight 128-byte copies filling sixteen owners/2048 bytes and exact/one-less
-  mixed VM Fuel. The corrected fixture has fresh receipts for both profiles.
-  All 376 receipt inputs match tested working bytes; implementation 7fe905c.
-  Root check: 375 sources / 4096 MIR; production LF and guidance body retained.
+  [single-plan record-work validation](docs/engineering/record-work-plan.md).
+  Each validator shares one fresh catalog plan with internal staging accounting.
+  Raw staging still replans; no plan crosses a chunk or changes guest admission.
+  Active/catalog/table/token/reservation/state/accounting error order and the
+  original scalar iterator are preserved. Plans 2 to 1, fixed field slots 1024
+  to 512, record rows 64 to 32 per validation. A 128-byte copy in one-byte chunks
+  validates 130 times: plans 260 to 130 and slots 133120 to 66560. Source counts
+  only; throughput and physical peaks not measured. No retained plan bank.
+  Development/O2 each pass eight groups: 1056 catalog mutations, 16 owner
+  occupancy mutations, 25 saved-state faults, scalar tags/depth/extent bounds,
+  six recipes in one-byte chunks, full 128-byte bool copy and final publication,
+  independent return accounting/masks and exact/one-less direct VM Fuel.
+  All 376 receipt inputs match tested bytes and implementation 19281f9.
+  Root check: 375 sources / 4097 MIR; production LF and guidance body retained.
+  Initial fixture loan-check failure is retained separately; no result reused.
   Full Engine, public CLI, standalone memory and full release gates not rerun.
   Known legacy source failure not retested or claimed fixed.
-  Public admission unchanged; broader completion paused; local commits only.
-  See [evidence](docs/evidence/call-record-snapshot-plan-windows-20261115.json).
-  Prior [subrecord preflight](docs/engineering/subrecord-assign-preflight.md) retains history.
+  Broader completion remains paused; local commits only.
+  See [evidence](docs/evidence/record-work-plan-windows-20261115.json).
+  Prior [CALL snapshots](docs/engineering/call-record-snapshot-plan.md) retain history.
 
 # Brownie C agent guidance
 
