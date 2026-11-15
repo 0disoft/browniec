@@ -1,0 +1,93 @@
+{
+  "schema": "browniec.value-retain-plan/v1",
+  "status": "passed",
+  "clientDate": "2026-11-15",
+  "baselineCommit": "83accc0a3789ca10f20783a0e54c0a37e8432b9c",
+  "implementationCommit": "9c77ad4e6098887a6daadb5c90fb70464a715101",
+  "profiles": [
+    {
+      "profile": "development",
+      "nativeGroups": 17,
+      "receipt": "build/value-retain-plan/development/receipt.json",
+      "receiptSha256": "a514ec22bb02c5efded6aa561b55a843c89f546a563219d3e044706659cc8dea",
+      "nativeInputMirrorVerified": true,
+      "nativeOverrides": false,
+      "allInputHashesMatch": true
+    },
+    {
+      "profile": "release",
+      "nativeGroups": 17,
+      "receipt": "build/value-retain-plan/release/receipt.json",
+      "receiptSha256": "ab972e31324b79ec8158caca95b5ea5ed60e922c4ce02aaa158f95f7ab1fb58f",
+      "nativeInputMirrorVerified": true,
+      "nativeOverrides": false,
+      "allInputHashesMatch": true
+    }
+  ],
+  "command": "python -B tools/verify-value-retain-plan.py --profile all",
+  "rootCheck": "check ok: 2 instance(s), 375 source file(s), 4099 MIR function(s), lock updated",
+  "productionProof": {
+    "propertyLoopMatchesBaseline": true,
+    "oldInspectionEntryAndErrorsPreserved": true,
+    "typeEquivalenceBodyMatchesBaseline": true,
+    "retainedLayoutFieldsUnchanged": true,
+    "otherCodecFunctionsUnchanged": true,
+    "productionLfRetained": true,
+    "noCallerSuppliedPlan": true
+  },
+  "testedInputIdentity": {
+    "inputCount": 378,
+    "allReceiptInputsMatchWorkingBytes": true,
+    "exactGitBlobMatches": 378,
+    "lineEndingOnlyDifferences": 0
+  },
+  "structuralCounts": {
+    "sourceLevelOnly": true,
+    "successfulRetentionPlansBefore": 2,
+    "successfulRetentionPlansAfter": 1,
+    "fieldSlotsBefore": 1024,
+    "fieldSlotsAfter": 512,
+    "recordRowsBefore": 64,
+    "recordRowsAfter": 32,
+    "retentionCalls": 4096,
+    "loopPlansRemoved": 4096,
+    "loopFieldSlotsBefore": 4194304,
+    "loopFieldSlotsAfter": 2097152,
+    "propertyRowsBefore": 64,
+    "propertyRowsAfter": 64,
+    "retainedRepresentationChanged": false,
+    "addedHeapAllocations": 0,
+    "transientJointResult": true,
+    "fuelPricesChanged": false,
+    "measuredThroughputOrPhysicalPeak": false
+  },
+  "coverage": {
+    "recordSlotMutations": 1024,
+    "recordRowMutations": 32,
+    "valueNodeMutations": 256,
+    "propertySlotsCompared": 64,
+    "allPropertyFieldsCompared": true,
+    "recordRowsCompared": 32,
+    "offsetsCompared": 512,
+    "scalarTags": 6,
+    "maximumValueNodes": 64,
+    "maximumArrayElements": 4096,
+    "recordDepths": 16,
+    "combinedWrapperDepth": 4,
+    "maximumRecordBytes": 4096,
+    "depthSeventeenRejected": true,
+    "fifthWrapperRejected": true,
+    "oversized6144ByteRecordRejected": true,
+    "nominalIdentityPreserved": true,
+    "retainedInputSnapshotsImmutable": true,
+    "diagnosticPrecedence": true
+  },
+  "guidanceTailUnchanged": true,
+  "guidanceTailSha256": "82ab2d55e85b7132a647bf4b08cae4df5eef0599abbfd29bca3df43281ed4d4d",
+  "limitations": [
+    "Source counts only; throughput, CPU instructions and physical peaks not measured.",
+    "Full Engine, public CLI, standalone memory, Linux and full release gates not rerun.",
+    "Known legacy source-test failure not retested or claimed fixed.",
+    "Local commits only; no push, release, deploy or version bump."
+  ]
+}

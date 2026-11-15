@@ -1,24 +1,24 @@
 - Latest maintenance checkpoint (2026-11-15):
-  [single-plan record-work validation](docs/engineering/record-work-plan.md).
-  Each validator shares one fresh catalog plan with internal staging accounting.
-  Raw staging still replans; no plan crosses a chunk or changes guest admission.
-  Active/catalog/table/token/reservation/state/accounting error order and the
-  original scalar iterator are preserved. Plans 2 to 1, fixed field slots 1024
-  to 512, record rows 64 to 32 per validation. A 128-byte copy in one-byte chunks
-  validates 130 times: plans 260 to 130 and slots 133120 to 66560. Source counts
-  only; throughput and physical peaks not measured. No retained plan bank.
-  Development/O2 each pass eight groups: 1056 catalog mutations, 16 owner
-  occupancy mutations, 25 saved-state faults, scalar tags/depth/extent bounds,
-  six recipes in one-byte chunks, full 128-byte bool copy and final publication,
-  independent return accounting/masks and exact/one-less direct VM Fuel.
-  All 376 receipt inputs match tested bytes and implementation 19281f9.
-  Root check: 375 sources / 4097 MIR; production LF and guidance body retained.
-  Initial fixture loan-check failure is retained separately; no result reused.
+  [single-plan retained value layouts](docs/engineering/value-retain-plan.md).
+  Checked inspection returns value shapes and their fresh record plan together;
+  codec retention no longer plans the same immutable record catalog twice.
+  No caller-supplied Plan, cache, retained-field, ownership or admission change.
+  Raw inspect/error order, scalar-sized property-loop errors and equivalence
+  classification are preserved. Successful retention plans 2 to 1, fixed field
+  slots 1024 to 512 and record rows 64 to 32. Source counts only; throughput
+  and physical peaks not measured. The joint result is transient.
+  Development/O2 each pass seventeen groups: 1312 metadata mutations, all
+  property fields and record offsets, full 64-node DAG, six scalar tags, maximum
+  arrays/records, record depths 1..16 with four wrappers, nominal identity,
+  depth-17/fifth-wrapper/oversized rejection, immutable input snapshots and
+  canonical codec/frame ownership behavior.
+  All 378 input hashes match tested bytes and implementation 9c77ad4.
+  Root check: 375 sources / 4099 MIR; production LF and guidance body retained.
   Full Engine, public CLI, standalone memory and full release gates not rerun.
   Known legacy source failure not retested or claimed fixed.
   Broader completion remains paused; local commits only.
-  See [evidence](docs/evidence/record-work-plan-windows-20261115.json).
-  Prior [CALL snapshots](docs/engineering/call-record-snapshot-plan.md) retain history.
+  See [evidence](docs/evidence/value-retain-plan-windows-20261115.json).
+  Prior [record work](docs/engineering/record-work-plan.md) retains history.
 
 # Brownie C agent guidance
 
