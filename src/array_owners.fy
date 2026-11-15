@@ -817,6 +817,12 @@ fn Token publish_record(ref mut Table table, usize slot, usize record, usize byt
 
 // Metadata authentication only; the returned copy does not grant write authority.
 // Native selected places use the same immutable catalog/table/backing lifetime.
+// The checked storage boundary must still authenticate catalog and owner shape.
+pub fn Result<Owner, Error> inspect_record_owner(ref Table table, Token token, usize capacity) {
+    let Owner owner = resolve_any(table, token, capacity)?;
+    if (owner.element != 0) { return .err(.Type); }
+    return .ok(owner);
+}
 pub fn Result<Owner, Error> resolve_record(ref records::Catalog catalog, ref Table table,
     Token token, usize capacity) {
     let Owner owner = resolve_any(table, token, capacity)?;

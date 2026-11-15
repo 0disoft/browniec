@@ -26,9 +26,10 @@ fn owners::Error codec_error(codec::Error error) {
 // stores can replace a noncanonical old byte; compound reads must reject it.
 pub fn Result<Place,owners::Error> select(ref layouts::Catalog catalog,
     ref owners::Table table,owners::Token root,usize ordinal,usize capacity) {
-    let owners::Owner owner=owners::resolve_record(catalog,table,root,capacity)?;
-    let storage::Leaf leaf=switch(storage::scalar_location(catalog,owner.record,owner.base,
-        ordinal,capacity,ref table.arena)) {
+    let owners::Owner owner=owners::inspect_record_owner(table,root,capacity)?;
+    let storage::Binding binding=storage::Binding{.bytes=owner.length,.alignment=owner.alignment};
+    let storage::Leaf leaf=switch(storage::scalar_location_bound(catalog,owner.record,owner.base,
+        binding,ordinal,capacity,ref table.arena)) {
         case .ok(value): { value } case .err(error): { return .err(failure(error)); }
     };
     return .ok(Place { .root=root,.record=owner.record,.length=owner.length,.alignment=owner.alignment,

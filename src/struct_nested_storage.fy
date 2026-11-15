@@ -285,11 +285,28 @@ pub fn Result<Leaf, Error> scalar_location(ref layouts::Catalog catalog, usize r
     let layouts::Plan plan = switch (layouts::plan(catalog,18446744073709551615)) {
         case .ok(value): { value } case .err(_): { return .err(.Layout); }
     };
-    let usize size = extent(ref plan,record,base,capacity,arena)?;
+    return scalar_location_prepared(catalog,ref plan,record,base,ordinal,capacity,arena);
+}
+// Expected shape is checked against a fresh local plan before ordinal/extent
+// errors, matching resolve_record followed by the raw scalar-location boundary.
+pub fn Result<Leaf, Error> scalar_location_bound(ref layouts::Catalog catalog, usize record,
+    usize base, Binding binding, usize ordinal, usize capacity, ref arenas::Arena arena) {
+    let layouts::Plan plan = switch (layouts::plan(catalog,18446744073709551615)) {
+        case .ok(value): { value } case .err(_): { return .err(.Layout); }
+    };
+    if (!binding_matches(ref plan,record,binding)) { return .err(.Layout); }
+    if (ordinal >= 128) { return .err(.Bounds); }
+    return scalar_location_prepared(catalog,ref plan,record,base,ordinal,capacity,arena);
+}
+// Private composition only: plan/ordinal were checked in this immutable call.
+// Re-prove the whole root extent before walking; no payload is accessed.
+fn Result<Leaf, Error> scalar_location_prepared(ref layouts::Catalog catalog, ref layouts::Plan plan,
+    usize record, usize base, usize ordinal, usize capacity, ref arenas::Arena arena) {
+    let usize size = extent(plan,record,base,capacity,arena)?;
     var Cursor cursor = Cursor { .depth = 1, .records = [0;16], .fields = [0;16], .bases = [0;16] };
     cursor.records[0] = record; var usize index = 0;
     while (index <= ordinal) {
-        let Leaf leaf = next(catalog,ref plan,ref mut cursor);
+        let Leaf leaf = next(catalog,plan,ref mut cursor);
         if (leaf.tag == 0) { return .err(.Bounds); }
         if (index == ordinal) { return .ok(Leaf { .tag = leaf.tag, .offset = base+leaf.offset }); }
         index += 1;
