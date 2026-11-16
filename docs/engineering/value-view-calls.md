@@ -178,3 +178,60 @@ See the [Windows evidence](../evidence/value-view-alias-preflight-windows-202611
 Full Engine transport, retained/source CALL integration, public CLI, standalone
 memory and full release gates remain outside this change. Known legacy compiler
 and stack failures are not claimed fixed.
+
+## Reuse authenticated RETURN operands (2026-11-16)
+
+Compared with 595fefb, a successful native view `handoff` previously resolved the
+returned row and caller row, then delegated to public `move` with local prepaid
+Fuel. That move resolved the same returned row again. Each resolver repeated the
+complete registry header and root-store preflight even though no mutation or
+callback intervened before the final binding publication.
+
+The handoff now checks the complete header once and uses the existing private
+`resolve_prepared` independently for both operands. Exact ticket/binding, native
+root/token/backing, physical read lease and initialized-window checks remain.
+Origin identity and subtraction-based containment checks still precede
+destination admission. A new private `move_prepared` factors the existing binding
+scan and single-row publication; both public move and handoff use it immediately
+after authentication. Public move retains its full resolver and Fuel admission.
+No caller can supply an unchecked proof through a public API.
+
+For a successful handoff, complete registry headers fall from three to one and
+exact root authentications from three to two. At 32 live rows, header live-pair
+comparisons fall from 1,488 to 496 (992 removed, 66.7%), and outer-row visits
+from 96 to 32. The two distinct operands still authenticate independently even
+when they name the same root. Whole-operation asymptotic bounds remain
+O(C^2+R^2), C <= 32 views and R <= 16 roots; the change removes repeated scans,
+not the quadratic header algorithm. No new state, allocation or cache is added.
+Counts describe source operations; throughput and physical peaks were not measured.
+
+The guest price remains 256. Removing the internal prepaid move changes no guest
+charge or admission point. Header-before-ticket, source-before-origin,
+containment-before-destination, exact errors and failure atomicity are preserved.
+The destination still must differ from the source binding, be in range and be
+unoccupied. A successful return preserves the ticket generation, range and lease;
+it needs no vacant descriptor, including at the full 32-row limit.
+
+Run `build/toolchain/fairyc.exe check` and
+`python -B tools/verify-value-view-handoff.py --profile all`. Nine selected native
+groups include 23,111 comparisons against the frozen pre-change handoff/move,
+using the unchanged independent header/resolver oracle. Cases cover healthy
+counts 0..32, 16 metadata variations at every slot for counts 0/1/8/32, five root
+faults at each of those counts, invalid source/origin tickets and bindings,
+occupied/out-of-range/self destinations and Fuel 0/255/256/257. Every comparison
+checks the exact result/error, ticket, Fuel and complete pool; failures retain the
+original pool. Representative root rows, owners and accounting are also checked.
+Existing tests cover whole root-state preservation, different-root and stale
+origins, contained/equal/empty windows, full-pool return, zero-Fuel cleanup and
+actual frame CALL/RETURN, recursive frames and failure containment.
+
+Both profiles passed. The initial two attempts failed while compiling a test
+helper: its if statement needed a separator before a following dereference
+assignment. A third attempt lost its execution supervisor while its two compiler
+children remained; those exact orphan processes were stopped before a retry
+with redirected logs. All incomplete receipts and logs are retained separately
+and are not counted as native passes. See the
+[Windows evidence](../evidence/value-view-handoff-windows-20261116.json).
+Full Engine transport, retained/source CALL integration, public CLI, standalone
+memory and full release gates were not rerun. Known legacy compiler/stack
+failures are not claimed fixed; broader completion remains paused.

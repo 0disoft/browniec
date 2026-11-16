@@ -1,0 +1,186 @@
+{
+  "schema": "browniec.value-view-handoff/v1",
+  "status": "passed",
+  "clientDate": "2026-11-16",
+  "baselineCommit": "595fefb629d466216b7d1b2d6eb8c77687702bcf",
+  "implementationCommit": "9c6caa3df0633109df2fde732dfc8c0235e525e4",
+  "command": "python -B tools/verify-value-view-handoff.py --profile all",
+  "profiles": [
+    {
+      "profile": "development",
+      "nativeGroups": 9,
+      "receipt": "build/value-view-handoff/development/receipt.json",
+      "receiptSha256": "4a643205588f3225c8febf0f86a079aa49bbcc7f253d0fce47b4a424f91b47a9",
+      "nativeInputMirrorVerified": true,
+      "nativeOverrides": false
+    },
+    {
+      "profile": "release",
+      "nativeGroups": 9,
+      "receipt": "build/value-view-handoff/release/receipt.json",
+      "receiptSha256": "5c7f232fd3adc17cc37927c8c6d2a7dc5471d300aa9100bfa474df29e87da33f",
+      "nativeInputMirrorVerified": true,
+      "nativeOverrides": false
+    }
+  ],
+  "rootCheck": "check ok: 2 instance(s), 375 source file(s), 4107 MIR function(s), lock updated",
+  "testedInputIdentity": {
+    "nativeInputCount": 377,
+    "exactGitIndexBlobMatches": 377,
+    "exactImplementationCommitBlobMatches": 377,
+    "profilesUseSameInputs": true,
+    "allReceiptInputsMatchWorkingBytes": true
+  },
+  "productionProof": {
+    "fullHeaderAndBindingAndExactResolverBodiesUnchanged": true,
+    "standaloneMoveRetainsFullAuthentication": true,
+    "bothOperandsAuthenticateRootTokenBackingLeaseWindow": true,
+    "noCallbackOrMutationBeforeFinalBindingPublication": true,
+    "guestFuel256AndErrorOrderUnchanged": true,
+    "noNewPublicApiCacheStateOrAllocation": true,
+    "allProductionLf": true,
+    "productionFiles": 367
+  },
+  "structuralCounts": {
+    "sourceLevelOnly": true,
+    "liveViews": 32,
+    "headersBefore": 3,
+    "headersAfter": 1,
+    "headerOuterRowVisitsBefore": 96,
+    "headerOuterRowVisitsAfter": 32,
+    "headerLivePairComparisonsBefore": 1488,
+    "headerLivePairComparisonsAfter": 496,
+    "removedHeaderLivePairComparisons": 992,
+    "headerComparisonReductionPercent": 66.667,
+    "exactRootAuthenticationsBefore": 3,
+    "exactRootAuthenticationsAfter": 2,
+    "wholeOperationComplexity": "Unchanged O(C^2+R^2), C<=32 views and R<=16 roots",
+    "throughputMeasured": false,
+    "physicalPeaksMeasured": false
+  },
+  "coverage": {
+    "nativeGroupsPerProfile": 9,
+    "originalAlgorithmHandoffComparisons": 23111,
+    "healthyPoolCounts": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32
+    ],
+    "metadataFaultCounts": [
+      0,
+      1,
+      8,
+      32
+    ],
+    "metadataSlots": 32,
+    "variationsPerSlot": 16,
+    "rootFaultsPerSelectedCount": 5,
+    "queriesPerCase": 11,
+    "fuelCases": [
+      0,
+      255,
+      256,
+      257
+    ],
+    "exactResultTicketFuelAndWholePoolParity": true,
+    "rejectionPreservesPool": true,
+    "containedEqualAndEmptyWindows": true,
+    "rootStateBytesLeaseAndAccountingRegressions": true,
+    "fullPoolReturnAndZeroFuelCleanup": true,
+    "actualFrameCallsReturnsRecursionAndFailureContainment": true
+  },
+  "initialAttempts": [
+    {
+      "attempt": 1,
+      "status": "incomplete; not counted as passed",
+      "reason": "test helper statement separator missing",
+      "logs": "build/value-view-handoff-attempt-1",
+      "profiles": [
+        {
+          "profile": "development",
+          "receipt": "build/value-view-handoff-attempt-1/development/receipt.json",
+          "receiptSha256": "113c0c536f1bc5d8fc6c96182be710368b548005648f346f761f36bde89b4e7c"
+        },
+        {
+          "profile": "release",
+          "receipt": "build/value-view-handoff-attempt-1/release/receipt.json",
+          "receiptSha256": "5664f8f48343ce332339006e6897c4ae4df0c2d2a74ac9d2ccb16e1291e44f49"
+        }
+      ]
+    },
+    {
+      "attempt": 2,
+      "status": "incomplete; not counted as passed",
+      "reason": "test helper statement separator missing",
+      "logs": "build/value-view-handoff-attempt-2",
+      "profiles": [
+        {
+          "profile": "development",
+          "receipt": "build/value-view-handoff-attempt-2/development/receipt.json",
+          "receiptSha256": "2728dfbbaf8ea63b215aaff71813f1397501b5bb8560d3030372b683985dc84c"
+        },
+        {
+          "profile": "release",
+          "receipt": "build/value-view-handoff-attempt-2/release/receipt.json",
+          "receiptSha256": "ba98781be07ac9fb5627a59527cbb927815bd18f4b0595ec7e98f3e495949629"
+        }
+      ]
+    },
+    {
+      "attempt": 3,
+      "status": "incomplete; not counted as passed",
+      "reason": "execution supervisor exited; exact orphan compilers stopped before logged retry",
+      "logs": "build/value-view-handoff-attempt-3",
+      "profiles": [
+        {
+          "profile": "development",
+          "receipt": "build/value-view-handoff-attempt-3/development/receipt.json",
+          "receiptSha256": "fb154b0bf10a0c7f53230b4a34f8de6e7c8d09889fd86f64be2ba5e5f43dbb25"
+        },
+        {
+          "profile": "release",
+          "receipt": "build/value-view-handoff-attempt-3/release/receipt.json",
+          "receiptSha256": "cc8b8ae2f881b71d60d75b8d3deb6a0ac42e16ee1a67f9aa5e1105c4b184d7aa"
+        }
+      ]
+    }
+  ],
+  "skipped": [
+    "Full Engine transport",
+    "Retained/source CALL integration",
+    "Public CLI",
+    "Standalone memory and full release gates",
+    "Known legacy compiler timeout and stack failures not retested or claimed fixed"
+  ],
+  "remote": "No push, publication, release or deployment performed"
+}
