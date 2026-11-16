@@ -125,8 +125,7 @@ fn void queries(ref views::Pool p,ref roots::State s,ref vec::Vec<bytes::Buffer>
     same(p,s,data,scratch,511);same(p,s,data,scratch,512);same(p,s,data,scratch,18446744073709551615);
     alias_queries(p,s,data,scratch);
 }
-fn void corrupt(ref views::Pool clean,ref roots::State s,ref vec::Vec<bytes::Buffer> data,
-    ref vec::Vec<bytes::Buffer> scratch,usize i,usize mode){
+fn views::Pool pool_fault(ref views::Pool clean,usize i,usize mode){
     var views::Pool p=*clean;
     if(mode==0){p.closed=true;}
     else if(mode==1){p.rows[i].generation=0;}
@@ -144,7 +143,11 @@ fn void corrupt(ref views::Pool clean,ref roots::State s,ref vec::Vec<bytes::Buf
     else if(mode==13){let bool live=p.rows[i].live;p.rows[i].live=!live;}
     else if(mode==14){p.rows[i].generation=18446744073709551615;}
     else{p.rows[i].serial=18446744073709551615;}
-    queries(ref p,s,data,scratch);
+    return p;
+}
+fn void corrupt(ref views::Pool clean,ref roots::State s,ref vec::Vec<bytes::Buffer> data,
+    ref vec::Vec<bytes::Buffer> scratch,usize i,usize mode){
+    let views::Pool p=pool_fault(clean,i,mode);queries(ref p,s,data,scratch);
 }
 fn void root_faults(ref views::Pool p,ref roots::State clean,
     ref vec::Vec<bytes::Buffer> data,ref vec::Vec<bytes::Buffer> scratch){
@@ -173,6 +176,95 @@ fn void root_faults(ref views::Pool p,ref roots::State clean,
     }
     let usize closed=ok(views::shutdown(ref mut p,ref mut s,ref data,ref scratch));
     assert(root_ok(roots::drain(ref mut s,ref mut data,ref mut scratch))==0);
+}
+// Frozen 595fefb handoff/move. Keep all three complete resolver calls as an
+// independent oracle; do not route this through the optimized public move.
+fn Result<usize,views::Error> original_pay(ref mut usize fuel){
+    let usize charge=views::move_cost();let usize available=*fuel;if(available<charge){return .err(.Fuel);};
+    *fuel=available-charge;return .ok(charge);
+}
+fn Result<views::Ticket,views::Error> original_move(ref mut views::Pool p,ref roots::State s,
+    ref vec::Vec<bytes::Buffer> data,ref vec::Vec<bytes::Buffer> scratch,views::Ticket source,
+    usize selected,usize destination,ref mut usize fuel){
+    let usize paid=original_pay(fuel)?;let views::Row row=resolve(p,s,data,scratch,source,selected)?;
+    if(destination>=512){return .err(.Binding);}var usize i=0;
+    while(i<32){if(i!=source.slot && p.rows[i].live && p.rows[i].binding==destination){return .err(.Binding);}i+=1;}
+    var views::Row moved=row;moved.binding=destination;p.rows[source.slot]=moved;return .ok(source);
+}
+fn Result<views::Ticket,views::Error> original_handoff(ref mut views::Pool p,ref roots::State s,
+    ref vec::Vec<bytes::Buffer> data,ref vec::Vec<bytes::Buffer> scratch,views::Ticket source,
+    usize selected,usize destination,views::Ticket origin,usize origin_binding,ref mut usize fuel){
+    let usize paid=original_pay(fuel)?;let views::Row row=resolve(p,s,data,scratch,source,selected)?;
+    let views::Row caller=resolve(p,s,data,scratch,origin,origin_binding)?;
+    if(row.serial!=caller.serial || row.owner_binding!=caller.owner_binding ||
+        row.owner_slot!=caller.owner_slot || row.owner_generation!=caller.owner_generation){return .err(.Binding);}
+    if(row.start<caller.start){return .err(.Bounds);}let usize offset=row.start-caller.start;
+    if(offset>caller.length || row.length>caller.length-offset){return .err(.Bounds);}
+    if(destination==selected){return .err(.Binding);}var usize prepaid=views::move_cost();
+    return original_move(p,s,data,scratch,source,selected,destination,ref mut prepaid);
+}
+fn void handoff_same(ref views::Pool p,ref roots::State s,ref vec::Vec<bytes::Buffer> data,
+    ref vec::Vec<bytes::Buffer> scratch,views::Ticket source,usize selected,usize destination,
+    views::Ticket origin,usize origin_binding,usize fuel){
+    var views::Pool before=*p;var views::Pool after=*p;var roots::State after_store=*s;
+    var usize old_fuel=fuel;var usize new_fuel=fuel;
+    let Result<views::Ticket,views::Error> old=original_handoff(ref mut before,s,data,scratch,source,selected,
+        destination,origin,origin_binding,ref mut old_fuel);
+    let Result<views::Ticket,views::Error> got=views::handoff(ref mut after,ref mut after_store,data,scratch,
+        source,selected,destination,origin,origin_binding,ref mut new_fuel);
+    assert(old_fuel==new_fuel);
+    assert(switch(old){case .ok(a):{switch(got){case .ok(b):{a.slot==b.slot && a.generation==b.generation}case .err(_):{false}}}
+        case .err(a):{switch(got){case .ok(_):{false}case .err(b):{code(a)==code(b)}}}});
+    same_pool(ref before,ref after);if(!got.is_ok){same_pool(ref after,p);}
+    assert(after_store.next==s.next && after_store.external==s.external && after_store.closed==s.closed);
+    assert(after_store.ledger.used==s.ledger.used && after_store.ledger.peak==s.ledger.peak &&
+        after_store.ledger.engine_used==s.ledger.engine_used && after_store.ledger.engine_peak==s.ledger.engine_peak);
+    var usize i=0;while(i<16){let roots::Row a=after_store.rows[i];let roots::Row b=s.rows[i];
+        let owners::Owner x=after_store.table.slots[i];let owners::Owner y=s.table.slots[i];
+        assert(a.serial==b.serial && a.binding==b.binding && a.slot==b.slot && a.generation==b.generation);
+        assert(x.generation==y.generation && x.live==y.live && x.reading==y.reading &&
+            x.length==y.length && x.capacity==y.capacity);i+=1;}
+}
+fn usize handoff_queries(ref views::Pool p,ref roots::State s,ref vec::Vec<bytes::Buffer> data,
+    ref vec::Vec<bytes::Buffer> scratch,usize count){
+    let usize last=if(count==0){0}else{count-1};
+    let views::Ticket source=views::Ticket{.slot=last,.generation=1};
+    let views::Ticket origin=views::Ticket{.slot=0,.generation=1};var usize mode=0;
+    while(mode<11){var views::Ticket from=source;var views::Ticket caller=origin;
+        var usize selected=16+last;var usize owner=16;var usize destination=128;var usize fuel=256;
+        if(mode==1){fuel=257;}else if(mode==2){destination=selected;}else if(mode==3){destination=16;}
+        else if(mode==4){destination=512;}else if(mode==5){from.slot=32;}
+        else if(mode==6){caller.generation=0;}else if(mode==7){selected=511;}
+        else if(mode==8){owner=511;}else if(mode==9){fuel=255;}else if(mode==10){fuel=0;}
+        handoff_same(p,s,data,scratch,from,selected,destination,caller,owner,fuel);mode+=1;
+    }return mode;
+}
+@test fn void handoff_matches_original_for_all_pool_sizes_faults_and_error_priorities(){
+    var vec::Vec<bytes::Buffer> data=vec::empty<bytes::Buffer>();var vec::Vec<bytes::Buffer> scratch=vec::empty<bytes::Buffer>();
+    var usize fuel=1000000;var roots::State s=switch(roots::open(ref mut data,ref mut scratch,limits(),ref mut fuel)){
+        case .ok(v):{v}case .err(_):{assert(false);handoff_matches_original_for_all_pool_sizes_faults_and_error_priorities();return;}};
+    let usize serial=root_ok(roots::insert(ref mut s,ref mut data,ref mut scratch,16,b"abc",limits(),ref mut fuel));
+    var views::Pool p=switch(views::open(ref mut s,ref data,ref scratch,limits(),ref mut fuel)){
+        case .ok(v):{v}case .err(_):{assert(false);handoff_matches_original_for_all_pool_sizes_faults_and_error_priorities();return;}};
+    var usize count=0;var usize comparisons=0;var views::Ticket first=views::Ticket{.slot=32,.generation=0};
+    while(count<=32){comparisons+=handoff_queries(ref p,ref s,ref data,ref scratch,count);
+        if(count==0 || count==1 || count==8 || count==32){var usize i=0;while(i<32){var usize mode=0;
+            while(mode<16){let views::Pool bad=pool_fault(ref p,i,mode);
+                comparisons+=handoff_queries(ref bad,ref s,ref data,ref scratch,count);mode+=1;}i+=1;}
+            var usize mode=0;while(mode<5){var roots::State bad=s;
+                if(mode==0){bad.table.slots[0].reading=false;}else if(mode==1){bad.rows[0].generation+=1;}
+                else if(mode==2){bad.table.slots[0].length=0;}else if(mode==3){bad.closed=true;}else{bad.ledger.used+=1;}
+                comparisons+=handoff_queries(ref p,ref bad,ref data,ref scratch,count);mode+=1;}
+        }
+        if(count==32){break;}
+        if(count==0){first=ticket(views::begin(ref mut p,ref mut s,ref data,ref scratch,serial,16,16,0,3,ref mut fuel));}
+        else{let views::Ticket added=ticket(views::alias(ref mut p,ref mut s,ref data,ref scratch,first,16,16+count,ref mut fuel));}
+        count+=1;
+    }
+    assert(comparisons==23111 && bytes::equal(bytes::view(vec::at<bytes::Buffer>(ref data,0)),b"abc"));
+    assert(vec::len<bytes::Buffer>(ref scratch)==0 && s.table.slots[0].reading);
+    let usize closed=ok(views::shutdown(ref mut p,ref mut s,ref data,ref scratch));
+    assert(root_ok(roots::drain(ref mut s,ref mut data,ref mut scratch))==0 && s.ledger.used==0);
 }
 @test fn void full_pool_lookup_then_read_keeps_exact_fuel_and_last_alias_cleanup(){
     var vec::Vec<bytes::Buffer> data=vec::empty<bytes::Buffer>();var vec::Vec<bytes::Buffer> scratch=vec::empty<bytes::Buffer>();

@@ -190,12 +190,17 @@ pub fn Result<usize,Error> aliases(ref mut Pool pool,ref roots::State store,
     }
     *pool=staged;return .ok(sources.len);
 }
+// Rebind an authenticated row before any intervening pool/store mutation.
+// The destination scan completes before this single canonical publication.
+fn Result<Ticket,Error> move_prepared(ref mut Pool pool,Ticket source,Row row,usize destination){
+    let usize checked=binding(pool,destination,source.slot)?;
+    var Row moved=row;moved.binding=destination;put(pool,source.slot,moved);return .ok(source);
+}
 pub fn Result<Ticket,Error> move(ref mut Pool pool,ref mut roots::State store,
     ref vec::Vec<bytes::Buffer> data,ref vec::Vec<bytes::Buffer> scratch,Ticket source,
     usize selected,usize destination,ref mut usize fuel){
     let usize paid=pay(move_cost(),fuel)?;let Row row=resolve(pool,store,data,scratch,source,selected)?;
-    let usize checked=binding(pool,destination,source.slot)?;
-    var Row moved=row;moved.binding=destination;put(pool,source.slot,moved);return .ok(source);
+    return move_prepared(pool,source,row,destination);
 }
 // Native RETURN bookkeeping only. The outer frame coordinator authenticates
 // caller tokens/adjacency and cleanup; tickets/bindings confer no guest authority.
@@ -203,16 +208,18 @@ pub fn Result<Ticket,Error> handoff(ref mut Pool pool,ref mut roots::State store
     ref vec::Vec<bytes::Buffer> data,ref vec::Vec<bytes::Buffer> scratch,Ticket source,
     usize selected,usize destination,Ticket origin,usize origin_binding,ref mut usize fuel){
     let usize paid=pay(move_cost(),fuel)?;
-    let Row row=resolve(pool,store,data,scratch,source,selected)?;
-    let Row caller=resolve(pool,store,data,scratch,origin,origin_binding)?;
+    // Both exact operands share this immutable header proof. No callback or
+    // mutation intervenes before destination admission and final publication.
+    let usize checked=header(pool)?;
+    let Row row=resolve_prepared(pool,store,data,scratch,source,selected)?;
+    let Row caller=resolve_prepared(pool,store,data,scratch,origin,origin_binding)?;
     if(row.serial!=caller.serial || row.owner_binding!=caller.owner_binding ||
         row.owner_slot!=caller.owner_slot || row.owner_generation!=caller.owner_generation){return .err(.Binding);}
     if(row.start<caller.start){return .err(.Bounds);}
     let usize offset=row.start-caller.start;
     if(offset>caller.length || row.length>caller.length-offset){return .err(.Bounds);}
     if(destination==selected){return .err(.Binding);}
-    var usize prepaid=move_cost();
-    return move(pool,store,data,scratch,source,selected,destination,ref mut prepaid);
+    return move_prepared(pool,source,row,destination);
 }
 pub fn Result<usize,Error> length(ref Pool pool,ref roots::State store,
     ref vec::Vec<bytes::Buffer> data,ref vec::Vec<bytes::Buffer> scratch,Ticket source,
