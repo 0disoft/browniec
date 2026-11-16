@@ -1,0 +1,105 @@
+{
+  "schema": "browniec.value-root-append/v1",
+  "status": "passed",
+  "clientDate": "2026-11-16",
+  "baselineCommit": "7a540e2aefde1646ad2f6afec8413f8f6bdc461c",
+  "implementationCommit": "343e209ee6e0f7f2aea1c5a28b439661eb0e037f",
+  "command": "python -B tools/verify-value-root-append.py --profile all",
+  "execution": {
+    "runReceipt": "build/value-root-append/run.json",
+    "exit": 0,
+    "elapsedSeconds": 484.073,
+    "runReceiptSha256": "6b9e6ae9efbec42db8d370f02a49d993c6924e00e791da839adc909418b13217",
+    "stdoutSha256": "68a58baea8d47ede64054e71ea1622533128a69039e4d79def0b017e3583f508",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "preservedFailedAttempt": {
+      "path": "build/value-root-append-attempt-01-fixture-type",
+      "reason": "Test fixture needed explicit State dereference; excluded from passes."
+    }
+  },
+  "profiles": [
+    {
+      "profile": "development",
+      "nativeGroups": 8,
+      "receipt": "build/value-root-append/development/receipt.json",
+      "receiptSha256": "5a32a1c64547f800d6fb19b77ae71fc141fc08ba893e00be4135491cc322f556",
+      "nativeInputMirrorVerified": true,
+      "nativeOverrides": false
+    },
+    {
+      "profile": "release",
+      "nativeGroups": 8,
+      "receipt": "build/value-root-append/release/receipt.json",
+      "receiptSha256": "bad76863311a15ce175b37d0fb5b7112c1e0a1f96e5a39c251fdc0983fbf500a",
+      "nativeInputMirrorVerified": true,
+      "nativeOverrides": false
+    }
+  ],
+  "rootCheck": "check ok: 2 instance(s), 375 source file(s), 4109 MIR function(s), lock updated",
+  "testedInputIdentity": {
+    "nativeInputCount": 378,
+    "exactGitIndexBlobMatches": 378,
+    "exactImplementationCommitBlobMatches": 378,
+    "profilesUseSameInputs": true,
+    "allReceiptInputsMatchWorkingBytes": true
+  },
+  "productionProof": {
+    "completePreflightUnchanged": true,
+    "exactResolverBodyUnchanged": true,
+    "appendTransactionAndStandaloneAppendUnchanged": true,
+    "standaloneResolverRetainsCompletePreflight": true,
+    "bothOperandsAuthenticatedBeforeAnyStoreOrVectorMutation": true,
+    "destinationWritableSourceReadLeasePreserved": true,
+    "publicDeclarationsUnchanged": true,
+    "noPersistentCacheOrProductionStagingCopyAdded": true,
+    "allProductionLf": true,
+    "productionFiles": 367
+  },
+  "structuralCounts": {
+    "sourceLevelOnly": true,
+    "liveRoots": 16,
+    "fullPreflightsBefore": 2,
+    "fullPreflightsAfter": 1,
+    "primaryRootRowVisitsBefore": 32,
+    "primaryRootRowVisitsAfter": 16,
+    "livePairComparisonsBefore": 240,
+    "livePairComparisonsAfter": 120,
+    "preflightComparisonReductionPercent": 50,
+    "exactOperandLookupsBefore": 2,
+    "exactOperandLookupsAfter": 2,
+    "overallPreflightBefore": "O(R^2), R <= 16",
+    "overallPreflightAfter": "O(R^2), R <= 16",
+    "fuelAndPayloadCopyingUnchanged": true,
+    "throughputMeasured": false,
+    "physicalMemoryMeasured": false
+  },
+  "coverage": {
+    "nativeGroupsPerProfile": 8,
+    "originalPreflightComparisonsPerProfile": 1660,
+    "successfulAndBoundaryComparisonCases": 240,
+    "slotFaultAndErrorPriorityCases": 1420,
+    "destinationPositions": 16,
+    "metadataFaultModes": 22,
+    "oracle": "Frozen two-resolver preflight; unchanged append transaction via standalone append with test-only copied input.",
+    "includes": [
+      "growth and within-capacity append",
+      "both source vector orders",
+      "source lease acceptance and destination lease rejection",
+      "empty windows and exhausted generations",
+      "exact results, Fuel, state, bytes and vector capacities",
+      "full owner/ledger/close-plan parity",
+      "corrupt rows/tokens/backing/accounting and error priority",
+      "standalone resolver, root lease, Buffer and view-window regressions",
+      "zero-Fuel cleanup"
+    ]
+  },
+  "skipped": [
+    "Full Engine/source CALL/public CLI/release matrices",
+    "Linux and OOM injection",
+    "Throughput and physical memory benchmarks"
+  ],
+  "unrelatedKnownFailuresClaimedFixed": false,
+  "localOnly": true,
+  "pushed": false,
+  "deployed": false
+}

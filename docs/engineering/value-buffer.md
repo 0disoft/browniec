@@ -69,6 +69,51 @@ independent proof/dispatch and prepaid allocator Results. Source methods/borrows
 views, public AllocError types and I/O remain implementation work. Local only; no push,
 release or deployment.
 
+## Shared two-root append preflight (2026-11-16)
+
+Compared with 7a540e2, `append_from` and `append_window` each performed a complete
+store preflight while resolving the destination, then repeated it while resolving
+the source. No store/vector mutation or callback occurs between those lookups.
+Both paths now run `ready` once and use the module-private `resolve_prepared` twice,
+before Fuel remainder admission, destination extraction or append publication.
+The ordinary resolver still starts with a complete `ready` for independent calls.
+
+The complete preflight and exact operand resolver bodies are unchanged. The
+destination retains writable authentication; the source permits an existing read
+lease while retaining exact serial/binding/token/backing authentication. Same-root
+rejection, subtraction-based initialized-window bounds, error priority, Fuel,
+source selection in either vector, restoration and append transactions remain.
+No public unchecked interface, persistent cache, allocation or production staging
+copy was added. Prepared lookup is valid only for the same unchanged store and
+vectors within the synchronous operation.
+
+For R live roots, the duplicated preflight's R*(R-1) live-pair comparisons become
+R*(R-1)/2. At R=16, full preflights fall from two to one, primary root-row visits
+from 32 to 16, and live-pair comparisons from 240 to 120 (50% fewer). Both exact
+operand lookups remain. Overall preflight complexity remains O(R^2), with R<=16;
+the improvement removes duplicate work, not an asymptotic bound. Fuel prices,
+payload copying and allocator policy are unchanged. Throughput and physical
+memory were not measured.
+
+Run `python -B tools/verify-value-root-append.py --profile all`. The selection
+includes two original-preflight comparison groups plus standalone root resolution,
+root leases, Buffer appends and view-window copy regressions. The oracle retains
+the original two full resolutions and delegates the unchanged append transaction
+to standalone append with test-only copied input. Its comparison covers exact
+results/Fuel, all state/table/ledger/close-plan fields, every retained byte and
+vector capacity/order.
+
+Development and release each passed all eight selected native groups on
+343e209, including 240 successful/boundary cases and 1420 slot-fault/error-priority
+cases against the original preflight. All 378 input hashes match both profiles,
+the working files, Git index and implementation commit; all 367 production files
+retain LF. The initial test-fixture type failure is retained separately and is
+excluded from passes. See the
+[Windows evidence](../evidence/value-root-append-windows-20261116.json).
+
+Full Engine transport, public CLI, Linux, OOM and full release gates remain
+outside this local slice; legacy compiler/stack failures are not claimed fixed.
+
 ## Direct content writes (2026-11-16)
 
 Compared with 524ca70, `value_roots::write` no longer extracts the selected

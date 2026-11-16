@@ -1,26 +1,27 @@
 - Latest maintenance checkpoint (2026-11-16):
-  [one header preflight for view shutdown](docs/engineering/value-buffer-views.md#one-header-preflight-for-view-shutdown-2026-11-16).
-  Shutdown reuses one complete registry header preflight across canonical row
-  retirement. Every row retains fresh exact ticket/root/token/backing/lease/
-  window authentication. Private close_prepared shares the unchanged sibling
-  scan, last-lease release and retirement; standalone close keeps its resolver.
-  At 32 live views, headers fall 33 to 1, outer-row visits 1056 to 32 and
-  live-pair comparisons 5952 to 496 (5456 removed, 91.7%). Registry cleanup
-  worst-case work is O(C^2) instead of O(C^3), C registry capacity <= 32.
-  All 32 per-view root authentications remain. Ascending order, exact errors, partial
-  progress, terminal generations, final refund and zero-Fuel cleanup remain.
-  No new public API/cache/persistent state/heap allocation; throughput and
-  physical peaks were not measured. Development/O2 each pass five native groups,
-  including 2101 frozen close/shutdown comparisons over healthy counts 0..32,
-  every slot's metadata faults at 0/1/8/32 and root faults with 16 native roots.
-  Full pool/store/ledger/closing-plan parity, bytes/vector capacities, late
-  failure retaining one row/lease, repair/retry, idempotence, zero-Fuel drain,
-  direct-close/lease/quota and actual frame CALL/RETURN cleanup are covered.
-  All 376 native inputs match implementation cdc76c7 and the Git index.
-  Root check: 375 sources / 4108 MIR; all 367 production files retain LF.
-  Full Engine/source CALL/public CLI/memory/release gates and known legacy
-  failures not rerun. Broader completion remains paused. No push or deployment.
-  See [evidence](docs/evidence/value-view-shutdown-windows-20261116.json).
+  [shared two-root append preflight](docs/engineering/value-buffer.md#shared-two-root-append-preflight-2026-11-16).
+  append_from and append_window share one complete ready across their two
+  synchronous operand lookups, before any store/vector mutation or callback.
+  Private resolve_prepared retains exact serial/binding/token/backing checks,
+  writable destination and read-leased source authentication. Independent
+  operations retain the full resolver. The global preflight, append transaction,
+  same-root rejection, bounds, Fuel, quotas and restoration remain unchanged.
+  At 16 roots, full preflights fall 2 to 1, primary root-row visits 32 to 16 and
+  live-pair comparisons 240 to 120 (50%); preflight remains O(R^2), R<=16.
+  No new public API, persistent cache, allocation or production staging copy.
+  Throughput and physical memory were not measured. Development/O2 each pass
+  eight native groups, including 1660 original-preflight comparisons covering
+  all target positions, both vector orders, growth, read leases, no-op/exhausted
+  generations, Fuel/bounds/quota failures, metadata faults and error priority.
+  Full state/table/ledger/close-plan, bytes/vector capacity/order and zero-Fuel
+  cleanup parity are covered. The oracle delegates unchanged append transactions
+  to standalone append with test-only copied input. All 378 native inputs match
+  implementation 343e209 and the Git index; all 367 production files retain LF.
+  Root check: 375 sources / 4109 MIR. The initial fixture type failure is preserved
+  separately and excluded from passes. Full Engine/source CALL/public CLI/Linux/
+  OOM/memory/release gates and known legacy failures were not rerun. Broader
+  completion remains paused. No push or deployment. See
+  [evidence](docs/evidence/value-root-append-windows-20261116.json).
 
 # Brownie C agent guidance
 
