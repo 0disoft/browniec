@@ -260,9 +260,11 @@ pub fn Result<usize,Error> append_to(ref Pool pool,ref mut roots::State store,
 }
 // Opening prepays bounded close. The last sibling releases the one actual root
 // lease; failed authentication leaves the row live so explicit repair can retry.
-pub fn Result<usize,Error> close(ref mut Pool pool,ref mut roots::State store,
-    ref vec::Vec<bytes::Buffer> data,ref vec::Vec<bytes::Buffer> scratch,Ticket source,usize selected){
-    let Row row=resolve(pool,store,data,scratch,source,selected)?;var usize siblings=0;var usize i=0;
+// The exact row was authenticated immediately before this private transition.
+// Canonical retirement preserves the pool header, including terminal generations.
+fn Result<usize,Error> close_prepared(ref mut Pool pool,ref mut roots::State store,
+    ref vec::Vec<bytes::Buffer> data,ref vec::Vec<bytes::Buffer> scratch,Ticket source,Row row){
+    var usize siblings=0;var usize i=0;
     while(i<32){if(i!=source.slot && get(pool,i).live &&
         get(pool,i).serial==row.serial){siblings+=1;}i+=1;}
     if(siblings==0){switch(roots::end_read(store,data,scratch,row.serial,row.owner_binding,token(row))){
@@ -270,6 +272,11 @@ pub fn Result<usize,Error> close(ref mut Pool pool,ref mut roots::State store,
     };}
     put(pool,source.slot,blank(if(row.generation==18446744073709551615){0}else{row.generation+1}));
     return .ok(siblings);
+}
+pub fn Result<usize,Error> close(ref mut Pool pool,ref mut roots::State store,
+    ref vec::Vec<bytes::Buffer> data,ref vec::Vec<bytes::Buffer> scratch,Ticket source,usize selected){
+    let Row row=resolve(pool,store,data,scratch,source,selected)?;
+    return close_prepared(pool,store,data,scratch,source,row);
 }
 pub fn Snapshot snapshot(ref Pool pool){
     var usize live=0;var usize count=0;var usize i=0;
@@ -282,7 +289,11 @@ pub fn Result<usize,Error> shutdown(ref mut Pool pool,ref mut roots::State store
     ref vec::Vec<bytes::Buffer> data,ref vec::Vec<bytes::Buffer> scratch){
     if(pool.closed){return .ok(0);}let usize checked=header(pool)?;var usize i=0;
     while(i<32){let Row row=get(pool,i);if(row.live){
-        let usize closed=close(pool,store,data,scratch,Ticket{.slot=i,.generation=row.generation},row.binding)?;
+        // Prior successful retirements preserve the initial header proof. Root
+        // leases may have changed, so authenticate every exact operand afresh.
+        let Ticket source=Ticket{.slot=i,.generation=row.generation};
+        let Row authenticated=resolve_prepared(pool,store,data,scratch,source,row.binding)?;
+        let usize closed=close_prepared(pool,store,data,scratch,source,authenticated)?;
     }i+=1;}
     switch(roots::release_metadata(store,data,scratch,metadata_charge())){
         case .ok(_):{}case .err(e):{return .err(root_error(e));}

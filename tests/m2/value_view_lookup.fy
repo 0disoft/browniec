@@ -266,6 +266,106 @@ fn usize handoff_queries(ref views::Pool p,ref roots::State s,ref vec::Vec<bytes
     let usize closed=ok(views::shutdown(ref mut p,ref mut s,ref data,ref scratch));
     assert(root_ok(roots::drain(ref mut s,ref mut data,ref mut scratch))==0 && s.ledger.used==0);
 }
+// Baseline 79e86d0 close/shutdown, using the independent frozen header/resolver.
+// Keep retirement and last-sibling release separate from the production helper.
+fn Result<usize,views::Error> original_close(ref mut views::Pool p,ref mut roots::State s,
+    ref vec::Vec<bytes::Buffer> data,ref vec::Vec<bytes::Buffer> scratch,views::Ticket source,usize selected){
+    let views::Row row=resolve(p,s,data,scratch,source,selected)?;var usize siblings=0;var usize i=0;
+    while(i<32){if(i!=source.slot && p.rows[i].live && p.rows[i].serial==row.serial){siblings+=1;}i+=1;}
+    if(siblings==0){switch(roots::end_read(s,data,scratch,row.serial,row.owner_binding,
+        owners::Token{.slot=row.owner_slot,.generation=row.owner_generation})){
+        case .ok(_):{}case .err(e):{return .err(root_error(e));}
+    };}
+    p.rows[source.slot]=views::Row{.generation=if(row.generation==18446744073709551615){0}else{row.generation+1},
+        .live=false,.binding=512,.serial=0,.owner_binding=512,.owner_slot=16,.owner_generation=0,.start=0,.length=0};
+    return .ok(siblings);
+}
+fn Result<usize,views::Error> original_shutdown(ref mut views::Pool p,ref mut roots::State s,
+    ref vec::Vec<bytes::Buffer> data,ref vec::Vec<bytes::Buffer> scratch){
+    if(p.closed){return .ok(0);}let usize checked=header(p)?;var usize i=0;
+    while(i<32){let views::Row row=p.rows[i];if(row.live){
+        let usize closed=original_close(p,s,data,scratch,views::Ticket{.slot=i,.generation=row.generation},row.binding)?;
+    }i+=1;}
+    switch(roots::release_metadata(s,data,scratch,views::metadata_charge())){
+        case .ok(_):{}case .err(e):{return .err(root_error(e));}
+    };
+    p.closed=true;return .ok(0);
+}
+fn void same_ledger(ref growth::Ledger a,ref growth::Ledger b){
+    assert(a.used==b.used && a.engine_used==b.engine_used && a.peak==b.peak && a.engine_peak==b.engine_peak &&
+        a.pending==b.pending && a.old_capacity==b.old_capacity && a.new_capacity==b.new_capacity &&
+        a.before_used==b.before_used && a.before_engine_used==b.before_engine_used);
+}
+fn void same_table(ref owners::Table a,ref owners::Table b){
+    var usize i=0;while(i<16){let owners::Owner x=a.slots[i];let owners::Owner y=b.slots[i];
+        assert(x.generation==y.generation && x.live==y.live && x.reading==y.reading &&
+            x.length==y.length && x.capacity==y.capacity);i+=1;}
+}
+fn void same_store(ref roots::State a,ref roots::State b){
+    assert(a.next==b.next && a.external==b.external && a.closed==b.closed);
+    same_ledger(ref a.ledger,ref b.ledger);same_table(ref a.table,ref b.table);
+    assert(a.closing.active==b.closing.active && a.closing.source.slot==b.closing.source.slot &&
+        a.closing.source.generation==b.closing.source.generation && a.closing.capacity==b.closing.capacity &&
+        a.closing.charge==b.closing.charge);
+    same_ledger(ref a.closing.before,ref b.closing.before);same_table(ref a.closing.after,ref b.closing.after);
+    var usize i=0;while(i<16){let roots::Row x=a.rows[i];let roots::Row y=b.rows[i];
+        assert(x.serial==y.serial && x.binding==y.binding && x.slot==y.slot && x.generation==y.generation);i+=1;}
+}
+fn void shutdown_same(ref views::Pool p,ref roots::State s,ref vec::Vec<bytes::Buffer> data,
+    ref vec::Vec<bytes::Buffer> scratch){
+    // Controlled metadata-only oracle branches share immutable backing. Neither
+    // branch owns/extracts a Buffer, and only the original fixture is drained.
+    var views::Pool before=*p;var views::Pool after=*p;var roots::State old_store=*s;var roots::State new_store=*s;
+    let usize data_capacity=vec::capacity<bytes::Buffer>(data);let usize scratch_capacity=vec::capacity<bytes::Buffer>(scratch);
+    let Result<usize,views::Error> old=original_shutdown(ref mut before,ref mut old_store,data,scratch);
+    let Result<usize,views::Error> got=views::shutdown(ref mut after,ref mut new_store,data,scratch);
+    assert(switch(old){case .ok(a):{switch(got){case .ok(b):{a==b}case .err(_):{false}}}
+        case .err(a):{switch(got){case .ok(_):{false}case .err(b):{code(a)==code(b)}}}});
+    // Failure may have closed earlier rows: compare exact partial progress.
+    same_pool(ref before,ref after);same_store(ref old_store,ref new_store);
+    if(got.is_ok){let views::Pool closed=after;let roots::State released=new_store;
+        assert(ok(views::shutdown(ref mut after,ref mut new_store,data,scratch))==0);
+        same_pool(ref after,ref closed);same_store(ref new_store,ref released);
+    }
+    assert(vec::len<bytes::Buffer>(data)==16 && vec::len<bytes::Buffer>(scratch)==0);
+    assert(vec::capacity<bytes::Buffer>(data)==data_capacity && vec::capacity<bytes::Buffer>(scratch)==scratch_capacity);
+    var usize i=0;while(i<16){let ref bytes::Buffer root=vec::at<bytes::Buffer>(data,i);
+        assert(bytes::len(root)==3 && bytes::capacity(root)==64 && bytes::equal(bytes::view(root),b"abc"));i+=1;}
+}
+@test fn void shutdown_matches_original_for_all_pool_sizes_faults_partial_progress_and_retirement(){
+    var vec::Vec<bytes::Buffer> data=vec::empty<bytes::Buffer>();var vec::Vec<bytes::Buffer> scratch=vec::empty<bytes::Buffer>();
+    var usize fuel=1000000;var roots::State s=switch(roots::open(ref mut data,ref mut scratch,limits(),ref mut fuel)){
+        case .ok(v):{v}case .err(_):{assert(false);shutdown_matches_original_for_all_pool_sizes_faults_partial_progress_and_retirement();return;}};
+    var usize[16] serials=[0;16];var usize i=0;while(i<16){
+        serials[i]=root_ok(roots::insert(ref mut s,ref mut data,ref mut scratch,i,b"abc",limits(),ref mut fuel));i+=1;}
+    var views::Pool p=switch(views::open(ref mut s,ref data,ref scratch,limits(),ref mut fuel)){
+        case .ok(v):{v}case .err(_):{assert(false);shutdown_matches_original_for_all_pool_sizes_faults_partial_progress_and_retirement();return;}};
+    var usize count=0;var usize comparisons=0;
+    while(count<=32){shutdown_same(ref p,ref s,ref data,ref scratch);comparisons+=1;
+        if(count==0 || count==1 || count==8 || count==32){i=0;while(i<32){var usize mode=0;
+            while(mode<16){let views::Pool bad=pool_fault(ref p,i,mode);
+                shutdown_same(ref bad,ref s,ref data,ref scratch);comparisons+=1;mode+=1;}i+=1;}
+            var usize mode=0;while(mode<5){var roots::State bad=s;
+                if(mode==0){bad.table.slots[15].reading=false;}else if(mode==1){bad.rows[15].generation+=1;}
+                else if(mode==2){bad.table.slots[15].length=0;}else if(mode==3){bad.closed=true;}else{bad.ledger.used+=1;}
+                shutdown_same(ref p,ref bad,ref data,ref scratch);comparisons+=1;mode+=1;}
+        }
+        if(count==32){break;}let usize owner=count%16;
+        let views::Ticket added=ticket(views::begin(ref mut p,ref mut s,ref data,ref scratch,serials[owner],owner,32+count,0,3,ref mut fuel));
+        count+=1;
+    }
+    assert(comparisons==2101);
+    // A late bad window retains exactly the failing row and its physical lease.
+    var views::Pool bad=p;var roots::State partial=s;bad.rows[31].start=18446744073709551615;
+    let Result<usize,views::Error> failed=views::shutdown(ref mut bad,ref mut partial,ref data,ref scratch);
+    assert(switch(failed){case .ok(_):{false}case .err(e):{code(e)==2}});
+    assert(views::snapshot(ref bad).live==1 && !bad.closed && partial.external==views::metadata_charge());
+    i=0;while(i<16){assert(partial.table.slots[i].reading==(i==15));i+=1;}
+    bad.rows[31].start=0;assert(ok(views::shutdown(ref mut bad,ref mut partial,ref data,ref scratch))==0);
+    assert(bad.closed && partial.external==0);
+    fuel=0;assert(ok(views::shutdown(ref mut p,ref mut s,ref data,ref scratch))==0 && fuel==0);
+    assert(root_ok(roots::drain(ref mut s,ref mut data,ref mut scratch))==0 && s.ledger.used==0 && fuel==0);
+}
 @test fn void full_pool_lookup_then_read_keeps_exact_fuel_and_last_alias_cleanup(){
     var vec::Vec<bytes::Buffer> data=vec::empty<bytes::Buffer>();var vec::Vec<bytes::Buffer> scratch=vec::empty<bytes::Buffer>();
     var usize fuel=1000000;var roots::State s=switch(roots::open(ref mut data,ref mut scratch,limits(),ref mut fuel)){
