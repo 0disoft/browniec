@@ -71,14 +71,20 @@ fn Result<usize,Error> binding(ref Pool pool,usize destination,usize except){
     while(i<32){if(i!=except && get(pool,i).live &&
         get(pool,i).binding==destination){return .err(.Binding);}i+=1;}return .ok(destination);
 }
-fn Result<usize,Error> vacant(ref Pool pool,usize destination){
-    let usize checked=header(pool)?;let usize available=binding(pool,destination,32)?;
+// Private to an already checked header. Binding admission plus canonical
+// publication into a vacant slot preserves that proof for a staged pool.
+fn Result<usize,Error> vacant_prepared(ref Pool pool,usize destination){
+    let usize available=binding(pool,destination,32)?;
     var usize i=0;while(i<32){if(!get(pool,i).live && get(pool,i).generation!=0){return .ok(i);}i+=1;}
     return .err(.Capacity);
 }
-fn Result<Row,Error> resolve(ref Pool pool,ref roots::State store,ref vec::Vec<bytes::Buffer> data,
+fn Result<usize,Error> vacant(ref Pool pool,usize destination){
+    let usize checked=header(pool)?;return vacant_prepared(pool,destination);
+}
+// The original immutable pool's full header has already been authenticated.
+// Exact ticket/root/lease/backing/window checks remain independent per source.
+fn Result<Row,Error> resolve_prepared(ref Pool pool,ref roots::State store,ref vec::Vec<bytes::Buffer> data,
     ref vec::Vec<bytes::Buffer> scratch,Ticket ticket,usize selected){
-    let usize checked=header(pool)?;
     if(ticket.slot>=32 || ticket.generation==0){return .err(.Stale);}
     let Row row=get(pool,ticket.slot);
     if(!row.live || row.generation!=ticket.generation){return .err(.Stale);}
@@ -92,6 +98,18 @@ fn Result<Row,Error> resolve(ref Pool pool,ref roots::State store,ref vec::Vec<b
         if(actual.serial==row.serial && actual.binding==row.owner_binding &&
             actual.slot==row.owner_slot && actual.generation==row.owner_generation){matched=true;}i+=1;}
     if(!matched){return .err(.State);}return .ok(row);
+}
+fn Result<Row,Error> resolve(ref Pool pool,ref roots::State store,ref vec::Vec<bytes::Buffer> data,
+    ref vec::Vec<bytes::Buffer> scratch,Ticket ticket,usize selected){
+    let usize checked=header(pool)?;return resolve_prepared(pool,store,data,scratch,ticket,selected);
+}
+fn Result<Row,Error> source_prepared(ref Pool pool,ref roots::State store,
+    ref vec::Vec<bytes::Buffer> data,ref vec::Vec<bytes::Buffer> scratch,usize selected){
+    if(selected>=512){return .err(.Binding);}var usize i=0;
+    while(i<32){let Row row=get(pool,i);if(row.live && row.binding==selected){
+        return resolve_prepared(pool,store,data,scratch,
+            Ticket{.slot=i,.generation=row.generation},selected);
+    }i+=1;}return .err(.Binding);
 }
 // Invocation-local lookup by a coordinator binding, never a guest-provided
 // ticket or serial. Authenticate the exact lease/root/backing before returning.
@@ -162,11 +180,10 @@ pub fn Result<usize,Error> aliases(ref mut Pool pool,ref roots::State store,
     if(sources.len==0){return .ok(0);}
     var Pool staged=*pool;var usize i=0;
     while(i<sources.len){
-        let Ticket source=lookup(pool,store,data,scratch,sources[i])?;
-        // lookup authenticated this exact row against the immutable pool/store.
-        // Only staged changes below; no external ticket or cached proof enters.
-        let Row row=get(pool,source.slot);
-        let usize slot=vacant(ref staged,destinations[i])?;
+        // The original pool/store stay immutable throughout the batch. Only
+        // canonical publication changes staged, preserving its checked header.
+        let Row row=source_prepared(pool,store,data,scratch,sources[i])?;
+        let usize slot=vacant_prepared(ref staged,destinations[i])?;
         let Ticket added=publish(ref mut staged,slot,destinations[i],row.serial,
             row.owner_binding,token(row),row.start,row.length);
         i+=1;

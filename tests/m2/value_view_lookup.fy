@@ -71,9 +71,59 @@ fn void same(ref views::Pool p,ref roots::State s,ref vec::Vec<bytes::Buffer> da
     assert(switch(before){case .ok(a):{switch(after){case .ok(b):{a.slot==b.slot && a.generation==b.generation}case .err(_):{false}}}
         case .err(a):{switch(after){case .ok(_):{false}case .err(b):{code(a)==code(b)}}}});
 }
+// Baseline 209267c batch: retain complete staged header validation. Standalone
+// lookup is independently checked against the frozen header/resolver above.
+fn Result<usize,views::Error> original_aliases(ref mut views::Pool pool,ref roots::State store,
+    ref vec::Vec<bytes::Buffer> data,ref vec::Vec<bytes::Buffer> scratch,
+    ref usize[] sources,ref usize[] destinations,ref mut usize fuel){
+    if(sources.len!=destinations.len){return .err(.Binding);}
+    if(sources.len>8){return .err(.Capacity);}
+    let usize charge=views::range_cost()*sources.len;let usize available=*fuel;
+    if(available<charge){return .err(.Fuel);};*fuel=available-charge;
+    let usize checked=header(pool)?;if(sources.len==0){return .ok(0);}
+    var views::Pool staged=*pool;var usize i=0;
+    while(i<sources.len){let views::Ticket source=views::lookup(pool,store,data,scratch,sources[i])?;
+        let views::Row row=get(pool,source.slot);let usize staged_checked=header(ref staged)?;
+        if(destinations[i]>=512){return .err(.Binding);}var usize j=0;
+        while(j<32){if(staged.rows[j].live && staged.rows[j].binding==destinations[i]){return .err(.Binding);}j+=1;}
+        var usize slot=0;while(slot<32){if(!staged.rows[slot].live && staged.rows[slot].generation!=0){break;}slot+=1;}
+        if(slot==32){return .err(.Capacity);}let usize generation=staged.rows[slot].generation;
+        staged.rows[slot]=views::Row{.generation=generation,.live=true,.binding=destinations[i],.serial=row.serial,
+            .owner_binding=row.owner_binding,.owner_slot=row.owner_slot,.owner_generation=row.owner_generation,
+            .start=row.start,.length=row.length};i+=1;
+    }
+    *pool=staged;return .ok(sources.len);
+}
+fn void same_pool(ref views::Pool a,ref views::Pool b){
+    assert(a.closed==b.closed);var usize i=0;while(i<32){let views::Row x=a.rows[i];let views::Row y=b.rows[i];
+        assert(x.generation==y.generation && x.live==y.live && x.binding==y.binding && x.serial==y.serial &&
+            x.owner_binding==y.owner_binding && x.owner_slot==y.owner_slot && x.owner_generation==y.owner_generation &&
+            x.start==y.start && x.length==y.length);i+=1;}
+}
+fn void alias_same(ref views::Pool p,ref roots::State s,ref vec::Vec<bytes::Buffer> data,
+    ref vec::Vec<bytes::Buffer> scratch,ref usize[] sources,ref usize[] destinations,usize fuel){
+    var views::Pool before=*p;var views::Pool after=*p;var usize old_fuel=fuel;var usize new_fuel=fuel;
+    let Result<usize,views::Error> old=original_aliases(ref mut before,s,data,scratch,sources,destinations,ref mut old_fuel);
+    let Result<usize,views::Error> got=views::aliases(ref mut after,s,data,scratch,sources,destinations,ref mut new_fuel);
+    assert(old_fuel==new_fuel);
+    assert(switch(old){case .ok(a):{switch(got){case .ok(b):{a==b}case .err(_):{false}}}
+        case .err(a):{switch(got){case .ok(_):{false}case .err(b):{code(a)==code(b)}}}});
+    same_pool(ref before,ref after);if(!got.is_ok){same_pool(ref after,p);}
+}
+fn void alias_queries(ref views::Pool p,ref roots::State s,ref vec::Vec<bytes::Buffer> data,ref vec::Vec<bytes::Buffer> scratch){
+    var usize[8] from=[16;8];var usize[8] to=[128,129,130,131,132,133,134,135];let usize[4] sizes=[0,1,2,8];var usize i=0;
+    while(i<4){let usize n=sizes[i];alias_same(p,s,data,scratch,ref from[..n],ref to[..n],512*n);i+=1;}
+    alias_same(p,s,data,scratch,ref from,ref to,4095);
+    alias_same(p,s,data,scratch,ref from[..1],ref to[..0],0);
+    let usize[9] too_many=[16;9];let usize[9] destinations=[128;9];alias_same(p,s,data,scratch,ref too_many,ref destinations,0);
+    from[7]=128;alias_same(p,s,data,scratch,ref from,ref to,4096);from[7]=16;
+    to[7]=128;alias_same(p,s,data,scratch,ref from,ref to,4096);
+    to[7]=512;alias_same(p,s,data,scratch,ref from,ref to,4096);
+}
 fn void queries(ref views::Pool p,ref roots::State s,ref vec::Vec<bytes::Buffer> data,ref vec::Vec<bytes::Buffer> scratch){
     same(p,s,data,scratch,16);same(p,s,data,scratch,23);same(p,s,data,scratch,47);
     same(p,s,data,scratch,511);same(p,s,data,scratch,512);same(p,s,data,scratch,18446744073709551615);
+    alias_queries(p,s,data,scratch);
 }
 fn void corrupt(ref views::Pool clean,ref roots::State s,ref vec::Vec<bytes::Buffer> data,
     ref vec::Vec<bytes::Buffer> scratch,usize i,usize mode){
