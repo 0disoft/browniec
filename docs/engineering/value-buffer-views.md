@@ -115,3 +115,59 @@ intentional public admission. The native-only registry tests recorded above cann
 the successor's execution behavior; its own evidence records that scope.
 Public AllocError, text/input/output, full Engine/Instance/host behavior, isolation,
 platform/delivery and broader validation remain part of the full objective.
+
+## One header preflight for view shutdown (2026-11-16)
+
+Compared with 79e86d0, shutdown previously checked the complete registry header
+and then called public close for every live row. Each close repeated the same
+quadratic header check as part of its resolver. Successful close only retires
+the selected row to the canonical blank representation; removing a row cannot
+introduce duplicate bindings or conflicting same-root identities. Thus every
+successful retirement preserves the initial header invariants.
+
+Shutdown now uses its initial complete header check for the entire sweep. Each
+row still authenticates its exact ticket, binding, root serial/token/backing,
+physical lease and initialized window through the private `resolve_prepared`.
+The private `close_prepared` factors the unchanged sibling scan, last-sibling
+lease release and canonical retirement. Public close retains its full resolver.
+Root leases can change during the sweep, so no root authentication is reused.
+No public unchecked API, persistent proof, cache, state or heap allocation is added.
+
+For N initially live views, full header checks fall from 1+N to one. With all
+32 rows live, ascending retirement previously performed 496 initial live-pair
+comparisons plus sum(k*(k-1)/2, k=1..32) = 5456 more: 5952 in total. It now performs
+496, removing 5456 (91.7%). Header outer-row visits fall from 1056 to 32. Worst-case
+registry cleanup work falls from O(C^3) to O(C^2) for registry capacity C,
+including the retained per-row sibling scans. Per-row root authentication,
+last-sibling releases and final metadata
+refund remain separate and unchanged. These are source-operation counts, not
+measured throughput or physical memory peaks; the fixed limits remain 32 views
+and 16 roots.
+
+The sweep keeps ascending slot order, exact errors and partial progress on a
+late failure. A failing row remains live, earlier successfully closed rows stay
+retired, and metadata is refunded only after every close succeeds. Maximum
+view generations retire as zero. Closed-pool idempotence, prepaid zero-Fuel
+cleanup, root bytes and owning vector positions/capacities remain unchanged.
+
+Run `build/toolchain/fairyc.exe check`, followed by
+`python -B tools/verify-value-view-shutdown.py --profile all`. Five selected native
+groups include an independent pre-change close/shutdown oracle over 2101 cases.
+The fixture uses 16 actual roots and checks healthy view counts 0..32, 16 metadata
+variations at every slot for counts 0/1/8/32, and five root faults at those counts.
+Every comparison checks the exact result/error and complete pool/root state,
+including owner tables, ledger, closing plan, metadata balance and generations.
+All root bytes and vector capacities are checked too. A separate late bad-window
+case proves exactly one row/lease remains and a repaired retry completes.
+Successful and already-closed cases verify idempotence; the original fixture
+shuts down and drains at zero remaining Fuel. Existing groups cover direct close,
+parent/child aliases, lease exclusion, generation retirement, quota refund and
+actual frame CALL/selected-range RETURN cleanup.
+
+Windows development and release each passed five native groups on cdc76c7.
+All 376 tested input hashes match that implementation commit and the Git index.
+Execution results and exact implementation/input identities are recorded in the
+[Windows evidence](../evidence/value-view-shutdown-windows-20261116.json).
+Full Engine transport, retained/source CALL integration, public CLI, standalone
+memory and full release gates are outside this focused change. Known legacy
+compiler and stack failures are not claimed fixed; broader completion stays paused.

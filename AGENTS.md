@@ -1,27 +1,26 @@
 - Latest maintenance checkpoint (2026-11-16):
-  [reuse authenticated RETURN operands](docs/engineering/value-view-calls.md#reuse-authenticated-return-operands-2026-11-16).
-  Native view handoff checks its registry header once and authenticates both
-  exact operands with private resolve_prepared. A private move_prepared shares
-  the existing destination scan and single-row publication with public move;
-  standalone move retains its full authentication and Fuel admission.
-  On success, header checks fall 3 to 1 and root authentications 3 to 2. At
-  32 live rows, header pairs fall 1488 to 496 (992 removed, 66.7%) and outer-row
-  visits 96 to 32. Both exact root/token/backing/lease/window checks remain.
-  No callback or mutation intervenes before publication. Fuel 256, errors,
-  containment, destination admission, ticket/range/lease and rollback remain.
-  No new public API/cache/state/allocation. Whole-operation O(C^2+R^2) remains;
-  throughput and physical peaks were not measured. Development/O2 each pass
-  nine native groups, including 23111 frozen-algorithm comparisons over healthy
-  counts 0..32, every slot's metadata faults at 0/1/8/32, root faults, ticket/
-  binding/destination/Fuel errors, full-pool return, contained/empty windows,
-  actual frame CALL/RETURN/recursion, accounting/bytes and zero-Fuel cleanup.
-  All 377 tested input hashes match implementation 9c6caa3 and Git index.
-  Root check: 375 sources / 4107 MIR; all 367 production files retain LF.
-  Two test-syntax failures and one supervisor interruption are recorded as
-  incomplete attempts. Full Engine/source CALL/public CLI/memory/release gates
-  and known legacy failures not rerun. Broader completion remains paused.
-  No push or deployment. See
-  [evidence](docs/evidence/value-view-handoff-windows-20261116.json).
+  [one header preflight for view shutdown](docs/engineering/value-buffer-views.md#one-header-preflight-for-view-shutdown-2026-11-16).
+  Shutdown reuses one complete registry header preflight across canonical row
+  retirement. Every row retains fresh exact ticket/root/token/backing/lease/
+  window authentication. Private close_prepared shares the unchanged sibling
+  scan, last-lease release and retirement; standalone close keeps its resolver.
+  At 32 live views, headers fall 33 to 1, outer-row visits 1056 to 32 and
+  live-pair comparisons 5952 to 496 (5456 removed, 91.7%). Registry cleanup
+  worst-case work is O(C^2) instead of O(C^3), C registry capacity <= 32.
+  All 32 per-view root authentications remain. Ascending order, exact errors, partial
+  progress, terminal generations, final refund and zero-Fuel cleanup remain.
+  No new public API/cache/persistent state/heap allocation; throughput and
+  physical peaks were not measured. Development/O2 each pass five native groups,
+  including 2101 frozen close/shutdown comparisons over healthy counts 0..32,
+  every slot's metadata faults at 0/1/8/32 and root faults with 16 native roots.
+  Full pool/store/ledger/closing-plan parity, bytes/vector capacities, late
+  failure retaining one row/lease, repair/retry, idempotence, zero-Fuel drain,
+  direct-close/lease/quota and actual frame CALL/RETURN cleanup are covered.
+  All 376 native inputs match implementation cdc76c7 and the Git index.
+  Root check: 375 sources / 4108 MIR; all 367 production files retain LF.
+  Full Engine/source CALL/public CLI/memory/release gates and known legacy
+  failures not rerun. Broader completion remains paused. No push or deployment.
+  See [evidence](docs/evidence/value-view-shutdown-windows-20261116.json).
 
 # Brownie C agent guidance
 
