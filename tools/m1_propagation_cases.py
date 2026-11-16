@@ -97,4 +97,4 @@ def run_propagation(case, root):
     truth = b"module main; fn Result<i32,bool> f(Result<bool,bool> x) {if(x?) {return .ok(0);} return .ok(1);} fn i32 main() {switch(f(.err(true))) {case .ok(v): {return 0;} case .err(e): {if(e) {return 42;} return 1;}}}"
     case("prop-error-bool-true", truth, 42)
     case("prop-check-no-execution", exact.replace(b".some(42)", b".some(1/0)"), mode="check")
-    case("prop-example", (root / "examples/propagation.brc").read_bytes(), 42)
+    case("prop-example", (root / "examples/propagation.brc").read_bytes(), 77)

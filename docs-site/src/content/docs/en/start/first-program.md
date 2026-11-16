@@ -13,7 +13,7 @@ Every public `.brc` entry defines `module main;` and a zero-argument `fn i32 mai
 module main;
 
 fn i32 main() {
-    return 6 * 7;
+    return 7 * 11;
 }
 ```
 
@@ -34,7 +34,7 @@ It prints `checked` and exits `0`. Now run it in the VM:
 Output:
 
 ```text
-return_i32=42
+return_i32=77
 ```
 
 Add `--json` for machine-readable output:
@@ -44,10 +44,10 @@ Add `--json` for machine-readable output:
 ```
 
 ```json
-{"schema":"browniec.result/v1","profile":"brownie.m1-scalar/1","command":"run","status":"completed","return_i32":42,"error":null}
+{"schema":"browniec.result/v1","profile":"brownie.m1-scalar/1","command":"run","status":"completed","return_i32":77,"error":null}
 ```
 
-Notice that **`return 42;` does not set the OS exit code to 42.** The CLI exits `0` because the run succeeded, while `42` is returned inside `return_i32`.
+Notice that **`return 77;` does not set the OS exit code to 77.** The CLI exits `0` because the run succeeded, while `77` is returned inside `return_i32`.
 
 ## 3. Peek at the Compiled IR
 
@@ -74,6 +74,6 @@ The default Fuel budget is `256`. Running a loop like `examples/loops.brc` with 
 
 ## Common Beginner Gotchas
 
-- **Expecting `return 42;` to be the process exit code**: Guest returns are data (`return_i32`); non-zero process exit codes (`2`..`7`) indicate errors.
+- **Expecting `return 77;` to be the process exit code**: Guest returns are data (`return_i32`); non-zero process exit codes (`2`..`7`) indicate errors.
 - **Forgetting `--fuel` on arrays**: Array initialization costs `65,537` Fuel before `main()` runs, so pass `--fuel 100000` or higher.
 - **Exceeding 4096 bytes or passing `--isolated`**: Public CLI rejects oversized files and unimplemented flags instead of silently ignoring them.

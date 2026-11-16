@@ -29,7 +29,7 @@ env.update({key: os.environ[key] for key in ['SystemRoot', 'WINDIR'] if key in o
 rows = []
 
 
-def case(source, category='public', expected=0, fuel=1000000):
+def case(source, category='public', expected=0, fuel=1000000, value=42):
     data = source.encode()
     path = output / f'case-{len(rows):03}.brc'
     path.write_bytes(data)
@@ -53,7 +53,7 @@ def case(source, category='public', expected=0, fuel=1000000):
         else:
             assert done.returncode == 0 and result['error'] is None, (source, done)
             assert result['status'] == ('checked' if mode == 'check' else 'completed'), result
-            assert result['return_i32'] == (None if mode == 'check' else 42), (source, result)
+            assert result['return_i32'] == (None if mode == 'check' else value), (source, result)
         rows.append(dict(category=category, command=command, sourceSha256=hashlib.sha256(data).hexdigest(),
                          exit=done.returncode, result=result))
 
@@ -82,7 +82,7 @@ for source in negatives:
     case(source, 'source', fuel=0)
 case(fixtures[0][0], expected=8, fuel=0)
 example = 'mutable-slice-record-result' if args.record_results else 'mutable-slice-array-result' if args.array_results else 'mutable-slice-owned-call' if args.owned_calls else 'mutable-slice-reborrow'
-case((root / f'examples/{example}.brc').read_text(encoding='utf-8'))
+case((root / f'examples/{example}.brc').read_text(encoding='utf-8'), value=(77 if example == 'mutable-slice-reborrow' else 42))
 # Exactly 16 static sites fit; one more child fails at compilation, before Fuel.
 for count in ([] if args.owned_calls or args.array_results or args.record_results else [15, 16]):
     source = 'module main;fn i32 main(){var i32[1] a=[42;1];let ref mut i32[] p=ref mut a;'

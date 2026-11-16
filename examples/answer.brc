@@ -1,5 +1,5 @@
 module main;
 
 fn i32 main() {
-    return 6 * 7;
+    return 7 * 11;
 }

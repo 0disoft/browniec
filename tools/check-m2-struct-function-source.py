@@ -23,7 +23,7 @@ exe=args.exe.resolve(strict=True)
 rows=[]
 
 
-def case(source,error=None,mode='run',fuel=1000000,profile='brownie.m2-struct-read/1'):
+def case(source,error=None,mode='run',fuel=1000000,profile='brownie.m2-struct-read/1',expected=42):
     data=source.encode()
     path=output/f'case-{len(rows):03}.brc'
     path.write_bytes(data)
@@ -35,7 +35,7 @@ def case(source,error=None,mode='run',fuel=1000000,profile='brownie.m2-struct-re
     result=json.loads(ran.stdout)
     assert result['schema']=='browniec.result/v1' and result['command']==mode,result
     assert result['status']==('error' if error else 'checked' if mode=='check' else 'completed'),result
-    assert result['return_i32']==(None if error or mode=='check' else 42),result
+    assert result['return_i32']==(None if error or mode=='check' else expected),result
     if error:
         assert result['error']['kind']==error and 0<=result['error']['byte_offset']<=len(data),(source,result)
     else:
@@ -43,9 +43,9 @@ def case(source,error=None,mode='run',fuel=1000000,profile='brownie.m2-struct-re
     rows.append(dict(command=command,sourceSha256=hashlib.sha256(data).hexdigest(),exit=code,result=result))
 
 
-def both(source,error=None,profile='brownie.m2-struct-read/1'):
-    case(source,error,'check',profile=profile)
-    case(source,error,profile=profile)
+def both(source,error=None,profile='brownie.m2-struct-read/1',expected=42):
+    case(source,error,'check',profile=profile,expected=expected)
+    case(source,error,profile=profile,expected=expected)
 
 
 import re
@@ -78,7 +78,7 @@ for expression,error in [('2147483647+1','overflow'),('1/0','zero_divisor')]:
 # An initializer may call a helper before publishing its own binding.
 both('module main;struct P{i32 x;}fn i32 helper(){let P p=P{.x=42};return p.x;}fn i32 main(){let P p=P{.x=helper()};return p.x;}')
 example=root/'examples/helper-records.brc'
-both(example.read_text())
+both(example.read_text(),expected=77)
 version=json.loads(subprocess.check_output([str(exe),'--version','--json'],cwd=empty,env=env))
 assert version['struct_helper_locals'] is True and version['restricted'] is False,version
 receipt.write_text(json.dumps(dict(schema='browniec.m2-struct-function-source-cli/v1',status='passed',profile=args.profile,

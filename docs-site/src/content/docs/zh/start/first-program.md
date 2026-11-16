@@ -13,7 +13,7 @@ Brownie C 可以直接处理单个 `.brc` 文件（最大 4096 个 UTF-8 字节�
 module main;
 
 fn i32 main() {
-    return 6 * 7;
+    return 7 * 11;
 }
 ```
 
@@ -34,7 +34,7 @@ fn i32 main() {
 输出：
 
 ```text
-return_i32=42
+return_i32=77
 ```
 
 加上 `--json` 可获取机器可读的输出：
@@ -44,10 +44,10 @@ return_i32=42
 ```
 
 ```json
-{"schema":"browniec.result/v1","profile":"brownie.m1-scalar/1","command":"run","status":"completed","return_i32":42,"error":null}
+{"schema":"browniec.result/v1","profile":"brownie.m1-scalar/1","command":"run","status":"completed","return_i32":77,"error":null}
 ```
 
-请注意，<strong>`return 42;` 并不会把操作系统的进程退出码设为 42。</strong>因为程序运行成功，CLI 的退出码为 `0`，而 `42` 会作为数据放在 `return_i32` 字段中返回。
+请注意，<strong>`return 77;` 并不会把操作系统的进程退出码设为 77。</strong>因为程序运行成功，CLI 的退出码为 `0`，而 `77` 会作为数据放在 `return_i32` 字段中返回。
 
 ## 3. 查看编译后的 IR
 
@@ -74,6 +74,6 @@ entry=0 instructions=4 registers=3 literal_bytes=0
 
 ## 新手常见误区
 
-- <strong>误以为 `return 42;` 是进程退出码</strong>：Guest 代码的返回值是数据（`return_i32`）；非零进程退出码（`2`..`7`）表示发生了错误。
+- <strong>误以为 `return 77;` 是进程退出码</strong>：Guest 代码的返回值是数据（`return_i32`）；非零进程退出码（`2`..`7`）表示发生了错误。
 - <strong>使用数组时忘记调整 `--fuel`</strong>：在 `main()` 运行之前，数组初始化会消耗 `65,537` Fuel，因此请至少传入 `--fuel 100000`。
 - <strong>源码超过 4096 字节或传入 `--isolated`</strong>：公开 CLI 会直接拒绝超大文件与尚未实现的参数，而不会静默忽略它们。

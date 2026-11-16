@@ -9,6 +9,6 @@ fn i32 total(i32 n) {
 }
 
 fn i32 main() {
-    let Point p = Point { .x = 20, .y = 0 };
+    let Point p = Point { .x = 55, .y = 0 };
     return p.x + total(6);
 }

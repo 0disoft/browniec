@@ -372,7 +372,7 @@ for name, source in [
     case(name,source.encode(),error="syntax" if name=="for-cross-function-break" else "type")
 post_once=body("var i32 i=0; for(;i<1;i=i+1) {continue;} return i;")
 case("for-fuel-exact",post_once,1,fuel=18)
-case("loop-example",(root/"examples/loops.brc").read_bytes(),42,fuel=1000)
+case("loop-example",(root/"examples/loops.brc").read_bytes(),77,fuel=1000)
 case("loop-body-calls",b"module main; fn i32 inc(i32 n) {return n+1;} fn i32 main() {var i32 sum=0; for(var i32 i=0;i<10;i=i+1) {sum=sum+inc(i);} return sum;}",55,fuel=1000)
 case("loop-call-frame-reuse",b"module main; fn i32 f(i32 n) {var i32 i=n; var i32 sum=0; while(i>0) {sum=sum+i; i=i-1;} return sum;} fn i32 main() {return f(3)+f(2);}",9,fuel=1000)
 case("for-fuel-short",post_once,error="fuel",fuel=17)

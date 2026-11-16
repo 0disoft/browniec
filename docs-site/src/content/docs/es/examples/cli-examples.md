@@ -21,7 +21,7 @@ fn i32 main() {
     var i32 answer = 0;
     let bool ready = true || (1 / 0 == 0);
     if (ready && factorial(5) == 120) {
-        answer = 42;
+        answer = 77;
     } else {
         answer = 1 / 0;
     }
@@ -33,7 +33,7 @@ fn i32 main() {
 ./build/browniec.exe run examples/branches.brc --json
 ```
 
-Salida: `"status":"completed"`, `"return_i32":42`.
+Salida: `"status":"completed"`, `"return_i32":77`.
 
 ## 2. Propagación de `Option` y `Result` (`examples/propagation.brc`)
 
@@ -51,9 +51,9 @@ fn Result<i32, bool> add(Result<i32, bool> left, Result<i32, bool> right) {
 }
 
 fn i32 main() {
-    switch (positive(.some(42))) {
+    switch (positive(.some(77))) {
         case .some(ok): {
-            switch (add(.ok(20), .ok(22))) {
+            switch (add(.ok(30), .ok(47))) {
                 case .ok(value): {
                     if (ok) { return value; }
                     return 0;
@@ -70,7 +70,7 @@ fn i32 main() {
 ./build/browniec.exe run examples/propagation.brc --json
 ```
 
-Salida: `"return_i32":42`.
+Salida: `"return_i32":77`.
 
 ## 3. Validación de bytes UTF-8 (`examples/array-utf8.brc`)
 
@@ -83,7 +83,7 @@ fn i32 main() {
     var u8[3] bytes = [128; 3];
     bytes[0] = 234;
     bytes[1] = 176;
-    if (text::valid_utf8(bytes)) { return 42; }
+    if (text::valid_utf8(bytes)) { return 77; }
     return 0;
 }
 ```
@@ -94,7 +94,7 @@ Como los programas con arrays pagan `65 537` de Fuel por adelantado para inicial
 ./build/browniec.exe run examples/array-utf8.brc --fuel 100000 --json
 ```
 
-Salida: `"return_i32":42`.
+Salida: `"return_i32":77`.
 
 ## 4. Registros auxiliares (`helper-records.brc`) y slices mutables (`mutable-slice-reborrow.brc`)
 
@@ -105,6 +105,6 @@ La construcción recursiva de structs y el représtamo de slices consumen más F
 ./build/browniec.exe run examples/mutable-slice-reborrow.brc --fuel 1000000 --json
 ```
 
-Ambos devuelven `"return_i32":42` con código de salida `0`.
+Ambos devuelven `"return_i32":77` con código de salida `0`.
 
 > **Nota** (`examples/projects/hello`): El directorio multiarchivo `examples/projects/hello` (`project.json`) pertenece al trabajo futuro o interno de paquetes y no está pensado para pasarse directamente a la CLI pública actual de archivo único.

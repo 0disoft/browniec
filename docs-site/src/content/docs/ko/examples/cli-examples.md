@@ -21,7 +21,7 @@ fn i32 main() {
     var i32 answer = 0;
     let bool ready = true || (1 / 0 == 0);
     if (ready && factorial(5) == 120) {
-        answer = 42;
+        answer = 77;
     } else {
         answer = 1 / 0;
     }
@@ -33,7 +33,7 @@ fn i32 main() {
 ./build/browniec.exe run examples/branches.brc --json
 ```
 
-결과: `"status":"completed"`, `"return_i32":42`.
+결과: `"status":"completed"`, `"return_i32":77`.
 
 ## 2. `?` 연산자로 `Option`/`Result` 이어 쓰기 (`examples/propagation.brc`)
 
@@ -51,9 +51,9 @@ fn Result<i32, bool> add(Result<i32, bool> left, Result<i32, bool> right) {
 }
 
 fn i32 main() {
-    switch (positive(.some(42))) {
+    switch (positive(.some(77))) {
         case .some(ok): {
-            switch (add(.ok(20), .ok(22))) {
+            switch (add(.ok(30), .ok(47))) {
                 case .ok(value): {
                     if (ok) { return value; }
                     return 0;
@@ -70,7 +70,7 @@ fn i32 main() {
 ./build/browniec.exe run examples/propagation.brc --json
 ```
 
-결과: `"return_i32":42`.
+결과: `"return_i32":77`.
 
 ## 3. UTF-8 바이트 검사 (`examples/array-utf8.brc`)
 
@@ -83,7 +83,7 @@ fn i32 main() {
     var u8[3] bytes = [128; 3];
     bytes[0] = 234;
     bytes[1] = 176;
-    if (text::valid_utf8(bytes)) { return 42; }
+    if (text::valid_utf8(bytes)) { return 77; }
     return 0;
 }
 ```
@@ -94,11 +94,11 @@ fn i32 main() {
 ./build/browniec.exe run examples/array-utf8.brc --fuel 100000 --json
 ```
 
-결과: `"return_i32":42`.
+결과: `"return_i32":77`.
 
 ## 4. 구조체 재귀와 가변 슬라이스 (`helper-records.brc`, `mutable-slice-reborrow.brc`)
 
-구조체를 여러 번 만들어 반환하거나(`examples/helper-records.brc`), 가변 슬라이스를 다시 빌려 수정할 때(`examples/mutable-slice-reborrow.brc`)는 연산량이 조금 더 많습니다. 예를 들어 `helper-records.brc`는 `--fuel 100000`에서는 중간에 Fuel이 다 떨어지지만 `--fuel 1000000`을 주면 무리 없이 `42`를 반환하고 끝납니다.
+구조체를 여러 번 만들어 반환하거나(`examples/helper-records.brc`), 가변 슬라이스를 다시 빌려 수정할 때(`examples/mutable-slice-reborrow.brc`)는 연산량이 조금 더 많습니다. 예를 들어 `helper-records.brc`는 `--fuel 100000`에서는 중간에 Fuel이 다 떨어지지만 `--fuel 1000000`을 주면 무리 없이 `77`을 반환하고 끝납니다.
 
 ```powershell
 ./build/browniec.exe run examples/helper-records.brc --fuel 1000000 --json

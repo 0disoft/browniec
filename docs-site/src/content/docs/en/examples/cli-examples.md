@@ -21,7 +21,7 @@ fn i32 main() {
     var i32 answer = 0;
     let bool ready = true || (1 / 0 == 0);
     if (ready && factorial(5) == 120) {
-        answer = 42;
+        answer = 77;
     } else {
         answer = 1 / 0;
     }
@@ -33,7 +33,7 @@ fn i32 main() {
 ./build/browniec.exe run examples/branches.brc --json
 ```
 
-Output: `"status":"completed"`, `"return_i32":42`.
+Output: `"status":"completed"`, `"return_i32":77`.
 
 ## 2. `Option` and `Result` Propagation (`examples/propagation.brc`)
 
@@ -51,9 +51,9 @@ fn Result<i32, bool> add(Result<i32, bool> left, Result<i32, bool> right) {
 }
 
 fn i32 main() {
-    switch (positive(.some(42))) {
+    switch (positive(.some(77))) {
         case .some(ok): {
-            switch (add(.ok(20), .ok(22))) {
+            switch (add(.ok(30), .ok(47))) {
                 case .ok(value): {
                     if (ok) { return value; }
                     return 0;
@@ -70,7 +70,7 @@ fn i32 main() {
 ./build/browniec.exe run examples/propagation.brc --json
 ```
 
-Output: `"return_i32":42`.
+Output: `"return_i32":77`.
 
 ## 3. UTF-8 Byte Validation (`examples/array-utf8.brc`)
 
@@ -83,7 +83,7 @@ fn i32 main() {
     var u8[3] bytes = [128; 3];
     bytes[0] = 234;
     bytes[1] = 176;
-    if (text::valid_utf8(bytes)) { return 42; }
+    if (text::valid_utf8(bytes)) { return 77; }
     return 0;
 }
 ```
@@ -94,7 +94,7 @@ Because array programs pay `65,537` Fuel up front to initialize the 64 KiB arena
 ./build/browniec.exe run examples/array-utf8.brc --fuel 100000 --json
 ```
 
-Output: `"return_i32":42`.
+Output: `"return_i32":77`.
 
 ## 4. Helper Records (`helper-records.brc`) and Mutable Slices (`mutable-slice-reborrow.brc`)
 
@@ -105,6 +105,6 @@ Recursive struct construction and slice reborrowing consume more Fuel than simpl
 ./build/browniec.exe run examples/mutable-slice-reborrow.brc --fuel 1000000 --json
 ```
 
-Both return `"return_i32":42` with exit status `0`.
+Both return `"return_i32":77` with exit status `0`.
 
 > **Note (`examples/projects/hello`):** The multi-file `examples/projects/hello` directory (`project.json`) belongs to future/internal package-bundle work and is not meant to be passed directly to the current single-file public CLI.

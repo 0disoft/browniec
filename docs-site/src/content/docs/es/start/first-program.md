@@ -13,7 +13,7 @@ Todo archivo `.brc` público define `module main;` y una función sin argumentos
 module main;
 
 fn i32 main() {
-    return 6 * 7;
+    return 7 * 11;
 }
 ```
 
@@ -34,7 +34,7 @@ Imprime `checked` y termina con código `0`. Ahora ejecútalo en la VM:
 Salida:
 
 ```text
-return_i32=42
+return_i32=77
 ```
 
 Añade `--json` para obtener una salida legible por máquina:
@@ -44,10 +44,10 @@ Añade `--json` para obtener una salida legible por máquina:
 ```
 
 ```json
-{"schema":"browniec.result/v1","profile":"brownie.m1-scalar/1","command":"run","status":"completed","return_i32":42,"error":null}
+{"schema":"browniec.result/v1","profile":"brownie.m1-scalar/1","command":"run","status":"completed","return_i32":77,"error":null}
 ```
 
-Fíjate en que `return 42;` **no establece el código de salida del sistema operativo en 42**. La CLI termina con `0` porque la ejecución tuvo éxito, mientras que `42` se devuelve dentro de `return_i32`.
+Fíjate en que `return 77;` **no establece el código de salida del sistema operativo en 77**. La CLI termina con `0` porque la ejecución tuvo éxito, mientras que `77` se devuelve dentro de `return_i32`.
 
 ## 3. Echar un vistazo al IR compilado
 
@@ -74,6 +74,6 @@ El presupuesto de Fuel predeterminado es `256`. Ejecutar un bucle como `examples
 
 ## Errores comunes de principiante
 
-- **Esperar que `return 42;` sea el código de salida del proceso**: Los retornos del programa huésped son datos (`return_i32`); los códigos de salida del proceso distintos de cero (`2`..`7`) indican errores.
+- **Esperar que `return 77;` sea el código de salida del proceso**: Los retornos del programa huésped son datos (`return_i32`); los códigos de salida del proceso distintos de cero (`2`..`7`) indican errores.
 - **Olvidar `--fuel` con arrays**: La inicialización de arrays consume `65 537` de Fuel antes de que se ejecute `main()`, así que pasa `--fuel 100000` o un valor mayor.
 - **Superar los 4096 bytes o pasar `--isolated`**: La CLI pública rechaza los archivos que exceden el tamaño y las flags no implementadas en lugar de ignorarlos en silencio.

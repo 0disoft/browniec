@@ -13,7 +13,7 @@ Brownie C는 프로젝트 폴더 대신 **`.brc` 파일 하나**를 CLI에 바�
 module main;
 
 fn i32 main() {
-    return 6 * 7;
+    return 7 * 11;
 }
 ```
 
@@ -34,7 +34,7 @@ fn i32 main() {
 출력:
 
 ```text
-return_i32=42
+return_i32=77
 ```
 
 프로그램에서 쓰기 좋은 한 줄짜리 JSON으로 결과를 받고 싶다면 `--json`을 붙입니다.
@@ -44,10 +44,10 @@ return_i32=42
 ```
 
 ```json
-{"schema":"browniec.result/v1","profile":"brownie.m1-scalar/1","command":"run","status":"completed","return_i32":42,"error":null}
+{"schema":"browniec.result/v1","profile":"brownie.m1-scalar/1","command":"run","status":"completed","return_i32":77,"error":null}
 ```
 
-여기서 재미있는 점 하나! Fairy C와 달리 Brownie C에서는 **`return 42;`가 OS 종료 코드 42를 뜻하지 않습니다.** 실행 자체는 정상 완료되었으므로 프로세스 종료 코드는 `0`이고, `42`는 결과 데이터(`return_i32`)로 돌려받습니다.
+여기서 재미있는 점 하나! Fairy C와 달리 Brownie C에서는 **`return 77;`이 OS 종료 코드 77을 뜻하지 않습니다.** 실행 자체는 정상 완료되었으므로 프로세스 종료 코드는 `0`이고, `77`은 결과 데이터(`return_i32`)로 돌려받습니다.
 
 ## 3. 생성된 IR 엿보기 (`inspect --ir`)
 

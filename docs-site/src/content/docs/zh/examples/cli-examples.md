@@ -21,7 +21,7 @@ fn i32 main() {
     var i32 answer = 0;
     let bool ready = true || (1 / 0 == 0);
     if (ready && factorial(5) == 120) {
-        answer = 42;
+        answer = 77;
     } else {
         answer = 1 / 0;
     }
@@ -33,7 +33,7 @@ fn i32 main() {
 ./build/browniec.exe run examples/branches.brc --json
 ```
 
-输出：`"status":"completed"`，`"return_i32":42`。
+输出：`"status":"completed"`，`"return_i32":77`。
 
 ## 2. `Option` 与 `Result` 错误传播（`examples/propagation.brc`）
 
@@ -51,9 +51,9 @@ fn Result<i32, bool> add(Result<i32, bool> left, Result<i32, bool> right) {
 }
 
 fn i32 main() {
-    switch (positive(.some(42))) {
+    switch (positive(.some(77))) {
         case .some(ok): {
-            switch (add(.ok(20), .ok(22))) {
+            switch (add(.ok(30), .ok(47))) {
                 case .ok(value): {
                     if (ok) { return value; }
                     return 0;
@@ -70,7 +70,7 @@ fn i32 main() {
 ./build/browniec.exe run examples/propagation.brc --json
 ```
 
-输出：`"return_i32":42`。
+输出：`"return_i32":77`。
 
 ## 3. UTF-8 字节校验（`examples/array-utf8.brc`）
 
@@ -83,7 +83,7 @@ fn i32 main() {
     var u8[3] bytes = [128; 3];
     bytes[0] = 234;
     bytes[1] = 176;
-    if (text::valid_utf8(bytes)) { return 42; }
+    if (text::valid_utf8(bytes)) { return 77; }
     return 0;
 }
 ```
@@ -94,7 +94,7 @@ fn i32 main() {
 ./build/browniec.exe run examples/array-utf8.brc --fuel 100000 --json
 ```
 
-输出：`"return_i32":42`。
+输出：`"return_i32":77`。
 
 ## 4. 辅助记录（`helper-records.brc`）与可变切片（`mutable-slice-reborrow.brc`）
 
@@ -105,6 +105,6 @@ fn i32 main() {
 ./build/browniec.exe run examples/mutable-slice-reborrow.brc --fuel 1000000 --json
 ```
 
-两个示例都会以退出码 `0` 退出，并返回 `"return_i32":42`。
+两个示例都会以退出码 `0` 退出，并返回 `"return_i32":77`。
 
 > <strong>注意（`examples/projects/hello`）：</strong>多文件目录 `examples/projects/hello`（含 `project.json`）属于未来或内部的包捆绑功能，不能直接传给当前的单文件公开 CLI。

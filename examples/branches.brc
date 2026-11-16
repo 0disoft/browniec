@@ -9,7 +9,7 @@ fn i32 main() {
     var i32 answer = 0;
     let bool ready = true || (1 / 0 == 0);
     if (ready && factorial(5) == 120) {
-        answer = 42;
+        answer = 77;
     } else {
         answer = 1 / 0;
     }

@@ -1,7 +1,7 @@
 module main;
 
 fn i32 set_answer(ref mut i32[] selected) {
-    selected[0] = 42;
+    selected[0] = 77;
     return selected[0];
 }
 
