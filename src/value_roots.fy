@@ -124,12 +124,19 @@ fn bool available(ref State s,ref vec::Vec<bytes::Buffer> roots,usize binding){
 }
 fn Result<usize,Error> resolve_mode(ref State s,ref vec::Vec<bytes::Buffer> roots,
     ref vec::Vec<bytes::Buffer> scratch,usize serial,usize binding,bool writing){
-    let usize count=ready(s,roots,scratch)?;if(serial==0 || binding>=512){return .err(.Binding);}
+    let usize count=ready(s,roots,scratch)?;
+    return resolve_prepared(s,roots,count,serial,binding,writing);
+}
+// Private to this module: count comes from ready on the same unchanged store
+// and vectors. Reuse only across synchronous lookups, before any mutation.
+fn Result<usize,Error> resolve_prepared(ref State s,ref vec::Vec<bytes::Buffer> roots,
+    usize count,usize serial,usize binding,bool writing){
+    if(serial==0 || binding>=512){return .err(.Binding);}
     var usize i=0;while(i<count){let Row row=s.rows[i];
         if(row.serial==serial){
             if(row.binding!=binding){return .err(.Binding);}
             // ready authenticated the full table and every row/token identity.
-            // These immutable borrows keep that proof local to this lookup;
+            // Unchanged state/vectors keep that proof local to these lookups;
             // retain the additional writable gate and actual backing checks.
             let owners::Owner owner=s.table.slots[row.slot];
             if(writing && owner.reading){return .err(.State);}
@@ -397,14 +404,15 @@ pub fn Result<usize,Error> append_window_cost(usize old_length,usize length){
 pub fn Result<usize,Error> append_window(ref mut State s,ref mut vec::Vec<bytes::Buffer> roots,
     ref mut vec::Vec<bytes::Buffer> scratch,usize dest_serial,usize dest_binding,usize source_serial,
     usize source_binding,usize start,usize length,growth::Limits limits,ref mut usize fuel){
-    let usize metadata=pay(512,fuel)?;let usize i=resolve(s,roots,scratch,dest_serial,dest_binding)?;
-    let usize source=resolve_mode(s,roots,scratch,source_serial,source_binding,false)?;
+    let usize metadata=pay(512,fuel)?;let usize count=ready(s,roots,scratch)?;
+    let usize i=resolve_prepared(s,roots,count,dest_serial,dest_binding,true)?;
+    let usize source=resolve_prepared(s,roots,count,source_serial,source_binding,false)?;
     if(i==source){return .err(.Binding);}
     let usize initialized=bytes::len(vec::at<bytes::Buffer>(roots,source));
     if(start>initialized || length>initialized-start){return .err(.Bounds);}
     let usize cost=append_window_cost(bytes::len(vec::at<bytes::Buffer>(roots,i)),length)?;
     let usize paid=pay(cost-512,fuel)?;let usize end=start+length;
-    let usize count=vec::len<bytes::Buffer>(roots);let bytes::Buffer root=take(roots,scratch,i);
+    let bytes::Buffer root=take(roots,scratch,i);
     var AppendOutcome result=AppendOutcome{.length=0,.error=2,.success=false};
     let bytes::Buffer changed=if(source<i){
         let ref u8[] input=bytes::view(vec::at<bytes::Buffer>(roots,source));
@@ -421,9 +429,10 @@ pub fn Result<usize,Error> append_window(ref mut State s,ref mut vec::Vec<bytes:
 pub fn Result<usize,Error> append_from(ref mut State s,ref mut vec::Vec<bytes::Buffer> roots,
     ref mut vec::Vec<bytes::Buffer> scratch,usize serial,usize binding,usize source_serial,
     usize source_binding,growth::Limits limits,ref mut usize fuel){
-    let usize metadata=pay(512,fuel)?;let usize i=resolve(s,roots,scratch,serial,binding)?;
-    let usize source=resolve_mode(s,roots,scratch,source_serial,source_binding,false)?;
-    if(i==source){return .err(.Binding);}let usize count=vec::len<bytes::Buffer>(roots);
+    let usize metadata=pay(512,fuel)?;let usize count=ready(s,roots,scratch)?;
+    let usize i=resolve_prepared(s,roots,count,serial,binding,true)?;
+    let usize source=resolve_prepared(s,roots,count,source_serial,source_binding,false)?;
+    if(i==source){return .err(.Binding);}
     let usize cost=append_from_cost(bytes::len(vec::at<bytes::Buffer>(roots,i)),
         bytes::len(vec::at<bytes::Buffer>(roots,source)))?;
     let usize paid=pay(cost-512,fuel)?;var bytes::Buffer root=take(roots,scratch,i);
