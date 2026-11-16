@@ -1151,7 +1151,7 @@ Earlier entries record their named commits; superseded gates are historical.
   See [the parser contract](docs/engineering/m1-parser-stack.md).
 
 - Fairy C toolchain adoption: implemented at `465e380`.
-  The compiler is now `eb274643` with SDK `0.0.0-stage0.87`; language `/20`
+  Historical result: compiler `eb274643` with SDK `0.0.0-stage0.87`; language `/20`
   and runtime ABI `/0` remain unchanged. Root and M0 SDK locks were adopted
   together. Windows exact-source reproduction and eleven provisioning cases pass;
   Linux is cross-built with static ELF/build-metadata checks only.

@@ -6,15 +6,15 @@
   "root": "fypi1-sha256-f02e2237584ee329d2eda7a824e25537332ac4dcf72ee2a65554dd763c692917",
   "packages": [
     {
-      "id": "fypi1-sha256-eb3f63d50ef081a07981b6aa8e10489929b687dcacc46b8024f4fadedc62e467",
+      "id": "fypi1-sha256-9c71d321b59a5dfbf3b20f6f1cea078dd323510565dd8f47d90ed99b4f63f1d7",
       "role": "standard-library",
       "packageUid": "fairyc.std",
       "sourceKind": "sdk",
       "localPath": "",
       "sdkIdentity": "fairyc-sdk-stdlib/0",
       "runtimeAbi": "fairyc-runtime/0",
-      "sourceIdentity": "fairyc-sdk-stdlib/0;fairyc-runtime/0;fysrc1-sha256-e256aabfe2a16a603f947d4ef5b55b5a4ae80915fdd855e18c6016910fbcc597",
-      "sourceDigest": "fysrc1-sha256-e256aabfe2a16a603f947d4ef5b55b5a4ae80915fdd855e18c6016910fbcc597",
+      "sourceIdentity": "fairyc-sdk-stdlib/0;fairyc-runtime/0;fysrc1-sha256-9358b8ed205e6dc34dd58b7639b070a94b0aabd7a9636381b6d6bbb4b9d2897b",
+      "sourceDigest": "fysrc1-sha256-9358b8ed205e6dc34dd58b7639b070a94b0aabd7a9636381b6d6bbb4b9d2897b",
       "version": "0.0.0-stage0.87",
       "features": []
     },
@@ -36,7 +36,7 @@
     {
       "owner": "fypi1-sha256-f02e2237584ee329d2eda7a824e25537332ac4dcf72ee2a65554dd763c692917",
       "binding": "stdlib",
-      "target": "fypi1-sha256-eb3f63d50ef081a07981b6aa8e10489929b687dcacc46b8024f4fadedc62e467"
+      "target": "fypi1-sha256-9c71d321b59a5dfbf3b20f6f1cea078dd323510565dd8f47d90ed99b4f63f1d7"
     }
   ]
 }

@@ -1,13 +1,14 @@
 {
   "schema": "browniec.toolchain/v2",
   "compiler": {
-    "version": "v0.0.0-20261031093456-eb274643bfcf",
-    "revision": "eb274643bfcfe746617121ddc6f130b018978b53"
+    "version": "v0.1.0-preview.2",
+    "revision": "801c5d8caa64d19aab8925763d6bf07f65f26418",
+    "tag": "v0.1.0-preview.2"
   },
   "sdk": {
     "identity": "fairyc-sdk-stdlib/0",
     "version": "0.0.0-stage0.87",
-    "sourceDigest": "fysrc1-sha256-c531e88e52b684a34cf9688eda19e5cafcc5788e7a4bbf7e5121e86874a7246a"
+    "sourceDigest": "fysrc1-sha256-9358b8ed205e6dc34dd58b7639b070a94b0aabd7a9636381b6d6bbb4b9d2897b"
   },
   "language": "fairyc-language/20",
   "runtimeAbi": "fairyc-runtime/0",
@@ -21,19 +22,46 @@
     "buildFlags": [
       "-mod=readonly",
       "-trimpath",
-      "-buildvcs=true"
+      "-ldflags=-s -w"
+    ],
+    "embeddedSourceCrLf": [
+      "internal/cstdlib/stage0_linux_directory.c",
+      "internal/cstdlib/stage0_linux_directory_paths.c"
     ]
   },
   "platforms": {
     "windows/amd64": {
       "executable": "fairyc.exe",
-      "sha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
-      "verification": "native-verified"
+      "sha256": "7665c8203ae9ed8397b013770fc53e57eb37d1f3d4c236bcd77983e570bad836",
+      "verification": "native-verified",
+      "distribution": {
+        "kind": "local-preview-candidate",
+        "archive": "../fairyc/.cache/starter-smoke-C8Fn38/fairyc-windows-amd64-preview-candidate.zip",
+        "archiveSha256": "39af3d5c1470262838c99f151ebc55699e57f685e41ce5825bf60779bd077748"
+      }
     },
     "linux/amd64": {
       "executable": "fairyc",
       "sha256": "619511bb8f98f5bd9ec543cfb33f6367de15fc2389d41b27506790234f4f93d6",
-      "verification": "cross-build-only"
+      "verification": "cross-build-only",
+      "compiler": {
+        "version": "v0.0.0-20261031093456-eb274643bfcf",
+        "revision": "eb274643bfcfe746617121ddc6f130b018978b53"
+      },
+      "sdk": {
+        "identity": "fairyc-sdk-stdlib/0",
+        "version": "0.0.0-stage0.87",
+        "sourceDigest": "fysrc1-sha256-c531e88e52b684a34cf9688eda19e5cafcc5788e7a4bbf7e5121e86874a7246a"
+      },
+      "bootstrap": {
+        "goVersion": "go1.27.1",
+        "package": "./cmd/fairyc",
+        "buildFlags": [
+          "-mod=readonly",
+          "-trimpath",
+          "-buildvcs=true"
+        ]
+      }
     }
   }
 }

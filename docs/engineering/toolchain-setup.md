@@ -1,5 +1,55 @@
 # Toolchain Setup
 
+## Current Windows preview.2 adoption (2026-11-16)
+
+Windows now uses compiler v0.1.0-preview.2 at
+801c5d8caa64d19aab8925763d6bf07f65f26418 with SDK 0.0.0-stage0.87.
+The SDK public version, language /20 and runtime ABI /0 are unchanged.
+The executable SHA-256 is
+7665c8203ae9ed8397b013770fc53e57eb37d1f3d4c236bcd77983e570bad836.
+This is a local preview candidate, not a published GitHub release. Import it with:
+
+    python -B tools/setup-toolchain.py --compiler-file ../fairyc/.cache/starter-smoke-C8Fn38/extracted/fairyc.exe
+
+The manifest records the matching ZIP checksum and the actual Go 1.27.1 recipe:
+-mod=readonly, -trimpath, and -ldflags=-s -w. Isolated source bootstrap fetches
+the exact commit and local preview.2 tag, checks that the tag resolves to that
+commit, and reproduces the executable checksum. The two embedded C inputs
+internal/cstdlib/stage0_linux_directory.c and stage0_linux_directory_paths.c
+retain the distribution checkout's CRLF. Only the isolated bootstrap checkout
+receives this normalization. Git renormalization must leave its index identical
+to the pinned commit and its status clean; no original Fairy C files are edited.
+Earlier LF-only reconstruction attempts differed and are excluded from passes.
+
+The root lock's SDK source digest is now
+fysrc1-sha256-9358b8ed205e6dc34dd58b7639b070a94b0aabd7a9636381b6d6bbb4b9d2897b.
+The M0 dependency selection produces an unchanged lock and passes locked check;
+it does not import the same SDK module closure as the root. Neither result is an
+SDK version bump. The old compiler and setup metadata remain under
+build/toolchain-preview2-adoption/previous for rollback.
+
+Linux retains its prior compiler identity, SDK digest, recipe, executable hash
+and cross-build-only status as platform overrides. These are historical pins,
+not preview.2 artifacts or new Linux verification. Setup uses the selected host's
+identity and still rejects an SDK/lock mismatch; the retained Linux pin cannot
+silently adopt the new Windows root lock. A separate Linux adoption is required.
+
+Windows verification passed twelve provisioning cases, including file import,
+reuse, rejection before execution, host-specific identity rejection, exact source
+reproduction and environment sanitation. Root check and locked check pass with
+375 sources / 4096 MIR functions. A fresh development Brownie CLI build returns
+77 in a tool-free runtime environment. One focused root-append native group
+passes in each development/release profile, covering 240 original-preflight
+comparisons per profile over sixteen roots, growth, both source vector orders,
+leases and rejection boundaries. Native mirrors use ten unchanged production
+modules plus the unchanged test fixture; this is not the full runtime suite.
+
+No Brownie production/test source, screen or keyboard input test, Linux build,
+full release gate, remote tag, push or deployment is part of this adoption.
+See the [Windows evidence](../evidence/toolchain-preview2-windows-20261116.json).
+
+## Historical adoption (2026-10-31)
+
 - Status: completed-with-known-baseline-failure; toolchain adoption and focused verification are complete
 
 `toolchain.json` is the reviewed compiler manifest and the authority for current

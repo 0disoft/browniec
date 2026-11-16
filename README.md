@@ -927,8 +927,13 @@ development and release each passed 16 native groups and 2,421 CLI cases, with
 368 matching current input hashes. See the
 [mutable execution Windows evidence](docs/evidence/m2-slice-mutable-execution-windows-20261101.json).
 
-- Fairy C toolchain adoption: implemented at `465e380`.
-  The compiler is now `eb274643` with SDK `0.0.0-stage0.87`; language `/20`
+- Windows compiler preview.2 adoption (2026-11-16): compiler 801c5d8c with SDK
+  0.0.0-stage0.87; the SDK version is unchanged. Local installation, exact-source
+  reproduction and focused CLI/native checks pass. Linux retains its historical
+  pin. See [the adoption contract](docs/engineering/toolchain-setup.md).
+
+- Historical Fairy C toolchain adoption: implemented at `465e380`.
+  The compiler was `eb274643` with SDK `0.0.0-stage0.87`; language `/20`
   and runtime ABI `/0` remain unchanged. Root and M0 SDK locks were adopted
   together. Windows exact-source reproduction and eleven provisioning cases pass;
   Linux is cross-built with static ELF/build-metadata checks only.

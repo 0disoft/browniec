@@ -34,18 +34,33 @@ def host_target(system=None, machine=None):
     return ('windows' if system == 'Windows' else 'linux') + '/amd64'
 
 
+def platform_config(config, target):
+    selected = dict(config)
+    entry = config['platforms'][target]
+    for key in ('compiler', 'sdk', 'bootstrap'):
+        selected[key] = entry.get(key, config[key])
+    return selected
+
+
 def load_config(root):
     config = json.loads((root / 'toolchain.json').read_text(encoding='utf-8-sig'))
     lock = json.loads((root / 'fairy.lock').read_text(encoding='utf-8-sig'))
     if config.get('schema') != 'browniec.toolchain/v2':
         raise SetupError('Unsupported toolchain manifest.')
-    compiler = config['compiler']
-    if not re.fullmatch('[0-9a-f]{40}', compiler['revision']):
-        raise SetupError('Invalid compiler revision.')
     expected_names = {'windows/amd64': 'fairyc.exe', 'linux/amd64': 'fairyc'}
     for target, item in config['platforms'].items():
         if target not in expected_names or item['executable'] != expected_names[target] or not re.fullmatch('[0-9a-f]{64}', item['sha256']):
             raise SetupError('Unsupported platform or invalid compiler identity.')
+    target = host_target()
+    if target not in config['platforms']:
+        raise SetupError(f'No reviewed compiler identity for {target}.')
+    config = platform_config(config, target)
+    compiler = config['compiler']
+    if not re.fullmatch('[0-9a-f]{40}', compiler['revision']):
+        raise SetupError('Invalid compiler revision.')
+    tag = compiler.get('tag')
+    if tag is not None and (tag != compiler['version'] or not re.fullmatch(r'v[0-9]+[.][0-9]+[.][0-9]+(?:-[A-Za-z0-9.]+)?', tag)):
+        raise SetupError('Invalid compiler tag.')
     std = [p for p in lock['packages'] if p['role'] == 'standard-library']
     if len(std) != 1 or lock['language'] != config['language'] or any(
         std[0][key] != value for key, value in (
@@ -53,8 +68,14 @@ def load_config(root):
             ('runtimeAbi', config['runtimeAbi']), ('sourceDigest', config['sdk']['sourceDigest']))):
         raise SetupError('toolchain.json and fairy.lock disagree; adopt the SDK and language together.')
     recipe = config['bootstrap']
-    if recipe['package'] != './cmd/fairyc' or recipe['buildFlags'] != ['-mod=readonly', '-trimpath', '-buildvcs=true']:
+    if recipe['package'] != './cmd/fairyc' or recipe['buildFlags'] not in (
+            ['-mod=readonly', '-trimpath', '-buildvcs=true'],
+            ['-mod=readonly', '-trimpath', '-ldflags=-s -w']):
         raise SetupError('Unsupported bootstrap build recipe.')
+    if recipe.get('embeddedSourceCrLf', []) not in ([], [
+            'internal/cstdlib/stage0_linux_directory.c',
+            'internal/cstdlib/stage0_linux_directory_paths.c']):
+        raise SetupError('Unsupported embedded source line endings.')
     return config
 
 
@@ -82,6 +103,7 @@ def run(arguments, *, cwd=None, env=None, error='Command failed'):
 
 
 def build_source(config, root, scratch, target, source_repository=None):
+    config = platform_config(config, target)
     env = child_environment(target)
     version = run(['go', 'env', 'GOVERSION'], env=env, error='Cannot identify Go')
     if version != config['bootstrap']['goVersion']:
@@ -106,12 +128,33 @@ def build_source(config, root, scratch, target, source_repository=None):
         run(['git', '-C', checkout, 'config', key, value], env=env, error='Cannot configure isolated compiler source')
     run(['git', '-C', checkout, 'fetch', '--quiet', '--no-tags', '--depth=1', '--', source, config['compiler']['revision']],
         env=env, error='Cannot fetch the selected compiler commit')
-    run(['git', '-C', checkout, 'checkout', '--quiet', '--detach', 'FETCH_HEAD'], env=env,
+    tag = config['compiler'].get('tag')
+    if tag:
+        reference = f'refs/tags/{tag}'
+        run(['git', '-C', checkout, 'fetch', '--quiet', '--no-tags', '--depth=1', '--', source, f'{reference}:{reference}'],
+            env=env, error='Cannot fetch the selected compiler tag')
+        tagged = run(['git', '-C', checkout, 'rev-parse', reference + '^{commit}'], env=env)
+        if tagged != config['compiler']['revision']:
+            raise SetupError('Compiler tag does not match the selected revision.')
+    run(['git', '-C', checkout, 'checkout', '--quiet', '--detach', config['compiler']['revision']], env=env,
         error='Cannot check out the selected compiler commit')
     revision = run(['git', '-C', checkout, 'rev-parse', 'HEAD'], env=env)
     dirty = run(['git', '-C', checkout, 'status', '--porcelain', '--untracked-files=all'], env=env)
     if revision != config['compiler']['revision'] or dirty:
         raise SetupError('Compiler source identity mismatch or dirty isolated checkout.')
+    # These distribution inputs are embedded as raw bytes. Reproduce their
+    # reviewed CRLF while proving the normalized Git content remains unchanged.
+    embedded = config['bootstrap'].get('embeddedSourceCrLf', [])
+    if embedded:
+        for name in embedded:
+            path = checkout / name
+            content = path.read_bytes().replace(bytes((13, 10)), bytes((10,)))
+            path.write_bytes(content.replace(bytes((10,)), bytes((13, 10))))
+        run(['git', '-C', checkout, 'add', '--renormalize', '--', *embedded], env=env)
+        run(['git', '-C', checkout, 'diff', '--cached', '--exit-code'], env=env,
+            error='Embedded source normalization changed the pinned Git content')
+        if run(['git', '-C', checkout, 'status', '--porcelain', '--untracked-files=all'], env=env):
+            raise SetupError('Embedded source normalization left a dirty isolated checkout.')
     candidate = scratch / config['platforms'][target]['executable']
     run(['go', 'build', *config['bootstrap']['buildFlags'], '-o', candidate, config['bootstrap']['package']],
         cwd=checkout, env=env, error='Compiler source build failed')
@@ -119,6 +162,7 @@ def build_source(config, root, scratch, target, source_repository=None):
 
 
 def validate_compiler(path, config, target):
+    config = platform_config(config, target)
     if digest(path) != config['platforms'][target]['sha256']:
         raise SetupError('Compiler SHA-256 mismatch; no executable was run or installed.')
     if target.startswith('linux/'):

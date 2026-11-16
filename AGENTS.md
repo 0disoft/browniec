@@ -1,27 +1,25 @@
 - Latest maintenance checkpoint (2026-11-16):
-  [shared two-root append preflight](docs/engineering/value-buffer.md#shared-two-root-append-preflight-2026-11-16).
-  append_from and append_window share one complete ready across their two
-  synchronous operand lookups, before any store/vector mutation or callback.
-  Private resolve_prepared retains exact serial/binding/token/backing checks,
-  writable destination and read-leased source authentication. Independent
-  operations retain the full resolver. The global preflight, append transaction,
-  same-root rejection, bounds, Fuel, quotas and restoration remain unchanged.
-  At 16 roots, full preflights fall 2 to 1, primary root-row visits 32 to 16 and
-  live-pair comparisons 240 to 120 (50%); preflight remains O(R^2), R<=16.
-  No new public API, persistent cache, allocation or production staging copy.
-  Throughput and physical memory were not measured. Development/O2 each pass
-  eight native groups, including 1660 original-preflight comparisons covering
-  all target positions, both vector orders, growth, read leases, no-op/exhausted
-  generations, Fuel/bounds/quota failures, metadata faults and error priority.
-  Full state/table/ledger/close-plan, bytes/vector capacity/order and zero-Fuel
-  cleanup parity are covered. The oracle delegates unchanged append transactions
-  to standalone append with test-only copied input. All 378 native inputs match
-  implementation 343e209 and the Git index; all 367 production files retain LF.
-  Root check: 375 sources / 4109 MIR. The initial fixture type failure is preserved
-  separately and excluded from passes. Full Engine/source CALL/public CLI/Linux/
-  OOM/memory/release gates and known legacy failures were not rerun. Broader
-  completion remains paused. No push or deployment. See
-  [evidence](docs/evidence/value-root-append-windows-20261116.json).
+  [Windows compiler preview.2 adoption](docs/engineering/toolchain-setup.md#current-windows-preview2-adoption-2026-11-16).
+  The active Windows compiler is v0.1.0-preview.2 / 801c5d8c with bundled SDK
+  0.0.0-stage0.87, language /20 and runtime ABI /0. SHA-256 is
+  7665c8203ae9ed8397b013770fc53e57eb37d1f3d4c236bcd77983e570bad836.
+  The SDK public version is unchanged; the root SDK source digest is 9358b8ed.
+  Root check/locked check pass (375 sources / 4096 MIR); M0 lock is unchanged
+  and its locked check passes. Twelve provisioning cases include exact-source
+  reproduction, pinned local tag/revision checks and rejected host overrides.
+  The reviewed source recipe preserves CRLF in two embedded C inputs only in
+  its isolated checkout, with unchanged normalized Git content and clean status.
+  A fresh development Brownie CLI build returns 77 with no runtime tools on PATH.
+  The unchanged root-append fixture passes one focused native group per profile
+  (development/release), 240 original-preflight comparisons each, in ten-module
+  production closures. This does not refresh the preceding full runtime evidence.
+  Linux compiler/SDK/recipe/hash and cross-build-only status remain historical
+  platform overrides, requiring a separate adoption for the new root lock.
+  The old compiler is retained under build/toolchain-preview2-adoption/previous.
+  No Brownie .fy changes, GUI/input tests, Linux build, push, release or deployment.
+  Runtime work, including the preceding append refactor, remains unchanged.
+  Broader completion remains paused. See
+  [evidence](docs/evidence/toolchain-preview2-windows-20261116.json).
 
 # Brownie C agent guidance
 

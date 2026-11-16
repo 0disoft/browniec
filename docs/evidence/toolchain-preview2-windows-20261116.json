@@ -1,0 +1,137 @@
+{
+  "schema": "browniec.toolchain-preview2-adoption/v1",
+  "status": "passed",
+  "clientDate": "2026-11-16",
+  "baselineCommit": "ca527af1dc19d3891342dae906bc10f47e30fc22",
+  "compiler": {
+    "version": "v0.1.0-preview.2",
+    "revision": "801c5d8caa64d19aab8925763d6bf07f65f26418",
+    "sha256": "7665c8203ae9ed8397b013770fc53e57eb37d1f3d4c236bcd77983e570bad836",
+    "modified": false
+  },
+  "sdk": {
+    "identity": "fairyc-sdk-stdlib/0",
+    "version": "0.0.0-stage0.87",
+    "sourceDigest": "fysrc1-sha256-9358b8ed205e6dc34dd58b7639b070a94b0aabd7a9636381b6d6bbb4b9d2897b"
+  },
+  "language": "fairyc-language/20",
+  "runtimeAbi": "fairyc-runtime/0",
+  "bootstrap": {
+    "goVersion": "go1.27.1",
+    "package": "./cmd/fairyc",
+    "buildFlags": [
+      "-mod=readonly",
+      "-trimpath",
+      "-ldflags=-s -w"
+    ],
+    "embeddedSourceCrLf": [
+      "internal/cstdlib/stage0_linux_directory.c",
+      "internal/cstdlib/stage0_linux_directory_paths.c"
+    ]
+  },
+  "distribution": {
+    "kind": "local-preview-candidate",
+    "archive": "../fairyc/.cache/starter-smoke-C8Fn38/fairyc-windows-amd64-preview-candidate.zip",
+    "archiveSha256": "39af3d5c1470262838c99f151ebc55699e57f685e41ce5825bf60779bd077748"
+  },
+  "upstreamReceipt": {
+    "path": "../fairyc/.cache/starter-smoke-C8Fn38/receipt.json",
+    "sha256": "3675c0177bb5de86f3a2f634f60507045e9936cc09789a7aeaf3732b2dfdd77b"
+  },
+  "setupReceipt": {
+    "path": "build/toolchain/setup-receipt.json",
+    "sha256": "d8ff00e1687e17c6e3955d5812f9733be9f77dae1067386875304c84233c3ded"
+  },
+  "provisioning": {
+    "path": "build/toolchain-verification/receipt.json",
+    "sha256": "30692dec243f05cb045673c12c9ac759c91475a9fd18ba5e47c5755d27a0f426",
+    "count": 12,
+    "cases": [
+      "verified executable import",
+      "existing compiler reuse",
+      "corrupt input rejected before execution; existing compiler preserved",
+      "version metadata mismatch rejected; existing compiler preserved",
+      "host-specific identity overrides default; rejected override preserves compiler",
+      "SDK lock mismatch rejected",
+      "tampered cached compiler rejected before execution",
+      "default exact-commit isolated source bootstrap reproduces native SHA-256",
+      "unavailable source commit rejected; existing compiler preserved",
+      "Windows and Linux AMD64 platform selection (logic only)",
+      "unsupported OS and architecture rejected",
+      "Git and Go overrides sanitized without mutating parent environment"
+    ]
+  },
+  "focusedVerification": {
+    "path": "build/toolchain-preview2-adoption/receipt.json",
+    "sha256": "e7a38d66f4384773d3b120608a875af3acaa65d2cc1dd449a326705a8b14db03",
+    "inputCount": 373,
+    "allInputsMatchWorkingBytes": true,
+    "nativeProductionModules": 10,
+    "nativeGroupsPerProfile": 1,
+    "originalPreflightComparisonsPerProfile": 240,
+    "profiles": [
+      "development",
+      "release"
+    ],
+    "browniecDevelopmentBuild": true,
+    "browniecArtifactSha256": "3554eeb8ef160e739f453e6261a4aa602fd3cfce9f841a746ba8cbe128c76ac7",
+    "browniecReturnI32": 77,
+    "toolFreeRuntime": true,
+    "rootCheck": "375 source files / 4096 MIR functions; check and check --locked passed",
+    "m0LockedCheck": "17 source files / 203 MIR functions; lock unchanged"
+  },
+  "previousCompiler": {
+    "path": "build/toolchain-preview2-adoption/previous/fairyc.exe",
+    "sha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+    "preserved": true
+  },
+  "sourceReproduction": {
+    "exactExecutableHashMatched": true,
+    "tagAndRevisionMatched": true,
+    "canonicalGitContentUnchanged": true,
+    "isolatedCheckoutClean": true,
+    "originalFairycCheckoutEdited": false,
+    "initiallyDifferentHash": "e8f74cb88f59c28d20f97ceebf0fb3aac628fe1bf3e51f078b855a76278fb97b",
+    "reason": "Two embedded C inputs use CRLF in the reviewed distribution; isolated normalization retains identical canonical Git content.",
+    "investigationPath": "build/toolchain-preview2-adoption/recipe-investigation",
+    "failedAttemptsExcluded": true
+  },
+  "linux": {
+    "previousManifestEntryPreserved": true,
+    "compiler": {
+      "version": "v0.0.0-20261031093456-eb274643bfcf",
+      "revision": "eb274643bfcfe746617121ddc6f130b018978b53"
+    },
+    "sdk": {
+      "identity": "fairyc-sdk-stdlib/0",
+      "version": "0.0.0-stage0.87",
+      "sourceDigest": "fysrc1-sha256-c531e88e52b684a34cf9688eda19e5cafcc5788e7a4bbf7e5121e86874a7246a"
+    },
+    "bootstrap": {
+      "goVersion": "go1.27.1",
+      "package": "./cmd/fairyc",
+      "buildFlags": [
+        "-mod=readonly",
+        "-trimpath",
+        "-buildvcs=true"
+      ]
+    },
+    "sha256": "619511bb8f98f5bd9ec543cfb33f6367de15fc2389d41b27506790234f4f93d6",
+    "verification": "cross-build-only",
+    "windowsSdkLockRejected": true,
+    "newNativeOrCrossBuildVerification": false
+  },
+  "productionSourcesUnchanged": true,
+  "productionFiles": 367,
+  "productionLf": true,
+  "m0LockUnchanged": true,
+  "skipped": [
+    "Screen and keyboard input tests",
+    "Linux builds and native execution",
+    "Full runtime/source/CLI/release matrices",
+    "Broader completion work"
+  ],
+  "pushed": false,
+  "published": false,
+  "deployed": false
+}
