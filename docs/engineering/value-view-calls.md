@@ -132,3 +132,49 @@ Full Engine transport, retained/source CALL integration, public CLI, standalone
 memory and full release gates are outside this focused change. Known legacy
 Static integration and source-test failures were not retested or claimed fixed.
 Broader completion remains paused; local delivery only.
+
+## One header preflight per CALL batch (2026-11-16)
+
+The preceding counts describe the earlier source-authentication change. Compared
+with 209267c, `aliases` now reuses its initial complete registry header preflight
+for both original source lookups and staged destination admission. Three private
+helpers separate header admission from exact source authentication and vacancy
+selection. Standalone `lookup`, `resolve` and `vacant` still validate the full
+header independently; the header and publication algorithms are unchanged.
+
+The original pool/store/vectors remain immutably borrowed through each source
+lookup. Sources always resolve against the original pool, retaining ticket,
+binding, native root/token/backing, physical lease and initialized-window checks.
+Only the staged copy changes. A unique in-range binding, a vacant non-retired
+slot, and canonical publication of an authenticated row preserve its initial
+header invariants after each insertion. No callback, public unchecked API,
+persistent proof, new state, allocation or cache is introduced.
+
+For A successful aliases, complete header checks fall from `1+2*A` to one. At
+eight arguments this is 17 to one (544 to 32 outer-row visits); all eight source
+root authentications remain. For 24 packed original rows plus eight new rows,
+live-pair comparisons fall from 5,420 to 276, removing 5,144 (94.9%). Registry
+preflight/selection work changes from O((A+1)*C^2) to O(C^2+A*C), C <= 32; per-source
+root authentication remains separate and unchanged. These are source-operation
+counts; throughput and physical memory peaks were not measured.
+
+Arity and eight-argument limits still precede Fuel admission. The price remains
+`512*A`. The loop retains source-before-destination checks for each argument,
+original-pool source selection, retired-slot behavior, exact error precedence,
+and one publication after complete success. Empty batches still check the header.
+
+Run `python -B tools/verify-value-view-alias-preflight.py --profile all`. Nine
+selected native groups cover the independent original-header/lookup oracle plus
+21,010 batch comparisons against the original algorithm. Cases include all
+healthy live counts 0..32, 16 metadata variations at every slot in selected pool
+sizes, root faults, arities 0/1/2/8/9, exact/short Fuel, mismatched arity, staged
+destinations used as sources, and late duplicate/out-of-range destinations.
+Every comparison checks complete pool fields, Fuel and exact result/error;
+rejection must leave the pool unchanged. Existing native groups retain the
+24-to-32-row batch, exhausted slots, windows, physical leases, quota/accounting,
+zero-Fuel cleanup and actual frame CALL/selected-range return checks.
+
+See the [Windows evidence](../evidence/value-view-alias-preflight-windows-20261116.json).
+Full Engine transport, retained/source CALL integration, public CLI, standalone
+memory and full release gates remain outside this change. Known legacy compiler
+and stack failures are not claimed fixed.

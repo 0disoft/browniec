@@ -1,25 +1,25 @@
 - Latest maintenance checkpoint (2026-11-16):
-  [direct root content writes](docs/engineering/value-buffer.md#direct-content-writes-2026-11-16).
-  Content-only writes borrow the authenticated vector element directly and keep
-  the unchanged write kernel, writable/lease/quota/bounds checks and 256+m Fuel
-  admission. No root extraction, scratch traffic or escaping native view occurs.
-  For n roots at index i, vector push/pop calls fall from 4*(n-1-i)+2 to zero:
-  62 to zero for the first of 16 roots, removing 253952 calls over 4096 writes.
-  Target selection changes O(n-i) transfers to O(1) borrowing; total O(n^2+m)
-  root preflight/payload work and O(1) auxiliary storage stay unchanged. No new
-  API/cache/state/allocation. Throughput and physical peaks were not measured.
-  Development/O2 each pass nine native groups, including 240 comparisons at all
-  sixteen positions against the counted original transfer sequence, 4096 paired
-  writes, empty roots, bounds/quota/Fuel/lease/generation cases, metadata-fault
-  oracles and actual frame writes. All root payloads/untouched bytes, vector
-  order/capacity, settled accounting and zero-Fuel cleanup are checked.
-  All 378 tested input hashes match implementation db7ae27 and the Git index.
-  Root check: 375 sources / 4103 MIR; all 367 production files retain LF.
-  Two initial native attempts failed on a test-only if/dereference separator;
-  corrected fixture and preserved logs are recorded under build/value-root-write.
-  Full Engine/public CLI/memory/release gates and known legacy failures not rerun.
-  Broader completion remains paused. No push or deployment performed here.
-  See [evidence](docs/evidence/value-root-write-windows-20261116.json).
+  [one header preflight per CALL alias batch](docs/engineering/value-view-calls.md#one-header-preflight-per-call-batch-2026-11-16).
+  CALL aliases reuse one complete registry header check through private source
+  and vacancy helpers. Original pool/store/vectors remain immutable; staged
+  canonical publication into a unique binding/non-retired vacant slot preserves
+  header invariants. Every source retains exact root/token/backing/lease/window
+  authentication, and independent callers keep their full header checks.
+  At eight arguments, headers fall 17 to one, outer-row visits 544 to 32.
+  With 24 packed original rows plus eight aliases, live-pair comparisons fall
+  5420 to 276 (5144 removed, 94.9%); all eight root authentications remain.
+  No new public API/cache/state/allocation. Fuel 512*A, error order, original-pool
+  source selection and one final publication/rollback are unchanged. Throughput
+  and physical peaks were not measured. Development/O2 each pass nine native
+  groups including 21010 original-algorithm batch comparisons over healthy counts
+  0..32, every slot's metadata faults and root faults, arity/Fuel/late failures,
+  exact whole-pool parity, 24-to-32-row admission, windows/leases/accounting,
+  zero-Fuel cleanup and actual frame CALL/selected-range return checks.
+  All 377 tested input hashes match implementation 2a611d3 and the Git index.
+  Root check: 375 sources / 4106 MIR; all 367 production files retain LF.
+  Full Engine/source CALL/public CLI/memory/release gates and known legacy
+  failures not rerun. Broader completion remains paused. No push or deployment.
+  See [evidence](docs/evidence/value-view-alias-preflight-windows-20261116.json).
 
 # Brownie C agent guidance
 
