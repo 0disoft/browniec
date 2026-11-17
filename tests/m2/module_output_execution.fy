@@ -248,3 +248,15 @@ fn void large_case(ref programs::Program p,usize length){
     };
     assert(!input_programs::compile(input,65536).is_ok);
 }
+
+@test fn void output_authority_follows_the_selected_entry_and_its_calls(){
+    check_output_requirement(b"module app;pub fn i32 unused(){output::emit(ref b\"\");return 0;}pub fn i32 chosen(){return 42;}",false);
+    check_output_requirement(b"module app;fn void send(){output::emit(ref b\"\");}pub fn i32 chosen(){send();return 42;}",true);
+    check_output_requirement(b"module app;pub fn i32 chosen(){if(false){output::emit(ref b\"\");}return 42;}",true);
+}
+fn void check_output_requirement(ref u8[] source,bool expected){
+    let programs::Program p=switch(kept(source,b"")){
+        case .ok(v):{v}case .err(_):{assert(false);return;}
+    };
+    assert(programs::requires_emit(ref p)==expected);
+}

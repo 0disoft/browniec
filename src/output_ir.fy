@@ -36,3 +36,39 @@ pub fn Result<usize,errors::Error> inspect(ref ir::Program p,ref statics::Sites 
         }else if(p.slice_functions[site] as usize!=f+1 || p.slice_origins[site]==0){return .err(errors::make(5,pc));}
     }return .ok(pc);
 }
+
+// Walk only a verified output Program. Follow both outcomes of conditional
+// branches; constant folding is not part of authority analysis.
+struct Reachability { bool[256] seen; usize[256] work; usize count; }
+pub fn bool reachable_emit(ref ir::Program p){
+    var Reachability search=Reachability{.seen=[false;256],.work=[0;256],.count=0};
+    let usize entry=p.starts[p.entry];
+    enqueue(ref mut search,entry);
+    var usize cursor=0;
+    while(cursor<search.count){
+        let usize pc=search.work[cursor];
+        cursor+=1;
+        let usize at=pc*8;
+        let u8 op=p.code[at];
+        if(op==116){return true;}
+        if(op==8 || op==25 || op==39 || op==50 || op==65 || op==79 || op==82){continue;}
+        let usize a=p.code[at+2] as usize;
+        if(op==19 || op==22 || op==20 || op==21 || op==24){
+            let usize branch=if(op==19 || op==22){a}else if(op==24){p.code[at+4] as usize}else{p.code[at+3] as usize};
+            enqueue(ref mut search,branch);
+            if(op==19 || op==22){continue;}
+        }
+        if(op==9 || op==64 || op==66 || op==78){
+            enqueue(ref mut search,p.starts[a]);
+        }
+        enqueue(ref mut search,pc+1);
+    }
+    return false;
+}
+fn void enqueue(ref mut Reachability search,usize pc){
+    if(search.seen[pc]){return;}
+    search.seen[pc]=true;
+    let usize slot=search.count;
+    search.work[slot]=pc;
+    search.count+=1;
+}

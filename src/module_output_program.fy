@@ -18,6 +18,7 @@ import std::bytes as bytes;
 import runtime_input as input_bytes;
 import runtime_output as output;
 import output_execution as output_steps;
+import output_ir as output_ir;
 import slice_result_execution as execution;
 import slice_result_runtime as runtime;
 import array_vm as backing;
@@ -91,6 +92,7 @@ fn Result<Program,diagnostics::Error> retain(ref sources::Snapshot sources,ref c
     return .ok(Program{.stored=retained});
 }
 fn ref Stored stored(ref Program p){return vec::at<Stored>(ref p.stored,0);}
+pub fn bool requires_emit(ref Program p){return output_ir::reachable_emit(ref stored(p).code.body);}
 pub fn bool accepts_input(ref Program p){return stored(p).input;}
 pub fn ref sources::Snapshot snapshot(ref Program p){return ref stored(p).sources;}
 pub fn ref candidates::Program code(ref Program p){return ref stored(p).code;}
