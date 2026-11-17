@@ -51,6 +51,7 @@ fn usize call_count(ref values::Program unit){let ref ir::Program body=ref unit.
 fn u8 register_type(ref values::Program unit,usize index){let ref ir::Program body=ref unit.body;return body.types[index];}
 fn usize name_count(ref bindings::State state){let ref locals::Table names=ref state.names;return names.count;}
 fn usize function_id(ref bindings::State state){let ref locals::Table names=ref state.names;return names.function;}
+fn bool must_use_result(ref properties::Catalog catalog,usize exact){return catalog.nodes[exact].kind==6;}
 
 fn Result<context::Value,errors::Error> buffer_call_raw(ref u8[] source,ref mut lexer::State s,
     ref mut values::Program unit,ref mut bindings::State state,ref signatures::Table table,
@@ -611,7 +612,7 @@ fn Result<bool,errors::Error> scope_raw(ref u8[] source,ref mut lexer::State s,r
                 let usize published=context::publish(unit,state,output,value,at)?;produced=true;break;
             }
             if(!value.nothing){
-                if(value.typed && unit.catalog.nodes[value.exact].kind==6){return .err(errors::make(18,at));}
+                if(value.typed && must_use_result(ref unit.catalog,value.exact)){return .err(errors::make(18,at));}
                 return .err(wrong(at));
             }let usize semi=lexer::punctuation(source,s,59)?;
         }
@@ -678,7 +679,7 @@ fn Result<walk::Outcome,errors::Error> walk_statement(ref u8[] source,ref mut le
                 let usize published=context::publish(unit,state,output,value,at)?;return .ok(walk::outcome(false,true));
             }
             if(!value.nothing){
-                if(value.typed && unit.catalog.nodes[value.exact].kind==6){return .err(errors::make(18,at));}
+                if(value.typed && must_use_result(ref unit.catalog,value.exact)){return .err(errors::make(18,at));}
                 return .err(wrong(at));
             }let usize semi=lexer::punctuation(source,s,59)?;
         }
@@ -743,9 +744,18 @@ fn Result<usize,errors::Error> lower(ref u8[] source,ref mut values::Program uni
     }return .ok(position(unit));
 }
 pub fn Result<values::Program,errors::Error> compile(ref u8[] source){
-    var values::Program unit=values::Program{.body=ir::empty(),.catalog=properties::empty(),
+    var values::Program unit=empty_candidate();
+    let Result<usize,errors::Error> lowered=lower(source,ref mut unit,true);
+    return publish_candidate(ref unit,lowered);
+}
+// Construction scratch must return before recursive control/type lowering.
+fn values::Program empty_candidate(){
+    return values::Program{.body=ir::empty(),.catalog=properties::empty(),
         .types=[0;16],.functions=[0;16],.parameters=[0;128],.results=[0;16]};
-    let usize lowered=lower(source,ref mut unit,true)?;return .ok(unit);
+}
+// Large success/error result slots are needed only after lowering finishes.
+fn Result<values::Program,errors::Error> publish_candidate(ref values::Program unit,Result<usize,errors::Error> lowered){
+    return switch(lowered){case .ok(_):{.ok(*unit)}case .err(error):{.err(error)}};
 }
 
 // Independent old traversal loops for private regression checks; never retry.

@@ -22,7 +22,10 @@ CASES = {
                            'image_quota_is_exact_and_independent_of_the_public_backing_limit',
                            'private_api_gates_and_native_host_budgets_remain_unchanged'],
     },
-    'annotation': {'value_signature_depth': None},
+    'annotation': {
+        'value_signature_depth': None,
+        'value_source_must_use_source': ['unused_results_parameters_overwrites_scope_exits_and_error_names_are_distinct'],
+    },
 }
 
 if __name__ == '__main__':

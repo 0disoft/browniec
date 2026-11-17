@@ -1,23 +1,24 @@
 - Latest runtime checkpoint (2026-11-18):
   [Combined stack follow-up](docs/engineering/native-stack-regressions.md)
-  repairs the unchanged public quota/runtime fixture. Public retained lowering
-  no longer waits in the private owning-result adapter. Builder, semantic-state
-  and error/publication temporaries are separated from scratch initialization.
-  Checked 0..127 register cells use 1024 rather than 8192 logical bytes per bank
-  on x64. Empty owned CALLs authenticate the same table/cursor facts without
-  constructing provisional copy tables; nonempty copies keep the raw path.
-  Six focused development groups pass, including original quota/CALL fixtures
-  and 53 independent empty-copy oracle cases through both entry points. See
-  [evidence](docs/evidence/native-stack-quota-windows-20261118.json).
-  Root locked check covers 375 sources / 4107 MIR functions. No added allocation,
-  compiler/stack/timeout override or fixture weakening. Whole-process peak stack
-  and latency are not measured. The unchanged complete public routing fixture
-  also passes after c9930a3 with all 367 production sources matching; its
-  [follow-up](docs/evidence/native-stack-routing-windows-20261118.json) records
-  that the shared repair needed no further implementation change. The private
-  four-wrapper/32-control failure still requires follow-up. The historical annotation pass is not a
-  current preview.2 pass. Current O2, post-patch CLI, full Engine, Linux and remote
-  delivery remain unverified. Broader completion remains paused; no push.
+  resolves all three named development overflows with unchanged original
+  combined fixtures. The quota repair passes six groups, including CALL depth,
+  compact 0..127 register cells and 53 empty-copy oracle cases through two APIs.
+  Cells save 7168 logical bytes per bank on x64. Empty CALL validation/advance
+  skips repeated provisional tables; CALL begin and nonempty copies stay intact.
+  The same repair also passes the complete source-routing fixture; its separate
+  follow-up is evidence-only. See [quota](docs/evidence/native-stack-quota-windows-20261118.json)
+  and [routing](docs/evidence/native-stack-routing-windows-20261118.json) evidence.
+  Private annotation repair borrows nested metadata in authentication/preflight
+  and recursive must-use checks, and defers candidate construction/publication.
+  Development/O2 each pass three groups: original local/signature control depth
+  32 executes, 33 rejects, and must-use errors remain distinct. See
+  [annotation evidence](docs/evidence/native-stack-annotation-windows-20261118.json).
+  Public O2 compilation still exceeds the unchanged 60-second MSVC host limit;
+  [that attempt](docs/evidence/native-stack-public-release-windows-20261118.json)
+  is incomplete, with zero native passes. Root locked checks pass 375 sources /
+  4110 MIR functions. No added allocation, overrides or fixture weakening.
+  Peak stack, latency, general compositions, post-patch CLI, full Engine, Linux
+  and remote delivery remain unverified. Broader completion stays paused; no push.
 
 # Brownie C agent guidance
 

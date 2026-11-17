@@ -11,7 +11,11 @@
   records successful execution of the exact input in both profiles. However,
   the [2026-11-18 preview.2 audit](../engineering/public-compile-stack.md#verification-boundaries)
   reproduces the private four-wrapper/32-control native overflow again; the
-  historical pass is not a current pass. This body failure remains open.
+  historical pass is not a current pass. The
+  [follow-up repair](../engineering/native-stack-regressions.md#private-local-annotations)
+  now passes the unchanged local and signature 32/33-control fixtures with
+  preview.2 in development/O2, plus must-use error regressions. General body
+  composition and broader completion remain unverified.
   Origins, other aggregates, body/
   final lowering, fixed scratch/publication and public Pending compile remain.
   Local only; broader completion stays paused while lowering remains authorized.

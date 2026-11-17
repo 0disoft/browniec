@@ -4,6 +4,7 @@ import value_source_bindings as bindings;
 import value_properties as properties;
 import value_source_properties as source_properties;
 import errors as errors;
+import ir as ir;
 
 pub struct Case { usize instruction; usize payload; }
 
@@ -13,13 +14,14 @@ fn u8 byte(usize value){var u8 result=0;var usize i=0;while(i<value){result+=1;i
 // Validate the same monotonic ledger as bindings before any allocation/emission.
 // Function ends are finalized by the caller after lowering the complete body.
 pub fn Result<properties::Plan,errors::Error> preflight(ref values::Program unit,ref bindings::State state,usize at){
+    let ref ir::Program body=ref unit.body;
     let usize checked=bindings::authenticate(unit,state,at)?;
     let properties::Plan plan=switch(source_properties::inspect(ref unit.catalog)){
         case .ok(v):{v}case .err(_):{return .err(invalid(at));}
     };
-    if(unit.body.count>=256 || unit.body.registers>128){return .err(errors::make(4,at));}
+    if(body.count>=256 || body.registers>128){return .err(errors::make(4,at));}
     let usize f=state.names.function;
-    if(unit.body.register_starts[f]>unit.body.registers){
+    if(body.register_starts[f]>body.registers){
         return .err(invalid(at));}
     return .ok(plan);
 }

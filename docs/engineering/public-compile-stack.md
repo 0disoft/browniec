@@ -105,6 +105,11 @@ on baseline `8f63c74`. The historical
 entry does not use this public compilation adapter, and this failure remains
 open rather than being counted toward this slice's five passing groups.
 
+The [later annotation repair](native-stack-regressions.md#private-local-annotations)
+reproduces the unchanged local fixture again at `0a6962c` and records current
+development passes after eliminating nested metadata copies and deferring
+candidate packaging. The earlier open status above is historical.
+
 Full-source release verification hit the existing one-minute MSVC host timeout
 both during concurrent diagnostics and in a later serial run. Neither is a pass.
 The full-source development selection passed all five final groups. The

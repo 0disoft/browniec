@@ -7,6 +7,7 @@ import lexer as lexer;
 import errors as errors;
 import metadata_budget as budget;
 import value_view_bindings as views;
+import ir as ir;
 
 // Compiler metadata only; no executable authority or complete source integration.
 // Keep one State with one Program for the entire lowering operation. Never reset
@@ -609,9 +610,13 @@ pub fn Result<bool,errors::Error> advance_auth(ref values::Program unit,ref Stat
     if(w.phase==0){let bool done=views::advance_auth(ref state.views,ref mut w.view,meter)?;if(done){w.phase=1;}return .ok(false);}
     if(w.phase==3){let bool done=views::advance_program_auth(unit,ref state.views,ref mut w.view,meter)?;if(done){w.phase=4;w.row=0;}return .ok(false);}
     if(!budget::admit(meter,4096,w.at)?){return .ok(false);}let usize at=w.at;let usize i=w.row;
-    if(w.phase==1){    if(state.next>16 || state.names.count>64 || state.names.function>=16 ||
-        state.names.function>=unit.body.function_count || unit.body.function_count>16 || state.views.function!=state.names.function ||
-        unit.catalog.count>64 || state.live>=65536 || state.maybe>=65536 ||
+    // Scalar metadata reads borrow the nested records; no whole IR/catalog
+    // copies wait on the active recursive type/control compiler stack.
+    let ref ir::Program body=ref unit.body;let ref properties::Catalog catalog=ref unit.catalog;
+    let ref locals::Table names=ref state.names;let ref views::State view_state=ref state.views;
+    if(w.phase==1){    if(state.next>16 || names.count>64 || names.function>=16 ||
+        names.function>=body.function_count || body.function_count>16 || view_state.function!=names.function ||
+        catalog.count>64 || state.live>=65536 || state.maybe>=65536 ||
         (state.live&state.maybe)!=0 || state.loop_roots>=65536 ||
         (state.loop_roots&(state.live|state.maybe))!=state.loop_roots || state.pending>=65536 ||
         state.reads>=65536 || state.writes>=65536 || (state.reads&state.writes)!=0 ||
@@ -621,22 +626,22 @@ pub fn Result<bool,errors::Error> advance_auth(ref values::Program unit,ref Stat
         (state.pending&state.live)!=state.pending || (!state.enforce_results && state.pending!=0)){
         return .err(invalid(at));}
  w.phase=2;return .ok(false);}
-    if(w.phase==2){if(i==16){w.view=views::auth(at,true);w.phase=3;return .ok(false);}        if(i<state.next){if(unit.types[i]==0 || unit.types[i] as usize>unit.catalog.count ||
-            unit.functions[i] as usize>=unit.body.function_count){return .err(invalid(at));}}
+    if(w.phase==2){if(i==16){w.view=views::auth(at,true);w.phase=3;return .ok(false);}        if(i<state.next){if(unit.types[i]==0 || unit.types[i] as usize>catalog.count ||
+            unit.functions[i] as usize>=body.function_count){return .err(invalid(at));}}
         else if(unit.types[i]!=0 || unit.functions[i]!=0 || ((state.live|state.maybe)&bit(i))!=0){return .err(invalid(at));}
-        if(((state.live|state.maybe)&bit(i))!=0 && unit.functions[i] as usize!=state.names.function){return .err(invalid(at));}
-        if((state.maybe&bit(i))!=0 && (unit.catalog.nodes[values::type_id(unit,i)].kind!=4 ||
+        if(((state.live|state.maybe)&bit(i))!=0 && unit.functions[i] as usize!=names.function){return .err(invalid(at));}
+        if((state.maybe&bit(i))!=0 && (catalog.nodes[values::type_id(unit,i)].kind!=4 ||
             named_owner(state,i))){return .err(invalid(at));}
         if((state.loop_roots&bit(i))!=0 && (named_owner(state,i) ||
-            unit.catalog.nodes[values::type_id(unit,i)].kind!=4)){return .err(invalid(at));}
-        if((state.pending&bit(i))!=0 && unit.catalog.nodes[values::type_id(unit,i)].kind!=6){return .err(invalid(at));}
-        if(((state.reads|state.writes)&bit(i))!=0 && unit.catalog.nodes[values::type_id(unit,i)].kind!=4){return .err(invalid(at));}
+            catalog.nodes[values::type_id(unit,i)].kind!=4)){return .err(invalid(at));}
+        if((state.pending&bit(i))!=0 && catalog.nodes[values::type_id(unit,i)].kind!=6){return .err(invalid(at));}
+        if(((state.reads|state.writes)&bit(i))!=0 && catalog.nodes[values::type_id(unit,i)].kind!=4){return .err(invalid(at));}
  w.row+=1;return .ok(false);}
     if(w.phase==4){if(i==16){w.row=0;w.phase=6;return .ok(false);}w.roots=views::local_roots(ref state.views,i);w.owner=0;w.phase=5;return .ok(false);}
     if(w.phase==5){let usize owner=w.owner;let usize roots=w.roots;if((roots&bit(owner))!=0 && (owner>=state.next || ((state.live|state.maybe)&bit(owner))==0 ||
-            unit.catalog.nodes[values::type_id(unit,owner)].kind!=4)){return .err(invalid(at));} w.owner+=1;if(w.owner==16){w.row+=1;w.phase=4;}return .ok(false);}
-    if(w.phase==6){if(i==64){w.done=true;return .ok(true);}if(state.views.names[i]!=0){let usize id=(state.views.names[i] as usize)-1;
-        if(i>=state.names.count || state.bindings[i]!=0 || state.names.registers[i]!=224+id){return .err(invalid(at));}
+            catalog.nodes[values::type_id(unit,owner)].kind!=4)){return .err(invalid(at));} w.owner+=1;if(w.owner==16){w.row+=1;w.phase=4;}return .ok(false);}
+    if(w.phase==6){if(i==64){w.done=true;return .ok(true);}if(view_state.names[i]!=0){let usize id=(view_state.names[i] as usize)-1;
+        if(i>=names.count || state.bindings[i]!=0 || names.registers[i]!=224+id){return .err(invalid(at));}
     } w.row+=1;return .ok(false);}
     return .err(errors::make(5,at));
 }

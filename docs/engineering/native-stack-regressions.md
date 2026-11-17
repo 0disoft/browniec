@@ -33,7 +33,7 @@ shared kernels.
 After lowering was repaired, the unchanged fixture exposed a second overflow
 during CALL execution. Zero owned arguments still entered the generic copy
 planner, constructing a provisional owner table and Table-bearing result
-temporaries. `call_copy_work` now checks empty argument lists in a small adapter.
+temporaries on validation/advance. `call_copy_work` now checks empty argument lists in a small adapter.
 `array_owners::validate_empty_call_copy` preserves complete table authentication,
 arena/depth identity, all eight origin/target comparison rows and inactive cursor
 checks. It returns the same empty copies without planning targets or touching
@@ -41,6 +41,8 @@ payload, owner metadata, progress counters or Fuel. Nonempty lists continue
 through the unchanged generic implementation. The independent complete planner
 remains the differential oracle: 53 valid/hostile cases exercise both `validate`
 and `advance` (106 calls), including ignored fields and allowance/capacity edges.
+CALL begin still uses its original admission/planning path; this optimization
+only removes repeated copy-plan construction during empty copy validation and advance.
 
 Focused verification command:
 
@@ -54,6 +56,12 @@ hashes matching. These cover the original combined quota and CALL depth fixtures
 admission boundaries, checked/full builder equivalence, compact register cells
 and empty-copy reauthentication. Whole-process peak stack and elapsed latency
 are not measured. See the [quota evidence](../evidence/native-stack-quota-windows-20261118.json).
+
+The final public O2 attempt selects the original quota/routing groups plus the
+existing private-API/Fuel gates, but MSVC exceeds its unchanged 60-second host
+limit before a native report completes. Zero groups are counted as release
+passes. There is no timeout/stack override or identical retry. See the
+[public O2 attempt](../evidence/native-stack-public-release-windows-20261118.json).
 
 ## Public source routing
 
@@ -81,3 +89,38 @@ The four-wrapper local annotation with 32 controls must execute to 42; the
 33-control input must reject with kind 4 and an in-source offset. The original
 combined fixture remains the acceptance boundary. The historical 2026-11-12
 pass does not replace verification with the current preview.2 toolchain.
+
+The unchanged local fixture reproduces `0xC00000FD` after the first two follow-up
+commits, at `0a6962c`. Separating Program construction and Result publication
+alone still overflowed. A diagnostic-only native image reached constructor
+preflight and binding/view authentication underneath 32 recursive controls.
+The generated transport retained full nested IR/catalog copies for scalar reads
+in the owning preflight and staged authentication routines, including reads in
+branches that were not currently executing.
+
+The final repair separates candidate construction/publication from recursive
+lowering and borrows the exact IR, catalog, name table and view metadata before
+scalar projections in `value_source_ops::preflight` and
+`value_source_bindings::advance_auth`. All validation conditions, ordering and
+stage-budget updates remain unchanged. The must-use Result query also runs through a small borrowed
+catalog helper, keeping its projection temporaries out of recursive statement
+frames. No condition, validation order, budget debit, IR emission, cleanup,
+allocation or public admission rule is changed. The raw compile traversal stays
+independent and is never used as a retry.
+
+All three focused development and O2 groups pass with identical input sets.
+Both original combined depth groups
+remain byte-identical: local annotations and function signatures execute to 42
+with 32 controls and reject 33 with kind 4 and an in-source offset. The existing
+must-use group preserves unused-result, parameter, overwrite, scope-exit and
+diagnostic-name rejection. All recorded input hashes match. See the
+[annotation evidence](../evidence/native-stack-annotation-windows-20261118.json).
+
+```text
+python -B tools/verify-native-stack.py --case annotation --profile development
+python -B tools/verify-native-stack.py --case annotation --profile release
+```
+
+Public O2 verification is recorded separately from the annotation passes. These three
+repairs do not establish a general native-stack bound for other control/type/
+CALL compositions, full Engine safety, elapsed latency or peak stack usage.
