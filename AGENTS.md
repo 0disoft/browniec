@@ -1,20 +1,20 @@
 - Latest runtime checkpoint (2026-11-18):
-  [Public compilation stack repair](docs/engineering/public-compile-stack.md)
-  moves retained-result publication after recursive lowering. The waiting
-  adapter's MSVC /Od reservation falls from 172,904 to 66,584 bytes (61.49%).
-  This is an individual frame measurement, not peak stack or runtime latency.
-  Windows development passes five focused groups with all production modules
-  and again with their 279/367-module dependency closure; original combined
-  array/record depth fixtures remain unchanged. All 289 closure inputs match.
-  Full-source and closure O2 builds exceed the unchanged 60-second MSVC timeout;
-  release verification remains incomplete. Three other development stack
-  failures remain open: combined public quota/runtime, combined public routing/
-  runtime, and private four-wrapper/32-control local annotations. The historical
-  annotation pass is not a current preview.2 pass. See
-  [evidence](docs/evidence/public-compile-stack-windows-20261118.json).
-  Compiler, default stack, ownership, errors, Fuel and quotas are unchanged.
-  No general stack-containment, post-patch CLI, full Engine, Linux, GUI/input or
-  remote-delivery verification. Broader completion remains paused; no push.
+  [Combined stack follow-up](docs/engineering/native-stack-regressions.md)
+  repairs the unchanged public quota/runtime fixture. Public retained lowering
+  no longer waits in the private owning-result adapter. Builder, semantic-state
+  and error/publication temporaries are separated from scratch initialization.
+  Checked 0..127 register cells use 1024 rather than 8192 logical bytes per bank
+  on x64. Empty owned CALLs authenticate the same table/cursor facts without
+  constructing provisional copy tables; nonempty copies keep the raw path.
+  Six focused development groups pass, including original quota/CALL fixtures
+  and 53 independent empty-copy oracle cases through both entry points. See
+  [evidence](docs/evidence/native-stack-quota-windows-20261118.json).
+  Root locked check covers 375 sources / 4107 MIR functions. No added allocation,
+  compiler/stack/timeout override or fixture weakening. Whole-process peak stack
+  and latency are not measured. Public routing and private four-wrapper/32-control
+  failures still require follow-up. The historical annotation pass is not a
+  current preview.2 pass. Current O2, post-patch CLI, full Engine, Linux and remote
+  delivery remain unverified. Broader completion remains paused; no push.
 
 # Brownie C agent guidance
 

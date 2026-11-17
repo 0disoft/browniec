@@ -23,7 +23,8 @@ pub struct Frame { usize environment; usize target; usize arity; usize count; us
 // suffices: frame counts/pending masks restore the enclosing lexical view after
 // child cleanup. Unused rows are scratch; original caller names stay immutable.
 // The owner pins this bank separately from semantic State construction.
-pub struct Bank { calls::Frame[34] calls; usize[64] begins; usize[64] ends; usize[64] registers; bool[64] mutability; tails::State tail; probes::State probe; routes::State route; syntax::State syntax; aggregates::State aggregate; array_values::Frame[34] arrays; usize[1024] cells; }
+// List cells contain checked register IDs 0..127, not source offsets or values.
+pub struct Bank { calls::Frame[34] calls; usize[64] begins; usize[64] ends; usize[64] registers; bool[64] mutability; tails::State tail; probes::State probe; routes::State route; syntax::State syntax; aggregates::State aggregate; array_values::Frame[34] arrays; u8[1024] cells; }
 pub fn Bank empty_bank(){return Bank{.calls=[calls::empty_frame();34],.begins=[0;64],.ends=[0;64],.registers=[0;64],.mutability=[false;64],.tail=tails::begin(lexer::empty(),0,0,false),.probe=probes::begin(lexer::empty(),0,false),.route=routes::begin(lexer::empty(),0),.syntax=syntax::begin(lexer::empty(),1),.aggregate=aggregates::begin(lexer::empty(),1),.arrays=[array_values::begin(0,0,0,0,false,64,0);34],.cells=[0;1024]};}
 pub struct State { usize[272] arguments; u8[272] parameters; Frame[34] frames; tokens::State token; usize used; usize value; usize cell_used;
     usize visits; u8 request; bool waiting; bool lexing; bool done; }

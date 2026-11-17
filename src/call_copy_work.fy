@@ -88,6 +88,7 @@ pub fn Result<cursor::State,owners::Error> begin_arrays(ref owners::Table table,
 pub fn Result<Option<owners::Copies>,owners::Error> advance(ref mut cursor::State work,
     ref mut owners::Table table,ref records::Catalog catalog,
     ref owners::CallArgument[] arguments,ref mut u8[] data,usize allowance){
+    if(arguments.len==0){return advance_empty(work,table,data.len,allowance);}
     return advance_impl(work,table,catalog,arguments,data,allowance,false);
 }
 // Finish source validation without touching destination bytes. Phase 1 is the
@@ -95,7 +96,15 @@ pub fn Result<Option<owners::Copies>,owners::Error> advance(ref mut cursor::Stat
 pub fn Result<Option<owners::Copies>,owners::Error> validate(ref mut cursor::State work,
     ref mut owners::Table table,ref records::Catalog catalog,
     ref owners::CallArgument[] arguments,ref mut u8[] data,usize allowance){
+    if(arguments.len==0){return advance_empty(work,table,data.len,allowance);}
     return advance_impl(work,table,catalog,arguments,data,allowance,true);
+}
+fn Result<Option<owners::Copies>,owners::Error> advance_empty(ref cursor::State work,
+    ref owners::Table table,usize capacity,usize allowance){
+    if(allowance==0 || allowance>cursor::chunk_limit() || work.last>cursor::chunk_limit()){return .err(.State);}
+    if(allowance>cursor::chunk_limit()-work.last){return .err(.State);}
+    let owners::Copies copies=owners::validate_empty_call_copy(table,work,capacity)?;
+    return .ok(.some(copies));
 }
 fn Result<Option<owners::Copies>,owners::Error> advance_impl(ref mut cursor::State work,
     ref mut owners::Table table,ref records::Catalog catalog,

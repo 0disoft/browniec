@@ -16,6 +16,13 @@ fn bool same(ref images::Builder a,ref images::Builder b){
     var usize i=0;while(i<16){if(a.catalog.starts[i]!=b.catalog.starts[i] || a.catalog.ends[i]!=b.catalog.ends[i] || a.catalog.text[i]!=b.catalog.text[i]){return false;}i+=1;}
     let ref u8[] x=ref a.data;let ref u8[] y=ref b.data;return bytes::equal(x,y);
 }
+
+@test fn void full_capacity_builder_matches_checked_constructor(){
+    let images::Builder full=images::full_builder();
+    let images::Builder checked=scratch(images::byte_limit());
+    assert(same(ref full,ref checked));
+    assert(!images::builder(images::byte_limit()+1).is_ok);
+}
 fn Result<images::Image,images::Error> from_local_scratch(){
     var images::Builder b=images::builder(4)?;let usize id=images::intern_text(ref mut b,b"kept")?;
     return images::freeze(ref b,images::metadata_charge()+4);

@@ -79,6 +79,12 @@ failure. The new quota group checks only the affected admission boundary: one
 literal requires 577 image units and an empty literal requires 576; each rejects
 one fewer unit. It does not claim to repair or replace that execution fixture.
 
+The subsequent [combined-stack follow-up](native-stack-regressions.md#public-image-quota)
+repairs and executes that unchanged quota/runtime fixture. It also removes the
+extra private owning-result frame from the public lowering path. The earlier
+adapter frame measurement above is historical, not a measurement of that later
+implementation.
+
 The original `public_program::source_routing_keeps_legacy_profiles_and_admits_the_extended_path`
 combined admission/execution fixture also overflows independently in development on baseline
 `8f63c74` and with this patch. It remains unchanged and open. A separate

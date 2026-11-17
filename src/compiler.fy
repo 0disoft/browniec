@@ -2805,6 +2805,11 @@ fn Result<usize,errors::Error> statement_staged(ref u8[] source,ref mut lexer::S
     ref mut ir::Program p,ref mut locals::Table names,ref functions::Table signatures,
     u8 terminator,u8 result_type,usize expr_depth,usize structure,ref mut loops::State flow){
     var scratch_vec::Vec<expression_work::Bank> scratch=expression_scratch(s.begin)?;let ref mut expression_work::Bank bank=scratch_vec::at_mut<expression_work::Bank>(ref mut scratch,0);
+    return statement_in_bank(source,s,p,names,signatures,terminator,result_type,expr_depth,structure,flow,bank);
+}
+fn Result<usize,errors::Error> statement_in_bank(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref mut locals::Table names,ref functions::Table signatures,
+    u8 terminator,u8 result_type,usize expr_depth,usize structure,ref mut loops::State flow,ref mut expression_work::Bank bank){
     var semantic_work::State w=semantic_work::begin(*s,1,0,terminator,expr_depth);
     var metadata_budget::State meter=metadata_budget::empty();
     while(!w.done){let usize allowance=metadata_budget::reset(ref mut meter,s.begin)?;
@@ -2828,6 +2833,13 @@ fn Result<bool,errors::Error> return_staged(ref u8[] source,ref mut lexer::State
         else if(reference_calls::result(signatures,function) || signatures.return_slice_elements[function]!=0 ||
             p.record_results[function]!=0 || p.array_results[function]!=0 || !types::scalar(result_type)){0}else{2};
     var scratch_vec::Vec<expression_work::Bank> scratch=expression_scratch(s.begin)?;let ref mut expression_work::Bank bank=scratch_vec::at_mut<expression_work::Bank>(ref mut scratch,0);
+    return return_in_bank(source,s,p,names,signatures,result_type,depth,expr_depth,flow,kind,bank);
+}
+// Semantic state is needed after Bank initialization, not while Vec::push is
+// constructing its large success/error payloads.
+fn Result<bool,errors::Error> return_in_bank(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref mut locals::Table names,ref functions::Table signatures,
+    u8 result_type,usize depth,usize expr_depth,ref mut loops::State flow,u8 kind,ref mut expression_work::Bank bank){
     var semantic_work::State w=semantic_work::begin(*s,kind,result_type,59,expr_depth);
     var metadata_budget::State meter=metadata_budget::empty();
     while(!w.done){let usize allowance=metadata_budget::reset(ref mut meter,s.begin)?;
@@ -3105,12 +3117,20 @@ pub fn Result<program_images::ReferenceProgram,program_images::Error> compile_re
 // Private returned-reference source path. Generic result admission remains
 // separate from the ordinary public compiler and host-visible reference ABI.
 pub fn Result<program_images::ReferenceReturnProgram,program_images::Error> compile_reference_returns(ref u8[] source,usize image_limit){
-    var static_images::Builder builder=switch(static_images::builder(4096)){
-        case .ok(v):{v}case .err(e):{return .err(image_literal_error(e));}
-    };
-    var reference_ir::Program code=reference_ir::Program{.body=ir::empty(),.parameters=[0;128],.results=[0;16],.origins=[0;16]};
-    let usize lowered=lower_reference_returns(source,ref mut builder,ref mut code)?;
-    return finish_reference_returns(ref builder,ref code,image_limit);
+    var static_images::Builder builder=static_images::full_builder();
+    var reference_ir::Program code=reference_return_candidate();
+    let Result<usize,program_images::Error> lowered=lower_reference_returns(source,ref mut builder,ref mut code);
+    return publish_lowered_reference_returns(ref builder,ref code,lowered,image_limit);
+}
+// Constructor intermediates must return before recursive lowering starts.
+fn reference_ir::Program reference_return_candidate(){
+    return reference_ir::Program{.body=ir::empty(),.parameters=[0;128],.results=[0;16],.origins=[0;16]};
+}
+fn Result<program_images::ReferenceReturnProgram,program_images::Error> publish_lowered_reference_returns(
+    ref static_images::Builder builder,ref reference_ir::Program code,
+    Result<usize,program_images::Error> lowered,usize image_limit){
+    switch(lowered){case .ok(_):{}case .err(e):{return .err(e);}};
+    return finish_reference_returns(builder,code,image_limit);
 }
 fn Result<program_images::ReferenceReturnProgram,program_images::Error> finish_reference_returns(
     ref static_images::Builder builder,ref reference_ir::Program code,usize image_limit){
@@ -3166,10 +3186,18 @@ pub fn Result<program_images::PublicProgram,errors::Error> compile_program(ref u
 }
 // Keep mutually exclusive admission temporaries off each other's native stack.
 fn Result<program_images::PublicProgram,errors::Error> compile_public_references(ref u8[] source,usize image_limit){
-    // Public container moves/error staging must begin only after recursive
-    // lowering has returned. Passing the completed candidate keeps those large
-    // native return slots out of the active compiler stack, without heap work.
-    return publish_public_references(compile_reference_returns(source,image_limit));
+    // Share lowering and final admission with the private API, without waiting
+    // in its owning Result frame as well as the public adapter's frame.
+    var static_images::Builder builder=static_images::full_builder();
+    var reference_ir::Program code=reference_return_candidate();
+    let Result<usize,program_images::Error> lowered=lower_reference_returns(source,ref mut builder,ref mut code);
+    return publish_lowered_public_references(ref builder,ref code,lowered,image_limit);
+}
+fn Result<program_images::PublicProgram,errors::Error> publish_lowered_public_references(
+    ref static_images::Builder builder,ref reference_ir::Program code,
+    Result<usize,program_images::Error> lowered,usize image_limit){
+    switch(lowered){case .ok(_):{}case .err(e):{return .err(public_error(e));}};
+    return publish_public_references(finish_reference_returns(builder,code,image_limit));
 }
 fn Result<program_images::PublicProgram,errors::Error> publish_public_references(
     Result<program_images::ReferenceReturnProgram,program_images::Error> candidate){

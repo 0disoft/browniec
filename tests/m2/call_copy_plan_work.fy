@@ -314,6 +314,52 @@ fn Result<usize,owners::Error> header_error(usize mode){
 @test fn void empty_arguments_and_long_bool_array_ignore_unused_bad_catalog(){
     assert(example(15,true).is_ok);assert(example(18,true).is_ok);
 }
+fn void empty_recipe_matches(ref owners::Table original,ref cursor::State initial,usize capacity,usize allowance){
+    var records::Catalog catalog=records::empty();catalog.count=33;
+    let owners::CallArgument[1] arguments=[arg(missing(),0,0,99)];
+    var u8 expected=switch(owners::validate_call_copy(original,ref catalog,ref arguments[..0],initial,capacity)){
+        case .ok(plan):{assert(plan.copies.count==0);0}case .err(error):{error_code(error)}
+    };
+    if(allowance==0 || allowance>4096 || initial.last>4096){expected=3;}
+    else if(allowance>4096-initial.last){expected=3;}
+    var usize mode=0;while(mode<2){
+        var owners::Table table=*original;var cursor::State copy=*initial;var u8[64] data=[42;64];
+        let Result<Option<owners::Copies>,owners::Error> result=if(mode==0){
+            raw_copy::validate(ref mut copy,ref mut table,ref catalog,ref arguments[..0],ref mut data[..capacity],allowance)
+        }else{raw_copy::advance(ref mut copy,ref mut table,ref catalog,ref arguments[..0],ref mut data[..capacity],allowance)};
+        switch(result){
+            case .ok(value):{assert(expected==0);switch(value){
+                case .none:{assert(false);}case .some(copies):{assert(copies.count==0);var usize i=0;while(i<8){assert(copies.tokens[i].slot==0 && copies.tokens[i].generation==0);i+=1;}}
+            };}
+            case .err(error):{assert(error_code(error)==expected);}
+        };
+        same_table(ref table,original);same_cursor(ref copy,initial);
+        var usize i=0;while(i<data.len){assert(data[i]==42);i+=1;}mode+=1;
+    }
+}
+@test fn void empty_copy_fast_path_matches_complete_plan_validation_without_mutation(){
+    let owners::Table table=owners::empty(64);var usize mode=0;
+    while(mode<16){var cursor::State copy=cursor::empty();
+        if(mode==1){copy.active=true;}else if(mode==2){copy.phase=1;}else if(mode==3){copy.phase=2;}
+        else if(mode==4){copy.count=1;}else if(mode==5){copy.index=1;}else if(mode==6){copy.at=1;}
+        else if(mode==7){copy.mark=1;}else if(mode==8){copy.end=1;}else if(mode==9){copy.depth=1;}
+        else if(mode==10){copy.written=1;copy.total=1;}else if(mode==11){copy.last=1;}
+        else if(mode==12){copy.total=1;}else if(mode==13){copy.last=1;copy.total=1;}
+        else if(mode==14){copy.pending=true;copy.charged=true;copy.pc=7;copy.frame=3;}
+        else if(mode==15){copy.source_slots[7]=99;copy.source_generations[7]=99;}
+        empty_recipe_matches(ref table,ref copy,64,1);mode+=1;
+    }
+    mode=0;while(mode<32){var cursor::State copy=cursor::empty();let usize row=mode%8;
+        if(mode<8){copy.source_bases[row]=1;}else if(mode<16){copy.source_ends[row]=1;}
+        else if(mode<24){copy.target_slots[row]=1;}else{copy.target_generations[row]=1;}
+        empty_recipe_matches(ref table,ref copy,64,1);mode+=1;
+    }
+    var cursor::State copy=cursor::empty();empty_recipe_matches(ref table,ref copy,63,1);
+    empty_recipe_matches(ref table,ref copy,64,0);empty_recipe_matches(ref table,ref copy,64,4097);
+    copy.last=1;copy.total=1;empty_recipe_matches(ref table,ref copy,64,4096);
+    copy=cursor::empty();var owners::Table invalid=owners::empty(64);invalid.depth=17;
+    empty_recipe_matches(ref invalid,ref copy,64,1);
+}
 @test fn void arity_and_array_descriptors_precede_invalid_original_table(){
     var usize mode=0;while(mode<4){assert(header_error(mode).is_ok);mode+=1;}
 }

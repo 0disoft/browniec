@@ -17,8 +17,12 @@ pub fn usize metadata_charge(){return 576;}
 fn Catalog empty_catalog(){return Catalog{.starts=[0;16],.ends=[0;16],.text=[false;16],.count=0,.used=0};}
 pub fn Result<Builder,Error> builder(usize limit){
     if(limit>byte_limit()){return .err(.Limit);}
-    return .ok(Builder{.data=[0;4096],.catalog=empty_catalog(),.limit=limit});
+    return .ok(empty_builder(limit));
 }
+fn Builder empty_builder(usize limit){return Builder{.data=[0;4096],.catalog=empty_catalog(),.limit=limit};}
+// The compiler's full scratch capacity is always valid. Avoid a fallible
+// builder result forcing an owning Program error slot into recursive lowering.
+pub fn Builder full_builder(){return empty_builder(byte_limit());}
 // Packed ranges cover exactly the initialized prefix. Check subtraction bounds
 // before every addition/index; unused metadata cannot smuggle another entry.
 fn Result<usize,Error> shape(ref Catalog c,usize length){

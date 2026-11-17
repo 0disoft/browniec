@@ -1215,6 +1215,18 @@ pub fn Result<calling::State,Error> capture_call_copy(ref CallCopyPlan plan,ref 
 // Replan exact pinned descriptors on every chunk, reauthenticating table depth,
 // arena prefix, source shape/generation and every destination slot/reservation.
 // The compact recipe is a comparison target, never independent write authority.
+// Empty CALLs have no provisional targets or payload. Authenticate the same
+// table/cursor facts without constructing a Table-bearing CallCopyPlan.
+pub fn Result<Copies,Error> validate_empty_call_copy(ref Table table,ref calling::State work,usize capacity){
+    if(work.count!=0 || work.phase>1 || work.index!=0 || work.last>work.total || work.written>work.total){return .err(.State);}
+    if(!valid(table,capacity)){return .err(.State);}
+    if(work.mark!=table.arena.used || work.end!=table.arena.used || work.depth!=table.depth){return .err(.State);}
+    var usize i=0;while(i<8){
+        if(work.source_bases[i]!=0 || work.source_ends[i]!=0 || work.target_slots[i]!=0 || work.target_generations[i]!=0){return .err(.State);}i+=1;
+    }
+    if(work.active || work.phase!=0 || work.at!=0 || work.written!=0){return .err(.State);}
+    return .ok(Copies{.tokens=[Token{.slot=0,.generation=0};8],.count=0});
+}
 pub fn Result<CallCopyPlan,Error> validate_call_copy(ref Table table,ref records::Catalog catalog,
     ref CallArgument[] arguments,ref calling::State work,usize capacity){
     if(work.count!=arguments.len || work.count>8 || work.phase>1){return .err(.State);}

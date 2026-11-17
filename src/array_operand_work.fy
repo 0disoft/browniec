@@ -20,8 +20,12 @@ pub fn Frame begin(usize at,usize depth,usize groups,u8 expected,bool literal,us
         .literal=literal,.repeated=false,.owned=literal,.done=false};}
 fn Result<bool,errors::Error> take(ref lexer::State s,ref mut Frame f,u8 kind,u8 next){
     if(kind!=0 && s.kind!=kind){return .err(errors::make(2,s.begin));}f.phase=next;f.request=1;return .ok(false);}
+fn Result<u8,errors::Error> register_byte(usize value,usize at){
+    let i64 wide=switch(num::i64_from_usize(value)){case .ok(v):{v}case .err(_):{return .err(errors::make(4,at));}};
+    return switch(num::u8_from_i64(wide)){case .ok(v):{.ok(v)}case .err(_):{.err(errors::make(4,at))}};
+}
 pub fn Result<bool,errors::Error> advance(ref u8[] source,ref lexer::State s,ref mut ir::Program p,
-    ref locals::Table names,ref mut Frame f,ref mut usize[] values,ref mut usize used,ref mut budget::State meter){
+    ref locals::Table names,ref mut Frame f,ref mut u8[] values,ref mut usize used,ref mut budget::State meter){
     if(f.done){return .ok(true);}if(meter.last!=0 || f.request!=0){return .ok(false);}
     if(!budget::admit(meter,4096,s.begin)?){return .ok(false);}
     if(f.phase==0){if(f.depth>32 || f.literal && f.groups>32-f.depth){return .err(errors::make(4,f.at));}
@@ -37,7 +41,7 @@ pub fn Result<bool,errors::Error> advance(ref u8[] source,ref lexer::State s,ref
             f.element=p.types[value];return take(s,f,59,6);}
         if(value>=128 || value>=p.registers || !types::scalar(p.types[value])){return .err(errors::make(3,f.inner));}
         if(f.element==0){f.element=p.types[value];}if(p.types[value]!=f.element){return .err(errors::make(3,f.inner));}
-        if(*used>=values.len){return .err(errors::make(5,f.inner));}let usize slot=*used;values[slot]=value;*used+=1;f.count+=1;f.expected=f.element;
+        if(*used>=values.len){return .err(errors::make(5,f.inner));}let usize slot=*used;values[slot]=register_byte(value,f.inner)?;*used+=1;f.count+=1;f.expected=f.element;
         if(s.kind==44){return take(s,f,44,8);}return take(s,f,93,10);}
     if(f.phase==6){if(s.kind!=1 || s.value<1 || s.value>4096){return .err(errors::make(3,s.begin));}
         f.length=cells::unpack(s.value,s.begin)?;return take(s,f,1,7);}
@@ -48,13 +52,12 @@ pub fn Result<bool,errors::Error> advance(ref u8[] source,ref lexer::State s,ref
     if(f.phase==11){if(f.repeated){let usize initialized=ir::array_init(p,f.id,f.value,f.at)?;f.phase=19;return .ok(false);}
         if(f.id>=16 || f.id>=p.arrays.count || f.count!=p.arrays.lengths[f.id] || f.count==0 || f.count>4096 || !types::scalar(p.arrays.elements[f.id])){return .err(errors::make(3,f.at));}
         if(p.count>=256 || p.list_used>4096 || f.count>4096-p.list_used){return .err(errors::make(4,f.at));}f.row=0;f.phase=12;return .ok(false);}
-    if(f.phase==12){if(f.row==f.count){f.phase=13;return .ok(false);}let usize r=values[f.start+f.row];
+    if(f.phase==12){if(f.row==f.count){f.phase=13;return .ok(false);}let usize r=values[f.start+f.row] as usize;
         if(r>=128 || r>=p.registers || p.types[r]!=p.arrays.elements[f.id] || p.slots[r] || p.array_parameters[r]!=0 || p.record_parameters[r]!=0 || p.slice_parameters[r]!=0){return .err(errors::make(3,f.at));}
         f.row+=1;return .ok(false);}
     if(f.phase==13){f.list_start=p.list_used;let usize pc=ir::raw(p,80,f.id,f.list_start%256,f.list_start/256,f.at)?;f.row=0;f.phase=14;return .ok(false);}
     if(f.phase==14){if(f.row==f.count){p.list_used=f.list_start+f.count;f.phase=19;return .ok(false);}
-        let usize r=values[f.start+f.row];let i64 wide=switch(num::i64_from_usize(r)){case .ok(v):{v}case .err(_):{return .err(errors::make(4,f.at));}};
-        let u8 byte=switch(num::u8_from_i64(wide)){case .ok(v):{v}case .err(_):{return .err(errors::make(4,f.at));}};
+        let usize r=values[f.start+f.row] as usize;let u8 byte=register_byte(r,f.at)?;
         p.list_operands[f.list_start+f.row]=byte;f.row+=1;return .ok(false);}
     if(f.phase==19){*used=f.start;f.phase=22;return .ok(false);}
     if(f.phase==20){if(f.binding>=names.count || names.registers[f.binding]<128 || names.registers[f.binding]>=144){return .err(errors::make(3,s.begin));}
