@@ -1,5 +1,9 @@
 # Validate view lookup once
 
+Successor: [call-local header indexing](value-view-header.md) replaces the
+pairwise scan discussed below while preserving its validation boundaries.
+The counts and receipts in this document describe the preceding implementation.
+
 The private typed/value VM resolves a view binding through
 `value_buffer_views::lookup` before its read/length/range/alias operation.
 The old successful lookup called `header(pool)`, searched for the binding, then

@@ -1,0 +1,271 @@
+{
+  "schema": "browniec.view-header-index/v1",
+  "status": "passed",
+  "recordedAt": "2026-11-17T13:43:46.227853+00:00",
+  "baselineCommit": "21f397644603c0b87e1430e33a2bcf2425e7b9bd",
+  "scope": "Private retained-value view header; existing root/lease authentication and Fuel preserved",
+  "source": "src/value_buffer_views.fy",
+  "sourceSha256": "4ac9fbb8d4952d307b1e346536d957df362e5ec27e9959ef6000ea0e9d7103bf",
+  "tests": "tests/m2/value_view_lookup.fy",
+  "testsSha256": "549a92568fec51ba7784420dbe010ed6d7f07c342cf4fdd03ded06e0f9918322",
+  "compiler": {
+    "version": "v0.1.0-preview.2",
+    "revision": "801c5d8caa64d19aab8925763d6bf07f65f26418",
+    "sha256": "7665c8203ae9ed8397b013770fc53e57eb37d1f3d4c236bcd77983e570bad836",
+    "provisioning": "Exact-source build with Go 1.27.1 in isolated scratch; manifest binary hash matched before execution.",
+    "tagProvenance": "Original local/published preview.2 tag was unavailable. The manifest tag was reconstructed at its exact pinned commit in an isolated input repository; no publisher-tag provenance is claimed. The sibling fairyc checkout was not modified."
+  },
+  "profiles": [
+    {
+      "profile": "development",
+      "nativeGroups": 9,
+      "receipt": "build/value-view-header/development/receipt.json",
+      "receiptSha256": "0bdae343685ecbe7f1e266557f89c057f1e31e11fc61e16d2547d5e96ab9e7fa",
+      "allInputHashesMatch": true,
+      "check": "check ok: 2 instance(s), 375 source file(s), 4096 MIR function(s), lock verified",
+      "nativeReport": {
+        "schemaVersion": "fairyc.test-report/v4",
+        "engine": "native",
+        "target": "x86_64-windows-msvc",
+        "profile": "development",
+        "tests": [
+          {
+            "identity": "tests::m2::value_buffer_views::actual_nested_ranges_aliases_and_compaction_pin_until_last_close",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_buffer_views::rejected_fuel_bindings_bounds_and_descriptor_exhaustion_roll_back",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_buffer_views::zero_fuel_shutdown_refunds_metadata_and_restores_actual_root_quota",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_execution::real_bytes_nested_ranges_aliases_move_and_empty_windows_outlive_parent_close",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_lookup::full_pool_lookup_then_read_keeps_exact_fuel_and_last_alias_cleanup",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_lookup::handoff_matches_original_for_all_pool_sizes_faults_and_error_priorities",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_lookup::indexed_header_matches_pairwise_oracle_for_collisions_high_serials_and_binding_bits",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_lookup::original_lookup_matches_all_pool_sizes_metadata_faults_and_error_priorities",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_lookup::shutdown_matches_original_for_all_pool_sizes_faults_partial_progress_and_retirement",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          }
+        ],
+        "count": 9,
+        "passed": 9,
+        "failed": 0,
+        "status": "ok",
+        "lock": "verified"
+      }
+    },
+    {
+      "profile": "release",
+      "nativeGroups": 9,
+      "receipt": "build/value-view-header/release/receipt.json",
+      "receiptSha256": "3d2d421f01b8d576bf9275959ef19d89b7c5d577a25fd0c6c29737089b0d3c0d",
+      "allInputHashesMatch": true,
+      "check": "check ok: 2 instance(s), 375 source file(s), 4096 MIR function(s), lock verified",
+      "nativeReport": {
+        "schemaVersion": "fairyc.test-report/v4",
+        "engine": "native",
+        "target": "x86_64-windows-msvc",
+        "profile": "release",
+        "tests": [
+          {
+            "identity": "tests::m2::value_buffer_views::actual_nested_ranges_aliases_and_compaction_pin_until_last_close",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_buffer_views::rejected_fuel_bindings_bounds_and_descriptor_exhaustion_roll_back",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_buffer_views::zero_fuel_shutdown_refunds_metadata_and_restores_actual_root_quota",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_execution::real_bytes_nested_ranges_aliases_move_and_empty_windows_outlive_parent_close",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_lookup::full_pool_lookup_then_read_keeps_exact_fuel_and_last_alias_cleanup",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_lookup::handoff_matches_original_for_all_pool_sizes_faults_and_error_priorities",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_lookup::indexed_header_matches_pairwise_oracle_for_collisions_high_serials_and_binding_bits",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_lookup::original_lookup_matches_all_pool_sizes_metadata_faults_and_error_priorities",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_lookup::shutdown_matches_original_for_all_pool_sizes_faults_partial_progress_and_retirement",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          }
+        ],
+        "count": 9,
+        "passed": 9,
+        "failed": 0,
+        "status": "ok",
+        "lock": "verified"
+      }
+    }
+  ],
+  "inputCount": 376,
+  "inputSetSha256": "15d267c011dba073627c7df820121e0fb665c06862ce1d77f2df640cac7b7004",
+  "productionSourcesLfOnly": 367,
+  "baselineNative": {
+    "sourceSha256": "175016fd64b89471fc1985003b32997ebf8332c7a61be509996da1465477ad9f",
+    "profile": "release",
+    "command": [
+      "build/toolchain/fairyc.exe",
+      "test",
+      "--native",
+      "--capture-output",
+      "--json",
+      "--locked",
+      "--release",
+      "--exact",
+      "tests::m2::value_view_lookup::full_pool_lookup_then_read_keeps_exact_fuel_and_last_alias_cleanup"
+    ],
+    "workingDirectory": "build/view-header-baseline",
+    "report": {
+      "schemaVersion": "fairyc.test-report/v4",
+      "engine": "native",
+      "target": "x86_64-windows-msvc",
+      "profile": "release",
+      "tests": [
+        {
+          "identity": "tests::m2::value_view_lookup::full_pool_lookup_then_read_keeps_exact_fuel_and_last_alias_cleanup",
+          "outcome": "passed",
+          "trapCategory": null,
+          "stdoutBase64": "",
+          "stderrBase64": ""
+        }
+      ],
+      "count": 1,
+      "passed": 1,
+      "failed": 0,
+      "status": "ok",
+      "lock": "verified"
+    },
+    "reportSha256": "6ff5244c53ea67fc0a745fa63298ba9cc3889298e981d09495b740a3a27fb4b8"
+  },
+  "structuralCounts": {
+    "liveAliases": 32,
+    "sharedRoots": 1,
+    "earlierRowComparisonsPerHeaderBefore": 496,
+    "earlierRowComparisonsPerHeaderAfter": 31,
+    "reductionPercent": 93.75,
+    "lookupThenReadHeaderPasses": 2,
+    "readIterations": 4096,
+    "earlierRowComparisonsBefore": 4063232,
+    "earlierRowComparisonsAfter": 253952,
+    "eliminatedEarlierRowComparisons": 3809280,
+    "newBindingBitTestsPerHeader": 32,
+    "logicalScratchBytesAdded": 128,
+    "addedHeapRequestsPerHeader": 0,
+    "worstCase": "O(N^2) for colliding distinct serials; at most 496 earlier-row comparisons plus 32 empty-bucket probes for 32 rows.",
+    "typicalCase": "O(N) for aliases of one serial or well-distributed serials; fixed 32-row scan and scratch initialization remain.",
+    "measuredElapsedLatencyOrNativePeakStack": false
+  },
+  "equivalence": {
+    "additionalHeaderOracleComparisonsPerProfile": 2880,
+    "healthyPoolSizesInclusive": [
+      0,
+      32
+    ],
+    "cases": [
+      "shared and distinct serials",
+      "32 colliding keys and bucket wraparound",
+      "maximum usize serials",
+      "binding bit boundaries",
+      "live/dead metadata corruption",
+      "conflicting aliases after collisions",
+      "lookup/alias/handoff/shutdown diagnostics, Fuel and exact partial state",
+      "4096 native lookup-then-byte reads and last-alias cleanup",
+      "real VM nested ranges, aliases, moves and empty windows"
+    ]
+  },
+  "skipped": [
+    "Full Engine suite",
+    "public CLI build/runtime",
+    "Linux",
+    "GUI/input",
+    "push/release/deployment"
+  ]
+}

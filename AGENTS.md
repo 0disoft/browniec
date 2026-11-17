@@ -1,25 +1,20 @@
-- Latest maintenance checkpoint (2026-11-16):
-  [Windows compiler preview.2 adoption](docs/engineering/toolchain-setup.md#current-windows-preview2-adoption-2026-11-16).
-  The active Windows compiler is v0.1.0-preview.2 / 801c5d8c with bundled SDK
-  0.0.0-stage0.87, language /20 and runtime ABI /0. SHA-256 is
-  7665c8203ae9ed8397b013770fc53e57eb37d1f3d4c236bcd77983e570bad836.
-  The SDK public version is unchanged; the root SDK source digest is 9358b8ed.
-  Root check/locked check pass (375 sources / 4096 MIR); M0 lock is unchanged
-  and its locked check passes. Twelve provisioning cases include exact-source
-  reproduction, pinned local tag/revision checks and rejected host overrides.
-  The reviewed source recipe preserves CRLF in two embedded C inputs only in
-  its isolated checkout, with unchanged normalized Git content and clean status.
-  A fresh development Brownie CLI build returns 77 with no runtime tools on PATH.
-  The unchanged root-append fixture passes one focused native group per profile
-  (development/release), 240 original-preflight comparisons each, in ten-module
-  production closures. This does not refresh the preceding full runtime evidence.
-  Linux compiler/SDK/recipe/hash and cross-build-only status remain historical
-  platform overrides, requiring a separate adoption for the new root lock.
-  The old compiler is retained under build/toolchain-preview2-adoption/previous.
-  No Brownie .fy changes, GUI/input tests, Linux build, push, release or deployment.
-  Runtime work, including the preceding append refactor, remains unchanged.
-  Broader completion remains paused. See
-  [evidence](docs/evidence/toolchain-preview2-windows-20261116.json).
+- Latest runtime checkpoint (2026-11-17):
+  [Call-local view header indexing](docs/engineering/value-view-header.md)
+  replaces pairwise registry checks with binding bits and serial representatives.
+  For 32 aliases of one root, earlier-row comparisons fall from 496 to 31 per
+  header; colliding distinct serials retain the bounded quadratic worst case.
+  Scratch adds 128 logical bytes, no heap requests or cross-call state. Root,
+  backing, lease, diagnostics, Fuel and partial-cleanup contracts are preserved.
+  Windows development/O2 each pass nine focused native groups, including 2,880
+  additional oracle comparisons and 4,096 actual lookup-then-read operations.
+  All 376 verification inputs match; 367 production modules retain LF. Root
+  check/locked checks pass (375 sources / 4096 MIR), with refreshed root lock.
+  The pinned [Windows preview.2 toolchain](docs/engineering/toolchain-setup.md#current-windows-preview2-adoption-2026-11-16)
+  is unchanged; its exact binary hash was reproduced. See
+  [evidence](docs/evidence/value-view-header-windows-20261117.json) for source-tag
+  reconstruction provenance and verification limits. No public admission,
+  full Engine, CLI build/runtime, Linux, GUI/input or remote-delivery validation.
+  Broader completion remains paused.
 
 # Brownie C agent guidance
 

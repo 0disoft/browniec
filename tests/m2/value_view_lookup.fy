@@ -384,3 +384,45 @@ fn void shutdown_same(ref views::Pool p,ref roots::State s,ref vec::Vec<bytes::B
     assert(fuel==0 && !s.table.slots[0].reading);
     assert(root_ok(roots::drain(ref mut s,ref mut data,ref mut scratch))==0 && s.ledger.used==0);
 }
+
+// Empty alias admission authenticates the whole header without resolving a
+// root. Compare arbitrary metadata, including states not produced by the VM,
+// against the frozen pairwise oracle rather than assuming slot/serial identity.
+fn void same_header(ref views::Pool pool,ref roots::State store,
+    ref vec::Vec<bytes::Buffer> data,ref vec::Vec<bytes::Buffer> scratch){
+    var views::Pool checked=*pool;let usize[1] empty=[0;1];var usize fuel=0;
+    let Result<usize,views::Error> before=header(pool);
+    let Result<usize,views::Error> after=views::aliases(ref mut checked,store,data,scratch,
+        ref empty[..0],ref empty[..0],ref mut fuel);
+    assert(switch(before){case .ok(a):{switch(after){case .ok(b):{a==b}case .err(_):{false}}}
+        case .err(a):{switch(after){case .ok(_):{false}case .err(b):{code(a)==code(b)}}}});
+    assert(fuel==0);same_pool(ref checked,pool);
+}
+@test fn void indexed_header_matches_pairwise_oracle_for_collisions_high_serials_and_binding_bits(){
+    var vec::Vec<bytes::Buffer> data=vec::empty<bytes::Buffer>();var vec::Vec<bytes::Buffer> scratch=vec::empty<bytes::Buffer>();
+    var usize fuel=roots::setup_cost();var roots::State store=switch(roots::open(ref mut data,ref mut scratch,limits(),ref mut fuel)){
+        case .ok(v):{v}case .err(_):{assert(false);indexed_header_matches_pairwise_oracle_for_collisions_high_serials_and_binding_bits();return;}};
+    var usize pattern=0;var usize comparisons=0;
+    while(pattern<5){
+        var views::Pool pool=views::Pool{.closed=false,.rows=[views::Row{.generation=1,.live=false,
+            .binding=512,.serial=0,.owner_binding=512,.owner_slot=16,.owner_generation=0,.start=0,.length=0};32]};
+        var usize count=0;
+        while(count<=32){same_header(ref pool,ref store,ref data,ref scratch);comparisons+=1;
+            if(count==32){break;}let usize i=count;let usize owner=if(pattern==0){0}else{i%16};
+            let usize serial=if(pattern==0){1}else if(pattern==1){i+1}else if(pattern==2){63+64*i}
+                else if(pattern==3){18446744073709551615-64*i}else{63+64*owner};
+            pool.rows[i]=views::Row{.generation=1,.live=true,.binding=16*i+if(i%2==0){0}else{15},
+                .serial=serial,.owner_binding=owner,.owner_slot=owner,.owner_generation=1,.start=0,.length=0};count+=1;
+        }
+        var usize i=0;while(i<32){var usize mode=0;while(mode<16){
+            let views::Pool bad=pool_fault(ref pool,i,mode);same_header(ref bad,ref store,ref data,ref scratch);
+            comparisons+=1;mode+=1;}i+=1;}
+        // A later colliding key must still find its original representative;
+        // neither binding bits nor a hash match prove alias coherence.
+        i=1;while(i<32){var views::Pool bad=pool;bad.rows[i].serial=pool.rows[0].serial;
+            bad.rows[i].owner_generation=2;same_header(ref bad,ref store,ref data,ref scratch);comparisons+=1;i+=1;}
+        pattern+=1;
+    }
+    assert(comparisons==2880 && fuel==0);
+    assert(root_ok(roots::drain(ref mut store,ref mut data,ref mut scratch))==0);
+}

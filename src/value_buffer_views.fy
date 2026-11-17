@@ -51,19 +51,30 @@ pub fn Result<Pool,Error> open(ref mut roots::State store,ref vec::Vec<bytes::Bu
     return .ok(Pool{.rows=[blank(1);32],.closed=false});
 }
 fn Result<usize,Error> header(ref Pool pool){
-    if(pool.closed){return .err(.State);}var usize i=0;
-    while(i<32){let Row row=get(pool,i);
+    if(pool.closed){return .err(.State);}
+    // Call-local scratch only: exact binding bits and one representative per
+    // serial. At most 32 keys occupy 64 buckets, so probing always terminates.
+    // Collisions compare full serials; no root/lease proof is cached here.
+    var usize[8] bindings=[0;8];var u8[64] serials=[32;64];
+    let usize one=1;var u8 index=0;
+    while(index<32){let Row row=get(pool,index as usize);
         if(row.live){
             if(row.generation==0 || row.binding>=512 || row.serial==0 || row.owner_binding>=512 ||
                 row.owner_slot>=16 || row.owner_generation==0){return .err(.State);}
-            var usize j=0;while(j<i){let Row other=get(pool,j);if(other.live){
-                if(other.binding==row.binding || (other.serial==row.serial &&
-                    (other.owner_binding!=row.owner_binding || other.owner_slot!=row.owner_slot ||
-                        other.owner_generation!=row.owner_generation))){return .err(.State);}
-            }j+=1;}
+            let usize word=row.binding/64;let usize bit=one<<(row.binding%64);
+            if((bindings[word]&bit)!=0){return .err(.State);}bindings[word]|=bit;
+            var usize bucket=row.serial%64;
+            while(serials[bucket]!=32){let Row other=get(pool,serials[bucket] as usize);
+                if(other.serial==row.serial){
+                    if(other.owner_binding!=row.owner_binding || other.owner_slot!=row.owner_slot ||
+                        other.owner_generation!=row.owner_generation){return .err(.State);}
+                    break;
+                }bucket=(bucket+1)%64;
+            }
+            if(serials[bucket]==32){serials[bucket]=index;}
         }else if(row.binding!=512 || row.serial!=0 || row.owner_binding!=512 ||
             row.owner_slot!=16 || row.owner_generation!=0 || row.start!=0 || row.length!=0){return .err(.State);}
-        i+=1;
+        index+=1;
     }return .ok(0);
 }
 fn Result<usize,Error> binding(ref Pool pool,usize destination,usize except){
