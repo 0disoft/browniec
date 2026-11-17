@@ -93,6 +93,10 @@ profile selection without retaining unrelated programs or entering those
 execution frames. Neither pre-existing combined execution failure is counted
 as a passing group or a repaired failure in this slice.
 
+The [later routing follow-up](native-stack-regressions.md#public-source-routing)
+records that the unchanged complete group passes after the shared quota repair
+`c9930a3`; the open status above belongs to the earlier adapter-only checkpoint.
+
 The private
 `value_signature_depth::four_wrapper_local_annotations_with_32_controls_execute_and_33_reject`
 fixture also overflows in development with preview.2 in the current checkout and

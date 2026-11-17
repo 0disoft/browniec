@@ -11,8 +11,11 @@
   [evidence](docs/evidence/native-stack-quota-windows-20261118.json).
   Root locked check covers 375 sources / 4107 MIR functions. No added allocation,
   compiler/stack/timeout override or fixture weakening. Whole-process peak stack
-  and latency are not measured. Public routing and private four-wrapper/32-control
-  failures still require follow-up. The historical annotation pass is not a
+  and latency are not measured. The unchanged complete public routing fixture
+  also passes after c9930a3 with all 367 production sources matching; its
+  [follow-up](docs/evidence/native-stack-routing-windows-20261118.json) records
+  that the shared repair needed no further implementation change. The private
+  four-wrapper/32-control failure still requires follow-up. The historical annotation pass is not a
   current preview.2 pass. Current O2, post-patch CLI, full Engine, Linux and remote
   delivery remain unverified. Broader completion remains paused; no push.
 

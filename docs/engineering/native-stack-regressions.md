@@ -57,8 +57,23 @@ are not measured. See the [quota evidence](../evidence/native-stack-quota-window
 
 ## Public source routing
 
-The original combined routing/execution fixture also reproduces on baseline
-`5e45f9a`. It must be rechecked after the quota repair before selecting its fix.
+The original combined routing/execution fixture reproduces `0xC00000FD` on
+baseline `5e45f9a`, but passes unchanged immediately after `c9930a3`. All 367
+production source files match that commit's executed snapshot; the full root
+lock and original test bytes also match. The shared quota repair already fixes
+this second case, so its follow-up is an evidence-only commit. No additional
+implementation change or weaker replacement fixture is needed.
+
+The complete original group checks scalar profile 0 with Fuel 1 rejection and
+Fuel 2/256 execution, array profile 1, literal/returned-reference profile 8,
+body/entry borrows and execution to 42. See the
+[routing evidence](../evidence/native-stack-routing-windows-20261118.json).
+
+For an independent rerun of this exact group:
+
+```text
+python -B tools/verify-native-stack.py --case routing --regression-only --profile development
+```
 
 ## Private local annotations
 
