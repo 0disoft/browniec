@@ -17,7 +17,7 @@ def reviewed_scratch(text):
         fields = re.findall(r'(fy_\w+) f_\d+;', body)
         if len(fields) >= 2 and array(fields[0], 'uintptr_t', 272) and array(fields[1], 'uint8_t', 272):
             candidates['expression'].append(name)
-        if len(fields) == 12 and array(fields[-1], 'uintptr_t', 1024):
+        if len(fields) == 12 and (array(fields[-1], 'uint8_t', 1024) or array(fields[-1], 'uintptr_t', 1024)):
             candidates['bank'].append(name)
         if len(fields) >= 2 and re.search(r'data\[UINT64_C\(35\)\]', definitions.get(fields[0], '')):
             rows = re.findall(r'(fy_\w+) f_\d+;', definitions.get(fields[1], ''))

@@ -25,8 +25,10 @@ for f in sources:
  name,raw=m.source_copy(f)
  (project/'src'/name).write_bytes(raw)
 compiler=root/'build/toolchain/fairyc.exe'
-contract=json.loads((root/'native/runtime-engine/transport.json').read_bytes())
-m.need(hashlib.sha256(compiler.read_bytes()).hexdigest()==contract['compilerSha256'], 'Pinned compiler binary changed')
+toolchain=json.loads((root/'toolchain.json').read_bytes())
+revision=toolchain['compiler']['revision']
+compiler_sha=toolchain['platforms']['windows/amd64']['sha256']
+m.need(hashlib.sha256(compiler.read_bytes()).hexdigest()==compiler_sha, 'Pinned compiler binary changed')
 for args in [['check'],['experimental','emit-workspace-c','--target','x86_64-windows-msvc','--locked']]:
  r=subprocess.run([str(compiler),*args],cwd=project,capture_output=True)
  if r.returncode: print(r.stderr.decode());raise SystemExit(r.returncode)
@@ -35,6 +37,12 @@ for args in [['check'],['experimental','emit-workspace-c','--target','x86_64-win
 (folder/'generated.c').write_bytes(generated)
 t=generated.decode('utf-8')
 c=json.loads((root/'native/runtime-engine/transport.json').read_bytes())
+c['compilerRevision']=revision
+c['compilerSha256']=compiler_sha
+repository=(root/toolchain['source']['localRepository']).resolve()
+for row in c['runtimeInputs']:
+ raw=subprocess.check_output(['git','-C',str(repository),'show',revision+':'+row['path']])
+ row.update(revision=revision,sha256=hashlib.sha256(raw).hexdigest())
 c['bindings']={}
 for number,tail in re.findall(r'bc_runtime_engine_binding\(UINT32_C\((\d+)\)\);(.*?)(?=bc_runtime_engine_binding|\Z)',t,re.S):
  found=re.search(r'(fy_fn_\d+)\(',tail)

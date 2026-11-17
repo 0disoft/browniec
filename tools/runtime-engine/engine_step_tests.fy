@@ -14,6 +14,8 @@ import errors as errors;
 import fuel as meter;
 import std::bytes as bytes;
 import engine_lifecycle_tests as lifecycle;
+import runtime_policy as policy;
+import runtime_run_config as configs;
 
 // Engine.step fixtures only. The parent owns native transport and integration.
 unsafe extern C fn usize probe_live();
@@ -364,6 +366,44 @@ fn Result<usize,u8> empty_output_and_running_drop(){
     }
     same_heap(ref before);return .ok(0);
 }
+
+fn Result<usize,u8> configured_output(){
+    let policy::Policy policy=switch(policy::parse(b"{\"schema\":\"brownie.policy/0.3\",\"compile\":{\"source_bytes\":262144,\"modules\":32,\"depth\":128,\"tokens\":131072,\"functions\":4096,\"types\":4096,\"instructions\":262144,\"registers_per_function\":1024,\"working_bytes\":67108864,\"fuel\":10000000,\"deadline_ms\":2000,\"diagnostics\":32},\"engine\":{\"memory_bytes\":134217728,\"control_bytes\":1048576,\"program_bytes\":8388608,\"total_program_bytes\":67108864,\"instances_bytes\":67108864,\"max_programs\":64,\"max_instances\":64,\"max_compiles\":1},\"run\":{\"memory_bytes\":16777216,\"object_bytes\":4194304,\"call_frames\":128,\"input_bytes\":1048576,\"output_bytes\":1048576,\"host_request_bytes\":1048576,\"host_response_bytes\":1048576,\"host_calls\":256,\"owner_entries\":16384,\"descriptor_entries\":16384,\"fuel\":10000000,\"deadline_ms\":1000},\"worker\":{\"memory_bytes\":201326592,\"user_cpu_time_ms\":5000,\"max_processes\":1,\"transport_bytes\":4194304,\"startup_ms\":2000,\"io_idle_ms\":1000,\"shutdown_grace_ms\":250,\"session_ms\":10000},\"capabilities\":[\"brownie.output.emit\"]}")){
+        case .ok(v):{v}case .err(_):{return .err(1);}
+    };
+    let configs::RunConfig missing=switch(configs::parse(b"{\"schema\":\"brownie.run/0.3\",\"entry\":{\"module\":\"app\",\"function\":\"chosen\"},\"requires\":[],\"grants\":[\"brownie.output.emit\"],\"limits\":{\"memory_bytes\":16777216,\"object_bytes\":4194304,\"call_frames\":128,\"input_bytes\":2,\"output_bytes\":2,\"host_request_bytes\":1048576,\"host_response_bytes\":1048576,\"host_calls\":256,\"owner_entries\":16384,\"descriptor_entries\":16384,\"fuel\":10000000,\"deadline_ms\":1000}}",ref policy)){
+        case .ok(v):{v}case .err(_):{return .err(2);}
+    };
+    let configs::RunConfig granted=switch(configs::parse(b"{\"schema\":\"brownie.run/0.3\",\"entry\":{\"module\":\"app\",\"function\":\"chosen\"},\"requires\":[\"brownie.output.emit\"],\"grants\":[\"brownie.output.emit\"],\"limits\":{\"memory_bytes\":16777216,\"object_bytes\":4194304,\"call_frames\":128,\"input_bytes\":2,\"output_bytes\":2,\"host_request_bytes\":1048576,\"host_response_bytes\":1048576,\"host_calls\":256,\"owner_entries\":16384,\"descriptor_entries\":16384,\"fuel\":10000000,\"deadline_ms\":1000}}",ref policy)){
+        case .ok(v):{v}case .err(_):{return .err(3);}
+    };
+    let ref u8[] source=b"module app;fn void send(ref u8[] data){output::emit(ref data);}pub fn i32 chosen(ref u8[] data){send(ref data);return 42;}";
+    var engine::Engine e=created()?;
+    let Heap idle=heap();
+    let Result<usize,engine::Error> denied=engine::prepare_granted_output(ref mut e,indexed(source)?,ref policy,ref missing,captured(b"AB")?,65536);
+    switch(denied){case .ok(_):{assert(false);}case .err(failure):{assert(failure.status==5);}};
+    counts(ref mut e,0,0,0);
+    same_heap(ref idle);
+    let Result<usize,engine::Error> oversized=engine::prepare_granted_output(ref mut e,indexed(source)?,ref policy,ref granted,captured(b"ABC")?,65536);
+    switch(oversized){case .ok(_):{assert(false);}case .err(failure):{assert(failure.status==8);}};
+    same_heap(ref idle);
+    let usize i=id(engine::prepare_granted_output(ref mut e,indexed(source)?,ref policy,ref granted,captured(b"A\x00")?,65536));
+    counts(ref mut e,1,1,1);
+    assert(event(engine::observe(ref mut e,i)).kind==4);
+    assert(tick(ref mut e,i,1).kind==4);
+    let engine::Event done=finish(ref mut e,i,2);
+    assert(done.kind==1 && done.value==42 && done.remaining<10000000);
+    {
+        let engine::Output output=take(ref mut e,i)?;
+        assert(bytes::equal(engine::output_view(ref output),b"A\x00"));
+    }
+    destroy(ref mut e,i);
+    counts(ref mut e,0,0,0);
+    same_heap(ref idle);
+    close(ref mut e);
+    return .ok(0);
+}
+
 pub fn void run(){
     let Heap before=heap();
     assert(fixed_and_mixed_quanta().is_ok);same_heap(ref before);
@@ -372,4 +412,5 @@ pub fn void run(){
     assert(running_cancel_refund_and_first_cause().is_ok);same_heap(ref before);
     assert(failures_and_exact_fuel().is_ok);same_heap(ref before);
     assert(empty_output_and_running_drop().is_ok);same_heap(ref before);
+    assert(configured_output().is_ok);same_heap(ref before);
 }

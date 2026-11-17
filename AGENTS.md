@@ -1,24 +1,12 @@
-- Latest runtime checkpoint (2026-11-18):
-  [Combined stack follow-up](docs/engineering/native-stack-regressions.md)
-  resolves all three named development overflows with unchanged original
-  combined fixtures. The quota repair passes six groups, including CALL depth,
-  compact 0..127 register cells and 53 empty-copy oracle cases through two APIs.
-  Cells save 7168 logical bytes per bank on x64. Empty CALL validation/advance
-  skips repeated provisional tables; CALL begin and nonempty copies stay intact.
-  The same repair also passes the complete source-routing fixture; its separate
-  follow-up is evidence-only. See [quota](docs/evidence/native-stack-quota-windows-20261118.json)
-  and [routing](docs/evidence/native-stack-routing-windows-20261118.json) evidence.
-  Private annotation repair borrows nested metadata in authentication/preflight
-  and recursive must-use checks, and defers candidate construction/publication.
-  Development/O2 each pass three groups: original local/signature control depth
-  32 executes, 33 rejects, and must-use errors remain distinct. See
-  [annotation evidence](docs/evidence/native-stack-annotation-windows-20261118.json).
-  Public O2 compilation still exceeds the unchanged 60-second MSVC host limit;
-  [that attempt](docs/evidence/native-stack-public-release-windows-20261118.json)
-  is incomplete, with zero native passes. Root locked checks pass 375 sources /
-  4110 MIR functions. No added allocation, overrides or fixture weakening.
-  Peak stack, latency, general compositions, post-patch CLI, full Engine, Linux
-  and remote delivery remain unverified. Broader completion stays paused; no push.
+- Latest runtime checkpoint (2026-11-18): the
+  [policy-checked input/output path](docs/engineering/runtime-engine-step.md#policy-checked-input-and-output-2026-11-18)
+  selects, compiles, authorizes and prepares one private Instance for stepping.
+  Windows development verifies denial, input limit, binary output and cleanup
+  on preview.2 with zero live SDK allocations. Root locked check passes 375
+  sources / 4113 MIR functions. Remaining work includes persistent Engine policy,
+  configured Program reuse, typed host request/reply and public delivery.
+  The [stack regression record](docs/engineering/native-stack-regressions.md)
+  preserves the previous checkpoint, including the public O2 timeout.
 
 # Brownie C agent guidance
 

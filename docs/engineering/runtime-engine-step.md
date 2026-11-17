@@ -86,6 +86,39 @@ copy kernel to actual saved dispatch, Fuel, captures and final frame publication
 CALL validation/copy shares the same byte allowance; the appended cursor is
 included in native size-based admission. Frame/loan metadata still remains atomic.
 
+## Policy-checked input and output (2026-11-18)
+
+The private `prepare_granted_output` entry selects the exact module and function
+from the run configuration and compiles it into an owning Program. It checks
+the run against the trusted Engine owner's supplied Policy. The selected
+verified Program is walked from its entry through branches and calls to derive
+whether it requires `brownie.output.emit`. At most 256 instruction positions are
+queued once. A reachable emit requires both declaration and grant, including
+when it would emit zero bytes. An uncalled function confers no requirement.
+
+Admission checks input length, the requested Fuel, output capacity and the
+retained input plus pending-execution bytes. A successful call returns a
+prepared Instance for the existing step/cancel and output transfer paths. The
+prepared Instance pins its Program after admission releases the Program ID.
+Rejection after compilation releases that Program, including when preparation
+must destroy a partially admitted Instance. Staged output is available on
+successful completion under the existing publication and transfer rules.
+
+The Windows development Engine harness verifies declaration denial, input
+length rejection, multiple resumes, binary output and owner reclamation with
+zero live SDK allocations. It used Fairy C preview.2, default 1 MiB reserve /
+4 KiB commit and 360 source inputs. The reviewed transport retains 36 typed
+bindings and 51 layout roles. The seven runtime inputs match the bytes from
+the previous transport pin. The separate selected-entry authority group
+passes under the same compiler in development. Root locked check verifies
+375 source files and 4113 MIR functions.
+
+This admission is one input/output entry per invocation with a Policy supplied
+by the trusted native owner. Persistent Engine policy ownership, reuse of a
+configured Program for multiple runs, full enforcement of remaining policy
+limits including deadlines, and C ABI delivery remain open. Typed host
+request/reply and optimized builds of this admission are unverified.
+
 ## Remaining accepted work
 
 Dispatch visits do not bound all bytes, metadata visits or native time. Output

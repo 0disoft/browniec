@@ -28,6 +28,9 @@ import runtime_output as pending_output;
 import runtime_pending_memory as pending_heap;
 import output_copy_cursor as output_copy;
 import array_fill_cursor as array_fill;
+import runtime_policy as policy;
+import runtime_policy_limits as policy_limits;
+import runtime_run_config as run_config;
 
 // Internal owning lifecycle, not public C handles/bc_step. IDs are scoped to
 // this exact Engine; the outer ABI registry must authenticate their association.
@@ -183,6 +186,57 @@ pub fn Result<usize,Error> create_input_output_instance(ref mut Engine e,usize p
     if(!vec::push<input_bytes::Snapshot>(ref mut incoming,input).is_ok){return .err(error(6));}
     let u32 s=unsafe{instance_output_raw(e as ptr mut void,program,ref mut incoming as ptr mut void,budget,limit,if(allowed){1}else{0})};return result(e,s);
 }
+// Private admission for a single configured input/output run. The trusted
+// Engine owner supplies its policy. This path binds the selected entry, output
+// grant, Fuel and retained I/O ceilings before guest execution.
+pub fn Result<usize,Error> prepare_granted_output(ref mut Engine e,modules::Index index,
+    ref policy::Policy ceiling,ref run_config::RunConfig run,input_bytes::Snapshot input,usize image_limit){
+    let u32 access=unsafe{control_access_raw(e as ptr void)};
+    if(access!=0){return .err(error(access));}
+    if(e.meta.closed){return .err(error(2));}
+    if(!run_config::narrowed_to(run,ceiling)){return .err(error(5));}
+    let policy_limits::RunLimits limits=run_config::run_limits(run);
+    if(limits.fuel>e.meta.limits.fuel || input_bytes::view(ref input).len>limits.input_bytes ||
+        input_bytes::capacity(ref input)>limits.memory_bytes){return .err(error(8));}
+    let input_entries::InputEntry selected=switch(input_entries::select_i32_input(
+        index,run_config::module_name(run),run_config::function_name(run))){
+        case .ok(v):{v}
+        case .err(e):{return .err(Error{.status=4,.diagnostic=diagnostics::Error{
+            .code=errors::make(3,e.at.start),.at=e.at}});}
+    };
+    let usize program=compile_input_output(e,selected,image_limit)?;
+    return switch(prepare_granted_instance(e,program,run,input)){
+        case .ok(instance):{let usize released=release_program(e,program)?;.ok(instance)}
+        case .err(failure):{let usize released=release_program(e,program)?;.err(failure)}
+    };
+}
+
+fn Result<usize,Error> prepare_granted_instance(ref mut Engine e,usize program,
+    ref run_config::RunConfig run,input_bytes::Snapshot input){
+    let bool emits=program_emits(e,program)?;
+    let ref u8[] name=b"brownie.output.emit";
+    if(emits && (!run_config::declares(run,name) || !run_config::grants(run,name))){
+        return .err(error(5));
+    }
+    let policy_limits::RunLimits limits=run_config::run_limits(run);
+    let usize max_output=if(emits){limits.output_bytes}else{0};
+    let usize pending=required_pending_bytes(e,program,max_output)?;
+    if(pending>limits.memory_bytes-input_bytes::capacity(ref input)){return .err(error(8));}
+    let usize instance=create_input_output_instance(e,program,input,limits.fuel,max_output,emits)?;
+    return switch(prepare_instance(e,instance)){
+        case .ok(_):{.ok(instance)}
+        case .err(failure):{let usize disposed=destroy_instance(e,instance)?;.err(failure)}
+    };
+}
+
+fn Result<bool,Error> program_emits(ref Engine e,usize id){
+    let usize index=switch(program_index(ref e.programs,id,true)){
+        case .ok(v):{v}case .err(status):{return .err(error(status));}
+    };
+    let ref Program retained=vec::at<Program>(ref e.programs,index);
+    return .ok(output_programs::requires_emit(vec::at<output_programs::Program>(ref retained.output,0)));
+}
+
 pub fn Result<Output,Error> take_output(ref mut Engine e,usize instance){
     let u32 preflight=unsafe{output_preflight_raw(e as ptr mut void,instance)};
     if(preflight!=0){return .err(error(preflight));}
