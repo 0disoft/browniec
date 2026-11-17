@@ -1,20 +1,20 @@
-- Latest runtime checkpoint (2026-11-17):
-  [Call-local view header indexing](docs/engineering/value-view-header.md)
-  replaces pairwise registry checks with binding bits and serial representatives.
-  For 32 aliases of one root, earlier-row comparisons fall from 496 to 31 per
-  header; colliding distinct serials retain the bounded quadratic worst case.
-  Scratch adds 128 logical bytes, no heap requests or cross-call state. Root,
-  backing, lease, diagnostics, Fuel and partial-cleanup contracts are preserved.
-  Windows development/O2 each pass nine focused native groups, including 2,880
-  additional oracle comparisons and 4,096 actual lookup-then-read operations.
-  All 376 verification inputs match; 367 production modules retain LF. Root
-  check/locked checks pass (375 sources / 4096 MIR), with refreshed root lock.
-  The pinned [Windows preview.2 toolchain](docs/engineering/toolchain-setup.md#current-windows-preview2-adoption-2026-11-16)
-  is unchanged; its exact binary hash was reproduced. See
-  [evidence](docs/evidence/value-view-header-windows-20261117.json) for source-tag
-  reconstruction provenance and verification limits. No public admission,
-  full Engine, CLI build/runtime, Linux, GUI/input or remote-delivery validation.
-  Broader completion remains paused.
+- Latest runtime checkpoint (2026-11-18):
+  [Public compilation stack repair](docs/engineering/public-compile-stack.md)
+  moves retained-result publication after recursive lowering. The waiting
+  adapter's MSVC /Od reservation falls from 172,904 to 66,584 bytes (61.49%).
+  This is an individual frame measurement, not peak stack or runtime latency.
+  Windows development passes five focused groups with all production modules
+  and again with their 279/367-module dependency closure; original combined
+  array/record depth fixtures remain unchanged. All 289 closure inputs match.
+  Full-source and closure O2 builds exceed the unchanged 60-second MSVC timeout;
+  release verification remains incomplete. Three other development stack
+  failures remain open: combined public quota/runtime, combined public routing/
+  runtime, and private four-wrapper/32-control local annotations. The historical
+  annotation pass is not a current preview.2 pass. See
+  [evidence](docs/evidence/public-compile-stack-windows-20261118.json).
+  Compiler, default stack, ownership, errors, Fuel and quotas are unchanged.
+  No general stack-containment, post-patch CLI, full Engine, Linux, GUI/input or
+  remote-delivery verification. Broader completion remains paused; no push.
 
 # Brownie C agent guidance
 

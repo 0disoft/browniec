@@ -20,6 +20,12 @@ body access uses explicit intermediate borrows to avoid copying large nested IR.
 Mutually exclusive compiler temporaries live in separate native functions; the
 combined multi-admission/execution regression remains in one test function.
 
+The [preview.2 public compilation stack repair](public-compile-stack.md) defers
+public-result packaging until recursive lowering returns. It records an
+unchanged combined CALL regression and separately identifies a pre-existing
+combined image-quota/runtime stack failure; it does not establish general native
+API stack containment.
+
 The CLI uses the same token selector with two thin branch functions. Its legacy
 branch calls the original compiler/verifier/VM directly; its retained branch owns
 the sealed ReferenceReturnProgram and calls the same local execution adapter as

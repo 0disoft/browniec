@@ -3166,7 +3166,14 @@ pub fn Result<program_images::PublicProgram,errors::Error> compile_program(ref u
 }
 // Keep mutually exclusive admission temporaries off each other's native stack.
 fn Result<program_images::PublicProgram,errors::Error> compile_public_references(ref u8[] source,usize image_limit){
-    return switch(compile_reference_returns(source,image_limit)){
+    // Public container moves/error staging must begin only after recursive
+    // lowering has returned. Passing the completed candidate keeps those large
+    // native return slots out of the active compiler stack, without heap work.
+    return publish_public_references(compile_reference_returns(source,image_limit));
+}
+fn Result<program_images::PublicProgram,errors::Error> publish_public_references(
+    Result<program_images::ReferenceReturnProgram,program_images::Error> candidate){
+    return switch(candidate){
         case .ok(p):{.ok(program_images::retain_public_references(p))}
         case .err(e):{.err(public_error(e))}
     };

@@ -5,9 +5,14 @@
   8 groups/profile pass, including four-wrapper signatures with 32 controls;
   33 controls reject. Engine development/O2 pass default stacks, zero SDK heap and
   all 335 input hashes at `f3995df`. See [value signature evidence](../evidence/runtime-compiler-value-signatures-windows-20261111.json).
-  Known predecessor/current diagnostic failure: a deepest local four-wrapper
-  annotation and owned-value use with 32 controls overflows the native stack;
-  this distinct body composition remains open. Origins, other aggregates, body/
+  Historical diagnostic failure: a deepest local four-wrapper annotation and
+  owned-value use with 32 controls overflowed the native stack. The
+  [2026-11-12 repair](../engineering/compiler-source-stages.md#local-annotationcontrol-stack-repair)
+  records successful execution of the exact input in both profiles. However,
+  the [2026-11-18 preview.2 audit](../engineering/public-compile-stack.md#verification-boundaries)
+  reproduces the private four-wrapper/32-control native overflow again; the
+  historical pass is not a current pass. This body failure remains open.
+  Origins, other aggregates, body/
   final lowering, fixed scratch/publication and public Pending compile remain.
   Local only; broader completion stays paused while lowering remains authorized.
 
