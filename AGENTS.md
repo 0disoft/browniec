@@ -1,11 +1,11 @@
-- Latest runtime checkpoint (2026-11-18): the
-  [configured Program path](docs/engineering/runtime-engine-step.md#reusable-configured-programs)
-  owns its Policy in Engine and reuses one verified Program across independently
-  admitted Instances. Windows development verifies exact-entry and authority
-  rejection, two interleaved runs with one verifier entry, release with live
-  pins and zero live SDK allocations. Root locked check passes 375 sources /
-  4115 MIR functions. Optimized verification, deadlines, typed host
-  request/reply and public delivery remain open. The
+- Latest runtime checkpoint (2026-11-18): [private scalar host execution](docs/engineering/host-exchange.md#verified-scalar-program-and-execution)
+  now binds a verified Program to its exact catalog and run grants, waits at
+  HOST_REQUEST, and installs one typed scalar reply before resuming. Windows
+  development and release pass five focused native groups each with default
+  stacks. Root locked check passes 376 sources / 4156 MIR functions. The
+  [configured Engine path](docs/engineering/runtime-engine-step.md#reusable-configured-programs)
+  owns Policy and reuses Programs. Host Engine lifecycle and quotas, general
+  typed destinations, OS deadlines and public delivery remain open. The
   [stack regression record](docs/engineering/native-stack-regressions.md)
   preserves the earlier public O2 timeout.
 

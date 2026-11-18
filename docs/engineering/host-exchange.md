@@ -1,11 +1,70 @@
 # Private native host exchange coordinator
 
 This H03/H04 source slice consumes the actual `host_catalog` and `host_wire`
-modules at base `845a05623d28e9eea348500debedbe264905c5f9`. It is not a VM,
-Instance, HOST_REQUEST opcode, INSTALL_REPLY dispatcher, public ABI or host
-availability gate. No opcode, existing Fuel price, public default or cap changes.
+modules at base `845a05623d28e9eea348500debedbe264905c5f9`. The standalone
+coordinator is also used by the private scalar execution path below. The public
+ABI and public host gate remain pending.
 
-## Ownership and API
+## Verified scalar Program and execution
+
+The private `host_program` dialect admits a single scalar function, with opcode
+117 for a catalog import taking one `i32` and returning `Result<i32,u32>`.
+The ordinary verifier rejects 117. Before retaining the original image, the
+host verifier checks the catalog signature and uses a temporary ADD proxy to
+prove control flow and register definitions independently. The proof rejects
+unreachable instructions. Each required import needs a declaration and grant
+under the supplied Policy. The Program retains the canonical entry and the
+SHA-256 binding of its exact immutable catalog.
+
+`create_scalar` rechecks admission, copies the catalog, checks its binding, and
+materializes a private eight-byte-per-instruction image. Each execution owns a
+2,656-byte header including its coordinator, program counter and 128 scalar
+registers. The header is fixed for the lifetime of the resource. The standalone
+coordinator keeps its 80-byte header. Its mutation entry points cannot publish,
+commit or remove a scalar VM request. The caller supplies a unique nonzero run
+ID, monotonic time and sampled cancellation.
+
+A step either dispatches one instruction or installs one committed reply. The
+request PC remains parked while waiting. The 14-byte request costs 15 Fuel
+including dispatch, and a 12-byte reply costs 12 Fuel at acceptance. Installing
+the reply and polling while waiting cost zero Fuel. Wrong run or request IDs,
+malformed replies and duplicate replies preserve the outstanding transaction.
+Success stores one signed `i32` in the verified destination and advances the
+PC. A kind-1 reply preserves the full `u32` as a terminal host error. Fatal
+replies, cancellation, deadlines and quota/Fuel exhaustion use the coordinator's
+first-cause rules. Reply installation and retirement use the existing snapshot
+handoff. This path has no adapter callback.
+
+Engine handle and quota integration, general typed destinations with guest
+error arms, compact scalar replies, OS deadline sampling and public delivery
+remain open. The scalar price is local to this path. The guest-facing general
+host contract remains incomplete.
+
+### Scalar verification
+
+Program binding at `a43cff8` passed two Windows development groups. The scalar
+VM composition passed five focused native groups in each Windows profile with
+Fairy C preview.2 (`801c5d8caa64d19aab8925763d6bf07f65f26418`), default stacks,
+and 375 hashed inputs. The selected groups cover exact catalog and grant binding,
+invalid operands, the standalone fake adapter, interleaved scalar execution,
+and stable host error/deadline outcomes. The `41 -> 42` path spends 29 Fuel in
+total across literal, publication, reply and return. Wrong identities, malformed
+replies and a second waiting poll spend zero. Root `fairyc check --locked`
+passed 376 source files and 4,156 MIR functions.
+
+| Windows profile | Native report SHA-256 |
+| --- | --- |
+| development | `ddbdd6722b70062b5aa745948cae4a04fda3db2777bd507fdbc4f9b11ed118ce` |
+| release | `f1ba750f948689c15dd483496983cb730b4758b839539d5a82db4f060e383f04` |
+
+The run used `fairyc test --native --capture-output --json --locked` with the
+four exact `tests::m2::host_program` identities and
+`tests::m2::host_exchange::fake_adapter_decodes_actual_request_and_encodes_reply_42`.
+The release profile adds `--release`. The focused runner kept commands, hashes
+and reports under `build/host-scalar`. Scalar allocator fault injection, public CLI,
+Linux and the full native suite remain outside this verification.
+
+## Standalone coordinator ownership and API
 
 `create(Catalog, grants, Limits, run, fuel, deadline) -> Result<Exchange, Error>`
 moves the admitted Catalog into a resource with private fields. It retains the
