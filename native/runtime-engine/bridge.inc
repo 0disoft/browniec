@@ -70,6 +70,11 @@ uint32_t bc_runtime_engine_call(void *raw,uint32_t operation,uintptr_t id,uintpt
  return finish(e,ticket,s);
 }
 
+uint32_t bc_runtime_engine_retain_host(void *raw,void *incoming){
+ bc_engine *e=raw;bc_engine_ticket ticket;uint32_t s=admission(e,&ticket);if(s)return s;
+ s=B38(&e->f_0,&e->f_1,incoming,sizeof(bc_host_program),sizeof(bc_host_ir));return finish(e,ticket,s);
+}
+
 uintptr_t bc_runtime_engine_policy_slot_bytes(void){return sizeof(bc_engine_policy);}
 
 /* Only layout facts cross this bridge; capacities/quota arithmetic stay Fairy. */

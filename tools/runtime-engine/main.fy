@@ -37,6 +37,7 @@ import engine_struct_work_tests as engine_record_tests;
 import engine_call_copy_tests as engine_call_tests;
 import engine_return_work_tests as engine_return_tests;
 import engine_step_tests as step_tests;
+import engine_host_tests as host_tests;
 import output_chunk_contracts as output_chunk_tests;
 import engine_output_chunk_tests as engine_chunk_tests;
 import pending_memory_contracts as pending_memory_tests;
@@ -80,6 +81,7 @@ fn i32 main(){
     engine_call_tests::run();
     engine_return_tests::run();
     step_tests::run();
+    host_tests::run();
     engine_chunk_tests::run();
     output_chunk_tests::multi_chunk_commits_once_after_the_last_byte_and_prepays_once();
     output_chunk_tests::fuel_and_quota_preflight_sample_without_copying_or_debit_on_rejection();

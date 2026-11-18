@@ -32,6 +32,9 @@ import array_fill_cursor as array_fill;
 import runtime_policy as policy;
 import runtime_policy_limits as policy_limits;
 import runtime_run_config as run_config;
+import host_catalog as host_catalog;
+import host_program as host_program;
+import ir as ir;
 
 // Internal owning lifecycle, not public C handles/bc_step. IDs are scoped to
 // this exact Engine; the outer ABI registry must authenticate their association.
@@ -50,7 +53,7 @@ struct EntryBinding {
 }
 resource Program {
     usize id; usize pins; bool released; vec::Vec<programs::Program> code;
-    vec::Vec<input_programs::Program> input; vec::Vec<output_programs::Program> output; usize bytes; usize execution_scratch; EntryBinding entry; cleanup { }
+    vec::Vec<input_programs::Program> input; vec::Vec<output_programs::Program> output; usize bytes; usize execution_scratch; EntryBinding entry; vec::Vec<host_program::Program> host; cleanup { }
 }
 struct Instance { usize id; usize program; usize fuel; u8 phase; Event event; usize output_limit; bool output_allowed; usize input_bytes; usize output_bytes; }
 resource BoundInput { usize instance; input_bytes::Snapshot input; cleanup { } }
@@ -65,6 +68,7 @@ pub resource Engine {
 @link_name("bc_runtime_engine_compile_preflight") unsafe extern C fn u32 compile_preflight_raw(ptr mut void owner,u32 mode,ptr void selected);
 @link_name("bc_runtime_engine_compile_fact") unsafe extern C fn usize compile_fact_raw(ptr void source,u32 kind,u32 fact);
 @link_name("bc_runtime_engine_policy_slot_bytes") unsafe extern C fn usize policy_slot_bytes_raw();
+@link_name("bc_runtime_engine_retain_host") unsafe extern C fn u32 retain_host_raw(ptr mut void owner,ptr mut void incoming);
 @link_name("bc_runtime_engine_bind") unsafe extern C fn u32 bind_raw(ptr mut void owner);
 @link_name("bc_runtime_engine_compile") unsafe extern C fn u32 compile_raw(ptr mut void owner,ptr mut void incoming,usize limit);
 @link_name("bc_runtime_engine_compile_input") unsafe extern C fn u32 compile_input_raw(ptr mut void owner,ptr mut void incoming,usize limit);
@@ -233,6 +237,28 @@ fn Result<usize,Error> check_run_policy(ref Engine e,ref run_config::RunConfig r
         return .err(error(5));
     }
     return .ok(0);
+}
+
+// Trusted internal IR admission. The Engine retains the resulting verified owner.
+pub fn Result<usize,Error> retain_scalar_host(ref mut Engine e,ref ir::Program code,host_catalog::Catalog imports,
+    ref u32[] digest,ref run_config::RunConfig run){
+    let host_program::Program verified=verify_scalar_host(e,code,imports,digest,run)?;
+    var vec::Vec<host_program::Program> incoming=vec::empty<host_program::Program>();
+    if(!vec::push<host_program::Program>(ref mut incoming,verified).is_ok){return .err(error(6));}
+    let u32 status=unsafe{retain_host_raw(e as ptr mut void,ref mut incoming as ptr mut void)};
+    return result(e,status);
+}
+
+fn Result<host_program::Program,Error> verify_scalar_host(ref Engine e,ref ir::Program code,host_catalog::Catalog imports,
+    ref u32[] digest,ref run_config::RunConfig run){
+    let usize checked=check_run_policy(e,run)?;
+    if(e.meta.admission==0 || e.meta.next==0 || vec::len<Program>(ref e.programs)>=e.meta.limits.programs){return .err(error(8));}
+    return switch(host_program::retain(code,imports,digest,vec::at<policy::Policy>(ref e.policy,0),run)){
+        case .ok(v):{.ok(v)}
+        case .err(reason):{return .err(error(switch(reason){
+            case .Authority:{5}case .Allocation:{6}case .Code:{4}case .Catalog:{1}case .Binding:{1}
+        }));}
+    };
 }
 
 // Compile the configured entry once. The retained Program starts with no pins.
@@ -621,7 +647,7 @@ fn u32 publish_program(ref mut Meta m,ref mut vec::Vec<Program> v,programs::Prog
     var vec::Vec<programs::Program> retained=vec::empty<programs::Program>();
     if(!vec::reserve<programs::Program>(ref mut retained,1).is_ok){return failed(m,6);}
     if(!vec::push<programs::Program>(ref mut retained,code).is_ok){return failed(m,6);}
-    if(!vec::push<Program>(v,Program{.id=id,.pins=0,.released=false,.code=retained,.input=vec::empty<input_programs::Program>(),.output=vec::empty<output_programs::Program>(),.bytes=bytes,.execution_scratch=heap.scratch,.entry=empty_entry()}).is_ok){return failed(m,6);}
+    if(!vec::push<Program>(v,Program{.id=id,.pins=0,.released=false,.code=retained,.input=vec::empty<input_programs::Program>(),.output=vec::empty<output_programs::Program>(),.bytes=bytes,.execution_scratch=heap.scratch,.entry=empty_entry(),.host=vec::empty<host_program::Program>()}).is_ok){return failed(m,6);}
     assert(memory::publish(ref mut m.programs,bytes).is_ok);advance(m);return success(m,id);
 }
 fn input_entries::InputEntry pop_input_entry(ref mut vec::Vec<input_entries::InputEntry> v){return switch(vec::pop<input_entries::InputEntry>(v)){
@@ -644,7 +670,7 @@ fn u32 publish_input_program(ref mut Meta m,ref mut vec::Vec<Program> v,input_pr
     let usize id=m.next;var vec::Vec<input_programs::Program> retained=vec::empty<input_programs::Program>();
     if(!vec::reserve<input_programs::Program>(ref mut retained,1).is_ok){return failed(m,6);}
     if(!vec::push<input_programs::Program>(ref mut retained,code).is_ok){return failed(m,6);}
-    if(!vec::push<Program>(v,Program{.id=id,.pins=0,.released=false,.code=vec::empty<programs::Program>(),.input=retained,.output=vec::empty<output_programs::Program>(),.bytes=bytes,.execution_scratch=heap.scratch,.entry=empty_entry()}).is_ok){return failed(m,6);}
+    if(!vec::push<Program>(v,Program{.id=id,.pins=0,.released=false,.code=vec::empty<programs::Program>(),.input=retained,.output=vec::empty<output_programs::Program>(),.bytes=bytes,.execution_scratch=heap.scratch,.entry=empty_entry(),.host=vec::empty<host_program::Program>()}).is_ok){return failed(m,6);}
     assert(memory::publish(ref mut m.programs,bytes).is_ok);advance(m);return success(m,id);
 }
 fn u32 compile_output_inner(ref mut Meta m,ref mut vec::Vec<Program> v,ref mut vec::Vec<entries::Entry> incoming,usize limit){
@@ -703,8 +729,30 @@ fn u32 publish_output_program(ref mut Meta m,ref mut vec::Vec<Program> v,output_
     if(!vec::reserve<output_programs::Program>(ref mut retained,1).is_ok){return failed(m,6);}
     if(!vec::push<output_programs::Program>(ref mut retained,code).is_ok){return failed(m,6);}
     if(!vec::push<Program>(v,Program{.id=id,.pins=0,.released=false,.code=vec::empty<programs::Program>(),
-        .input=vec::empty<input_programs::Program>(),.output=retained,.bytes=bytes,.execution_scratch=scratch,.entry=entry}).is_ok){return failed(m,6);}
+        .input=vec::empty<input_programs::Program>(),.output=retained,.bytes=bytes,.execution_scratch=scratch,.entry=entry,.host=vec::empty<host_program::Program>()}).is_ok){return failed(m,6);}
     assert(memory::publish(ref mut m.programs,bytes).is_ok);advance(m);return success(m,id);
+}
+fn host_program::Program pop_host_program(ref mut vec::Vec<host_program::Program> v){
+    return switch(vec::pop<host_program::Program>(v)){
+        case .some(p):{p}case .none:{assert(false);pop_host_program(v)}
+    };
+}
+fn u32 publish_host_inner(ref mut Meta m,ref mut vec::Vec<Program> v,ref mut vec::Vec<host_program::Program> incoming,
+    usize program_stride,usize ir_stride){
+    if(!m.configured || vec::len<host_program::Program>(incoming)!=1){return failed(m,5);}
+    if(m.next==0 || vec::len<Program>(v)>=m.limits.programs){return failed(m,8);}
+    let usize bytes=control_layout::capacity(1)*program_stride+host_program::heap_bytes(vec::at<host_program::Program>(incoming,0),ir_stride);
+    if(!memory::publish(ref mut m.programs,bytes).is_ok){return failed(m,8);}
+    let host_program::Program code=pop_host_program(incoming);
+    var vec::Vec<host_program::Program> retained=vec::empty<host_program::Program>();
+    if(!vec::push<host_program::Program>(ref mut retained,code).is_ok){
+        assert(memory::release(ref mut m.programs,bytes).is_ok);return failed(m,6);
+    }
+    let usize id=m.next;
+    assert(vec::push<Program>(v,Program{.id=id,.pins=0,.released=false,.code=vec::empty<programs::Program>(),
+        .input=vec::empty<input_programs::Program>(),.output=vec::empty<output_programs::Program>(),.bytes=bytes,
+        .execution_scratch=0,.entry=empty_entry(),.host=retained}).is_ok);
+    advance(m);return success(m,id);
 }
 fn u32 output_instance_inner(ref mut Meta m,ref mut vec::Vec<Program> p,ref mut vec::Vec<Instance> v,
     ref mut vec::Vec<BoundInput> inputs,ref mut vec::Vec<input_bytes::Snapshot> incoming,usize code,usize budget,usize limit,u32 allowed){
@@ -1218,12 +1266,14 @@ pub fn void retain_native_bindings(){
     let Instance witness=Instance{.id=0,.program=0,.fuel=0,.phase=0,.event=pending(),.output_limit=0,.output_allowed=false,.input_bytes=0,.output_bytes=0};
     unsafe{binding_raw(22)};discard instance_identity(ref witness);
     let Program program_witness=Program{.id=0,.pins=0,.released=false,.code=vec::empty<programs::Program>(),
-        .input=vec::empty<input_programs::Program>(),.output=vec::empty<output_programs::Program>(),.bytes=0,.execution_scratch=0,.entry=empty_entry()};
+        .input=vec::empty<input_programs::Program>(),.output=vec::empty<output_programs::Program>(),.bytes=0,.execution_scratch=0,.entry=empty_entry(),.host=vec::empty<host_program::Program>()};
     unsafe{binding_raw(25)};discard program_identity(ref program_witness);
     let Output output_witness=Output{.instance=0,.run=output_programs::vacant(0),.pending=vec::empty<machines::Machine>()};
     unsafe{binding_raw(30)};discard output_identity(ref output_witness);
     let vec::Vec<policy::Policy> owned=vec::empty<policy::Policy>();
     unsafe{binding_raw(37)};let vec::Vec<policy::Policy> cleared=reset_policy_storage(owned);
+    var vec::Vec<host_program::Program> host_incoming=vec::empty<host_program::Program>();
+    unsafe{binding_raw(38)};discard publish_host_inner(ref mut m,ref mut output_program,ref mut host_incoming,0,0);
     retain_output_bindings(ref snapshot);retain_input_binding();
 }
 

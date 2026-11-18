@@ -163,6 +163,7 @@ pub fn Result<Catalog,Error> duplicate(ref Catalog c){
     };
     return .ok(Catalog{.strings=strings,.table=c.table});
 }
+pub fn usize heap_bytes(ref Catalog c){return bytes::capacity(ref c.strings);}
 pub fn usize count(ref Catalog c){return c.table.count;}
 fn Result<usize,Error> index(ref Catalog c,usize i){if(i>=c.table.count){return .err(error(.Bounds,0));}return .ok(i);}
 pub fn Result<ref u8[],Error> module_name(ref Catalog c,usize i){let usize j=index(c,i)?;return .ok(view(ref c.strings,c.table.entries[j].scope));}

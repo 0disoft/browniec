@@ -85,6 +85,13 @@ for layout,name in re.findall(r'^(typedef struct \{\n[^}]*\} (fy_resource_\d+);)
  if re.search(r'\b'+re.escape(arg(1,0))+r' f_0;',layout) and re.search(r'\b'+re.escape(c['programVectorType'])+r' f_1;',layout):engine_candidates.append(name)
 assert len(engine_candidates)==1,engine_candidates
 c['engineType']=engine_candidates[0]
+c['hostProgramVectorType']=field_type(c['programType'],9)
+assert arg(38,2)==c['hostProgramVectorType']
+c['hostProgramType']=vector_element(c['hostProgramVectorType'])
+host_ir_vector=field_type(c['hostProgramType'],0)
+host_ir=set(re.findall(r'^static fy_tagged_\d+ fy_fn_\d+\('+re.escape(host_ir_vector)+r' \* [^,]+, (fy_struct_\d+) [^;]+;',t,re.M))
+assert len(host_ir)==1,host_ir
+c['hostIRType']=host_ir.pop()
 c['policyVectorType']=field_type(c['engineType'],8)
 c['policyType']=vector_element(c['policyVectorType'])
 assert arg(37,0)==c['policyVectorType']
@@ -136,11 +143,12 @@ types['returnMetadataType']=c['returnMetadataType']
 types['policyVectorType']=c['policyVectorType']
 types['policyType']=c['policyType']
 types['capturePlanType']=c['capturePlanType']
+for key in ['hostProgramVectorType','hostProgramType','hostIRType']:types[key]=c[key]
 c['reviewedLayouts']={k:re.search(r'^typedef struct \{\n[^}]*\} '+re.escape(v)+';$',t,re.M).group() for k,v in types.items()}
-assert len(c['bindings'])==37 and len(c['reviewedLayouts'])==45
+assert len(c['bindings'])==38 and len(c['reviewedLayouts'])==48
 for key in ['lifecycleType','setupWorkType','preparationWorkType','cleanupWorkType','runtimeMetadataType','cleanupRuntimeType','inputWindowsType','storageBufferType']:
  c['reviewedLayouts'][key]=re.search(r'^typedef struct \{\n[^}]*\} '+re.escape(c[key])+';$',t,re.M).group()
-assert len(c['reviewedLayouts'])==53
+assert len(c['reviewedLayouts'])==56
 c['transportSha256']=hashlib.sha256(generated).hexdigest()
 c['compilerScratch']=reviewed_scratch(t)
 c['sourceInputs']=[dict(path=p.relative_to(root).as_posix(),sha256=hashlib.sha256(p.read_bytes()).hexdigest()) for p in sources]

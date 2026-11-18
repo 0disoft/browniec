@@ -127,6 +127,10 @@ fn Result<Program,Error> publish(ref ir::Program code,catalog::Catalog imports,u
         .module_name=scope,.function_name=name});
 }
 
+pub fn usize heap_bytes(ref Program p,usize ir_stride){
+    return vec::capacity<ir::Program>(ref p.code)*ir_stride+catalog::heap_bytes(ref p.catalog)+
+        bytes::capacity(ref p.module_name)+bytes::capacity(ref p.function_name);
+}
 pub fn ref ir::Program code(ref Program p){return vec::at<ir::Program>(ref p.code,0);}
 pub fn ref catalog::Catalog imports(ref Program p){return ref p.catalog;}
 pub fn u32[8] binding(ref Program p){return p.digest.words;}
