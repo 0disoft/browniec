@@ -523,7 +523,14 @@ fn Result<ScalarEvent,ScalarError> install_scalar(ref mut Exchange e,usize dst,u
     if(field.tag==7){return install_bytes(e,dst,output_bytes(ref output),now);}
     let ref mut u8[] data=scalar_header(e);
     if(output_kind(ref output)==1){
-        data[81]=4;data[82]=3;store_cell(data,84,11,field.scalar);
+        let usize at=96+8*(data[80] as usize);
+        if(data[at]==programs::result_request_opcode()){
+            let usize error_dst=data[at+5] as usize;
+            let u8 error_target=data[at+6];
+            set_reg(data,error_dst,field.scalar);data[80]=error_target;
+        }else{
+            data[81]=4;data[82]=3;store_cell(data,84,11,field.scalar);
+        }
     }else{
         set_reg(data,dst,field.scalar);data[80]+=1;
     }
@@ -583,10 +590,10 @@ pub fn Result<ScalarEvent,ScalarError> step_scalar(ref mut Exchange e,usize now,
     let usize a=data[at+2] as usize;
     let usize b=data[at+3] as usize;
     if(host.phase==2){
-        if((op!=programs::request_opcode() && op!=programs::typed_request_opcode()) || b!=host.import_id){return .err(.State);}
+        if((op!=programs::request_opcode() && !programs::typed_request(op)) || b!=host.import_id){return .err(.State);}
         return install_scalar(e,dst,now);
     }
-    if(op==programs::typed_request_opcode()){return publish_typed(e,b,a,now);}
+    if(programs::typed_request(op)){return publish_typed(e,b,a,now);}
     if(op==programs::request_opcode()){
         let i64 value=reg(data,a);
         return publish_scalar(e,b,value,now);

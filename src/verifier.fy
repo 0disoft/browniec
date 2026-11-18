@@ -78,9 +78,9 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records
         let usize dst = p.code[at + 1] as usize;
         let usize a = p.code[at + 2] as usize;
         let usize b = p.code[at + 3] as usize;
-        if(host_profile && (op==118 || op==119 || op==120)){
+        if(host_profile && (op>=118 && op<=121)){
             if(dst<start || dst>=end || p.slots[dst] || registers::contains(ref written,dst) ||
-                p.code[at+6]!=0 || p.code[at+7]!=0){return .err(errors::make(5,pc));}
+                (op!=121 && p.code[at+6]!=0) || p.code[at+7]!=0){return .err(errors::make(5,pc));}
             if(op==119){
                 let usize offset=a+256*b;
                 let usize length=p.code[at+4] as usize+256*(p.code[at+5] as usize);
@@ -91,13 +91,24 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records
             }else{
             let usize count=p.code[at+4] as usize;
             if(count>32 || a>end || count>end-a || (count==0 && a!=0) ||
-                (!types::scalar(p.types[dst]) && p.types[dst]!=14) || p.code[at+5]!=0){
+                (!types::scalar(p.types[dst]) && p.types[dst]!=14) || (op!=121 && p.code[at+5]!=0)){
                 return .err(errors::make(5,pc));
             }
             var usize arg=a;
             while(arg<a+count){
                 if(!readable(p,ref defined,arg,start,end)){return .err(errors::make(5,pc));}
                 arg+=1;
+            }
+            if(op==121){
+                let usize error_dst=p.code[at+5] as usize;
+                let usize error_target=p.code[at+6] as usize;
+                if(error_target<=pc+1 || error_target>=p.ends[f] || error_dst<start || error_dst>=end ||
+                    p.types[error_dst]!=11 || p.slots[error_dst] || error_dst==dst ||
+                    registers::contains(ref written,error_dst)){return .err(errors::make(5,pc));}
+                var registers::Set error_defined=defined;
+                registers::insert(ref mut error_defined,error_dst);registers::insert(ref mut written,error_dst);
+                if(!merge(ref mut states,ref mut seen,ref error_defined,error_target,
+                    ref mut array_states,live,ref mut static_states,static_live)){return .err(errors::make(5,pc));}
             }
             }
             registers::insert(ref mut defined,dst);registers::insert(ref mut written,dst);

@@ -35,9 +35,7 @@ replies, cancellation, deadlines and quota/Fuel exhaustion use the coordinator's
 first-cause rules. Reply installation and retirement use the existing snapshot
 handoff. This path has no adapter callback.
 
-General typed destinations with guest error arms, compact scalar replies,
-and public delivery remain open. The scalar Fuel price
-is local to this path.
+The scalar Fuel price is local to this path. The [typed host path](#typed-host-arguments) adds wider destinations and a [guest error arm](#guest-result-branches).
 
 ### Scalar verification
 
@@ -203,6 +201,23 @@ embedded zero and non-UTF-8 bytes, six-byte and empty replies, malformed replies
 and cross-run rejection. The final values are 48 and 42 with zero live SDK
 allocations. Root fairyc check --locked verifies 376 sources and 4,191 MIR
 functions. Receipt is in build/runtime-engine/20261118T154919582849Z/receipt.json.
+
+## Guest Result branches
+
+Private opcode 121 binds a typed host call to two successors. A success
+reply defines only the catalog-typed success register and falls through.
+A kind-1 reply defines only the u32 error register and transfers control
+to a verified forward error target. The verifier merges independent
+register definitions on both edges. A kind-2 reply is a terminal host
+failure. The Engine continues to validate reply identity and deadline
+before acceptance and to enforce the existing Fuel and storage limits.
+
+Windows development and /O2 verify a successful reply, forwarding
+u32::MAX from the error arm, and fatal host termination. Wrong arity,
+an illegal error target and a read of the other arm's register are
+rejected before execution. Both profiles exit 0 with zero live SDK
+allocations. Root fairyc check --locked verifies 376 sources and 4,193
+MIR functions. Receipt is in build/runtime-engine/20261118T155705204963Z/receipt.json.
 
 ## Standalone coordinator ownership and API
 

@@ -1,9 +1,8 @@
-- Latest runtime checkpoint (2026-11-19): [Engine scalar run deadline](docs/engineering/host-exchange.md#engine-scalar-run-deadline)
-  connects the Windows monotonic clock to host step, reply and cancellation.
-  Windows development and /O2 verify real expiry, exact tick boundaries,
-  first-cause preservation and zero live SDK allocations. Root locked check
-  passes 376 sources / 4165 MIR functions. General compile/run deadlines,
-  typed host destinations and public delivery remain open. The
+- Latest runtime checkpoint (2026-11-19): [Engine typed host execution](docs/engineering/host-exchange.md#typed-host-arguments)
+  admits catalog-typed argument lists, variable-length byte values and verified
+  guest Result arms. Windows development and /O2 pass all three slices with zero
+  live SDK allocations. Root locked check passes 376 sources / 4193 MIR functions.
+  Resumable byte commits, source lowering and public delivery remain open. The
   [stack regression record](docs/engineering/native-stack-regressions.md)
   preserves the earlier public O2 timeout.
 

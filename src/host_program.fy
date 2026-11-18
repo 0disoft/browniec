@@ -25,6 +25,8 @@ pub resource Program {
 
 pub fn u8 request_opcode(){return 117;}
 pub fn u8 typed_request_opcode(){return 118;}
+pub fn u8 result_request_opcode(){return 121;}
+pub fn bool typed_request(u8 op){return op==typed_request_opcode() || op==result_request_opcode();}
 
 fn bool typed_signature(ref ir::Program p,ref catalog::Catalog imports,usize at){
     let usize dst=p.code[at+1] as usize;let usize first=p.code[at+2] as usize;
@@ -44,7 +46,7 @@ fn bool typed_signature(ref ir::Program p,ref catalog::Catalog imports,usize at)
 
 pub fn bool typed(ref ir::Program code){
     var usize pc=0;
-    while(pc<code.count){if(code.code[pc*8]==typed_request_opcode()){return true;}pc+=1;}
+    while(pc<code.count){if(typed_request(code.code[pc*8])){return true;}pc+=1;}
     return false;
 }
 
@@ -77,7 +79,7 @@ fn Result<usize,Error> inspect(ref ir::Program code,ref catalog::Catalog imports
             scalar.code[at]=2;
             scalar.code[at+3]=code.code[at+2];
             required|=one<<id;
-        }else if(op==typed_request_opcode()){
+        }else if(typed_request(op)){
             if(!typed_signature(code,imports,at)){return .err(.Catalog);}
             required|=one<<(code.code[at+3] as usize);
         }else if(op==119 || op==120){
