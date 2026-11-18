@@ -93,17 +93,17 @@ fn bool valid(Limits l){return l.request_bytes<=wire::payload_limit() && l.reply
 // Fuel charges below are supplied by the integrating native owner, not new prices.
 pub fn Result<Exchange,Error> create(catalog::Catalog c,ref bool[] allowed,Limits limits,
     usize run,usize fuel,usize deadline){
-    return create_sized(c,allowed,limits,run,fuel,deadline,80);
-}
-fn Result<Exchange,Error> create_sized(catalog::Catalog c,ref bool[] allowed,Limits limits,
-    usize run,usize fuel,usize deadline,usize size){
     if(run==0){return .err(.Identity);}
     if(!valid(limits) || allowed.len!=catalog::count(ref c)){return .err(.Catalog);}
-    var Grants grants=Grants{.allowed=[false;64]};var usize i=0;
-    while(i<allowed.len){grants.allowed[i]=allowed[i];i+=1;}
     let u32[8] digest=switch(catalog::digest(ref c)){
         case .ok(v):{v}case .err(_):{return .err(.Allocation);}
     };
+    return create_sized(c,allowed,limits,run,fuel,deadline,80,digest);
+}
+fn Result<Exchange,Error> create_sized(catalog::Catalog c,ref bool[] allowed,Limits limits,
+    usize run,usize fuel,usize deadline,usize size,u32[8] digest){
+    var Grants grants=Grants{.allowed=[false;64]};var usize i=0;
+    while(i<allowed.len){grants.allowed[i]=allowed[i];i+=1;}
     var bytes::Buffer header=switch(bytes::with_capacity(size)){
         case .ok(v):{v}case .err(_):{return .err(.Allocation);}
     };
@@ -307,6 +307,11 @@ pub struct ScalarEvent {
     // 0 none, 1 exchange, 2 arithmetic, 3 host error (guest error arm is still gated).
     u8 failure; i64 host_error;
 }
+pub fn ScalarEvent empty_scalar_event(){
+    return ScalarEvent{.phase=0,.host=Observation{.phase=0,.cause=0,.run=0,.request=0,.import_id=0,
+        .calls=0,.requests=0,.replies=0,.adapter=0,.fuel=0,.terminal_at=0,.external_effects_unknown=false},
+        .value=0,.failure=0,.host_error=0};
+}
 fn i64 load_cell(ref u8[] data,usize at,u8 tag){
     return switch(scalar::decode(tag,data[at..at+4])){
         case .ok(v):{v}case .err(_):{assert(false);0}
@@ -348,18 +353,20 @@ pub fn Result<Exchange,ScalarError> create_scalar(ref programs::Program p,ref po
     let Limits bounds=Limits{.request_bytes=limits.host_request_bytes,.reply_bytes=limits.host_response_bytes,
         .requests_total=14*limits.host_calls,.replies_total=12*limits.host_calls,.calls=limits.host_calls,
         .adapter_per_call=0,.adapter_total=0};
-    var Exchange e=switch(create_sized(exact,ref allowed[..count],bounds,run_id,limits.fuel,deadline,scalar_header_size())){
+    // The only source of the copy is the immutable catalog already bound by retain.
+    let u32[8] digest=programs::binding(p);
+    var Exchange e=switch(create_sized(exact,ref allowed[..count],bounds,run_id,limits.fuel,deadline,scalar_header_size(),digest)){
         case .ok(v):{v}case .err(_):{return .err(.Allocation);}
     };
-    let u32[8] expected=programs::binding(p);
-    let Binding actual=binding(ref e);
-    if(!programs::same_digest(ref expected,ref actual.words)){return .err(.Binding);}
     load_image(ref mut e,programs::code(p));
     return .ok(e);
 }
-// Upper bound for the retained header/catalog and overlapping scalar snapshots.
-pub fn usize scalar_storage_bound(ref programs::Program p){
-    return scalar_header_size()+catalog::heap_bytes(programs::imports(p))+14+12;
+// Reserve the exact maximum heap backing over this admitted scalar run.
+pub fn usize scalar_storage_bound(ref programs::Program p,policy_limits::RunLimits limits){
+    let usize base=scalar_header_size()+catalog::duplicate_bytes(programs::imports(p));
+    if(programs::requirements(p)==0 || limits.host_calls==0 || limits.host_request_bytes<14){return base;}
+    // A reply is allocated before replacing the still-live request.
+    return base+14+if(limits.host_response_bytes>=12){12}else{0};
 }
 pub fn Result<ScalarEvent,ScalarError> observe_scalar(ref Exchange e){
     if(!is_scalar(e)){return .err(.State);}

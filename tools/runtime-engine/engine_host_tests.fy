@@ -2,10 +2,20 @@ module engine_host_tests;
 import host_catalog as catalog;
 import host_program as programs;
 import std::bytes as bytes;
+import std::num as num;
 import ir as ir;
 import runtime_engine as engine;
 import runtime_policy as policy;
 import runtime_run_config as runs;
+import runtime_live_memory as live_memory;
+import runtime_program_memory as program_memory;
+
+unsafe extern C fn usize probe_live();
+unsafe extern C fn usize probe_live_bytes();
+unsafe extern C fn usize probe_peak_bytes();
+unsafe extern C fn usize probe_attempts();
+unsafe extern C fn void probe_rebase();
+unsafe extern C fn void bc_runtime_engine_test_fail(i64 count);
 
 fn ref u8[] json(){return b"{\"schema\":\"brownie.catalog/1\",\"imports\":[{\"id\":0,\"module\":\"host::example\",\"symbol\":\"check\",\"parameters\":[\"i32\"],\"result\":\"Result<i32,u32>\",\"effect\":\"read\",\"capability\":\"host.example.check\",\"adapter_revision\":\"v1\"}]}";}
 fn ref u8[] policy_json_yes(){return b"{\"schema\":\"brownie.policy/0.3\",\"compile\":{\"source_bytes\":262144,\"modules\":32,\"depth\":128,\"tokens\":131072,\"functions\":4096,\"types\":4096,\"instructions\":262144,\"registers_per_function\":1024,\"working_bytes\":67108864,\"fuel\":10000000,\"deadline_ms\":2000,\"diagnostics\":32},\"engine\":{\"memory_bytes\":134217728,\"control_bytes\":1048576,\"program_bytes\":8388608,\"total_program_bytes\":67108864,\"instances_bytes\":67108864,\"max_programs\":64,\"max_instances\":64,\"max_compiles\":1},\"run\":{\"memory_bytes\":16777216,\"object_bytes\":4194304,\"call_frames\":128,\"input_bytes\":1048576,\"output_bytes\":1048576,\"host_request_bytes\":1048576,\"host_response_bytes\":1048576,\"host_calls\":256,\"owner_entries\":16384,\"descriptor_entries\":16384,\"fuel\":10000000,\"deadline_ms\":1000},\"worker\":{\"memory_bytes\":201326592,\"user_cpu_time_ms\":5000,\"max_processes\":1,\"transport_bytes\":4194304,\"startup_ms\":2000,\"io_idle_ms\":1000,\"shutdown_grace_ms\":250,\"session_ms\":10000},\"capabilities\":[\"host.example.check\"]}";}
@@ -132,4 +142,103 @@ fn Result<usize,u8> interleaved(){
     assert(id(engine::destroy(ref mut owner))==0);
     return .ok(1);
 }
-pub fn void run(){assert(admission().is_ok);assert(interleaved().is_ok);}
+fn Result<runs::RunConfig,u8> memory_config(ref policy::Policy ceiling,usize limit){
+    var bytes::Buffer source=bytes::empty();
+    assert(bytes::append(ref mut source,b"{\"schema\":\"brownie.run/0.3\",\"entry\":{\"module\":\"app\",\"function\":\"chosen\"},\"requires\":[\"host.example.check\"],\"grants\":[\"host.example.check\"],\"limits\":{\"memory_bytes\":").is_ok);
+    let i64 value=switch(num::i64_from_usize(limit)){case .ok(v):{v}case .err(_):{return .err(9);}};
+    assert(bytes::append_i64(ref mut source,value).is_ok);
+    assert(bytes::append(ref mut source,b",\"object_bytes\":1,\"call_frames\":1,\"input_bytes\":0,\"output_bytes\":0,\"host_request_bytes\":14,\"host_response_bytes\":12,\"host_calls\":1,\"owner_entries\":1,\"descriptor_entries\":1,\"fuel\":10000000,\"deadline_ms\":1000}}").is_ok);
+    return switch(runs::parse(bytes::view(ref source),ceiling)){case .ok(v):{.ok(v)}case .err(_):{.err(9)}};
+}
+fn void ledger(ref engine::Engine owner,usize current,usize peak){
+    switch(engine::instance_memory(owner)){
+        case .ok(v):{assert(v.current==current && v.peak==peak);}
+        case .err(_):{assert(false);}
+    };
+    switch(engine::program_memory(owner)){
+        case .ok(v):{assert(v.external_bytes==current && v.tracked_bytes==v.control_bytes+v.program_bytes+current);}
+        case .err(_):{assert(false);}
+    };
+}
+fn Result<usize,u8> pending_memory(){
+    let policy::Policy ceiling=parsed_policy(true)?;
+    let runs::RunConfig run=config(ref ceiling,true)?;
+    var engine::Engine owner=configured(parsed_policy(true)?)?;
+    let catalog::Catalog imports=catalog_from(json())?;
+    let u32[8] expected=digest(ref imports)?;
+    let ir::Program code=candidate()?;
+    let usize p=id(engine::retain_scalar_host(ref mut owner,ref code,imports,ref expected,ref run));
+    let usize base=unsafe{probe_live_bytes()};
+    unsafe{probe_rebase()};
+    let usize sample=id(engine::prepare_scalar_host(ref mut owner,p,ref run));
+    let usize backing=unsafe{probe_live_bytes()}-base;
+    assert(unsafe{probe_attempts()}==3 && unsafe{probe_peak_bytes()}==base+backing);
+    let usize reservation=backing+26;
+    ledger(ref owner,reservation,reservation);
+    assert(id(engine::destroy_instance(ref mut owner,sample))==sample);
+    assert(unsafe{probe_live_bytes()}==base);
+    ledger(ref owner,0,reservation);
+
+    let runs::RunConfig exact=memory_config(ref ceiling,reservation)?;
+    let runs::RunConfig short=memory_config(ref ceiling,reservation-1)?;
+    let usize baseline=unsafe{probe_live_bytes()};
+    unsafe{probe_rebase()};
+    rejected(engine::prepare_scalar_host(ref mut owner,p,ref short),8);
+    assert(unsafe{probe_attempts()}==0 && unsafe{probe_live_bytes()}==baseline);
+    assert(counts(ref mut owner).instances==0 && counts(ref mut owner).pins==0);
+    ledger(ref owner,0,reservation);
+    var i64 failure=0;
+    while(failure<3){
+        unsafe{bc_runtime_engine_test_fail(failure)};
+        rejected(engine::prepare_scalar_host(ref mut owner,p,ref exact),6);
+        unsafe{bc_runtime_engine_test_fail(-1)};
+        assert(unsafe{probe_live_bytes()}==baseline);
+        assert(counts(ref mut owner).instances==0 && counts(ref mut owner).pins==0);
+        ledger(ref owner,0,reservation);
+        failure+=1;
+    }
+
+    let usize a=id(engine::prepare_scalar_host(ref mut owner,p,ref exact));
+    let usize b=id(engine::prepare_scalar_host(ref mut owner,p,ref exact));
+    assert(a==sample+1 && b==a+1);
+    assert(event(engine::step_instance(ref mut owner,a,8)).kind==4);
+    assert(event(engine::step_instance(ref mut owner,b,8)).kind==4);
+    ledger(ref owner,2*reservation,2*reservation);
+    assert(unsafe{probe_live_bytes()}==baseline+2*(backing+14));
+
+    assert(event(engine::cancel_ready(ref mut owner,a)).kind==3);
+    assert(event(engine::cancel_ready(ref mut owner,a)).kind==3);
+    switch(engine::observe_scalar_host(ref owner,a)){
+        case .ok(v):{assert(v.phase==4 && v.host.cause==1 && v.host.run==a && v.host.request==1);}
+        case .err(_):{assert(false);}
+    };
+    ledger(ref owner,reservation,2*reservation);
+    assert(unsafe{probe_live_bytes()}==baseline+backing+14);
+    assert(id(engine::destroy_instance(ref mut owner,a))==a);
+    ledger(ref owner,reservation,2*reservation);
+    assert(request(ref owner,b).run==b);
+
+    let usize c=id(engine::prepare_scalar_host(ref mut owner,p,ref exact));
+    assert(event(engine::step_instance(ref mut owner,c,8)).kind==4);
+    assert(id(engine::destroy_instance(ref mut owner,c))==c);
+    ledger(ref owner,reservation,2*reservation);
+    let engine::HostRequest asked=request(ref owner,b);
+    unsafe{probe_rebase()};
+    assert(event(engine::reply_scalar_host(ref mut owner,b,asked.run,asked.request,0,
+        b"\x03\x00\x00\x00\x04\x00\x00\x00\x2a\x00\x00\x00")).kind==0);
+    assert(unsafe{probe_peak_bytes()}==baseline+reservation && unsafe{probe_live_bytes()}==baseline+backing+12);
+    let engine::Event done=event(engine::step_instance(ref mut owner,b,8));
+    assert(done.kind==1 && done.value==42);
+    ledger(ref owner,0,2*reservation);
+    assert(unsafe{probe_live_bytes()}==baseline);
+    assert(id(engine::destroy_instance(ref mut owner,b))==b);
+    assert(id(engine::release_program(ref mut owner,p))==p);
+    assert(id(engine::destroy(ref mut owner))==0);
+    return .ok(reservation);
+}
+pub fn void run(){
+    assert(admission().is_ok);
+    assert(interleaved().is_ok);
+    assert(pending_memory().is_ok);
+    assert(unsafe{probe_live()}==0);
+}

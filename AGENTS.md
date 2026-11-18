@@ -1,9 +1,10 @@
-- Latest runtime checkpoint (2026-11-18): [Engine-owned scalar host execution](docs/engineering/host-exchange.md#engine-owned-scalar-host-execution)
-  reuses one verified Program across two pinned Instances. Windows development
-  and optimized Engine runs confirm cross-run reply rejection, independent
-  `42` and `-7` outcomes and zero live SDK allocations. Root locked check passes
-  376 sources / 4161 MIR functions. OS deadlines, general typed host
-  destinations and public delivery remain open. The
+- Latest runtime checkpoint (2026-11-18): [Engine scalar pending memory](docs/engineering/host-exchange.md#engine-scalar-pending-memory)
+  reserves exact backing and overlapping scalar envelopes under the Instance
+  and Engine ceilings. Windows development and /O2 confirm exact and one-less
+  admission, cancellation and destroy refunds, cross-run reply rejection,
+  independent outcomes and zero live SDK allocations. Root locked check passes
+  376 sources / 4163 MIR functions. OS deadlines, general typed host destinations
+  and public delivery remain open. The
   [stack regression record](docs/engineering/native-stack-regressions.md)
   preserves the earlier public O2 timeout.
 

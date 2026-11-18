@@ -79,10 +79,9 @@ Engine observe, cancel and destroy paths own the terminal state and cleanup.
 Run IDs are scoped to the Engine. The scalar path samples cancellation through
 the Engine and has no OS deadline source yet.
 
-The Instance reserves its exchange vector, fixed header, catalog backing and
-26 bytes for overlapping scalar envelopes. Destruction returns that reservation
-and drops the exchange. General typed replies, compact snapshots and complete
-accounting for admission scratch remain open.
+The Instance reserves its exchange vector, fixed header, exact catalog copy and
+capacity for its permitted scalar envelopes. See [pending memory accounting](#engine-scalar-pending-memory)
+for the reservation and refund rules.
 
 Windows development verification ran `python -B tools/verify-runtime-engine.py
 --profile development` with Fairy C preview.2, 366 source inputs, 41 checked
@@ -111,6 +110,38 @@ reported zero live SDK allocations after teardown. The optimized executable
 SHA-256 is `204e6adbdc4f073f9731fe4682e79e7ab92332900db8faede174c494c82cd51a`. The local receipt
 is `build/runtime-engine/20261118T105620621886Z/receipt.json`. This verifies the
 private Engine path. Public delivery remains open.
+
+## Engine scalar pending memory
+
+Admission charges the SDK backing for a Vec of eight Exchange slots, the
+2,656-byte execution header and the initialized bytes of the catalog string
+pool. The catalog clone copies these exact bytes and inherits the verified
+Program's digest, so preparation needs no canonical serialization buffer.
+The Engine reserves an additional 14 bytes if the run can publish a request
+and another 12 bytes if a scalar reply fits the run's reply limit. Both
+envelopes can be live while accepting a reply. This is a per-run reservation.
+The same charge applies to the live Instance ledger and to the combined Engine
+ceiling. Program pins and control storage are accounted for separately.
+
+Completion and cancellation free the exchange and return the entire run
+reservation. The terminal observation remains in the preallocated Instance
+slot, which now uses an additional 120 bytes per slot on Windows x64.
+A waiting Instance can also be destroyed directly. Destroying a terminal
+Instance does not refund the same bytes twice. Program release and pins keep
+their existing lifetime rules.
+
+Windows development and /O2 passed `python -B tools/verify-runtime-engine.py
+--profile all` under the default 1 MiB stack reserve. The fixture's exact
+reservation is 63,776 bytes, including 26 bytes of envelope overlap. One byte
+less rejects before any allocation attempt. The allocator probe confirms
+the exact overlap peak and injects failures at all three preparation
+allocations. With two waiting Instances, cancelling one refunds only its
+reservation. Repeated cancel and subsequent destroy leave the peer's
+reservation intact. Direct destroy of a waiting Instance and successful
+completion also refund the full reservation. Both native profiles exit 0 with
+zero live SDK allocations. Root `fairyc check --locked` passes 376 sources
+and 4,163 MIR functions. The local receipt is
+`build/runtime-engine/20261118T111819576719Z/receipt.json`.
 
 ## Standalone coordinator ownership and API
 

@@ -163,6 +163,8 @@ pub fn Result<Catalog,Error> duplicate(ref Catalog c){
     };
     return .ok(Catalog{.strings=strings,.table=c.table});
 }
+// duplicate copies only initialized string bytes into an exact-capacity Buffer.
+pub fn usize duplicate_bytes(ref Catalog c){return bytes::view(ref c.strings).len;}
 pub fn usize heap_bytes(ref Catalog c){return bytes::capacity(ref c.strings);}
 pub fn usize count(ref Catalog c){return c.table.count;}
 fn Result<usize,Error> index(ref Catalog c,usize i){if(i>=c.table.count){return .err(error(.Bounds,0));}return .ok(i);}

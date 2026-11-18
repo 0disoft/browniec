@@ -44,7 +44,7 @@ pub struct Error { u32 status; diagnostics::Error diagnostic; }
 pub struct Event { u8 kind; i64 value; diagnostics::Error diagnostic; usize remaining; bool fuel_known; }
 // Event.kind 4 indicates a suspended host request. Request bytes are detached.
 pub struct HostRequest { usize run; usize request; usize import_id; u8[14] payload; }
-struct HostTransition { Event event; bool terminal; }
+struct HostTransition { Event event; host::ScalarEvent scalar; }
 pub struct Snapshot { usize programs; usize instances; usize pins; bool closed; }
 struct Meta {
     Limits limits; usize thread; usize lifetime; usize active; usize admission;
@@ -59,7 +59,7 @@ resource Program {
     usize id; usize pins; bool released; vec::Vec<programs::Program> code;
     vec::Vec<input_programs::Program> input; vec::Vec<output_programs::Program> output; usize bytes; usize execution_scratch; EntryBinding entry; vec::Vec<host_program::Program> host; cleanup { }
 }
-struct Instance { usize id; usize program; usize fuel; u8 phase; Event event; usize output_limit; bool output_allowed; usize input_bytes; usize output_bytes; }
+struct Instance { usize id; usize program; usize fuel; u8 phase; Event event; usize output_limit; bool output_allowed; usize input_bytes; usize output_bytes; host::ScalarEvent host_terminal; }
 resource BoundInput { usize instance; input_bytes::Snapshot input; cleanup { } }
 pub resource Output { usize instance; output_programs::Execution run; vec::Vec<machines::Machine> pending; vec::Vec<host::Exchange> host; cleanup { } }
 pub resource Engine {
@@ -287,6 +287,15 @@ fn Result<usize,Error> host_output_index(ref Engine e,usize instance){
     return .ok(oi);
 }
 pub fn Result<host::ScalarEvent,Error> observe_scalar_host(ref Engine e,usize instance){
+    let u32 status=unsafe{control_access_raw(e as ptr void)};
+    if(status!=0){return .err(error(status));}
+    switch(instance_index(ref e.instances,instance)){
+        case .ok(i):{
+            let host::ScalarEvent saved=vec::at<Instance>(ref e.instances,i).host_terminal;
+            if(saved.phase!=0){return .ok(saved);}
+        }
+        case .err(_):{return .err(error(2));}
+    };
     let usize oi=host_output_index(e,instance)?;
     let ref Output owner=vec::at<Output>(ref e.outputs,oi);
     return switch(host::observe_scalar(vec::at<host::Exchange>(ref owner.host,0))){
@@ -600,6 +609,11 @@ fn void commit_payload(ref mut Meta m,ref live::Plan plan){
     let usize retained=live::observe(ref m.heap).current;
     assert(memory::commit_external(ref mut m.programs,retained).is_ok);
 }
+fn void release_payload(ref mut Meta m,usize bytes){
+    assert(live::release(ref mut m.heap,bytes).is_ok);
+    let usize retained=live::observe(ref m.heap).current;
+    assert(memory::commit_external(ref mut m.programs,retained).is_ok);
+}
 fn u32 input_preflight_inner(ref mut Meta m,ref vec::Vec<Program> p,ref vec::Vec<Instance> v,
     usize code,usize budget,ref input_bytes::Snapshot input,u32 output,usize limit,u32 allowed,usize width){
     if(m.closed){return 2;}if(m.admission==0){return 8;}
@@ -814,8 +828,10 @@ fn u32 prepare_host_inner(ref mut Meta m,ref mut vec::Vec<Program> p,ref mut vec
     let ref policy::Policy ceiling=vec::at<policy::Policy>(policies,0);
     let policy_limits::RunLimits limits=run_config::run_limits(run);
     if(!host_program::allows(verified,ceiling,run) || limits.fuel>m.limits.fuel){return failed(m,5);}
-    let usize charge=control_layout::capacity(1)*stride+host::scalar_storage_bound(verified);
-    if(charge>limits.memory_bytes){return failed(m,8);}
+    let usize exchange_bytes=host::scalar_storage_bound(verified,limits);
+    let usize slots=control_layout::capacity(1);
+    if(stride==0 || exchange_bytes>limits.memory_bytes || stride>(limits.memory_bytes-exchange_bytes)/slots){return failed(m,8);}
+    let usize charge=slots*stride+exchange_bytes;
     let live::Plan reservation=switch(prepare_payload(m,0,charge,0)){
         case .ok(plan):{plan}case .err(status):{return failed(m,status);}
     };
@@ -830,7 +846,7 @@ fn u32 prepare_host_inner(ref mut Meta m,ref mut vec::Vec<Program> p,ref mut vec
     assert(vec::push<Output>(outputs,Output{.instance=id,.run=output_programs::vacant(limits.fuel),
         .pending=vec::empty<machines::Machine>(),.host=saved}).is_ok);
     assert(vec::push<Instance>(v,Instance{.id=id,.program=code,.fuel=limits.fuel,.phase=4,.event=ready(limits.fuel),
-        .output_limit=0,.output_allowed=false,.input_bytes=0,.output_bytes=charge}).is_ok);
+        .output_limit=0,.output_allowed=false,.input_bytes=0,.output_bytes=charge,.host_terminal=host::empty_scalar_event()}).is_ok);
     commit_payload(m,ref reservation);
     let ref mut Program target=vec::at_mut<Program>(p,pi);target.pins+=1;
     advance(m);return success(m,id);
@@ -855,7 +871,7 @@ fn u32 drive_host_owner(ref mut vec::Vec<host::Exchange> owners,u32 mode,usize q
         let bool cancel=failed && observed.host.cause==1;
         let u8 event_kind=if(done){1}else if(cancel){3}else if(failed){2}else if(observed.phase==1){4}else{0};
         let u8 diagnostic=if(observed.failure==2){6}else if(observed.host.cause==5){8}else if(observed.host.cause==4){15}else{0};
-        *transition=HostTransition{.terminal=done || failed,.event=Event{.kind=event_kind,.value=observed.value,
+        *transition=HostTransition{.scalar=observed,.event=Event{.kind=event_kind,.value=observed.value,
             .diagnostic=diagnostics::absent(errors::make(diagnostic,0)),.remaining=observed.host.fuel,.fuel_known=true}};
         if(observed.phase!=0 || mode!=0){return 0;}
         remaining-=1;
@@ -863,23 +879,31 @@ fn u32 drive_host_owner(ref mut vec::Vec<host::Exchange> owners,u32 mode,usize q
     return 0;
 }
 fn u32 drive_host(ref mut Meta m,ref mut vec::Vec<Instance> v,ref mut vec::Vec<Output> outputs,
-    usize ii,u32 mode,usize quantum,usize run,usize request,u8 kind,ref u8[] payload){
+    ref mut vec::Vec<Output> scratch,usize ii,u32 mode,usize quantum,usize run,usize request,u8 kind,ref u8[] payload){
     let usize id=vec::at<Instance>(v,ii).id;
     let usize oi=switch(output_index(outputs,id)){case .ok(i):{i}case .err(_):{return failed(m,7);}};
-    var HostTransition next=HostTransition{.terminal=false,.event=pending()};
-    let ref mut Output saved=vec::at_mut<Output>(outputs,oi);
-    let u32 status=unsafe{drive_host_raw(saved as ptr mut void,mode,quantum,run,request,kind,
-        payload as ptr u8,payload.len,ref mut next as ptr mut void)};
+    var HostTransition next=HostTransition{.scalar=host::empty_scalar_event(),.event=pending()};
+    var u32 status=0;
+    {let ref mut Output saved=vec::at_mut<Output>(outputs,oi);
+     status=unsafe{drive_host_raw(saved as ptr mut void,mode,quantum,run,request,kind,
+        payload as ptr u8,payload.len,ref mut next as ptr mut void)};}
     if(status!=0){return failed(m,status);}
     let ref mut Instance target=vec::at_mut<Instance>(v,ii);
-    target.event=next.event;if(next.terminal){target.phase=2;}
+    target.event=next.event;
+    if(next.scalar.phase==3 || next.scalar.phase==4){
+        remove_output(outputs,scratch,id);
+        release_payload(m,target.output_bytes);
+        target.output_bytes=0;
+        target.host_terminal=next.scalar;
+        target.phase=2;
+    }
     m.event=next.event;return success(m,id);
 }
 fn u32 reply_host_inner(ref mut Meta m,ref mut vec::Vec<Instance> v,ref mut vec::Vec<Output> outputs,
-    usize instance,usize run,usize request,u8 kind,ref u8[] payload){
+    ref mut vec::Vec<Output> scratch,usize instance,usize run,usize request,u8 kind,ref u8[] payload){
     let usize ii=switch(instance_index(v,instance)){case .ok(i):{i}case .err(status):{return failed(m,status);}};
     if(vec::at<Instance>(v,ii).phase!=4){return failed(m,11);}
-    return drive_host(m,v,outputs,ii,2,1,run,request,kind,payload);
+    return drive_host(m,v,outputs,scratch,ii,2,1,run,request,kind,payload);
 }
 
 fn u32 output_instance_inner(ref mut Meta m,ref mut vec::Vec<Program> p,ref mut vec::Vec<Instance> v,
@@ -900,7 +924,7 @@ fn u32 output_instance_inner(ref mut Meta m,ref mut vec::Vec<Program> p,ref mut 
     let usize id=m.next;
     if(input){let input_bytes::Snapshot snapshot=pop_snapshot(incoming);
         if(!vec::push<BoundInput>(inputs,BoundInput{.instance=id,.input=snapshot}).is_ok){return failed(m,6);}}
-    if(!vec::push<Instance>(v,Instance{.id=id,.program=code,.fuel=budget,.phase=0,.event=ready(budget),.output_limit=limit,.output_allowed=allowed==1 || allowed==3,.input_bytes=capacity,.output_bytes=0}).is_ok){
+    if(!vec::push<Instance>(v,Instance{.id=id,.program=code,.fuel=budget,.phase=0,.event=ready(budget),.output_limit=limit,.output_allowed=allowed==1 || allowed==3,.input_bytes=capacity,.output_bytes=0,.host_terminal=host::empty_scalar_event()}).is_ok){
         if(input){let Option<BoundInput> disposed=vec::pop<BoundInput>(inputs);}return failed(m,6);
     }
     commit_payload(m,ref storage);
@@ -963,7 +987,7 @@ fn u32 instance_inner(ref mut Meta m,ref mut vec::Vec<Program> p,ref mut vec::Ve
     let usize pi=switch(program_index(p,code,true)){case .ok(x):{x}case .err(s):{return failed(m,s);}};
     if(vec::len<Instance>(v)>=m.limits.instances || m.next==0){return failed(m,8);}
     let usize id=m.next;
-    if(!vec::push<Instance>(v,Instance{.id=id,.program=code,.fuel=budget,.phase=0,.event=ready(budget),.output_limit=0,.output_allowed=false,.input_bytes=0,.output_bytes=0}).is_ok){return failed(m,6);}
+    if(!vec::push<Instance>(v,Instance{.id=id,.program=code,.fuel=budget,.phase=0,.event=ready(budget),.output_limit=0,.output_allowed=false,.input_bytes=0,.output_bytes=0,.host_terminal=host::empty_scalar_event()}).is_ok){return failed(m,6);}
     let ref mut Program target=vec::at_mut<Program>(p,pi);target.pins+=1;advance(m);return success(m,id);
 }
 fn Result<usize,u32> input_index(ref vec::Vec<BoundInput> v,usize id){
@@ -985,7 +1009,7 @@ fn u32 input_instance_inner(ref mut Meta m,ref mut vec::Vec<Program> p,ref mut v
     };
     let usize id=m.next;let input_bytes::Snapshot snapshot=pop_snapshot(incoming);
     if(!vec::push<BoundInput>(inputs,BoundInput{.instance=id,.input=snapshot}).is_ok){return failed(m,6);}
-    if(!vec::push<Instance>(v,Instance{.id=id,.program=code,.fuel=budget,.phase=0,.event=ready(budget),.output_limit=0,.output_allowed=false,.input_bytes=capacity,.output_bytes=0}).is_ok){
+    if(!vec::push<Instance>(v,Instance{.id=id,.program=code,.fuel=budget,.phase=0,.event=ready(budget),.output_limit=0,.output_allowed=false,.input_bytes=capacity,.output_bytes=0,.host_terminal=host::empty_scalar_event()}).is_ok){
         let Option<BoundInput> disposed=vec::pop<BoundInput>(inputs);return failed(m,6);
     }
     commit_payload(m,ref storage);
@@ -1028,9 +1052,7 @@ fn u32 destroy_instance_inner(ref mut Meta m,ref mut vec::Vec<Program> p,ref mut
     let Instance last=switch(vec::pop<Instance>(v)){case .some(x):{x}case .none:{assert(false);current}};
     if(ii<vec::len<Instance>(v)){let ref mut Instance target=vec::at_mut<Instance>(v,ii);*target=last;}
     remove_output(outputs,output_scratch,id);remove_input(inputs,input_scratch,id);
-    assert(live::release(ref mut m.heap,current.input_bytes+current.output_bytes).is_ok);
-    let usize retained=live::observe(ref m.heap).current;
-    assert(memory::commit_external(ref mut m.programs,retained).is_ok);
+    release_payload(m,current.input_bytes+current.output_bytes);
     if(reclaim){remove(m,p,scratch,pi);}return success(m,id);
 }
 fn u32 execute_inner(ref mut Meta m,ref vec::Vec<Program> p,ref mut vec::Vec<Instance> v,ref vec::Vec<BoundInput> inputs,ref mut vec::Vec<Output> outputs,usize id){
@@ -1180,12 +1202,12 @@ fn u32 cancel_output_owner(ref mut vec::Vec<machines::Machine> saved){
     };
 }
 fn u32 step_instance_inner(ref mut Meta m,ref vec::Vec<Program> p,ref mut vec::Vec<Instance> v,
-    ref vec::Vec<BoundInput> inputs,ref mut vec::Vec<Output> outputs,usize id,usize quantum){
+    ref vec::Vec<BoundInput> inputs,ref mut vec::Vec<Output> outputs,ref mut vec::Vec<Output> scratch,usize id,usize quantum){
     if(quantum==0 || quantum>4096){return failed(m,1);}
     let usize ii=switch(instance_index(v,id)){case .ok(x):{x}case .err(s):{return failed(m,s);}};
     let Instance before=*vec::at<Instance>(v,ii);
     if(before.phase==2){return failed(m,11);}
-    if(before.phase==4){return drive_host(m,v,outputs,ii,0,quantum,0,0,0,b"");}
+    if(before.phase==4){return drive_host(m,v,outputs,scratch,ii,0,quantum,0,0,0,b"");}
     if(before.phase!=3){return failed(m,3);}
     let usize pi=switch(program_index(p,before.program,false)){case .ok(x):{x}case .err(s):{return failed(m,s);}};
     let ref Program code=vec::at<Program>(p,pi);
@@ -1251,7 +1273,7 @@ fn u32 observe_inner(ref mut Meta m,ref vec::Vec<Instance> v,usize id){
 fn u32 cancel_inner(ref mut Meta m,ref vec::Vec<Program> p,ref mut vec::Vec<Instance> v,ref vec::Vec<BoundInput> inputs,ref mut vec::Vec<Output> outputs,ref mut vec::Vec<Output> scratch,usize id){
     let usize ii=switch(instance_index(v,id)){case .ok(x):{x}case .err(s):{return failed(m,s);}};
     let Instance before=*vec::at<Instance>(v,ii);
-    if(before.phase==4){return drive_host(m,v,outputs,ii,1,1,0,0,0,b"");}
+    if(before.phase==4){return drive_host(m,v,outputs,scratch,ii,1,1,0,0,0,b"");}
     if(before.phase==3){
         let usize oi=switch(output_index(outputs,id)){case .ok(x):{x}case .err(_):{return failed(m,7);}};
         // Drain canonical private metadata and discard any staged prefix before
@@ -1261,12 +1283,10 @@ fn u32 cancel_inner(ref mut Meta m,ref vec::Vec<Program> p,ref mut vec::Vec<Inst
         if(status==12){m.event=before.event;return success(m,id);}
         // A prior failure wins. Finalize it through the same Program diagnostic
         // and retained-output path as step, even if the caller repeats cancel.
-        if(status==13){return step_instance_inner(m,p,v,inputs,outputs,id,1);}
+        if(status==13){return step_instance_inner(m,p,v,inputs,outputs,scratch,id,1);}
         if(status!=0){return failed(m,7);}
         remove_output(outputs,scratch,id);
-        assert(live::release(ref mut m.heap,before.output_bytes).is_ok);
-        let usize retained=live::observe(ref m.heap).current;
-        assert(memory::commit_external(ref mut m.programs,retained).is_ok);
+        release_payload(m,before.output_bytes);
         let ref mut Instance target=vec::at_mut<Instance>(v,ii);target.output_bytes=0;
         target.event=Event{.kind=3,.value=0,.diagnostic=absent(),.remaining=before.event.remaining,.fuel_known=true};target.phase=2;
     }
@@ -1296,7 +1316,7 @@ fn u32 dispatch_inner(ref mut Meta m,ref mut vec::Vec<Program> p,ref mut vec::Ve
     if(operation==7){return cancel_inner(m,p,v,inputs,outputs,output_scratch,id);}
     if(operation==8){return inspect_inner(m,p,v);}
     if(operation==9){return prepare_instance_inner(m,p,v,inputs,outputs,id);}
-    if(operation==10){return step_instance_inner(m,p,v,inputs,outputs,id,argument);}
+    if(operation==10){return step_instance_inner(m,p,v,inputs,outputs,output_scratch,id,argument);}
     return failed(m,1);
 }
 // After the last epoch, only bounded owner maintenance may run, under the
@@ -1395,7 +1415,7 @@ pub fn void retain_native_bindings(){
     unsafe{binding_raw(16)};discard take_output_inner(ref mut m,ref mut output_instances,ref mut outputs,ref mut output_scratch,0,ref mut outgoing);
     unsafe{binding_raw(17)};let vec::Vec<Output> empty_outputs=reset_output_storage(outputs);
     unsafe{binding_raw(18)};discard control_access_inner(ref m,1,1);
-    let Instance witness=Instance{.id=0,.program=0,.fuel=0,.phase=0,.event=pending(),.output_limit=0,.output_allowed=false,.input_bytes=0,.output_bytes=0};
+    let Instance witness=Instance{.id=0,.program=0,.fuel=0,.phase=0,.event=pending(),.output_limit=0,.output_allowed=false,.input_bytes=0,.output_bytes=0,.host_terminal=host::empty_scalar_event()};
     unsafe{binding_raw(22)};discard instance_identity(ref witness);
     let Program program_witness=Program{.id=0,.pins=0,.released=false,.code=vec::empty<programs::Program>(),
         .input=vec::empty<input_programs::Program>(),.output=vec::empty<output_programs::Program>(),.bytes=0,.execution_scratch=0,.entry=empty_entry(),.host=vec::empty<host_program::Program>()};
@@ -1406,12 +1426,13 @@ pub fn void retain_native_bindings(){
     unsafe{binding_raw(37)};let vec::Vec<policy::Policy> cleared=reset_policy_storage(owned);
     var vec::Vec<host_program::Program> host_incoming=vec::empty<host_program::Program>();
     unsafe{binding_raw(38)};discard publish_host_inner(ref mut m,ref mut output_program,ref mut host_incoming,0,0);
-    retain_host_bindings(ref mut m,ref mut output_program,ref mut output_instances,ref mut output_scratch);
+    var vec::Vec<Output> host_outputs=vec::empty<Output>();
+    retain_host_bindings(ref mut m,ref mut output_program,ref mut output_instances,ref mut host_outputs,ref mut output_scratch);
     retain_output_bindings(ref snapshot);retain_input_binding();
 }
 
 fn void retain_host_bindings(ref mut Meta m,ref mut vec::Vec<Program> p,
-    ref mut vec::Vec<Instance> v,ref mut vec::Vec<Output> outputs){
+    ref mut vec::Vec<Instance> v,ref mut vec::Vec<Output> outputs,ref mut vec::Vec<Output> output_scratch){
     let ref u8[] policy_json=b"";
     switch(policy::parse(policy_json)){
         case .ok(ceiling):{
@@ -1425,9 +1446,9 @@ fn void retain_host_bindings(ref mut Meta m,ref mut vec::Vec<Program> p,
         }
         case .err(_):{}
     };
-    unsafe{binding_raw(40)};discard reply_host_inner(m,v,outputs,0,0,0,0,b"");
+    unsafe{binding_raw(40)};discard reply_host_inner(m,v,outputs,output_scratch,0,0,0,0,b"");
     var vec::Vec<host::Exchange> owners=vec::empty<host::Exchange>();
-    var HostTransition next=HostTransition{.terminal=false,.event=pending()};
+    var HostTransition next=HostTransition{.scalar=host::empty_scalar_event(),.event=pending()};
     unsafe{binding_raw(41)};discard drive_host_owner(ref mut owners,0,0,0,0,0,b"",ref mut next);
 }
 
