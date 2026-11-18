@@ -45,10 +45,15 @@ fn Result<usize,Error> field_length(ref u8[] input,usize offset,u8 expected){
     if(input[offset+1]!=0 || input[offset+2]!=0 || input[offset+3]!=0){return .err(.Header);}
     return .ok(read_u32(input[offset+4..offset+8]));
 }
-pub fn Result<usize,Error> byte_reply_prefix(ref u8[] prefix,usize total){
+// Nonempty replies start with the whole TLV header. Validate the declared
+// envelope and fixed scalar width before reserving any snapshot storage.
+pub fn Result<usize,Error> reply_prefix(u8 kind,u8 result_tag,ref u8[] prefix,usize total){
     let usize bounded_total=bounded(total,payload_limit())?;
-    let usize size=field_length(prefix,0,7)?;
+    if(kind>1){return .err(.Reply);}
+    let u8 tag=if(kind==1){5}else{result_tag};
+    let usize size=field_length(prefix,0,tag)?;
     if(prefix.len>bounded_total || size!=bounded_total-8){return .err(.Length);}
+    if(tag!=7 && size!=scalar::width(scalar_tag(tag))){return .err(.Length);}
     return .ok(bounded_total);
 }
 fn Result<Field,Error> parse_field(ref u8[] input,usize offset,u8 expected) {

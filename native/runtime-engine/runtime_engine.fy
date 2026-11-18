@@ -274,15 +274,13 @@ pub fn Result<usize,Error> prepare_scalar_host(ref mut Engine e,usize program,re
     return result(e,status);
 }
 pub fn Result<Event,Error> reply_scalar_host(ref mut Engine e,usize instance,usize run,usize request,u8 kind,ref u8[] payload){
-    let u32 status=unsafe{reply_host_raw(e as ptr mut void,instance,run,request,kind,payload as ptr u8,payload.len,0,0)};
-    let usize completed=result(e,status)?;return .ok(e.meta.event);
+    return receive_host_reply(e,instance,run,request,kind,payload.len,0,payload);
 }
-// Supplies the next bounded piece of a byte success reply, including its TLV
-// envelope. Offsets and total are measured in wire bytes.
+// Supplies the next bounded piece of a typed reply. Offsets and total are
+// measured in wire bytes. An empty fatal reply uses total and offset zero.
 pub fn Result<Event,Error> receive_host_reply(ref mut Engine e,usize instance,usize run,usize request,
-    usize total,usize offset,ref u8[] chunk){
-    if(total==0){return .err(error(1));}
-    let u32 status=unsafe{reply_host_raw(e as ptr mut void,instance,run,request,0,chunk as ptr u8,chunk.len,total,offset)};
+    u8 kind,usize total,usize offset,ref u8[] chunk){
+    let u32 status=unsafe{reply_host_raw(e as ptr mut void,instance,run,request,kind,chunk as ptr u8,chunk.len,total,offset)};
     let usize completed=result(e,status)?;return .ok(e.meta.event);
 }
 fn Result<usize,Error> host_output_index(ref Engine e,usize instance){
@@ -882,12 +880,10 @@ fn u32 drive_host_owner(ref mut vec::Vec<host::Exchange> owners,u32 mode,usize q
     if(vec::len<host::Exchange>(owners)!=1){return 7;}
     let ref mut host::Exchange exchange=vec::at_mut<host::Exchange>(owners,0);
     var usize remaining=quantum;
-    while(remaining>0){
+    while(remaining>0 || mode==2){
         let usize now=unsafe{monotonic_ticks_raw()};
         let Result<host::ScalarEvent,host::ScalarError> action=if(mode==2){
-            host::reply_scalar(exchange,run,request,kind,payload,now,false)
-        }else if(mode==3){
-            host::receive_scalar_reply(exchange,run,request,quantum,offset,payload,now)
+            host::receive_scalar_reply(exchange,run,request,kind,quantum,offset,payload,now)
         }else{host::step_scalar_budget(exchange,now,mode==1,ref mut remaining)};
         let host::ScalarEvent observed=switch(action){
             case .ok(value):{value}case .err(reason):{return switch(reason){
@@ -930,8 +926,7 @@ fn u32 reply_host_inner(ref mut Meta m,ref mut vec::Vec<Instance> v,ref mut vec:
     ref mut vec::Vec<Output> scratch,usize instance,usize run,usize request,u8 kind,ref u8[] payload,usize total,usize offset){
     let usize ii=switch(instance_index(v,instance)){case .ok(i):{i}case .err(status):{return failed(m,status);}};
     if(vec::at<Instance>(v,ii).phase!=4){return failed(m,11);}
-    if(total!=0){return drive_host(m,v,outputs,scratch,ii,3,total,run,request,kind,payload,offset);}
-    return drive_host(m,v,outputs,scratch,ii,2,1,run,request,kind,payload,0);
+    return drive_host(m,v,outputs,scratch,ii,2,total,run,request,kind,payload,offset);
 }
 
 fn u32 output_instance_inner(ref mut Meta m,ref mut vec::Vec<Program> p,ref mut vec::Vec<Instance> v,

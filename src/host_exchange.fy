@@ -233,15 +233,14 @@ pub fn Result<wire::Request,Error> request_fields(ref Exchange e){
 pub fn Result<usize,Error> reply(ref mut Exchange e,usize run,usize request,u8 kind,
     ref u8[] payload,usize snapshot_fuel,usize now,bool cancelled){
     if(is_scalar(e)){return .err(.State);}
-    return reply_exchange(e,run,request,kind,payload,snapshot_fuel,now,cancelled,wire::payload_limit());
+    return reply_exchange(e,run,request,kind,payload,snapshot_fuel,now,cancelled);
 }
 fn Result<usize,Error> reply_exchange(ref mut Exchange e,usize run,usize request,u8 kind,
-    ref u8[] payload,usize snapshot_fuel,usize now,bool cancelled,usize copy_limit){
+    ref u8[] payload,usize snapshot_fuel,usize now,bool cancelled){
     let usize checked=checkpoint(e,now,cancelled)?;
     if(state(e).phase!=1){return .err(.State);}
     if(run!=state(e).run || request!=state(e).request){return .err(.Identity);}
     if(payload.len>wire::payload_limit()){return stop(e,4,now);}
-    if(payload.len>copy_limit){return .err(.Malformed);}
     // A syntactically valid reply exceeding a reduced policy is terminal. The
     // hard wire ceiling rejects metadata before trusting any payload length.
     let wire::Field value=switch(wire::decode_reply(kind,result_tag(e),payload,wire::payload_limit())){
@@ -263,14 +262,17 @@ fn Result<usize,Error> reply_budget(ref mut Exchange e,usize length,usize fuel,u
 fn void commit_reply(ref mut Exchange e,u8 kind,usize length,usize fuel,usize now){
     var Observation s=state(e);s.replies+=length;s.fuel-=fuel;s.phase=2;
     save(e,s);
-    // Reply kind is in the unused fixed header byte, with identical authority.
-    let ref mut u8[] h=unsafe { byte_slice::from_raw_parts_mut(e,e.header_data,80) };h[3]=kind;
+    save_reply_kind(e,kind);
     if(kind==2){terminate(e,3,now);}
 }
 fn u8 result_tag(ref Exchange e){
     return switch(catalog::result_tag(bound_catalog(e),state(e).import_id)){
         case .ok(v):{v}case .err(_):{assert(false);0}
     };
+}
+// The fixed header carries the kind through receipt and installation.
+fn void save_reply_kind(ref mut Exchange e,u8 kind){
+    let ref mut u8[] h=unsafe { byte_slice::from_raw_parts_mut(e,e.header_data,80) };h[3]=kind;
 }
 fn u8 reply_kind(ref Exchange e){return bytes::view(ref e.header)[3];}
 fn ref u8[] reply_bytes(ref Exchange e){return bytes::view(ref e.backing);}
@@ -482,29 +484,34 @@ fn ScalarEvent scalar_event(ref Exchange e){
     return ScalarEvent{.phase=phase,.host=host,.value=if(phase==3){load_cell(data,84,1)}else{0},
         .failure=failure,.host_error=if(failure==3){load_cell(data,84,11)}else{0}};
 }
-pub fn Result<ScalarEvent,ScalarError> reply_scalar(ref mut Exchange e,usize run,usize request,u8 kind,
-    ref u8[] payload,usize now,bool cancelled){
-    if(!is_scalar(e) || header(e)[81]!=0){return .err(.State);}
-    let Result<usize,Error> committed=reply_exchange(e,run,request,kind,payload,payload.len,now,cancelled,4096);
-    if(!committed.is_ok && state(e).phase!=3){return .err(.Rejected);}
-    return .ok(scalar_event(e));
+// Compact scalar values can be split inside the TLV body. Validate a final
+// fragment without mutating the retained prefix, so a bad value can be retried.
+fn bool valid_compact_end(u8 kind,u8 tag,ref u8[] prefix,ref u8[] chunk,usize total){
+    var u8[16] message=[0;16];
+    var usize i=0;
+    while(i<prefix.len){message[i]=prefix[i];i+=1;}
+    while(i<total){message[i]=chunk[i-prefix.len];i+=1;}
+    return wire::decode_reply(kind,tag,ref message[..total],total).is_ok;
 }
-// Each call owns its slice only for the duration of the copy. The first piece
-// includes the byte TLV header. The total is stored at 4200 until commit, when
-// that word becomes the zero-initialized installation cursor again.
+// Each call owns its slice only for the duration of the copy. For a nonempty
+// envelope the first piece carries the whole TLV header, which pins the total.
 pub fn Result<ScalarEvent,ScalarError> receive_scalar_reply(ref mut Exchange e,usize run,usize request,
-    usize total,usize offset,ref u8[] chunk,usize now){
+    u8 kind,usize total,usize offset,ref u8[] chunk,usize now){
     if(!is_scalar(e) || header(e)[81]!=0){return .err(.State);}
     let Observation current=poll_exchange(e,now,false);
     if(current.phase==3){return .ok(scalar_event(e));}
     if((current.phase!=1 && current.phase!=4) || current.run!=run || current.request!=request ||
-        chunk.len==0 || chunk.len>4096 || offset>total || chunk.len>total-offset){
+        chunk.len>4096 || offset>total || chunk.len>total-offset || (chunk.len==0 && total!=0)){
         return .err(.Rejected);
     }
+    let bool complete=offset+chunk.len==total;
+    let u8 tag=result_tag(e);
     if(current.phase==1){
-        if(offset!=0 || result_tag(e)!=7){return .err(.Rejected);}
+        if(offset!=0){return .err(.Rejected);}
         if(total>wire::payload_limit()){discard stop(e,4,now);return .ok(scalar_event(e));}
-        if(!wire::byte_reply_prefix(chunk,total).is_ok){return .err(.Rejected);}
+        let bool valid=if(complete){wire::decode_reply(kind,tag,chunk,total).is_ok}
+            else{wire::reply_prefix(kind,tag,chunk,total).is_ok};
+        if(!valid){return .err(.Rejected);}
         if(!reply_budget(e,total,total,now).is_ok){return .ok(scalar_event(e));}
         var bytes::Buffer prepared=switch(bytes::with_capacity(total)){
             case .ok(v):{v}case .err(_):{return .err(.Allocation);}
@@ -512,16 +519,21 @@ pub fn Result<ScalarEvent,ScalarError> receive_scalar_reply(ref mut Exchange e,u
         if(!bytes::append(ref mut prepared,chunk).is_ok){return .err(.Allocation);}
         let bytes::Buffer old=replace_buffer(e,prepared);
     }else{
-        if(total!=read(header(e),4200) || offset!=reply_bytes(e).len){return .err(.Rejected);}
+        let ref u8[] prefix=reply_bytes(e);
+        if(kind!=reply_kind(e) || offset!=prefix.len || !wire::reply_prefix(kind,tag,prefix,total).is_ok){
+            return .err(.Rejected);
+        }
+        if(complete && (kind!=0 || tag!=7) && !valid_compact_end(kind,tag,prefix,chunk,total)){
+            return .err(.Rejected);
+        }
         // Exact capacity was reserved before swapping out the waiting request.
         let u32 status=unsafe{append_buffer_raw(e as ptr mut void,chunk as ptr u8,chunk.len)};
         if(status!=0){return .err(.Allocation);}
     }
-    if(offset+chunk.len==total){
-        write(scalar_header(e),4200,0);
-        commit_reply(e,0,total,total,now);
-    }else{
-        write(scalar_header(e),4200,total);
+    if(complete){
+        commit_reply(e,kind,total,total,now);
+    }else if(current.phase==1){
+        save_reply_kind(e,kind);
         var Observation receiving=current;receiving.phase=4;save(e,receiving);
     }
     return .ok(scalar_event(e));

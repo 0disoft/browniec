@@ -1,10 +1,8 @@
-- Latest runtime checkpoint (2026-11-19): [Bounded byte reply receipt](docs/engineering/host-exchange.md#bounded-byte-reply-receipt)
-  accepts at most 4,096 wire bytes per call and publishes only complete replies.
-  Windows development and /O2 verify mid-receipt cancellation and deadline
-  expiry, exact final bytes, no continuation allocations and zero live SDK
-  allocations. Root locked check passes 376 sources / 4199 MIR functions.
-  Public delivery remains open. The
-  [stack regression record](docs/engineering/native-stack-regressions.md)
+- Latest runtime checkpoint (2026-11-19): [Compact and empty reply receipt](docs/engineering/host-exchange.md#compact-and-empty-reply-receipt)
+  shares the bounded receipt path with byte replies. Windows development and
+  /O2 verify interrupted scalar and empty replies, reservation refunds and zero
+  live SDK allocations. Root locked check passes 376 sources / 4200 MIR
+  functions. The [stack regression record](docs/engineering/native-stack-regressions.md)
   preserves the earlier public O2 timeout.
 
 # Brownie C agent guidance

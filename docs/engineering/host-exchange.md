@@ -230,6 +230,32 @@ byte. Both profiles exit with zero live SDK allocations. Root fairyc
 check --locked verifies 376 sources and 4,199 MIR functions. The local
 receipt is build/runtime-engine/20261118T180948817537Z/receipt.json.
 
+## Compact and empty reply receipt
+
+The private Engine uses the same 4,096-wire-byte receipt path for scalar and
+byte-range successes, host Result errors, and empty fatal replies. Each piece
+identifies the Instance, run, request and reply kind. A nonempty envelope starts
+with the complete eight-byte TLV header, even when its body is empty. Later
+pieces must match the kind, declared total and exact next offset. Compact
+scalar bodies are validated before the final piece is appended. Invalid values
+leave the retained prefix available for a corrected piece.
+
+The guest stays paused until receipt completes. Completion charges reply Fuel
+and the byte counter once. The next step installs the scalar or selects the
+Result arm. An empty byte-range success uses an eight-byte envelope. An empty
+fatal reply uses zero wire bytes and completes in one call. The same deadline
+checkpoint runs before accepting that call. Cancellation and expiry discard the
+prefix and release the Instance reservation.
+
+Windows development and /O2 pass fragmented i32 success and u32 Result
+error replies, empty byte success, and zero-byte fatal replies. Cancellation and
+deadline expiry before the final i32 fragment or before submitting an empty
+fatal reply leave the guest result, reply byte count and Fuel unchanged. Both
+stop paths return the Instance reservation. Both profiles exit with zero live SDK
+allocations. Root fairyc check --locked passes 376 sources and 4,200 MIR
+functions. The local receipt is
+build/runtime-engine/20261118T190054125071Z/receipt.json.
+
 ## Resumable byte reply installation
 
 Complete receipt validates the wire envelope and charges its Fuel once.

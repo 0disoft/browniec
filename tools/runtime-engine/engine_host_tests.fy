@@ -460,7 +460,7 @@ fn Result<usize,u8> variable_bytes(){
     assert(!engine::reply_scalar_host(ref mut owner,a,b,1,0,b"\x07\x00\x00\x00\x02\x00\x00\x00x").is_ok);
     assert(!engine::reply_scalar_host(ref mut owner,a,a,1,0,b"\x07\x00\x00\x00\x02\x00\x00\x00x").is_ok);
     assert(event(engine::reply_scalar_host(ref mut owner,a,a,1,0,b"\x07\x00\x00\x00\x06\x00\x00\x00hello\xff")).kind==0);
-    assert(event(engine::reply_scalar_host(ref mut owner,b,b,1,0,b"\x07\x00\x00\x00\x00\x00\x00\x00")).kind==0);
+    assert(event(engine::receive_host_reply(ref mut owner,b,b,1,0,8,0,b"\x07\x00\x00\x00\x00\x00\x00\x00")).kind==0);
     assert(event(engine::step_instance(ref mut owner,a,8)).kind==4);
     assert(event(engine::step_instance(ref mut owner,b,8)).kind==4);
     check_bytes(ref owner,a,b"hello\xff");check_bytes(ref owner,b,b"");
@@ -521,8 +521,13 @@ fn Result<usize,u8> result_branch(){
     assert(event(engine::step_instance(ref mut owner,b,8)).kind==4);
     assert(event(engine::step_instance(ref mut owner,c,8)).kind==4);
     assert(event(engine::reply_scalar_host(ref mut owner,a,a,1,0,answer())).kind==0);
-    assert(event(engine::reply_scalar_host(ref mut owner,b,b,1,1,b"\x05\x00\x00\x00\x04\x00\x00\x00\xff\xff\xff\xff")).kind==0);
-    assert(event(engine::reply_scalar_host(ref mut owner,c,c,1,2,b"")).kind==2);
+    let ref u8[] host_error=b"\x05\x00\x00\x00\x04\x00\x00\x00\xff\xff\xff\xff";
+    let usize fuel=scalar(ref owner,b).host.fuel;
+    assert(event(engine::receive_host_reply(ref mut owner,b,b,1,1,12,0,host_error[..9])).remaining==fuel);
+    receiving_invisible(ref owner,b,fuel);
+    assert(!engine::receive_host_reply(ref mut owner,b,b,1,0,12,9,host_error[9..]).is_ok);
+    assert(event(engine::receive_host_reply(ref mut owner,b,b,1,1,12,9,host_error[9..])).remaining==fuel-12);
+    assert(event(engine::receive_host_reply(ref mut owner,c,c,1,2,0,0,b"")).kind==2);
     assert(scalar(ref owner,c).host.cause==3);
     assert(event(engine::step_instance(ref mut owner,a,8)).value==42);
     assert(event(engine::step_instance(ref mut owner,b,8)).kind==4);
@@ -627,7 +632,7 @@ fn void stage_large_reply(ref mut engine::Engine owner,usize instance,ref u8[] r
     assert(accepted.kind==0 && accepted.remaining==fuel);
 }
 fn engine::Event receive_piece(ref mut engine::Engine owner,usize instance,ref u8[] reply,usize from,usize to){
-    return event(engine::receive_host_reply(owner,instance,instance,1,reply.len,from,reply[from..to]));
+    return event(engine::receive_host_reply(owner,instance,instance,1,0,reply.len,from,reply[from..to]));
 }
 fn void receiving_invisible(ref engine::Engine owner,usize instance,usize fuel){
     let host::ScalarEvent waiting=scalar(owner,instance);
@@ -658,11 +663,11 @@ fn Result<usize,u8> chunked_receive(){
 
     unsafe{probe_rebase()};
     assert(!engine::reply_scalar_host(ref mut owner,complete,complete,1,0,wire_reply).is_ok);
-    assert(!engine::receive_host_reply(ref mut owner,complete,complete,1,total,0,wire_reply[..4097]).is_ok);
-    assert(!engine::receive_host_reply(ref mut owner,complete,complete,1,total-1,0,wire_reply[..4096]).is_ok);
+    assert(!engine::receive_host_reply(ref mut owner,complete,complete,1,0,total,0,wire_reply[..4097]).is_ok);
+    assert(!engine::receive_host_reply(ref mut owner,complete,complete,1,0,total-1,0,wire_reply[..4096]).is_ok);
     assert(unsafe{probe_attempts()}==0);
     unsafe{bc_runtime_engine_test_fail(0)};
-    assert(!engine::receive_host_reply(ref mut owner,complete,complete,1,total,0,wire_reply[..4096]).is_ok);
+    assert(!engine::receive_host_reply(ref mut owner,complete,complete,1,0,total,0,wire_reply[..4096]).is_ok);
     unsafe{bc_runtime_engine_test_fail(-1)};
     check_bytes(ref owner,complete,b"a\x00\xff");
     assert(scalar(ref owner,complete).host.fuel==fuel && scalar(ref owner,complete).host.replies==0);
@@ -677,10 +682,10 @@ fn Result<usize,u8> chunked_receive(){
     receiving_invisible(ref owner,expired,fuel);
 
     unsafe{probe_rebase()};
-    assert(!engine::receive_host_reply(ref mut owner,complete,cancelled,1,total,4096,wire_reply[4096..8192]).is_ok);
-    assert(!engine::receive_host_reply(ref mut owner,complete,complete,1,total,0,wire_reply[..4096]).is_ok);
-    assert(!engine::receive_host_reply(ref mut owner,complete,complete,1,total,4097,wire_reply[4097..8192]).is_ok);
-    assert(!engine::receive_host_reply(ref mut owner,complete,complete,1,total+1,4096,wire_reply[4096..8192]).is_ok);
+    assert(!engine::receive_host_reply(ref mut owner,complete,cancelled,1,0,total,4096,wire_reply[4096..8192]).is_ok);
+    assert(!engine::receive_host_reply(ref mut owner,complete,complete,1,0,total,0,wire_reply[..4096]).is_ok);
+    assert(!engine::receive_host_reply(ref mut owner,complete,complete,1,0,total,4097,wire_reply[4097..8192]).is_ok);
+    assert(!engine::receive_host_reply(ref mut owner,complete,complete,1,0,total+1,4096,wire_reply[4096..8192]).is_ok);
     assert(event(engine::step_instance(ref mut owner,complete,4096)).kind==0);
     receiving_invisible(ref owner,complete,fuel);
     assert(receive_piece(ref mut owner,complete,wire_reply,4096,8192).remaining==fuel);
@@ -692,7 +697,7 @@ fn Result<usize,u8> chunked_receive(){
     assert(unsafe{probe_attempts()}==0);
 
     assert(event(engine::cancel_ready(ref mut owner,cancelled)).kind==3);
-    assert(!engine::receive_host_reply(ref mut owner,cancelled,cancelled,1,total,4096,wire_reply[4096..8192]).is_ok);
+    assert(!engine::receive_host_reply(ref mut owner,cancelled,cancelled,1,0,total,4096,wire_reply[4096..8192]).is_ok);
     terminated_receive(ref owner,cancelled,1,fuel);
     ledger(ref owner,2*charge,peak);
 
@@ -713,6 +718,66 @@ fn Result<usize,u8> chunked_receive(){
     assert(id(engine::destroy_instance(ref mut owner,complete))==complete);
     assert(id(engine::destroy_instance(ref mut owner,cancelled))==cancelled);
     assert(id(engine::destroy_instance(ref mut owner,expired))==expired);
+    assert(id(engine::release_program(ref mut owner,p))==p);
+    assert(id(engine::destroy(ref mut owner))==0);
+    return .ok(1);
+}
+fn Result<usize,u8> compact_receive(){
+    let policy::Policy ceiling=parsed_policy(true)?;
+    let runs::RunConfig run=config(ref ceiling,true)?;
+    var engine::Engine owner=configured(ceiling)?;
+    let catalog::Catalog imports=catalog_from(json())?;
+    let u32[8] expected=digest(ref imports)?;
+    let ir::Program code=candidate()?;
+    let usize p=id(engine::retain_scalar_host(ref mut owner,ref code,imports,ref expected,ref run));
+    let usize done=waiting(ref mut owner,p,ref run).run;
+    let usize charge=instance_bytes(ref owner);
+    let usize cancelled=waiting(ref mut owner,p,ref run).run;
+    let usize expired=waiting(ref mut owner,p,ref run).run;
+    let usize empty_cancelled=waiting(ref mut owner,p,ref run).run;
+    let usize empty_expired=waiting(ref mut owner,p,ref run).run;
+    let usize fuel=9999984;
+    let ref u8[] message=answer();
+    assert(!engine::receive_host_reply(ref mut owner,done,done,1,0,0,0,b"").is_ok);
+    assert(!engine::receive_host_reply(ref mut owner,done,done,1,2,12,0,message[..8]).is_ok);
+    assert(!engine::receive_host_reply(ref mut owner,done,done,1,0,13,0,message[..8]).is_ok);
+    assert(event(engine::receive_host_reply(ref mut owner,done,done,1,0,12,0,message[..8])).remaining==fuel);
+    assert(event(engine::receive_host_reply(ref mut owner,cancelled,cancelled,1,0,12,0,message[..9])).remaining==fuel);
+    assert(event(engine::receive_host_reply(ref mut owner,expired,expired,1,0,12,0,message[..11])).remaining==fuel);
+    receiving_invisible(ref owner,done,fuel);
+    receiving_invisible(ref owner,cancelled,fuel);
+    receiving_invisible(ref owner,expired,fuel);
+    assert(event(engine::step_instance(ref mut owner,expired,8)).kind==0);
+    assert(!engine::receive_host_reply(ref mut owner,done,done,1,2,0,0,b"").is_ok);
+
+    unsafe{probe_rebase()};
+    assert(event(engine::receive_host_reply(ref mut owner,done,done,1,0,12,8,message[8..])).remaining==fuel-12);
+    assert(unsafe{probe_attempts()}==0);
+    assert(scalar(ref owner,done).host.replies==12);
+    let engine::Event finished=event(engine::step_instance(ref mut owner,done,8));
+    assert(finished.kind==1 && finished.value==42 && finished.remaining==fuel-13);
+    assert(event(engine::cancel_ready(ref mut owner,cancelled)).kind==3);
+    assert(!engine::receive_host_reply(ref mut owner,cancelled,cancelled,1,0,12,9,message[9..]).is_ok);
+    terminated_receive(ref owner,cancelled,1,fuel);
+    assert(event(engine::cancel_ready(ref mut owner,empty_cancelled)).kind==3);
+    assert(!engine::receive_host_reply(ref mut owner,empty_cancelled,empty_cancelled,1,2,0,0,b"").is_ok);
+    terminated_receive(ref owner,empty_cancelled,1,fuel);
+    ledger(ref owner,2*charge,5*charge);
+
+    unsafe{bc_runtime_engine_test_set_clock(10001000)};
+    let engine::Event elapsed=event(engine::receive_host_reply(ref mut owner,expired,expired,1,0,12,11,message[11..]));
+    assert(elapsed.kind==2 && elapsed.diagnostic.code.kind==errors::deadline_kind());
+    terminated_receive(ref owner,expired,2,fuel);
+    let engine::Event late_empty=event(engine::receive_host_reply(ref mut owner,empty_expired,empty_expired,1,2,0,0,b""));
+    assert(late_empty.kind==2 && late_empty.diagnostic.code.kind==errors::deadline_kind());
+    terminated_receive(ref owner,empty_expired,2,fuel);
+    ledger(ref owner,0,5*charge);
+
+    assert(id(engine::destroy_instance(ref mut owner,done))==done);
+    assert(id(engine::destroy_instance(ref mut owner,cancelled))==cancelled);
+    assert(id(engine::destroy_instance(ref mut owner,expired))==expired);
+    assert(id(engine::destroy_instance(ref mut owner,empty_cancelled))==empty_cancelled);
+    assert(id(engine::destroy_instance(ref mut owner,empty_expired))==empty_expired);
     assert(id(engine::release_program(ref mut owner,p))==p);
     assert(id(engine::destroy(ref mut owner))==0);
     return .ok(1);
@@ -746,6 +811,9 @@ pub fn void run(){
     unsafe{bc_runtime_engine_test_use_os_clock()};
     unsafe{bc_runtime_engine_test_set_clock(1000)};
     assert(chunked_receive().is_ok);
+    unsafe{bc_runtime_engine_test_use_os_clock()};
+    unsafe{bc_runtime_engine_test_set_clock(1000)};
+    assert(compact_receive().is_ok);
     unsafe{bc_runtime_engine_test_use_os_clock()};
     assert(deadline_order().is_ok);
     unsafe{bc_runtime_engine_test_use_os_clock()};
