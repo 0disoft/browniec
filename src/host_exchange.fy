@@ -520,7 +520,6 @@ fn Result<ScalarEvent,ScalarError> install_scalar(ref mut Exchange e,usize dst,u
         case .ok(v):{v}case .err(_):{return .err(.State);}
     };
     let wire::Field field=output_field(ref output);
-    if(field.tag==7){return install_bytes(e,dst,output_bytes(ref output),now);}
     let ref mut u8[] data=scalar_header(e);
     if(output_kind(ref output)==1){
         let usize at=96+8*(data[80] as usize);
@@ -536,15 +535,42 @@ fn Result<ScalarEvent,ScalarError> install_scalar(ref mut Exchange e,usize dst,u
     }
     return .ok(scalar_event(e));
 }
-fn Result<ScalarEvent,ScalarError> install_bytes(ref mut Exchange e,usize dst,ref u8[] payload,usize now){
+// 4192 holds the committed arena end. 4200 is the unpublished reply cursor.
+fn Result<ScalarEvent,ScalarError> install_bytes(ref mut Exchange e,usize dst,usize now,ref mut usize work){
+    let wire::Field field=switch(wire::decode_reply(0,7,reply_bytes(e),e.limits.reply_bytes)){
+        case .ok(v):{v}case .err(_):{return .err(.State);}
+    };
     let ref u8[] current=header(e);
     let usize start=read(current,4192);
-    if(payload.len>current.len-start){discard stop(e,4,now);return .ok(scalar_event(e));}
-    let ref mut u8[] data=scalar_header(e);
-    var usize i=0;
-    while(i<payload.len){data[start+i]=payload[i];i+=1;}
-    write(data,4192,start+payload.len);
-    set_reg(data,dst,pack_blob(start,payload.len));data[80]+=1;
+    let usize copied=read(current,4200);
+    if(start>current.len || copied>field.length){return .err(.State);}
+    if(field.length>current.len-start){discard stop(e,4,now);return .ok(scalar_event(e));}
+    let usize left=field.length-copied;
+    let usize count=if(left<*work){left}else{*work};
+    *work-=if(count==0){1}else{count};
+
+    // Move only Buffer metadata. The source allocation stays immutable, and
+    // the arena and source have disjoint owners throughout the copy.
+    let bytes::Buffer backing=replace_buffer(e,bytes::empty());
+    let usize next=copied+count;
+    {
+        let ref u8[] source=bytes::view(ref backing);
+        let ref mut u8[] data=scalar_header(e);
+        var usize i=copied;
+        while(i<next){data[start+i]=source[field.start+i];i+=1;}
+        if(next==field.length){
+            write(data,4192,start+next);
+            write(data,4200,0);
+            set_reg(data,dst,pack_blob(start,next));data[80]+=1;
+        }else{
+            write(data,4200,next);
+        }
+    }
+    if(next<field.length){
+        let bytes::Buffer empty=replace_buffer(e,backing);
+        return .ok(scalar_event(e));
+    }
+    var Observation s=state(e);s.phase=0;save(e,s);
     return .ok(scalar_event(e));
 }
 fn void dispatch_scalar(ref mut u8[] data,u8 op,usize dst,usize a,usize b,usize at){
@@ -576,10 +602,14 @@ fn void dispatch_scalar(ref mut u8[] data,u8 op,usize dst,usize a,usize b,usize 
     };
     set_reg(data,dst,value);data[80]+=1;
 }
-// One step executes one instruction or installs one reply. Waiting performs
-// one checkpoint, without moving the PC, spending Fuel or calling an adapter.
 pub fn Result<ScalarEvent,ScalarError> step_scalar(ref mut Exchange e,usize now,bool cancelled){
-    if(!is_scalar(e)){return .err(.State);}
+    var usize work=4096;
+    return step_scalar_budget(e,now,cancelled,ref mut work);
+}
+// One checkpoint executes one instruction or advances one reply. A byte reply
+// spends one work unit per copied byte. Fuel was charged at acceptance.
+pub fn Result<ScalarEvent,ScalarError> step_scalar_budget(ref mut Exchange e,usize now,bool cancelled,ref mut usize work){
+    if(!is_scalar(e) || *work==0 || *work>4096){return .err(.State);}
     if(header(e)[81]!=0){return .ok(scalar_event(e));}
     let Observation host=poll_exchange(e,now,cancelled);
     if(host.phase==1 || host.phase==3){return .ok(scalar_event(e));}
@@ -591,8 +621,10 @@ pub fn Result<ScalarEvent,ScalarError> step_scalar(ref mut Exchange e,usize now,
     let usize b=data[at+3] as usize;
     if(host.phase==2){
         if((op!=programs::request_opcode() && !programs::typed_request(op)) || b!=host.import_id){return .err(.State);}
-        return install_scalar(e,dst,now);
-    }
+        if(reply_kind(e)==0 && result_tag(e)==7){return install_bytes(e,dst,now,work);}
+    };
+    *work-=1;
+    if(host.phase==2){return install_scalar(e,dst,now);}
     if(programs::typed_request(op)){return publish_typed(e,b,a,now);}
     if(op==programs::request_opcode()){
         let i64 value=reg(data,a);

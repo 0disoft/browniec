@@ -202,6 +202,29 @@ and cross-run rejection. The final values are 48 and 42 with zero live SDK
 allocations. Root fairyc check --locked verifies 376 sources and 4,191 MIR
 functions. Receipt is in build/runtime-engine/20261118T154919582849Z/receipt.json.
 
+## Resumable byte reply installation
+
+Reply acceptance still validates and snapshots the wire envelope and charges its
+Fuel once. Installation spends one unit of the Engine step allowance per byte
+copied into the preallocated arena, up to 4,096 bytes per step. An empty reply
+uses one work unit. Guest instructions and other reply installations use one
+unit each from the same allowance.
+
+While a copy is pending, the reply stays in phase 2 and the guest PC, destination
+register and committed arena end stay unchanged. The final chunk publishes the
+range and advances the PC together. Each chunk starts at the existing
+cancellation and deadline checkpoint. If either ends the run, the Engine drops
+the reply and arena and refunds their reservation.
+
+Windows development and /O2 verify an 8,195-byte reply with step allowances
+of 1, 4,096, 4,096, 1 and 1. The following guest request gets the exact
+reply bytes only after installation completes. Two peers stop mid-copy,
+one by cancellation and one by deadline. Neither emits a following
+request. Fuel stays fixed during copying, no allocation is attempted,
+and the stopped Instances return their reservations. Both profiles exit
+with zero live SDK allocations. Root fairyc check --locked verifies
+376 sources and 4,194 MIR functions. Receipt is in build/runtime-engine/20261118T164215423735Z/receipt.json.
+
 ## Guest Result branches
 
 Private opcode 121 binds a typed host call to two successors. A success

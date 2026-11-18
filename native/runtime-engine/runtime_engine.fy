@@ -878,7 +878,7 @@ fn u32 drive_host_owner(ref mut vec::Vec<host::Exchange> owners,u32 mode,usize q
         let usize now=unsafe{monotonic_ticks_raw()};
         let Result<host::ScalarEvent,host::ScalarError> action=if(mode==2){
             host::reply_scalar(exchange,run,request,kind,payload,now,false)
-        }else{host::step_scalar(exchange,now,mode==1)};
+        }else{host::step_scalar_budget(exchange,now,mode==1,ref mut remaining)};
         let host::ScalarEvent observed=switch(action){
             case .ok(value):{value}case .err(reason):{return switch(reason){
                 case .Rejected:{1}case .Allocation:{6}case .Authority:{5}case .State:{7}case .Binding:{7}
@@ -892,7 +892,6 @@ fn u32 drive_host_owner(ref mut vec::Vec<host::Exchange> owners,u32 mode,usize q
         *transition=HostTransition{.scalar=observed,.event=Event{.kind=event_kind,.value=observed.value,
             .diagnostic=diagnostics::absent(errors::make(diagnostic,0)),.remaining=observed.host.fuel,.fuel_known=true}};
         if(observed.phase!=0 || mode!=0){return 0;}
-        remaining-=1;
     }
     return 0;
 }

@@ -434,7 +434,7 @@ fn void check_bytes(ref engine::Engine owner,usize instance,ref u8[] expected){
         case .ok(v):{v}case .err(_):{assert(false);b""}
     };
     let u8[1] tags=[7];
-    let wire::Request decoded=switch(wire::decode_request(payload,ref tags,256)){
+    let wire::Request decoded=switch(wire::decode_request(payload,ref tags,wire::payload_limit())){
         case .ok(v):{v}case .err(_):{assert(false);wire::Request{.fields=[wire::empty_field();32],.count=0}}
     };
     let wire::Field field=decoded.fields[0];
@@ -536,6 +536,105 @@ fn Result<usize,u8> result_branch(){
     assert(id(engine::destroy(ref mut owner))==0);
     return .ok(1);
 }
+fn Result<bytes::Buffer,u8> large_reply(){
+    var bytes::Buffer message=switch(bytes::with_capacity(8203)){case .ok(v):{v}case .err(_):{return .err(1);}};
+    assert(bytes::resize_zeroed(ref mut message,8203).is_ok);
+    {
+        let ref mut u8[] data=bytes::view_mut(ref mut message);
+        data[0]=7;data[4]=3;data[5]=32;
+        var usize i=8;
+        while(i<data.len){
+            data[i]=if(i%2==0){165}else{90};i+=1;
+        }
+        data[8202]=255;
+    }
+    return .ok(message);
+}
+fn void invisible_reply(ref engine::Engine owner,usize instance,usize fuel){
+    let host::ScalarEvent pending=scalar(owner,instance);
+    assert(pending.phase==2 && pending.host.phase==2 && pending.value==0);
+    assert(pending.host.calls==1 && pending.host.request==1 && pending.host.replies==8203 && pending.host.fuel==fuel);
+    assert(!engine::host_request_payload(owner,instance).is_ok);
+}
+fn usize instance_bytes(ref engine::Engine owner){
+    return switch(engine::instance_memory(owner)){case .ok(v):{v.current}case .err(_):{assert(false);0}};
+}
+fn Result<usize,u8> chunked_reply(){
+    let policy::Policy ceiling=parsed_policy(true)?;
+    let runs::RunConfig run=config(ref ceiling,true)?;
+    var engine::Engine owner=configured(ceiling)?;
+    let catalog::Catalog imports=catalog_from(byte_catalog())?;
+    let u32[8] expected=digest(ref imports)?;
+    let ir::Program code=byte_code()?;
+    let usize p=id(engine::retain_scalar_host(ref mut owner,ref code,imports,ref expected,ref run));
+    let usize complete=id(engine::prepare_scalar_host(ref mut owner,p,ref run));
+    let usize charge=instance_bytes(ref owner);
+    let usize cancelled=id(engine::prepare_scalar_host(ref mut owner,p,ref run));
+    let usize expired=id(engine::prepare_scalar_host(ref mut owner,p,ref run));
+    let usize peak=3*charge;
+    let bytes::Buffer message=large_reply()?;
+    let ref u8[] wire_reply=bytes::view(ref message);
+    let usize fuel=10000000-1-14-wire_reply.len;
+    stage_large_reply(ref mut owner,complete,wire_reply,fuel);
+    stage_large_reply(ref mut owner,cancelled,wire_reply,fuel);
+    stage_large_reply(ref mut owner,expired,wire_reply,fuel);
+    ledger(ref owner,peak,peak);
+
+    unsafe{probe_rebase()};
+    copy_pending(ref mut owner,complete,1,fuel);
+    copy_pending(ref mut owner,complete,4096,fuel);
+    copy_pending(ref mut owner,complete,4096,fuel);
+    copy_pending(ref mut owner,complete,1,fuel);
+    assert(!engine::reply_scalar_host(ref mut owner,complete,complete,1,0,wire_reply).is_ok);
+    invisible_reply(ref owner,complete,fuel);
+    let engine::Event installed=event(engine::step_instance(ref mut owner,complete,1));
+    assert(installed.kind==0 && installed.remaining==fuel);
+    assert(scalar(ref owner,complete).phase==0 && !engine::host_request_payload(ref owner,complete).is_ok);
+
+    copy_pending(ref mut owner,cancelled,4096,fuel);
+    copy_pending(ref mut owner,expired,4096,fuel);
+    assert(unsafe{probe_attempts()}==0);
+    assert(event(engine::cancel_ready(ref mut owner,cancelled)).kind==3);
+    terminal_without_bytes(ref owner,cancelled,1,fuel);
+    ledger(ref owner,2*charge,peak);
+    assert(event(engine::step_instance(ref mut owner,complete,2)).kind==4);
+    check_bytes(ref owner,complete,wire_reply[8..]);
+    assert(event(engine::reply_scalar_host(ref mut owner,complete,complete,2,0,answer())).kind==0);
+    let engine::Event done=event(engine::step_instance(ref mut owner,complete,8));
+    assert(done.kind==1 && done.value==8237);
+    ledger(ref owner,charge,peak);
+
+    unsafe{bc_runtime_engine_test_set_clock(10001000)};
+    let engine::Event elapsed=event(engine::step_instance(ref mut owner,expired,4096));
+    assert(elapsed.kind==2 && elapsed.diagnostic.code.kind==errors::deadline_kind());
+    terminal_without_bytes(ref owner,expired,2,fuel);
+    assert(event(engine::cancel_ready(ref mut owner,expired)).kind==2);
+    terminal_without_bytes(ref owner,expired,2,fuel);
+    ledger(ref owner,0,peak);
+
+    assert(id(engine::destroy_instance(ref mut owner,complete))==complete);
+    assert(id(engine::destroy_instance(ref mut owner,cancelled))==cancelled);
+    assert(id(engine::destroy_instance(ref mut owner,expired))==expired);
+    assert(id(engine::release_program(ref mut owner,p))==p);
+    assert(id(engine::destroy(ref mut owner))==0);
+    return .ok(1);
+}
+fn void stage_large_reply(ref mut engine::Engine owner,usize instance,ref u8[] reply,usize fuel){
+    assert(event(engine::step_instance(owner,instance,8)).kind==4);
+    let engine::Event accepted=event(engine::reply_scalar_host(owner,instance,instance,1,0,reply));
+    assert(accepted.kind==0 && accepted.remaining==fuel);
+}
+fn void copy_pending(ref mut engine::Engine owner,usize instance,usize work,usize fuel){
+    let engine::Event partial=event(engine::step_instance(owner,instance,work));
+    assert(partial.kind==0 && partial.value==0 && partial.remaining==fuel);
+    invisible_reply(owner,instance,fuel);
+}
+fn void terminal_without_bytes(ref engine::Engine owner,usize instance,u8 cause,usize fuel){
+    let host::ScalarEvent final_state=scalar(owner,instance);
+    assert(final_state.phase==4 && final_state.value==0 && final_state.host.cause==cause);
+    assert(final_state.host.calls==1 && final_state.host.replies==8203 && final_state.host.fuel==fuel);
+    assert(!engine::host_request_payload(owner,instance).is_ok);
+}
 pub fn void run(){
     unsafe{bc_runtime_engine_test_set_clock(1000)};
     assert(admission().is_ok);
@@ -544,6 +643,8 @@ pub fn void run(){
     assert(multi_arguments().is_ok);
     assert(variable_bytes().is_ok);
     assert(result_branch().is_ok);
+    assert(chunked_reply().is_ok);
+    unsafe{bc_runtime_engine_test_use_os_clock()};
     assert(deadline_order().is_ok);
     unsafe{bc_runtime_engine_test_use_os_clock()};
     assert(real_deadline().is_ok);

@@ -1,8 +1,9 @@
-- Latest runtime checkpoint (2026-11-19): [Engine typed host execution](docs/engineering/host-exchange.md#typed-host-arguments)
-  admits catalog-typed argument lists, variable-length byte values and verified
-  guest Result arms. Windows development and /O2 pass all three slices with zero
-  live SDK allocations. Root locked check passes 376 sources / 4193 MIR functions.
-  Resumable byte commits, source lowering and public delivery remain open. The
+- Latest runtime checkpoint (2026-11-19): [Resumable host byte replies](docs/engineering/host-exchange.md#resumable-byte-reply-installation)
+  use the Engine step allowance and publish only after copying the entire reply.
+  Windows development and /O2 verify exact final bytes, mid-copy cancellation
+  and deadline expiry, preserved Fuel and zero live SDK allocations. Root locked
+  check passes 376 sources / 4194 MIR functions. Resumable receipt snapshotting
+  and public delivery remain open. The
   [stack regression record](docs/engineering/native-stack-regressions.md)
   preserves the earlier public O2 timeout.
 
