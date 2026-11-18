@@ -15,6 +15,8 @@ pub fn u8 scalar_tag(u8 tag) {
     if(tag==4){return 9;} if(tag==5){return 11;} if(tag==6){return 12;}
     return 0;
 }
+// Private VM register tag for immutable byte ranges. It has no scalar encoding.
+pub fn u8 register_tag(u8 tag){return if(tag==7){14}else{scalar_tag(tag)};}
 fn bool valid(u8 tag) { return tag>=1 && tag<=7; }
 fn usize read_u32(ref u8[] input) {
     return input[0] as usize + input[1] as usize*256 +

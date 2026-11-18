@@ -32,11 +32,11 @@ fn bool typed_signature(ref ir::Program p,ref catalog::Catalog imports,usize at)
     if(dst>=p.registers || first>p.registers || argc>p.registers-first){return false;}
     let usize count=switch(catalog::parameter_count(imports,id)){case .ok(v):{v}case .err(_):{return false;}};
     let u8 result=switch(catalog::result_tag(imports,id)){case .ok(v):{v}case .err(_):{return false;}};
-    if(argc!=count || wire::scalar_tag(result)!=p.types[dst]){return false;}
+    if(argc!=count || wire::register_tag(result)!=p.types[dst]){return false;}
     var usize i=0;
     while(i<count){
         let u8 tag=switch(catalog::parameter_tag(imports,id,i)){case .ok(v):{v}case .err(_):{return false;}};
-        if(wire::scalar_tag(tag)!=p.types[first+i]){return false;}
+        if(wire::register_tag(tag)!=p.types[first+i]){return false;}
         i+=1;
     }
     return true;
@@ -54,10 +54,10 @@ pub fn bool typed(ref ir::Program code){
 fn Result<usize,Error> inspect(ref ir::Program code,ref catalog::Catalog imports){
     if(code.count==0 || code.count>256 || code.registers>128 ||
         code.function_count!=1 || code.entry!=0 || code.arrays.count!=0 ||
-        code.records.count!=0 || code.list_used!=0){return .err(.Code);}
+        code.records.count!=0 || code.list_used>4096){return .err(.Code);}
     var usize reg=0;
     while(reg<code.registers){
-        if(!types::scalar(code.types[reg])){return .err(.Code);}
+        if(!types::scalar(code.types[reg]) && code.types[reg]!=14){return .err(.Code);}
         reg+=1;
     }
     var ir::Program scalar=*code;
@@ -80,6 +80,8 @@ fn Result<usize,Error> inspect(ref ir::Program code,ref catalog::Catalog imports
         }else if(op==typed_request_opcode()){
             if(!typed_signature(code,imports,at)){return .err(.Catalog);}
             required|=one<<(code.code[at+3] as usize);
+        }else if(op==119 || op==120){
+            if(!typed(code)){return .err(.Code);}
         }else if(op==2){
             let usize dst=code.code[at+1] as usize;
             if(dst>=code.registers || code.types[dst]!=1){return .err(.Code);}

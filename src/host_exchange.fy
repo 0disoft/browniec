@@ -361,28 +361,41 @@ fn void load_image(ref mut Exchange e,ref ir::Program p){
     if(wide(data)){
         var usize i=0;
         while(i<p.constant_count){store_wide(data,3168+i*8,p.constants[i]);i+=1;}
+        let usize first=blob_base()+p.list_used;
+        write(data,4192,first);
+        i=0;while(i<p.list_used){data[blob_base()+i]=p.list_operands[i];i+=1;}
     }
 }
-struct EnvelopeBounds { usize request; usize reply; }
+// A typed byte cell packs a header-relative offset and exact length.
+fn usize blob_base(){return 4208;}
+fn i64 pack_blob(usize start,usize length){
+    return switch(num::i64_from_usize(start*4294967296+length)){case .ok(v):{v}case .err(_):{assert(false);0}};
+}
+fn usize blob_bits(i64 value){
+    return switch(num::usize_from_i64(value)){case .ok(v):{v}case .err(_):{assert(false);0}};
+}
+struct EnvelopeBounds { usize request; usize reply; usize byte_reply; }
 fn EnvelopeBounds typed_bounds(ref programs::Program p,policy_limits::RunLimits limits){
     let ref catalog::Catalog c=programs::imports(p);
     let usize required=programs::requirements(p);
     let usize one=1;
-    var usize request=0;var usize reply=0;var usize id=0;
+    var usize request=0;var usize reply=0;var usize byte_reply=0;var usize id=0;
     while(id<catalog::count(c)){
         if((required&(one<<id))!=0){
             let usize size=request_bound(c,id);
             if(size<=limits.host_request_bytes){
-                if(size>request){request=size;}
+                let usize possible=if(has_byte_arguments(c,id)){limits.host_request_bytes}else{size};
+                if(possible>request){request=possible;}
                 let u8 tag=success_tag(c,id);
-                let usize ok_size=8+scalar::width(wire::scalar_tag(tag));
-                if(ok_size<=limits.host_response_bytes && ok_size>reply){reply=ok_size;}
+                let usize ok_size=if(tag==7){limits.host_response_bytes}else{8+scalar::width(wire::scalar_tag(tag))};
+                if(ok_size>=8 && ok_size<=limits.host_response_bytes && ok_size>reply){reply=ok_size;}
+                if(tag==7 && ok_size>=8){byte_reply=ok_size-8;}
                 if(limits.host_response_bytes>=12 && reply<12){reply=12;}
             }
         }
         id+=1;
     }
-    return EnvelopeBounds{.request=request,.reply=reply};
+    return EnvelopeBounds{.request=request,.reply=reply,.byte_reply=byte_reply};
 }
 fn usize arg_count(ref catalog::Catalog c,usize id){
     return switch(catalog::parameter_count(c,id)){case .ok(v):{v}case .err(_):{assert(false);0}};
@@ -392,6 +405,16 @@ fn u8 arg_tag(ref catalog::Catalog c,usize id,usize index){
 }
 fn u8 success_tag(ref catalog::Catalog c,usize id){
     return switch(catalog::result_tag(c,id)){case .ok(v):{v}case .err(_):{assert(false);0}};
+}
+fn bool has_byte_arguments(ref catalog::Catalog c,usize id){
+    let usize count=arg_count(c,id);var usize i=0;
+    while(i<count){if(arg_tag(c,id,i)==7){return true;}i+=1;}
+    return false;
+}
+fn usize storage_size(ref ir::Program code,EnvelopeBounds envelope,policy_limits::RunLimits limits){
+    let usize replies=envelope.byte_reply*limits.host_calls;
+    let usize arena=if(replies<limits.object_bytes){replies}else{limits.object_bytes};
+    return blob_base()+code.list_used+arena;
 }
 fn usize request_bound(ref catalog::Catalog c,usize id){
     var usize total=2;var usize i=0;let usize count=arg_count(c,id);
@@ -414,13 +437,13 @@ pub fn Result<Exchange,ScalarError> create_scalar(ref programs::Program p,ref po
     var usize i=0;
     while(i<count){allowed[i]=(required&(one<<i))!=0;i+=1;}
     let bool typed=programs::typed(programs::code(p));
-    let EnvelopeBounds envelope=if(typed){typed_bounds(p,limits)}else{EnvelopeBounds{.request=14,.reply=12}};
+    let EnvelopeBounds envelope=if(typed){typed_bounds(p,limits)}else{EnvelopeBounds{.request=14,.reply=12,.byte_reply=0}};
     let Limits bounds=Limits{.request_bytes=limits.host_request_bytes,.reply_bytes=limits.host_response_bytes,
         .requests_total=envelope.request*limits.host_calls,.replies_total=envelope.reply*limits.host_calls,.calls=limits.host_calls,
         .adapter_per_call=0,.adapter_total=0};
     // The only source of the copy is the immutable catalog already bound by retain.
     let u32[8] digest=programs::binding(p);
-    let usize size=if(typed){typed_header_size()}else{scalar_header_size()};
+    let usize size=if(typed){storage_size(programs::code(p),envelope,limits)}else{scalar_header_size()};
     var Exchange e=switch(create_sized(exact,ref allowed[..count],bounds,run_id,limits.fuel,deadline,size,digest)){
         case .ok(v):{v}case .err(_):{return .err(.Allocation);}
     };
@@ -432,7 +455,7 @@ pub fn usize scalar_storage_bound(ref programs::Program p,policy_limits::RunLimi
     let usize catalog_bytes=catalog::duplicate_bytes(programs::imports(p));
     if(programs::typed(programs::code(p))){
         let EnvelopeBounds envelope=typed_bounds(p,limits);
-        return typed_header_size()+catalog_bytes+if(limits.host_calls==0){0}else{envelope.request+envelope.reply};
+        return storage_size(programs::code(p),envelope,limits)+catalog_bytes+if(limits.host_calls==0){0}else{envelope.request+envelope.reply};
     }
     let usize base=scalar_header_size()+catalog_bytes;
     if(programs::requirements(p)==0 || limits.host_calls==0 || limits.host_request_bytes<14){return base;}
@@ -473,17 +496,22 @@ fn Result<ScalarEvent,ScalarError> publish_typed(ref mut Exchange e,usize import
     var wire::Field[32] fields=[wire::empty_field();32];
     var usize i=0;
     while(i<count){
-        fields[i]=wire::Field{.tag=arg_tag(c,import_id,i),.scalar=reg(data,first+i),.start=0,.length=0};
+        let u8 tag=arg_tag(c,import_id,i);let i64 value=reg(data,first+i);
+        let usize bits=if(tag==7){blob_bits(value)}else{0};
+        fields[i]=wire::Field{.tag=tag,.scalar=value,.start=bits/4294967296,.length=bits%4294967296};
         i+=1;
     }
-    let usize length=request_bound(c,import_id);
+    let usize length=switch(wire::request_size(ref fields[..count],data,e.limits.request_bytes)){
+        case .ok(v):{v}
+        case .err(_):{discard stop(e,4,now);return .ok(scalar_event(e));}
+    };
     let usize fuel=1+length;
     if(!preflight_request(e,length,fuel,0,now).is_ok){return .ok(scalar_event(e));}
     var bytes::Buffer message=switch(bytes::with_capacity(length)){
         case .ok(v):{v}case .err(_):{return .err(.Allocation);}
     };
     assert(bytes::resize_zeroed(ref mut message,length).is_ok);
-    assert(wire::encode_request(ref fields[..count],b"",bytes::view_mut(ref mut message),length).is_ok);
+    assert(wire::encode_request(ref fields[..count],header(e),bytes::view_mut(ref mut message),length).is_ok);
     discard commit_request(e,import_id,message,length,fuel,0);
     return .ok(scalar_event(e));
 }
@@ -492,6 +520,7 @@ fn Result<ScalarEvent,ScalarError> install_scalar(ref mut Exchange e,usize dst,u
         case .ok(v):{v}case .err(_):{return .err(.State);}
     };
     let wire::Field field=output_field(ref output);
+    if(field.tag==7){return install_bytes(e,dst,output_bytes(ref output),now);}
     let ref mut u8[] data=scalar_header(e);
     if(output_kind(ref output)==1){
         data[81]=4;data[82]=3;store_cell(data,84,11,field.scalar);
@@ -500,7 +529,28 @@ fn Result<ScalarEvent,ScalarError> install_scalar(ref mut Exchange e,usize dst,u
     }
     return .ok(scalar_event(e));
 }
+fn Result<ScalarEvent,ScalarError> install_bytes(ref mut Exchange e,usize dst,ref u8[] payload,usize now){
+    let ref u8[] current=header(e);
+    let usize start=read(current,4192);
+    if(payload.len>current.len-start){discard stop(e,4,now);return .ok(scalar_event(e));}
+    let ref mut u8[] data=scalar_header(e);
+    var usize i=0;
+    while(i<payload.len){data[start+i]=payload[i];i+=1;}
+    write(data,4192,start+payload.len);
+    set_reg(data,dst,pack_blob(start,payload.len));data[80]+=1;
+    return .ok(scalar_event(e));
+}
 fn void dispatch_scalar(ref mut u8[] data,u8 op,usize dst,usize a,usize b,usize at){
+    if(op==119){
+        let usize start=blob_base()+a+b*256;
+        let usize length=data[at+4] as usize+256*(data[at+5] as usize);
+        set_reg(data,dst,pack_blob(start,length));data[80]+=1;return;
+    }
+    if(op==120){
+        let usize length=blob_bits(reg(data,a))%4294967296;
+        let i64 value=switch(num::i64_from_usize(length)){case .ok(v):{v}case .err(_):{assert(false);0}};
+        set_reg(data,dst,value);data[80]+=1;return;
+    }
     if(op==19 || op==22){data[80]=data[at+2];return;}
     if(op==20 || op==21){
         let bool taken=(reg(data,a)==0)==(op==20);

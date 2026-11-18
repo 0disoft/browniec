@@ -55,7 +55,7 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records
     var registers::Set defined = registers::empty();
     var usize i = start;
     while (i < end) {
-        if (p.record_parameters[i] == 0 && p.slice_parameters[i] == 0 && static_sites.parameters[i]==0 && value_sites.parameters[i]==0 && !types::valid(p.types[i])) { return .err(errors::make(5, p.starts[f])); }
+        if (p.record_parameters[i] == 0 && p.slice_parameters[i] == 0 && static_sites.parameters[i]==0 && value_sites.parameters[i]==0 && !types::valid(p.types[i]) && !(host_profile && p.types[i]==14)) { return .err(errors::make(5, p.starts[f])); }
         if (i < start + arity) {
             if (p.slots[i]) { return .err(errors::make(5, p.starts[f])); }
             registers::insert(ref mut written, i);
@@ -78,17 +78,27 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records
         let usize dst = p.code[at + 1] as usize;
         let usize a = p.code[at + 2] as usize;
         let usize b = p.code[at + 3] as usize;
-        if(host_profile && op==118){
+        if(host_profile && (op==118 || op==119 || op==120)){
+            if(dst<start || dst>=end || p.slots[dst] || registers::contains(ref written,dst) ||
+                p.code[at+6]!=0 || p.code[at+7]!=0){return .err(errors::make(5,pc));}
+            if(op==119){
+                let usize offset=a+256*b;
+                let usize length=p.code[at+4] as usize+256*(p.code[at+5] as usize);
+                if(p.types[dst]!=14 || offset>p.list_used || length>p.list_used-offset){return .err(errors::make(5,pc));}
+            }else if(op==120){
+                if(p.types[dst]!=1 || !readable(p,ref defined,a,start,end) || p.types[a]!=14 ||
+                    b!=0 || p.code[at+4]!=0 || p.code[at+5]!=0){return .err(errors::make(5,pc));}
+            }else{
             let usize count=p.code[at+4] as usize;
             if(count>32 || a>end || count>end-a || (count==0 && a!=0) ||
-                dst<start || dst>=end || p.slots[dst] || !types::scalar(p.types[dst]) ||
-                registers::contains(ref written,dst) || p.code[at+5]!=0 || p.code[at+6]!=0 || p.code[at+7]!=0){
+                (!types::scalar(p.types[dst]) && p.types[dst]!=14) || p.code[at+5]!=0){
                 return .err(errors::make(5,pc));
             }
             var usize arg=a;
             while(arg<a+count){
                 if(!readable(p,ref defined,arg,start,end)){return .err(errors::make(5,pc));}
                 arg+=1;
+            }
             }
             registers::insert(ref mut defined,dst);registers::insert(ref mut written,dst);
             if(pc+1>=p.ends[f] || !merge(ref mut states,ref mut seen,ref defined,pc+1,
@@ -345,7 +355,8 @@ fn Result<reborrows::Sites,errors::Error> validate_values_mode(ref ir::Program p
     if (p.count == 0 || p.count > 256 || p.registers == 0 || p.registers > 128 || p.constant_count > 128 ||
         p.function_count == 0 || p.function_count > 16 || p.entry >= p.function_count || p.call_count > 32) { return .err(errors::make(5, 0)); }
     if (!arrays::valid(ref p.arrays)) { return .err(errors::make(5, 0)); }
-    let usize list_metadata=lists::metadata(p)?;
+    if(host_profile){if(p.list_used>4096){return .err(errors::make(5,0));}}
+    else{let usize list_metadata=lists::metadata(p)?;}
     let records::Prepared shapes = records::prepare(ref p.records)?;
     var usize id = 0;
     while (id < 16) {

@@ -407,12 +407,80 @@ fn Result<usize,u8> multi_arguments(){
     assert(id(engine::destroy(ref mut owner))==0);
     return .ok(1);
 }
+fn ref u8[] byte_catalog(){return b"{\"schema\":\"brownie.catalog/1\",\"imports\":[{\"id\":0,\"module\":\"host::example\",\"symbol\":\"check\",\"parameters\":[\"ref u8[]\"],\"result\":\"Result<brownie::bytes::Buffer,u32>\",\"effect\":\"read\",\"capability\":\"host.example.check\",\"adapter_revision\":\"v1\"},{\"id\":1,\"module\":\"host::example\",\"symbol\":\"next\",\"parameters\":[\"ref u8[]\"],\"result\":\"Result<i32,u32>\",\"effect\":\"read\",\"capability\":\"host.example.check\",\"adapter_revision\":\"v1\"}]}";}
+fn Result<ir::Program,u8> byte_code(){
+    var ir::Program code=ir::empty();
+    let usize input=switch(ir::emit(ref mut code,119,0,0,0)){case .ok(v):{v}case .err(_):{return .err(1);}};
+    code.types[input]=14;code.code[4]=3;code.list_used=3;
+    code.list_operands[0]=97;code.list_operands[1]=0;code.list_operands[2]=255;
+    let usize value=switch(ir::emit(ref mut code,programs::typed_request_opcode(),input,0,0)){
+        case .ok(v):{v}case .err(_):{return .err(1);}
+    };
+    code.types[value]=14;code.code[12]=1;
+    let usize size=switch(ir::emit(ref mut code,120,value,0,0)){case .ok(v):{v}case .err(_):{return .err(1);}};
+    code.types[size]=1;
+    let usize acknowledged=switch(ir::emit(ref mut code,programs::typed_request_opcode(),value,1,0)){
+        case .ok(v):{v}case .err(_):{return .err(1);}
+    };
+    code.types[acknowledged]=1;code.code[28]=1;
+    let usize total=switch(ir::emit(ref mut code,2,size,acknowledged,0)){case .ok(v):{v}case .err(_):{return .err(1);}};
+    let usize returned=switch(ir::emit(ref mut code,8,total,0,0)){case .ok(v):{v}case .err(_):{return .err(1);}};
+    code.function_count=1;let usize end=code.count;let usize registers=code.registers;
+    code.ends[0]=end;code.register_ends[0]=registers;code.return_types[0]=1;
+    return .ok(code);
+}
+fn void check_bytes(ref engine::Engine owner,usize instance,ref u8[] expected){
+    let ref u8[] payload=switch(engine::host_request_payload(owner,instance)){
+        case .ok(v):{v}case .err(_):{assert(false);b""}
+    };
+    let u8[1] tags=[7];
+    let wire::Request decoded=switch(wire::decode_request(payload,ref tags,256)){
+        case .ok(v):{v}case .err(_):{assert(false);wire::Request{.fields=[wire::empty_field();32],.count=0}}
+    };
+    let wire::Field field=decoded.fields[0];
+    assert(field.length==expected.len && bytes::equal(payload[field.start..field.start+field.length],expected));
+}
+fn Result<usize,u8> variable_bytes(){
+    let policy::Policy ceiling=parsed_policy(true)?;
+    let runs::RunConfig run=config(ref ceiling,true)?;
+    var engine::Engine owner=configured(ceiling)?;
+    let catalog::Catalog imports=catalog_from(byte_catalog())?;
+    let u32[8] expected=digest(ref imports)?;
+    var ir::Program invalid=byte_code()?;
+    invalid.code[4]=4;
+    rejected(engine::retain_scalar_host(ref mut owner,ref invalid,catalog_from(byte_catalog())?,ref expected,ref run),4);
+    let ir::Program code=byte_code()?;
+    let usize p=id(engine::retain_scalar_host(ref mut owner,ref code,imports,ref expected,ref run));
+    let usize a=id(engine::prepare_scalar_host(ref mut owner,p,ref run));
+    let usize b=id(engine::prepare_scalar_host(ref mut owner,p,ref run));
+    assert(event(engine::step_instance(ref mut owner,a,8)).kind==4);
+    assert(event(engine::step_instance(ref mut owner,b,8)).kind==4);
+    check_bytes(ref owner,a,b"a\x00\xff");
+    check_bytes(ref owner,b,b"a\x00\xff");
+    assert(!engine::reply_scalar_host(ref mut owner,a,b,1,0,b"\x07\x00\x00\x00\x02\x00\x00\x00x").is_ok);
+    assert(!engine::reply_scalar_host(ref mut owner,a,a,1,0,b"\x07\x00\x00\x00\x02\x00\x00\x00x").is_ok);
+    assert(event(engine::reply_scalar_host(ref mut owner,a,a,1,0,b"\x07\x00\x00\x00\x06\x00\x00\x00hello\xff")).kind==0);
+    assert(event(engine::reply_scalar_host(ref mut owner,b,b,1,0,b"\x07\x00\x00\x00\x00\x00\x00\x00")).kind==0);
+    assert(event(engine::step_instance(ref mut owner,a,8)).kind==4);
+    assert(event(engine::step_instance(ref mut owner,b,8)).kind==4);
+    check_bytes(ref owner,a,b"hello\xff");check_bytes(ref owner,b,b"");
+    assert(event(engine::reply_scalar_host(ref mut owner,a,a,2,0,answer())).kind==0);
+    assert(event(engine::reply_scalar_host(ref mut owner,b,b,2,0,answer())).kind==0);
+    assert(event(engine::step_instance(ref mut owner,a,8)).value==48);
+    assert(event(engine::step_instance(ref mut owner,b,8)).value==42);
+    assert(id(engine::destroy_instance(ref mut owner,a))==a);
+    assert(id(engine::destroy_instance(ref mut owner,b))==b);
+    assert(id(engine::release_program(ref mut owner,p))==p);
+    assert(id(engine::destroy(ref mut owner))==0);
+    return .ok(1);
+}
 pub fn void run(){
     unsafe{bc_runtime_engine_test_set_clock(1000)};
     assert(admission().is_ok);
     assert(interleaved().is_ok);
     assert(pending_memory().is_ok);
     assert(multi_arguments().is_ok);
+    assert(variable_bytes().is_ok);
     assert(deadline_order().is_ok);
     unsafe{bc_runtime_engine_test_use_os_clock()};
     assert(real_deadline().is_ok);

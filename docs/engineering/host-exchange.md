@@ -188,6 +188,22 @@ register. Both native profiles exit 0 with zero live SDK allocations. Root
 fairyc check --locked verifies 376 sources and 4,184 MIR functions. Receipt:
 build/runtime-engine/20261118T154037971398Z/receipt.json.
 
+## Variable-length host values
+
+Typed requests accept byte ranges alongside scalar arguments. Private opcodes 119
+and 120 install an immutable literal range and read its length. A success reply
+carrying bytes is copied into Instance-owned storage. The guest can inspect its
+length and forward the range as another request. Admission accounts for the
+literal pool, the byte arena bounded by the run's object limit, and overlapping
+request and reply envelopes. Byte ranges are typed separately from scalar
+registers. The byte arena is retained until the execution ends.
+
+Windows development and /O2 pass the round trip across two Instances, including
+embedded zero and non-UTF-8 bytes, six-byte and empty replies, malformed replies,
+and cross-run rejection. The final values are 48 and 42 with zero live SDK
+allocations. Root fairyc check --locked verifies 376 sources and 4,191 MIR
+functions. Receipt is in build/runtime-engine/20261118T154919582849Z/receipt.json.
+
 ## Standalone coordinator ownership and API
 
 `create(Catalog, grants, Limits, run, fuel, deadline) -> Result<Exchange, Error>`
