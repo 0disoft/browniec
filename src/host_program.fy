@@ -1,0 +1,139 @@
+module host_program;
+
+import host_catalog as catalog;
+import ir as ir;
+import runtime_policy as policy;
+import runtime_run_config as runs;
+import std::bytes as bytes;
+import std::vec as vec;
+import verifier as verifier;
+
+// Private scalar host dialect. The ordinary verifier still rejects opcode 117.
+pub enum Error { Code; Catalog; Binding; Authority; Allocation; }
+struct Digest { u32[8] words; }
+pub resource Program {
+    vec::Vec<ir::Program> code;
+    catalog::Catalog catalog;
+    Digest digest;
+    usize required;
+    bytes::Buffer module_name;
+    bytes::Buffer function_name;
+    cleanup { }
+}
+
+pub fn u8 request_opcode(){return 117;}
+
+// HOST_REQUEST: dst=i32 destination, a=i32 argument, b=catalog import ID.
+// The independent scalar verifier checks the same input and output registers
+// through an ADD proxy. The proxy is temporary and never executes.
+fn Result<usize,Error> inspect(ref ir::Program code,ref catalog::Catalog imports){
+    if(code.count==0 || code.count>256 || code.registers>128 ||
+        code.function_count!=1 || code.entry!=0 || code.arrays.count!=0 ||
+        code.records.count!=0 || code.list_used!=0){return .err(.Code);}
+    var usize reg=0;
+    while(reg<code.registers){
+        if(code.types[reg]!=1 && code.types[reg]!=2){return .err(.Code);}
+        reg+=1;
+    }
+    var ir::Program scalar=*code;
+    var usize required=0;
+    var usize pc=0;
+    let usize one=1;
+    while(pc<code.count){
+        let usize at=pc*8;
+        let u8 op=code.code[at];
+        if(op==request_opcode()){
+            let usize dst=code.code[at+1] as usize;
+            let usize arg=code.code[at+2] as usize;
+            let usize id=code.code[at+3] as usize;
+            if(dst>=code.registers || arg>=code.registers ||
+                code.types[dst]!=1 || code.types[arg]!=1){return .err(.Code);}
+            if(!signature(imports,id)){return .err(.Catalog);}
+            scalar.code[at]=2;
+            scalar.code[at+3]=code.code[at+2];
+            required|=one<<id;
+        }else if(op==2){
+            let usize dst=code.code[at+1] as usize;
+            if(dst>=code.registers || code.types[dst]!=1){return .err(.Code);}
+        }else if(op!=1 && op!=8 && op!=19 && op!=20 && op!=21 && op!=22){
+            return .err(.Code);
+        }
+        pc+=1;
+    }
+    if(!verifier::verify(ref scalar).is_ok){return .err(.Code);}
+    return .ok(required);
+}
+
+fn bool signature(ref catalog::Catalog imports,usize id){
+    if(id>=catalog::count(imports)){return false;}
+    return switch(catalog::parameter_count(imports,id)){
+        case .ok(count):{count==1 && i32_argument(imports,id) && i32_result(imports,id)}
+        case .err(_):{false}
+    };
+}
+fn bool i32_argument(ref catalog::Catalog imports,usize id){
+    return switch(catalog::parameter_tag(imports,id,0)){case .ok(tag):{tag==3}case .err(_):{false}};
+}
+fn bool i32_result(ref catalog::Catalog imports,usize id){
+    return switch(catalog::result_tag(imports,id)){case .ok(tag):{tag==3}case .err(_):{false}};
+}
+pub fn bool same_digest(ref u32[] expected,ref u32[] actual){
+    if(expected.len!=8 || actual.len!=8){return false;}
+    var usize i=0;
+    while(i<8){if(expected[i]!=actual[i]){return false;}i+=1;}
+    return true;
+}
+
+fn bool allowed_imports(ref catalog::Catalog imports,usize required,ref runs::RunConfig run){
+    let usize one=1;
+    var usize id=0;
+    while(id<catalog::count(imports)){
+        if((required&(one<<id))!=0){
+            let ref u8[] cap=switch(catalog::capability(imports,id)){
+                case .ok(v):{v}case .err(_):{return false;}
+            };
+            if(!runs::declares(run,cap) || !runs::grants(run,cap)){return false;}
+        }
+        id+=1;
+    }
+    return true;
+}
+
+pub fn Result<Program,Error> retain(ref ir::Program code,catalog::Catalog imports,
+    ref u32[] expected,ref policy::Policy ceiling,ref runs::RunConfig run){
+    let u32[8] digest=switch(catalog::digest(ref imports)){
+        case .ok(v):{v}case .err(_):{return .err(.Catalog);}
+    };
+    if(!same_digest(expected,ref digest)){return .err(.Binding);}
+    let usize required=inspect(code,ref imports)?;
+    if(!runs::narrowed_to(run,ceiling) || !allowed_imports(ref imports,required,run)){
+        return .err(.Authority);
+    }
+    return publish(code,imports,digest,required,run);
+}
+
+fn Result<Program,Error> publish(ref ir::Program code,catalog::Catalog imports,u32[8] digest,
+    usize required,ref runs::RunConfig run){
+    let bytes::Buffer scope=switch(bytes::copy(runs::module_name(run))){
+        case .ok(v):{v}case .err(_):{return .err(.Allocation);}
+    };
+    let bytes::Buffer name=switch(bytes::copy(runs::function_name(run))){
+        case .ok(v):{v}case .err(_):{return .err(.Allocation);}
+    };
+    var vec::Vec<ir::Program> retained=vec::empty<ir::Program>();
+    if(!vec::reserve<ir::Program>(ref mut retained,1).is_ok){return .err(.Allocation);}
+    if(!vec::push<ir::Program>(ref mut retained,*code).is_ok){return .err(.Allocation);}
+    return .ok(Program{.code=retained,.catalog=imports,.digest=Digest{.words=digest},.required=required,
+        .module_name=scope,.function_name=name});
+}
+
+pub fn ref ir::Program code(ref Program p){return vec::at<ir::Program>(ref p.code,0);}
+pub fn ref catalog::Catalog imports(ref Program p){return ref p.catalog;}
+pub fn u32[8] binding(ref Program p){return p.digest.words;}
+pub fn usize requirements(ref Program p){return p.required;}
+
+pub fn bool allows(ref Program p,ref policy::Policy ceiling,ref runs::RunConfig run){
+    return bytes::equal(bytes::view(ref p.module_name),runs::module_name(run)) &&
+        bytes::equal(bytes::view(ref p.function_name),runs::function_name(run)) &&
+        runs::narrowed_to(run,ceiling) && allowed_imports(imports(p),p.required,run);
+}
