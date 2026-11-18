@@ -303,6 +303,17 @@ pub fn Result<host::ScalarEvent,Error> observe_scalar_host(ref Engine e,usize in
         case .ok(v):{.ok(v)}case .err(_):{.err(error(7))}
     };
 }
+// The borrow is scoped to the immutable Engine view. Copy into adapter-owned
+// storage before stepping, replying, cancelling or destroying the Instance.
+pub fn Result<ref u8[],Error> host_request_payload(ref Engine e,usize instance){
+    let usize oi=host_output_index(e,instance)?;
+    let ref Output owner=vec::at<Output>(ref e.outputs,oi);
+    let ref host::Exchange exchange=vec::at<host::Exchange>(ref owner.host,0);
+    if(host::deadline_reached(exchange,unsafe{monotonic_ticks_raw()})){return .err(error(11));}
+    return switch(host::request_bytes(exchange)){
+        case .ok(data):{.ok(data)}case .err(_):{.err(error(11))}
+    };
+}
 pub fn Result<HostRequest,Error> scalar_host_request(ref Engine e,usize instance){
     let usize oi=host_output_index(e,instance)?;
     let ref Output owner=vec::at<Output>(ref e.outputs,oi);

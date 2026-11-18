@@ -43,7 +43,7 @@ fn bool merge(ref mut usize[] states, ref mut bool[] seen, ref registers::Set de
     seen[target] = true;
     return true;
 }
-fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records::Prepared shapes, ref reborrows::Sites loans, ref statics::Sites static_sites, bool allow_reborrow_calls, u8 place_kind, ref mut bool[] used_calls,ref value_ir::Sites value_sites) {
+fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records::Prepared shapes, ref reborrows::Sites loans, ref statics::Sites static_sites, bool allow_reborrow_calls, u8 place_kind, ref mut bool[] used_calls,ref value_ir::Sites value_sites,bool host_profile) {
     let usize start = p.register_starts[f];
     let usize end = p.register_ends[f];
     let usize arity = p.arities[f];
@@ -78,6 +78,23 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records
         let usize dst = p.code[at + 1] as usize;
         let usize a = p.code[at + 2] as usize;
         let usize b = p.code[at + 3] as usize;
+        if(host_profile && op==118){
+            let usize count=p.code[at+4] as usize;
+            if(count>32 || a>end || count>end-a || (count==0 && a!=0) ||
+                dst<start || dst>=end || p.slots[dst] || !types::scalar(p.types[dst]) ||
+                registers::contains(ref written,dst) || p.code[at+5]!=0 || p.code[at+6]!=0 || p.code[at+7]!=0){
+                return .err(errors::make(5,pc));
+            }
+            var usize arg=a;
+            while(arg<a+count){
+                if(!readable(p,ref defined,arg,start,end)){return .err(errors::make(5,pc));}
+                arg+=1;
+            }
+            registers::insert(ref mut defined,dst);registers::insert(ref mut written,dst);
+            if(pc+1>=p.ends[f] || !merge(ref mut states,ref mut seen,ref defined,pc+1,
+                ref mut array_states,live,ref mut static_states,static_live)){return .err(errors::make(5,pc));}
+            pc+=1;continue;
+        }
         if(op==116){
             let usize checked=output_ir::inspect(p,static_sites,pc,f,live,static_live)?;
             if(pc+1>=p.ends[f] || !merge(ref mut states,ref mut seen,ref defined,pc+1,
@@ -321,10 +338,10 @@ fn Result<reborrows::Sites, errors::Error> validate(ref ir::Program p,bool allow
 }
 fn Result<reborrows::Sites,errors::Error> validate_values(ref ir::Program p,bool allow_reborrow_calls,
     u8 place_kind,ref statics::Sites static_sites,ref value_ir::Sites value_sites){
-    return validate_values_mode(p,allow_reborrow_calls,place_kind,static_sites,value_sites,false);
+    return validate_values_mode(p,allow_reborrow_calls,place_kind,static_sites,value_sites,false,false);
 }
 fn Result<reborrows::Sites,errors::Error> validate_values_mode(ref ir::Program p,bool allow_reborrow_calls,
-    u8 place_kind,ref statics::Sites static_sites,ref value_ir::Sites value_sites,bool input){
+    u8 place_kind,ref statics::Sites static_sites,ref value_ir::Sites value_sites,bool input,bool host_profile){
     if (p.count == 0 || p.count > 256 || p.registers == 0 || p.registers > 128 || p.constant_count > 128 ||
         p.function_count == 0 || p.function_count > 16 || p.entry >= p.function_count || p.call_count > 32) { return .err(errors::make(5, 0)); }
     if (!arrays::valid(ref p.arrays)) { return .err(errors::make(5, 0)); }
@@ -363,7 +380,7 @@ fn Result<reborrows::Sites,errors::Error> validate_values_mode(ref ir::Program p
     let usize record_results = struct_results::metadata(p)?;
     var bool[32] used_calls = [false; 32];
     f = 0;
-    while (f < p.function_count) { let usize checked = function(p, f, ref shapes, ref loans, static_sites, allow_reborrow_calls, place_kind, ref mut used_calls,value_sites)?; f += 1; }
+    while (f < p.function_count) { let usize checked = function(p, f, ref shapes, ref loans, static_sites, allow_reborrow_calls, place_kind, ref mut used_calls,value_sites,host_profile)?; f += 1; }
     let usize selected_places=places::inspect_prepared(p,ref shapes)?;
     var usize call = 0;
     while (call < p.call_count) { if (!used_calls[call]) { return .err(errors::make(5, 0)); } call += 1; }
@@ -443,6 +460,13 @@ pub fn Result<reborrows::Sites,errors::Error> verify_sites(ref ir::Program p){
 pub fn Result<usize, errors::Error> verify(ref ir::Program p) {
     let reborrows::Sites sites=verify_sites(p)?;return .ok(p.count);
 }
+// Scalar host admission checks catalog types before invoking this CFG proof.
+pub fn Result<usize,errors::Error> inspect_host(ref ir::Program p){
+    let statics::Sites static_sites=statics::empty();
+    let value_ir::Sites values=value_ir::empty();
+    let reborrows::Sites loans=validate_values_mode(p,false,4,ref static_sites,ref values,false,true)?;
+    return .ok(p.count);
+}
 // Analysis-only proof does not impose the executable derived CALL subset.
 pub fn Result<usize, errors::Error> inspect_reborrow_calls(ref ir::Program p) {
     let reborrows::Sites sites=plain(p,true)?;return .ok(p.count);
@@ -493,7 +517,7 @@ pub fn Result<ReferenceReturnProof,errors::Error> inspect_input_returns(ref imag
     let image_calls::Proof recipes=image_calls::inspect_input_returns(unit,image)?;
     let statics::Sites sites=image_sites::prepare(unit,ref recipes,image)?;
     let ref ir::Program p=ref unit.body;let value_ir::Sites no_values=value_ir::empty();
-    let reborrows::Sites loans=validate_values_mode(p,true,4,ref sites,ref no_values,true)?;
+    let reborrows::Sites loans=validate_values_mode(p,true,4,ref sites,ref no_values,true,false)?;
     let usize executable=executable_calls(p,ref loans)?;
     let usize[16] roots=reference_lifetimes::prepare(p,ref sites)?;
     let usize checked=reference_lifetimes::inspect(p,ref sites,ref roots)?;
@@ -506,7 +530,7 @@ pub fn Result<ReferenceReturnProof,errors::Error> inspect_output_returns(ref ima
     let image_calls::Proof recipes=image_calls::inspect_output_returns(unit,image,input)?;
     var statics::Sites sites=image_sites::prepare(unit,ref recipes,image)?;sites.output=true;
     let ref ir::Program p=ref unit.body;let value_ir::Sites no_values=value_ir::empty();
-    let reborrows::Sites loans=validate_values_mode(p,true,4,ref sites,ref no_values,input)?;
+    let reborrows::Sites loans=validate_values_mode(p,true,4,ref sites,ref no_values,input,false)?;
     let usize executable=executable_calls(p,ref loans)?;
     let usize[16] roots=reference_lifetimes::prepare(p,ref sites)?;
     let usize checked=reference_lifetimes::inspect(p,ref sites,ref roots)?;

@@ -7,6 +7,8 @@ import runtime_run_config as runs;
 import std::bytes as bytes;
 import std::vec as vec;
 import verifier as verifier;
+import types as types;
+import host_wire as wire;
 
 // Private scalar host dialect. The ordinary verifier still rejects opcode 117.
 pub enum Error { Code; Catalog; Binding; Authority; Allocation; }
@@ -22,6 +24,29 @@ pub resource Program {
 }
 
 pub fn u8 request_opcode(){return 117;}
+pub fn u8 typed_request_opcode(){return 118;}
+
+fn bool typed_signature(ref ir::Program p,ref catalog::Catalog imports,usize at){
+    let usize dst=p.code[at+1] as usize;let usize first=p.code[at+2] as usize;
+    let usize id=p.code[at+3] as usize;let usize argc=p.code[at+4] as usize;
+    if(dst>=p.registers || first>p.registers || argc>p.registers-first){return false;}
+    let usize count=switch(catalog::parameter_count(imports,id)){case .ok(v):{v}case .err(_):{return false;}};
+    let u8 result=switch(catalog::result_tag(imports,id)){case .ok(v):{v}case .err(_):{return false;}};
+    if(argc!=count || wire::scalar_tag(result)!=p.types[dst]){return false;}
+    var usize i=0;
+    while(i<count){
+        let u8 tag=switch(catalog::parameter_tag(imports,id,i)){case .ok(v):{v}case .err(_):{return false;}};
+        if(wire::scalar_tag(tag)!=p.types[first+i]){return false;}
+        i+=1;
+    }
+    return true;
+}
+
+pub fn bool typed(ref ir::Program code){
+    var usize pc=0;
+    while(pc<code.count){if(code.code[pc*8]==typed_request_opcode()){return true;}pc+=1;}
+    return false;
+}
 
 // HOST_REQUEST: dst=i32 destination, a=i32 argument, b=catalog import ID.
 // The independent scalar verifier checks the same input and output registers
@@ -32,7 +57,7 @@ fn Result<usize,Error> inspect(ref ir::Program code,ref catalog::Catalog imports
         code.records.count!=0 || code.list_used!=0){return .err(.Code);}
     var usize reg=0;
     while(reg<code.registers){
-        if(code.types[reg]!=1 && code.types[reg]!=2){return .err(.Code);}
+        if(!types::scalar(code.types[reg])){return .err(.Code);}
         reg+=1;
     }
     var ir::Program scalar=*code;
@@ -52,6 +77,9 @@ fn Result<usize,Error> inspect(ref ir::Program code,ref catalog::Catalog imports
             scalar.code[at]=2;
             scalar.code[at+3]=code.code[at+2];
             required|=one<<id;
+        }else if(op==typed_request_opcode()){
+            if(!typed_signature(code,imports,at)){return .err(.Catalog);}
+            required|=one<<(code.code[at+3] as usize);
         }else if(op==2){
             let usize dst=code.code[at+1] as usize;
             if(dst>=code.registers || code.types[dst]!=1){return .err(.Code);}
@@ -60,7 +88,13 @@ fn Result<usize,Error> inspect(ref ir::Program code,ref catalog::Catalog imports
         }
         pc+=1;
     }
-    if(!verifier::verify(ref scalar).is_ok){return .err(.Code);}
+    if(typed(code)){
+        if(!verifier::inspect_host(ref scalar).is_ok){return .err(.Code);}
+    }else{
+        var usize r=0;
+        while(r<code.registers){if(code.types[r]!=1 && code.types[r]!=2){return .err(.Code);}r+=1;}
+        if(!verifier::verify(ref scalar).is_ok){return .err(.Code);}
+    }
     return .ok(required);
 }
 

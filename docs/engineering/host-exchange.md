@@ -173,6 +173,21 @@ and timestamp. Both profiles exit 0 with zero live SDK allocations. Root
 `fairyc check --locked` passes 376 sources and 4,165 MIR functions. The local
 receipt is `build/runtime-engine/20261118T152530683517Z/receipt.json`.
 
+## Typed host arguments
+
+Private opcode 118 reads up to 32 contiguous scalar registers in catalog order
+and writes one scalar success destination. Catalog tags, arity and capability
+grants are checked at retention. The host verifier checks each register's
+definition on every incoming path. Ordinary admission still rejects opcode 118.
+The Engine exposes the pending envelope through an immutable, deadline-checked
+borrow. It retains the existing detached scalar accessor for opcode 117.
+
+The Windows development and /O2 fixture sends a 39-byte request with bool, i64
+and u32 arguments. It rejects invalid arity, wrong tags and an undefined third
+register. Both native profiles exit 0 with zero live SDK allocations. Root
+fairyc check --locked verifies 376 sources and 4,184 MIR functions. Receipt:
+build/runtime-engine/20261118T154037971398Z/receipt.json.
+
 ## Standalone coordinator ownership and API
 
 `create(Catalog, grants, Limits, run, fuel, deadline) -> Result<Exchange, Error>`

@@ -195,19 +195,24 @@ fn Result<usize,Error> begin_exchange(ref mut Exchange e,usize import_id,ref u8[
     let u8 result=switch(catalog::result_tag(bound_catalog(e),import_id)){
         case .ok(v):{v}case .err(_):{return .err(.Catalog);}
     };
+    let usize admitted=preflight_request(e,payload.len,snapshot_fuel,adapter_cost,now)?;
+    let bytes::Buffer prepared=snapshot(payload)?;
+    return .ok(commit_request(e,import_id,prepared,payload.len,snapshot_fuel,adapter_cost));
+}
+fn Result<usize,Error> preflight_request(ref mut Exchange e,usize length,usize fuel,usize adapter_cost,usize now){
     if(state(e).request==18446744073709551615){return stop(e,6,now);}
-    if(state(e).calls>=e.limits.calls || !fits(state(e).requests,payload.len,e.limits.requests_total) ||
+    if(length>e.limits.request_bytes || state(e).calls>=e.limits.calls || !fits(state(e).requests,length,e.limits.requests_total) ||
         adapter_cost>e.limits.adapter_per_call || !fits(state(e).adapter,adapter_cost,e.limits.adapter_total)){
         return stop(e,4,now);
     }
-    if(snapshot_fuel>state(e).fuel){return stop(e,5,now);}
-    let bytes::Buffer prepared=snapshot(payload)?;
-    // No fallible operation after publication. This synchronous transaction
-    // charges once at publication, not resumable copy/step accounting.
+    if(fuel>state(e).fuel){return stop(e,5,now);}
+    return .ok(length);
+}
+fn usize commit_request(ref mut Exchange e,usize import_id,bytes::Buffer prepared,usize length,usize fuel,usize adapter_cost){
     var Observation s=state(e);s.import_id=import_id;s.request+=1;s.calls+=1;
-    s.requests+=payload.len;s.adapter+=adapter_cost;s.fuel-=snapshot_fuel;s.phase=1;
+    s.requests+=length;s.adapter+=adapter_cost;s.fuel-=fuel;s.phase=1;
     let bytes::Buffer old=replace_buffer(e,prepared);save(e,s);
-    return .ok(state(e).request);
+    return s.request;
 }
 pub fn Result<ref u8[],Error> request_bytes(ref Exchange e){
     if(state(e).phase!=1){return .err(.State);}return .ok(bytes::view(ref e.backing));
@@ -295,11 +300,14 @@ pub fn ref u8[] output_bytes(ref Output o){
 // 96..2144 verified instructions (four operands, four inline literal bytes).
 // 2144..2656 mutable i32 register cells (bools use the same storage).
 fn usize scalar_header_size(){return 2656;}
+fn usize typed_header_size(){return 4192;}
 fn ref mut u8[] scalar_header(ref mut Exchange e){
-    return unsafe { byte_slice::from_raw_parts_mut(e,e.header_data,scalar_header_size()) };
+    let usize size=header(e).len;
+    return unsafe { byte_slice::from_raw_parts_mut(e,e.header_data,size) };
 }
 fn ref u8[] header(ref Exchange e){return bytes::view(ref e.header);}
-fn bool is_scalar(ref Exchange e){return header(e).len==scalar_header_size();}
+fn bool is_scalar(ref Exchange e){return header(e).len==scalar_header_size() || header(e).len>=typed_header_size();}
+fn bool wide(ref u8[] data){return data.len>=typed_header_size();}
 
 pub enum ScalarError { Authority; Binding; Allocation; State; Rejected; }
 pub struct ScalarEvent {
@@ -321,6 +329,18 @@ fn i64 load_cell(ref u8[] data,usize at,u8 tag){
 fn void store_cell(ref mut u8[] data,usize at,u8 tag,i64 value){
     assert(scalar::encode(tag,value,data[at..at+4]).is_ok);
 }
+fn i64 wide_cell(ref u8[] data,usize at){
+    return switch(scalar::decode(9,data[at..at+8])){case .ok(v):{v}case .err(_):{assert(false);0}};
+}
+fn void store_wide(ref mut u8[] data,usize at,i64 value){assert(scalar::encode(9,value,data[at..at+8]).is_ok);}
+fn i64 reg(ref u8[] data,usize index){
+    if(wide(data)){return wide_cell(data,2144+index*8);}
+    return load_cell(data,2144+index*4,1);
+}
+fn void set_reg(ref mut u8[] data,usize index,i64 value){
+    if(wide(data)){store_wide(data,2144+index*8,value);}
+    else{store_cell(data,2144+index*4,1,value);}
+}
 fn void load_image(ref mut Exchange e,ref ir::Program p){
     let ref mut u8[] data=scalar_header(e);
     var usize pc=0;
@@ -329,12 +349,54 @@ fn void load_image(ref mut Exchange e,ref ir::Program p){
         let usize at=96+source;
         data[at]=p.code[source];data[at+1]=p.code[source+1];
         data[at+2]=p.code[source+2];data[at+3]=p.code[source+3];
-        if(data[at]==1){
+        if(wide(data)){
+            data[at+4]=p.code[source+4];data[at+5]=p.code[source+5];
+            data[at+6]=p.code[source+6];data[at+7]=p.code[source+7];
+        }else if(data[at]==1){
             let i64 literal=p.constants[p.code[source+2] as usize];
             store_cell(data,at+4,1,literal);
         }
         pc+=1;
     }
+    if(wide(data)){
+        var usize i=0;
+        while(i<p.constant_count){store_wide(data,3168+i*8,p.constants[i]);i+=1;}
+    }
+}
+struct EnvelopeBounds { usize request; usize reply; }
+fn EnvelopeBounds typed_bounds(ref programs::Program p,policy_limits::RunLimits limits){
+    let ref catalog::Catalog c=programs::imports(p);
+    let usize required=programs::requirements(p);
+    let usize one=1;
+    var usize request=0;var usize reply=0;var usize id=0;
+    while(id<catalog::count(c)){
+        if((required&(one<<id))!=0){
+            let usize size=request_bound(c,id);
+            if(size<=limits.host_request_bytes){
+                if(size>request){request=size;}
+                let u8 tag=success_tag(c,id);
+                let usize ok_size=8+scalar::width(wire::scalar_tag(tag));
+                if(ok_size<=limits.host_response_bytes && ok_size>reply){reply=ok_size;}
+                if(limits.host_response_bytes>=12 && reply<12){reply=12;}
+            }
+        }
+        id+=1;
+    }
+    return EnvelopeBounds{.request=request,.reply=reply};
+}
+fn usize arg_count(ref catalog::Catalog c,usize id){
+    return switch(catalog::parameter_count(c,id)){case .ok(v):{v}case .err(_):{assert(false);0}};
+}
+fn u8 arg_tag(ref catalog::Catalog c,usize id,usize index){
+    return switch(catalog::parameter_tag(c,id,index)){case .ok(v):{v}case .err(_):{assert(false);0}};
+}
+fn u8 success_tag(ref catalog::Catalog c,usize id){
+    return switch(catalog::result_tag(c,id)){case .ok(v):{v}case .err(_):{assert(false);0}};
+}
+fn usize request_bound(ref catalog::Catalog c,usize id){
+    var usize total=2;var usize i=0;let usize count=arg_count(c,id);
+    while(i<count){total+=8+scalar::width(wire::scalar_tag(arg_tag(c,id,i)));i+=1;}
+    return total;
 }
 pub fn Result<Exchange,ScalarError> create_scalar(ref programs::Program p,ref policy::Policy ceiling,
     ref runs::RunConfig run,usize run_id,usize deadline){
@@ -351,12 +413,15 @@ pub fn Result<Exchange,ScalarError> create_scalar(ref programs::Program p,ref po
     let usize one=1;
     var usize i=0;
     while(i<count){allowed[i]=(required&(one<<i))!=0;i+=1;}
+    let bool typed=programs::typed(programs::code(p));
+    let EnvelopeBounds envelope=if(typed){typed_bounds(p,limits)}else{EnvelopeBounds{.request=14,.reply=12}};
     let Limits bounds=Limits{.request_bytes=limits.host_request_bytes,.reply_bytes=limits.host_response_bytes,
-        .requests_total=14*limits.host_calls,.replies_total=12*limits.host_calls,.calls=limits.host_calls,
+        .requests_total=envelope.request*limits.host_calls,.replies_total=envelope.reply*limits.host_calls,.calls=limits.host_calls,
         .adapter_per_call=0,.adapter_total=0};
     // The only source of the copy is the immutable catalog already bound by retain.
     let u32[8] digest=programs::binding(p);
-    var Exchange e=switch(create_sized(exact,ref allowed[..count],bounds,run_id,limits.fuel,deadline,scalar_header_size(),digest)){
+    let usize size=if(typed){typed_header_size()}else{scalar_header_size()};
+    var Exchange e=switch(create_sized(exact,ref allowed[..count],bounds,run_id,limits.fuel,deadline,size,digest)){
         case .ok(v):{v}case .err(_):{return .err(.Allocation);}
     };
     load_image(ref mut e,programs::code(p));
@@ -364,7 +429,12 @@ pub fn Result<Exchange,ScalarError> create_scalar(ref programs::Program p,ref po
 }
 // Reserve the exact maximum heap backing over this admitted scalar run.
 pub fn usize scalar_storage_bound(ref programs::Program p,policy_limits::RunLimits limits){
-    let usize base=scalar_header_size()+catalog::duplicate_bytes(programs::imports(p));
+    let usize catalog_bytes=catalog::duplicate_bytes(programs::imports(p));
+    if(programs::typed(programs::code(p))){
+        let EnvelopeBounds envelope=typed_bounds(p,limits);
+        return typed_header_size()+catalog_bytes+if(limits.host_calls==0){0}else{envelope.request+envelope.reply};
+    }
+    let usize base=scalar_header_size()+catalog_bytes;
     if(programs::requirements(p)==0 || limits.host_calls==0 || limits.host_request_bytes<14){return base;}
     // A reply is allocated before replacing the still-live request.
     return base+14+if(limits.host_response_bytes>=12){12}else{0};
@@ -396,6 +466,27 @@ fn Result<ScalarEvent,ScalarError> publish_scalar(ref mut Exchange e,usize impor
     if(!published.is_ok && state(e).phase!=3){return .err(.Rejected);}
     return .ok(scalar_event(e));
 }
+fn Result<ScalarEvent,ScalarError> publish_typed(ref mut Exchange e,usize import_id,usize first,usize now){
+    let ref catalog::Catalog c=bound_catalog(e);
+    let usize count=arg_count(c,import_id);
+    let ref u8[] data=header(e);
+    var wire::Field[32] fields=[wire::empty_field();32];
+    var usize i=0;
+    while(i<count){
+        fields[i]=wire::Field{.tag=arg_tag(c,import_id,i),.scalar=reg(data,first+i),.start=0,.length=0};
+        i+=1;
+    }
+    let usize length=request_bound(c,import_id);
+    let usize fuel=1+length;
+    if(!preflight_request(e,length,fuel,0,now).is_ok){return .ok(scalar_event(e));}
+    var bytes::Buffer message=switch(bytes::with_capacity(length)){
+        case .ok(v):{v}case .err(_):{return .err(.Allocation);}
+    };
+    assert(bytes::resize_zeroed(ref mut message,length).is_ok);
+    assert(wire::encode_request(ref fields[..count],b"",bytes::view_mut(ref mut message),length).is_ok);
+    discard commit_request(e,import_id,message,length,fuel,0);
+    return .ok(scalar_event(e));
+}
 fn Result<ScalarEvent,ScalarError> install_scalar(ref mut Exchange e,usize dst,usize now){
     let Output output=switch(take_reply_exchange(e,now,false)){
         case .ok(v):{v}case .err(_):{return .err(.State);}
@@ -405,28 +496,28 @@ fn Result<ScalarEvent,ScalarError> install_scalar(ref mut Exchange e,usize dst,u
     if(output_kind(ref output)==1){
         data[81]=4;data[82]=3;store_cell(data,84,11,field.scalar);
     }else{
-        store_cell(data,2144+dst*4,1,field.scalar);data[80]+=1;
+        set_reg(data,dst,field.scalar);data[80]+=1;
     }
     return .ok(scalar_event(e));
 }
 fn void dispatch_scalar(ref mut u8[] data,u8 op,usize dst,usize a,usize b,usize at){
     if(op==19 || op==22){data[80]=data[at+2];return;}
     if(op==20 || op==21){
-        let bool taken=(load_cell(data,2144+a*4,1)==0)==(op==20);
+        let bool taken=(reg(data,a)==0)==(op==20);
         data[80]=if(taken){data[at+3]}else{data[80]+1};return;
     }
     if(op==8){
-        let i64 value=load_cell(data,2144+a*4,1);
+        let i64 value=reg(data,a);
         store_cell(data,84,1,value);data[81]=3;return;
     }
-    let i64 value=if(op==1){load_cell(data,at+4,1)}else{
+    let i64 value=if(op==1){if(wide(data)){wide_cell(data,3168+a*8)}else{load_cell(data,at+4,1)}}else{
         assert(op==2);
-        switch(arithmetic::signed(2,load_cell(data,2144+a*4,1),load_cell(data,2144+b*4,1),1,0)){
+        switch(arithmetic::signed(2,reg(data,a),reg(data,b),1,0)){
             case .ok(v):{v}
             case .err(_):{data[81]=4;data[82]=2;return;}
         }
     };
-    store_cell(data,2144+dst*4,1,value);data[80]+=1;
+    set_reg(data,dst,value);data[80]+=1;
 }
 // One step executes one instruction or installs one reply. Waiting performs
 // one checkpoint, without moving the PC, spending Fuel or calling an adapter.
@@ -442,11 +533,12 @@ pub fn Result<ScalarEvent,ScalarError> step_scalar(ref mut Exchange e,usize now,
     let usize a=data[at+2] as usize;
     let usize b=data[at+3] as usize;
     if(host.phase==2){
-        if(op!=programs::request_opcode() || b!=host.import_id){return .err(.State);}
+        if((op!=programs::request_opcode() && op!=programs::typed_request_opcode()) || b!=host.import_id){return .err(.State);}
         return install_scalar(e,dst,now);
     }
+    if(op==programs::typed_request_opcode()){return publish_typed(e,b,a,now);}
     if(op==programs::request_opcode()){
-        let i64 value=load_cell(data,2144+a*4,1);
+        let i64 value=reg(data,a);
         return publish_scalar(e,b,value,now);
     }
     if(spend_guest(e,now).is_ok){dispatch_scalar(scalar_header(e),op,dst,a,b,at);}

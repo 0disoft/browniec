@@ -2,6 +2,8 @@ module engine_host_tests;
 import host_catalog as catalog;
 import host_program as programs;
 import host_exchange as host;
+import host_wire as wire;
+import verifier as verifier;
 import errors as errors;
 import std::bytes as bytes;
 import std::num as num;
@@ -345,11 +347,72 @@ fn Result<usize,u8> real_deadline(){
     assert(id(engine::destroy(ref mut owner))==0);
     return .ok(1);
 }
+fn ref u8[] mixed_catalog(){return b"{\"schema\":\"brownie.catalog/1\",\"imports\":[{\"id\":0,\"module\":\"host::example\",\"symbol\":\"check\",\"parameters\":[\"bool\",\"i64\",\"u32\"],\"result\":\"Result<i32,u32>\",\"effect\":\"read\",\"capability\":\"host.example.check\",\"adapter_revision\":\"v1\"}]}";}
+fn Result<ir::Program,u8> mixed_code(){
+    var ir::Program code=ir::empty();
+    let usize yes=switch(ir::boolean(ref mut code,true,0)){case .ok(v):{v}case .err(_):{return .err(1);}};
+    let usize signed=switch(ir::integer(ref mut code,-4294967297,9,0)){case .ok(v):{v}case .err(_):{return .err(1);}};
+    let usize unsigned=switch(ir::integer(ref mut code,4000000000,11,0)){case .ok(v):{v}case .err(_):{return .err(1);}};
+    let usize at=code.count*8;
+    let usize received=switch(ir::emit(ref mut code,programs::typed_request_opcode(),yes,0,0)){
+        case .ok(v):{v}case .err(_):{return .err(1);}
+    };
+    code.code[at+4]=3;code.types[received]=1;
+    let usize returned=switch(ir::emit(ref mut code,8,received,0,0)){case .ok(v):{v}case .err(_):{return .err(1);}};
+    code.function_count=1;let usize end=code.count;let usize registers=code.registers;
+    code.ends[0]=end;code.register_ends[0]=registers;code.return_types[0]=1;
+    return .ok(code);
+}
+fn void check_mixed(ref engine::Engine owner,usize instance){
+    let ref u8[] payload=switch(engine::host_request_payload(owner,instance)){
+        case .ok(v):{v}case .err(_):{assert(false);b""}
+    };
+    let u8[3] tags=[1,4,5];
+    let wire::Request decoded=switch(wire::decode_request(payload,ref tags,64)){
+        case .ok(v):{v}case .err(_):{assert(false);wire::Request{.fields=[wire::empty_field();32],.count=0}}
+    };
+    assert(payload.len==39 && decoded.count==3);
+    assert(decoded.fields[0].scalar==1 && decoded.fields[1].scalar==-4294967297 && decoded.fields[2].scalar==4000000000);
+}
+fn Result<usize,u8> multi_arguments(){
+    let policy::Policy ceiling=parsed_policy(true)?;
+    let runs::RunConfig run=config(ref ceiling,true)?;
+    var engine::Engine owner=configured(ceiling)?;
+    let catalog::Catalog imports=catalog_from(mixed_catalog())?;
+    let u32[8] expected=digest(ref imports)?;
+    var ir::Program invalid=mixed_code()?;
+    invalid.code[28]=2;
+    rejected(engine::retain_scalar_host(ref mut owner,ref invalid,catalog_from(mixed_catalog())?,ref expected,ref run),1);
+    invalid.code[28]=3;invalid.types[2]=1;
+    rejected(engine::retain_scalar_host(ref mut owner,ref invalid,catalog_from(mixed_catalog())?,ref expected,ref run),1);
+    invalid.types[2]=11;
+    // The third argument exists with the right tag but is not defined at PC 3.
+    invalid.code[17]=4;invalid.types[4]=11;
+    invalid.registers=5;invalid.register_ends[0]=5;
+    rejected(engine::retain_scalar_host(ref mut owner,ref invalid,catalog_from(mixed_catalog())?,ref expected,ref run),4);
+    let ir::Program code=mixed_code()?;
+    assert(!verifier::verify(ref code).is_ok);
+    let usize p=id(engine::retain_scalar_host(ref mut owner,ref code,imports,ref expected,ref run));
+    let usize instance=id(engine::prepare_scalar_host(ref mut owner,p,ref run));
+    let engine::Event suspended=event(engine::step_instance(ref mut owner,instance,8));
+    assert(suspended.kind==4 && suspended.remaining==9999957);
+    check_mixed(ref owner,instance);
+    let host::ScalarEvent requested=scalar(ref owner,instance);
+    assert(requested.host.run==instance && requested.host.request==1);
+    assert(event(engine::reply_scalar_host(ref mut owner,instance,instance,1,0,answer())).kind==0);
+    let engine::Event done=event(engine::step_instance(ref mut owner,instance,8));
+    assert(done.kind==1 && done.value==42 && done.remaining==9999944);
+    assert(id(engine::destroy_instance(ref mut owner,instance))==instance);
+    assert(id(engine::release_program(ref mut owner,p))==p);
+    assert(id(engine::destroy(ref mut owner))==0);
+    return .ok(1);
+}
 pub fn void run(){
     unsafe{bc_runtime_engine_test_set_clock(1000)};
     assert(admission().is_ok);
     assert(interleaved().is_ok);
     assert(pending_memory().is_ok);
+    assert(multi_arguments().is_ok);
     assert(deadline_order().is_ok);
     unsafe{bc_runtime_engine_test_use_os_clock()};
     assert(real_deadline().is_ok);

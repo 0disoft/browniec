@@ -109,16 +109,19 @@ fn void emit(Field field,ref u8[] blob,usize size,ref mut u8[] output) {
         assert(encoded.is_ok);
     }
 }
-pub fn Result<usize,Error> encode_request(ref Field[] fields,ref u8[] blob,
-    ref mut u8[] output,usize limit) {
-    let usize capacity=bounded(output.len,limit)?;
+pub fn Result<usize,Error> request_size(ref Field[] fields,ref u8[] blob,usize limit){
+    let usize checked=bounded(2,limit)?;
     if(fields.len>32){return .err(.Count);}
     var usize total=2;var usize i=0;
-    if(total>limit){return .err(.Limit);}
     while(i<fields.len){total=add_field(total,field_size(fields[i],blob)?,limit)?;i+=1;}
-    if(capacity!=total){return .err(.Length);}
+    return .ok(total);
+}
+pub fn Result<usize,Error> encode_request(ref Field[] fields,ref u8[] blob,
+    ref mut u8[] output,usize limit) {
+    let usize total=request_size(fields,blob,limit)?;
+    if(output.len!=total){return .err(.Length);}
     write_le(fields.len,output[..2]);
-    i=0;var usize offset=2;
+    var usize i=0;var usize offset=2;
     while(i<fields.len){
         let Field field=fields[i];
         let usize size=if(field.tag==7){field.length}else{scalar::width(scalar_tag(field.tag))};
