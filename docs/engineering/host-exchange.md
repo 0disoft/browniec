@@ -202,11 +202,38 @@ and cross-run rejection. The final values are 48 and 42 with zero live SDK
 allocations. Root fairyc check --locked verifies 376 sources and 4,191 MIR
 functions. Receipt is in build/runtime-engine/20261118T154919582849Z/receipt.json.
 
+## Bounded byte reply receipt
+
+The private Engine accepts byte success replies in pieces of at most 4,096 wire
+bytes. The first piece must include the eight-byte TLV header. Its declared
+length must agree with the supplied envelope total. Every piece identifies the
+same run and request and supplies its exact contiguous offset. The first
+successful receipt reserves the full bounded snapshot and copies just its
+piece. Further pieces append without growth or retaining caller memory. The
+single-call Engine reply API remains available for envelopes up to 4,096 bytes.
+
+The receiving Exchange stays in phase 4 until the final byte, with guest
+execution paused and the reply byte counter and Fuel unchanged. Completion
+commits the reply once and makes it available for step-budgeted installation.
+Each receipt and Engine step checks cancellation and deadline through the
+existing checkpoints. Terminal cleanup discards any prefix and returns the
+Instance reservation.
+
+Windows development and /O2 verify 8,203 wire bytes received in pieces of
+4,096, 4,096, 10 and 1 byte. The test rejects oversized pieces, wrong
+totals, wrong runs and duplicate or skipped offsets. Allocation failure
+on the first piece preserves the original request. Continuations allocate
+nothing. A cancelled Instance and an expired peer both discard their
+prefixes, preserve uncharged Fuel and reply counters, and release their
+reservations. The complete reply reaches the next guest request byte for
+byte. Both profiles exit with zero live SDK allocations. Root fairyc
+check --locked verifies 376 sources and 4,199 MIR functions. The local
+receipt is build/runtime-engine/20261118T180948817537Z/receipt.json.
+
 ## Resumable byte reply installation
 
-Reply acceptance still validates and snapshots the wire envelope and charges its
-Fuel once. Installation spends one unit of the Engine step allowance per byte
-copied into the preallocated arena, up to 4,096 bytes per step. An empty reply
+Complete receipt validates the wire envelope and charges its Fuel once.
+Installation spends one unit of the Engine step allowance per byte copied into the preallocated arena, up to 4,096 bytes per step. An empty reply
 uses one work unit. Guest instructions and other reply installations use one
 unit each from the same allowance.
 

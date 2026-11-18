@@ -1,9 +1,9 @@
-- Latest runtime checkpoint (2026-11-19): [Resumable host byte replies](docs/engineering/host-exchange.md#resumable-byte-reply-installation)
-  use the Engine step allowance and publish only after copying the entire reply.
-  Windows development and /O2 verify exact final bytes, mid-copy cancellation
-  and deadline expiry, preserved Fuel and zero live SDK allocations. Root locked
-  check passes 376 sources / 4194 MIR functions. Resumable receipt snapshotting
-  and public delivery remain open. The
+- Latest runtime checkpoint (2026-11-19): [Bounded byte reply receipt](docs/engineering/host-exchange.md#bounded-byte-reply-receipt)
+  accepts at most 4,096 wire bytes per call and publishes only complete replies.
+  Windows development and /O2 verify mid-receipt cancellation and deadline
+  expiry, exact final bytes, no continuation allocations and zero live SDK
+  allocations. Root locked check passes 376 sources / 4199 MIR functions.
+  Public delivery remains open. The
   [stack regression record](docs/engineering/native-stack-regressions.md)
   preserves the earlier public O2 timeout.
 

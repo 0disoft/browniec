@@ -38,13 +38,22 @@ fn Result<usize,Error> bounded(usize length,usize limit) {
     if(limit>payload_limit() || length>limit){return .err(.Limit);}
     return .ok(length);
 }
-fn Result<Field,Error> parse_field(ref u8[] input,usize offset,u8 expected) {
+fn Result<usize,Error> field_length(ref u8[] input,usize offset,u8 expected){
     if(!valid(expected)){return .err(.Type);}
     if(offset>input.len || input.len-offset<8){return .err(.Header);}
-    let u8 tag=input[offset];
-    if(tag!=expected || !valid(tag)){return .err(.Type);}
+    if(input[offset]!=expected){return .err(.Type);}
     if(input[offset+1]!=0 || input[offset+2]!=0 || input[offset+3]!=0){return .err(.Header);}
-    let usize size=read_u32(input[offset+4..offset+8]);
+    return .ok(read_u32(input[offset+4..offset+8]));
+}
+pub fn Result<usize,Error> byte_reply_prefix(ref u8[] prefix,usize total){
+    let usize bounded_total=bounded(total,payload_limit())?;
+    let usize size=field_length(prefix,0,7)?;
+    if(prefix.len>bounded_total || size!=bounded_total-8){return .err(.Length);}
+    return .ok(bounded_total);
+}
+fn Result<Field,Error> parse_field(ref u8[] input,usize offset,u8 expected) {
+    let usize size=field_length(input,offset,expected)?;
+    let u8 tag=expected;
     let usize start=offset+8;
     if(size>input.len-start){return .err(.Length);}
     var i64 cell=0;

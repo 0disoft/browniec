@@ -12,7 +12,7 @@ import std::bytes as bytes;
 import std::num as num;
 
 // Private native coordinator and scalar VM driver. No public ABI.
-// Phase: 0 Ready, 1 Waiting, 2 Install, 3 Terminal.
+// Phase: 0 Ready, 1 Waiting, 2 Install, 3 Terminal, 4 Receiving.
 // Cause: 0 None, 1 Cancelled, 2 Deadline, 3 HostFailure, 4 Quota, 5 Fuel, 6 Identity.
 pub enum Error { State; Identity; Catalog; Denied; Malformed; Allocation; Terminated; }
 pub struct Limits {
@@ -40,10 +40,12 @@ pub resource Output {
     cleanup { }
 }
 // Pinned Windows x64 Buffer layout: four pointer-width cells. The compiler
-// cannot mutate/project owning resource fields. One leading Buffer owns either
-// the waiting request or committed reply. Metadata moves only, never payload.
+// cannot mutate/project owning resource fields. The leading Buffer holds the
+// waiting request, receiving reply prefix or committed reply. Metadata moves only, never payload.
 @link_name("fy_std_buffer_reserve_v0")
 unsafe extern C fn u32 validate_buffer_raw(ptr mut void buffer,usize capacity);
+@link_name("fy_std_buffer_append_v0")
+unsafe extern C fn u32 append_buffer_raw(ptr mut void buffer,ptr u8 data,usize length);
 fn bytes::Buffer replace_buffer(ref mut Exchange e,bytes::Buffer prepared){
     var bytes::Buffer incoming=prepared;var bytes::Buffer old=bytes::empty();
     let ptr mut void from=unsafe { ref mut incoming as ptr mut void };
@@ -231,33 +233,39 @@ pub fn Result<wire::Request,Error> request_fields(ref Exchange e){
 pub fn Result<usize,Error> reply(ref mut Exchange e,usize run,usize request,u8 kind,
     ref u8[] payload,usize snapshot_fuel,usize now,bool cancelled){
     if(is_scalar(e)){return .err(.State);}
-    return reply_exchange(e,run,request,kind,payload,snapshot_fuel,now,cancelled);
+    return reply_exchange(e,run,request,kind,payload,snapshot_fuel,now,cancelled,wire::payload_limit());
 }
 fn Result<usize,Error> reply_exchange(ref mut Exchange e,usize run,usize request,u8 kind,
-    ref u8[] payload,usize snapshot_fuel,usize now,bool cancelled){
+    ref u8[] payload,usize snapshot_fuel,usize now,bool cancelled,usize copy_limit){
     let usize checked=checkpoint(e,now,cancelled)?;
     if(state(e).phase!=1){return .err(.State);}
     if(run!=state(e).run || request!=state(e).request){return .err(.Identity);}
     if(payload.len>wire::payload_limit()){return stop(e,4,now);}
+    if(payload.len>copy_limit){return .err(.Malformed);}
     // A syntactically valid reply exceeding a reduced policy is terminal. The
     // hard wire ceiling rejects metadata before trusting any payload length.
     let wire::Field value=switch(wire::decode_reply(kind,result_tag(e),payload,wire::payload_limit())){
         case .ok(v):{v}case .err(_):{return .err(.Malformed);}
     };
-    if(payload.len>e.limits.reply_bytes || !fits(state(e).replies,payload.len,e.limits.replies_total)){
+    let usize admitted=reply_budget(e,payload.len,snapshot_fuel,now)?;
+    let bytes::Buffer prepared=snapshot(payload)?;
+    let bytes::Buffer old=replace_buffer(e,prepared);
+    commit_reply(e,kind,payload.len,snapshot_fuel,now);
+    return .ok(request);
+}
+fn Result<usize,Error> reply_budget(ref mut Exchange e,usize length,usize fuel,usize now){
+    if(length>e.limits.reply_bytes || !fits(state(e).replies,length,e.limits.replies_total)){
         return stop(e,4,now);
     }
-    if(snapshot_fuel>state(e).fuel){return stop(e,5,now);}
-    // All nonfatal replies retain a single exact TLV snapshot. Output borrows
-    // only its checked payload range; scalar and empty headers are also owned.
-    let bytes::Buffer prepared=snapshot(payload)?;
-    var Observation s=state(e);s.replies+=payload.len;s.fuel-=snapshot_fuel;s.phase=2;
-    let bytes::Buffer old=replace_buffer(e,prepared);
+    if(fuel>state(e).fuel){return stop(e,5,now);}
+    return .ok(length);
+}
+fn void commit_reply(ref mut Exchange e,u8 kind,usize length,usize fuel,usize now){
+    var Observation s=state(e);s.replies+=length;s.fuel-=fuel;s.phase=2;
     save(e,s);
     // Reply kind is in the unused fixed header byte, with identical authority.
     let ref mut u8[] h=unsafe { byte_slice::from_raw_parts_mut(e,e.header_data,80) };h[3]=kind;
     if(kind==2){terminate(e,3,now);}
-    return .ok(request);
 }
 fn u8 result_tag(ref Exchange e){
     return switch(catalog::result_tag(bound_catalog(e),state(e).import_id)){
@@ -311,7 +319,7 @@ fn bool wide(ref u8[] data){return data.len>=typed_header_size();}
 
 pub enum ScalarError { Authority; Binding; Allocation; State; Rejected; }
 pub struct ScalarEvent {
-    // 0 runnable, 1 waiting, 2 reply ready, 3 done, 4 failed.
+    // 0 runnable, 1 waiting, 2 reply ready, 3 done, 4 failed, 5 receiving.
     u8 phase; Observation host; i64 value;
     // 0 none, 1 exchange, 2 arithmetic, 3 host error (guest error arm is still gated).
     u8 failure; i64 host_error;
@@ -469,7 +477,7 @@ pub fn Result<ScalarEvent,ScalarError> observe_scalar(ref Exchange e){
 fn ScalarEvent scalar_event(ref Exchange e){
     let ref u8[] data=header(e);
     let Observation host=state(e);
-    let u8 phase=if(data[81]!=0){data[81]}else if(host.phase==3){4}else{host.phase};
+    let u8 phase=if(data[81]!=0){data[81]}else if(host.phase==3){4}else if(host.phase==4){5}else{host.phase};
     let u8 failure=if(host.phase==3){1}else{data[82]};
     return ScalarEvent{.phase=phase,.host=host,.value=if(phase==3){load_cell(data,84,1)}else{0},
         .failure=failure,.host_error=if(failure==3){load_cell(data,84,11)}else{0}};
@@ -477,8 +485,45 @@ fn ScalarEvent scalar_event(ref Exchange e){
 pub fn Result<ScalarEvent,ScalarError> reply_scalar(ref mut Exchange e,usize run,usize request,u8 kind,
     ref u8[] payload,usize now,bool cancelled){
     if(!is_scalar(e) || header(e)[81]!=0){return .err(.State);}
-    let Result<usize,Error> committed=reply_exchange(e,run,request,kind,payload,payload.len,now,cancelled);
+    let Result<usize,Error> committed=reply_exchange(e,run,request,kind,payload,payload.len,now,cancelled,4096);
     if(!committed.is_ok && state(e).phase!=3){return .err(.Rejected);}
+    return .ok(scalar_event(e));
+}
+// Each call owns its slice only for the duration of the copy. The first piece
+// includes the byte TLV header. The total is stored at 4200 until commit, when
+// that word becomes the zero-initialized installation cursor again.
+pub fn Result<ScalarEvent,ScalarError> receive_scalar_reply(ref mut Exchange e,usize run,usize request,
+    usize total,usize offset,ref u8[] chunk,usize now){
+    if(!is_scalar(e) || header(e)[81]!=0){return .err(.State);}
+    let Observation current=poll_exchange(e,now,false);
+    if(current.phase==3){return .ok(scalar_event(e));}
+    if((current.phase!=1 && current.phase!=4) || current.run!=run || current.request!=request ||
+        chunk.len==0 || chunk.len>4096 || offset>total || chunk.len>total-offset){
+        return .err(.Rejected);
+    }
+    if(current.phase==1){
+        if(offset!=0 || result_tag(e)!=7){return .err(.Rejected);}
+        if(total>wire::payload_limit()){discard stop(e,4,now);return .ok(scalar_event(e));}
+        if(!wire::byte_reply_prefix(chunk,total).is_ok){return .err(.Rejected);}
+        if(!reply_budget(e,total,total,now).is_ok){return .ok(scalar_event(e));}
+        var bytes::Buffer prepared=switch(bytes::with_capacity(total)){
+            case .ok(v):{v}case .err(_):{return .err(.Allocation);}
+        };
+        if(!bytes::append(ref mut prepared,chunk).is_ok){return .err(.Allocation);}
+        let bytes::Buffer old=replace_buffer(e,prepared);
+    }else{
+        if(total!=read(header(e),4200) || offset!=reply_bytes(e).len){return .err(.Rejected);}
+        // Exact capacity was reserved before swapping out the waiting request.
+        let u32 status=unsafe{append_buffer_raw(e as ptr mut void,chunk as ptr u8,chunk.len)};
+        if(status!=0){return .err(.Allocation);}
+    }
+    if(offset+chunk.len==total){
+        write(scalar_header(e),4200,0);
+        commit_reply(e,0,total,total,now);
+    }else{
+        write(scalar_header(e),4200,total);
+        var Observation receiving=current;receiving.phase=4;save(e,receiving);
+    }
     return .ok(scalar_event(e));
 }
 fn Result<ScalarEvent,ScalarError> publish_scalar(ref mut Exchange e,usize import_id,i64 value,usize now){
@@ -612,7 +657,7 @@ pub fn Result<ScalarEvent,ScalarError> step_scalar_budget(ref mut Exchange e,usi
     if(!is_scalar(e) || *work==0 || *work>4096){return .err(.State);}
     if(header(e)[81]!=0){return .ok(scalar_event(e));}
     let Observation host=poll_exchange(e,now,cancelled);
-    if(host.phase==1 || host.phase==3){return .ok(scalar_event(e));}
+    if(host.phase==1 || host.phase==3 || host.phase==4){return .ok(scalar_event(e));}
     let ref u8[] data=header(e);
     let usize at=96+8*(data[80] as usize);
     let u8 op=data[at];
