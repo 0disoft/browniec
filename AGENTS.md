@@ -1,8 +1,8 @@
 - Latest runtime checkpoint (2026-11-18): [Engine-owned scalar host execution](docs/engineering/host-exchange.md#engine-owned-scalar-host-execution)
   reuses one verified Program across two pinned Instances. Windows development
-  confirms cross-run reply rejection, independent `42` and `-7` outcomes and
-  zero live SDK allocations. Root locked check passes 376 sources / 4161 MIR
-  functions. Optimized Engine verification, OS deadlines, general typed host
+  and optimized Engine runs confirm cross-run reply rejection, independent
+  `42` and `-7` outcomes and zero live SDK allocations. Root locked check passes
+  376 sources / 4161 MIR functions. OS deadlines, general typed host
   destinations and public delivery remain open. The
   [stack regression record](docs/engineering/native-stack-regressions.md)
   preserves the earlier public O2 timeout.

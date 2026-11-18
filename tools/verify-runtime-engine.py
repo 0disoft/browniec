@@ -122,9 +122,9 @@ def main():
                    recordedAt=datetime.now(timezone.utc).isoformat(), commands=[], profiles=[], runtimeInputs=[])
     root_lock = (ROOT / 'fairy.lock').read_bytes()
 
-    def run(command, cwd=output, env=None):
+    def run(command, cwd=output, env=None, timeout=180):
         command = list(map(str, command))
-        result = subprocess.run(command, cwd=cwd, env=env, capture_output=True, timeout=180)
+        result = subprocess.run(command, cwd=cwd, env=env, capture_output=True, timeout=timeout)
         index = len(receipt['commands'])
         stdout, stderr = f'logs/{index:02d}.stdout', f'logs/{index:02d}.stderr'
         write(output / stdout, result.stdout)
@@ -347,9 +347,11 @@ def main():
                                   input_adoption=output / 'native/runtime-input-adoption/bridge.c')
             for name, source in native_sources.items():
                 obj = folder / (name + '.obj')
+                # MSVC can spend several minutes optimizing the generated Engine unit.
+                timeout = 900 if profile == 'release' and name == 'transport' else 180
                 run([cl, '/nologo', '/TC', '/std:c11', '/MT', '/W3',
                      '/Od' if profile == 'development' else '/O2', '/c', source,
-                     '/Fo' + str(obj)], env=env)
+                     '/Fo' + str(obj)], env=env, timeout=timeout)
                 objects.append(obj)
             exe = folder / 'runtime-engine.exe'
             run([cl, '/nologo', *objects, 'ntdll.lib', '/Fe' + str(exe), '/link', '/INCREMENTAL:NO', '/Brepro'], env=env)

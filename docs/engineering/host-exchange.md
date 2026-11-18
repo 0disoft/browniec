@@ -96,7 +96,21 @@ the Program, and the native process exits with zero live SDK allocations.
 The executable SHA-256 is
 `76001ff3619f81ffdf3f0ebfde7ddfc8e56488b264b10973ac4dbb56bd3e4e47`.
 Root `fairyc check --locked` passed 376 sources and 4,161 MIR functions.
-Optimized Engine composition and public delivery remain unverified in this run.
+Windows optimized verification ran `python -B tools/verify-runtime-engine.py
+--profile release` with MSVC 14.51.36231 and the default stack.
+The first attempt timed out after 180 seconds while compiling the generated
+Engine transport. The runner now allows 900 seconds for that optimization
+step. The next build reached an admission failure in the existing configured
+output fixture. Its retained module and function names had the correct lengths
+but started with zero bytes. Filling local arrays before constructing the entry
+binding preserves the exact names in the optimized build.
+
+With the fix, the same Engine suite exited 0. Both crossed replies were rejected,
+the two Instances returned `42` and `-7` independently, and the native heap probe
+reported zero live SDK allocations after teardown. The optimized executable
+SHA-256 is `204e6adbdc4f073f9731fe4682e79e7ab92332900db8faede174c494c82cd51a`. The local receipt
+is `build/runtime-engine/20261118T105620621886Z/receipt.json`. This verifies the
+private Engine path. Public delivery remains open.
 
 ## Standalone coordinator ownership and API
 

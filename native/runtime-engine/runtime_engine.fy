@@ -758,14 +758,16 @@ fn Result<EntryBinding,u32> bind_entry(bool configured,ref input_entries::InputE
         case .ok(v):{v}case .err(_):{return .err(7);}
     };
     if(scope.len==0 || scope.len>128 || function.len==0 || function.len>64){return .err(4);}
-    var EntryBinding entry=empty_entry();
+    // Fill the arrays before constructing the value. The pinned optimizer
+    // loses indexed writes through EntryBinding fields at this return boundary.
+    var u8[128] scope_bytes=[0;128];
+    var u8[64] function_bytes=[0;64];
     var usize i=0;
-    while(i<scope.len){entry.scope[i]=scope[i];i+=1;}
+    while(i<scope.len){scope_bytes[i]=scope[i];i+=1;}
     i=0;
-    while(i<function.len){entry.function[i]=function[i];i+=1;}
-    entry.scope_len=scope.len;
-    entry.function_len=function.len;
-    return .ok(entry);
+    while(i<function.len){function_bytes[i]=function[i];i+=1;}
+    return .ok(EntryBinding{.scope=scope_bytes,.function=function_bytes,
+        .scope_len=scope.len,.function_len=function.len,.emits=false});
 }
 fn u32 publish_output_program(ref mut Meta m,ref mut vec::Vec<Program> v,output_programs::Program code,usize bytes,EntryBinding selected){
     var EntryBinding entry=selected;
