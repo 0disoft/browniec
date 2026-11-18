@@ -34,6 +34,7 @@ pub fn limits::CompileLimits compile_limits(ref Policy p){return p.compile;}
 pub fn limits::EngineLimits engine_limits(ref Policy p){return p.engine;}
 pub fn limits::RunLimits run_limits(ref Policy p){return p.run;}
 pub fn limits::WorkerLimits worker_limits(ref Policy p){return p.worker;}
+pub fn usize heap_bytes(ref Policy p){return j::heap_bytes(ref p.capabilities);}
 pub fn usize capability_count(ref Policy p){return j::count(ref p.capabilities);}
 pub fn Result<ref u8[],j::Error> capability(ref Policy p,usize i){return j::capability(ref p.capabilities,i);}
 pub fn bool contains_capability(ref Policy p,ref u8[] name){return j::contains(ref p.capabilities,name);}

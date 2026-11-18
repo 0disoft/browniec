@@ -119,6 +119,22 @@ configured Program for multiple runs, full enforcement of remaining policy
 limits including deadlines, and C ABI delivery remain open. Typed host
 request/reply and optimized builds of this admission are unverified.
 
+## Engine-owned policy
+
+`create_with_policy` consumes a validated Policy and keeps it for the lifetime
+of the Engine. Configured run admission rechecks declarations, grants and run
+limits against that owned Policy. Legacy Instance constructors cannot supply
+authority to a configured Engine. The supported Engine count, Fuel, compile
+working memory and Instance memory ceilings narrow the existing limits.
+Policy vector and capability backing are charged as control storage and
+released on successful Engine destruction.
+
+Windows development verification passed with Fairy C preview.2, default
+native stacks, 37 reviewed bindings and 53 layouts. The run exercised
+declaration denial, the input limit and successful step/output/teardown,
+with zero live SDK allocations. Root locked verification passed 375
+sources and 4115 MIR functions.
+
 ## Remaining accepted work
 
 Dispatch visits do not bound all bytes, metadata visits or native time. Output

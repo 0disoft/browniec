@@ -40,7 +40,7 @@ pub struct Event { u8 kind; i64 value; diagnostics::Error diagnostic; usize rema
 pub struct Snapshot { usize programs; usize instances; usize pins; bool closed; }
 struct Meta {
     Limits limits; usize thread; usize lifetime; usize active; usize admission;
-    usize next; usize result; Error error; Event event; Snapshot snapshot; bool closed; control::Budget control; memory::Budget programs; live::Budget heap;
+    usize next; usize result; Error error; Event event; Snapshot snapshot; bool closed; control::Budget control; memory::Budget programs; live::Budget heap; bool configured;
 }
 // Exactly one executable vector has one element; the others are empty. Input code is
 // never relabelled as a zero-argument Program or an array/image input lease.
@@ -54,12 +54,13 @@ pub resource Output { usize instance; output_programs::Execution run; vec::Vec<m
 pub resource Engine {
     Meta meta; vec::Vec<Program> programs; vec::Vec<Program> scratch;
     vec::Vec<Instance> instances; vec::Vec<BoundInput> inputs;
-    vec::Vec<BoundInput> input_scratch; vec::Vec<Output> outputs; vec::Vec<Output> output_scratch; cleanup { }
+    vec::Vec<BoundInput> input_scratch; vec::Vec<Output> outputs; vec::Vec<Output> output_scratch; vec::Vec<policy::Policy> policy; cleanup { }
 }
 @link_name("bc_runtime_engine_input_preflight") unsafe extern C fn u32 input_preflight_raw(ptr mut void owner,usize program,usize budget,ptr void input,u32 output,usize limit,u32 allowed);
 @link_name("bc_runtime_engine_input_fact") unsafe extern C fn usize input_fact_raw(ptr void source,u32 fact);
 @link_name("bc_runtime_engine_compile_preflight") unsafe extern C fn u32 compile_preflight_raw(ptr mut void owner,u32 mode,ptr void selected);
 @link_name("bc_runtime_engine_compile_fact") unsafe extern C fn usize compile_fact_raw(ptr void source,u32 kind,u32 fact);
+@link_name("bc_runtime_engine_policy_slot_bytes") unsafe extern C fn usize policy_slot_bytes_raw();
 @link_name("bc_runtime_engine_bind") unsafe extern C fn u32 bind_raw(ptr mut void owner);
 @link_name("bc_runtime_engine_compile") unsafe extern C fn u32 compile_raw(ptr mut void owner,ptr mut void incoming,usize limit);
 @link_name("bc_runtime_engine_compile_input") unsafe extern C fn u32 compile_input_raw(ptr mut void owner,ptr mut void incoming,usize limit);
@@ -118,8 +119,36 @@ pub fn Result<Engine,Error> create_with_compilation(Limits limits,usize control_
     return create_with_instance_memory(limits,control_limit,retained,working_limit,live::Limits{.instance=268435456,.instances=536870912});
 }
 pub fn Result<Engine,Error> create_with_instance_memory(Limits limits,usize control_limit,memory::Limits retained,usize working_limit,live::Limits instance_limits){
-    if(!valid_limits(limits) || control_limit==0 || control_limit>4194304){return .err(error(1));}
     let usize required=required_control_bytes(limits)?;
+    return allocate_owner(limits,control_limit,retained,working_limit,instance_limits,required,vec::empty<policy::Policy>());
+}
+
+pub fn Result<Engine,Error> create_with_policy(policy::Policy ceiling){
+    let policy_limits::EngineLimits engine=policy::engine_limits(ref ceiling);
+    let policy_limits::RunLimits run=policy::run_limits(ref ceiling);
+    let policy_limits::CompileLimits compile=policy::compile_limits(ref ceiling);
+    let Limits limits=Limits{.programs=if(engine.max_programs<64){engine.max_programs}else{64},
+        .instances=if(engine.max_instances<64){engine.max_instances}else{64},
+        .fuel=if(run.fuel<fuel::cli_limit()){run.fuel}else{fuel::cli_limit()}};
+    let usize base=required_control_bytes(limits)?;
+    let usize slot=unsafe{policy_slot_bytes_raw()};
+    let usize strings=policy::heap_bytes(ref ceiling);
+    if(slot==0 || slot>(18446744073709551615-base)/8 || strings>18446744073709551615-base-slot*8){
+        return .err(error(8));
+    }
+    let usize total=base+slot*8+strings;
+    if(total>engine.control_bytes || total>engine.memory_bytes){return .err(error(8));}
+    var vec::Vec<policy::Policy> owned=vec::empty<policy::Policy>();
+    if(!vec::reserve<policy::Policy>(ref mut owned,1).is_ok){return .err(error(6));}
+    if(!vec::push<policy::Policy>(ref mut owned,ceiling).is_ok){return .err(error(6));}
+    return allocate_owner(limits,engine.control_bytes,
+        memory::Limits{.engine=engine.memory_bytes,.program=engine.program_bytes,.programs=engine.total_program_bytes},
+        compile.working_bytes,live::Limits{.instance=run.memory_bytes,.instances=engine.instances_bytes},total,owned);
+}
+
+fn Result<Engine,Error> allocate_owner(Limits limits,usize control_limit,memory::Limits retained,usize working_limit,
+    live::Limits instance_limits,usize required,vec::Vec<policy::Policy> owned){
+    if(control_limit==0 || control_limit>4194304){return .err(error(1));}
     let control::Budget storage=switch(control::create(control_limit,required)){
         case .ok(v):{v}case .err(_):{return .err(error(8));}
     };
@@ -136,8 +165,9 @@ pub fn Result<Engine,Error> create_with_instance_memory(Limits limits,usize cont
     if(!vec::reserve<BoundInput>(ref mut inputs,limits.instances).is_ok || !vec::reserve<BoundInput>(ref mut input_scratch,limits.instances).is_ok){return .err(error(6));}
     var vec::Vec<Output> outputs=vec::empty<Output>();var vec::Vec<Output> output_scratch=vec::empty<Output>();
     if(!vec::reserve<Output>(ref mut outputs,limits.instances).is_ok || !vec::reserve<Output>(ref mut output_scratch,limits.instances).is_ok){return .err(error(6));}
-    var Engine e=Engine{.meta=Meta{.limits=limits,.thread=0,.lifetime=0,.active=0,.admission=1,.next=1,.result=0,.error=error(0),.event=pending(),.snapshot=empty_snapshot(),.closed=false,.control=storage,.programs=retained_storage,.heap=payloads},
-        .programs=programs,.scratch=scratch,.instances=instances,.inputs=inputs,.input_scratch=input_scratch,.outputs=outputs,.output_scratch=output_scratch};
+    let bool configured=vec::len<policy::Policy>(ref owned)==1;
+    var Engine e=Engine{.meta=Meta{.limits=limits,.thread=0,.lifetime=0,.active=0,.admission=1,.next=1,.result=0,.error=error(0),.event=pending(),.snapshot=empty_snapshot(),.closed=false,.control=storage,.programs=retained_storage,.heap=payloads,.configured=configured},
+        .programs=programs,.scratch=scratch,.instances=instances,.inputs=inputs,.input_scratch=input_scratch,.outputs=outputs,.output_scratch=output_scratch,.policy=owned};
     let u32 status=unsafe {bind_raw(ref mut e as ptr mut void)};
     if(status!=0){return .err(error(status));}return .ok(e);
 }
@@ -179,22 +209,31 @@ pub fn Result<usize,Error> create_output_instance(ref mut Engine e,usize program
     let u32 s=unsafe{instance_output_raw(e as ptr mut void,program,ref mut incoming as ptr mut void,budget,limit,if(allowed){1}else{0})};return result(e,s);
 }
 pub fn Result<usize,Error> create_input_output_instance(ref mut Engine e,usize program,input_bytes::Snapshot input,usize budget,usize limit,bool allowed){
-    let u32 preflight=unsafe{input_preflight_raw(e as ptr mut void,program,budget,ref input as ptr void,1,limit,if(allowed){1}else{0})};
+    return bind_input_output(e,program,input,budget,limit,if(allowed){1}else{0});
+}
+// Modes 0/1 are trusted legacy denial/allow. Modes 2/3 carry configured
+// denial/allow and can only be selected after the Engine policy check.
+fn Result<usize,Error> bind_input_output(ref mut Engine e,usize program,input_bytes::Snapshot input,usize budget,usize limit,u32 authority){
+    let u32 preflight=unsafe{input_preflight_raw(e as ptr mut void,program,budget,ref input as ptr void,1,limit,authority)};
     if(preflight!=0){return .err(error(preflight));}
     var vec::Vec<input_bytes::Snapshot> incoming=vec::empty<input_bytes::Snapshot>();
     if(!vec::reserve<input_bytes::Snapshot>(ref mut incoming,1).is_ok){return .err(error(6));}
     if(!vec::push<input_bytes::Snapshot>(ref mut incoming,input).is_ok){return .err(error(6));}
-    let u32 s=unsafe{instance_output_raw(e as ptr mut void,program,ref mut incoming as ptr mut void,budget,limit,if(allowed){1}else{0})};return result(e,s);
+    let u32 s=unsafe{instance_output_raw(e as ptr mut void,program,ref mut incoming as ptr mut void,budget,limit,authority)};return result(e,s);
 }
-// Private admission for a single configured input/output run. The trusted
-// Engine owner supplies its policy. This path binds the selected entry, output
-// grant, Fuel and retained I/O ceilings before guest execution.
-pub fn Result<usize,Error> prepare_granted_output(ref mut Engine e,modules::Index index,
-    ref policy::Policy ceiling,ref run_config::RunConfig run,input_bytes::Snapshot input,usize image_limit){
+fn Result<usize,Error> check_run_policy(ref Engine e,ref run_config::RunConfig run){
     let u32 access=unsafe{control_access_raw(e as ptr void)};
     if(access!=0){return .err(error(access));}
     if(e.meta.closed){return .err(error(2));}
-    if(!run_config::narrowed_to(run,ceiling)){return .err(error(5));}
+    if(!e.meta.configured || !run_config::narrowed_to(run,vec::at<policy::Policy>(ref e.policy,0))){
+        return .err(error(5));
+    }
+    return .ok(0);
+}
+
+pub fn Result<usize,Error> prepare_granted_output(ref mut Engine e,modules::Index index,
+    ref run_config::RunConfig run,input_bytes::Snapshot input,usize image_limit){
+    let usize checked=check_run_policy(e,run)?;
     let policy_limits::RunLimits limits=run_config::run_limits(run);
     if(limits.fuel>e.meta.limits.fuel || input_bytes::view(ref input).len>limits.input_bytes ||
         input_bytes::capacity(ref input)>limits.memory_bytes){return .err(error(8));}
@@ -222,7 +261,7 @@ fn Result<usize,Error> prepare_granted_instance(ref mut Engine e,usize program,
     let usize max_output=if(emits){limits.output_bytes}else{0};
     let usize pending=required_pending_bytes(e,program,max_output)?;
     if(pending>limits.memory_bytes-input_bytes::capacity(ref input)){return .err(error(8));}
-    let usize instance=create_input_output_instance(e,program,input,limits.fuel,max_output,emits)?;
+    let usize instance=bind_input_output(e,program,input,limits.fuel,max_output,if(emits){3}else{2})?;
     return switch(prepare_instance(e,instance)){
         case .ok(_):{.ok(instance)}
         case .err(failure):{let usize disposed=destroy_instance(e,instance)?;.err(failure)}
@@ -466,7 +505,8 @@ fn void commit_payload(ref mut Meta m,ref live::Plan plan){
 fn u32 input_preflight_inner(ref mut Meta m,ref vec::Vec<Program> p,ref vec::Vec<Instance> v,
     usize code,usize budget,ref input_bytes::Snapshot input,u32 output,usize limit,u32 allowed,usize width){
     if(m.closed){return 2;}if(m.admission==0){return 8;}
-    if(output>1 || limit>1048576 || allowed>1){return 1;}if(budget>m.limits.fuel){return 5;}
+    if(output>1 || limit>1048576 || allowed>3){return 1;}
+    if(m.configured!=(allowed>=2) || (output==0 && m.configured) || budget>m.limits.fuel){return 5;}
     let usize pi=switch(program_index(p,code,true)){case .ok(index):{index}case .err(status):{return status;}};
     let ref Program program=vec::at<Program>(p,pi);
     if(output==0){if(vec::len<input_programs::Program>(ref program.input)!=1){return 1;}}
@@ -612,7 +652,8 @@ fn u32 publish_output_program(ref mut Meta m,ref mut vec::Vec<Program> v,output_
 }
 fn u32 output_instance_inner(ref mut Meta m,ref mut vec::Vec<Program> p,ref mut vec::Vec<Instance> v,
     ref mut vec::Vec<BoundInput> inputs,ref mut vec::Vec<input_bytes::Snapshot> incoming,usize code,usize budget,usize limit,u32 allowed){
-    if(limit>1048576 || allowed>1){return failed(m,1);}if(budget>m.limits.fuel){return failed(m,5);}
+    if(limit>1048576 || allowed>3){return failed(m,1);}
+    if(m.configured!=(allowed>=2) || budget>m.limits.fuel){return failed(m,5);}
     let usize pi=switch(program_index(p,code,true)){case .ok(x):{x}case .err(s):{return failed(m,s);}};
     let ref Program program=vec::at<Program>(p,pi);
     if(vec::len<output_programs::Program>(ref program.output)!=1){return failed(m,1);}
@@ -627,7 +668,7 @@ fn u32 output_instance_inner(ref mut Meta m,ref mut vec::Vec<Program> p,ref mut 
     let usize id=m.next;
     if(input){let input_bytes::Snapshot snapshot=pop_snapshot(incoming);
         if(!vec::push<BoundInput>(inputs,BoundInput{.instance=id,.input=snapshot}).is_ok){return failed(m,6);}}
-    if(!vec::push<Instance>(v,Instance{.id=id,.program=code,.fuel=budget,.phase=0,.event=ready(budget),.output_limit=limit,.output_allowed=allowed==1,.input_bytes=capacity,.output_bytes=0}).is_ok){
+    if(!vec::push<Instance>(v,Instance{.id=id,.program=code,.fuel=budget,.phase=0,.event=ready(budget),.output_limit=limit,.output_allowed=allowed==1 || allowed==3,.input_bytes=capacity,.output_bytes=0}).is_ok){
         if(input){let Option<BoundInput> disposed=vec::pop<BoundInput>(inputs);}return failed(m,6);
     }
     commit_payload(m,ref storage);
@@ -685,7 +726,7 @@ fn u32 take_output_inner(ref mut Meta m,ref mut vec::Vec<Instance> instances,ref
     return success(m,id);
 }
 fn u32 instance_inner(ref mut Meta m,ref mut vec::Vec<Program> p,ref mut vec::Vec<Instance> v,usize code,usize budget){
-    if(budget>m.limits.fuel){return failed(m,5);}
+    if(m.configured || budget>m.limits.fuel){return failed(m,5);}
     let usize pi=switch(program_index(p,code,true)){case .ok(x):{x}case .err(s):{return failed(m,s);}};
     if(vec::len<Instance>(v)>=m.limits.instances || m.next==0){return failed(m,8);}
     let usize id=m.next;
@@ -700,7 +741,7 @@ fn input_bytes::Snapshot pop_snapshot(ref mut vec::Vec<input_bytes::Snapshot> v)
 };}
 fn u32 input_instance_inner(ref mut Meta m,ref mut vec::Vec<Program> p,ref mut vec::Vec<Instance> v,
     ref mut vec::Vec<BoundInput> inputs,ref mut vec::Vec<input_bytes::Snapshot> incoming,usize code,usize budget){
-    if(budget>m.limits.fuel){return failed(m,5);}
+    if(m.configured || budget>m.limits.fuel){return failed(m,5);}
     let usize pi=switch(program_index(p,code,true)){case .ok(x):{x}case .err(s):{return failed(m,s);}};
     if(vec::len<input_programs::Program>(ref vec::at<Program>(p,pi).input)!=1){return failed(m,1);}
     if(vec::len<Instance>(v)>=m.limits.instances || m.next==0){return failed(m,8);}
@@ -1038,6 +1079,7 @@ fn vec::Vec<Program> reset_program_storage(vec::Vec<Program> v){assert(vec::len<
 fn vec::Vec<Instance> reset_instance_storage(vec::Vec<Instance> v){assert(vec::len<Instance>(ref v)==0);return vec::empty<Instance>();}
 fn vec::Vec<BoundInput> reset_input_storage(vec::Vec<BoundInput> v){assert(vec::len<BoundInput>(ref v)==0);return vec::empty<BoundInput>();}
 fn vec::Vec<Output> reset_output_storage(vec::Vec<Output> v){assert(vec::len<Output>(ref v)==0);return vec::empty<Output>();}
+fn vec::Vec<policy::Policy> reset_policy_storage(vec::Vec<policy::Policy> owned){return vec::empty<policy::Policy>();}
 // Only the dedicated transport fixture calls this helper-retention root. The
 // marker calls identify typed definitions; they publish nothing or run guests.
 fn u32 control_access_inner(ref Meta m,usize thread,usize lifetime){
@@ -1078,7 +1120,7 @@ pub fn void retain_native_bindings(){
     let live::Budget payloads=switch(live::create(live::Limits{.instance=268435456,.instances=536870912})){
         case .ok(v):{v}case .err(_):{assert(false);return;}
     };
-    var Meta m=Meta{.limits=Limits{.programs=1,.instances=1,.fuel=256},.thread=0,.lifetime=0,.active=0,.admission=1,.next=1,.result=0,.error=error(0),.event=pending(),.snapshot=empty_snapshot(),.closed=false,.control=storage,.programs=retained_storage,.heap=payloads};
+    var Meta m=Meta{.limits=Limits{.programs=1,.instances=1,.fuel=256},.thread=0,.lifetime=0,.active=0,.admission=1,.next=1,.result=0,.error=error(0),.event=pending(),.snapshot=empty_snapshot(),.closed=false,.control=storage,.programs=retained_storage,.heap=payloads,.configured=false};
     var vec::Vec<Program> p=vec::empty<Program>();var vec::Vec<Program> scratch=vec::empty<Program>();
     var vec::Vec<Instance> v=vec::empty<Instance>();var vec::Vec<entries::Entry> input=vec::empty<entries::Entry>();
     var vec::Vec<BoundInput> bound=vec::empty<BoundInput>();var vec::Vec<BoundInput> bound_scratch=vec::empty<BoundInput>();
@@ -1124,6 +1166,8 @@ pub fn void retain_native_bindings(){
     unsafe{binding_raw(25)};discard program_identity(ref program_witness);
     let Output output_witness=Output{.instance=0,.run=output_programs::vacant(0),.pending=vec::empty<machines::Machine>()};
     unsafe{binding_raw(30)};discard output_identity(ref output_witness);
+    let vec::Vec<policy::Policy> owned=vec::empty<policy::Policy>();
+    unsafe{binding_raw(37)};let vec::Vec<policy::Policy> cleared=reset_policy_storage(owned);
     retain_output_bindings(ref snapshot);retain_input_binding();
 }
 

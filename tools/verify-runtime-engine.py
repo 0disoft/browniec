@@ -222,6 +222,8 @@ def main():
         for variant, types in contract['programVariants'].items():
             layout_types.update({variant + '_' + role: name for role, name in types.items()})
         layout_types.update({key + '_entry': name for key, name in contract['entryTypes'].items()})
+        for key in ['policyType','policyVectorType']:
+            layout_types[key]=contract[key]
         need(set(layout_types) == set(contract['reviewedLayouts']), 'Reviewed layout set changed')
         cached_field=re.search(r'\b(fy_struct_\d+) f_4;',contract['reviewedLayouts']['output_stored'])
         need(cached_field is not None and cached_field.group(1)==contract['preparationType'],
@@ -266,6 +268,11 @@ def main():
             array=re.search(r'typedef struct \{[^}]*\} '+re.escape(member.group(1))+r';',generated.decode('utf-8'))
             need(array is not None and re.search(r'uintptr_t data\[UINT64_C\(8\)\]',array.group()),
                  'CALL comparison bank element/count differs')
+        policy_vector=contract['policyVectorType']
+        need(re.search(r'\b'+re.escape(policy_vector)+r' f_8;',contract['reviewedLayouts']['engineType']),
+             'Engine policy storage projection differs')
+        need(re.search(r'\b'+re.escape(policy_vector)+r' \w+\('+re.escape(policy_vector)+r' ',contract['reviewedDeclarations']['37']),
+             'Engine policy teardown signature differs')
         for key, name in layout_types.items():
             actual = re.search(r'^typedef struct \{\n[^}]*\} ' + re.escape(name) + r';$',
                                generated.decode('utf-8'), re.M)
@@ -290,6 +297,7 @@ def main():
                 bindings += f'typedef {name} bc_{variant}_{role};\n'
         for key, name in contract['entryTypes'].items():
             bindings += f'typedef {name} bc_{key}_entry;\n'
+        bindings += f'typedef {contract["policyType"]} bc_engine_policy;\n'
         bindings += '\n'.join(f'#define B{key} {value}' for key, value in contract['bindings'].items()) + '\n'
         write(output / 'bindings.h', bindings)
         for name in ['abi_thread_identity.c', 'abi_thread_identity.h']:

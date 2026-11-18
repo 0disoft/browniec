@@ -92,6 +92,7 @@ pub fn Result<Capabilities,Error> capabilities(ref u8[] source,ref mut Cursor c)
     let usize close=take(source,c,93)?;
     return .ok(Capabilities{.strings=strings,.table=Table{.items=items,.count=count}});
 }
+pub fn usize heap_bytes(ref Capabilities caps){return bytes::capacity(ref caps.strings);}
 pub fn usize count(ref Capabilities caps){return caps.table.count;}
 pub fn Result<ref u8[],Error> capability(ref Capabilities caps,usize i){
     if(i>=caps.table.count){return .err(error(.Bounds,0));}return .ok(view(ref caps.strings,caps.table.items[i]));

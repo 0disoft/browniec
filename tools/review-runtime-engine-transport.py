@@ -85,6 +85,9 @@ for layout,name in re.findall(r'^(typedef struct \{\n[^}]*\} (fy_resource_\d+);)
  if re.search(r'\b'+re.escape(arg(1,0))+r' f_0;',layout) and re.search(r'\b'+re.escape(c['programVectorType'])+r' f_1;',layout):engine_candidates.append(name)
 assert len(engine_candidates)==1,engine_candidates
 c['engineType']=engine_candidates[0]
+c['policyVectorType']=field_type(c['engineType'],8)
+c['policyType']=vector_element(c['policyVectorType'])
+assert arg(37,0)==c['policyVectorType']
 c['pendingMetaType']=arg(26,2)
 c['cursorType']=field_type(c['pendingMetaType'],0)
 c['outputCopyType']=field_type(c['cursorType'],2)
@@ -130,12 +133,14 @@ types['callMetadataType']=c['callMetadataType']
 for key in ['callContextWorkType','callArgumentWorkType','callOwnedWorkType','returnPreparationType','returnRecordPlanType','returnCatalogWorkType']:types[key]=c[key]
 types['callCopyPlanType']=c['callCopyPlanType']
 types['returnMetadataType']=c['returnMetadataType']
+types['policyVectorType']=c['policyVectorType']
+types['policyType']=c['policyType']
 types['capturePlanType']=c['capturePlanType']
 c['reviewedLayouts']={k:re.search(r'^typedef struct \{\n[^}]*\} '+re.escape(v)+';$',t,re.M).group() for k,v in types.items()}
-assert len(c['bindings'])==36 and len(c['reviewedLayouts'])==43
+assert len(c['bindings'])==37 and len(c['reviewedLayouts'])==45
 for key in ['lifecycleType','setupWorkType','preparationWorkType','cleanupWorkType','runtimeMetadataType','cleanupRuntimeType','inputWindowsType','storageBufferType']:
  c['reviewedLayouts'][key]=re.search(r'^typedef struct \{\n[^}]*\} '+re.escape(c[key])+';$',t,re.M).group()
-assert len(c['reviewedLayouts'])==51
+assert len(c['reviewedLayouts'])==53
 c['transportSha256']=hashlib.sha256(generated).hexdigest()
 c['compilerScratch']=reviewed_scratch(t)
 c['sourceInputs']=[dict(path=p.relative_to(root).as_posix(),sha256=hashlib.sha256(p.read_bytes()).hexdigest()) for p in sources]

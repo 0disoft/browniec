@@ -378,16 +378,18 @@ fn Result<usize,u8> configured_output(){
         case .ok(v):{v}case .err(_):{return .err(3);}
     };
     let ref u8[] source=b"module app;fn void send(ref u8[] data){output::emit(ref data);}pub fn i32 chosen(ref u8[] data){send(ref data);return 42;}";
-    var engine::Engine e=created()?;
+    var engine::Engine e=switch(engine::create_with_policy(policy)){
+        case .ok(v):{v}case .err(_):{return .err(4);}
+    };
     let Heap idle=heap();
-    let Result<usize,engine::Error> denied=engine::prepare_granted_output(ref mut e,indexed(source)?,ref policy,ref missing,captured(b"AB")?,65536);
+    let Result<usize,engine::Error> denied=engine::prepare_granted_output(ref mut e,indexed(source)?,ref missing,captured(b"AB")?,65536);
     switch(denied){case .ok(_):{assert(false);}case .err(failure):{assert(failure.status==5);}};
     counts(ref mut e,0,0,0);
     same_heap(ref idle);
-    let Result<usize,engine::Error> oversized=engine::prepare_granted_output(ref mut e,indexed(source)?,ref policy,ref granted,captured(b"ABC")?,65536);
+    let Result<usize,engine::Error> oversized=engine::prepare_granted_output(ref mut e,indexed(source)?,ref granted,captured(b"ABC")?,65536);
     switch(oversized){case .ok(_):{assert(false);}case .err(failure):{assert(failure.status==8);}};
     same_heap(ref idle);
-    let usize i=id(engine::prepare_granted_output(ref mut e,indexed(source)?,ref policy,ref granted,captured(b"A\x00")?,65536));
+    let usize i=id(engine::prepare_granted_output(ref mut e,indexed(source)?,ref granted,captured(b"A\x00")?,65536));
     counts(ref mut e,1,1,1);
     assert(event(engine::observe(ref mut e,i)).kind==4);
     assert(tick(ref mut e,i,1).kind==4);
