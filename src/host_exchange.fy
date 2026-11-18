@@ -357,6 +357,14 @@ pub fn Result<Exchange,ScalarError> create_scalar(ref programs::Program p,ref po
     load_image(ref mut e,programs::code(p));
     return .ok(e);
 }
+// Upper bound for the retained header/catalog and overlapping scalar snapshots.
+pub fn usize scalar_storage_bound(ref programs::Program p){
+    return scalar_header_size()+catalog::heap_bytes(programs::imports(p))+14+12;
+}
+pub fn Result<ScalarEvent,ScalarError> observe_scalar(ref Exchange e){
+    if(!is_scalar(e)){return .err(.State);}
+    return .ok(scalar_event(e));
+}
 fn ScalarEvent scalar_event(ref Exchange e){
     let ref u8[] data=header(e);
     let Observation host=state(e);

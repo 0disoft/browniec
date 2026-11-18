@@ -199,7 +199,7 @@ def main():
                        ('24', 2, 'outputVectorType'), ('25', 0, 'programType'),
                        ('28',0,'machineType'),('28',1,'coreType'),
                        ('29',0,'machineType'),('29',1,'coreType'),('26',10,'callMetadataType')]
-        projections.extend([('30',0,'outputType'),('38',2,'hostProgramVectorType')])
+        projections.extend([('30',0,'outputType'),('38',2,'hostProgramVectorType'),('39',3,'outputVectorType'),('39',4,'policyVectorType'),('39',5,'hostRunConfigType'),('40',2,'outputVectorType'),('41',0,'hostExchangeVectorType'),('41',7,'hostTransitionType')])
         projections.extend([('31',0,'pendingVectorType'),('31',1,'completionType'),('31',2,'publishedVectorType'),
                             ('31',3,'outputProgramType'),('31',4,'snapshotType'),('33',0,'pendingVectorType')])
         for binding, index, key in projections:
@@ -222,13 +222,13 @@ def main():
         for variant, types in contract['programVariants'].items():
             layout_types.update({variant + '_' + role: name for role, name in types.items()})
         layout_types.update({key + '_entry': name for key, name in contract['entryTypes'].items()})
-        for key in ['policyType','policyVectorType','hostProgramVectorType','hostProgramType','hostIRType']:
+        for key in ['policyType','policyVectorType','hostProgramVectorType','hostProgramType','hostIRType','hostExchangeVectorType','hostExchangeType','hostRunConfigType','hostTransitionType']:
             layout_types[key]=contract[key]
         need(set(layout_types) == set(contract['reviewedLayouts']), 'Reviewed layout set changed')
         cached_field=re.search(r'\b(fy_struct_\d+) f_4;',contract['reviewedLayouts']['output_stored'])
         need(cached_field is not None and cached_field.group(1)==contract['preparationType'],
              'Output Program preparation projection differs')
-        for owner,field,key in [('programType',9,'hostProgramVectorType'),('outputType',1,'executionType'),('outputType',2,'pendingVectorType'),
+        for owner,field,key in [('programType',9,'hostProgramVectorType'),('outputType',3,'hostExchangeVectorType'),('outputType',1,'executionType'),('outputType',2,'pendingVectorType'),
                                 ('preparationType',8,'capturePlanType'),
                                 ('executionType',0,'completionType'),('executionType',1,'publishedVectorType'),
                                 ('machineType',0,'storageBufferType'),('machineType',5,'inputWindowsType'),('inputWindowsType',0,'storageBufferType'),('machineType',6,'transactionType'),('machineType',7,'pendingMetaType'),
@@ -299,6 +299,7 @@ def main():
             bindings += f'typedef {name} bc_{key}_entry;\n'
         bindings += f'typedef {contract["policyType"]} bc_engine_policy;\n'
         bindings += f'typedef {contract["hostProgramType"]} bc_host_program;\ntypedef {contract["hostIRType"]} bc_host_ir;\n'
+        bindings += f'typedef {contract["hostExchangeType"]} bc_host_exchange;\n'
         bindings += '\n'.join(f'#define B{key} {value}' for key, value in contract['bindings'].items()) + '\n'
         write(output / 'bindings.h', bindings)
         for name in ['abi_thread_identity.c', 'abi_thread_identity.h']:

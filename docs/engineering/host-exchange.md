@@ -35,10 +35,9 @@ replies, cancellation, deadlines and quota/Fuel exhaustion use the coordinator's
 first-cause rules. Reply installation and retirement use the existing snapshot
 handoff. This path has no adapter callback.
 
-Engine handle and quota integration, general typed destinations with guest
-error arms, compact scalar replies, OS deadline sampling and public delivery
-remain open. The scalar price is local to this path. The guest-facing general
-host contract remains incomplete.
+General typed destinations with guest error arms, compact scalar replies,
+OS deadline sampling and public delivery remain open. The scalar Fuel price
+is local to this path.
 
 ### Scalar verification
 
@@ -63,6 +62,41 @@ four exact `tests::m2::host_program` identities and
 The release profile adds `--release`. The focused runner kept commands, hashes
 and reports under `build/host-scalar`. Scalar allocator fault injection, public CLI,
 Linux and the full native suite remain outside this verification.
+
+## Engine-owned scalar host execution
+
+`retain_scalar_host` accepts internal scalar IR and verifies it once under the
+Engine-owned Policy before assigning a Program ID. Program release blocks new
+Instances. Existing pins keep the verified Program alive through their final
+destroy. `prepare_scalar_host` rechecks the run's entry, declarations, grants
+and limits and opens a fresh exchange for the new Instance ID.
+
+`step_instance` exposes `Event.kind == 4` at suspension. `scalar_host_request`
+returns detached request bytes plus the Instance-scoped run ID and request ID.
+`reply_scalar_host` selects the target Instance and validates both IDs against
+its own exchange. Accepting the reply stages it for the next step. The normal
+Engine observe, cancel and destroy paths own the terminal state and cleanup.
+Run IDs are scoped to the Engine. The scalar path samples cancellation through
+the Engine and has no OS deadline source yet.
+
+The Instance reserves its exchange vector, fixed header, catalog backing and
+26 bytes for overlapping scalar envelopes. Destruction returns that reservation
+and drops the exchange. General typed replies, compact snapshots and complete
+accounting for admission scratch remain open.
+
+Windows development verification ran `python -B tools/verify-runtime-engine.py
+--profile development` with Fairy C preview.2, 366 source inputs, 41 checked
+transport bindings, 60 reviewed layouts and a default 1 MiB stack reserve.
+One Program stays pinned by two Instances with identical request IDs and distinct
+run IDs. Swapped run IDs, a wrong request ID and a malformed payload preserve
+pending Fuel. The independent accepted results are `42` and `-7`. Duplicate
+replies and replies to destroyed Instances reject. The last destroy releases
+the Program, and the native process exits with zero live SDK allocations.
+
+The executable SHA-256 is
+`76001ff3619f81ffdf3f0ebfde7ddfc8e56488b264b10973ac4dbb56bd3e4e47`.
+Root `fairyc check --locked` passed 376 sources and 4,161 MIR functions.
+Optimized Engine composition and public delivery remain unverified in this run.
 
 ## Standalone coordinator ownership and API
 

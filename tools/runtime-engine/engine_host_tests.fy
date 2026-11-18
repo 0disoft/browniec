@@ -1,6 +1,7 @@
 module engine_host_tests;
 import host_catalog as catalog;
 import host_program as programs;
+import std::bytes as bytes;
 import ir as ir;
 import runtime_engine as engine;
 import runtime_policy as policy;
@@ -73,4 +74,62 @@ fn Result<usize,u8> admission(){
     assert(id(engine::destroy(ref mut owner))==0);
     return .ok(1);
 }
-pub fn void run(){assert(admission().is_ok);}
+fn engine::Event event(Result<engine::Event,engine::Error> result){
+    return switch(result){case .ok(v):{v}case .err(_):{assert(false);event(result)}};
+}
+fn engine::HostRequest request(ref engine::Engine owner,usize instance){
+    return switch(engine::scalar_host_request(owner,instance)){
+        case .ok(value):{value}case .err(_):{assert(false);request(owner,instance)}
+    };
+}
+fn Result<usize,u8> interleaved(){
+    let policy::Policy ceiling=parsed_policy(true)?;
+    let runs::RunConfig run=config(ref ceiling,true)?;
+    let runs::RunConfig missing=config(ref ceiling,false)?;
+    var engine::Engine owner=configured(ceiling)?;
+    let catalog::Catalog imports=catalog_from(json())?;
+    let u32[8] expected=digest(ref imports)?;
+    let ir::Program code=candidate()?;
+    let usize p=id(engine::retain_scalar_host(ref mut owner,ref code,imports,ref expected,ref run));
+    rejected(engine::prepare_scalar_host(ref mut owner,p,ref missing),5);
+    let usize a=id(engine::prepare_scalar_host(ref mut owner,p,ref run));
+    let usize b=id(engine::prepare_scalar_host(ref mut owner,p,ref run));
+    assert(p==1 && a==2 && b==3);
+    let engine::Snapshot live=counts(ref mut owner);
+    assert(live.programs==1 && live.instances==2 && live.pins==2);
+    assert(id(engine::release_program(ref mut owner,p))==p);
+    rejected(engine::prepare_scalar_host(ref mut owner,p,ref run),2);
+    let engine::Event waiting_a=event(engine::step_instance(ref mut owner,a,8));
+    let engine::Event waiting_b=event(engine::step_instance(ref mut owner,b,8));
+    assert(waiting_a.kind==4 && waiting_b.kind==4 && waiting_a.remaining==9999984 && waiting_b.remaining==9999984);
+    let engine::HostRequest ra=request(ref owner,a);
+    let engine::HostRequest rb=request(ref owner,b);
+    let ref u8[] expected_request=b"\x01\x00\x03\x00\x00\x00\x04\x00\x00\x00\x29\x00\x00\x00";
+    assert(ra.run==a && rb.run==b && ra.request==1 && rb.request==1 && ra.import_id==0 && rb.import_id==0);
+    assert(bytes::equal(ref ra.payload,expected_request) && bytes::equal(ref rb.payload,expected_request));
+    let ref u8[] answer_a=b"\x03\x00\x00\x00\x04\x00\x00\x00\x2a\x00\x00\x00";
+    let ref u8[] answer_b=b"\x03\x00\x00\x00\x04\x00\x00\x00\xf9\xff\xff\xff";
+    assert(!engine::reply_scalar_host(ref mut owner,a,rb.run,rb.request,0,answer_b).is_ok);
+    assert(!engine::reply_scalar_host(ref mut owner,b,ra.run,ra.request,0,answer_a).is_ok);
+    assert(!engine::reply_scalar_host(ref mut owner,a,ra.run,2,0,answer_a).is_ok);
+    assert(!engine::reply_scalar_host(ref mut owner,a,ra.run,ra.request,0,b"\x03").is_ok);
+    assert(event(engine::observe(ref mut owner,a)).remaining==waiting_a.remaining);
+    assert(event(engine::observe(ref mut owner,b)).remaining==waiting_b.remaining);
+    assert(event(engine::reply_scalar_host(ref mut owner,b,rb.run,rb.request,0,answer_b)).kind==0);
+    assert(!engine::reply_scalar_host(ref mut owner,b,rb.run,rb.request,0,answer_a).is_ok);
+    let engine::Event done_b=event(engine::step_instance(ref mut owner,b,8));
+    assert(done_b.kind==1 && done_b.value==-7 && done_b.remaining==9999971);
+    let engine::Event still_a=event(engine::step_instance(ref mut owner,a,8));
+    assert(still_a.kind==4 && still_a.remaining==waiting_a.remaining);
+    assert(request(ref owner,a).run==a);
+    assert(event(engine::reply_scalar_host(ref mut owner,a,ra.run,ra.request,0,answer_a)).kind==0);
+    let engine::Event done_a=event(engine::step_instance(ref mut owner,a,8));
+    assert(done_a.kind==1 && done_a.value==42 && done_a.remaining==9999971);
+    assert(!engine::take_output(ref mut owner,a).is_ok);
+    assert(id(engine::destroy_instance(ref mut owner,b))==b && counts(ref mut owner).pins==1);
+    assert(id(engine::destroy_instance(ref mut owner,a))==a && counts(ref mut owner).programs==0);
+    assert(!engine::reply_scalar_host(ref mut owner,a,ra.run,ra.request,0,answer_a).is_ok);
+    assert(id(engine::destroy(ref mut owner))==0);
+    return .ok(1);
+}
+pub fn void run(){assert(admission().is_ok);assert(interleaved().is_ok);}

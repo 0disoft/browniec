@@ -49,6 +49,11 @@ for number,tail in re.findall(r'bc_runtime_engine_binding\(UINT32_C\((\d+)\)\);(
  if found:
   if number in c['bindings']:raise RuntimeError('Duplicate binding marker '+number)
   c['bindings'][number]=found.group(1)
+# MSVC transport orders the reply witness after a forward block jump. Resolve
+# that jump within the witness definition before reading the typed callee.
+reply_body=re.search(r'^static void fy_fn_\d+\([^\n]*\) \{\n(?:(?!^}).)*bc_runtime_engine_binding\(UINT32_C\(40\)\);(?:(?!^}).)*^}',t,re.M|re.S).group()
+reply_target=re.search(r'bc_runtime_engine_binding\(UINT32_C\(40\)\);\s+goto (fy_b_\d+);',reply_body).group(1)
+c['bindings']['40']=re.search(r'^'+reply_target+r':\n[^\n]*\b(fy_fn_\d+)\(',reply_body,re.M).group(1)
 definitions=list(re.finditer(r'^static [^\n]+\b(fy_fn_\d+)\([^\n]*\) \{',t,re.M))
 marked=[]
 for i,match in enumerate(definitions):
@@ -71,7 +76,7 @@ def field_type(owner,index):
 
 # Resolve resource roles from typed projections, never previous numeric IDs.
 def vector_element(vector):
- matches=set(re.findall(r'^static const (fy_resource_\d+) \* fy_fn_\d+\(const '+re.escape(vector)+r' \* [^,]+, uintptr_t [^;]+;',t,re.M))
+ matches=set(re.findall(r'^static (?:const )?(fy_resource_\d+) \* fy_fn_\d+\((?:const )?'+re.escape(vector)+r' \* [^,]+, uintptr_t [^;]+;',t,re.M))
  assert len(matches)==1,(vector,matches)
  return matches.pop()
 c['sourceIndexType']=field_type(c['entryTypes']['ordinary'],0)
@@ -92,6 +97,11 @@ host_ir_vector=field_type(c['hostProgramType'],0)
 host_ir=set(re.findall(r'^static fy_tagged_\d+ fy_fn_\d+\('+re.escape(host_ir_vector)+r' \* [^,]+, (fy_struct_\d+) [^;]+;',t,re.M))
 assert len(host_ir)==1,host_ir
 c['hostIRType']=host_ir.pop()
+c['hostExchangeVectorType']=field_type(c['outputType'],3)
+c['hostExchangeType']=vector_element(c['hostExchangeVectorType'])
+c['hostRunConfigType']=arg(39,5)
+c['hostTransitionType']=arg(41,7)
+assert arg(41,0)==c['hostExchangeVectorType'] and arg(40,2)==c['outputVectorType']
 c['policyVectorType']=field_type(c['engineType'],8)
 c['policyType']=vector_element(c['policyVectorType'])
 assert arg(37,0)==c['policyVectorType']
@@ -143,12 +153,12 @@ types['returnMetadataType']=c['returnMetadataType']
 types['policyVectorType']=c['policyVectorType']
 types['policyType']=c['policyType']
 types['capturePlanType']=c['capturePlanType']
-for key in ['hostProgramVectorType','hostProgramType','hostIRType']:types[key]=c[key]
+for key in ['hostProgramVectorType','hostProgramType','hostIRType','hostExchangeVectorType','hostExchangeType','hostRunConfigType','hostTransitionType']:types[key]=c[key]
 c['reviewedLayouts']={k:re.search(r'^typedef struct \{\n[^}]*\} '+re.escape(v)+';$',t,re.M).group() for k,v in types.items()}
-assert len(c['bindings'])==38 and len(c['reviewedLayouts'])==48
+assert len(c['bindings'])==41 and len(c['reviewedLayouts'])==52
 for key in ['lifecycleType','setupWorkType','preparationWorkType','cleanupWorkType','runtimeMetadataType','cleanupRuntimeType','inputWindowsType','storageBufferType']:
  c['reviewedLayouts'][key]=re.search(r'^typedef struct \{\n[^}]*\} '+re.escape(c[key])+';$',t,re.M).group()
-assert len(c['reviewedLayouts'])==56
+assert len(c['reviewedLayouts'])==60
 c['transportSha256']=hashlib.sha256(generated).hexdigest()
 c['compilerScratch']=reviewed_scratch(t)
 c['sourceInputs']=[dict(path=p.relative_to(root).as_posix(),sha256=hashlib.sha256(p.read_bytes()).hexdigest()) for p in sources]
