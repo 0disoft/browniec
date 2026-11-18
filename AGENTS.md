@@ -1,12 +1,13 @@
 - Latest runtime checkpoint (2026-11-18): the
-  [policy-checked input/output path](docs/engineering/runtime-engine-step.md#policy-checked-input-and-output-2026-11-18)
-  selects, compiles, authorizes and prepares one private Instance for stepping.
-  Windows development verifies denial, input limit, binary output and cleanup
-  on preview.2 with zero live SDK allocations. Root locked check passes 375
-  sources / 4113 MIR functions. Remaining work includes persistent Engine policy,
-  configured Program reuse, typed host request/reply and public delivery.
-  The [stack regression record](docs/engineering/native-stack-regressions.md)
-  preserves the previous checkpoint, including the public O2 timeout.
+  [configured Program path](docs/engineering/runtime-engine-step.md#reusable-configured-programs)
+  owns its Policy in Engine and reuses one verified Program across independently
+  admitted Instances. Windows development verifies exact-entry and authority
+  rejection, two interleaved runs with one verifier entry, release with live
+  pins and zero live SDK allocations. Root locked check passes 375 sources /
+  4115 MIR functions. Optimized verification, deadlines, typed host
+  request/reply and public delivery remain open. The
+  [stack regression record](docs/engineering/native-stack-regressions.md)
+  preserves the earlier public O2 timeout.
 
 # Brownie C agent guidance
 

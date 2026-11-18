@@ -113,11 +113,8 @@ the previous transport pin. The separate selected-entry authority group
 passes under the same compiler in development. Root locked check verifies
 375 source files and 4113 MIR functions.
 
-This admission is one input/output entry per invocation with a Policy supplied
-by the trusted native owner. Persistent Engine policy ownership, reuse of a
-configured Program for multiple runs, full enforcement of remaining policy
-limits including deadlines, and C ABI delivery remain open. Typed host
-request/reply and optimized builds of this admission are unverified.
+This was the initial single-run admission. The successors below describe the
+current Engine policy and Program ownership.
 
 ## Engine-owned policy
 
@@ -134,6 +131,30 @@ native stacks, 37 reviewed bindings and 53 layouts. The run exercised
 declaration denial, the input limit and successful step/output/teardown,
 with zero live SDK allocations. Root locked verification passed 375
 sources and 4115 MIR functions.
+
+## Reusable configured Programs
+
+`compile_granted_output` verifies and retains one input/output Program. The
+Program stores the exact canonical module and function selected by the
+compiler and the reachable emit requirement. That reachability walk runs once
+at publication. `prepare_granted_instance` checks the Engine-owned policy, exact
+entry, grant and input/output/Fuel limits for each run. Each Instance binds its
+own input snapshot, continuation and staged output. The convenience entry
+`prepare_granted_output` still prepares one run and releases the Program ID.
+
+Releasing the Program ID prevents further Instance creation. Existing pins
+preserve the executable until the last Instance is destroyed. The native
+control ledger includes the inline entry binding. On Windows x64 it adds
+216 bytes per reserved Program row in the primary and scratch tables.
+
+Windows development verification used Fairy C preview.2, 360 source inputs
+and the default native stacks. The verifier counter remained at one through
+two interleaved Instances with different inputs, Fuel and output limits.
+The test also covers a stricter Engine policy, mismatched entry, missing
+declaration, oversize input, raw authority denial, release with two live
+pins and reclamation on the last destroy. Both outputs match their inputs
+and the process exits with zero live SDK allocations. Release verification,
+deadlines, typed host request/reply and public C ABI delivery remain open.
 
 ## Remaining accepted work
 

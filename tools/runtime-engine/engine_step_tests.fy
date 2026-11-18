@@ -21,6 +21,8 @@ import runtime_run_config as configs;
 unsafe extern C fn usize probe_live();
 unsafe extern C fn usize probe_live_bytes();
 unsafe extern C fn usize probe_attempts();
+unsafe extern C fn void bc_runtime_engine_test_proof_begin();
+unsafe extern C fn usize bc_runtime_engine_test_proof_count();
 unsafe extern C fn void bc_runtime_engine_test_fail(i64 count);
 struct Heap { usize blocks; usize bytes; }
 fn Heap heap(){return Heap{.blocks=unsafe{probe_live()},.bytes=unsafe{probe_live_bytes()}};}
@@ -367,38 +369,74 @@ fn Result<usize,u8> empty_output_and_running_drop(){
     same_heap(ref before);return .ok(0);
 }
 
+fn Result<policy::Policy,u8> output_policy(bool allow){
+    return switch(policy::parse(if(allow){b"{\"schema\":\"brownie.policy/0.3\",\"compile\":{\"source_bytes\":262144,\"modules\":32,\"depth\":128,\"tokens\":131072,\"functions\":4096,\"types\":4096,\"instructions\":262144,\"registers_per_function\":1024,\"working_bytes\":67108864,\"fuel\":10000000,\"deadline_ms\":2000,\"diagnostics\":32},\"engine\":{\"memory_bytes\":134217728,\"control_bytes\":1048576,\"program_bytes\":8388608,\"total_program_bytes\":67108864,\"instances_bytes\":67108864,\"max_programs\":64,\"max_instances\":64,\"max_compiles\":1},\"run\":{\"memory_bytes\":16777216,\"object_bytes\":4194304,\"call_frames\":128,\"input_bytes\":1048576,\"output_bytes\":1048576,\"host_request_bytes\":1048576,\"host_response_bytes\":1048576,\"host_calls\":256,\"owner_entries\":16384,\"descriptor_entries\":16384,\"fuel\":10000000,\"deadline_ms\":1000},\"worker\":{\"memory_bytes\":201326592,\"user_cpu_time_ms\":5000,\"max_processes\":1,\"transport_bytes\":4194304,\"startup_ms\":2000,\"io_idle_ms\":1000,\"shutdown_grace_ms\":250,\"session_ms\":10000},\"capabilities\":[\"brownie.output.emit\"]}"}else{b"{\"schema\":\"brownie.policy/0.3\",\"compile\":{\"source_bytes\":262144,\"modules\":32,\"depth\":128,\"tokens\":131072,\"functions\":4096,\"types\":4096,\"instructions\":262144,\"registers_per_function\":1024,\"working_bytes\":67108864,\"fuel\":10000000,\"deadline_ms\":2000,\"diagnostics\":32},\"engine\":{\"memory_bytes\":134217728,\"control_bytes\":1048576,\"program_bytes\":8388608,\"total_program_bytes\":67108864,\"instances_bytes\":67108864,\"max_programs\":64,\"max_instances\":64,\"max_compiles\":1},\"run\":{\"memory_bytes\":16777216,\"object_bytes\":4194304,\"call_frames\":128,\"input_bytes\":1048576,\"output_bytes\":1048576,\"host_request_bytes\":1048576,\"host_response_bytes\":1048576,\"host_calls\":256,\"owner_entries\":16384,\"descriptor_entries\":16384,\"fuel\":10000000,\"deadline_ms\":1000},\"worker\":{\"memory_bytes\":201326592,\"user_cpu_time_ms\":5000,\"max_processes\":1,\"transport_bytes\":4194304,\"startup_ms\":2000,\"io_idle_ms\":1000,\"shutdown_grace_ms\":250,\"session_ms\":10000},\"capabilities\":[]}"})){
+        case .ok(v):{.ok(v)}case .err(_):{.err(1)}
+    };
+}
+fn Result<configs::RunConfig,u8> run_config(ref policy::Policy ceiling,usize which){
+    let ref u8[] source=if(which==0){b"{\"schema\":\"brownie.run/0.3\",\"entry\":{\"module\":\"app\",\"function\":\"chosen\"},\"requires\":[\"brownie.output.emit\"],\"grants\":[\"brownie.output.emit\"],\"limits\":{\"memory_bytes\":16777216,\"object_bytes\":4194304,\"call_frames\":128,\"input_bytes\":2,\"output_bytes\":2,\"host_request_bytes\":1048576,\"host_response_bytes\":1048576,\"host_calls\":256,\"owner_entries\":16384,\"descriptor_entries\":16384,\"fuel\":10000000,\"deadline_ms\":1000}}"}else if(which==1){b"{\"schema\":\"brownie.run/0.3\",\"entry\":{\"module\":\"app\",\"function\":\"chosen\"},\"requires\":[],\"grants\":[\"brownie.output.emit\"],\"limits\":{\"memory_bytes\":16777216,\"object_bytes\":4194304,\"call_frames\":128,\"input_bytes\":2,\"output_bytes\":2,\"host_request_bytes\":1048576,\"host_response_bytes\":1048576,\"host_calls\":256,\"owner_entries\":16384,\"descriptor_entries\":16384,\"fuel\":10000000,\"deadline_ms\":1000}}"}
+        else if(which==2){b"{\"schema\":\"brownie.run/0.3\",\"entry\":{\"module\":\"app\",\"function\":\"other\"},\"requires\":[\"brownie.output.emit\"],\"grants\":[\"brownie.output.emit\"],\"limits\":{\"memory_bytes\":16777216,\"object_bytes\":4194304,\"call_frames\":128,\"input_bytes\":2,\"output_bytes\":2,\"host_request_bytes\":1048576,\"host_response_bytes\":1048576,\"host_calls\":256,\"owner_entries\":16384,\"descriptor_entries\":16384,\"fuel\":10000000,\"deadline_ms\":1000}}"}else{b"{\"schema\":\"brownie.run/0.3\",\"entry\":{\"module\":\"app\",\"function\":\"chosen\"},\"requires\":[\"brownie.output.emit\"],\"grants\":[\"brownie.output.emit\"],\"limits\":{\"memory_bytes\":16777216,\"object_bytes\":4194304,\"call_frames\":128,\"input_bytes\":2,\"output_bytes\":1,\"host_request_bytes\":1048576,\"host_response_bytes\":1048576,\"host_calls\":256,\"owner_entries\":16384,\"descriptor_entries\":16384,\"fuel\":7000000,\"deadline_ms\":1000}}"};
+    return switch(configs::parse(source,ceiling)){
+        case .ok(v):{.ok(v)}case .err(_):{.err(2)}
+    };
+}
+fn Result<engine::Engine,u8> configured_engine(policy::Policy ceiling){
+    return switch(engine::create_with_policy(ceiling)){
+        case .ok(v):{.ok(v)}case .err(_):{.err(3)}
+    };
+}
+fn void rejected_id(Result<usize,engine::Error> r,u32 status){
+    switch(r){case .ok(_):{assert(false);}case .err(failure):{assert(failure.status==status);}};
+}
 fn Result<usize,u8> configured_output(){
-    let policy::Policy policy=switch(policy::parse(b"{\"schema\":\"brownie.policy/0.3\",\"compile\":{\"source_bytes\":262144,\"modules\":32,\"depth\":128,\"tokens\":131072,\"functions\":4096,\"types\":4096,\"instructions\":262144,\"registers_per_function\":1024,\"working_bytes\":67108864,\"fuel\":10000000,\"deadline_ms\":2000,\"diagnostics\":32},\"engine\":{\"memory_bytes\":134217728,\"control_bytes\":1048576,\"program_bytes\":8388608,\"total_program_bytes\":67108864,\"instances_bytes\":67108864,\"max_programs\":64,\"max_instances\":64,\"max_compiles\":1},\"run\":{\"memory_bytes\":16777216,\"object_bytes\":4194304,\"call_frames\":128,\"input_bytes\":1048576,\"output_bytes\":1048576,\"host_request_bytes\":1048576,\"host_response_bytes\":1048576,\"host_calls\":256,\"owner_entries\":16384,\"descriptor_entries\":16384,\"fuel\":10000000,\"deadline_ms\":1000},\"worker\":{\"memory_bytes\":201326592,\"user_cpu_time_ms\":5000,\"max_processes\":1,\"transport_bytes\":4194304,\"startup_ms\":2000,\"io_idle_ms\":1000,\"shutdown_grace_ms\":250,\"session_ms\":10000},\"capabilities\":[\"brownie.output.emit\"]}")){
-        case .ok(v):{v}case .err(_):{return .err(1);}
-    };
-    let configs::RunConfig missing=switch(configs::parse(b"{\"schema\":\"brownie.run/0.3\",\"entry\":{\"module\":\"app\",\"function\":\"chosen\"},\"requires\":[],\"grants\":[\"brownie.output.emit\"],\"limits\":{\"memory_bytes\":16777216,\"object_bytes\":4194304,\"call_frames\":128,\"input_bytes\":2,\"output_bytes\":2,\"host_request_bytes\":1048576,\"host_response_bytes\":1048576,\"host_calls\":256,\"owner_entries\":16384,\"descriptor_entries\":16384,\"fuel\":10000000,\"deadline_ms\":1000}}",ref policy)){
-        case .ok(v):{v}case .err(_):{return .err(2);}
-    };
-    let configs::RunConfig granted=switch(configs::parse(b"{\"schema\":\"brownie.run/0.3\",\"entry\":{\"module\":\"app\",\"function\":\"chosen\"},\"requires\":[\"brownie.output.emit\"],\"grants\":[\"brownie.output.emit\"],\"limits\":{\"memory_bytes\":16777216,\"object_bytes\":4194304,\"call_frames\":128,\"input_bytes\":2,\"output_bytes\":2,\"host_request_bytes\":1048576,\"host_response_bytes\":1048576,\"host_calls\":256,\"owner_entries\":16384,\"descriptor_entries\":16384,\"fuel\":10000000,\"deadline_ms\":1000}}",ref policy)){
-        case .ok(v):{v}case .err(_):{return .err(3);}
-    };
-    let ref u8[] source=b"module app;fn void send(ref u8[] data){output::emit(ref data);}pub fn i32 chosen(ref u8[] data){send(ref data);return 42;}";
-    var engine::Engine e=switch(engine::create_with_policy(policy)){
-        case .ok(v):{v}case .err(_):{return .err(4);}
-    };
-    let Heap idle=heap();
-    let Result<usize,engine::Error> denied=engine::prepare_granted_output(ref mut e,indexed(source)?,ref missing,captured(b"AB")?,65536);
-    switch(denied){case .ok(_):{assert(false);}case .err(failure):{assert(failure.status==5);}};
-    counts(ref mut e,0,0,0);
-    same_heap(ref idle);
-    let Result<usize,engine::Error> oversized=engine::prepare_granted_output(ref mut e,indexed(source)?,ref granted,captured(b"ABC")?,65536);
-    switch(oversized){case .ok(_):{assert(false);}case .err(failure):{assert(failure.status==8);}};
-    same_heap(ref idle);
-    let usize i=id(engine::prepare_granted_output(ref mut e,indexed(source)?,ref granted,captured(b"A\x00")?,65536));
-    counts(ref mut e,1,1,1);
-    assert(event(engine::observe(ref mut e,i)).kind==4);
-    assert(tick(ref mut e,i,1).kind==4);
-    let engine::Event done=finish(ref mut e,i,2);
-    assert(done.kind==1 && done.value==42 && done.remaining<10000000);
+    let policy::Policy ceiling=output_policy(true)?;
+    let configs::RunConfig granted=run_config(ref ceiling,0)?;
+    let configs::RunConfig missing=run_config(ref ceiling,1)?;
+    let configs::RunConfig other=run_config(ref ceiling,2)?;
+    let configs::RunConfig narrow=run_config(ref ceiling,3)?;
+    let ref u8[] source=b"module app;fn void send(ref u8[] data){output::emit(ref data);}pub fn i32 other(ref u8[] data){return 0;}pub fn i32 chosen(ref u8[] data){send(ref data);return 42;}";
     {
-        let engine::Output output=take(ref mut e,i)?;
-        assert(bytes::equal(engine::output_view(ref output),b"A\x00"));
+        var engine::Engine denied=configured_engine(output_policy(false)?)?;
+        rejected_id(engine::compile_granted_output(ref mut denied,indexed(source)?,ref granted,65536),5);
+        counts(ref mut denied,0,0,0);
+        close(ref mut denied);
     }
+    var engine::Engine e=configured_engine(ceiling)?;
+    let Heap idle=heap();
+    unsafe{bc_runtime_engine_test_proof_begin()};
+    let usize p=id(engine::compile_granted_output(ref mut e,indexed(source)?,ref granted,65536));
+    let usize proofs=unsafe{bc_runtime_engine_test_proof_count()};
+    assert(proofs==1);
+    counts(ref mut e,1,0,0);
+    let Heap retained=heap();
+    rejected_id(engine::prepare_granted_instance(ref mut e,p,ref missing,captured(b"AB")?),5);
+    rejected_id(engine::prepare_granted_instance(ref mut e,p,ref other,captured(b"AB")?),5);
+    rejected_id(engine::prepare_granted_instance(ref mut e,p,ref granted,captured(b"ABC")?),8);
+    rejected_id(engine::create_input_output_instance(ref mut e,p,captured(b"AB")?,10000000,2,true),5);
+    counts(ref mut e,1,0,0);
+    same_heap(ref retained);
+    let usize i=id(engine::prepare_granted_instance(ref mut e,p,ref granted,captured(b"A\x00")?));
+    let usize j=id(engine::prepare_granted_instance(ref mut e,p,ref narrow,captured(b"Z")?));
+    counts(ref mut e,1,2,2);
+    assert(event(engine::observe(ref mut e,i)).remaining==10000000-meter::output_prepare(2)-meter::input_prepare());
+    assert(event(engine::observe(ref mut e,j)).remaining==7000000-meter::output_prepare(1)-meter::input_prepare());
+    release(ref mut e,p);
+    rejected_id(engine::prepare_granted_instance(ref mut e,p,ref granted,captured(b"OK")?),2);
+    assert(tick(ref mut e,i,1).kind==4);
+    assert(tick(ref mut e,j,1).kind==4);
+    let engine::Event second=finish(ref mut e,j,2);
+    let engine::Event first=finish(ref mut e,i,1);
+    assert(first.kind==1 && second.kind==1 && first.value==42 && second.value==42);
+    {
+        let engine::Output first_output=take(ref mut e,i)?;
+        let engine::Output second_output=take(ref mut e,j)?;
+        assert(bytes::equal(engine::output_view(ref first_output),b"A\x00"));
+        assert(bytes::equal(engine::output_view(ref second_output),b"Z"));
+    }
+    assert(unsafe{bc_runtime_engine_test_proof_count()}==proofs);
+    destroy(ref mut e,j);
+    counts(ref mut e,1,1,1);
     destroy(ref mut e,i);
     counts(ref mut e,0,0,0);
     same_heap(ref idle);
