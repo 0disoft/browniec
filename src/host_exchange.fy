@@ -132,10 +132,11 @@ pub fn Observation poll(ref mut Exchange e,usize now,bool cancelled){
     if(is_scalar(e)){return state(e);}
     return poll_exchange(e,now,cancelled);
 }
+pub fn bool deadline_reached(ref Exchange e,usize now){return e.deadline!=0 && now>=e.deadline;}
 fn Observation poll_exchange(ref mut Exchange e,usize now,bool cancelled){
     if(state(e).phase!=3){
         if(cancelled){terminate(e,1,now);}
-        else if(e.deadline!=0 && now>=e.deadline){terminate(e,2,now);}
+        else if(deadline_reached(e,now)){terminate(e,2,now);}
     }return state(e);
 }
 fn Result<usize,Error> checkpoint(ref mut Exchange e,usize now,bool cancelled){

@@ -36,7 +36,7 @@ first-cause rules. Reply installation and retirement use the existing snapshot
 handoff. This path has no adapter callback.
 
 General typed destinations with guest error arms, compact scalar replies,
-OS deadline sampling and public delivery remain open. The scalar Fuel price
+and public delivery remain open. The scalar Fuel price
 is local to this path.
 
 ### Scalar verification
@@ -76,8 +76,8 @@ returns detached request bytes plus the Instance-scoped run ID and request ID.
 `reply_scalar_host` selects the target Instance and validates both IDs against
 its own exchange. Accepting the reply stages it for the next step. The normal
 Engine observe, cancel and destroy paths own the terminal state and cleanup.
-Run IDs are scoped to the Engine. The scalar path samples cancellation through
-the Engine and has no OS deadline source yet.
+Run IDs are scoped to the Engine. See the [scalar run deadline](#engine-scalar-run-deadline)
+for cancellation and expiry ordering.
 
 The Instance reserves its exchange vector, fixed header, exact catalog copy and
 capacity for its permitted scalar envelopes. See [pending memory accounting](#engine-scalar-pending-memory)
@@ -142,6 +142,36 @@ completion also refund the full reservation. Both native profiles exit 0 with
 zero live SDK allocations. Root `fairyc check --locked` passes 376 sources
 and 4,163 MIR functions. The local receipt is
 `build/runtime-engine/20261118T111819576719Z/receipt.json`.
+
+## Engine scalar run deadline
+
+The Windows Engine samples interrupt time with [QueryInterruptTimePrecise](https://learn.microsoft.com/en-us/windows/win32/api/realtimeapiset/nf-realtimeapiset-queryinterrupttimeprecise).
+Scalar preparation sets an absolute deadline from the admitted run limit in
+milliseconds. The sample is taken before allocating the exchange. The Engine
+converts the duration to 100 ns ticks and checks the addition for overflow. The Engine uses
+the same clock before each scalar instruction or reply installation and at
+reply and cancel entry. A waiting caller drives expiry by stepping or submitting
+a reply. A read-only observation reports the last committed state, and request
+export refuses expired requests without committing a state transition.
+
+Each owner-thread checkpoint serializes competing outcomes. At the first
+checkpoint that observes both cancellation and expiry, cancellation takes
+precedence. A committed terminal result freezes its cause, Fuel, counters and
+timestamp. A staged success reply can still expire before installation. A fatal
+reply accepted before the deadline commits its host failure immediately. Expiry
+produces a failed Engine event with the deadline diagnostic, retires the exchange
+and returns its reservation. The Engine's host terminal timestamp uses the
+Windows tick units.
+
+Windows development and /O2 passed `python -B tools/verify-runtime-engine.py
+--profile all` with MSVC 14.51.36231 and the default 1 MiB stack reserve.
+The fixed-clock fixtures cover one tick before the deadline and exact expiry,
+late and staged replies, a committed success and fatal reply, cancellation
+precedence, expiry before the first step and timestamp overflow before allocation.
+A separate fixture waits on the real Windows clock and checks the deadline cause
+and timestamp. Both profiles exit 0 with zero live SDK allocations. Root
+`fairyc check --locked` passes 376 sources and 4,165 MIR functions. The local
+receipt is `build/runtime-engine/20261118T152530683517Z/receipt.json`.
 
 ## Standalone coordinator ownership and API
 

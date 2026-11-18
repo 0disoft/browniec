@@ -313,6 +313,9 @@ def main():
         write(output / 'transport.c', '#define main generated_main\n#include "generated.c"\n#undef main\n' +
               ''.join('_Static_assert(sizeof('+r['type']+') <= UINT64_C('+str(r['slotBound'])+'), "compiler scratch width bound");\n' for r in contract['compilerScratch'].values()) +
               '#include "abi_thread_identity.h"\n#include "bindings.h"\n'
+              '#include <windows.h>\n'
+              'static void bc_test_interrupt_time(PULONGLONG now);\n'
+              '#define BC_ENGINE_INTERRUPT_TIME bc_test_interrupt_time\n'
               '#include "bridge.inc"\n#include "test-host.inc"\n#include "compile-test-host.inc"\n')
         repository = (args.fairyc_repository or ROOT / toolchain['source']['localRepository']).resolve()
         runtime = [inputs['tools/runtime-engine/heap-observer.c'].decode('utf-8')]
@@ -394,7 +397,7 @@ def main():
                            'Complete Engine accounting/preallocation, OOM injection and poison containment remain',
                            'Ordinary zero-argument terminal Fuel is still marked unknown',
                            'Private setup/cache checks/seal/cleanup and CALL/RET stages share the allowance; whole Runtime projection/copy accounting is conservative, not an instrumented field or CPU bound',
-                           'Private input/output compiler proof uses resumable logical stages; synchronous compile still drains them, source lowering and admission allocations remain atomic; no public stopping/poison, host dispatch or OS deadline'])
+                           'Private input/output compiler proof uses resumable logical stages; synchronous compile still drains them, source lowering and admission allocations remain atomic; no public stopping/poison, host dispatch or general compile/run deadline'])
     except Exception as error:
         receipt.update(status='failed', error=str(error))
         raise

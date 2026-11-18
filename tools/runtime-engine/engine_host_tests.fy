@@ -1,6 +1,8 @@
 module engine_host_tests;
 import host_catalog as catalog;
 import host_program as programs;
+import host_exchange as host;
+import errors as errors;
 import std::bytes as bytes;
 import std::num as num;
 import ir as ir;
@@ -10,6 +12,10 @@ import runtime_run_config as runs;
 import runtime_live_memory as live_memory;
 import runtime_program_memory as program_memory;
 
+unsafe extern C fn usize bc_runtime_engine_monotonic_ticks();
+unsafe extern C fn void bc_runtime_engine_test_set_clock(usize ticks);
+unsafe extern C fn void bc_runtime_engine_test_use_os_clock();
+unsafe extern C fn void bc_runtime_engine_test_wait_for_clock(usize start,usize elapsed);
 unsafe extern C fn usize probe_live();
 unsafe extern C fn usize probe_live_bytes();
 unsafe extern C fn usize probe_peak_bytes();
@@ -236,9 +242,116 @@ fn Result<usize,u8> pending_memory(){
     assert(id(engine::destroy(ref mut owner))==0);
     return .ok(reservation);
 }
+fn host::ScalarEvent scalar(ref engine::Engine owner,usize instance){
+    return switch(engine::observe_scalar_host(owner,instance)){
+        case .ok(v):{v}case .err(_):{assert(false);host::empty_scalar_event()}
+    };
+}
+fn engine::HostRequest waiting(ref mut engine::Engine owner,usize program,ref runs::RunConfig run){
+    let usize instance=id(engine::prepare_scalar_host(owner,program,run));
+    assert(event(engine::step_instance(owner,instance,8)).kind==4);
+    return request(owner,instance);
+}
+fn ref u8[] answer(){return b"\x03\x00\x00\x00\x04\x00\x00\x00\x2a\x00\x00\x00";}
+fn void stopped(ref mut engine::Engine owner,engine::HostRequest asked,u8 cause,usize at,usize fuel,usize replies){
+    let usize instance=asked.run;
+    assert(!engine::reply_scalar_host(owner,instance,instance,asked.request,0,answer()).is_ok);
+    let engine::Event terminal=event(engine::cancel_ready(owner,instance));
+    let u8 expected_kind=if(cause==1){3}else{2};
+    assert(terminal.kind==expected_kind);
+    if(cause==2){assert(terminal.diagnostic.code.kind==errors::deadline_kind());}
+    assert(terminal.remaining==fuel);
+    let host::ScalarEvent after=scalar(owner,instance);
+    assert(after.phase==4 && after.host.cause==cause && after.host.terminal_at==at &&
+        after.host.fuel==fuel && after.host.replies==replies && after.host.external_effects_unknown);
+    assert(id(engine::destroy_instance(owner,instance))==instance);
+}
+fn Result<usize,u8> deadline_order(){
+    let policy::Policy ceiling=parsed_policy(true)?;
+    let runs::RunConfig run=config(ref ceiling,true)?;
+    var engine::Engine owner=configured(ceiling)?;
+    let catalog::Catalog imports=catalog_from(json())?;
+    let u32[8] expected=digest(ref imports)?;
+    let ir::Program code=candidate()?;
+    let usize p=id(engine::retain_scalar_host(ref mut owner,ref code,imports,ref expected,ref run));
+    let usize start=1000;let usize deadline=start+10000000;
+    unsafe{bc_runtime_engine_test_set_clock(start)};
+    let engine::HostRequest success=waiting(ref mut owner,p,ref run);
+    let engine::HostRequest cancelled=waiting(ref mut owner,p,ref run);
+    let engine::HostRequest fatal=waiting(ref mut owner,p,ref run);
+    let engine::HostRequest expired=waiting(ref mut owner,p,ref run);
+    let engine::HostRequest late=waiting(ref mut owner,p,ref run);
+    let engine::HostRequest tie=waiting(ref mut owner,p,ref run);
+    let engine::HostRequest staged=waiting(ref mut owner,p,ref run);
+    let usize unstarted=id(engine::prepare_scalar_host(ref mut owner,p,ref run));
+
+    let usize before=deadline-1;
+    unsafe{bc_runtime_engine_test_set_clock(before)};
+    assert(event(engine::step_instance(ref mut owner,expired.run,8)).kind==4);
+    assert(event(engine::reply_scalar_host(ref mut owner,success.run,success.run,success.request,0,answer())).kind==0);
+    let engine::Event done=event(engine::step_instance(ref mut owner,success.run,8));
+    assert(done.kind==1 && done.value==42 && done.remaining==9999971);
+    assert(event(engine::cancel_ready(ref mut owner,cancelled.run)).kind==3);
+    assert(event(engine::reply_scalar_host(ref mut owner,fatal.run,fatal.run,fatal.request,2,b"")).kind==2);
+    assert(event(engine::reply_scalar_host(ref mut owner,staged.run,staged.run,staged.request,0,answer())).kind==0);
+
+    unsafe{bc_runtime_engine_test_set_clock(deadline)};
+    assert(!engine::scalar_host_request(ref owner,expired.run).is_ok);
+    assert(event(engine::step_instance(ref mut owner,expired.run,8)).kind==2);
+    assert(event(engine::reply_scalar_host(ref mut owner,late.run,late.run,late.request,0,answer())).kind==2);
+    assert(event(engine::cancel_ready(ref mut owner,tie.run)).kind==3);
+    assert(event(engine::step_instance(ref mut owner,staged.run,8)).kind==2);
+    assert(event(engine::step_instance(ref mut owner,unstarted,8)).kind==2);
+    let host::ScalarEvent idle=scalar(ref owner,unstarted);
+    assert(idle.host.cause==2 && idle.host.terminal_at==deadline && idle.host.calls==0 && idle.host.fuel==10000000);
+
+    unsafe{bc_runtime_engine_test_set_clock(deadline+1)};
+    assert(event(engine::cancel_ready(ref mut owner,success.run)).value==42);
+    assert(scalar(ref owner,success.run).phase==3);
+    assert(id(engine::destroy_instance(ref mut owner,success.run))==success.run);
+    assert(id(engine::destroy_instance(ref mut owner,unstarted))==unstarted);
+    stopped(ref mut owner,cancelled,1,before,9999984,0);
+    stopped(ref mut owner,fatal,3,before,9999984,0);
+    stopped(ref mut owner,expired,2,deadline,9999984,0);
+    stopped(ref mut owner,late,2,deadline,9999984,0);
+    stopped(ref mut owner,tie,1,deadline,9999984,0);
+    stopped(ref mut owner,staged,2,deadline,9999972,12);
+    ledger(ref owner,0,8*63776);
+
+    unsafe{bc_runtime_engine_test_set_clock(18446744073709551615)};
+    unsafe{probe_rebase()};
+    rejected(engine::prepare_scalar_host(ref mut owner,p,ref run),8);
+    assert(unsafe{probe_attempts()}==0);
+    assert(id(engine::release_program(ref mut owner,p))==p);
+    assert(id(engine::destroy(ref mut owner))==0);
+    return .ok(1);
+}
+fn Result<usize,u8> real_deadline(){
+    let policy::Policy ceiling=parsed_policy(true)?;
+    let runs::RunConfig run=config(ref ceiling,true)?;
+    var engine::Engine owner=configured(ceiling)?;
+    let catalog::Catalog imports=catalog_from(json())?;
+    let u32[8] expected=digest(ref imports)?;
+    let ir::Program code=candidate()?;
+    let usize p=id(engine::retain_scalar_host(ref mut owner,ref code,imports,ref expected,ref run));
+    let engine::HostRequest asked=waiting(ref mut owner,p,ref run);
+    let usize now=unsafe{bc_runtime_engine_monotonic_ticks()};
+    unsafe{bc_runtime_engine_test_wait_for_clock(now,10000000)};
+    assert(event(engine::step_instance(ref mut owner,asked.run,8)).kind==2);
+    let host::ScalarEvent expired=scalar(ref owner,asked.run);
+    assert(expired.host.terminal_at>=now+10000000);
+    stopped(ref mut owner,asked,2,expired.host.terminal_at,9999984,0);
+    assert(id(engine::release_program(ref mut owner,p))==p);
+    assert(id(engine::destroy(ref mut owner))==0);
+    return .ok(1);
+}
 pub fn void run(){
+    unsafe{bc_runtime_engine_test_set_clock(1000)};
     assert(admission().is_ok);
     assert(interleaved().is_ok);
     assert(pending_memory().is_ok);
+    assert(deadline_order().is_ok);
+    unsafe{bc_runtime_engine_test_use_os_clock()};
+    assert(real_deadline().is_ok);
     assert(unsafe{probe_live()}==0);
 }

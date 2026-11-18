@@ -72,6 +72,7 @@ pub resource Engine {
 @link_name("bc_runtime_engine_compile_preflight") unsafe extern C fn u32 compile_preflight_raw(ptr mut void owner,u32 mode,ptr void selected);
 @link_name("bc_runtime_engine_compile_fact") unsafe extern C fn usize compile_fact_raw(ptr void source,u32 kind,u32 fact);
 @link_name("bc_runtime_engine_policy_slot_bytes") unsafe extern C fn usize policy_slot_bytes_raw();
+@link_name("bc_runtime_engine_monotonic_ticks") unsafe extern C fn usize monotonic_ticks_raw();
 @link_name("bc_runtime_engine_prepare_host") unsafe extern C fn u32 prepare_host_raw(ptr mut void owner,usize program,ptr void run);
 @link_name("bc_runtime_engine_reply_host") unsafe extern C fn u32 reply_host_raw(ptr mut void owner,usize instance,usize run,usize request,u8 kind,ptr u8 data,usize length);
 @link_name("bc_runtime_engine_drive_host") unsafe extern C fn u32 drive_host_raw(ptr mut void owner,u32 mode,usize argument,usize run,usize request,u8 kind,ptr u8 data,usize length,ptr mut void transition);
@@ -310,6 +311,7 @@ pub fn Result<HostRequest,Error> scalar_host_request(ref Engine e,usize instance
     let ref u8[] data=switch(host::request_bytes(exchange)){
         case .ok(v):{v}case .err(_):{return .err(error(11));}
     };
+    if(host::deadline_reached(exchange,unsafe{monotonic_ticks_raw()})){return .err(error(11));}
     if(data.len!=14 || state.run!=instance){return .err(error(7));}
     var u8[14] payload=[0;14];var usize i=0;
     while(i<14){payload[i]=data[i];i+=1;}
@@ -831,12 +833,16 @@ fn u32 prepare_host_inner(ref mut Meta m,ref mut vec::Vec<Program> p,ref mut vec
     let usize exchange_bytes=host::scalar_storage_bound(verified,limits);
     let usize slots=control_layout::capacity(1);
     if(stride==0 || exchange_bytes>limits.memory_bytes || stride>(limits.memory_bytes-exchange_bytes)/slots){return failed(m,8);}
+    // Policy bounds deadline_ms to 1..60000. Windows interrupt time uses 100 ns ticks.
+    let usize duration=limits.deadline_ms*10000;
+    let usize start=unsafe{monotonic_ticks_raw()};
+    if(start>18446744073709551615-duration){return failed(m,8);}
     let usize charge=slots*stride+exchange_bytes;
     let live::Plan reservation=switch(prepare_payload(m,0,charge,0)){
         case .ok(plan):{plan}case .err(status):{return failed(m,status);}
     };
     let usize id=m.next;
-    let host::Exchange exchange=switch(host::create_scalar(verified,ceiling,run,id,0)){
+    let host::Exchange exchange=switch(host::create_scalar(verified,ceiling,run,id,start+duration)){
         case .ok(value):{value}case .err(reason):{return failed(m,switch(reason){
             case .Authority:{5}case .Allocation:{6}case .Binding:{7}case .State:{7}case .Rejected:{7}
         });}
@@ -858,9 +864,10 @@ fn u32 drive_host_owner(ref mut vec::Vec<host::Exchange> owners,u32 mode,usize q
     let ref mut host::Exchange exchange=vec::at_mut<host::Exchange>(owners,0);
     var usize remaining=quantum;
     while(remaining>0){
+        let usize now=unsafe{monotonic_ticks_raw()};
         let Result<host::ScalarEvent,host::ScalarError> action=if(mode==2){
-            host::reply_scalar(exchange,run,request,kind,payload,0,false)
-        }else{host::step_scalar(exchange,0,mode==1)};
+            host::reply_scalar(exchange,run,request,kind,payload,now,false)
+        }else{host::step_scalar(exchange,now,mode==1)};
         let host::ScalarEvent observed=switch(action){
             case .ok(value):{value}case .err(reason):{return switch(reason){
                 case .Rejected:{1}case .Allocation:{6}case .Authority:{5}case .State:{7}case .Binding:{7}
@@ -870,7 +877,7 @@ fn u32 drive_host_owner(ref mut vec::Vec<host::Exchange> owners,u32 mode,usize q
         let bool failed=observed.phase==4;
         let bool cancel=failed && observed.host.cause==1;
         let u8 event_kind=if(done){1}else if(cancel){3}else if(failed){2}else if(observed.phase==1){4}else{0};
-        let u8 diagnostic=if(observed.failure==2){6}else if(observed.host.cause==5){8}else if(observed.host.cause==4){15}else{0};
+        let u8 diagnostic=if(observed.failure==2){6}else if(observed.host.cause==5){8}else if(observed.host.cause==4){15}else if(observed.host.cause==2){errors::deadline_kind()}else{0};
         *transition=HostTransition{.scalar=observed,.event=Event{.kind=event_kind,.value=observed.value,
             .diagnostic=diagnostics::absent(errors::make(diagnostic,0)),.remaining=observed.host.fuel,.fuel_known=true}};
         if(observed.phase!=0 || mode!=0){return 0;}

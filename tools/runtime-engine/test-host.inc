@@ -2,6 +2,25 @@
 #include <assert.h>
 #include <stdio.h>
 extern size_t probe_live(void);
+
+static int host_clock_fixed;
+static ULONGLONG host_clock_ticks;
+static void bc_test_interrupt_time(PULONGLONG now){
+ if(host_clock_fixed){*now=host_clock_ticks;return;}
+ QueryInterruptTimePrecise(now);
+}
+void bc_runtime_engine_test_set_clock(uintptr_t ticks){
+ assert(!host_clock_fixed||ticks>=host_clock_ticks);
+ host_clock_ticks=ticks;host_clock_fixed=1;
+}
+void bc_runtime_engine_test_use_os_clock(void){host_clock_fixed=0;}
+void bc_runtime_engine_test_wait_for_clock(uintptr_t start,uintptr_t elapsed){
+ assert(!host_clock_fixed);
+ ULONGLONG wait_start=GetTickCount64();
+ while(bc_runtime_engine_monotonic_ticks()-start<elapsed){
+  assert(GetTickCount64()-wait_start<5000);Sleep(1);
+ }
+}
 void bc_runtime_engine_binding(uint32_t number){(void)number;}
 static uintptr_t call_recipe_visits=0;
 void bc_runtime_engine_test_recipe_visit(void){++call_recipe_visits;}
