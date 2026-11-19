@@ -16,8 +16,8 @@
 | browniec inspect SOURCE --ir | Compile/verify and emit bounded private IR diagnostics without executing | Implemented for the same public M1/M2 admission as check; optional --json |
 | browniec worker | Broker-only restricted IPC endpoint | Designed; unavailable |
 
-The implemented grammar is `browniec check SOURCE [--json]` and
-`browniec run SOURCE [--fuel N] [--json]`, `browniec inspect SOURCE --ir [--json]`,
+The implemented grammar is `browniec check SOURCE [--json|--json-v2]` and
+`browniec run SOURCE [--fuel N] [--json|--json-v2]`, `browniec inspect SOURCE --ir [--json]`,
 plus `--version [--json]` and `--help`.
 Fuel defaults to 256 and accepts 0..16000000; duplicate/unknown options are errors.
 Run grants no guest host capability. SOURCE selects one local disk file with a

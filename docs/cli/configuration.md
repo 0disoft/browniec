@@ -25,6 +25,9 @@ Missing required values fail. Empty values are invalid unless a documented field
 allows empty bytes. Unknown fields, duplicate keys, invalid UTF-8, excess depth,
 excess bytes, and values outside schema bounds are rejected during bounded input.
 
+For check and run, choose a single output format. Text is the default,
+`--json` selects result v1, and `--json-v2` selects result v2.
+
 ## Paths and secrets
 
 Policy, catalog, and source paths require explicit selection. Path traversal,

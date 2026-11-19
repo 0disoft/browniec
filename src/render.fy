@@ -33,33 +33,64 @@ pub fn i32 exit_code(u8 kind) {
     return 4;
 }
 
-fn Result<bytes::Buffer, bytes::BufferError> encode(bool run, bool failed, i64 value, errors::Error error, u8 arrays) {
+pub enum Format { Text; Json; JsonV2; }
+pub fn bool text_mode(Format format){
+    return switch(format){case .Text:{true}case .Json:{false}case .JsonV2:{false}};
+}
+fn bool v2(Format format){
+    return switch(format){case .Text:{false}case .Json:{false}case .JsonV2:{true}};
+}
+fn bool has_location(u8 location){
+    return location!=errors::absent_location();
+}
+fn ref str location_name(u8 location){
+    if(location==errors::instruction_location()){return "instruction_index";}
+    if(location!=errors::absent_location()){return "source_byte";}
+    return "none";
+}
+fn Result<usize,bytes::BufferError> encode_location(ref mut bytes::Buffer output,Format format,errors::Error error){
+    if(!v2(format)){
+        let usize key=bytes::append(output,b"\",\"byte_offset\":")?;
+        return bytes::append_usize(output,error.offset);
+    }
+    let usize open=bytes::append(output,b"\",\"location\":{\"kind\":\"")?;
+    let usize name=bytes::append(output,text::as_bytes(location_name(error.location)))?;
+    if(has_location(error.location)){
+        let usize offset=bytes::append(output,b"\",\"offset\":")?;
+        let usize value=bytes::append_usize(output,error.offset)?;
+        return bytes::append(output,b"}");
+    }
+    return bytes::append(output,b"\"}");
+}
+fn Result<bytes::Buffer, bytes::BufferError> encode(Format format,bool run, bool failed, i64 value, errors::Error error, u8 arrays) {
     var bytes::Buffer output = bytes::with_capacity(512)?;
+    let usize prefix=bytes::append(ref mut output,if(v2(format)){
+        b"{\"schema\":\"browniec.result/v2\",\"profile\":"
+    }else{b"{\"schema\":\"browniec.result/v1\",\"profile\":"})?;
     let usize header = bytes::append(ref mut output, if (arrays == 8) {
-        b"{\"schema\":\"browniec.result/v1\",\"profile\":\"brownie.m2-reference/1\",\"command\":"
+        b"\"brownie.m2-reference/1\",\"command\":"
     } else if (arrays == 7) {
-        b"{\"schema\":\"browniec.result/v1\",\"profile\":\"brownie.m2-struct-nested/1\",\"command\":"
+        b"\"brownie.m2-struct-nested/1\",\"command\":"
     } else if (arrays == 6) {
-        b"{\"schema\":\"browniec.result/v1\",\"profile\":\"brownie.m2-struct-copy/1\",\"command\":"
+        b"\"brownie.m2-struct-copy/1\",\"command\":"
     } else if (arrays == 5) {
-        b"{\"schema\":\"browniec.result/v1\",\"profile\":\"brownie.m2-struct-write/1\",\"command\":"
+        b"\"brownie.m2-struct-write/1\",\"command\":"
     } else if (arrays == 4) {
-        b"{\"schema\":\"browniec.result/v1\",\"profile\":\"brownie.m2-struct-read/1\",\"command\":"
+        b"\"brownie.m2-struct-read/1\",\"command\":"
     } else if (arrays == 3) {
-        b"{\"schema\":\"browniec.result/v1\",\"profile\":\"brownie.m2-array-copy/1\",\"command\":"
+        b"\"brownie.m2-array-copy/1\",\"command\":"
     } else if (arrays == 2) {
-        b"{\"schema\":\"browniec.result/v1\",\"profile\":\"brownie.m2-array-write/1\",\"command\":"
+        b"\"brownie.m2-array-write/1\",\"command\":"
     } else if (arrays == 1) {
-        b"{\"schema\":\"browniec.result/v1\",\"profile\":\"brownie.m2-array-read/1\",\"command\":"
-    } else { b"{\"schema\":\"browniec.result/v1\",\"profile\":\"brownie.m1-scalar/1\",\"command\":" })?;
+        b"\"brownie.m2-array-read/1\",\"command\":"
+    } else { b"\"brownie.m1-scalar/1\",\"command\":" })?;
     let usize command = bytes::append(ref mut output, if (run) { b"\"run\"" } else { b"\"check\"" })?;
     let usize status = bytes::append(ref mut output, if (failed) { b",\"status\":\"error\",\"return_i32\":null,\"error\":{\"kind\":\"" }
         else if (run) { b",\"status\":\"completed\",\"return_i32\":" }
         else { b",\"status\":\"checked\",\"return_i32\":null,\"error\":null" })?;
     if (failed) {
         let usize a = bytes::append(ref mut output, text::as_bytes(kind(error.kind)))?;
-        let usize b = bytes::append(ref mut output, b"\",\"byte_offset\":")?;
-        let usize c = bytes::append_usize(ref mut output, error.offset)?;
+        let usize location=encode_location(ref mut output,format,error)?;
         let usize d = bytes::append(ref mut output, b"}")?;
     } else if (run) {
         let usize a = bytes::append_i64(ref mut output, value)?;
@@ -71,13 +102,13 @@ fn Result<bytes::Buffer, bytes::BufferError> encode(bool run, bool failed, i64 v
 
 @effects(console)
 pub fn i32 outcome(bool json, bool run, bool failed, i64 value, errors::Error error) {
-    return selected_outcome(json, run, failed, value, error, 0);
+    return selected_outcome(if(json){.Json}else{.Text}, run, failed, value, error, 0);
 }
 @effects(console)
-pub fn i32 selected_outcome(bool json, bool run, bool failed, i64 value, errors::Error error, u8 arrays) {
+pub fn i32 selected_outcome(Format format, bool run, bool failed, i64 value, errors::Error error, u8 arrays) {
     let i32 code = if (failed) { exit_code(error.kind) } else { 0 };
-    if (json) {
-        let bytes::Buffer output = switch (encode(run, failed, value, error, arrays)) {
+    if (!text_mode(format)) {
+        let bytes::Buffer output = switch (encode(format,run, failed, value, error, arrays)) {
             case .ok(value): { value } case .err(_): { return 7; }
         };
         let ref u8[] view = bytes::view(ref output);
@@ -87,9 +118,13 @@ pub fn i32 selected_outcome(bool json, bool run, bool failed, i64 value, errors:
         };
     }
     if (failed) {
-        if (!io::write_stderr("browniec: ").is_ok || !io::write_stderr(kind(error.kind)).is_ok ||
-            !io::write_stderr(" at byte ").is_ok || !io::write_stderr_usize(error.offset).is_ok ||
-            !io::write_stderr("\n").is_ok) { return 7; }
+        if(!io::write_stderr("browniec: ").is_ok || !io::write_stderr(kind(error.kind)).is_ok){return 7;}
+        if(has_location(error.location)){
+            let bool instruction=error.location==errors::instruction_location();
+            let ref str label=if(instruction){" at instruction "}else{" at byte "};
+            if(!io::write_stderr(label).is_ok || !io::write_stderr_usize(error.offset).is_ok){return 7;}
+        }
+        if(!io::write_stderr("\n").is_ok){return 7;}
     } else if (run) {
         if (!io::write_stderr("return_i32=").is_ok || !io::write_stderr_i64(value).is_ok ||
             !io::write_stderr("\n").is_ok) { return 7; }

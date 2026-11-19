@@ -55,9 +55,9 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records
     var registers::Set defined = registers::empty();
     var usize i = start;
     while (i < end) {
-        if (p.record_parameters[i] == 0 && p.slice_parameters[i] == 0 && static_sites.parameters[i]==0 && value_sites.parameters[i]==0 && !types::valid(p.types[i]) && !(host_profile && p.types[i]==14)) { return .err(errors::make(5, p.starts[f])); }
+        if (p.record_parameters[i] == 0 && p.slice_parameters[i] == 0 && static_sites.parameters[i]==0 && value_sites.parameters[i]==0 && !types::valid(p.types[i]) && !(host_profile && p.types[i]==14)) { return .err(errors::instruction(p.starts[f])); }
         if (i < start + arity) {
-            if (p.slots[i]) { return .err(errors::make(5, p.starts[f])); }
+            if (p.slots[i]) { return .err(errors::instruction(p.starts[f])); }
             registers::insert(ref mut written, i);
             if (p.array_parameters[i] == 0 && p.record_parameters[i] == 0 && p.slice_parameters[i] == 0 && static_sites.parameters[i]==0 && value_sites.parameters[i]==0) { registers::insert(ref mut defined, i); }
         }
@@ -69,7 +69,7 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records
     // Solve the forward graph, then check each backedge preserves its target's
     // entry invariant. This bounded inductive proof needs no cyclic worklist.
     while (pc < p.ends[f]) {
-        if (!seen[pc]) { return .err(errors::make(5, pc)); }
+        if (!seen[pc]) { return .err(errors::instruction(pc)); }
         defined = registers::Set { .low = states[pc * 2], .high = states[pc * 2 + 1] };
         var usize live = array_states[pc];
         var usize static_live = static_states[pc];
@@ -80,23 +80,23 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records
         let usize b = p.code[at + 3] as usize;
         if(host_profile && (op>=118 && op<=121)){
             if(dst<start || dst>=end || p.slots[dst] || registers::contains(ref written,dst) ||
-                (op!=121 && p.code[at+6]!=0) || p.code[at+7]!=0){return .err(errors::make(5,pc));}
+                (op!=121 && p.code[at+6]!=0) || p.code[at+7]!=0){return .err(errors::instruction(pc));}
             if(op==119){
                 let usize offset=a+256*b;
                 let usize length=p.code[at+4] as usize+256*(p.code[at+5] as usize);
-                if(p.types[dst]!=14 || offset>p.list_used || length>p.list_used-offset){return .err(errors::make(5,pc));}
+                if(p.types[dst]!=14 || offset>p.list_used || length>p.list_used-offset){return .err(errors::instruction(pc));}
             }else if(op==120){
                 if(p.types[dst]!=1 || !readable(p,ref defined,a,start,end) || p.types[a]!=14 ||
-                    b!=0 || p.code[at+4]!=0 || p.code[at+5]!=0){return .err(errors::make(5,pc));}
+                    b!=0 || p.code[at+4]!=0 || p.code[at+5]!=0){return .err(errors::instruction(pc));}
             }else{
             let usize count=p.code[at+4] as usize;
             if(count>32 || a>end || count>end-a || (count==0 && a!=0) ||
                 (!types::scalar(p.types[dst]) && p.types[dst]!=14) || (op!=121 && p.code[at+5]!=0)){
-                return .err(errors::make(5,pc));
+                return .err(errors::instruction(pc));
             }
             var usize arg=a;
             while(arg<a+count){
-                if(!readable(p,ref defined,arg,start,end)){return .err(errors::make(5,pc));}
+                if(!readable(p,ref defined,arg,start,end)){return .err(errors::instruction(pc));}
                 arg+=1;
             }
             if(op==121){
@@ -104,70 +104,70 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records
                 let usize error_target=p.code[at+6] as usize;
                 if(error_target<=pc+1 || error_target>=p.ends[f] || error_dst<start || error_dst>=end ||
                     p.types[error_dst]!=11 || p.slots[error_dst] || error_dst==dst ||
-                    registers::contains(ref written,error_dst)){return .err(errors::make(5,pc));}
+                    registers::contains(ref written,error_dst)){return .err(errors::instruction(pc));}
                 var registers::Set error_defined=defined;
                 registers::insert(ref mut error_defined,error_dst);registers::insert(ref mut written,error_dst);
                 if(!merge(ref mut states,ref mut seen,ref error_defined,error_target,
-                    ref mut array_states,live,ref mut static_states,static_live)){return .err(errors::make(5,pc));}
+                    ref mut array_states,live,ref mut static_states,static_live)){return .err(errors::instruction(pc));}
             }
             }
             registers::insert(ref mut defined,dst);registers::insert(ref mut written,dst);
             if(pc+1>=p.ends[f] || !merge(ref mut states,ref mut seen,ref defined,pc+1,
-                ref mut array_states,live,ref mut static_states,static_live)){return .err(errors::make(5,pc));}
+                ref mut array_states,live,ref mut static_states,static_live)){return .err(errors::instruction(pc));}
             pc+=1;continue;
         }
         if(op==116){
             let usize checked=output_ir::inspect(p,static_sites,pc,f,live,static_live)?;
             if(pc+1>=p.ends[f] || !merge(ref mut states,ref mut seen,ref defined,pc+1,
-                ref mut array_states,live,ref mut static_states,static_live)){return .err(errors::make(5,pc));}
+                ref mut array_states,live,ref mut static_states,static_live)){return .err(errors::instruction(pc));}
             pc+=1;continue;
         }
         if(op==78){
-            if(!static_sites.call_profile){return .err(errors::make(5,pc));}
+            if(!static_sites.call_profile){return .err(errors::instruction(pc));}
             if(a>=p.function_count || a==p.entry || b>=p.call_count || used_calls[b] ||
-                p.call_arities[b] as usize!=p.arities[a]){return .err(errors::make(5,pc));}
+                p.call_arities[b] as usize!=p.arities[a]){return .err(errors::instruction(pc));}
             if((live>>48)!=0){let usize preserved=reborrow_calls::inspect(p,loans,pc,f,live)?;}
             let usize checked=array_parameters::arguments_static(p,a,b,f,ref defined,live,pc,ref static_sites.parameters)?;
             if(static_sites.results[a]!=0){let usize one=1;
                 if(dst>=16 || static_sites.definitions[dst]!=pc || static_sites.functions[dst]!=f ||
-                    static_sites.kinds[dst]!=static_sites.results[a] || (static_live&(one<<dst))!=0){return .err(errors::make(5,pc));}
+                    static_sites.kinds[dst]!=static_sites.results[a] || (static_live&(one<<dst))!=0){return .err(errors::instruction(pc));}
                 static_live|=one<<dst;
             }else if(p.array_results[a]!=0 || p.record_results[a]!=0){
                 live=if(p.record_results[a]!=0){struct_results::call(p,a,dst,f,live,pc)?}else{array_results::call(p,a,dst,f,live,pc)?};
             }else if(p.return_types[a]==13){
-                if(dst!=0){return .err(errors::make(5,pc));}
+                if(dst!=0){return .err(errors::instruction(pc));}
             }else{
                 if(dst<start || dst>=end || p.slots[dst] || registers::contains(ref written,dst) ||
-                    p.types[dst]!=p.return_types[a] || !types::valid(p.types[dst])){return .err(errors::make(5,pc));}
+                    p.types[dst]!=p.return_types[a] || !types::valid(p.types[dst])){return .err(errors::instruction(pc));}
                 registers::insert(ref mut defined,dst);registers::insert(ref mut written,dst);
             }
             used_calls[b]=true;
             if(pc+1>=p.ends[f] || !merge(ref mut states,ref mut seen,ref defined,pc+1,
-                ref mut array_states,live,ref mut static_states,static_live)){return .err(errors::make(5,pc));}
+                ref mut array_states,live,ref mut static_states,static_live)){return .err(errors::instruction(pc));}
             pc+=1;continue;
         }
         if(op==79){let usize one=1;
             if(static_sites.results[f]==0 || live!=0 || a>=16 || static_live!=(one<<a) ||
                 static_sites.functions[a]!=f || (static_sites.kinds[a]!=static_sites.results[f] &&
-                !(static_sites.results[f]==3 && static_sites.kinds[a]==1))){return .err(errors::make(5,pc));}
+                !(static_sites.results[f]==3 && static_sites.kinds[a]==1))){return .err(errors::instruction(pc));}
             pc+=1;continue;
         }
         if (statics::operation(op)) {
             static_live = statics::step(p, static_sites, pc, f, ref mut defined, ref mut written, static_live)?;
             if (pc + 1 >= p.ends[f] || !merge(ref mut states, ref mut seen, ref defined, pc + 1,
-                ref mut array_states, live, ref mut static_states, static_live)) { return .err(errors::make(5, pc)); }
+                ref mut array_states, live, ref mut static_states, static_live)) { return .err(errors::instruction(pc)); }
             pc += 1; continue;
         }
         if(value_ir::operation(op)){
-            if(!value_sites.enabled){return .err(errors::make(5,pc));}
+            if(!value_sites.enabled){return .err(errors::instruction(pc));}
             if(op==94 || op==113){
                 if(live!=0 || static_live!=0 || value_sites.results[f]==0 ||
-                    (op==94 && value_sites.results[f]>16) || (op==113 && value_sites.results[f]<17)){return .err(errors::make(5,pc));}
+                    (op==94 && value_sites.results[f]>16) || (op==113 && value_sites.results[f]<17)){return .err(errors::instruction(pc));}
                 pc+=1;continue;
             }
             if(op==93 || op==114){
                 if(a>=p.function_count || a==p.entry || b>=p.call_count || used_calls[b] ||
-                    p.call_arities[b] as usize!=p.arities[a]){return .err(errors::make(5,pc));}
+                    p.call_arities[b] as usize!=p.arities[a]){return .err(errors::instruction(pc));}
                 if((live>>48)!=0){let usize preserved=reborrow_calls::inspect(p,loans,pc,f,live)?;}
                 let usize checked=array_parameters::arguments_values(p,a,b,f,ref defined,live,pc,ref value_sites.parameters)?;
                 if(value_sites.results[a]!=0){
@@ -175,116 +175,116 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records
                     // namespace. A view result never defines a scalar word.
                 }else if(p.array_results[a]!=0 || p.record_results[a]!=0){
                     live=if(p.record_results[a]!=0){struct_results::call(p,a,dst,f,live,pc)?}else{array_results::call(p,a,dst,f,live,pc)?};
-                }else if(p.return_types[a]==13){if(dst!=0){return .err(errors::make(5,pc));}}
+                }else if(p.return_types[a]==13){if(dst!=0){return .err(errors::instruction(pc));}}
                 else{
                     if(dst<start || dst>=end || p.slots[dst] || registers::contains(ref written,dst) ||
-                        p.types[dst]!=p.return_types[a] || !types::valid(p.types[dst])){return .err(errors::make(5,pc));}
+                        p.types[dst]!=p.return_types[a] || !types::valid(p.types[dst])){return .err(errors::instruction(pc));}
                     registers::insert(ref mut defined,dst);registers::insert(ref mut written,dst);
                 }
                 used_calls[b]=true;
             }else if(op==105 || op==106){
                 let usize hi=p.code[at+4] as usize;
                 if(!readable(p,ref defined,b,start,end) || p.types[b]!=12 ||
-                    !readable(p,ref defined,hi,start,end) || p.types[hi]!=12){return .err(errors::make(5,pc));}
+                    !readable(p,ref defined,hi,start,end) || p.types[hi]!=12){return .err(errors::instruction(pc));}
             }else if(op==99 || op==100 || op==110 || op==111){
                 if(dst<start || dst>=end || p.types[dst]!=if(op==99 || op==110){12}else{10} || p.slots[dst] ||
                     value_sites.parameters[dst]!=0 || p.array_parameters[dst]!=0 ||
                     p.record_parameters[dst]!=0 || p.slice_parameters[dst]!=0 ||
-                    registers::contains(ref written,dst)){return .err(errors::make(5,pc));}
-                if((op==100 || op==111) && (!readable(p,ref defined,b,start,end) || p.types[b]!=12)){return .err(errors::make(5,pc));}
+                    registers::contains(ref written,dst)){return .err(errors::instruction(pc));}
+                if((op==100 || op==111) && (!readable(p,ref defined,b,start,end) || p.types[b]!=12)){return .err(errors::instruction(pc));}
                 registers::insert(ref mut defined,dst);registers::insert(ref mut written,dst);
             }else if(op==101){
                 if(!readable(p,ref defined,a,start,end) || p.types[a]!=12 ||
-                    !readable(p,ref defined,b,start,end) || p.types[b]!=10){return .err(errors::make(5,pc));}
+                    !readable(p,ref defined,b,start,end) || p.types[b]!=10){return .err(errors::instruction(pc));}
             }else if(op==102 || op==103){
-                if(!readable(p,ref defined,b,start,end) || p.types[b]!=if(op==102){10}else{12}){return .err(errors::make(5,pc));}
+                if(!readable(p,ref defined,b,start,end) || p.types[b]!=if(op==102){10}else{12}){return .err(errors::instruction(pc));}
             }else if(op==98){
                 // The independent typed CFG proved the exact live wrapper and
                 // canonical operands. Define one fresh ordinary bool here.
                 if(dst<start || dst>=end || p.types[dst]!=2 || p.slots[dst] ||
                     value_sites.parameters[dst]!=0 || p.array_parameters[dst]!=0 ||
                     p.record_parameters[dst]!=0 || p.slice_parameters[dst]!=0 ||
-                    registers::contains(ref written,dst)){return .err(errors::make(5,pc));}
+                    registers::contains(ref written,dst)){return .err(errors::instruction(pc));}
                 registers::insert(ref mut defined,dst);registers::insert(ref mut written,dst);
             }else if(op==96){
                 if(dst<start || dst>=end || p.slots[dst] || registers::contains(ref written,dst) ||
-                    a>=16 || value_sites.scalar_tags[a]==0 || p.types[dst]!=value_sites.scalar_tags[a]){return .err(errors::make(5,pc));}
+                    a>=16 || value_sites.scalar_tags[a]==0 || p.types[dst]!=value_sites.scalar_tags[a]){return .err(errors::instruction(pc));}
                 registers::insert(ref mut defined,dst);registers::insert(ref mut written,dst);
             }else if(op==97){
                 if(dst>=16 || value_sites.scalar_tags[dst]==0 || !readable(p,ref defined,a,start,end) ||
-                    p.types[a]!=value_sites.scalar_tags[dst]){return .err(errors::make(5,pc));}
+                    p.types[a]!=value_sites.scalar_tags[dst]){return .err(errors::instruction(pc));}
             }else if(op==92){
                 if(!merge(ref mut states,ref mut seen,ref defined,p.code[at+4] as usize,
-                    ref mut array_states,live,ref mut static_states,static_live)){return .err(errors::make(5,pc));}
+                    ref mut array_states,live,ref mut static_states,static_live)){return .err(errors::instruction(pc));}
             }
             if(pc+1>=p.ends[f] || !merge(ref mut states,ref mut seen,ref defined,pc+1,
-                ref mut array_states,live,ref mut static_states,static_live)){return .err(errors::make(5,pc));}
+                ref mut array_states,live,ref mut static_states,static_live)){return .err(errors::instruction(pc));}
             pc+=1;continue;
         }
-        if ((op == 8 || op == 39 || op == 50 || op==82) && static_live != 0) { return .err(errors::make(5, pc)); }
+        if ((op == 8 || op == 39 || op == 50 || op==82) && static_live != 0) { return .err(errors::instruction(pc)); }
         if (op < 1 || (op > 62 && op!=80 && op!=81 && op!=82 && !places::operation(op)) || (!places::operation(op) && op != 52 && ((op!=24 && op!=47 && op!=49 && op!=53 && op!=59 && op!=61 && !(op>=83 && op<=85) && p.code[at + 4] != 0) ||
-            (op!=47 && !(op>=83 && op<=85 && p.code[at+4]==2) && p.code[at + 5] != 0) || p.code[at + 6] != 0 || p.code[at + 7] != 0))) { return .err(errors::make(5, pc)); }
+            (op!=47 && !(op>=83 && op<=85 && p.code[at+4]==2) && p.code[at + 5] != 0) || p.code[at + 6] != 0 || p.code[at + 7] != 0))) { return .err(errors::instruction(pc)); }
         // Strict analysis retains its gate; executable proof may admit this CALL.
         if(op==9 && (live>>48)!=0) {
-            if(!allow_reborrow_calls){return .err(errors::make(5,pc));}
+            if(!allow_reborrow_calls){return .err(errors::instruction(pc));}
             let usize preserved=reborrow_calls::inspect(p,loans,pc,f,live)?;
         }
         if (op==25) {
-            if(dst!=0 || a!=0 || b!=0) {return .err(errors::make(5,pc));}
+            if(dst!=0 || a!=0 || b!=0) {return .err(errors::instruction(pc));}
             pc+=1; continue;
         }
         if (op==24) {
             let usize target=p.code[at+4] as usize;
-            if(!readable(p,ref defined,a,start,end) || !types::tagged(p.types[a]) || b>1 || target<=pc || target>=p.ends[f]) {return .err(errors::make(5,pc));}
+            if(!readable(p,ref defined,a,start,end) || !types::tagged(p.types[a]) || b>1 || target<=pc || target>=p.ends[f]) {return .err(errors::instruction(pc));}
             let u8 tag=types::payload(p.types[a],p.code[at+3]);
-            if(tag==0) {if(dst!=0) {return .err(errors::make(5,pc));}}
-            else if(dst<start || dst>=end || p.slots[dst] || registers::contains(ref written, dst) || p.types[dst]!=tag) {return .err(errors::make(5,pc));}
+            if(tag==0) {if(dst!=0) {return .err(errors::instruction(pc));}}
+            else if(dst<start || dst>=end || p.slots[dst] || registers::contains(ref written, dst) || p.types[dst]!=tag) {return .err(errors::instruction(pc));}
             // The mismatch path receives no payload definition.
-            if (!merge(ref mut states,ref mut seen,ref defined,target,ref mut array_states,live,ref mut static_states,static_live)) {return .err(errors::make(5,pc));}
+            if (!merge(ref mut states,ref mut seen,ref defined,target,ref mut array_states,live,ref mut static_states,static_live)) {return .err(errors::instruction(pc));}
             if(tag!=0) {registers::insert(ref mut defined, dst);registers::insert(ref mut written, dst);}
-            if(pc+1>=p.ends[f]) {return .err(errors::make(5,pc));}
-            if (!merge(ref mut states,ref mut seen,ref defined,pc+1,ref mut array_states,live,ref mut static_states,static_live)) {return .err(errors::make(5,pc));}
+            if(pc+1>=p.ends[f]) {return .err(errors::instruction(pc));}
+            if (!merge(ref mut states,ref mut seen,ref defined,pc+1,ref mut array_states,live,ref mut static_states,static_live)) {return .err(errors::instruction(pc));}
             pc+=1; continue;
         }
         if(op==50) {
-            if(dst!=0 || b!=0) {return .err(errors::make(5,pc));}
+            if(dst!=0 || b!=0) {return .err(errors::instruction(pc));}
             let usize returned=struct_results::returned(p,a,f,live,pc)?;
             pc+=1;continue;
         }
         if(op==39) {
-            if(dst!=0 || b!=0) {return .err(errors::make(5,pc));}
+            if(dst!=0 || b!=0) {return .err(errors::instruction(pc));}
             let usize returned=array_results::returned(p,a,f,live,pc)?;
             pc+=1;continue;
         }
         if(op==82){
             if(p.return_types[f]!=13 || p.array_results[f]!=0 || p.record_results[f]!=0 ||
-                live!=0 || dst!=0 || a!=0 || b!=0){return .err(errors::make(5,pc));}
+                live!=0 || dst!=0 || a!=0 || b!=0){return .err(errors::instruction(pc));}
             pc+=1;continue;
         }
         if (op == 8) {
-            if(p.array_results[f]!=0 || p.record_results[f]!=0) {return .err(errors::make(5,pc));}
-            if (live != 0 || dst != 0 || b != 0 || !readable(p, ref defined, a, start, end)) { return .err(errors::make(5, pc)); }
-            if (p.types[a] != p.return_types[f]) { return .err(errors::make(5, pc)); }
+            if(p.array_results[f]!=0 || p.record_results[f]!=0) {return .err(errors::instruction(pc));}
+            if (live != 0 || dst != 0 || b != 0 || !readable(p, ref defined, a, start, end)) { return .err(errors::instruction(pc)); }
+            if (p.types[a] != p.return_types[f]) { return .err(errors::instruction(pc)); }
             pc += 1; continue;
         }
         if (op == 22) {
-            if (dst != 0 || b != 0 || a < p.starts[f] || a >= pc || !seen[a] || live != array_states[a] || static_live != static_states[a]) { return .err(errors::make(5, pc)); }
+            if (dst != 0 || b != 0 || a < p.starts[f] || a >= pc || !seen[a] || live != array_states[a] || static_live != static_states[a]) { return .err(errors::instruction(pc)); }
             if ((states[a * 2] & defined.low) != states[a * 2] ||
-                (states[a * 2 + 1] & defined.high) != states[a * 2 + 1]) { return .err(errors::make(5, pc)); }
+                (states[a * 2 + 1] & defined.high) != states[a * 2 + 1]) { return .err(errors::instruction(pc)); }
             pc+=1; continue;
         }
         if(places::operation(op)){
-            if(p.code[at+4]>place_kind){return .err(errors::make(5,pc));}
+            if(p.code[at+4]>place_kind){return .err(errors::instruction(pc));}
             let usize checked=places::step(p,shapes,pc,f,ref mut defined,ref mut written,live)?;
         }else if(op==80 || op==81){
             live=array_verifier::step(p,pc,f,ref mut defined,ref mut written,live)?;
         }else if (op >= 54) {
             live = reborrows::step(p, loans, pc, f, ref mut defined, ref mut written, live)?;
         } else if(op==9 && a<p.function_count && p.return_types[a]==13){
-            if(dst!=0 || b>=p.call_count || used_calls[b] || a==p.entry || p.call_arities[b] as usize!=p.arities[a]){return .err(errors::make(5,pc));}
+            if(dst!=0 || b>=p.call_count || used_calls[b] || a==p.entry || p.call_arities[b] as usize!=p.arities[a]){return .err(errors::instruction(pc));}
             let usize checked=array_parameters::arguments(p,a,b,f,ref defined,live,pc)?;used_calls[b]=true;
         } else if(op==9 && a<p.function_count && (p.array_results[a]!=0 || p.record_results[a]!=0)) {
-            if(b>=p.call_count || used_calls[b] || a==p.entry || p.call_arities[b] as usize!=p.arities[a]) {return .err(errors::make(5,pc));}
+            if(b>=p.call_count || used_calls[b] || a==p.entry || p.call_arities[b] as usize!=p.arities[a]) {return .err(errors::instruction(pc));}
             let usize checked=array_parameters::arguments(p,a,b,f,ref defined,live,pc)?;
             live=if(p.record_results[a]!=0){struct_results::call(p,a,dst,f,live,pc)?}
                 else{array_results::call(p,a,dst,f,live,pc)?};
@@ -295,62 +295,62 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records
             live = array_verifier::step(p, pc, f, ref mut defined, ref mut written, live)?;
         } else if (op >= 19 && op <= 21) {
             let usize target = if (op == 19) { a } else { b };
-            if (dst != 0 || target <= pc || target >= p.ends[f]) { return .err(errors::make(5, pc)); }
+            if (dst != 0 || target <= pc || target >= p.ends[f]) { return .err(errors::instruction(pc)); }
             if (op == 19) {
-                if (b != 0) { return .err(errors::make(5, pc)); }
+                if (b != 0) { return .err(errors::instruction(pc)); }
             } else {
-                if (!readable(p, ref defined, a, start, end) || p.types[a] != 2) { return .err(errors::make(5, pc)); }
+                if (!readable(p, ref defined, a, start, end) || p.types[a] != 2) { return .err(errors::instruction(pc)); }
             }
-            if (!merge(ref mut states, ref mut seen, ref defined, target, ref mut array_states, live, ref mut static_states, static_live)) {return .err(errors::make(5,pc));}
+            if (!merge(ref mut states, ref mut seen, ref defined, target, ref mut array_states, live, ref mut static_states, static_live)) {return .err(errors::instruction(pc));}
             if (op == 19) { pc += 1; continue; }
         } else if (op == 18) {
-            if (dst < start || dst >= end || !p.slots[dst] || b != 0 || !readable(p, ref defined, a, start, end)) { return .err(errors::make(5, pc)); }
-            if (p.types[dst] != p.types[a]) { return .err(errors::make(5, pc)); }
+            if (dst < start || dst >= end || !p.slots[dst] || b != 0 || !readable(p, ref defined, a, start, end)) { return .err(errors::instruction(pc)); }
+            if (p.types[dst] != p.types[a]) { return .err(errors::instruction(pc)); }
             registers::insert(ref mut defined, dst); registers::insert(ref mut written, dst);
         } else {
-            if (dst < start || dst >= end || p.slots[dst] || registers::contains(ref written, dst)) { return .err(errors::make(5, pc)); }
+            if (dst < start || dst >= end || p.slots[dst] || registers::contains(ref written, dst)) { return .err(errors::instruction(pc)); }
             if (op == 1) {
-                if (!types::scalar(p.types[dst])) { return .err(errors::make(5,pc)); }
-                if (a >= p.constant_count || b != 0) { return .err(errors::make(5, pc)); }
-                if (types::integer(p.types[dst]) && !types::fits(p.types[dst],p.constants[a])) { return .err(errors::make(5, pc)); }
-                if (p.types[dst] == 2 && p.constants[a] != 0 && p.constants[a] != 1) { return .err(errors::make(5, pc)); }
+                if (!types::scalar(p.types[dst])) { return .err(errors::instruction(pc)); }
+                if (a >= p.constant_count || b != 0) { return .err(errors::instruction(pc)); }
+                if (types::integer(p.types[dst]) && !types::fits(p.types[dst],p.constants[a])) { return .err(errors::instruction(pc)); }
+                if (p.types[dst] == 2 && p.constants[a] != 0 && p.constants[a] != 1) { return .err(errors::instruction(pc)); }
             } else if (op == 26) {
-                if(b!=0 || !readable(p,ref defined,a,start,end) || !types::widening(p.types[a],p.types[dst])) {return .err(errors::make(5,pc));}
+                if(b!=0 || !readable(p,ref defined,a,start,end) || !types::widening(p.types[a],p.types[dst])) {return .err(errors::instruction(pc));}
             } else if (op == 23) {
-                if (!types::tagged(p.types[dst]) || b>1) {return .err(errors::make(5,pc));}
+                if (!types::tagged(p.types[dst]) || b>1) {return .err(errors::instruction(pc));}
                 let u8 tag=types::payload(p.types[dst],p.code[at + 3]);
-                if (tag==0) {if(a!=0) {return .err(errors::make(5,pc));}}
-                else if (!readable(p,ref defined,a,start,end) || p.types[a]!=tag) {return .err(errors::make(5,pc));}
+                if (tag==0) {if(a!=0) {return .err(errors::instruction(pc));}}
+                else if (!readable(p,ref defined,a,start,end) || p.types[a]!=tag) {return .err(errors::instruction(pc));}
             } else if (op == 9) {
-                if (a >= p.function_count || b >= p.call_count || used_calls[b] || ((p.arrays.count != 0 || p.records.count != 0) && a == p.entry)) { return .err(errors::make(5, pc)); }
+                if (a >= p.function_count || b >= p.call_count || used_calls[b] || ((p.arrays.count != 0 || p.records.count != 0) && a == p.entry)) { return .err(errors::instruction(pc)); }
                 let usize count = p.call_arities[b] as usize;
-                if (count != p.arities[a] || count > 8 || p.types[dst] != p.return_types[a]) { return .err(errors::make(5, pc)); }
+                if (count != p.arities[a] || count > 8 || p.types[dst] != p.return_types[a]) { return .err(errors::instruction(pc)); }
                 let usize checked = array_parameters::arguments(p, a, b, f, ref defined, live, pc)?;
                 used_calls[b] = true;
             } else if (op == 17) {
-                if (a < start || a >= end || !p.slots[a] || !registers::contains(ref defined, a) || b != 0) { return .err(errors::make(5, pc)); }
-                if (p.types[dst] != p.types[a]) { return .err(errors::make(5, pc)); }
+                if (a < start || a >= end || !p.slots[a] || !registers::contains(ref defined, a) || b != 0) { return .err(errors::instruction(pc)); }
+                if (p.types[dst] != p.types[a]) { return .err(errors::instruction(pc)); }
             } else {
-                if (!readable(p, ref defined, a, start, end)) { return .err(errors::make(5, pc)); }
+                if (!readable(p, ref defined, a, start, end)) { return .err(errors::instruction(pc)); }
                 if (op == 7 || op == 10 || op == 27) {
                     let u8 expected = if (op == 7 || op == 27) { p.types[a] } else { 2 };
-                    if(op==7 && !types::signed(expected)) {return .err(errors::make(5,pc));}
-                    if(op==27 && !types::integer(expected)) {return .err(errors::make(5,pc));}
-                    if (b != 0 || p.types[a] != expected || p.types[dst] != expected) { return .err(errors::make(5, pc)); }
+                    if(op==7 && !types::signed(expected)) {return .err(errors::instruction(pc));}
+                    if(op==27 && !types::integer(expected)) {return .err(errors::instruction(pc));}
+                    if (b != 0 || p.types[a] != expected || p.types[dst] != expected) { return .err(errors::instruction(pc)); }
                 } else {
-                    if (!readable(p, ref defined, b, start, end)) { return .err(errors::make(5, pc)); }
-                    if (!types::scalar(p.types[a]) || p.types[a] != p.types[b] || p.types[dst] != if (op >= 11 && op <= 16) { 2 } else { p.types[a] }) { return .err(errors::make(5, pc)); }
-                    if (op != 11 && op != 12 && !types::integer(p.types[a])) { return .err(errors::make(5, pc)); }
+                    if (!readable(p, ref defined, b, start, end)) { return .err(errors::instruction(pc)); }
+                    if (!types::scalar(p.types[a]) || p.types[a] != p.types[b] || p.types[dst] != if (op >= 11 && op <= 16) { 2 } else { p.types[a] }) { return .err(errors::instruction(pc)); }
+                    if (op != 11 && op != 12 && !types::integer(p.types[a])) { return .err(errors::instruction(pc)); }
                 }
             }
             registers::insert(ref mut defined, dst); registers::insert(ref mut written, dst);
         }
-        if (pc + 1 >= p.ends[f]) { return .err(errors::make(5, pc)); }
-        if (!merge(ref mut states, ref mut seen, ref defined, pc + 1, ref mut array_states, live, ref mut static_states, static_live)) {return .err(errors::make(5,pc));}
+        if (pc + 1 >= p.ends[f]) { return .err(errors::instruction(pc)); }
+        if (!merge(ref mut states, ref mut seen, ref defined, pc + 1, ref mut array_states, live, ref mut static_states, static_live)) {return .err(errors::instruction(pc));}
         pc += 1;
     }
     i = start;
-    while (i < end) { if (!registers::contains(ref written, i)) { return .err(errors::make(5, pc)); } i += 1; }
+    while (i < end) { if (!registers::contains(ref written, i)) { return .err(errors::instruction(pc)); } i += 1; }
     return .ok(end - start);
 }
 
@@ -364,9 +364,9 @@ fn Result<reborrows::Sites,errors::Error> validate_values(ref ir::Program p,bool
 fn Result<reborrows::Sites,errors::Error> validate_values_mode(ref ir::Program p,bool allow_reborrow_calls,
     u8 place_kind,ref statics::Sites static_sites,ref value_ir::Sites value_sites,bool input,bool host_profile){
     if (p.count == 0 || p.count > 256 || p.registers == 0 || p.registers > 128 || p.constant_count > 128 ||
-        p.function_count == 0 || p.function_count > 16 || p.entry >= p.function_count || p.call_count > 32) { return .err(errors::make(5, 0)); }
-    if (!arrays::valid(ref p.arrays)) { return .err(errors::make(5, 0)); }
-    if(host_profile){if(p.list_used>4096){return .err(errors::make(5,0));}}
+        p.function_count == 0 || p.function_count > 16 || p.entry >= p.function_count || p.call_count > 32) { return .err(errors::absent(5,0)); }
+    if (!arrays::valid(ref p.arrays)) { return .err(errors::absent(5,0)); }
+    if(host_profile){if(p.list_used>4096){return .err(errors::absent(5,0));}}
     else{let usize list_metadata=lists::metadata(p)?;}
     let records::Prepared shapes = records::prepare(ref p.records)?;
     var usize id = 0;
@@ -374,25 +374,25 @@ fn Result<reborrows::Sites,errors::Error> validate_values_mode(ref ir::Program p
         if ((id < p.arrays.count && p.array_functions[id] as usize >= p.function_count) ||
             (id >= p.arrays.count && p.array_functions[id] != 0) ||
             (id < p.records.count && p.record_functions[id] as usize >= p.function_count) ||
-            (id >= p.records.count && p.record_functions[id] != 0)) { return .err(errors::make(5, 0)); }
-        if (p.slice_roots[id] as usize > p.arrays.count) { return .err(errors::make(5, 0)); }
+            (id >= p.records.count && p.record_functions[id] != 0)) { return .err(errors::absent(5,0)); }
+        if (p.slice_roots[id] as usize > p.arrays.count) { return .err(errors::absent(5,0)); }
         id += 1;
     }
-    if(p.return_types[p.entry]!=1){return .err(errors::make(5,0));}
-    if(input){if(p.arities[p.entry]!=1 || p.register_starts[p.entry]>=128 || static_sites.parameters[p.register_starts[p.entry]]!=3){return .err(errors::make(5,0));}}
-    else if(p.arities[p.entry]!=0){return .err(errors::make(5,0));}
+    if(p.return_types[p.entry]!=1){return .err(errors::absent(5,0));}
+    if(input){if(p.arities[p.entry]!=1 || p.register_starts[p.entry]>=128 || static_sites.parameters[p.register_starts[p.entry]]!=3){return .err(errors::absent(5,0));}}
+    else if(p.arities[p.entry]!=0){return .err(errors::absent(5,0));}
     var usize f = 0;
     var usize code_end = 0;
     var usize register_end = 0;
     while (f < p.function_count) {
-        if (p.record_results[f]==0 && static_sites.results[f]==0 && value_sites.results[f]==0 && p.return_types[f]!=13 && !types::valid(p.return_types[f])) { return .err(errors::make(5, code_end)); }
+        if (p.record_results[f]==0 && static_sites.results[f]==0 && value_sites.results[f]==0 && p.return_types[f]!=13 && !types::valid(p.return_types[f])) { return .err(errors::instruction(code_end)); }
         if (p.starts[f] != code_end || p.ends[f] <= code_end || p.ends[f] > p.count ||
             p.register_starts[f] != register_end || p.register_ends[f] < register_end ||
             p.register_ends[f] > p.registers || p.arities[f] > 8 ||
-            p.arities[f] > p.register_ends[f] - register_end) { return .err(errors::make(5, code_end)); }
+            p.arities[f] > p.register_ends[f] - register_end) { return .err(errors::instruction(code_end)); }
         code_end = p.ends[f]; register_end = p.register_ends[f]; f += 1;
     }
-    if (code_end != p.count || register_end != p.registers) { return .err(errors::make(5, 0)); }
+    if (code_end != p.count || register_end != p.registers) { return .err(errors::absent(5,0)); }
     let usize copy_metadata=copying::metadata(p)?;
     let usize borrowed_parameters = if(input){slice_parameters::metadata_input(p)?}else{slice_parameters::metadata(p)?};
     let reborrows::Sites loans = reborrows::metadata(p)?;
@@ -405,7 +405,7 @@ fn Result<reborrows::Sites,errors::Error> validate_values_mode(ref ir::Program p
     while (f < p.function_count) { let usize checked = function(p, f, ref shapes, ref loans, static_sites, allow_reborrow_calls, place_kind, ref mut used_calls,value_sites,host_profile)?; f += 1; }
     let usize selected_places=places::inspect_prepared(p,ref shapes)?;
     var usize call = 0;
-    while (call < p.call_count) { if (!used_calls[call]) { return .err(errors::make(5, 0)); } call += 1; }
+    while (call < p.call_count) { if (!used_calls[call]) { return .err(errors::absent(5,0)); } call += 1; }
     return .ok(loans);
 }
 

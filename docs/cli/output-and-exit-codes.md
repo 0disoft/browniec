@@ -69,11 +69,18 @@ result schema.
 
 For `browniec.result/v1`, command is `check` or `run`; status is `checked`, `completed`, or `error`.
 Only completed runs have a numeric return_i32. Failures carry an error object with
-`kind` and zero-based source `byte_offset`. Kinds are lexical, syntax, type,
+`kind` and the legacy numeric `byte_offset` field. Kinds are lexical, syntax, type,
 compile_limit, verification, overflow, zero_divisor, fuel, frame_limit, input_io, usage, and
 array_limit, bounds, allocation, and unavailable. Non-source failures use offset 0;
-internal verifier errors identify an instruction index. JSON mode is honored once
-its option has been parsed.
+the legacy field also carries instruction indices for internal verifier errors.
+JSON mode is honored once its option has been parsed.
+
+For check and run, `--json-v2` selects `browniec.result/v2`. The error object
+contains `kind` and `location`. Location has a `kind` of `source_byte`,
+`instruction_index` or `none`. Source and instruction locations include
+their zero-based `offset`. An absent location omits the offset. Text mode
+labels source bytes and instruction indices explicitly and omits absent locations.
+
 
 For check/run, text mode leaves stdout empty and writes checked status, return_i32, or diagnostics
 to stderr. Guest output bytes and output_b64 are not implemented. Version JSON uses
