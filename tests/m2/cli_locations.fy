@@ -23,8 +23,9 @@ fn void check_diagnostic(ref ir::Program code,usize index){
 @test
 fn void renders_verifier_instruction_index(){
     var ir::Program code=ir::empty();
-    let usize r=switch(ir::literal(ref mut code,77,0)){case .ok(v):{v}case .err(_):{assert(false);0}};
-    let usize ret=switch(ir::emit(ref mut code,8,r,0,0)){case .ok(v):{v}case .err(_):{assert(false);0}};
+    // Neither source byte offset equals its instruction index.
+    let usize r=switch(ir::literal(ref mut code,77,17)){case .ok(v):{v}case .err(_):{assert(false);0}};
+    let usize ret=switch(ir::emit(ref mut code,8,r,0,42)){case .ok(v):{v}case .err(_):{assert(false);0}};
     code.function_count=1;
     code.return_types[0]=1;
     code.ends[0]=2;
@@ -34,7 +35,6 @@ fn void renders_verifier_instruction_index(){
     code.code[0]=255;
     check_diagnostic(ref code,0);
 
-    // The return is instruction 1, but its source byte offset is 0.
     code.code[0]=first;
     code.code[8]=255;
     check_diagnostic(ref code,1);
