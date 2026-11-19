@@ -9,10 +9,12 @@ on:
       - '.gitattributes'
       - 'README.md'
       - 'examples/answer.brc'
+      - 'examples/shipping-fee.brc'
       - 'fairy.lock'
       - 'fairy.toml'
       - 'src/**'
       - 'toolchain.json'
+      - 'tools/check-cli-contract.py'
       - 'tools/setup-toolchain.py'
       - 'tools/fairyc-windows-release.patch'
 
@@ -77,3 +79,6 @@ jobs:
               $result.return_i32 -isnot [long] -or $result.return_i32 -ne 77 -or $null -ne $result.error) {
             throw 'Expected a completed run with return_i32: 77 and no error.'
           }
+
+      - name: Check CLI diagnostics and eval-i32 on the same release binary
+        run: python -B tools/check-cli-contract.py --exe ./build/browniec.exe
