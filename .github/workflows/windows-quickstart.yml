@@ -1,0 +1,79 @@
+name: Windows quick start
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/windows-quickstart.yml'
+      - '.gitattributes'
+      - 'README.md'
+      - 'examples/answer.brc'
+      - 'fairy.lock'
+      - 'fairy.toml'
+      - 'src/**'
+      - 'toolchain.json'
+      - 'tools/setup-toolchain.py'
+      - 'tools/fairyc-windows-release.patch'
+
+permissions:
+  contents: read
+
+jobs:
+  quickstart:
+    runs-on: windows-2025
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Check clean checkout and read the toolchain pin
+        id: toolchain
+        shell: pwsh
+        run: |
+          $status = git status --porcelain
+          if ($LASTEXITCODE -ne 0 -or $status -or (Test-Path build) -or (Test-Path ../fairyc)) {
+            throw 'Expected a clean checkout without build output or an adjacent Fairy C checkout.'
+          }
+          $go = (Get-Content toolchain.json -Raw | ConvertFrom-Json).bootstrap.goVersion
+          if ($go -cnotmatch '^go[0-9]+[.][0-9]+[.][0-9]+$') { throw "Invalid Go pin: $go" }
+          "go-version=$($go.Substring(2))" >> $env:GITHUB_OUTPUT
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.10'
+          architecture: x64
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version: ${{ steps.toolchain.outputs.go-version }}
+          cache: false
+
+      - name: Install the pinned Fairy C toolchain
+        run: python -B tools/setup-toolchain.py
+
+      - name: Build the locked Windows release
+        run: ./build/toolchain/fairyc.exe build --release --locked
+
+      - name: Check the answer example
+        run: ./build/browniec.exe check examples/answer.brc --json
+
+      - name: Run the answer example and verify its output
+        shell: pwsh
+        run: |
+          $stderr = Join-Path $env:RUNNER_TEMP 'browniec-answer.stderr'
+          $stdout = @(./build/browniec.exe run examples/answer.brc --json 2> $stderr)
+          $exitCode = $LASTEXITCODE
+          $stdout | Write-Output
+          if ($exitCode -ne 0 -or (Get-Item $stderr).Length -ne 0) {
+            Get-Content $stderr
+            throw "Expected exit 0 and empty stderr; got exit $exitCode."
+          }
+          if ($stdout.Count -ne 1) { throw 'Expected one JSON line.' }
+          $result = ConvertFrom-Json -InputObject $stdout[0] -NoEnumerate
+          if ($result -isnot [pscustomobject] -or $result.schema -cne 'browniec.result/v1' -or
+              $result.command -cne 'run' -or $result.status -cne 'completed' -or
+              $result.return_i32 -isnot [long] -or $result.return_i32 -ne 77 -or $null -ne $result.error) {
+            throw 'Expected a completed run with return_i32: 77 and no error.'
+          }
