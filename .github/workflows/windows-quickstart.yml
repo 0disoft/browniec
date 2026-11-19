@@ -117,13 +117,15 @@ jobs:
           $test = $report.tests[0]
           $stdout = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($test.stdoutBase64))
           $stderr = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($test.stderrBase64))
-          $expected = @(
-            '{"schema":"browniec.result/v1","profile":"brownie.m1-scalar/1","command":"check","status":"error","return_i32":null,"error":{"kind":"verification","byte_offset":1}}'
-            '{"schema":"browniec.result/v2","profile":"brownie.m1-scalar/1","command":"check","status":"error","return_i32":null,"error":{"kind":"verification","location":{"kind":"instruction_index","offset":1}}}'
-          )
+          $indices = 0, 1
+          $expectedJson = foreach ($index in $indices) {
+            '{"schema":"browniec.result/v1","profile":"brownie.m1-scalar/1","command":"check","status":"error","return_i32":null,"error":{"kind":"verification","byte_offset":INDEX}}'.Replace('INDEX', "$index")
+            '{"schema":"browniec.result/v2","profile":"brownie.m1-scalar/1","command":"check","status":"error","return_i32":null,"error":{"kind":"verification","location":{"kind":"instruction_index","offset":INDEX}}}'.Replace('INDEX', "$index")
+          }
+          $expectedText = foreach ($index in $indices) { "browniec: verification at instruction $index" }
           Write-Output "Captured stdout:`n$stdout"
           Write-Output "Captured stderr:`n$stderr"
-          if ($stdout -cne (($expected -join [char]10) + [char]10) -or
-              $stderr -cne ('browniec: verification at instruction 1' + [char]10)) {
-            throw 'Unexpected verifier diagnostic text or JSON output.'
+          if ($stdout -cne (($expectedJson -join [char]10) + [char]10) -or
+              $stderr -cne (($expectedText -join [char]10) + [char]10)) {
+            throw 'Expected verifier diagnostic text and both JSON formats for instruction indices 0 and 1.'
           }

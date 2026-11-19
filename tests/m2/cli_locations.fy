@@ -6,6 +6,20 @@ import verifier as verifier;
 import render as render;
 
 @effects(console)
+fn void check_diagnostic(ref ir::Program code,usize index){
+    switch(verifier::verify(code)){
+        case .ok(_):{assert(false);}
+        case .err(e):{
+            assert(e.kind==5 && e.offset==index);
+            assert(e.location==errors::instruction_location());
+            assert(render::selected_outcome(.Text,false,true,0,e,0)==6);
+            assert(render::selected_outcome(.Json,false,true,0,e,0)==6);
+            assert(render::selected_outcome(.JsonV2,false,true,0,e,0)==6);
+        }
+    };
+}
+
+@effects(console)
 @test
 fn void renders_verifier_instruction_index(){
     var ir::Program code=ir::empty();
@@ -18,25 +32,10 @@ fn void renders_verifier_instruction_index(){
     assert(verifier::verify(ref code).is_ok);
     let u8 first=code.code[0];
     code.code[0]=255;
-    switch(verifier::verify(ref code)){
-        case .ok(_):{assert(false);}
-        case .err(e):{
-            assert(e.kind==5 && e.offset==0);
-            assert(e.location==errors::instruction_location());
-        }
-    };
+    check_diagnostic(ref code,0);
 
     // The return is instruction 1, but its source byte offset is 0.
     code.code[0]=first;
     code.code[8]=255;
-    switch(verifier::verify(ref code)){
-        case .ok(_):{assert(false);}
-        case .err(e):{
-            assert(e.kind==5 && e.offset==1);
-            assert(e.location==errors::instruction_location());
-            assert(render::selected_outcome(.Text,false,true,0,e,0)==6);
-            assert(render::selected_outcome(.Json,false,true,0,e,0)==6);
-            assert(render::selected_outcome(.JsonV2,false,true,0,e,0)==6);
-        }
-    };
+    check_diagnostic(ref code,1);
 }
