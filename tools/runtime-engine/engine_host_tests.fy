@@ -1,5 +1,6 @@
 module engine_host_tests;
 import host_catalog as catalog;
+import compiler as compiler;
 import host_program as programs;
 import host_exchange as host;
 import host_wire as wire;
@@ -147,6 +148,57 @@ fn Result<usize,u8> interleaved(){
     assert(id(engine::destroy_instance(ref mut owner,b))==b && counts(ref mut owner).pins==1);
     assert(id(engine::destroy_instance(ref mut owner,a))==a && counts(ref mut owner).programs==0);
     assert(!engine::reply_scalar_host(ref mut owner,a,ra.run,ra.request,0,answer_a).is_ok);
+    assert(id(engine::destroy(ref mut owner))==0);
+    return .ok(1);
+}
+fn ref u8[] source_run_config(){return b"{\"schema\":\"brownie.run/0.3\",\"entry\":{\"module\":\"main\",\"function\":\"main\"},\"requires\":[\"host.example.check\"],\"grants\":[\"host.example.check\"],\"limits\":{\"memory_bytes\":16777216,\"object_bytes\":4194304,\"call_frames\":128,\"input_bytes\":1048576,\"output_bytes\":1048576,\"host_request_bytes\":1048576,\"host_response_bytes\":1048576,\"host_calls\":256,\"owner_entries\":16384,\"descriptor_entries\":16384,\"fuel\":10000000,\"deadline_ms\":1000}}";}
+fn ref u8[] source_catalog(){
+    return b"{\"schema\":\"brownie.catalog/1\",\"imports\":[{\"id\":0,\"module\":\"host::example\",\"symbol\":\"a\",\"parameters\":[\"i32\"],\"result\":\"Result<i32,u32>\",\"effect\":\"read\",\"capability\":\"host.example.check\",\"adapter_revision\":\"v1\"},{\"id\":1,\"module\":\"host::example\",\"symbol\":\"check\",\"parameters\":[\"i32\"],\"result\":\"Result<i32,u32>\",\"effect\":\"read\",\"capability\":\"host.example.check\",\"adapter_revision\":\"v1\"}]}";
+}
+fn void source_rejected(Result<usize,engine::Error> result,usize offset){
+    switch(result){
+        case .ok(_):{assert(false);}
+        case .err(e):{assert(e.status==4 && e.diagnostic.at.source==0 && e.diagnostic.at.start==offset);}
+    };
+}
+fn Result<usize,u8> source_round_trip(){
+    let ref u8[] source=b"module main; fn i32 main() { return host::example::check(40 + 1) + 35; }";
+    assert(!compiler::compile(source).is_ok);
+    let policy::Policy ceiling=parsed_policy(true)?;
+    let runs::RunConfig run=switch(runs::parse(source_run_config(),ref ceiling)){case .ok(v):{v}case .err(_):{return .err(6);}};
+    var engine::Engine owner=configured(ceiling)?;
+    let catalog::Catalog imports=catalog_from(source_catalog())?;
+    let u32[8] expected=digest(ref imports)?;
+    let u32[8] wrong=[0;8];
+    let ref u8[] unknown=b"module main; fn i32 main() { return host::example::chec(41); }";
+    let ref u8[] bad_arg=b"module main; fn i32 main() { return host::example::check(true); }";
+    source_rejected(engine::compile_scalar_host(ref mut owner,unknown,catalog_from(source_catalog())?,ref expected,ref run),36);
+    source_rejected(engine::compile_scalar_host(ref mut owner,bad_arg,catalog_from(source_catalog())?,ref expected,ref run),36);
+    rejected(engine::compile_scalar_host(ref mut owner,source,catalog_from(source_catalog())?,ref wrong,ref run),1);
+    assert(counts(ref mut owner).programs==0);
+
+    let usize p=id(engine::compile_scalar_host(ref mut owner,source,imports,ref expected,ref run));
+    let usize a=id(engine::prepare_scalar_host(ref mut owner,p,ref run));
+    let usize b=id(engine::prepare_scalar_host(ref mut owner,p,ref run));
+    assert(p==1 && a==2 && b==3 && counts(ref mut owner).pins==2);
+    assert(event(engine::step_instance(ref mut owner,a,8)).kind==4);
+    assert(event(engine::step_instance(ref mut owner,b,8)).kind==4);
+    let engine::HostRequest ra=request(ref owner,a);
+    let engine::HostRequest rb=request(ref owner,b);
+    assert(ra.import_id==1 && rb.import_id==1 && ra.request==1 && rb.request==1);
+    let ref u8[] expected_request=b"\x01\x00\x03\x00\x00\x00\x04\x00\x00\x00\x29\x00\x00\x00";
+    assert(bytes::equal(ref ra.payload,expected_request) && bytes::equal(ref rb.payload,expected_request));
+    assert(!engine::reply_scalar_host(ref mut owner,a,rb.run,rb.request,0,answer()).is_ok);
+    assert(event(engine::reply_scalar_host(ref mut owner,a,ra.run,ra.request,0,answer())).kind==0);
+    assert(event(engine::step_instance(ref mut owner,a,8)).value==77);
+    assert(event(engine::step_instance(ref mut owner,b,8)).kind==4);
+    let ref u8[] other=b"\x03\x00\x00\x00\x04\x00\x00\x00\xf9\xff\xff\xff";
+    assert(event(engine::reply_scalar_host(ref mut owner,b,rb.run,rb.request,0,other)).kind==0);
+    let engine::Event done=event(engine::step_instance(ref mut owner,b,8));
+    assert(done.kind==1 && done.value==28);
+    assert(id(engine::destroy_instance(ref mut owner,a))==a);
+    assert(id(engine::destroy_instance(ref mut owner,b))==b);
+    assert(id(engine::release_program(ref mut owner,p))==p);
     assert(id(engine::destroy(ref mut owner))==0);
     return .ok(1);
 }
@@ -803,6 +855,7 @@ pub fn void run(){
     unsafe{bc_runtime_engine_test_set_clock(1000)};
     assert(admission().is_ok);
     assert(interleaved().is_ok);
+    assert(source_round_trip().is_ok);
     assert(pending_memory().is_ok);
     assert(multi_arguments().is_ok);
     assert(variable_bytes().is_ok);

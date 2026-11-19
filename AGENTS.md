@@ -1,8 +1,9 @@
-- Latest runtime checkpoint (2026-11-19): [Compact and empty reply receipt](docs/engineering/host-exchange.md#compact-and-empty-reply-receipt)
-  shares the bounded receipt path with byte replies. Windows development and
-  /O2 verify interrupted scalar and empty replies, reservation refunds and zero
-  live SDK allocations. Root locked check passes 376 sources / 4200 MIR
-  functions. The [stack regression record](docs/engineering/native-stack-regressions.md)
+- Latest runtime checkpoint (2026-11-19): [Scalar host calls from source](docs/engineering/host-exchange.md#scalar-host-calls-from-source)
+  lower one i32 argument through the existing private Engine admission.
+  Windows development and /O2 verify two Instances from one source Program,
+  exact requests, cross-run rejection and zero live SDK allocations. Root
+  locked check passes 377 sources / 4206 MIR functions. The
+  [stack regression record](docs/engineering/native-stack-regressions.md)
   preserves the earlier public O2 timeout.
 
 # Brownie C agent guidance

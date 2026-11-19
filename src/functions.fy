@@ -27,6 +27,7 @@ pub struct Table {
     bool reference_calls;
     bool reference_returns;
     bool output;
+    bool scalar_host_calls;
     usize[16] begins;
     usize[16] ends;
     usize[16] bodies;
@@ -61,7 +62,7 @@ pub struct Table {
     usize entry;
 }
 pub fn Table empty() {
-    return Table { .context=context::empty(), .literals=literal_collection::empty(), .reference_calls=false, .reference_returns=false, .output=false, .begins = [0; 16], .ends = [0; 16], .bodies = [0; 16],
+    return Table { .context=context::empty(), .literals=literal_collection::empty(), .reference_calls=false, .reference_returns=false, .output=false, .scalar_host_calls=false, .begins = [0; 16], .ends = [0; 16], .bodies = [0; 16],
         .body_ends = [0; 16], .arities = [0; 16], .return_lengths = [0; 16], .return_records = [0; 16],
         .return_slice_elements = [0; 16], .return_slice_inputs = [0; 16], .return_slice_candidates = [0; 16], .param_begins = [0; 128],
         .param_ends = [0; 128], .return_types = [0; 16], .param_types = [0; 128],

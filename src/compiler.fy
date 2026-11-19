@@ -1,5 +1,9 @@
 module compiler;
 
+import host_catalog as host_catalog;
+import host_program as host_program;
+import host_source as host_source;
+
 import errors as errors;
 import lexer as lexer;
 import ir as ir;
@@ -418,7 +422,19 @@ fn Result<usize,errors::Error> static_equal_right(ref u8[] source,ref mut lexer:
     let usize close=lexer::punctuation(source,s,41)?;let usize value=static_builders::equal(p,left,right.site,at)?;
     if(right.owned){let usize closed=static_builders::close(p,right.site,at)?;}return .ok(value);
 }
+fn Result<usize,errors::Error> host_operand(ref u8[] source,ref mut lexer::State s,ref mut ir::Program p,
+    ref locals::Table table,ref functions::Table signatures,usize depth,u8 result_type,usize structure,ref mut loops::State flow){
+    let host_source::Name item=host_source::name(source,s)?;
+    let usize open=lexer::punctuation(source,s,40)?;
+    let usize value=expression(source,s,p,table,signatures,1,depth+1,1,result_type,structure,flow)?;
+    if(p.types[value]!=1){return .err(errors::make(3,item.begin));}
+    let usize close=lexer::punctuation(source,s,41)?;
+    return ir::emit(p,host_program::request_opcode(),value,0,item.begin);
+}
 fn Result<usize, errors::Error> named_operand(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref locals::Table table, ref functions::Table signatures, usize depth, u8 expected, u8 result_type, usize structure, ref mut loops::State loop_state) {
+    if(signatures.scalar_host_calls && host_source::qualified(source,s)?){
+        return host_operand(source,s,p,table,signatures,depth,result_type,structure,loop_state);
+    }
     let usize at = s.begin;
     if(record_expressions::projected(source,s,p,table,signatures)?){
         return record_expression_read(source,s,p,table,signatures,at,depth,result_type,structure,loop_state);
@@ -2960,12 +2976,14 @@ fn Result<functions::Table,errors::Error> lowering_signatures(ref u8[] source,bo
 
 // Scratch belongs to the wrapper and never escapes on failure. Avoid a large
 // Result<Program> value throughout nested source lowering in native debug code.
-fn Result<usize, errors::Error> lower_into(ref u8[] source,bool origin_analysis,bool references,bool returns,ref literal_collection::Index literals,ref mut ir::Program p) {
+fn Result<usize, errors::Error> lower_into(ref u8[] source,bool origin_analysis,bool references,bool returns,bool scalar_host_calls,ref literal_collection::Index literals,ref mut ir::Program p) {
     if (source.len > 4096) { return .err(errors::make(4, 4096)); }
     let ref str valid = switch (text::validate_utf8(source)) {
         case .ok(value): { value } case .err(_): { return .err(errors::make(1, 0)); }
     };
     var functions::Table signatures = lowering_signatures(source,returns)?;
+    if(scalar_host_calls && signatures.count!=1){return .err(errors::make(3,0));}
+    signatures.scalar_host_calls=scalar_host_calls;
     var usize active=16;
     return lower_prepared(source,origin_analysis,references,returns,literals,ref mut signatures,p,ref mut active);
 }
@@ -3029,14 +3047,22 @@ fn Result<usize,errors::Error> lower_prepared(ref u8[] source,bool origin_analys
 pub fn Result<ir::Program,errors::Error> compile(ref u8[] source){
     var ir::Program p=ir::empty();
     let literal_collection::Index literals=literal_collection::empty();
-    let usize lowered=lower_into(source,false,false,false,ref literals,ref mut p)?;
+    let usize lowered=lower_into(source,false,false,false,false,ref literals,ref mut p)?;
     return .ok(p);
 }
+// Private candidate only. The Engine still verifies and binds the catalog digest
+// and Policy through the existing host Program admission.
+pub fn Result<usize,errors::Error> lower_scalar_host(ref u8[] source,ref host_catalog::Catalog imports,ref mut ir::Program code){
+    let literal_collection::Index literals=literal_collection::empty();
+    let usize count=lower_into(source,false,false,false,true,ref literals,code)?;
+    return host_source::bind(source,code,imports);
+}
+
 // The analysis Program stays private and is never returned to an executor.
 pub fn Result<slice_origins::Summary,errors::Error> inspect_slice_results(ref u8[] source){
     var ir::Program p=ir::empty();
     let literal_collection::Index literals=literal_collection::empty();
-    let usize lowered=lower_into(source,true,false,false,ref literals,ref mut p)?;
+    let usize lowered=lower_into(source,true,false,false,false,ref literals,ref mut p)?;
     let functions::Table signatures=functions::scan(source)?;
     let slice_result_ir::Program unit=slice_result_ir::from_proxy(p,ref signatures)?;
     let slice_result_verifier::Proof checked=slice_result_verifier::inspect(ref unit)?;
@@ -3047,7 +3073,7 @@ pub fn Result<slice_origins::Summary,errors::Error> inspect_slice_results(ref u8
 pub fn Result<slice_result_ir::Program,errors::Error> inspect_slice_result_ir(ref u8[] source){
     var ir::Program p=ir::empty();
     let literal_collection::Index literals=literal_collection::empty();
-    let usize lowered=lower_into(source,true,false,false,ref literals,ref mut p)?;
+    let usize lowered=lower_into(source,true,false,false,false,ref literals,ref mut p)?;
     let functions::Table signatures=functions::scan(source)?;
     let slice_result_ir::Program unit=slice_result_ir::from_proxy(p,ref signatures)?;
     let slice_result_verifier::Proof checked=slice_result_verifier::inspect(ref unit)?;
@@ -3075,7 +3101,7 @@ pub fn Result<program_images::Program,program_images::Error> compile_image(ref u
         }
     };
     var ir::Program body=ir::empty();
-    switch(lower_into(source,false,false,false,ref literals,ref mut body)){
+    switch(lower_into(source,false,false,false,false,ref literals,ref mut body)){
         case .ok(_):{}case .err(e):{return .err(image_source_error(e));}
     };
     let static_images::Image image=switch(static_images::freeze(ref builder,image_limit)){
@@ -3097,7 +3123,7 @@ pub fn Result<program_images::ReferenceProgram,program_images::Error> compile_re
         });}
     };
     var ir::Program body=ir::empty();
-    switch(lower_into(source,false,true,false,ref literals,ref mut body)){
+    switch(lower_into(source,false,true,false,false,ref literals,ref mut body)){
         case .ok(_):{}case .err(e):{return .err(image_source_error(e));}
     };
     let functions::Table signatures=switch(functions::scan(source)){
@@ -3148,7 +3174,7 @@ fn Result<usize,program_images::Error> lower_reference_returns(ref u8[] source,
             case .Source:{image_source_error(e.source)}case .Image:{image_literal_error(e.image)}
         });}
     };
-    switch(lower_into(source,false,true,true,ref literals,ref mut code.body)){
+    switch(lower_into(source,false,true,true,false,ref literals,ref mut code.body)){
         case .ok(_):{}case .err(e):{return .err(image_source_error(e));}
     };
     return reference_return_signature(source,code);
@@ -3209,7 +3235,7 @@ fn Result<program_images::PublicProgram,errors::Error> publish_public_references
 fn Result<program_images::PublicProgram,errors::Error> compile_public_legacy(ref u8[] source){
     var ir::Program code=ir::empty();
     let literal_collection::Index literals=literal_collection::empty();
-    let usize lowered=lower_into(source,false,false,false,ref literals,ref mut code)?;
+    let usize lowered=lower_into(source,false,false,false,false,ref literals,ref mut code)?;
     return switch(program_images::retain_public_legacy(ref code)){
         case .ok(v):{.ok(v)}case .err(e):{.err(public_error(e))}
     };

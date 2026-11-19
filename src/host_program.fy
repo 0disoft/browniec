@@ -75,7 +75,7 @@ fn Result<usize,Error> inspect(ref ir::Program code,ref catalog::Catalog imports
             let usize id=code.code[at+3] as usize;
             if(dst>=code.registers || arg>=code.registers ||
                 code.types[dst]!=1 || code.types[arg]!=1){return .err(.Code);}
-            if(!signature(imports,id)){return .err(.Catalog);}
+            if(!scalar_signature(imports,id)){return .err(.Catalog);}
             scalar.code[at]=2;
             scalar.code[at+3]=code.code[at+2];
             required|=one<<id;
@@ -102,7 +102,7 @@ fn Result<usize,Error> inspect(ref ir::Program code,ref catalog::Catalog imports
     return .ok(required);
 }
 
-fn bool signature(ref catalog::Catalog imports,usize id){
+pub fn bool scalar_signature(ref catalog::Catalog imports,usize id){
     if(id>=catalog::count(imports)){return false;}
     return switch(catalog::parameter_count(imports,id)){
         case .ok(count):{count==1 && i32_argument(imports,id) && i32_result(imports,id)}

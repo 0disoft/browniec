@@ -33,6 +33,7 @@ import runtime_policy as policy;
 import runtime_policy_limits as policy_limits;
 import runtime_run_config as run_config;
 import host_catalog as host_catalog;
+import compiler as compiler;
 import host_exchange as host;
 import host_program as host_program;
 import ir as ir;
@@ -245,6 +246,32 @@ fn Result<usize,Error> check_run_policy(ref Engine e,ref run_config::RunConfig r
         return .err(error(5));
     }
     return .ok(0);
+}
+
+fn Result<policy_limits::CompileLimits,Error> source_host_limits(ref Engine e,ref run_config::RunConfig run){
+    let usize checked=check_run_policy(e,run)?;
+    if(!bytes::equal(run_config::module_name(run),b"main") ||
+        !bytes::equal(run_config::function_name(run),b"main")){return .err(error(5));}
+    if(e.meta.admission==0 || e.meta.next==0 || vec::len<Program>(ref e.programs)>=e.meta.limits.programs){return .err(error(8));}
+    return .ok(policy::compile_limits(vec::at<policy::Policy>(ref e.policy,0)));
+}
+
+// Single-source entry through the existing private scalar host dialect.
+pub fn Result<usize,Error> compile_scalar_host(ref mut Engine e,ref u8[] source,host_catalog::Catalog imports,
+    ref u32[] digest,ref run_config::RunConfig run){
+    let policy_limits::CompileLimits limits=source_host_limits(e,run)?;
+    if(source.len>limits.source_bytes){return .err(error(8));}
+    var ir::Program code=ir::empty();
+    switch(compiler::lower_scalar_host(source,ref imports,ref mut code)){
+        case .ok(_):{}
+        case .err(problem):{
+            let usize at=problem.offset;
+            return .err(Error{.status=4,.diagnostic=diagnostics::Error{
+                .code=problem,.at=sources::Span{.source=0,.start=at,.end=if(at<source.len){at+1}else{at}}}});
+        }
+    };
+    if(code.count>limits.instructions || code.registers>limits.registers_per_function){return .err(error(8));}
+    return retain_scalar_host(e,ref code,imports,digest,run);
 }
 
 // Trusted internal IR admission. The Engine retains the resulting verified owner.

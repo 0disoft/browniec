@@ -5,6 +5,39 @@ modules at base `845a05623d28e9eea348500debedbe264905c5f9`. The standalone
 coordinator is also used by the private scalar execution path below. The public
 ABI and public host gate remain pending.
 
+## Scalar host calls from source
+
+The private Engine can compile a single Brownie C source with an i32
+return value and the configured entry `main::main`. For example:
+
+```text
+module main;
+fn i32 main() {
+    return host::example::check(40 + 1) + 35;
+}
+```
+
+The frontend lowers one i32 argument using the ordinary expression parser.
+It resolves the canonical qualified name against the exact catalog passed to
+the Engine. The import must take one i32 and declare `Result<i32,u32>`.
+The resulting i32 expression receives the host success value. A host error
+ends the scalar run with the existing host error diagnostic.
+
+The private verifier checks the candidate and binds its immutable catalog
+digest before Program retention. Run declarations and grants still control
+admission. Each prepared Instance suspends with its own request and resumes
+with its own matching response. This slice supports a single function within
+the existing scalar host IR subset and its 4,096-source-byte bound. Typed
+source Result arms and public CLI/ABI admission remain pending.
+
+Windows development and /O2 verify one source-compiled Program reused by two
+Instances. Both request i32 41 at catalog import 1. A cross-run response is
+rejected, and matching replies of 42 and -7 produce 77 and 28. The verifier
+also exercises unknown imports, wrong argument types, mismatched digests and
+the ordinary compiler gate. Both profiles exit with zero live SDK allocations.
+Root fairyc check --locked passes 377 sources and 4,206 MIR functions. The
+local receipt is build/runtime-engine/20261119T085228115292Z/receipt.json.
+
 ## Verified scalar Program and execution
 
 The private `host_program` dialect admits a single scalar function, with opcode
