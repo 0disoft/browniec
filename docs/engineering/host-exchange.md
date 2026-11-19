@@ -38,6 +38,30 @@ the ordinary compiler gate. Both profiles exit with zero live SDK allocations.
 Root fairyc check --locked passes 377 sources and 4,206 MIR functions. The
 local receipt is build/runtime-engine/20261119T085228115292Z/receipt.json.
 
+## Catalog-typed scalar arguments from source
+
+The same private entry accepts zero to 32 scalar arguments of the exact
+catalog types and a scalar success result. The compiler resolves each
+qualified source span against the catalog, uses the parameter type to lower
+each expression from left to right, and checks arity before emitting the
+request. An existing contiguous argument range is used directly. Otherwise
+private COPY122 stages the already evaluated cells contiguously; each copy
+spends one Fuel and one dispatch unit. No expression is evaluated again.
+
+The independent host verifier still checks operand definition, exact type and
+import binding before retaining the Program. Compiler binding scratch is
+discarded before admission. The one-i32 fast path keeps its original
+instruction and costs. Typed arguments can borrow the ordinary compiler's
+checked signed negation, including i64. Byte source operands, explicit guest
+Result handling, ordinary verification and public CLI/ABI entry stay gated.
+
+Windows development and O2 both decoded the exact source-generated
+`(bool, i64, u32)` request and returned 77 with 9,999,938 Fuel remaining.
+The fixture forces register staging and rejects missing, extra and mistyped
+arguments before Program publication. Both Engine runs ended with zero live SDK
+allocations. Root locked check passed 377 sources and 4,236 MIR functions.
+Local receipt: `build/runtime-engine/20261119T203041503024Z/receipt.json`.
+
 ## Verified scalar Program and execution
 
 The private `host_program` dialect admits a single scalar function, with opcode

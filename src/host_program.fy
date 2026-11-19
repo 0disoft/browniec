@@ -26,6 +26,7 @@ pub resource Program {
 pub fn u8 request_opcode(){return 117;}
 pub fn u8 typed_request_opcode(){return 118;}
 pub fn u8 result_request_opcode(){return 121;}
+pub fn u8 copy_opcode(){return 122;}
 pub fn bool typed_request(u8 op){return op==typed_request_opcode() || op==result_request_opcode();}
 
 fn bool typed_signature(ref ir::Program p,ref catalog::Catalog imports,usize at){
@@ -82,12 +83,12 @@ fn Result<usize,Error> inspect(ref ir::Program code,ref catalog::Catalog imports
         }else if(typed_request(op)){
             if(!typed_signature(code,imports,at)){return .err(.Catalog);}
             required|=one<<(code.code[at+3] as usize);
-        }else if(op==119 || op==120){
+        }else if(op==119 || op==120 || op==copy_opcode()){
             if(!typed(code)){return .err(.Code);}
         }else if(op==2){
             let usize dst=code.code[at+1] as usize;
             if(dst>=code.registers || code.types[dst]!=1){return .err(.Code);}
-        }else if(op!=1 && op!=8 && op!=19 && op!=20 && op!=21 && op!=22){
+        }else if(op!=1 && op!=7 && op!=8 && op!=19 && op!=20 && op!=21 && op!=22){
             return .err(.Code);
         }
         pc+=1;

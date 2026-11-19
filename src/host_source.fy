@@ -5,8 +5,18 @@ import host_catalog as catalog;
 import host_program as programs;
 import ir as ir;
 import lexer as lexer;
+import host_wire as wire;
+import std::num as num;
+import types as types;
 
 pub struct Name { usize begin; usize scope_end; usize symbol; usize end; }
+pub struct Call { u8 id; usize argc; u8 result; usize parameters; }
+
+// Private compile-only prefix of list_operands. No scratch is retained in Host IR.
+// One row per catalog import, then sorted (source offset, import ID) records.
+// Every qualified call needs at least seven tokens, so 256 entries suffice.
+fn usize rows(){return 64*34;}
+fn usize scratch_bytes(){return 64*34+2+3*256;}
 
 pub fn Result<bool,errors::Error> qualified(ref u8[] source,ref lexer::State s){
     if(s.kind!=2 || !lexer::equal(source[s.begin..s.end],b"host")){return .ok(false);}
@@ -37,35 +47,118 @@ pub fn Result<Name,errors::Error> name(ref u8[] source,ref mut lexer::State s){
     return .err(errors::make(2,s.begin));
 }
 
-fn Result<u8,errors::Error> import_id(ref u8[] source,Name item,ref catalog::Catalog imports){
+fn u8 import_id(ref u8[] source,Name item,ref catalog::Catalog imports){
     var u8 id=0;
     while((id as usize)<catalog::count(imports)){
         let usize i=id as usize;
         let ref u8[] scope=switch(catalog::module_name(imports,i)){case .ok(v):{v}case .err(_):{assert(false);b""}};
         let ref u8[] symbol=switch(catalog::symbol(imports,i)){case .ok(v):{v}case .err(_):{assert(false);b""}};
         if(lexer::equal(scope,source[item.begin..item.scope_end]) && lexer::equal(symbol,source[item.symbol..item.end])){
-            if(!programs::scalar_signature(imports,i)){return .err(errors::make(3,item.begin));}
-            return .ok(id);
+            return id;
         }
         id+=1;
     }
-    return .err(errors::make(3,item.begin));
+    return 64;
 }
 
-// Candidate offsets are authored by the source lowerer. Resolve them before the
-// independent host verifier sees the Program or any authority is retained.
-pub fn Result<usize,errors::Error> bind(ref u8[] source,ref mut ir::Program code,ref catalog::Catalog imports){
-    var usize pc=0;
-    while(pc<code.count){
-        let usize at=pc*8;
-        if(code.code[at]==programs::request_opcode()){
-            var lexer::State s=lexer::empty();
-            s.cursor=code.offsets[pc];
-            let usize first=lexer::next(source,ref mut s)?;
-            let Name item=name(source,ref mut s)?;
-            code.code[at+3]=import_id(source,item,imports)?;
+fn u8 small(usize value){
+    let i64 n=switch(num::i64_from_usize(value)){case .ok(v):{v}case .err(_):{assert(false);0}};
+    return switch(num::u8_from_i64(n)){case .ok(v):{v}case .err(_):{assert(false);0}};
+}
+
+// Scan with the same initial lexer state as the single-source body lowerer.
+// Binding is advisory: the retaining verifier rechecks the exact catalog.
+pub fn Result<usize,errors::Error> prepare(ref u8[] source,usize body,ref mut ir::Program code,ref catalog::Catalog imports){
+    if(code.list_used!=0){return .err(errors::make(5,body));}
+    code.list_used=scratch_bytes();
+    var usize i=0;
+    while(i<catalog::count(imports)){
+        let usize at=i*34;
+        let usize argc=switch(catalog::parameter_count(imports,i)){case .ok(v):{v}case .err(_):{assert(false);0}};
+        let u8 tag=switch(catalog::result_tag(imports,i)){case .ok(v):{v}case .err(_):{assert(false);0}};
+        code.list_operands[at]=small(argc);code.list_operands[at+1]=wire::register_tag(tag);
+        var usize j=0;
+        while(j<argc){
+            let u8 parameter=switch(catalog::parameter_tag(imports,i,j)){case .ok(v):{v}case .err(_):{assert(false);0}};
+            code.list_operands[at+2+j]=wire::register_tag(parameter);j+=1;
         }
-        pc+=1;
+        i+=1;
     }
-    return .ok(pc);
+    var usize count=0;
+    var lexer::State s=lexer::empty();s.cursor=body;
+    let usize first=lexer::next(source,ref mut s)?;
+    while(s.kind!=0){
+        if(qualified(source,ref s)?){
+            var lexer::State look=lexer::snapshot(ref s);
+            switch(name(source,ref mut look)){
+                case .ok(item):{
+                    let u8 id=import_id(source,item,imports);
+                    if(id<64){
+                        if(count==256){return .err(errors::make(4,item.begin));}
+                        let usize at=rows()+2+3*count;
+                        code.list_operands[at]=small(item.begin%256);
+                        code.list_operands[at+1]=small(item.begin/256);
+                        code.list_operands[at+2]=id;
+                        count+=1;
+                    }
+                    s=look;continue;
+                }
+                case .err(_):{}
+            };
+        }
+        let usize next=lexer::next(source,ref mut s)?;
+    }
+    code.list_operands[rows()]=small(count%256);
+    code.list_operands[rows()+1]=small(count/256);
+    return .ok(code.list_used);
+}
+
+fn Result<u8,errors::Error> lookup(ref ir::Program code,usize at){
+    if(code.list_used<scratch_bytes()){return .err(errors::make(5,at));}
+    var usize lo=0;
+    var usize hi=code.list_operands[rows()] as usize+256*(code.list_operands[rows()+1] as usize);
+    if(hi>256){return .err(errors::make(5,at));}
+    while(lo<hi){
+        let usize mid=lo+(hi-lo)/2;let usize entry=rows()+2+3*mid;
+        let usize begin=code.list_operands[entry] as usize+256*(code.list_operands[entry+1] as usize);
+        if(begin==at){return .ok(code.list_operands[entry+2]);}
+        if(begin<at){lo=mid+1;}else{hi=mid;}
+    }
+    return .err(errors::make(3,at));
+}
+
+pub fn Result<Call,errors::Error> signature(ref ir::Program code,usize at){
+    let u8 id=lookup(code,at)?;
+    if(id>=64){return .err(errors::make(5,at));}
+    let usize row=(id as usize)*34;
+    let usize argc=code.list_operands[row] as usize;
+    let u8 result=code.list_operands[row+1];
+    if(argc>32){return .err(errors::make(5,at));}
+    if(!types::scalar(result)){return .err(errors::make(3,at));}
+    return .ok(Call{.id=id,.argc=argc,.result=result,.parameters=row+2});
+}
+
+pub fn Result<usize,errors::Error> finish(ref mut ir::Program code){
+    if(code.list_used!=scratch_bytes()){return .err(errors::make(3,0));}
+    var usize i=0;while(i<code.list_used){code.list_operands[i]=0;i+=1;}
+    code.list_used=0;return .ok(code.count);
+}
+
+pub fn Result<usize,errors::Error> emit(ref mut ir::Program code,Call call,ref usize[] args,usize at){
+    if(call.argc==1 && call.result==1 && code.types[args[0]]==1){
+        return ir::emit(code,programs::request_opcode(),args[0],call.id as usize,at);
+    }
+    let usize start=if(call.argc==0){0}else{args[0]};
+    var usize i=0;
+    while(i<call.argc && args[i]==start+i){i+=1;}
+    let usize first=if(i==call.argc){start}else{code.registers};
+    if(i!=call.argc){
+        i=0;
+        while(i<call.argc){let usize saved=ir::emit(code,programs::copy_opcode(),args[i],0,at)?;i+=1;}
+    }
+    if(code.registers>=128){return .err(errors::make(4,at));}
+    let usize dst=code.registers;code.registers+=1;code.types[dst]=call.result;
+    let usize pc=ir::raw(code,programs::typed_request_opcode(),dst,first,call.id as usize,at)?;
+    code.code[pc*8+4]=small(call.argc);
+    return .ok(dst);
 }

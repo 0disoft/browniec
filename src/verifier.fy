@@ -78,10 +78,13 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records
         let usize dst = p.code[at + 1] as usize;
         let usize a = p.code[at + 2] as usize;
         let usize b = p.code[at + 3] as usize;
-        if(host_profile && (op>=118 && op<=121)){
+        if(host_profile && (op>=118 && op<=122)){
             if(dst<start || dst>=end || p.slots[dst] || registers::contains(ref written,dst) ||
                 (op!=121 && p.code[at+6]!=0) || p.code[at+7]!=0){return .err(errors::instruction(pc));}
-            if(op==119){
+            if(op==122){
+                if(!readable(p,ref defined,a,start,end) || p.types[dst]!=p.types[a] ||
+                    b!=0 || p.code[at+4]!=0 || p.code[at+5]!=0){return .err(errors::instruction(pc));}
+            }else if(op==119){
                 let usize offset=a+256*b;
                 let usize length=p.code[at+4] as usize+256*(p.code[at+5] as usize);
                 if(p.types[dst]!=14 || offset>p.list_used || length>p.list_used-offset){return .err(errors::instruction(pc));}

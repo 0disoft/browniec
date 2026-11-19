@@ -426,6 +426,35 @@ fn void check_mixed(ref engine::Engine owner,usize instance){
     assert(payload.len==39 && decoded.count==3);
     assert(decoded.fields[0].scalar==1 && decoded.fields[1].scalar==-4294967297 && decoded.fields[2].scalar==4000000000);
 }
+fn Result<usize,u8> typed_source_round_trip(){
+    let ref u8[] source=b"module main; fn i32 main() { let u32 amount = 4000000000; return host::example::check(true, -4294967297, amount) + 35; }";
+    let policy::Policy ceiling=parsed_policy(true)?;
+    let runs::RunConfig run=switch(runs::parse(source_run_config(),ref ceiling)){case .ok(v):{v}case .err(_):{return .err(6);}};
+    var engine::Engine owner=configured(ceiling)?;
+    let catalog::Catalog imports=catalog_from(mixed_catalog())?;
+    let u32[8] expected=digest(ref imports)?;
+
+    let ref u8[] short=b"module main; fn i32 main() { return host::example::check(true, -4294967297); }";
+    let ref u8[] long=b"module main; fn i32 main() { return host::example::check(true, -4294967297, 4000000000, 1); }";
+    let ref u8[] wrong=b"module main; fn i32 main() { return host::example::check(1, -4294967297, 4000000000); }";
+    rejected(engine::compile_scalar_host(ref mut owner,short,catalog_from(mixed_catalog())?,ref expected,ref run),4);
+    rejected(engine::compile_scalar_host(ref mut owner,long,catalog_from(mixed_catalog())?,ref expected,ref run),4);
+    rejected(engine::compile_scalar_host(ref mut owner,wrong,catalog_from(mixed_catalog())?,ref expected,ref run),4);
+    assert(counts(ref mut owner).programs==0);
+
+    let usize program=id(engine::compile_scalar_host(ref mut owner,source,imports,ref expected,ref run));
+    let usize instance=id(engine::prepare_scalar_host(ref mut owner,program,ref run));
+    let engine::Event suspended=event(engine::step_instance(ref mut owner,instance,16));
+    assert(suspended.kind==4 && suspended.remaining==9999953);
+    check_mixed(ref owner,instance);
+    assert(event(engine::reply_scalar_host(ref mut owner,instance,instance,1,0,answer())).kind==0);
+    let engine::Event complete=event(engine::step_instance(ref mut owner,instance,16));
+    assert(complete.kind==1 && complete.value==77 && complete.remaining==9999938);
+    assert(id(engine::destroy_instance(ref mut owner,instance))==instance);
+    assert(id(engine::release_program(ref mut owner,program))==program);
+    assert(id(engine::destroy(ref mut owner))==0);
+    return .ok(1);
+}
 fn Result<usize,u8> multi_arguments(){
     let policy::Policy ceiling=parsed_policy(true)?;
     let runs::RunConfig run=config(ref ceiling,true)?;
@@ -856,6 +885,7 @@ pub fn void run(){
     assert(admission().is_ok);
     assert(interleaved().is_ok);
     assert(source_round_trip().is_ok);
+    assert(typed_source_round_trip().is_ok);
     assert(pending_memory().is_ok);
     assert(multi_arguments().is_ok);
     assert(variable_bytes().is_ok);

@@ -3,7 +3,6 @@ module compiler;
 import function_scan_work as signature_scan;
 
 import host_catalog as host_catalog;
-import host_program as host_program;
 import host_source as host_source;
 
 import errors as errors;
@@ -427,11 +426,21 @@ fn Result<usize,errors::Error> static_equal_right(ref u8[] source,ref mut lexer:
 fn Result<usize,errors::Error> host_operand(ref u8[] source,ref mut lexer::State s,ref mut ir::Program p,
     ref locals::Table table,ref functions::Table signatures,usize depth,u8 result_type,usize structure,ref mut loops::State flow){
     let host_source::Name item=host_source::name(source,s)?;
+    let host_source::Call call=host_source::signature(p,item.begin)?;
     let usize open=lexer::punctuation(source,s,40)?;
-    let usize value=expression(source,s,p,table,signatures,1,depth+1,1,result_type,structure,flow)?;
-    if(p.types[value]!=1){return .err(errors::make(3,item.begin));}
+    var usize[32] arguments=[0;32];
+    var usize i=0;
+    while(i<call.argc){
+        if(i!=0){let usize comma=lexer::punctuation(source,s,44)?;}
+        let u8 expected=p.list_operands[call.parameters+i];
+        if(!types::scalar(expected)){return .err(errors::make(3,item.begin));}
+        let usize value=expression(source,s,p,table,signatures,1,depth+1,expected,result_type,structure,flow)?;
+        if(p.types[value]!=expected){return .err(errors::make(3,item.begin));}
+        arguments[i]=value;i+=1;
+    }
     let usize close=lexer::punctuation(source,s,41)?;
-    return ir::emit(p,host_program::request_opcode(),value,0,item.begin);
+    let ref usize[] args=ref arguments;
+    return host_source::emit(p,call,args,item.begin);
 }
 fn Result<usize, errors::Error> named_operand(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref locals::Table table, ref functions::Table signatures, usize depth, u8 expected, u8 result_type, usize structure, ref mut loops::State loop_state) {
     if(signatures.scalar_host_calls && host_source::qualified(source,s)?){
@@ -3065,9 +3074,16 @@ pub fn Result<ir::Program,errors::Error> compile_eval_i32(ref u8[] source){
 // Private candidate only. The Engine still verifies and binds the catalog digest
 // and Policy through the existing host Program admission.
 pub fn Result<usize,errors::Error> lower_scalar_host(ref u8[] source,ref host_catalog::Catalog imports,ref mut ir::Program code){
+    if(source.len>4096){return .err(errors::make(4,4096));}
+    let ref str valid=switch(text::validate_utf8(source)){case .ok(v):{v}case .err(_):{return .err(errors::make(1,0));}};
+    var functions::Table signatures=lowering_signatures(source,false)?;
+    if(signatures.count!=1){return .err(errors::make(3,0));}
+    signatures.scalar_host_calls=true;
+    let usize prepared=host_source::prepare(source,signatures.bodies[0],code,imports)?;
     let literal_collection::Index literals=literal_collection::empty();
-    let usize count=lower_into(source,false,false,false,true,ref literals,code)?;
-    return host_source::bind(source,code,imports);
+    var usize active=16;
+    let usize count=lower_prepared(source,false,false,false,ref literals,ref mut signatures,code,ref mut active)?;
+    return host_source::finish(code);
 }
 
 // The analysis Program stays private and is never returned to an executor.

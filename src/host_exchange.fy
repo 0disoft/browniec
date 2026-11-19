@@ -362,6 +362,8 @@ fn void load_image(ref mut Exchange e,ref ir::Program p){
         if(wide(data)){
             data[at+4]=p.code[source+4];data[at+5]=p.code[source+5];
             data[at+6]=p.code[source+6];data[at+7]=p.code[source+7];
+            // The verified destination type selects the checked negate width.
+            if(data[at]==7){data[at+4]=p.types[data[at+1] as usize];}
         }else if(data[at]==1){
             let i64 literal=p.constants[p.code[source+2] as usize];
             store_cell(data,at+4,1,literal);
@@ -631,6 +633,10 @@ fn Result<ScalarEvent,ScalarError> install_bytes(ref mut Exchange e,usize dst,us
     return .ok(scalar_event(e));
 }
 fn void dispatch_scalar(ref mut u8[] data,u8 op,usize dst,usize a,usize b,usize at){
+    if(op==programs::copy_opcode()){
+        let i64 value=reg(data,a);
+        set_reg(data,dst,value);data[80]+=1;return;
+    }
     if(op==119){
         let usize start=blob_base()+a+b*256;
         let usize length=data[at+4] as usize+256*(data[at+5] as usize);
@@ -651,8 +657,10 @@ fn void dispatch_scalar(ref mut u8[] data,u8 op,usize dst,usize a,usize b,usize 
         store_cell(data,84,1,value);data[81]=3;return;
     }
     let i64 value=if(op==1){if(wide(data)){wide_cell(data,3168+a*8)}else{load_cell(data,at+4,1)}}else{
-        assert(op==2);
-        switch(arithmetic::signed(2,reg(data,a),reg(data,b),1,0)){
+        assert(op==2 || op==7);
+        let i64 right=if(op==7){0}else{reg(data,b)};
+        let u8 tag=if(op==7 && wide(data)){data[at+4]}else{1};
+        switch(arithmetic::signed(op,reg(data,a),right,tag,0)){
             case .ok(v):{v}
             case .err(_):{data[81]=4;data[82]=2;return;}
         }
