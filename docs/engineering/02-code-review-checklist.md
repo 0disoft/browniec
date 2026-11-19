@@ -6,7 +6,7 @@
 
 Review the concrete observable change and its invariant, ownership, effect, and compatibility consequences using evidence relevant to the affected behavior.
 
-Project-wide decisions: docs/engineering/00-project-invariants.md
+Project-wide decisions: [Project Invariants](00-project-invariants.md)
 
 ## Required Decisions
 
@@ -21,4 +21,4 @@ Project-wide decisions: docs/engineering/00-project-invariants.md
 - Owner: UNASSIGNED
 - Source of truth and related ADR: UNDECIDED
 - Required evidence and remaining gaps: UNDECIDED
-- Validation route: VALIDATION.md
+- Validation route: [Validation](../../VALIDATION.md)
