@@ -3,9 +3,11 @@ module tests::m2::cli_locations;
 import ir as ir;
 import errors as errors;
 import verifier as verifier;
+import render as render;
 
+@effects(console)
 @test
-fn void rejects_first_instruction_with_its_index(){
+fn void renders_verifier_instruction_index(){
     var ir::Program code=ir::empty();
     let usize r=switch(ir::literal(ref mut code,77,0)){case .ok(v):{v}case .err(_):{assert(false);0}};
     let usize ret=switch(ir::emit(ref mut code,8,r,0,0)){case .ok(v):{v}case .err(_):{assert(false);0}};
@@ -14,12 +16,27 @@ fn void rejects_first_instruction_with_its_index(){
     code.ends[0]=2;
     code.register_ends[0]=1;
     assert(verifier::verify(ref code).is_ok);
+    let u8 first=code.code[0];
     code.code[0]=255;
     switch(verifier::verify(ref code)){
         case .ok(_):{assert(false);}
         case .err(e):{
             assert(e.kind==5 && e.offset==0);
             assert(e.location==errors::instruction_location());
+        }
+    };
+
+    // The return is instruction 1, but its source byte offset is 0.
+    code.code[0]=first;
+    code.code[8]=255;
+    switch(verifier::verify(ref code)){
+        case .ok(_):{assert(false);}
+        case .err(e):{
+            assert(e.kind==5 && e.offset==1);
+            assert(e.location==errors::instruction_location());
+            assert(render::selected_outcome(.Text,false,true,0,e,0)==6);
+            assert(render::selected_outcome(.Json,false,true,0,e,0)==6);
+            assert(render::selected_outcome(.JsonV2,false,true,0,e,0)==6);
         }
     };
 }

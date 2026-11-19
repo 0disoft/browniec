@@ -84,7 +84,7 @@ jobs:
       - name: Check CLI diagnostics and eval-i32 on the same release binary
         run: python -B tools/check-cli-contract.py --exe ./build/browniec.exe
 
-      - name: Check the internal verifier instruction index
+      - name: Check internal verifier diagnostic output
         shell: pwsh
         run: |
           $compiler = (Resolve-Path ./build/toolchain/fairyc.exe).Path
@@ -96,10 +96,10 @@ jobs:
           Copy-Item -LiteralPath src -Destination $project -Recurse
           Copy-Item -LiteralPath tests/m2/cli_locations.fy -Destination $testDir
 
-          $identity = 'tests::m2::cli_locations::rejects_first_instruction_with_its_index'
+          $identity = 'tests::m2::cli_locations::renders_verifier_instruction_index'
           Push-Location $project
           try {
-            $output = & $compiler test --native --release --locked --json --exact $identity
+            $output = & $compiler test --native --release --locked --capture-output --json --exact $identity
             $exitCode = $LASTEXITCODE
           } finally {
             Pop-Location
@@ -113,4 +113,17 @@ jobs:
               @($report.tests).Count -ne 1 -or $report.tests[0].identity -cne $identity -or
               $report.tests[0].outcome -cne 'passed') {
             throw 'Expected exactly one passing native release verifier test.'
+          }
+          $test = $report.tests[0]
+          $stdout = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($test.stdoutBase64))
+          $stderr = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($test.stderrBase64))
+          $expected = @(
+            '{"schema":"browniec.result/v1","profile":"brownie.m1-scalar/1","command":"check","status":"error","return_i32":null,"error":{"kind":"verification","byte_offset":1}}'
+            '{"schema":"browniec.result/v2","profile":"brownie.m1-scalar/1","command":"check","status":"error","return_i32":null,"error":{"kind":"verification","location":{"kind":"instruction_index","offset":1}}}'
+          )
+          Write-Output "Captured stdout:`n$stdout"
+          Write-Output "Captured stderr:`n$stderr"
+          if ($stdout -cne (($expected -join [char]10) + [char]10) -or
+              $stderr -cne ('browniec: verification at instruction 1' + [char]10)) {
+            throw 'Unexpected verifier diagnostic text or JSON output.'
           }
