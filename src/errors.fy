@@ -10,6 +10,8 @@ pub struct Error { u8 kind; u8 location; usize offset; }
 pub fn Error make(u8 kind, usize offset) {
     return Error{.kind=kind,.offset=offset,.location=0};
 }
+// The instruction index is zero-based; 0 is a valid location.
+// JSON v1 keeps the index in byte_offset for compatibility.
 pub fn Error instruction(usize pc){
     return Error{.kind=5,.offset=pc,.location=instruction_location()};
 }

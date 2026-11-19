@@ -31,6 +31,7 @@ fn void renders_verifier_instruction_index(){
     code.ends[0]=2;
     code.register_ends[0]=1;
     assert(verifier::verify(ref code).is_ok);
+    assert(code.offsets[0]==17 && code.offsets[1]==42);
     let u8 first=code.code[0];
     code.code[0]=255;
     check_diagnostic(ref code,0);
