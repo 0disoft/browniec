@@ -43,7 +43,7 @@ fn Result<bool,errors::Error> child(ref u8[] source,ref mut State w,ref mut budg
     if(w.parsing){var signatures::State frame=w.signature;
         let Result<bool,errors::Error> result=signatures::advance(source,ref mut w.result,ref mut frame,meter);w.signature=frame;
         w.token=signatures::observed(ref w.signature);let bool done=result?;
-        if(done){if(w.mode==0){w.phase=4;}else{
+        if(done){if(w.mode!=1){w.phase=4;}else{
                 let usize f=signatures::prepared(ref w.signature)?;let ref context::Table scope=ref w.result.context;
                 if(f>=scope.function_count || w.result.begins[f]!=context::begin(scope.functions[f]) || w.result.ends[f]!=context::end(scope.functions[f])){
                     return .err(errors::make(5,w.active));}
@@ -53,14 +53,14 @@ fn Result<bool,errors::Error> child(ref u8[] source,ref mut State w,ref mut budg
 }
 pub fn Result<bool,errors::Error> advance_single(ref u8[] source,ref mut State w,ref mut budget::State meter){
     if(w.done){return .ok(true);}if(meter.last!=0){return .ok(false);}
-    if(w.mode!=0){return .err(errors::make(5,0));}
+    if(w.mode==1){return .err(errors::make(5,0));}
     if(w.waiting || w.parsing || w.skipping){return child(source,w,meter);}
     if(!budget::admit(meter,4096,w.token.begin)?){return .ok(false);}
     if(w.phase==0){next(w,1);return .ok(false);}
     if(w.phase==1){if(!word(source,ref w.token,b"module")){return .err(errors::make(2,w.token.begin));}next(w,2);return .ok(false);}
     if(w.phase==2){if(!word(source,ref w.token,b"main")){return .err(errors::make(2,w.token.begin));}next(w,3);return .ok(false);}
     if(w.phase==3){if(w.token.kind!=59){return .err(errors::make(2,w.token.begin));}next(w,4);return .ok(false);}
-    if(w.phase==4){if(w.token.kind==0){if(w.result.entry==16){return .err(errors::make(3,source.len));}w.done=true;return .ok(true);}
+    if(w.phase==4){if(w.token.kind==0){if(w.mode==2){w.result.entry=eval_entry(source,ref w.result)?;}if(w.result.entry==16){return .err(errors::make(3,source.len));}w.done=true;return .ok(true);}
         let lexer::State current=w.token;
         if(word(source,ref w.token,b"struct")){w.declaration=declarations::structure(current);w.skipping=true;}
         else{w.signature=signatures::begin(current);w.parsing=true;}return .ok(false);}
@@ -86,6 +86,28 @@ pub fn Result<bool,errors::Error> advance_indexed(ref u8[] source,ref context::T
     if(w.phase==13){let lexer::State current=w.token;w.signature=signatures::begin(current);w.parsing=true;return .ok(false);}
     return .err(errors::make(5,w.active));
 }
+fn Result<usize,errors::Error> eval_entry(ref u8[] source,ref raw::Table table){
+    var usize f=0;
+    while(f<table.count){
+        let usize at=table.begins[f];
+        if(lexer::equal(source[at..table.ends[f]],b"evaluate")){
+            if(table.arities[f]!=1 || table.param_types[f*8]!=1 || table.param_lengths[f*8]!=0 ||
+                table.param_records[f*8]!=0 || table.param_slices[f*8] ||
+                table.return_types[f]!=1 || table.return_lengths[f]!=0 || table.return_records[f]!=0 ||
+                table.return_slice_elements[f]!=0){return .err(errors::make(3,at));}
+            return .ok(f);
+        }
+        f+=1;
+    }
+    return .err(errors::make(3,source.len));
+}
+pub fn Result<raw::Table,errors::Error> scan_eval(ref u8[] source){
+    var State w=seed(2,0,false);
+    var budget::State meter=budget::empty();
+    while(!w.done){let usize allowance=budget::reset(ref mut meter,0)?;let bool done=advance_single(source,ref mut w,ref mut meter)?;}
+    return prepared(ref w);
+}
+
 // Owning compatibility adapters; no public Pending compiler protocol.
 pub fn Result<raw::Table,errors::Error> scan_single(ref u8[] source,bool returns){
     var State w=single(returns);var budget::State meter=budget::empty();

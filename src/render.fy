@@ -62,7 +62,7 @@ fn Result<usize,bytes::BufferError> encode_location(ref mut bytes::Buffer output
     }
     return bytes::append(output,b"\"}");
 }
-fn Result<bytes::Buffer, bytes::BufferError> encode(Format format,bool run, bool failed, i64 value, errors::Error error, u8 arrays) {
+fn Result<bytes::Buffer, bytes::BufferError> encode(Format format,bool run,bool eval, bool failed, i64 value, errors::Error error, u8 arrays) {
     var bytes::Buffer output = bytes::with_capacity(512)?;
     let usize prefix=bytes::append(ref mut output,if(v2(format)){
         b"{\"schema\":\"browniec.result/v2\",\"profile\":"
@@ -84,7 +84,7 @@ fn Result<bytes::Buffer, bytes::BufferError> encode(Format format,bool run, bool
     } else if (arrays == 1) {
         b"\"brownie.m2-array-read/1\",\"command\":"
     } else { b"\"brownie.m1-scalar/1\",\"command\":" })?;
-    let usize command = bytes::append(ref mut output, if (run) { b"\"run\"" } else { b"\"check\"" })?;
+    let usize command = bytes::append(ref mut output, if(eval){b"\"eval-i32\""}else if(run){b"\"run\""}else{b"\"check\"" })?;
     let usize status = bytes::append(ref mut output, if (failed) { b",\"status\":\"error\",\"return_i32\":null,\"error\":{\"kind\":\"" }
         else if (run) { b",\"status\":\"completed\",\"return_i32\":" }
         else { b",\"status\":\"checked\",\"return_i32\":null,\"error\":null" })?;
@@ -106,9 +106,17 @@ pub fn i32 outcome(bool json, bool run, bool failed, i64 value, errors::Error er
 }
 @effects(console)
 pub fn i32 selected_outcome(Format format, bool run, bool failed, i64 value, errors::Error error, u8 arrays) {
+    return command_outcome(format,run,false,failed,value,error,arrays);
+}
+@effects(console)
+pub fn i32 eval_outcome(Format format,bool failed,i64 value,errors::Error error){
+    return command_outcome(format,true,true,failed,value,error,0);
+}
+@effects(console)
+fn i32 command_outcome(Format format,bool run,bool eval,bool failed,i64 value,errors::Error error,u8 arrays){
     let i32 code = if (failed) { exit_code(error.kind) } else { 0 };
     if (!text_mode(format)) {
-        let bytes::Buffer output = switch (encode(format,run, failed, value, error, arrays)) {
+        let bytes::Buffer output = switch (encode(format,run,eval, failed, value, error, arrays)) {
             case .ok(value): { value } case .err(_): { return 7; }
         };
         let ref u8[] view = bytes::view(ref output);

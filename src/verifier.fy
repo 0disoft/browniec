@@ -359,10 +359,10 @@ fn Result<reborrows::Sites, errors::Error> validate(ref ir::Program p,bool allow
 }
 fn Result<reborrows::Sites,errors::Error> validate_values(ref ir::Program p,bool allow_reborrow_calls,
     u8 place_kind,ref statics::Sites static_sites,ref value_ir::Sites value_sites){
-    return validate_values_mode(p,allow_reborrow_calls,place_kind,static_sites,value_sites,false,false);
+    return validate_values_mode(p,allow_reborrow_calls,place_kind,static_sites,value_sites,0,false);
 }
 fn Result<reborrows::Sites,errors::Error> validate_values_mode(ref ir::Program p,bool allow_reborrow_calls,
-    u8 place_kind,ref statics::Sites static_sites,ref value_ir::Sites value_sites,bool input,bool host_profile){
+    u8 place_kind,ref statics::Sites static_sites,ref value_ir::Sites value_sites,u8 entry_kind,bool host_profile){
     if (p.count == 0 || p.count > 256 || p.registers == 0 || p.registers > 128 || p.constant_count > 128 ||
         p.function_count == 0 || p.function_count > 16 || p.entry >= p.function_count || p.call_count > 32) { return .err(errors::absent(5,0)); }
     if (!arrays::valid(ref p.arrays)) { return .err(errors::absent(5,0)); }
@@ -379,7 +379,13 @@ fn Result<reborrows::Sites,errors::Error> validate_values_mode(ref ir::Program p
         id += 1;
     }
     if(p.return_types[p.entry]!=1){return .err(errors::absent(5,0));}
-    if(input){if(p.arities[p.entry]!=1 || p.register_starts[p.entry]>=128 || static_sites.parameters[p.register_starts[p.entry]]!=3){return .err(errors::absent(5,0));}}
+    if(entry_kind!=0){
+        let usize first=p.register_starts[p.entry];
+        if(p.arities[p.entry]!=1 || first>=p.registers){return .err(errors::absent(5,0));}
+        if(entry_kind==1 && static_sites.parameters[first]!=3){return .err(errors::absent(5,0));}
+        if(entry_kind==2 && (p.types[first]!=1 || p.array_parameters[first]!=0 || p.record_parameters[first]!=0 ||
+            p.slice_parameters[first]!=0 || p.arrays.count!=0 || p.records.count!=0)){return .err(errors::absent(5,0));}
+    }
     else if(p.arities[p.entry]!=0){return .err(errors::absent(5,0));}
     var usize f = 0;
     var usize code_end = 0;
@@ -394,7 +400,7 @@ fn Result<reborrows::Sites,errors::Error> validate_values_mode(ref ir::Program p
     }
     if (code_end != p.count || register_end != p.registers) { return .err(errors::absent(5,0)); }
     let usize copy_metadata=copying::metadata(p)?;
-    let usize borrowed_parameters = if(input){slice_parameters::metadata_input(p)?}else{slice_parameters::metadata(p)?};
+    let usize borrowed_parameters = if(entry_kind!=0){slice_parameters::metadata_input(p)?}else{slice_parameters::metadata(p)?};
     let reborrows::Sites loans = reborrows::metadata(p)?;
     let usize parameters = array_parameters::metadata(p)?;
     let usize record_parameters = struct_parameters::metadata(p)?;
@@ -482,11 +488,18 @@ pub fn Result<reborrows::Sites,errors::Error> verify_sites(ref ir::Program p){
 pub fn Result<usize, errors::Error> verify(ref ir::Program p) {
     let reborrows::Sites sites=verify_sites(p)?;return .ok(p.count);
 }
+pub fn Result<usize,errors::Error> verify_eval_i32(ref ir::Program p){
+    let statics::Sites sites=statics::empty();
+    let value_ir::Sites values=value_ir::empty();
+    let reborrows::Sites loans=validate_values_mode(p,false,4,ref sites,ref values,2,false)?;
+    let usize calls=executable_calls(p,ref loans)?;
+    return .ok(p.count);
+}
 // Scalar host admission checks catalog types before invoking this CFG proof.
 pub fn Result<usize,errors::Error> inspect_host(ref ir::Program p){
     let statics::Sites static_sites=statics::empty();
     let value_ir::Sites values=value_ir::empty();
-    let reborrows::Sites loans=validate_values_mode(p,false,4,ref static_sites,ref values,false,true)?;
+    let reborrows::Sites loans=validate_values_mode(p,false,4,ref static_sites,ref values,0,true)?;
     return .ok(p.count);
 }
 // Analysis-only proof does not impose the executable derived CALL subset.
@@ -539,7 +552,7 @@ pub fn Result<ReferenceReturnProof,errors::Error> inspect_input_returns(ref imag
     let image_calls::Proof recipes=image_calls::inspect_input_returns(unit,image)?;
     let statics::Sites sites=image_sites::prepare(unit,ref recipes,image)?;
     let ref ir::Program p=ref unit.body;let value_ir::Sites no_values=value_ir::empty();
-    let reborrows::Sites loans=validate_values_mode(p,true,4,ref sites,ref no_values,true,false)?;
+    let reborrows::Sites loans=validate_values_mode(p,true,4,ref sites,ref no_values,1,false)?;
     let usize executable=executable_calls(p,ref loans)?;
     let usize[16] roots=reference_lifetimes::prepare(p,ref sites)?;
     let usize checked=reference_lifetimes::inspect(p,ref sites,ref roots)?;
@@ -552,7 +565,7 @@ pub fn Result<ReferenceReturnProof,errors::Error> inspect_output_returns(ref ima
     let image_calls::Proof recipes=image_calls::inspect_output_returns(unit,image,input)?;
     var statics::Sites sites=image_sites::prepare(unit,ref recipes,image)?;sites.output=true;
     let ref ir::Program p=ref unit.body;let value_ir::Sites no_values=value_ir::empty();
-    let reborrows::Sites loans=validate_values_mode(p,true,4,ref sites,ref no_values,input,false)?;
+    let reborrows::Sites loans=validate_values_mode(p,true,4,ref sites,ref no_values,if(input){1}else{0},false)?;
     let usize executable=executable_calls(p,ref loans)?;
     let usize[16] roots=reference_lifetimes::prepare(p,ref sites)?;
     let usize checked=reference_lifetimes::inspect(p,ref sites,ref roots)?;

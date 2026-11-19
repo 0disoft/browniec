@@ -47,12 +47,16 @@ import mixed_call_vm as mixed_calls;
 // 32-frame receipt array. One inert native receipt supplies that empty view.
 pub fn Result<i64, errors::Error> execute(ref ir::Program p,usize fuel,
     ref mut array_vm::State arrays,ref mut bytes::Buffer payload,ref mut slices::State loans,ref mut borrowed::Frames borrowed_frames){
+    return execute_entry(p,fuel,arrays,payload,loans,borrowed_frames,0);
+}
+pub fn Result<i64,errors::Error> execute_entry(ref ir::Program p,usize fuel,
+    ref mut array_vm::State arrays,ref mut bytes::Buffer payload,ref mut slices::State loans,ref mut borrowed::Frames borrowed_frames,i64 argument){
     var mutable::Frame[1] receipts=[mutable::empty();1];
     var canonical::State[1] authority=[canonical::empty();1];
     var canonical_calls::Bindings[1] call_sites=[canonical_calls::empty();1];
     var child_sites::Bindings[1] child_bindings=[child_sites::empty();1];
     let reborrows::Sites sites=reborrows::Sites{.parents=[16;16],.newer=[0;16],.count=0};
-    return core(p,fuel,arrays,payload,loans,borrowed_frames,ref mut receipts[..0],ref mut authority[..0],ref mut call_sites[..0],ref mut child_bindings[..0],ref sites);
+    return core(p,fuel,arrays,payload,loans,borrowed_frames,ref mut receipts[..0],ref mut authority[..0],ref mut call_sites[..0],ref mut child_bindings[..0],ref sites,argument);
 }
 // Private integration entry: caller owns 32 initialized, unique frame receipts,
 // has independently inspected the immutable Program, and calls mutable::finish
@@ -66,7 +70,7 @@ pub fn Result<i64, errors::Error> execute_mutable(ref ir::Program p,usize fuel,
     var canonical_calls::Bindings[1] call_sites=[canonical_calls::empty();1];
     var child_sites::Bindings[1] child_bindings=[child_sites::empty();1];
     let reborrows::Sites sites=reborrows::Sites{.parents=[16;16],.newer=[0;16],.count=0};
-    return core(p,fuel,arrays,payload,loans,borrowed_frames,receipts,ref mut authority[..0],ref mut call_sites[..0],ref mut child_bindings[..0],ref sites);
+    return core(p,fuel,arrays,payload,loans,borrowed_frames,receipts,ref mut authority[..0],ref mut call_sites[..0],ref mut child_bindings[..0],ref sites,0);
 }
 // Native-only raw entry. Caller independently inspects immutable IR/Sites,
 // admits the canonical CALL subset and fresh unique context, then finishes every
@@ -76,7 +80,7 @@ pub fn Result<i64,errors::Error> execute_canonical(ref ir::Program p,ref reborro
     ref mut canonical::State[] authority,ref mut canonical_calls::Bindings[] call_sites,ref mut child_sites::Bindings[] child_bindings){
     if(authority.len!=1 || call_sites.len!=1 || child_bindings.len!=1){return .err(errors::make(5,0));}
     var mutable::Frame[1] unused=[mutable::empty();1];
-    return core(p,fuel,arrays,payload,loans,frames,ref mut unused[..0],authority,call_sites,child_bindings,sites);
+    return core(p,fuel,arrays,payload,loans,frames,ref mut unused[..0],authority,call_sites,child_bindings,sites,0);
 }
 fn bool mutable_function(ref ir::Program p,usize function){
     var usize i=0;while(i<p.arities[function]){let usize site=p.slice_parameters[p.register_starts[function]+i] as usize;
@@ -93,7 +97,7 @@ fn Result<usize,errors::Error> leave(ref ir::Program p,usize function,usize fram
 // Internal execution core: caller supplies an immutable independently inspected
 // Program and invocation-owned state. Public VM entry points still use verify.
 fn Result<i64, errors::Error> core(ref ir::Program p, usize fuel,
-    ref mut array_vm::State arrays, ref mut bytes::Buffer payload, ref mut slices::State loans, ref mut borrowed::Frames borrowed_frames, ref mut mutable::Frame[] receipts, ref mut canonical::State[] authority,ref mut canonical_calls::Bindings[] call_sites,ref mut child_sites::Bindings[] child_bindings, ref reborrows::Sites sites) {
+    ref mut array_vm::State arrays, ref mut bytes::Buffer payload, ref mut slices::State loans, ref mut borrowed::Frames borrowed_frames, ref mut mutable::Frame[] receipts, ref mut canonical::State[] authority,ref mut canonical_calls::Bindings[] call_sites,ref mut child_sites::Bindings[] child_bindings, ref reborrows::Sites sites,i64 argument) {
     var vec::Vec<value_program::Program> admitted=vec::empty<value_program::Program>();
     var vec::Vec<value_frames::State> states=vec::empty<value_frames::State>();
     var vec::Vec<value_roots::State> owners=vec::empty<value_roots::State>();
@@ -102,7 +106,7 @@ fn Result<i64, errors::Error> core(ref ir::Program p, usize fuel,
     var vec::Vec<value_views::Pool> view_pools=vec::empty<value_views::Pool>();
     return core_values(p,fuel,arrays,payload,loans,borrowed_frames,receipts,authority,call_sites,child_bindings,sites,
         ref admitted,ref mut states,ref mut owners,ref mut data,ref mut scratch,ref mut roots,ref mut root_scratch,ref mut view_pools,
-        value_limits::Limits{.object=0,.instance=0,.engine=0});
+        value_limits::Limits{.object=0,.instance=0,.engine=0},argument);
 }
 // Same canonical loop and ordinary transactions, with a separately retained
 // typed Program. Legacy callers pass inert vectors and keep their exact prices.
@@ -130,7 +134,7 @@ pub fn Result<i64,errors::Error> execute_values(value_program::Program program,u
     var mutable::Frame[1] unused=[mutable::empty();1];
     let Result<i64,errors::Error> outcome=core_values(ref value_program::code(retained).body,remaining,arrays,payload,loans,borrowed_frames,
         ref mut unused[..0],authority,call_sites,child_bindings,value_program::loans(retained),ref admitted,
-        ref mut states,ref mut owners,ref mut data,ref mut scratch,ref mut roots,ref mut root_scratch,ref mut view_pools,budget.values);
+        ref mut states,ref mut owners,ref mut data,ref mut scratch,ref mut roots,ref mut root_scratch,ref mut view_pools,budget.values,0);
     return values::finish_views(ref mut states,ref mut owners,ref mut data,ref mut scratch,ref mut roots,ref mut root_scratch,ref mut view_pools,outcome);
 }
 fn Result<i64,errors::Error> core_values(ref ir::Program p,usize fuel,
@@ -140,7 +144,7 @@ fn Result<i64,errors::Error> core_values(ref ir::Program p,usize fuel,
     ref mut vec::Vec<value_frames::State> value_states,ref mut vec::Vec<value_roots::State> owner_states,
     ref mut vec::Vec<bytes::Buffer> value_data,ref mut vec::Vec<bytes::Buffer> value_scratch,
     ref mut vec::Vec<bytes::Buffer> value_buffers,ref mut vec::Vec<bytes::Buffer> root_scratch,
-    ref mut vec::Vec<value_views::Pool> view_pools,value_limits::Limits limits){
+    ref mut vec::Vec<value_views::Pool> view_pools,value_limits::Limits limits,i64 argument){
     if(authority.len>1 || call_sites.len!=authority.len || child_bindings.len!=authority.len){return .err(errors::make(5,0));}
     if(authority.len==0 && reborrows::present(p)) { return .err(errors::make(5,0)); }
     let lists::Requirement list_plan=lists::requirement(p)?;
@@ -151,7 +155,7 @@ fn Result<i64,errors::Error> core_values(ref ir::Program p,usize fuel,
     var vec::Vec<usize> place_state=places::prepare_metered(ref place_plan,fuel-list_plan.cost)?;
     let Result<i64,errors::Error> outcome=run_core(p,fuel-list_plan.cost-place_plan.cost,arrays,payload,loans,borrowed_frames,
         receipts,authority,call_sites,child_bindings,sites,ref mut list_cells,ref mut list_scratch,ref mut place_state,
-        admitted,value_states,owner_states,value_data,value_scratch,value_buffers,root_scratch,view_pools,limits);
+        admitted,value_states,owner_states,value_data,value_scratch,value_buffers,root_scratch,view_pools,limits,argument);
     return switch(outcome){case .ok(value):{.ok(value)}case .err(e):{places::abort(ref mut place_state);.err(e)}};
 }
 // Keep owning invocation scratch outside every fallible execution exit. Failure
@@ -164,11 +168,12 @@ fn Result<i64,errors::Error> run_core(ref ir::Program p,usize fuel,
     ref vec::Vec<value_program::Program> admitted,ref mut vec::Vec<value_frames::State> value_states,
     ref mut vec::Vec<value_roots::State> owner_states,ref mut vec::Vec<bytes::Buffer> value_data,
     ref mut vec::Vec<bytes::Buffer> value_scratch,ref mut vec::Vec<bytes::Buffer> value_buffers,
-    ref mut vec::Vec<bytes::Buffer> root_scratch,ref mut vec::Vec<value_views::Pool> view_pools,value_limits::Limits limits){
+    ref mut vec::Vec<bytes::Buffer> root_scratch,ref mut vec::Vec<value_views::Pool> view_pools,value_limits::Limits limits,i64 argument){
     var usize remaining=fuel;
     let bool typed=vec::len<value_program::Program>(admitted)==1;
     var struct_vm::State records = struct_vm::empty();
     var i64[4096] registers = [0; 4096];
+    registers[p.register_starts[p.entry]]=argument;
     var usize[32] return_pcs = [0; 32];
     var usize[32] return_dsts = [0; 32];
     var usize[32] functions = [0;32];

@@ -95,6 +95,15 @@ The run exits with code 0 and prints one JSON object with `return_i32: 77`.
 The default Fuel budget is 256. Run trusted local source only. OS isolation
 is unavailable.
 
+Try the shipping-fee rule with a decimal i32 order total:
+
+```powershell
+./build/browniec.exe eval-i32 examples/shipping-fee.brc 29999 --json
+./build/browniec.exe eval-i32 examples/shipping-fee.brc 30000 --json
+```
+
+The results are 3000 and 0, respectively.
+
 ## Current implementation (2026-11-07)
 
 Private [Buffer view copying](docs/engineering/value-view-copy.md) now accepts

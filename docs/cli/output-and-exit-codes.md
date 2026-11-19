@@ -67,7 +67,7 @@ program that compiles and then fails verification or execution keeps its selecte
 array profile. The result schema and error kinds do not differ from the scalar
 result schema.
 
-For `browniec.result/v1`, command is `check` or `run`; status is `checked`, `completed`, or `error`.
+For `browniec.result/v1`, command is `check`, `run` or `eval-i32`; status is `checked`, `completed`, or `error`.
 Only completed runs have a numeric return_i32. Failures carry an error object with
 `kind` and the legacy numeric `byte_offset` field. Kinds are lexical, syntax, type,
 compile_limit, verification, overflow, zero_divisor, fuel, frame_limit, input_io, usage, and
@@ -75,14 +75,14 @@ array_limit, bounds, allocation, and unavailable. Non-source failures use offset
 the legacy field also carries instruction indices for internal verifier errors.
 JSON mode is honored once its option has been parsed.
 
-For check and run, `--json-v2` selects `browniec.result/v2`. The error object
+For check, run and eval-i32, `--json-v2` selects `browniec.result/v2`. The error object
 contains `kind` and `location`. Location has a `kind` of `source_byte`,
 `instruction_index` or `none`. Source and instruction locations include
 their zero-based `offset`. An absent location omits the offset. Text mode
 labels source bytes and instruction indices explicitly and omits absent locations.
 
 
-For check/run, text mode leaves stdout empty and writes checked status, return_i32, or diagnostics
+For check/run/eval-i32, text mode leaves stdout empty and writes checked status, return_i32, or diagnostics
 to stderr. Guest output bytes and output_b64 are not implemented. Version JSON uses
 `browniec.version/v1`, preserves `profile` as `brownie.m1-scalar/1`, adds the
 `array_profile`, `array_write_profile`, and `array_copy_profile` fields, and

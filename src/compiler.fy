@@ -1,5 +1,7 @@
 module compiler;
 
+import function_scan_work as signature_scan;
+
 import host_catalog as host_catalog;
 import host_program as host_program;
 import host_source as host_source;
@@ -3048,6 +3050,16 @@ pub fn Result<ir::Program,errors::Error> compile(ref u8[] source){
     var ir::Program p=ir::empty();
     let literal_collection::Index literals=literal_collection::empty();
     let usize lowered=lower_into(source,false,false,false,false,ref literals,ref mut p)?;
+    return .ok(p);
+}
+pub fn Result<ir::Program,errors::Error> compile_eval_i32(ref u8[] source){
+    if(source.len>4096){return .err(errors::make(4,4096));}
+    let ref str valid=switch(text::validate_utf8(source)){case .ok(v):{v}case .err(_):{return .err(errors::make(1,0));}};
+    var functions::Table signatures=signature_scan::scan_eval(source)?;
+    let literal_collection::Index literals=literal_collection::empty();
+    var ir::Program p=ir::empty();var usize active=16;
+    let usize lowered=lower_prepared(source,false,false,false,ref literals,ref mut signatures,ref mut p,ref mut active)?;
+    if(p.arrays.count!=0 || p.records.count!=0){return .err(errors::make(3,signatures.begins[signatures.entry]));}
     return .ok(p);
 }
 // Private candidate only. The Engine still verifies and binds the catalog digest

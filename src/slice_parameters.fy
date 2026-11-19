@@ -14,8 +14,8 @@ fn bool formal(ref ir::Program p, usize r, usize site, usize f) {
 }
 
 pub fn Result<usize, errors::Error> metadata(ref ir::Program p) {return metadata_mode(p,false);}
-// Generic byte InputEntry is proved by the caller's separate complete static
-// signature pass. It must not manufacture an ordinary array-backed formal.
+// The caller independently proves the one external parameter. This metadata
+// check excludes ordinary array-backed borrowing at the external entry.
 pub fn Result<usize,errors::Error> metadata_input(ref ir::Program p){return metadata_mode(p,true);}
 fn Result<usize,errors::Error> metadata_mode(ref ir::Program p,bool input) {
     if (p.function_count == 0 || p.function_count > 16 || p.entry >= p.function_count ||

@@ -1,0 +1,8 @@
+module main;
+
+fn i32 evaluate(i32 order_total) {
+    if (order_total < 30000) {
+        return 3000;
+    }
+    return 0;
+}

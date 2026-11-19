@@ -25,8 +25,12 @@ Missing required values fail. Empty values are invalid unless a documented field
 allows empty bytes. Unknown fields, duplicate keys, invalid UTF-8, excess depth,
 excess bytes, and values outside schema bounds are rejected during bounded input.
 
-For check and run, choose a single output format. Text is the default,
+For check, run and eval-i32, choose a single output format. Text is the default,
 `--json` selects result v1, and `--json-v2` selects result v2.
+
+The positional input to eval-i32 is a signed decimal integer from
+-2147483648 to 2147483647. Invalid input is rejected before the source is opened.
+It uses the same Fuel option and defaults as run.
 
 ## Paths and secrets
 

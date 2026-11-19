@@ -53,6 +53,15 @@ pub fn Result<result_execution::Scalar,errors::Error> run_slice_scalar(ref resul
 pub fn Result<i64, errors::Error> run(ref ir::Program p, usize fuel) {
     return run_with_array_limit(p, fuel, 65536);
 }
+pub fn Result<i64,errors::Error> eval_i32(ref ir::Program p,i64 argument,usize fuel){
+    if(argument< -2147483648 || argument>2147483647){return .err(errors::absent(10,0));}
+    let usize checked=verifier::verify_eval_i32(p)?;
+    var array_vm::State arrays=array_vm::empty(0);
+    var bytes::Buffer payload=bytes::empty();
+    var slices::State loans=slices::empty();
+    var borrowed::Frames frames=borrowed::empty();
+    return execution::execute_entry(p,fuel,ref mut arrays,ref mut payload,ref mut loans,ref mut frames,argument);
+}
 // Private native typed-value entry. Retains the complete independent proof and
 // exact code/layout, then reuses ordinary aggregate/loan/place execution. Public
 // source/ordinary/image admission still reject this dialect.

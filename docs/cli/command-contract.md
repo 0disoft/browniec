@@ -10,6 +10,7 @@
 | browniec --version | Report experimental profile and delivery availability; full metadata planned | Implemented for the bounded M1/M2 feature subsets |
 | browniec check SOURCE | Compile and verify without running guest code or host calls | Implemented for the bounded M1/M2 feature subsets |
 | browniec run SOURCE | Compile, verify, and run one selected source | Implemented for the bounded M1/M2 feature subsets |
+| browniec eval-i32 SOURCE N | Evaluate a scalar rule with one signed decimal i32 input | Implemented for `module main` sources with `fn i32 evaluate(i32 ...)` |
 | browniec run --project FILE | Use an explicit source map, policy, entry, grants, and run limits | Not implemented |
 | browniec check SOURCE --isolated | Use a restricted compile-only worker | Designed; unavailable |
 | browniec run SOURCE --isolated | Use the restricted worker and parent broker | Designed; unavailable |
@@ -19,6 +20,7 @@
 The implemented grammar is `browniec check SOURCE [--json|--json-v2]` and
 `browniec run SOURCE [--fuel N] [--json|--json-v2]`, `browniec inspect SOURCE --ir [--json]`,
 plus `--version [--json]` and `--help`.
+Scalar evaluation uses `browniec eval-i32 SOURCE N [--fuel N] [--json|--json-v2]`.
 Fuel defaults to 256 and accepts 0..16000000; duplicate/unknown options are errors.
 Run grants no guest host capability. SOURCE selects one local disk file with a
 4096-byte UTF-8 source limit. The public language supports six scalar types,
@@ -35,8 +37,9 @@ General mutable/non-byte/Buffer/input results and host-visible reference tickets
 remain unavailable.
 Guest Buffer/input/output, project/policy/catalog/grant CLI loaders, worker,
 cancellation and deadlines remain unavailable. `--isolated` returns an availability
-denial, with no unrestricted fallback. Zero-argument i32 `main` is the only entry;
-the source file is not a guest input snapshot.
+denial, with no unrestricted fallback. Ordinary check/run use zero-argument i32
+`main`. The separate eval-i32 command selects a single-i32 `evaluate` entry.
+The source file is not a guest input snapshot.
 
 ## Execution rules
 
