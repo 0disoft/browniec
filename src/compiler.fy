@@ -423,8 +423,9 @@ fn Result<usize,errors::Error> static_equal_right(ref u8[] source,ref mut lexer:
     let usize close=lexer::punctuation(source,s,41)?;let usize value=static_builders::equal(p,left,right.site,at)?;
     if(right.owned){let usize closed=static_builders::close(p,right.site,at)?;}return .ok(value);
 }
-fn Result<usize,errors::Error> host_operand(ref u8[] source,ref mut lexer::State s,ref mut ir::Program p,
+fn Result<host_source::Invocation,errors::Error> host_invocation(ref u8[] source,ref mut lexer::State s,ref mut ir::Program p,
     ref locals::Table table,ref functions::Table signatures,usize depth,u8 result_type,usize structure,ref mut loops::State flow){
+    if(result_type==0){return .err(errors::make(3,s.begin));}
     let host_source::Name item=host_source::name(source,s)?;
     let host_source::Call call=host_source::signature(p,item.begin)?;
     let usize open=lexer::punctuation(source,s,40)?;
@@ -441,11 +442,12 @@ fn Result<usize,errors::Error> host_operand(ref u8[] source,ref mut lexer::State
     }
     let usize close=lexer::punctuation(source,s,41)?;
     let ref usize[] args=ref arguments;
-    return host_source::emit(p,call,args,item.begin);
+    return host_source::invoke(p,call,args,item.begin);
 }
 fn Result<usize, errors::Error> named_operand(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref locals::Table table, ref functions::Table signatures, usize depth, u8 expected, u8 result_type, usize structure, ref mut loops::State loop_state) {
     if(signatures.scalar_host_calls && host_source::qualified(source,s)?){
-        return host_operand(source,s,p,table,signatures,depth,result_type,structure,loop_state);
+        let host_source::Invocation call=host_invocation(source,s,p,table,signatures,depth,result_type,structure,loop_state)?;
+        return host_source::emit(p,ref call);
     }
     let usize at = s.begin;
     if(record_expressions::projected(source,s,p,table,signatures)?){
@@ -2423,6 +2425,10 @@ fn Result<bool,errors::Error> switch_join(ref u8[] source,ref mut lexer::State s
     if(result_type==0) {return .err(errors::make(3,at));}
     let usize keyword=lexer::next(source,s)?;
     let usize open=lexer::punctuation(source,s,40)?;
+    if(signatures.scalar_host_calls && host_source::qualified(source,s)?){
+        var locals::Table names=locals::snapshot(table);
+        return host_switch(source,s,p,ref mut names,signatures,join,true,result_type,structure,depth,loop_state);
+    }
     let usize subject=expression(source,s,p,table,signatures,1,depth+1,0,result_type,structure+1,loop_state)?;
     let u8 tag=p.types[subject];
     if(!types::tagged(tag)) {return .err(errors::make(3,at));}
@@ -2542,6 +2548,10 @@ fn Result<bool, errors::Error> control_switch(ref u8[] source, ref mut lexer::St
     let usize at = s.begin;
     let usize keyword=lexer::next(source,s)?;
     let usize open=lexer::punctuation(source,s,40)?;
+    if(signatures.scalar_host_calls && host_source::qualified(source,s)?){
+        var joins::Join unused=joins::empty(0,false);
+        return host_switch(source,s,p,table,signatures,ref mut unused,false,result_type,depth,expr_depth,loop_state);
+    }
     let usize subject=expression(source,s,p,table,signatures,1,expr_depth,0,result_type,depth,loop_state)?;
     let u8 tag=p.types[subject];
     if(!types::tagged(tag)) {return .err(errors::make(3,at));}
@@ -2585,6 +2595,43 @@ fn Result<bool, errors::Error> control_switch(ref u8[] source, ref mut lexer::St
         arm+=1;
     }
     return .ok(terminal);
+}
+
+// A direct host switch has two independently defined payload registers.
+// The regular arm lowerers own lexical scopes and join/exit handling.
+fn Result<bool,errors::Error> host_switch(ref u8[] source,ref mut lexer::State s,ref mut ir::Program p,
+    ref mut locals::Table table,ref functions::Table signatures,ref mut joins::Join join,bool value_mode,
+    u8 result_type,usize structure,usize depth,ref mut loops::State flow){
+    let usize at=s.begin;
+    if(depth>30 || structure>30){return .err(errors::make(4,at));}
+    let host_source::Invocation call=host_invocation(source,s,p,table,signatures,depth+1,result_type,structure+1,flow)?;
+    let usize close=lexer::punctuation(source,s,41)?;
+    let usize brace=lexer::punctuation(source,s,123)?;
+    let host_source::Branch route=host_source::branch(p,ref call)?;
+    let usize outer=table.count;
+    let patterns::Pattern first=patterns::parse_result(source,s)?;
+    let bool first_stops=host_switch_arm(source,s,p,table,signatures,join,value_mode,result_type,structure,depth,flow,ref first,ref route)?;
+    table.count=outer;
+    let usize skip=if(first_stops){256}else{ir::raw(p,19,0,0,0,at)?};
+    let patterns::Pattern second=patterns::parse_result(source,s)?;
+    if(second.variant==first.variant){return .err(errors::make(3,second.begin));}
+    let bool second_stops=host_switch_arm(source,s,p,table,signatures,join,value_mode,result_type,structure,depth,flow,ref second,ref route)?;
+    table.count=outer;
+    let usize end=lexer::punctuation(source,s,125)?;
+    if(!first_stops){let usize target=p.count;let usize patched=ir::patch(p,skip,target,at)?;}
+    return .ok(first_stops && second_stops);
+}
+
+fn Result<bool,errors::Error> host_switch_arm(ref u8[] source,ref mut lexer::State s,ref mut ir::Program p,
+    ref mut locals::Table table,ref functions::Table signatures,ref mut joins::Join join,bool value_mode,
+    u8 result_type,usize structure,usize depth,ref mut loops::State flow,ref patterns::Pattern pattern,ref host_source::Branch route){
+    let usize payload=host_source::enter_arm(p,route,pattern.variant,s.begin)?;
+    if(pattern.binding){
+        if(locals::find(source,table,pattern.begin,pattern.end)!=64){return .err(errors::make(3,pattern.begin));}
+        let usize binding=locals::declare(table,pattern.begin,pattern.end,payload,false)?;
+    }
+    if(value_mode){return conditional_arm(source,s,p,table,signatures,join,depth+2,result_type,structure+2,flow);}
+    return block(source,s,p,table,signatures,result_type,structure+2,depth,flow);
 }
 
 fn Result<bool, errors::Error> control_for(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref mut locals::Table table, ref functions::Table signatures, u8 result_type, usize depth, usize expr_depth, ref mut loops::State loop_state) {
@@ -2965,7 +3012,7 @@ pub fn Result<usize, errors::Error> lower_body(ref u8[] source, ref functions::T
 }
 
 fn Result<usize,errors::Error> body(ref u8[] source,ref functions::Table signatures,usize f,ref mut ir::Program p){
-    return lower_body(source,signatures,f,p,true);
+    return lower_body(source,signatures,f,p,!signatures.scalar_host_calls);
 }
 
 // Release source-name/catalog scratch before recursive expression lowering.

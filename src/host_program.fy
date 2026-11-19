@@ -60,10 +60,11 @@ fn Result<usize,Error> inspect(ref ir::Program code,ref catalog::Catalog imports
         code.records.count!=0 || code.list_used>4096){return .err(.Code);}
     var usize reg=0;
     while(reg<code.registers){
-        if(!types::scalar(code.types[reg]) && code.types[reg]!=14){return .err(.Code);}
+        if(!types::scalar(code.types[reg]) && (code.types[reg]!=14 || code.slots[reg])){return .err(.Code);}
         reg+=1;
     }
     var ir::Program scalar=*code;
+    let bool typed_code=typed(code);
     var usize required=0;
     var usize pc=0;
     let usize one=1;
@@ -83,8 +84,8 @@ fn Result<usize,Error> inspect(ref ir::Program code,ref catalog::Catalog imports
         }else if(typed_request(op)){
             if(!typed_signature(code,imports,at)){return .err(.Catalog);}
             required|=one<<(code.code[at+3] as usize);
-        }else if(op==119 || op==120 || op==copy_opcode()){
-            if(!typed(code)){return .err(.Code);}
+        }else if(op==17 || op==18 || op==119 || op==120 || op==copy_opcode()){
+            if(!typed_code){return .err(.Code);}
         }else if(op==2){
             let usize dst=code.code[at+1] as usize;
             if(dst>=code.registers || code.types[dst]!=1){return .err(.Code);}
@@ -93,7 +94,7 @@ fn Result<usize,Error> inspect(ref ir::Program code,ref catalog::Catalog imports
         }
         pc+=1;
     }
-    if(typed(code)){
+    if(typed_code){
         if(!verifier::inspect_host(ref scalar).is_ok){return .err(.Code);}
     }else{
         var usize r=0;

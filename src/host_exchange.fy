@@ -633,7 +633,7 @@ fn Result<ScalarEvent,ScalarError> install_bytes(ref mut Exchange e,usize dst,us
     return .ok(scalar_event(e));
 }
 fn void dispatch_scalar(ref mut u8[] data,u8 op,usize dst,usize a,usize b,usize at){
-    if(op==programs::copy_opcode()){
+    if(op==17 || op==18 || op==programs::copy_opcode()){
         let i64 value=reg(data,a);
         set_reg(data,dst,value);data[80]+=1;return;
     }

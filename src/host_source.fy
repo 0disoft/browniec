@@ -13,6 +13,8 @@ import types as types;
 
 pub struct Name { usize begin; usize scope_end; usize symbol; usize end; }
 pub struct Call { u8 id; usize argc; u8 result; usize parameters; }
+pub struct Invocation { Call call; usize first; usize at; }
+pub struct Branch { usize request; usize success_jump; usize success; usize error; }
 
 // Private compile-only prefix of list_operands. No scratch is retained in Host IR.
 // One row per catalog import, then sorted (source offset, import ID) records.
@@ -199,10 +201,7 @@ pub fn bool fresh_bytes(ref ir::Program code,usize before,usize result){
     return code.code[at]==programs::typed_request_opcode() && code.code[at+1] as usize==result;
 }
 
-pub fn Result<usize,errors::Error> emit(ref mut ir::Program code,Call call,ref usize[] args,usize at){
-    if(call.argc==1 && call.result==1 && code.types[args[0]]==1){
-        return ir::emit(code,programs::request_opcode(),args[0],call.id as usize,at);
-    }
+pub fn Result<Invocation,errors::Error> invoke(ref mut ir::Program code,Call call,ref usize[] args,usize at){
     let usize start=if(call.argc==0){0}else{args[0]};
     var usize i=0;
     while(i<call.argc && args[i]==start+i){i+=1;}
@@ -211,9 +210,43 @@ pub fn Result<usize,errors::Error> emit(ref mut ir::Program code,Call call,ref u
         i=0;
         while(i<call.argc){let usize saved=ir::emit(code,programs::copy_opcode(),args[i],0,at)?;i+=1;}
     }
-    if(code.registers>=128){return .err(errors::make(4,at));}
-    let usize dst=code.registers;code.registers+=1;code.types[dst]=call.result;
-    let usize pc=ir::raw(code,programs::typed_request_opcode(),dst,first,call.id as usize,at)?;
-    code.code[pc*8+4]=small(call.argc);
+    return .ok(Invocation{.call=call,.first=first,.at=at});
+}
+
+fn Result<usize,errors::Error> request(ref mut ir::Program code,ref Invocation call,u8 op){
+    if(code.registers>=128){return .err(errors::make(4,call.at));}
+    let usize dst=code.registers;
+    let usize pc=ir::raw(code,op,dst,call.first,call.call.id as usize,call.at)?;
+    code.registers+=1;code.types[dst]=call.call.result;
+    code.code[pc*8+4]=small(call.call.argc);
     return .ok(dst);
+}
+
+pub fn Result<usize,errors::Error> emit(ref mut ir::Program code,ref Invocation call){
+    if(call.call.argc==1 && call.call.result==1 && code.types[call.first]==1){
+        return ir::emit(code,programs::request_opcode(),call.first,call.call.id as usize,call.at);
+    }
+    return request(code,call,programs::typed_request_opcode());
+}
+
+pub fn Result<Branch,errors::Error> branch(ref mut ir::Program code,ref Invocation call){
+    if(code.registers>126){return .err(errors::make(4,call.at));}
+    let usize pc=code.count;
+    let usize success=request(code,call,programs::result_request_opcode())?;
+    let usize error=code.registers;
+    code.registers+=1;code.types[error]=11;
+    code.code[pc*8+5]=small(error);
+    let usize jump=ir::raw(code,19,0,0,0,call.at)?;
+    return .ok(Branch{.request=pc,.success_jump=jump,.success=success,.error=error});
+}
+
+pub fn Result<usize,errors::Error> enter_arm(ref mut ir::Program code,ref Branch route,u8 variant,usize at){
+    let usize target=code.count;
+    if(target>=256){return .err(errors::make(4,at));}
+    if(variant==1){
+        let usize patched=ir::patch(code,route.success_jump,target,at)?;
+        return .ok(route.success);
+    }
+    code.code[route.request*8+6]=small(target);
+    return .ok(route.error);
 }

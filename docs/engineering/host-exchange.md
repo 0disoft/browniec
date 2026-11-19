@@ -27,8 +27,8 @@ The private verifier checks the candidate and binds its immutable catalog
 digest before Program retention. Run declarations and grants still control
 admission. Each prepared Instance suspends with its own request and resumes
 with its own matching response. This slice supports a single function within
-the existing scalar host IR subset and its 4,096-source-byte bound. Typed
-source Result arms and public CLI/ABI admission remain pending.
+the existing scalar host IR subset and its 4,096-source-byte bound.
+See [direct Result switches](#guest-result-branches) for explicit error handling.
 
 Windows development and /O2 verify one source-compiled Program reused by two
 Instances. Both request i32 41 at catalog import 1. A cross-run response is
@@ -52,8 +52,8 @@ The independent host verifier still checks operand definition, exact type and
 import binding before retaining the Program. Compiler binding scratch is
 discarded before admission. The one-i32 fast path keeps its original
 instruction and costs. Typed arguments can borrow the ordinary compiler's
-checked signed negation, including i64. Explicit guest Result handling,
-ordinary verification and public CLI/ABI entry stay gated.
+checked signed negation, including i64. The ordinary verifier and public
+CLI/ABI entry retain their host admission gates.
 
 Windows development and O2 both decoded the exact source-generated
 `(bool, i64, u32)` request and returned 77 with 9,999,938 Fuel remaining.
@@ -367,6 +367,22 @@ to a verified forward error target. The verifier merges independent
 register definitions on both edges. A kind-2 reply is a terminal host
 failure. The Engine continues to validate reply identity and deadline
 before acceptance and to enforce the existing Fuel and storage limits.
+
+Private source accepts a direct host call as the subject of a `switch`
+statement or expression. Both `.ok(payload)` and `.err(code)` are required,
+in either order. The arms bind only their own payload, and a switch expression
+joins continuing scalar values using independently verified slot accesses.
+Each source call uses the same request and reply charges as opcode 121.
+Control flow instructions spend their regular one-Fuel dispatch charge.
+First-class host Result values, propagation and public delivery remain open.
+
+Windows development and O2 verified both source forms and both arm orders.
+The success arm returned 77. The error arm forwarded `u32::MAX` as a typed
+host argument and returned -7 after the second reply. Duplicate arms and
+cross-arm binding access were rejected before Program registration. Both
+profiles ended with zero live SDK allocations. Root locked check passed
+377 sources and 4,247 MIR functions.
+Local receipt: `build/runtime-engine/20261119T205223989971Z/receipt.json`.
 
 Windows development and /O2 verify a successful reply, forwarding
 u32::MAX from the error arm, and fatal host termination. Wrong arity,

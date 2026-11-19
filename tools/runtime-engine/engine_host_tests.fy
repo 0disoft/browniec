@@ -670,6 +670,47 @@ fn Result<usize,u8> result_branch(){
     assert(id(engine::destroy(ref mut owner))==0);
     return .ok(1);
 }
+fn Result<usize,u8> result_source_round_trip(){
+    let ref u8[] statement=b"module main; fn i32 main(){ switch(host::example::check(41)){ case .err(code): { return host::example::next(code); } case .ok(value): { return value + 35; } } }";
+    let ref u8[] expression=b"module main; fn i32 main(){ return switch(host::example::check(41)){ case .ok(value): { value + 35 } case .err(code): { host::example::next(code) } }; }";
+    let ref u8[] duplicate=b"module main; fn i32 main(){ switch(host::example::check(41)){ case .ok(value): { return value; } case .ok(other): { return other; } } }";
+    let ref u8[] wrong_scope=b"module main; fn i32 main(){ switch(host::example::check(41)){ case .ok(value): { return value; } case .err(code): { return value; } } }";
+    let policy::Policy ceiling=parsed_policy(true)?;
+    let runs::RunConfig run=switch(runs::parse(source_run_config(),ref ceiling)){case .ok(v):{v}case .err(_):{return .err(6);}};
+    var engine::Engine owner=configured(ceiling)?;
+    let catalog::Catalog imports=catalog_from(result_catalog())?;
+    let u32[8] expected=digest(ref imports)?;
+    rejected(engine::compile_scalar_host(ref mut owner,duplicate,catalog_from(result_catalog())?,ref expected,ref run),4);
+    rejected(engine::compile_scalar_host(ref mut owner,wrong_scope,catalog_from(result_catalog())?,ref expected,ref run),4);
+    assert(counts(ref mut owner).programs==0);
+    let usize a=id(engine::compile_scalar_host(ref mut owner,statement,imports,ref expected,ref run));
+    let usize b=id(engine::compile_scalar_host(ref mut owner,expression,catalog_from(result_catalog())?,ref expected,ref run));
+    check_result_source(ref mut owner,a,ref run);
+    check_result_source(ref mut owner,b,ref run);
+    assert(id(engine::release_program(ref mut owner,a))==a);
+    assert(id(engine::release_program(ref mut owner,b))==b);
+    assert(id(engine::destroy(ref mut owner))==0);
+    return .ok(1);
+}
+fn void check_result_source(ref mut engine::Engine owner,usize program,ref runs::RunConfig run){
+    let engine::HostRequest ok=waiting(owner,program,run);
+    let engine::HostRequest err=waiting(owner,program,run);
+    let ref u8[] argument=b"\x01\x00\x03\x00\x00\x00\x04\x00\x00\x00\x29\x00\x00\x00";
+    assert(ok.import_id==0 && ok.request==1 && bytes::equal(ref ok.payload,argument));
+    assert(err.import_id==0 && err.request==1 && bytes::equal(ref err.payload,argument));
+    assert(event(engine::reply_scalar_host(owner,ok.run,ok.run,1,0,answer())).kind==0);
+    let engine::Event done=event(engine::step_instance(owner,ok.run,8));
+    assert(done.kind==1 && done.value==77);
+    let ref u8[] host_error=b"\x05\x00\x00\x00\x04\x00\x00\x00\xff\xff\xff\xff";
+    assert(event(engine::reply_scalar_host(owner,err.run,err.run,1,1,host_error)).kind==0);
+    assert(event(engine::step_instance(owner,err.run,8)).kind==4);
+    check_u32_error(owner,err.run);
+    assert(event(engine::reply_scalar_host(owner,err.run,err.run,2,0,b"\x03\x00\x00\x00\x04\x00\x00\x00\xf9\xff\xff\xff")).kind==0);
+    let engine::Event recovered=event(engine::step_instance(owner,err.run,8));
+    assert(recovered.kind==1 && recovered.value==-7);
+    assert(id(engine::destroy_instance(owner,ok.run))==ok.run);
+    assert(id(engine::destroy_instance(owner,err.run))==err.run);
+}
 fn Result<bytes::Buffer,u8> large_reply(){
     var bytes::Buffer message=switch(bytes::with_capacity(8203)){case .ok(v):{v}case .err(_):{return .err(1);}};
     assert(bytes::resize_zeroed(ref mut message,8203).is_ok);
@@ -939,6 +980,7 @@ pub fn void run(){
     assert(variable_bytes().is_ok);
     assert(byte_source_round_trip().is_ok);
     assert(result_branch().is_ok);
+    assert(result_source_round_trip().is_ok);
     assert(chunked_reply().is_ok);
     unsafe{bc_runtime_engine_test_use_os_clock()};
     unsafe{bc_runtime_engine_test_set_clock(1000)};
