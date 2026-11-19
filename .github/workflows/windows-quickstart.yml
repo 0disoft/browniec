@@ -13,6 +13,7 @@ on:
       - 'fairy.lock'
       - 'fairy.toml'
       - 'src/**'
+      - 'tests/m2/cli_locations.fy'
       - 'toolchain.json'
       - 'tools/check-cli-contract.py'
       - 'tools/setup-toolchain.py'
@@ -82,3 +83,34 @@ jobs:
 
       - name: Check CLI diagnostics and eval-i32 on the same release binary
         run: python -B tools/check-cli-contract.py --exe ./build/browniec.exe
+
+      - name: Check the internal verifier instruction index
+        shell: pwsh
+        run: |
+          $compiler = (Resolve-Path ./build/toolchain/fairyc.exe).Path
+          $project = Join-Path $env:RUNNER_TEMP "browniec-cli-locations-$([guid]::NewGuid())"
+          $testDir = Join-Path $project 'tests/m2'
+          New-Item -ItemType Directory -Path $testDir | Out-Null
+          # Fairy C analyzes discovered test files before applying an exact selector.
+          Copy-Item -LiteralPath fairy.toml, fairy.lock -Destination $project
+          Copy-Item -LiteralPath src -Destination $project -Recurse
+          Copy-Item -LiteralPath tests/m2/cli_locations.fy -Destination $testDir
+
+          $identity = 'tests::m2::cli_locations::rejects_first_instruction_with_its_index'
+          Push-Location $project
+          try {
+            $output = & $compiler test --native --release --locked --json --exact $identity
+            $exitCode = $LASTEXITCODE
+          } finally {
+            Pop-Location
+          }
+          $output | Write-Output
+          if ($exitCode -ne 0) { throw "Verifier test exited with code $exitCode." }
+          $report = ($output -join [Environment]::NewLine) | ConvertFrom-Json
+          if ($report.status -cne 'ok' -or $report.engine -cne 'native' -or
+              $report.profile -cne 'release' -or $report.lock -cne 'verified' -or
+              $report.count -ne 1 -or $report.passed -ne 1 -or $report.failed -ne 0 -or
+              @($report.tests).Count -ne 1 -or $report.tests[0].identity -cne $identity -or
+              $report.tests[0].outcome -cne 'passed') {
+            throw 'Expected exactly one passing native release verifier test.'
+          }
