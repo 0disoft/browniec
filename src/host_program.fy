@@ -27,7 +27,9 @@ pub fn u8 request_opcode(){return 117;}
 pub fn u8 typed_request_opcode(){return 118;}
 pub fn u8 result_request_opcode(){return 121;}
 pub fn u8 copy_opcode(){return 122;}
-pub fn bool typed_request(u8 op){return op==typed_request_opcode() || op==result_request_opcode();}
+pub fn u8 value_request_opcode(){return 123;}
+pub fn u8 project_opcode(){return 124;}
+pub fn bool typed_request(u8 op){return op==typed_request_opcode() || op==result_request_opcode() || op==value_request_opcode();}
 
 fn bool typed_signature(ref ir::Program p,ref catalog::Catalog imports,usize at){
     let usize dst=p.code[at+1] as usize;let usize first=p.code[at+2] as usize;
@@ -35,7 +37,11 @@ fn bool typed_signature(ref ir::Program p,ref catalog::Catalog imports,usize at)
     if(dst>=p.registers || first>p.registers || argc>p.registers-first){return false;}
     let usize count=switch(catalog::parameter_count(imports,id)){case .ok(v):{v}case .err(_):{return false;}};
     let u8 result=switch(catalog::result_tag(imports,id)){case .ok(v):{v}case .err(_):{return false;}};
-    if(argc!=count || wire::register_tag(result)!=p.types[dst]){return false;}
+    let u8 tag=wire::register_tag(result);
+    if(argc!=count){return false;}
+    if(p.code[at]==value_request_opcode()){
+        if(dst+1>=p.registers || p.types[dst]!=types::host_result() || p.types[dst+1]!=128+tag){return false;}
+    }else if(tag!=p.types[dst]){return false;}
     var usize i=0;
     while(i<count){
         let u8 tag=switch(catalog::parameter_tag(imports,id,i)){case .ok(v):{v}case .err(_):{return false;}};
@@ -60,7 +66,7 @@ fn Result<usize,Error> inspect(ref ir::Program code,ref catalog::Catalog imports
         code.records.count!=0 || code.list_used>4096){return .err(.Code);}
     var usize reg=0;
     while(reg<code.registers){
-        if(!types::scalar(code.types[reg]) && (code.types[reg]!=14 || code.slots[reg])){return .err(.Code);}
+        if(!types::scalar(code.types[reg]) && (code.slots[reg] || (code.types[reg]!=14 && !types::host_storage(code.types[reg])))){return .err(.Code);}
         reg+=1;
     }
     var ir::Program scalar=*code;
@@ -84,7 +90,7 @@ fn Result<usize,Error> inspect(ref ir::Program code,ref catalog::Catalog imports
         }else if(typed_request(op)){
             if(!typed_signature(code,imports,at)){return .err(.Catalog);}
             required|=one<<(code.code[at+3] as usize);
-        }else if(op==17 || op==18 || op==119 || op==120 || op==copy_opcode()){
+        }else if(op==17 || op==18 || op==119 || op==120 || op==copy_opcode() || op==project_opcode()){
             if(!typed_code){return .err(.Code);}
         }else if(op==2){
             let usize dst=code.code[at+1] as usize;

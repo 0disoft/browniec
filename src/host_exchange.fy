@@ -580,8 +580,11 @@ fn Result<ScalarEvent,ScalarError> install_scalar(ref mut Exchange e,usize dst,u
     };
     let wire::Field field=output_field(ref output);
     let ref mut u8[] data=scalar_header(e);
-    if(output_kind(ref output)==1){
-        let usize at=96+8*(data[80] as usize);
+    let usize at=96+8*(data[80] as usize);
+    let bool failed=output_kind(ref output)==1;
+    if(data[at]==programs::value_request_opcode()){
+        save_result(data,dst,!failed,field.scalar);data[80]+=1;
+    }else if(failed){
         if(data[at]==programs::result_request_opcode()){
             let usize error_dst=data[at+5] as usize;
             let u8 error_target=data[at+6];
@@ -593,6 +596,10 @@ fn Result<ScalarEvent,ScalarError> install_scalar(ref mut Exchange e,usize dst,u
         set_reg(data,dst,field.scalar);data[80]+=1;
     }
     return .ok(scalar_event(e));
+}
+fn void save_result(ref mut u8[] data,usize dst,bool ok,i64 value){
+    set_reg(data,dst+1,value);
+    set_reg(data,dst,if(ok){1}else{0});
 }
 // 4192 holds the committed arena end. 4200 is the unpublished reply cursor.
 fn Result<ScalarEvent,ScalarError> install_bytes(ref mut Exchange e,usize dst,usize now,ref mut usize work){
@@ -620,7 +627,11 @@ fn Result<ScalarEvent,ScalarError> install_bytes(ref mut Exchange e,usize dst,us
         if(next==field.length){
             write(data,4192,start+next);
             write(data,4200,0);
-            set_reg(data,dst,pack_blob(start,next));data[80]+=1;
+            let usize at=96+8*(data[80] as usize);
+            let i64 value=pack_blob(start,next);
+            if(data[at]==programs::value_request_opcode()){save_result(data,dst,true,value);}
+            else{set_reg(data,dst,value);}
+            data[80]+=1;
         }else{
             write(data,4200,next);
         }
@@ -633,6 +644,12 @@ fn Result<ScalarEvent,ScalarError> install_bytes(ref mut Exchange e,usize dst,us
     return .ok(scalar_event(e));
 }
 fn void dispatch_scalar(ref mut u8[] data,u8 op,usize dst,usize a,usize b,usize at){
+    if(op==programs::project_opcode()){
+        let i64 tag=reg(data,a);
+        if(b!=2 && tag!=if(b==1){1}else{0}){data[81]=4;data[82]=2;return;}
+        let i64 value=if(b==2){tag}else{reg(data,a+1)};
+        set_reg(data,dst,value);data[80]+=1;return;
+    }
     if(op==17 || op==18 || op==programs::copy_opcode()){
         let i64 value=reg(data,a);
         set_reg(data,dst,value);data[80]+=1;return;

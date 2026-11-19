@@ -14,7 +14,7 @@ import types as types;
 pub struct Name { usize begin; usize scope_end; usize symbol; usize end; }
 pub struct Call { u8 id; usize argc; u8 result; usize parameters; }
 pub struct Invocation { Call call; usize first; usize at; }
-pub struct Branch { usize request; usize success_jump; usize success; usize error; }
+pub struct Branch { usize request; usize success_jump; usize success; usize error; usize saved; }
 
 // Private compile-only prefix of list_operands. No scratch is retained in Host IR.
 // One row per catalog import, then sorted (source offset, import ID) records.
@@ -229,6 +229,51 @@ pub fn Result<usize,errors::Error> emit(ref mut ir::Program code,ref Invocation 
     return request(code,call,programs::typed_request_opcode());
 }
 
+pub fn Result<u8,errors::Error> annotation(ref u8[] source,ref mut lexer::State s){
+    let usize head=lexer::word(source,s,b"Result")?;
+    let usize open=lexer::punctuation(source,s,60)?;
+    let u8 success=if(s.kind==2 && lexer::equal(source[s.begin..s.end],b"brownie")){
+        let usize root=lexer::next(source,s)?;
+        let usize a=lexer::punctuation(source,s,58)?;let usize b=lexer::punctuation(source,s,58)?;
+        let usize module_name=lexer::word(source,s,b"bytes")?;
+        let usize c=lexer::punctuation(source,s,58)?;let usize d=lexer::punctuation(source,s,58)?;
+        let usize buffer=lexer::word(source,s,b"Buffer")?;
+        14
+    }else{types::parse_raw(source,s)?};
+    if(!types::host_success(success)){return .err(errors::make(3,head));}
+    let usize separator=lexer::punctuation(source,s,44)?;
+    let usize error=lexer::word(source,s,b"u32")?;
+    let usize close=lexer::punctuation(source,s,62)?;
+    return .ok(success);
+}
+
+pub fn Result<usize,errors::Error> save(ref mut ir::Program code,ref Invocation call){
+    if(code.registers>126){return .err(errors::make(4,call.at));}
+    let usize dst=request(code,call,programs::value_request_opcode())?;
+    code.types[dst]=types::host_result();code.types[dst+1]=128+call.call.result;
+    code.registers+=1;
+    return .ok(dst);
+}
+
+pub fn bool is_saved(ref ir::Program code,usize r){
+    return r<127 && r+1<code.registers && code.types[r]==types::host_result();
+}
+
+pub fn Result<usize,errors::Error> project(ref mut ir::Program code,usize value,u8 variant,usize at){
+    if(!is_saved(code,value) || variant>2){return .err(errors::make(3,at));}
+    let u8 tag=if(variant==2){2}else if(variant==0){11}else{code.types[value+1]-128};
+    let usize dst=ir::emit(code,programs::project_opcode(),value,variant as usize,at)?;
+    code.types[dst]=tag;
+    return .ok(dst);
+}
+
+pub fn Result<Branch,errors::Error> branch_saved(ref mut ir::Program code,usize value,usize at){
+    let usize predicate=project(code,value,2,at)?;
+    let usize success=ir::raw(code,21,0,predicate,0,at)?;
+    let usize failure=ir::raw(code,19,0,0,0,at)?;
+    return .ok(Branch{.request=failure,.success_jump=success,.success=0,.error=0,.saved=value});
+}
+
 pub fn Result<Branch,errors::Error> branch(ref mut ir::Program code,ref Invocation call){
     if(code.registers>126){return .err(errors::make(4,call.at));}
     let usize pc=code.count;
@@ -237,12 +282,17 @@ pub fn Result<Branch,errors::Error> branch(ref mut ir::Program code,ref Invocati
     code.registers+=1;code.types[error]=11;
     code.code[pc*8+5]=small(error);
     let usize jump=ir::raw(code,19,0,0,0,call.at)?;
-    return .ok(Branch{.request=pc,.success_jump=jump,.success=success,.error=error});
+    return .ok(Branch{.request=pc,.success_jump=jump,.success=success,.error=error,.saved=256});
 }
 
-pub fn Result<usize,errors::Error> enter_arm(ref mut ir::Program code,ref Branch route,u8 variant,usize at){
+pub fn Result<usize,errors::Error> enter_arm(ref mut ir::Program code,ref Branch route,u8 variant,bool binding,usize at){
     let usize target=code.count;
     if(target>=256){return .err(errors::make(4,at));}
+    if(route.saved!=256){
+        let usize edge=if(variant==1){route.success_jump}else{route.request};
+        let usize patched=ir::patch(code,edge,target,at)?;
+        return if(binding){project(code,route.saved,variant,at)}else{.ok(0)};
+    }
     if(variant==1){
         let usize patched=ir::patch(code,route.success_jump,target,at)?;
         return .ok(route.success);

@@ -1345,6 +1345,7 @@ fn Result<bool,errors::Error> result_property(ref u8[] source,ref lexer::State s
 // CASE24 tests the already evaluated Result. Both paths initialize one bool
 // slot; no payload is re-evaluated, moved or given a new cleanup obligation.
 fn Result<usize,errors::Error> result_is_ok(ref mut ir::Program p,usize value,usize at){
+    if(host_source::is_saved(p,value)){return host_source::project(p,value,2,at);}
     if(value>=128 || p.types[value]<5 || p.types[value]>8){return .err(errors::make(3,at));}
     let usize slot=ir::slot(p,2,at)?;
     let ir::Case branch=ir::branch_case(p,value,1,at)?;
@@ -2009,6 +2010,17 @@ fn Result<usize, errors::Error> declaration(ref u8[] source, ref mut lexer::Stat
     if (word_is(source, s, b"let") || word_is(source, s, b"var")) {
         let bool mutable = word_is(source, s, b"var");
         let usize keyword = lexer::next(source, s)?;
+        if(signatures.scalar_host_calls && word_is(source,s,b"Result")){
+            if(mutable || terminator!=59 || result_type==0){return .err(errors::make(3,s.begin));}
+            let u8 tag=host_source::annotation(source,s)?;
+            let inference::Header binding=inference::header(source,s,table)?;
+            if(!host_source::qualified(source,s)?){return .err(errors::make(3,s.begin));}
+            let host_source::Invocation call=host_invocation(source,s,p,table,signatures,expr_depth,result_type,structure,loop_state)?;
+            if(tag!=call.call.result){return .err(errors::make(3,call.at));}
+            let usize end=lexer::punctuation(source,s,terminator)?;
+            let usize value=host_source::save(p,ref call)?;
+            return locals::declare(table,binding.begin,binding.end,value,false);
+        }
         if(inference::follows(source,s)?){
             return inferred_declaration(source,s,p,table,signatures,mutable,terminator,result_type,expr_depth,structure,loop_state);
         }
@@ -2430,6 +2442,11 @@ fn Result<bool,errors::Error> switch_join(ref u8[] source,ref mut lexer::State s
         return host_switch(source,s,p,ref mut names,signatures,join,true,result_type,structure,depth,loop_state);
     }
     let usize subject=expression(source,s,p,table,signatures,1,depth+1,0,result_type,structure+1,loop_state)?;
+    if(signatures.scalar_host_calls && host_source::is_saved(p,subject)){
+        var locals::Table names=locals::snapshot(table);
+        let host_source::Branch route=host_source::branch_saved(p,subject,at)?;
+        return host_switch_arms(source,s,p,ref mut names,signatures,join,true,result_type,structure,depth,loop_state,ref route);
+    }
     let u8 tag=p.types[subject];
     if(!types::tagged(tag)) {return .err(errors::make(3,at));}
     let usize close=lexer::punctuation(source,s,41)?;
@@ -2553,6 +2570,11 @@ fn Result<bool, errors::Error> control_switch(ref u8[] source, ref mut lexer::St
         return host_switch(source,s,p,table,signatures,ref mut unused,false,result_type,depth,expr_depth,loop_state);
     }
     let usize subject=expression(source,s,p,table,signatures,1,expr_depth,0,result_type,depth,loop_state)?;
+    if(signatures.scalar_host_calls && host_source::is_saved(p,subject)){
+        var joins::Join unused=joins::empty(0,false);
+        let host_source::Branch route=host_source::branch_saved(p,subject,at)?;
+        return host_switch_arms(source,s,p,table,signatures,ref mut unused,false,result_type,depth,expr_depth,loop_state,ref route);
+    }
     let u8 tag=p.types[subject];
     if(!types::tagged(tag)) {return .err(errors::make(3,at));}
     let usize close=lexer::punctuation(source,s,41)?;
@@ -2605,17 +2627,25 @@ fn Result<bool,errors::Error> host_switch(ref u8[] source,ref mut lexer::State s
     let usize at=s.begin;
     if(depth>30 || structure>30){return .err(errors::make(4,at));}
     let host_source::Invocation call=host_invocation(source,s,p,table,signatures,depth+1,result_type,structure+1,flow)?;
+    let host_source::Branch route=host_source::branch(p,ref call)?;
+    return host_switch_arms(source,s,p,table,signatures,join,value_mode,result_type,structure,depth,flow,ref route);
+}
+
+fn Result<bool,errors::Error> host_switch_arms(ref u8[] source,ref mut lexer::State s,ref mut ir::Program p,
+    ref mut locals::Table table,ref functions::Table signatures,ref mut joins::Join join,bool value_mode,
+    u8 result_type,usize structure,usize depth,ref mut loops::State flow,ref host_source::Branch route){
+    let usize at=s.begin;
+    if(depth>30 || structure>30){return .err(errors::make(4,at));}
     let usize close=lexer::punctuation(source,s,41)?;
     let usize brace=lexer::punctuation(source,s,123)?;
-    let host_source::Branch route=host_source::branch(p,ref call)?;
     let usize outer=table.count;
     let patterns::Pattern first=patterns::parse_result(source,s)?;
-    let bool first_stops=host_switch_arm(source,s,p,table,signatures,join,value_mode,result_type,structure,depth,flow,ref first,ref route)?;
+    let bool first_stops=host_switch_arm(source,s,p,table,signatures,join,value_mode,result_type,structure,depth,flow,ref first,route)?;
     table.count=outer;
     let usize skip=if(first_stops){256}else{ir::raw(p,19,0,0,0,at)?};
     let patterns::Pattern second=patterns::parse_result(source,s)?;
     if(second.variant==first.variant){return .err(errors::make(3,second.begin));}
-    let bool second_stops=host_switch_arm(source,s,p,table,signatures,join,value_mode,result_type,structure,depth,flow,ref second,ref route)?;
+    let bool second_stops=host_switch_arm(source,s,p,table,signatures,join,value_mode,result_type,structure,depth,flow,ref second,route)?;
     table.count=outer;
     let usize end=lexer::punctuation(source,s,125)?;
     if(!first_stops){let usize target=p.count;let usize patched=ir::patch(p,skip,target,at)?;}
@@ -2625,7 +2655,7 @@ fn Result<bool,errors::Error> host_switch(ref u8[] source,ref mut lexer::State s
 fn Result<bool,errors::Error> host_switch_arm(ref u8[] source,ref mut lexer::State s,ref mut ir::Program p,
     ref mut locals::Table table,ref functions::Table signatures,ref mut joins::Join join,bool value_mode,
     u8 result_type,usize structure,usize depth,ref mut loops::State flow,ref patterns::Pattern pattern,ref host_source::Branch route){
-    let usize payload=host_source::enter_arm(p,route,pattern.variant,s.begin)?;
+    let usize payload=host_source::enter_arm(p,route,pattern.variant,pattern.binding,s.begin)?;
     if(pattern.binding){
         if(locals::find(source,table,pattern.begin,pattern.end)!=64){return .err(errors::make(3,pattern.begin));}
         let usize binding=locals::declare(table,pattern.begin,pattern.end,payload,false)?;

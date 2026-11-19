@@ -699,17 +699,77 @@ fn void check_result_source(ref mut engine::Engine owner,usize program,ref runs:
     assert(ok.import_id==0 && ok.request==1 && bytes::equal(ref ok.payload,argument));
     assert(err.import_id==0 && err.request==1 && bytes::equal(ref err.payload,argument));
     assert(event(engine::reply_scalar_host(owner,ok.run,ok.run,1,0,answer())).kind==0);
-    let engine::Event done=event(engine::step_instance(owner,ok.run,8));
+    let engine::Event done=event(engine::step_instance(owner,ok.run,16));
     assert(done.kind==1 && done.value==77);
     let ref u8[] host_error=b"\x05\x00\x00\x00\x04\x00\x00\x00\xff\xff\xff\xff";
     assert(event(engine::reply_scalar_host(owner,err.run,err.run,1,1,host_error)).kind==0);
-    assert(event(engine::step_instance(owner,err.run,8)).kind==4);
+    assert(event(engine::step_instance(owner,err.run,16)).kind==4);
     check_u32_error(owner,err.run);
     assert(event(engine::reply_scalar_host(owner,err.run,err.run,2,0,b"\x03\x00\x00\x00\x04\x00\x00\x00\xf9\xff\xff\xff")).kind==0);
-    let engine::Event recovered=event(engine::step_instance(owner,err.run,8));
+    let engine::Event recovered=event(engine::step_instance(owner,err.run,16));
     assert(recovered.kind==1 && recovered.value==-7);
     assert(id(engine::destroy_instance(owner,ok.run))==ok.run);
     assert(id(engine::destroy_instance(owner,err.run))==err.run);
+}
+fn Result<usize,u8> saved_result_source(){
+    let ref u8[] source=b"module main; fn i32 main(){ let Result<i32,u32> reply=host::example::check(41); if(reply.is_ok){ return switch(reply){ case .ok(value): { value+35 } case .err(_): { 0 } }; } switch(reply){ case .err(code): { return host::example::next(code); } case .ok(_): { return 0; } } }";
+    let ref u8[] mismatched=b"module main; fn i32 main(){ let Result<u32,u32> reply=host::example::check(41); return 0; }";
+    let policy::Policy ceiling=parsed_policy(true)?;
+    let runs::RunConfig run=switch(runs::parse(source_run_config(),ref ceiling)){case .ok(v):{v}case .err(_):{return .err(6);}};
+    var engine::Engine owner=configured(ceiling)?;
+    let catalog::Catalog imports=catalog_from(result_catalog())?;
+    let u32[8] expected=digest(ref imports)?;
+    rejected(engine::compile_scalar_host(ref mut owner,mismatched,catalog_from(result_catalog())?,ref expected,ref run),4);
+
+    // The retained verifier must reject use of the hidden payload as a
+    // normal register, even when the selected arm's active type is i32.
+    var ir::Program raw=ir::empty();
+    assert(compiler::lower_scalar_host(source,ref imports,ref mut raw).is_ok);
+    assert(raw.code[8]==programs::value_request_opcode());
+    let u8 payload=raw.code[9]+1;
+    var usize pc=0;
+    while(pc<raw.count && raw.code[pc*8]!=8){pc+=1;}
+    assert(pc<raw.count);raw.code[pc*8+2]=payload;
+    rejected(engine::retain_scalar_host(ref mut owner,ref raw,catalog_from(result_catalog())?,ref expected,ref run),4);
+    assert(counts(ref mut owner).programs==0);
+
+    let usize p=id(engine::compile_scalar_host(ref mut owner,source,imports,ref expected,ref run));
+    check_result_source(ref mut owner,p,ref run);
+    assert(id(engine::release_program(ref mut owner,p))==p);
+    assert(id(engine::destroy(ref mut owner))==0);
+    return .ok(1);
+}
+fn Result<usize,u8> saved_buffer_result_source(){
+    let ref u8[] source=b"module main; fn i32 main(){ let Result<brownie::bytes::Buffer,u32> reply=host::example::check(b\"x\"); return switch(reply){ case .err(_): { 17 } case .ok(data): { host::example::next(ref data) + 35 } }; }";
+    let policy::Policy ceiling=parsed_policy(true)?;
+    let runs::RunConfig run=switch(runs::parse(source_run_config(),ref ceiling)){case .ok(v):{v}case .err(_):{return .err(6);}};
+    var engine::Engine owner=configured(ceiling)?;
+    let catalog::Catalog imports=catalog_from(byte_catalog())?;
+    let u32[8] expected=digest(ref imports)?;
+    let usize p=id(engine::compile_scalar_host(ref mut owner,source,imports,ref expected,ref run));
+    let usize a=id(engine::prepare_scalar_host(ref mut owner,p,ref run));
+    let usize b=id(engine::prepare_scalar_host(ref mut owner,p,ref run));
+    assert(event(engine::step_instance(ref mut owner,a,8)).kind==4);
+    assert(event(engine::step_instance(ref mut owner,b,8)).kind==4);
+    check_bytes(ref owner,a,b"x");
+    check_bytes(ref owner,b,b"x");
+    assert(event(engine::reply_scalar_host(ref mut owner,b,b,1,1,b"\x05\x00\x00\x00\x04\x00\x00\x00\xff\xff\xff\xff")).kind==0);
+    let engine::Event failed=event(engine::step_instance(ref mut owner,b,16));
+    assert(failed.kind==1 && failed.value==17);
+    assert(event(engine::reply_scalar_host(ref mut owner,a,a,1,0,b"\x07\x00\x00\x00\x03\x00\x00\x00a\x00\xff")).kind==0);
+    assert(event(engine::step_instance(ref mut owner,a,1)).kind==0);
+    assert(event(engine::step_instance(ref mut owner,a,1)).kind==0);
+    assert(!engine::host_request_payload(ref owner,a).is_ok);
+    assert(event(engine::step_instance(ref mut owner,a,8)).kind==4);
+    check_bytes(ref owner,a,b"a\x00\xff");
+    assert(event(engine::reply_scalar_host(ref mut owner,a,a,2,0,answer())).kind==0);
+    let engine::Event done=event(engine::step_instance(ref mut owner,a,8));
+    assert(done.kind==1 && done.value==77);
+    assert(id(engine::destroy_instance(ref mut owner,a))==a);
+    assert(id(engine::destroy_instance(ref mut owner,b))==b);
+    assert(id(engine::release_program(ref mut owner,p))==p);
+    assert(id(engine::destroy(ref mut owner))==0);
+    return .ok(1);
 }
 fn Result<bytes::Buffer,u8> large_reply(){
     var bytes::Buffer message=switch(bytes::with_capacity(8203)){case .ok(v):{v}case .err(_):{return .err(1);}};
@@ -981,6 +1041,8 @@ pub fn void run(){
     assert(byte_source_round_trip().is_ok);
     assert(result_branch().is_ok);
     assert(result_source_round_trip().is_ok);
+    assert(saved_result_source().is_ok);
+    assert(saved_buffer_result_source().is_ok);
     assert(chunked_reply().is_ok);
     unsafe{bc_runtime_engine_test_use_os_clock()};
     unsafe{bc_runtime_engine_test_set_clock(1000)};

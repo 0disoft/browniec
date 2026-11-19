@@ -374,7 +374,24 @@ in either order. The arms bind only their own payload, and a switch expression
 joins continuing scalar values using independently verified slot accesses.
 Each source call uses the same request and reply charges as opcode 121.
 Control flow instructions spend their regular one-Fuel dispatch charge.
-First-class host Result values, propagation and public delivery remain open.
+Host Result propagation and public delivery remain open.
+
+An annotated immutable local such as
+`let Result<i32,u32> reply = host::example::check(41);` retains the full
+reply for later `.is_ok` or an exhaustive `switch`. The annotation must
+match the catalog, including `Result<brownie::bytes::Buffer,u32>` for byte
+success. Ordinary argument and return operands cannot read the private
+storage cells. A projection checks the selected variant before reading its
+payload. Byte success installs the tag and range together after the last
+copy, while a recoverable error retains only its u32 value. The call is
+issued once even when the local is inspected more than once.
+
+Windows development and O2 verified saved scalar and Buffer replies, including
+error payload forwarding, rejection of a mismatched annotation and a raw read
+of an opaque payload cell, and byte installation with one-unit steps. Both
+profiles ended with zero live SDK allocations. Root locked check passed 377
+sources and 4,259 MIR functions.
+Local receipt: `build/runtime-engine/20261119T210640288629Z/receipt.json`.
 
 Windows development and O2 verified both source forms and both arm orders.
 The success arm returned 77. The error arm forwarded `u32::MAX` as a typed

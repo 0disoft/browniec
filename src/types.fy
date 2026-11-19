@@ -12,6 +12,11 @@ pub fn bool signed(u8 tag) { return tag == 1 || tag == 9; }
 pub fn bool unsigned(u8 tag) { return tag >= 10 && tag <= 12; }
 pub fn bool integer(u8 tag) { return signed(tag) || unsigned(tag); }
 pub fn bool scalar(u8 tag) { return integer(tag) || tag == 2; }
+// Host Result storage is opaque to ordinary register operands. Its second
+// cell encodes the catalog success type, even when it carries a u32 error.
+pub fn u8 host_result(){return 15;}
+pub fn bool host_success(u8 tag){return scalar(tag) || tag==14;}
+pub fn bool host_storage(u8 tag){return tag==host_result() || (tag>=128 && host_success(tag-128));}
 // Strict widening: the entire source domain fits the target, never just a value.
 pub fn bool widening(u8 source,u8 target) {
     if(source==10) {return target==1 || target==9 || target==11 || target==12;}

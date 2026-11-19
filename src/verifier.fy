@@ -30,7 +30,7 @@ import value_view_flow as value_view_flow;
 import output_ir as output_ir;
 
 fn bool readable(ref ir::Program p, ref registers::Set defined, usize r, usize start, usize end) {
-    return r >= start && r < end && p.types[r]!=0 && !p.slots[r] && p.array_parameters[r] == 0 && p.record_parameters[r] == 0 && p.slice_parameters[r] == 0 && registers::contains(defined, r);
+    return r >= start && r < end && p.types[r]!=0 && !types::host_storage(p.types[r]) && !p.slots[r] && p.array_parameters[r] == 0 && p.record_parameters[r] == 0 && p.slice_parameters[r] == 0 && registers::contains(defined, r);
 }
 fn bool merge(ref mut usize[] states, ref mut bool[] seen, ref registers::Set defined, usize target, ref mut usize[] array_states, usize live, ref mut usize[] static_states, usize static_live) {
     if (seen[target] && (array_states[target] != live || static_states[target] != static_live)) { return false; }
@@ -55,7 +55,7 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records
     var registers::Set defined = registers::empty();
     var usize i = start;
     while (i < end) {
-        if (p.record_parameters[i] == 0 && p.slice_parameters[i] == 0 && static_sites.parameters[i]==0 && value_sites.parameters[i]==0 && !types::valid(p.types[i]) && !(host_profile && p.types[i]==14)) { return .err(errors::instruction(p.starts[f])); }
+        if (p.record_parameters[i] == 0 && p.slice_parameters[i] == 0 && static_sites.parameters[i]==0 && value_sites.parameters[i]==0 && !types::valid(p.types[i]) && !(host_profile && (p.types[i]==14 || types::host_storage(p.types[i])))) { return .err(errors::instruction(p.starts[f])); }
         if (i < start + arity) {
             if (p.slots[i]) { return .err(errors::instruction(p.starts[f])); }
             registers::insert(ref mut written, i);
@@ -78,10 +78,17 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records
         let usize dst = p.code[at + 1] as usize;
         let usize a = p.code[at + 2] as usize;
         let usize b = p.code[at + 3] as usize;
-        if(host_profile && (op>=118 && op<=122)){
+        if(host_profile && (op>=118 && op<=124)){
             if(dst<start || dst>=end || p.slots[dst] || registers::contains(ref written,dst) ||
                 (op!=121 && p.code[at+6]!=0) || p.code[at+7]!=0){return .err(errors::instruction(pc));}
-            if(op==122){
+            if(op==124){
+                if(a<start || a+1>=end || p.types[a]!=types::host_result() ||
+                    p.types[a+1]<128 || !types::host_success(p.types[a+1]-128) ||
+                    !registers::contains(ref defined,a) || !registers::contains(ref defined,a+1) ||
+                    b>2 || p.code[at+4]!=0 || p.code[at+5]!=0){return .err(errors::instruction(pc));}
+                let u8 tag=if(b==2){2}else if(b==0){11}else{p.types[a+1]-128};
+                if(p.types[dst]!=tag){return .err(errors::instruction(pc));}
+            }else if(op==122){
                 if(!readable(p,ref defined,a,start,end) || p.types[dst]!=p.types[a] ||
                     b!=0 || p.code[at+4]!=0 || p.code[at+5]!=0){return .err(errors::instruction(pc));}
             }else if(op==119){
@@ -93,10 +100,14 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records
                     b!=0 || p.code[at+4]!=0 || p.code[at+5]!=0){return .err(errors::instruction(pc));}
             }else{
             let usize count=p.code[at+4] as usize;
-            if(count>32 || a>end || count>end-a || (count==0 && a!=0) ||
-                (!types::scalar(p.types[dst]) && p.types[dst]!=14) || (op!=121 && p.code[at+5]!=0)){
+            if(count>32 || a>end || count>end-a || (count==0 && a!=0) || (op!=121 && p.code[at+5]!=0)){
                 return .err(errors::instruction(pc));
             }
+            if(op==123){
+                if(dst+1>=end || p.types[dst]!=types::host_result() || p.types[dst+1]<128 ||
+                    !types::host_success(p.types[dst+1]-128) || p.slots[dst+1] ||
+                    registers::contains(ref written,dst+1)){return .err(errors::instruction(pc));}
+            }else if(!types::host_success(p.types[dst])){return .err(errors::instruction(pc));}
             var usize arg=a;
             while(arg<a+count){
                 if(!readable(p,ref defined,arg,start,end)){return .err(errors::instruction(pc));}
@@ -112,6 +123,8 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records
                 registers::insert(ref mut error_defined,error_dst);registers::insert(ref mut written,error_dst);
                 if(!merge(ref mut states,ref mut seen,ref error_defined,error_target,
                     ref mut array_states,live,ref mut static_states,static_live)){return .err(errors::instruction(pc));}
+            }else if(op==123){
+                registers::insert(ref mut defined,dst+1);registers::insert(ref mut written,dst+1);
             }
             }
             registers::insert(ref mut defined,dst);registers::insert(ref mut written,dst);
