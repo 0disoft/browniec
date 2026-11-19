@@ -555,6 +555,54 @@ fn Result<usize,u8> variable_bytes(){
     assert(id(engine::destroy(ref mut owner))==0);
     return .ok(1);
 }
+fn Result<usize,u8> byte_source_round_trip(){
+    let policy::Policy ceiling=parsed_policy(true)?;
+    let runs::RunConfig run=switch(runs::parse(source_run_config(),ref ceiling)){case .ok(v):{v}case .err(_):{return .err(6);}};
+    var engine::Engine owner=configured(ceiling)?;
+    let catalog::Catalog imports=catalog_from(byte_catalog())?;
+    let u32[8] expected=digest(ref imports)?;
+    let ref u8[] bad=b"module main; fn i32 main() { let response=host::example::check(b\"a\"); return host::example::next(response); }";
+    let ref u8[] copy=b"module main; fn i32 main() { let response=host::example::check(b\"a\"); let other=response; return host::example::next(ref other); }";
+    rejected(engine::compile_scalar_host(ref mut owner,bad,catalog_from(byte_catalog())?,ref expected,ref run),4);
+    rejected(engine::compile_scalar_host(ref mut owner,copy,catalog_from(byte_catalog())?,ref expected,ref run),4);
+    assert(counts(ref mut owner).programs==0);
+
+    // 1,200 literal bytes exceed the space left while catalog scratch is live.
+    // The real source keeps that entire payload after the scratch is discarded.
+    var bytes::Buffer source=bytes::empty();
+    var u8[1200] pattern=[97;1200];
+    pattern[1199]=122;
+    let ref u8[] literal=ref pattern;
+    assert(bytes::append(ref mut source,b"module main; fn i32 main() { let response = host::example::check(b\"").is_ok);
+    assert(bytes::append(ref mut source,literal).is_ok);
+    assert(bytes::append(ref mut source,b"\\x00\\xff\"); return host::example::next(ref response) + 35; }").is_ok);
+    let usize p=id(engine::compile_scalar_host(ref mut owner,bytes::view(ref source),imports,ref expected,ref run));
+    let usize a=id(engine::prepare_scalar_host(ref mut owner,p,ref run));
+    let usize b=id(engine::prepare_scalar_host(ref mut owner,p,ref run));
+    assert(event(engine::step_instance(ref mut owner,a,8)).kind==4);
+    assert(event(engine::step_instance(ref mut owner,b,8)).kind==4);
+    var bytes::Buffer request=bytes::empty();
+    assert(bytes::append(ref mut request,literal).is_ok);
+    assert(bytes::append(ref mut request,b"\x00\xff").is_ok);
+    check_bytes(ref owner,a,bytes::view(ref request));
+    check_bytes(ref owner,b,bytes::view(ref request));
+    assert(event(engine::reply_scalar_host(ref mut owner,a,a,1,0,b"\x07\x00\x00\x00\x03\x00\x00\x00a\x00\xff")).kind==0);
+    assert(event(engine::reply_scalar_host(ref mut owner,b,b,1,0,b"\x07\x00\x00\x00\x00\x00\x00\x00")).kind==0);
+    assert(event(engine::step_instance(ref mut owner,a,8)).kind==4);
+    assert(event(engine::step_instance(ref mut owner,b,8)).kind==4);
+    check_bytes(ref owner,a,b"a\x00\xff");
+    check_bytes(ref owner,b,b"");
+    assert(event(engine::reply_scalar_host(ref mut owner,a,a,2,0,answer())).kind==0);
+    assert(event(engine::reply_scalar_host(ref mut owner,b,b,2,0,b"\x03\x00\x00\x00\x04\x00\x00\x00\x07\x00\x00\x00")).kind==0);
+    let engine::Event first=event(engine::step_instance(ref mut owner,a,8));
+    let engine::Event second=event(engine::step_instance(ref mut owner,b,8));
+    assert(first.kind==1 && first.value==77 && second.kind==1 && second.value==42);
+    assert(id(engine::destroy_instance(ref mut owner,a))==a);
+    assert(id(engine::destroy_instance(ref mut owner,b))==b);
+    assert(id(engine::release_program(ref mut owner,p))==p);
+    assert(id(engine::destroy(ref mut owner))==0);
+    return .ok(1);
+}
 fn ref u8[] result_catalog(){return b"{\"schema\":\"brownie.catalog/1\",\"imports\":[{\"id\":0,\"module\":\"host::example\",\"symbol\":\"check\",\"parameters\":[\"i32\"],\"result\":\"Result<i32,u32>\",\"effect\":\"read\",\"capability\":\"host.example.check\",\"adapter_revision\":\"v1\"},{\"id\":1,\"module\":\"host::example\",\"symbol\":\"next\",\"parameters\":[\"u32\"],\"result\":\"Result<i32,u32>\",\"effect\":\"read\",\"capability\":\"host.example.check\",\"adapter_revision\":\"v1\"}]}";}
 fn Result<ir::Program,u8> result_code(){
     var ir::Program code=ir::empty();
@@ -889,6 +937,7 @@ pub fn void run(){
     assert(pending_memory().is_ok);
     assert(multi_arguments().is_ok);
     assert(variable_bytes().is_ok);
+    assert(byte_source_round_trip().is_ok);
     assert(result_branch().is_ok);
     assert(chunked_reply().is_ok);
     unsafe{bc_runtime_engine_test_use_os_clock()};

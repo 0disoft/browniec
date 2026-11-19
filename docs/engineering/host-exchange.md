@@ -52,8 +52,8 @@ The independent host verifier still checks operand definition, exact type and
 import binding before retaining the Program. Compiler binding scratch is
 discarded before admission. The one-i32 fast path keeps its original
 instruction and costs. Typed arguments can borrow the ordinary compiler's
-checked signed negation, including i64. Byte source operands, explicit guest
-Result handling, ordinary verification and public CLI/ABI entry stay gated.
+checked signed negation, including i64. Explicit guest Result handling,
+ordinary verification and public CLI/ABI entry stay gated.
 
 Windows development and O2 both decoded the exact source-generated
 `(bool, i64, u32)` request and returned 77 with 9,999,938 Fuel remaining.
@@ -61,6 +61,29 @@ The fixture forces register staging and rejects missing, extra and mistyped
 arguments before Program publication. Both Engine runs ended with zero live SDK
 allocations. Root locked check passed 377 sources and 4,236 MIR functions.
 Local receipt: `build/runtime-engine/20261119T203041503024Z/receipt.json`.
+
+## Variable-length bytes from source
+
+A `ref u8[]` catalog parameter accepts a byte literal or an explicit `ref` to
+an immutable local initialized by a Buffer reply. For example:
+
+```text
+let reply = host::example::check(b"a\x00\xff");
+return host::example::next(ref reply) + 35;
+```
+
+The compiler finalizes decoded literals after clearing its catalog scratch.
+The private verifier checks the final ranges and the exact types before
+retention. Replies use the existing Instance arena and become readable only
+after installation completes. The source subset denies implicit borrowing,
+copying reply owners into another local, and mutable reply locals.
+
+Windows development and O2 passed a source-generated 1,202-byte literal
+request and a reuse test with two Instances. The replies carried three bytes
+and zero bytes respectively; each subsequent request forwarded its own reply
+and the Instances returned 77 and 42 with zero live SDK allocations at exit.
+Root locked check passed 377 sources and 4,239 MIR functions.
+Local receipt: `build/runtime-engine/20261119T204125690892Z/receipt.json`.
 
 ## Verified scalar Program and execution
 

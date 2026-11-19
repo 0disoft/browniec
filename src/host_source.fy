@@ -5,6 +5,8 @@ import host_catalog as catalog;
 import host_program as programs;
 import ir as ir;
 import lexer as lexer;
+import literal_source as literals;
+import locals as locals;
 import host_wire as wire;
 import std::num as num;
 import types as types;
@@ -134,14 +136,67 @@ pub fn Result<Call,errors::Error> signature(ref ir::Program code,usize at){
     let usize argc=code.list_operands[row] as usize;
     let u8 result=code.list_operands[row+1];
     if(argc>32){return .err(errors::make(5,at));}
-    if(!types::scalar(result)){return .err(errors::make(3,at));}
+    if(!types::scalar(result) && result!=14){return .err(errors::make(3,at));}
     return .ok(Call{.id=id,.argc=argc,.result=result,.parameters=row+2});
 }
 
-pub fn Result<usize,errors::Error> finish(ref mut ir::Program code){
+pub fn Result<usize,errors::Error> finish(ref u8[] source,ref mut ir::Program code){
     if(code.list_used!=scratch_bytes()){return .err(errors::make(3,0));}
     var usize i=0;while(i<code.list_used){code.list_operands[i]=0;i+=1;}
-    code.list_used=0;return .ok(code.count);
+    code.list_used=0;
+    var usize pc=0;
+    while(pc<code.count){
+        if(code.code[pc*8]==119){
+            let usize at=code.offsets[pc];
+            let usize packed=pack_literal(source,code,pc,at)?;
+        }
+        pc+=1;
+    }
+    return .ok(code.count);
+}
+
+// Literal offsets are authored by the compiler. Build the backing only after
+// discarding binding scratch so it cannot reduce the admitted literal capacity.
+fn Result<usize,errors::Error> pack_literal(ref u8[] source,ref mut ir::Program code,usize pc,usize at){
+    let literals::Decoded decoded=literals::decode(source,at)?;
+    let usize start=code.list_used;
+    let usize length=decoded.length;
+    if(decoded.text){return .err(errors::make(3,at));}
+    if(length>4096-start){return .err(errors::make(4,at));}
+    var usize i=0;
+    while(i<length){code.list_operands[start+i]=decoded.data[i];i+=1;}
+    code.code[pc*8+2]=small(start%256);code.code[pc*8+3]=small(start/256);
+    code.code[pc*8+4]=small(length%256);code.code[pc*8+5]=small(length/256);
+    code.list_used=start+length;
+    return .ok(code.list_used);
+}
+
+pub fn Result<usize,errors::Error> byte_argument(ref u8[] source,ref mut lexer::State s,ref mut ir::Program code,ref locals::Table names){
+    let usize at=s.begin;
+    if(s.kind==3){
+        let usize next=lexer::next(source,s)?;
+        if(code.registers>=128){return .err(errors::make(4,at));}
+        let usize dst=code.registers;
+        let usize pc=ir::raw(code,119,dst,0,0,at)?;
+        code.types[dst]=14;code.registers+=1;
+        return .ok(dst);
+    }
+    let usize borrow=lexer::word(source,s,b"ref")?;
+    if(s.kind!=2){return .err(errors::make(3,s.begin));}
+    let usize index=locals::find(source,names,s.begin,s.end);
+    if(index==64){return .err(errors::make(3,s.begin));}
+    let usize value=names.registers[index];
+    if(value>=128 || code.types[value]!=14){return .err(errors::make(3,s.begin));}
+    let usize next=lexer::next(source,s)?;
+    return .ok(value);
+}
+
+// Only a fresh reply can introduce a byte owner. Name-to-name copies and
+// mutable bindings require the general value/ownership path.
+pub fn bool fresh_bytes(ref ir::Program code,usize before,usize result){
+    if(before>=code.count){return false;}
+    let usize at=(code.count-1)*8;
+    return code.code[at]==programs::typed_request_opcode() && code.code[at+1] as usize==result;
 }
 
 pub fn Result<usize,errors::Error> emit(ref mut ir::Program code,Call call,ref usize[] args,usize at){

@@ -433,8 +433,9 @@ fn Result<usize,errors::Error> host_operand(ref u8[] source,ref mut lexer::State
     while(i<call.argc){
         if(i!=0){let usize comma=lexer::punctuation(source,s,44)?;}
         let u8 expected=p.list_operands[call.parameters+i];
-        if(!types::scalar(expected)){return .err(errors::make(3,item.begin));}
-        let usize value=expression(source,s,p,table,signatures,1,depth+1,expected,result_type,structure,flow)?;
+        let usize value=if(expected==14){host_source::byte_argument(source,s,p,table)?}else{
+            expression(source,s,p,table,signatures,1,depth+1,expected,result_type,structure,flow)?
+        };
         if(p.types[value]!=expected){return .err(errors::make(3,item.begin));}
         arguments[i]=value;i+=1;
     }
@@ -1824,8 +1825,15 @@ fn Result<usize,errors::Error> inferred_declaration(ref u8[] source,ref mut lexe
     if(shape.length!=0){
         return array_initializer(source,s,p,table,signatures,name,shape.element,shape.length,mutable,terminator,result_type,expr_depth,structure,loop_state);
     }
+    let usize before=p.count;
     let usize value=expression(source,s,p,table,signatures,1,expr_depth,0,result_type,structure,loop_state)?;
     let usize end=lexer::punctuation(source,s,terminator)?;
+    if(signatures.scalar_host_calls && value<128 && p.types[value]==14){
+        if(mutable || terminator!=59 || result_type==0 || !host_source::fresh_bytes(p,before,value)){
+            return .err(errors::make(3,name.begin));
+        }
+        return locals::declare(table,name.begin,name.end,value,false);
+    }
     return inference::bind(p,table,name,value,mutable,result_type==0);
 }
 fn Result<usize,errors::Error> conditional_initializer(ref u8[] source,ref mut lexer::State s,
@@ -3083,7 +3091,7 @@ pub fn Result<usize,errors::Error> lower_scalar_host(ref u8[] source,ref host_ca
     let literal_collection::Index literals=literal_collection::empty();
     var usize active=16;
     let usize count=lower_prepared(source,false,false,false,ref literals,ref mut signatures,code,ref mut active)?;
-    return host_source::finish(code);
+    return host_source::finish(source,code);
 }
 
 // The analysis Program stays private and is never returned to an executor.
