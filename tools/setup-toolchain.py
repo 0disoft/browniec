@@ -14,6 +14,9 @@ import tempfile
 from urllib.parse import urlsplit
 
 
+WINDOWS_RELEASE_PATCH = Path('tools/fairyc-windows-release.patch')
+
+
 class SetupError(Exception):
     pass
 
@@ -76,6 +79,12 @@ def load_config(root):
             'internal/cstdlib/stage0_linux_directory.c',
             'internal/cstdlib/stage0_linux_directory_paths.c']):
         raise SetupError('Unsupported embedded source line endings.')
+    if 'sourcePatchSha256' in recipe:
+        patch_sha = recipe['sourcePatchSha256']
+        if target != 'windows/amd64' or not re.fullmatch('[0-9a-f]{64}', patch_sha):
+            raise SetupError('Invalid Windows release compiler patch identity.')
+        if digest(root / WINDOWS_RELEASE_PATCH) != patch_sha:
+            raise SetupError('Windows release compiler patch SHA-256 mismatch.')
     return config
 
 
@@ -155,6 +164,12 @@ def build_source(config, root, scratch, target, source_repository=None):
             error='Embedded source normalization changed the pinned Git content')
         if run(['git', '-C', checkout, 'status', '--porcelain', '--untracked-files=all'], env=env):
             raise SetupError('Embedded source normalization left a dirty isolated checkout.')
+    if 'sourcePatchSha256' in config['bootstrap']:
+        patch = root / WINDOWS_RELEASE_PATCH
+        if digest(patch) != config['bootstrap']['sourcePatchSha256']:
+            raise SetupError('Windows release compiler patch SHA-256 mismatch.')
+        run(['git', '-C', checkout, 'apply', '--index', '--whitespace=error', '--', patch],
+            env=env, error='Cannot apply the pinned Windows release compiler patch')
     candidate = scratch / config['platforms'][target]['executable']
     run(['go', 'build', *config['bootstrap']['buildFlags'], '-o', candidate, config['bootstrap']['package']],
         cwd=checkout, env=env, error='Compiler source build failed')
@@ -168,10 +183,12 @@ def validate_compiler(path, config, target):
     if target.startswith('linux/'):
         path.chmod(0o755)
     lines = run([path, '--version'], error='Cannot identify the verified compiler').splitlines()
-    expected = [f"compiler: {config['compiler']['version']}",
+    patched = 'sourcePatchSha256' in config['bootstrap']
+    version = config['compiler']['version'] + ('+dirty' if patched else '')
+    expected = [f"compiler: {version}",
                 f"sdk: {config['sdk']['identity']} {config['sdk']['version']}",
                 f"language: {config['language']}", f"runtime: {config['runtimeAbi']}",
-                f"revision: {config['compiler']['revision']}", 'modified: false']
+                f"revision: {config['compiler']['revision']}", f'modified: {str(patched).lower()}']
     for line in expected:
         if line not in lines:
             raise SetupError(f'Compiler identity mismatch: {line}')
@@ -198,10 +215,10 @@ def remove_scratch(path, parent, prefix):
     shutil.rmtree(path, onerror=writable_retry)
 
 
-def setup(root, compiler_file=None, source_repository=None):
+def setup(root, compiler_file=None, source_repository=None, from_source=False):
     root = Path(root).resolve()
-    if compiler_file and source_repository:
-        raise SetupError('Choose --compiler-file or --source-repository, not both.')
+    if sum(map(bool, (compiler_file, source_repository, from_source))) > 1:
+        raise SetupError('Choose one of --compiler-file, --source-repository, or --from-source.')
     config = load_config(root)
     target = host_target()
     if target not in config['platforms']:
@@ -216,7 +233,7 @@ def setup(root, compiler_file=None, source_repository=None):
     scratch = None
     try:
         mode = 'existing'
-        if not compiler_file and not source_repository and destination.exists():
+        if not (compiler_file or source_repository or from_source) and destination.exists():
             version = validate_compiler(destination, config, target)
         else:
             scratch = Path(tempfile.mkdtemp(prefix='.setup-', dir=output))
@@ -249,9 +266,10 @@ def main():
     choice = parser.add_mutually_exclusive_group()
     choice.add_argument('--compiler-file')
     choice.add_argument('--source-repository')
+    choice.add_argument('--from-source', action='store_true', help='rebuild even when a compiler is installed')
     args = parser.parse_args()
     try:
-        receipt = setup(Path(__file__).resolve().parent.parent, args.compiler_file, args.source_repository)
+        receipt = setup(Path(__file__).resolve().parent.parent, args.compiler_file, args.source_repository, args.from_source)
     except (SetupError, OSError, ValueError, KeyError, TypeError) as exc:
         parser.exit(1, f'toolchain setup: {exc}\n')
     print(f"PASS: {receipt['mode']}; {receipt['artifact']}")

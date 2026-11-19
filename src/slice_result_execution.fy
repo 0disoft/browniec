@@ -615,13 +615,12 @@ fn Result<Option<Outcome>,errors::Error> dispatch(ref body_ir::Program body,ref 
     ref mut vec::Vec<i64> list_cells,ref mut bytes::Buffer list_scratch,ref mut vec::Vec<usize> place_state,
     ref mut input_views::State windows,ref u8[] guest,ref u8[] origins,ref mut usize remaining,ref mut output::Transaction staged,
     ref mut cursors::Cursor cursor,ref mut usize[] static_live,ref mut u32[] static_words,ref mut i64[] registers,usize quantum,ref mut usize visited,ref capture_plans::Plan plans,bool stop_calls){
-    var usize i=0;
     while(cursor.pc<body.count){
         let usize bytes_left=dispatch_room(cursor)?;
         if(*visited==quantum || bytes_left==0){return .ok(.none);}
         let usize frame=bindings.frame;let usize f=bindings.functions[frame];
         if(frame==0 || f>=body.function_count || cursor.pc<body.starts[f] || cursor.pc>=body.ends[f]){return .err(errors::make(5,0));}
-        let usize instruction=cursor.pc;let usize at=cursor.pc*8;let usize offset=body.offsets[cursor.pc];let u8 op=body.code[at];
+        let usize at=cursor.pc*8;let usize offset=body.offsets[cursor.pc];let u8 op=body.code[at];
         let usize dst=body.code[at+1] as usize;let usize a=body.code[at+2] as usize;let usize b=body.code[at+3] as usize;
         let usize base=frame*128;
         if(cursor.call.pending){
@@ -690,42 +689,12 @@ fn Result<Option<Outcome>,errors::Error> dispatch(ref body_ir::Program body,ref 
             let usize ready=return_work::check(ref cursor.returned,return_bytes,offset)?;
         };
         *remaining-=1;*visited+=1;
-        if(record_steps::operation(body,cursor.pc)){
-            var array_fill::State recording=record_steps::begin(body,cursor.pc,bindings,state,registers[base..base+128],data,place_state,remaining)?;
-            if(recording.total>18446744073709551615-cursor.array.total || recording.last>4096-cursor.array.last){return .err(errors::make(5,offset));}
-            recording.total+=cursor.array.total;recording.last+=cursor.array.last;
-            let usize room=4096-cursor.output.last-cursor.call.last-cursor.returned.last-cursor.metadata.last-recording.last;
-            if(room!=0){let bool finished=record_steps::advance(ref mut recording,body,bindings,state,data,place_state,room)?;}
-            cursor.array=recording;if(!recording.active){cursor.pc+=1;}continue;
-        }
-        if(array_lists::operation(body,cursor.pc)){
-            var array_fill::State listing=array_lists::begin(body,cursor.pc,bindings,state,data.len,list_cells,list_scratch,place_state,remaining)?;
-            listing.total=cursor.array.total;listing.last=cursor.array.last;
-            let bool finished=array_lists::advance(ref mut listing,body,bindings,state,data,registers[base..base+128],
-                list_cells,list_scratch,place_state,bytes_left)?;
-            cursor.array=listing;if(finished){cursor.pc+=1;continue;}return .ok(.none);
-        }
-        if(array_copies::operation(body,cursor.pc)){
-            var array_fill::State copying=array_copies::begin(body,cursor.pc,bindings,state,data,place_state,remaining)?;
-            if(copying.total>18446744073709551615-cursor.array.total || copying.last>4096-cursor.array.last){return .err(errors::make(5,offset));}
-            copying.total+=cursor.array.total;copying.last+=cursor.array.last;
-            let usize room=4096-cursor.output.last-cursor.call.last-cursor.returned.last-cursor.metadata.last-copying.last;
-            if(copying.active && room!=0){let bool finished=array_copies::advance(ref mut copying,body,bindings,state,data,place_state,room)?;}
-            cursor.array=copying;if(!copying.active){cursor.pc+=1;}continue;
-        }
-        if(op==33 || op==40 || array_steps::selected_fill(body,cursor.pc)){
-            var array_fill::State filling=array_steps::begin(body,cursor.pc,bindings,state,registers[base..base+128],data.len,place_state,remaining)?;
-            filling.total=cursor.array.total;filling.last=cursor.array.last;
-            let bool finished=array_steps::advance(ref mut filling,body,bindings,state,data,place_state,bytes_left)?;
-            cursor.array=filling;if(finished){cursor.pc+=1;}continue;
-        }
-        if(op==116){
-            var output_copy::State copying=output_steps::begin(body,sites,cursor.pc,f,bindings,state,
-                static_words[frame*16..frame*16+16],static_live[frame],windows,guest,literals,data,staged,remaining)?;
-            copying.total=cursor.output.total;copying.last=cursor.output.last;
-            if(copying.active){let bool finished=output_steps::advance_limited(ref mut copying,guest,literals,data,staged,bytes_left)?;}
-            cursor.output=copying;if(!copying.active){cursor.pc+=1;}continue;
-        }
+        let Option<bool> bulk=begin_dispatch_work(body,bindings,state,data,sites,literals,list_cells,list_scratch,
+            place_state,windows,guest,remaining,staged,cursor,static_live,static_words,registers,bytes_left,op,f,frame,offset)?;
+        switch(bulk){
+            case .none:{}
+            case .some(resume):{if(resume){continue;}return .ok(.none);}
+        };
         if(op>=83 && op<=87){
             let usize price=places::price(body,cursor.pc,f,frame,place_state)?;
             if(*remaining<price){return .err(errors::make(8,offset));}
@@ -811,72 +780,10 @@ fn Result<Option<Outcome>,errors::Error> dispatch(ref body_ir::Program body,ref 
                 windows,static_live,static_words,registers,remaining,bytes_left,plans)?;
             cursor.call=calling;if(finished){cursor.pc=body.starts[calling.target];}continue;
         }
-        if(op==79){
-            let usize input_work=if(input_views::enabled(windows)){meter::input_frame()}else{0};
-            if(*remaining<input_work){return .err(errors::make(8,offset));};*remaining-=input_work;
-            let usize next=bindings.continuations[frame];
-            if(frame<=1 || next==0 || next>body.count){return .err(errors::make(5,offset));}
-            let usize parent=frame-1;let usize caller=bindings.functions[parent];
-            if(sites.results[f]==3){
-                let reference_returns::Returned staged=reference_returns::prepare_input(body,sites,cursor.pc,f,
-                    static_words[frame*16..frame*16+16],static_live[frame],static_live[parent],bindings,state,literals.len,*remaining,windows,origins)?;
-                *remaining=staged.remaining;
-                if(staged.loan){var runtime::Call call=frames::current(bindings);
-                    let runtime::Returned result=records::handoff(bindings,state,ref mut call,staged.ticket,data.len,staged.remaining)?;
-                    *remaining=result.remaining;
-                    let usize resumed=frames::pop_reference(body,bindings,result)?;
-                    static_live[parent]=receipts::publish(ref mut bindings.loans,parent,staged.destination,result.held,staged.span,
-                        static_words[parent*16..parent*16+16],static_live[parent],offset)?;
-                    *remaining=result.remaining;
-                }else{let runtime::Resumed resumed=owned::leave(body,cursor.pc,8,bindings,state,data,staged.remaining)?;
-                    *remaining=resumed.remaining;
-                    if(staged.input){let usize published=input_views::put(windows,parent,staged.destination,staged.span,offset)?;}
-                    static_words[parent*16+staged.destination]=staged.word;let usize one=1;static_live[parent]|=one<<staged.destination;
-                    *remaining=resumed.remaining;
-                }
-                let usize cleared=input_views::clear_frame(windows,frame,offset)?;
-                static_live[frame]=0;i=0;while(i<16){static_words[frame*16+i]=0;i+=1;}return_work::record(ref mut cursor.returned,return_bytes,instruction,frame,op);cursor.pc=next;continue;
-            }
-            let transfer::Returned staged=transfer::returned(body,sites,literals.len,cursor.pc,f,
-                static_words[frame*16..frame*16+16],static_live[frame],next-1,caller,
-                bindings.destinations[frame],static_live[parent],*remaining)?;
-            *remaining=staged.remaining;
-            // The native ordinary-return transaction restores all loan inputs;
-            // no image view or payload ownership is transferred by that layer.
-            let runtime::Resumed resumed=switch(owned::leave(body,cursor.pc,8,bindings,state,data,staged.remaining)){
-                case .ok(v):{v}case .err(e):{return .err(errors::make(e.kind,offset));}
-            };
-            *remaining=resumed.remaining;let usize cleared=input_views::clear_frame(windows,frame,offset)?;static_live[frame]=0;
-            i=0;while(i<16){static_words[frame*16+i]=0;i+=1;}
-            static_words[parent*16+staged.destination]=staged.word;
-            let usize one=1;static_live[parent]|=one<<staged.destination;return_work::record(ref mut cursor.returned,return_bytes,instruction,frame,op);cursor.pc=next;continue;
-        }
-        if(op==65){
-            let usize input_work=if(input_views::enabled(windows)){meter::input_frame()}else{0};
-            if(*remaining<input_work){return .err(errors::make(8,offset));};*remaining-=input_work;
-            if(static_live[frame]!=0){return .err(errors::make(5,offset));}
-            let usize selected=frames::selected(bindings,a)?;var runtime::Call call=frames::current(bindings);
-            let runtime::Returned result=switch(records::handoff(bindings,state,ref mut call,bindings.results[selected],data.len,*remaining)){
-                case .ok(v):{v}case .err(e):{return .err(errors::make(e.kind,offset));}
-            };*remaining=result.remaining;
-            return_work::record(ref mut cursor.returned,return_bytes,instruction,frame,op);
-            cursor.pc=frames::pop_cached(body,bindings,result,plans)?;let usize cleared=input_views::clear_frame(windows,frame,offset)?;
-            if(bindings.frame==0){return .ok(.some(transferred(result)));}continue;
-        }
-        if(op==8 || op==39 || op==50 || op==82){
-            let usize input_work=if(input_views::enabled(windows)){meter::input_frame()}else{0};
-            if(*remaining<input_work){return .err(errors::make(8,offset));};*remaining-=input_work;
-            if(op==82 && (frame==1 || body.return_types[f]!=13)){return .err(errors::make(5,offset));}
-            if(static_live[frame]!=0){return .err(errors::make(5,offset));}
-            let usize destination=bindings.destinations[frame];let usize next=bindings.continuations[frame];
-            let i64 value=if(op==8){registers[base+a]}else{0};
-            let runtime::Resumed resumed=switch(owned::leave(body,cursor.pc,op,bindings,state,data,*remaining)){
-                case .ok(v):{v}case .err(e):{return .err(errors::make(e.kind,offset));}
-            };
-            *remaining=resumed.remaining;let usize cleared=input_views::clear_frame(windows,frame,offset)?;
-            return_work::record(ref mut cursor.returned,return_bytes,instruction,frame,op);
-            if(frame==1){return .ok(.some(completed(Scalar{.value=value,.remaining=*remaining,.resumed=resumed.tickets})));}
-            if(op==8){registers[(frame-1)*128+destination]=value;}cursor.pc=next;continue;
+        if(op==8 || op==39 || op==50 || op==65 || op==79 || op==82){
+            let Option<Outcome> done=dispatch_return(body,bindings,state,data,sites,literals.len,windows,origins,
+                remaining,cursor,static_live,static_words,registers,plans,op,a,f,frame,offset,return_bytes)?;
+            switch(done){case .some(value):{return .ok(.some(value));}case .none:{continue;}};
         }
         if(op>=41 && op<=49){*remaining=records::step(body,cursor.pc,bindings,state,registers[base..base+128],data,*remaining)?;cursor.pc+=1;continue;}
         if((op>=33 && op<=40) || (op>=51 && op<=53)){*remaining=owned::step(body,cursor.pc,bindings,state,registers[base..base+128],data,*remaining)?;cursor.pc+=1;continue;}
@@ -893,4 +800,130 @@ fn Result<Option<Outcome>,errors::Error> dispatch(ref body_ir::Program body,ref 
         else{registers[base+dst]=scalar::scalar(body,cursor.pc,registers[base..base+128])?;}
         cursor.pc+=1;
     }return .err(errors::make(5,0));
+}
+
+// A published return either resumes the caller or completes the invocation.
+fn Result<Option<Outcome>,errors::Error> dispatch_return(ref body_ir::Program body,ref mut frames::Frames bindings,
+    ref mut runtime::State state,ref mut u8[] data,ref statics::Sites sites,usize literal_length,
+    ref mut input_views::State windows,ref u8[] origins,ref mut usize remaining,ref mut cursors::Cursor cursor,
+    ref mut usize[] static_live,ref mut u32[] static_words,ref mut i64[] registers,ref capture_plans::Plan plans,
+    u8 op,usize a,usize f,usize frame,usize offset,usize return_bytes){
+    let usize instruction=cursor.pc;let usize base=frame*128;
+    var usize i=0;
+    if(op==79){
+        let usize input_work=if(input_views::enabled(windows)){meter::input_frame()}else{0};
+        if(*remaining<input_work){return .err(errors::make(8,offset));};*remaining-=input_work;
+        let usize next=bindings.continuations[frame];
+        if(frame<=1 || next==0 || next>body.count){return .err(errors::make(5,offset));}
+        let usize parent=frame-1;let usize caller=bindings.functions[parent];
+        if(sites.results[f]==3){
+            let reference_returns::Returned staged=reference_returns::prepare_input(body,sites,cursor.pc,f,
+                static_words[frame*16..frame*16+16],static_live[frame],static_live[parent],bindings,state,literal_length,*remaining,windows,origins)?;
+            *remaining=staged.remaining;
+            if(staged.loan){var runtime::Call call=frames::current(bindings);
+                let runtime::Returned result=records::handoff(bindings,state,ref mut call,staged.ticket,data.len,staged.remaining)?;
+                *remaining=result.remaining;
+                let usize resumed=frames::pop_reference(body,bindings,result)?;
+                static_live[parent]=receipts::publish(ref mut bindings.loans,parent,staged.destination,result.held,staged.span,
+                    static_words[parent*16..parent*16+16],static_live[parent],offset)?;
+                *remaining=result.remaining;
+            }else{let runtime::Resumed resumed=owned::leave(body,cursor.pc,8,bindings,state,data,staged.remaining)?;
+                *remaining=resumed.remaining;
+                if(staged.input){let usize published=input_views::put(windows,parent,staged.destination,staged.span,offset)?;}
+                static_words[parent*16+staged.destination]=staged.word;let usize one=1;static_live[parent]|=one<<staged.destination;
+                *remaining=resumed.remaining;
+            }
+            let usize cleared=input_views::clear_frame(windows,frame,offset)?;
+            static_live[frame]=0;i=0;while(i<16){static_words[frame*16+i]=0;i+=1;}return_work::record(ref mut cursor.returned,return_bytes,instruction,frame,op);cursor.pc=next;return .ok(.none);
+        }
+        let transfer::Returned staged=transfer::returned(body,sites,literal_length,cursor.pc,f,
+            static_words[frame*16..frame*16+16],static_live[frame],next-1,caller,
+            bindings.destinations[frame],static_live[parent],*remaining)?;
+        *remaining=staged.remaining;
+        // The native ordinary-return transaction restores all loan inputs;
+        // no image view or payload ownership is transferred by that layer.
+        let runtime::Resumed resumed=switch(owned::leave(body,cursor.pc,8,bindings,state,data,staged.remaining)){
+            case .ok(v):{v}case .err(e):{return .err(errors::make(e.kind,offset));}
+        };
+        *remaining=resumed.remaining;let usize cleared=input_views::clear_frame(windows,frame,offset)?;static_live[frame]=0;
+        i=0;while(i<16){static_words[frame*16+i]=0;i+=1;}
+        static_words[parent*16+staged.destination]=staged.word;
+        let usize one=1;static_live[parent]|=one<<staged.destination;return_work::record(ref mut cursor.returned,return_bytes,instruction,frame,op);cursor.pc=next;return .ok(.none);
+    }
+    if(op==65){
+        let usize input_work=if(input_views::enabled(windows)){meter::input_frame()}else{0};
+        if(*remaining<input_work){return .err(errors::make(8,offset));};*remaining-=input_work;
+        if(static_live[frame]!=0){return .err(errors::make(5,offset));}
+        let usize selected=frames::selected(bindings,a)?;var runtime::Call call=frames::current(bindings);
+        let runtime::Returned result=switch(records::handoff(bindings,state,ref mut call,bindings.results[selected],data.len,*remaining)){
+            case .ok(v):{v}case .err(e):{return .err(errors::make(e.kind,offset));}
+        };*remaining=result.remaining;
+        return_work::record(ref mut cursor.returned,return_bytes,instruction,frame,op);
+        cursor.pc=frames::pop_cached(body,bindings,result,plans)?;let usize cleared=input_views::clear_frame(windows,frame,offset)?;
+        if(bindings.frame==0){return .ok(.some(transferred(result)));}return .ok(.none);
+    }
+    if(op==8 || op==39 || op==50 || op==82){
+        let usize input_work=if(input_views::enabled(windows)){meter::input_frame()}else{0};
+        if(*remaining<input_work){return .err(errors::make(8,offset));};*remaining-=input_work;
+        if(op==82 && (frame==1 || body.return_types[f]!=13)){return .err(errors::make(5,offset));}
+        if(static_live[frame]!=0){return .err(errors::make(5,offset));}
+        let usize destination=bindings.destinations[frame];let usize next=bindings.continuations[frame];
+        let i64 value=if(op==8){registers[base+a]}else{0};
+        let runtime::Resumed resumed=switch(owned::leave(body,cursor.pc,op,bindings,state,data,*remaining)){
+            case .ok(v):{v}case .err(e):{return .err(errors::make(e.kind,offset));}
+        };
+        *remaining=resumed.remaining;let usize cleared=input_views::clear_frame(windows,frame,offset)?;
+        return_work::record(ref mut cursor.returned,return_bytes,instruction,frame,op);
+        if(frame==1){return .ok(.some(completed(Scalar{.value=value,.remaining=*remaining,.resumed=resumed.tickets})));}
+        if(op==8){registers[(frame-1)*128+destination]=value;}cursor.pc=next;return .ok(.none);
+    }
+    return .err(errors::make(5,offset));
+}
+
+// None leaves this instruction to the other handlers. Some distinguishes an
+// instruction that can keep dispatching from a list step that must yield.
+fn Result<Option<bool>,errors::Error> begin_dispatch_work(ref body_ir::Program body,ref mut frames::Frames bindings,
+    ref mut runtime::State state,ref mut u8[] data,ref statics::Sites sites,ref u8[] literals,
+    ref mut vec::Vec<i64> list_cells,ref mut bytes::Buffer list_scratch,ref mut vec::Vec<usize> place_state,
+    ref mut input_views::State windows,ref u8[] guest,ref mut usize remaining,ref mut output::Transaction staged,
+    ref mut cursors::Cursor cursor,ref mut usize[] static_live,ref mut u32[] static_words,ref mut i64[] registers,
+    usize bytes_left,u8 op,usize f,usize frame,usize offset){
+    let usize base=frame*128;
+    if(record_steps::operation(body,cursor.pc)){
+        var array_fill::State recording=record_steps::begin(body,cursor.pc,bindings,state,registers[base..base+128],data,place_state,remaining)?;
+        if(recording.total>18446744073709551615-cursor.array.total || recording.last>4096-cursor.array.last){return .err(errors::make(5,offset));}
+        recording.total+=cursor.array.total;recording.last+=cursor.array.last;
+        let usize room=4096-cursor.output.last-cursor.call.last-cursor.returned.last-cursor.metadata.last-recording.last;
+        if(room!=0){let bool finished=record_steps::advance(ref mut recording,body,bindings,state,data,place_state,room)?;}
+        cursor.array=recording;if(!recording.active){cursor.pc+=1;}return .ok(.some(true));
+    }
+    if(array_lists::operation(body,cursor.pc)){
+        var array_fill::State listing=array_lists::begin(body,cursor.pc,bindings,state,data.len,list_cells,list_scratch,place_state,remaining)?;
+        listing.total=cursor.array.total;listing.last=cursor.array.last;
+        let bool finished=array_lists::advance(ref mut listing,body,bindings,state,data,registers[base..base+128],
+            list_cells,list_scratch,place_state,bytes_left)?;
+        cursor.array=listing;if(finished){cursor.pc+=1;return .ok(.some(true));}return .ok(.some(false));
+    }
+    if(array_copies::operation(body,cursor.pc)){
+        var array_fill::State copying=array_copies::begin(body,cursor.pc,bindings,state,data,place_state,remaining)?;
+        if(copying.total>18446744073709551615-cursor.array.total || copying.last>4096-cursor.array.last){return .err(errors::make(5,offset));}
+        copying.total+=cursor.array.total;copying.last+=cursor.array.last;
+        let usize room=4096-cursor.output.last-cursor.call.last-cursor.returned.last-cursor.metadata.last-copying.last;
+        if(copying.active && room!=0){let bool finished=array_copies::advance(ref mut copying,body,bindings,state,data,place_state,room)?;}
+        cursor.array=copying;if(!copying.active){cursor.pc+=1;}return .ok(.some(true));
+    }
+    if(op==33 || op==40 || array_steps::selected_fill(body,cursor.pc)){
+        var array_fill::State filling=array_steps::begin(body,cursor.pc,bindings,state,registers[base..base+128],data.len,place_state,remaining)?;
+        filling.total=cursor.array.total;filling.last=cursor.array.last;
+        let bool finished=array_steps::advance(ref mut filling,body,bindings,state,data,place_state,bytes_left)?;
+        cursor.array=filling;if(finished){cursor.pc+=1;}return .ok(.some(true));
+    }
+    if(op==116){
+        var output_copy::State copying=output_steps::begin(body,sites,cursor.pc,f,bindings,state,
+            static_words[frame*16..frame*16+16],static_live[frame],windows,guest,literals,data,staged,remaining)?;
+        copying.total=cursor.output.total;copying.last=cursor.output.last;
+        if(copying.active){let bool finished=output_steps::advance_limited(ref mut copying,guest,literals,data,staged,bytes_left)?;}
+        cursor.output=copying;if(!copying.active){cursor.pc+=1;}return .ok(.some(true));
+    }
+    return .ok(.none);
 }

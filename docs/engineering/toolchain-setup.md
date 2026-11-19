@@ -1,6 +1,44 @@
 # Toolchain Setup
 
-## Current Windows preview.2 adoption (2026-11-16)
+## Windows release build
+
+The unpatched preview.2 compiler sends the whole Brownie CLI to one MSVC
+translation unit: 22,658,625 bytes and 2,198 generated functions. The optimized
+compiler process exceeds Fairy C's 60-second command deadline before an
+executable is published. The existing C partitioner's default 2 MiB groups
+also time out on the eighth unit with this project.
+
+The Windows pin now builds the same Fairy C revision with the
+[release patch](../../tools/fairyc-windows-release.patch). Optimized console
+builds use the existing function-boundary partition emitter with a 512 KiB
+target per group and one shared header. Fairy C invokes MSVC with /O2 and links
+once. Each invocation keeps its existing 60-second limit; the complete build
+can take longer. The patch preserves the default stack and SDK; development
+builds, diagnostic run/test policy, and Linux retain their original routes.
+
+With Git and Go 1.27.1 on PATH, bootstrap in the Brownie checkout and build:
+
+    python -B tools/setup-toolchain.py --from-source
+    ./build/toolchain/fairyc.exe build --release --locked
+    ./build/browniec.exe run examples/answer.brc --json
+
+Setup checks the source commit, tag and patch SHA-256, applies the patch only in
+its disposable checkout, and checks the resulting executable SHA-256 before
+running or installing it. The compiler reports v0.1.0-preview.2+dirty and
+modified: true. The unpatched preview ZIP is a historical artifact. A matching
+rebuilt binary may be provisioned with --compiler-file. The SDK and root lock
+are unchanged. The Brownie retained dispatcher also separates return handling
+and bulk-work startup from the instruction loop; the unchanged dispatcher
+still timed out at 512 KiB. Fuel debit, continuation order, and return
+publication stay in their existing order.
+
+The official release build passed in 191.1 seconds with 46 generated units
+(maximum 524,218 bytes, plus a 670,726-byte shared header). The answer example
+returned 77 with exit 0, one JSON line and empty stderr. The same binary passed
+72 public Program checks; the compiler passed 13 provisioning cases. See the
+[Windows release evidence](../evidence/windows-release-build-20261119.json).
+
+## Historical Windows preview.2 adoption (2026-11-16)
 
 Windows now uses compiler v0.1.0-preview.2 at
 801c5d8caa64d19aab8925763d6bf07f65f26418 with SDK 0.0.0-stage0.87.

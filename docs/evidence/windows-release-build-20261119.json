@@ -1,0 +1,103 @@
+{
+  "schema": "browniec.windows-release-build/v1",
+  "environment": {
+    "target": "x86_64-windows-msvc",
+    "msvc": "14.51.36231",
+    "sdk": "10.0.26100.0",
+    "go": "go1.27.1"
+  },
+  "baseline": {
+    "brownieCommit": "419776966aa2771faa7fe01be5c572f0305c3468",
+    "singleUnitBytes": 22658625,
+    "generatedFunctions": 2198,
+    "exit": 6,
+    "stderr": "fairyc: build failed: MSVC host command exceeded 1m0s",
+    "partitionTrials": [
+      {
+        "targetBytes": 2097152,
+        "failedUnit": "fy_unit_7.c"
+      },
+      {
+        "targetBytes": 524288,
+        "failedUnit": "fy_unit_29.c"
+      }
+    ]
+  },
+  "compiler": {
+    "revision": "801c5d8caa64d19aab8925763d6bf07f65f26418",
+    "sha256": "59275509ffdcade2179814efa1d74a1f4740a319231a454a5bc548e999fb6619",
+    "patchSha256": "4743a5f0b12e4f03962d4ef2a91e240347fb8a6e2bb6736664efd3a0e03f0b2f"
+  },
+  "source": {
+    "lockSha256": "22095a35a96490e5bd4e8dcf8d8cb03f7990fc3322cae761fac93410b508ff35",
+    "dispatcherSha256": "5f2247513105e9d818be7c630b44b1f68b4257f780027ecac64857c8b91b2c55"
+  },
+  "build": {
+    "argv": [
+      "build/toolchain/fairyc.exe",
+      "build",
+      "--release",
+      "--locked"
+    ],
+    "exit": 0,
+    "stdout": "built: build/browniec.exe (x86_64-windows-msvc, release, lock verified)\n",
+    "stderr": "",
+    "seconds": 191.1,
+    "generatedUnits": 46,
+    "largestUnitBytes": 524218,
+    "sharedHeaderBytes": 670726,
+    "childCommandLimitSeconds": 60,
+    "defaultStack": true,
+    "exeSha256": "16c91fb6978b9184e01defb754250ffcba08756938a80127d0219d338d89ab6b"
+  },
+  "cases": [
+    {
+      "args": [
+        "check",
+        "examples/answer.brc",
+        "--json"
+      ],
+      "exit": 0,
+      "stdout": "{\"schema\":\"browniec.result/v1\",\"profile\":\"brownie.m1-scalar/1\",\"command\":\"check\",\"status\":\"checked\",\"return_i32\":null,\"error\":null}\n",
+      "stderr": ""
+    },
+    {
+      "args": [
+        "run",
+        "examples/answer.brc",
+        "--json"
+      ],
+      "exit": 0,
+      "stdout": "{\"schema\":\"browniec.result/v1\",\"profile\":\"brownie.m1-scalar/1\",\"command\":\"run\",\"status\":\"completed\",\"return_i32\":77,\"error\":null}\n",
+      "stderr": ""
+    },
+    {
+      "args": [
+        "eval-i32",
+        "examples/shipping-fee.brc",
+        "29999",
+        "--json"
+      ],
+      "exit": 0,
+      "stdout": "{\"schema\":\"browniec.result/v1\",\"profile\":\"brownie.m1-scalar/1\",\"command\":\"eval-i32\",\"status\":\"completed\",\"return_i32\":3000,\"error\":null}\n",
+      "stderr": ""
+    },
+    {
+      "args": [
+        "eval-i32",
+        "examples/shipping-fee.brc",
+        "30000",
+        "--json"
+      ],
+      "exit": 0,
+      "stdout": "{\"schema\":\"browniec.result/v1\",\"profile\":\"brownie.m1-scalar/1\",\"command\":\"eval-i32\",\"status\":\"completed\",\"return_i32\":0,\"error\":null}\n",
+      "stderr": ""
+    }
+  ],
+  "provisioningCases": 13,
+  "referenceCliCases": 72,
+  "limitations": [
+    "One Windows host; no full runtime or Linux suite.",
+    "Whole build wall time includes frontend, serial compiler invocations, and link."
+  ]
+}

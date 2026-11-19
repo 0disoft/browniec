@@ -77,19 +77,22 @@
 
 ## Windows quick start
 
-Use Windows x64, Python 3.10+, and MSVC with the Windows SDK (Visual Studio
-Build Tools, Desktop development with C++ workload). Obtain the pinned Fairy C
-Windows executable described in [Toolchain setup](docs/engineering/toolchain-setup.md)
-and pass its path to the setup script.
+Use Windows x64, Python 3.10+, Git, Go 1.27.1, and MSVC with the Windows SDK
+(Visual Studio, Desktop development with C++ workload). Setup builds the pinned
+Fairy C compiler with the [Windows release patch](docs/engineering/toolchain-setup.md#windows-release-build).
+Go is needed only for compiler setup.
 
 From the repository root:
 
 ```powershell
-python -B tools/setup-toolchain.py --compiler-file C:/path/to/fairyc.exe
-./build/toolchain/fairyc.exe build --locked
+python -B tools/setup-toolchain.py
+./build/toolchain/fairyc.exe build --release --locked
 ./build/browniec.exe check examples/answer.brc --json
 ./build/browniec.exe run examples/answer.brc --json
 ```
+
+If an older compiler is already installed, run `python -B tools/setup-toolchain.py --from-source` once.
+Omit `--release` for a development build.
 
 The run exits with code 0 and prints one JSON object with `return_i32: 77`.
 The default Fuel budget is 256. Run trusted local source only. OS isolation

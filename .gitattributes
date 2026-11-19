@@ -24,3 +24,6 @@
 *.tgz binary
 *.mp4 binary
 *.mov binary
+
+# Unified diff context starts with a space before the source indentation.
+/tools/fairyc-windows-release.patch whitespace=-space-before-tab

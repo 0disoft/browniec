@@ -39,6 +39,8 @@ def verify(source):
         for filename in ('toolchain.json', 'fairy.lock'):
             shutil.copyfile(ROOT / filename, path / filename)
         shutil.copyfile(ROOT / 'tools/setup-toolchain.py', path / 'tools/setup-toolchain.py')
+        if 'sourcePatchSha256' in config['bootstrap']:
+            shutil.copyfile(ROOT / SETUP.WINDOWS_RELEASE_PATCH, path / SETUP.WINDOWS_RELEASE_PATCH)
         return path
 
     def run(path, arguments, success, expected):
@@ -97,11 +99,18 @@ def verify(source):
         shutil.copyfile(bad, tampered / 'build/toolchain' / entry['executable'])
         run(tampered, [], False, 'SHA-256 mismatch')
         cases.append('tampered cached compiler rejected before execution')
+        if 'sourcePatchSha256' in config['bootstrap']:
+            tampered_patch = fixture('tampered-patch')
+            (tampered_patch / SETUP.WINDOWS_RELEASE_PATCH).write_bytes(b'unreviewed patch')
+            run(tampered_patch, ['--from-source'], False, 'patch SHA-256 mismatch')
+            cases.append('tampered compiler patch rejected before bootstrap')
         rebuilt = fixture('source')
         changed(rebuilt, lambda c: c['source'].update(localRepository=os.path.relpath(source, rebuilt)))
-        run(rebuilt, [], True, 'PASS: source-build')
+        (rebuilt / 'build/toolchain').mkdir(parents=True)
+        shutil.copyfile(bad, rebuilt / 'build/toolchain' / entry['executable'])
+        run(rebuilt, ['--from-source'], True, 'PASS: source-build')
         preserved(rebuilt)
-        cases.append('default exact-commit isolated source bootstrap reproduces native SHA-256')
+        cases.append('explicit isolated source bootstrap replaces old install with the pinned SHA-256')
         changed(rebuilt, lambda c: c['compiler'].update(revision='0' * 40))
         run(rebuilt, ['--source-repository', source], False, 'Cannot fetch the selected compiler commit')
         preserved(rebuilt)
@@ -131,7 +140,8 @@ def verify(source):
                        compilerRevision=config['compiler']['revision'], goVersion=config['bootstrap']['goVersion'],
                        cases=cases, count=len(cases), sourceSha256=[dict(path=p, sha256=SETUP.digest(ROOT / p))
                            for p in ['toolchain.json', 'fairy.lock', 'tools/setup-toolchain.py', 'tools/setup-toolchain.ps1',
-                                     'tools/verify-toolchain.py', 'tools/verify-toolchain.ps1']],
+                                     'tools/verify-toolchain.py', 'tools/verify-toolchain.ps1',
+                                     *([SETUP.WINDOWS_RELEASE_PATCH.as_posix()] if 'sourcePatchSha256' in config['bootstrap'] else [])]],
                        limitations=['Native provisioning checks on the recorded host only; not a Brownie VM regression.',
                                     'Platform-selection logic does not establish Linux native execution.',
                                     'HTTPS acquisition, empty module caches and clean-machine setup were not exercised.'])

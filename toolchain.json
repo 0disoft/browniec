@@ -27,17 +27,16 @@
     "embeddedSourceCrLf": [
       "internal/cstdlib/stage0_linux_directory.c",
       "internal/cstdlib/stage0_linux_directory_paths.c"
-    ]
+    ],
+    "sourcePatchSha256": "4743a5f0b12e4f03962d4ef2a91e240347fb8a6e2bb6736664efd3a0e03f0b2f"
   },
   "platforms": {
     "windows/amd64": {
       "executable": "fairyc.exe",
-      "sha256": "7665c8203ae9ed8397b013770fc53e57eb37d1f3d4c236bcd77983e570bad836",
+      "sha256": "59275509ffdcade2179814efa1d74a1f4740a319231a454a5bc548e999fb6619",
       "verification": "native-verified",
       "distribution": {
-        "kind": "local-preview-candidate",
-        "archive": "../fairyc/.cache/starter-smoke-C8Fn38/fairyc-windows-amd64-preview-candidate.zip",
-        "archiveSha256": "39af3d5c1470262838c99f151ebc55699e57f685e41ce5825bf60779bd077748"
+        "kind": "pinned-source-with-patch"
       }
     },
     "linux/amd64": {
