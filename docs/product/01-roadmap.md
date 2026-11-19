@@ -87,9 +87,9 @@
 | M0: native feasibility | Scoped native primitive evidence recorded | Revisit only for a new platform/shim/toolchain requirement; not a full product gate |
 | M1: scalar source to native VM | Bounded scalar checkpoint met | Keep regressions on semantic changes; full safe/0.3 is not M1 completion |
 | M2: aggregates, borrows and bytes | Public arrays/records/scalar slices plus retained literal/shared-byte results; private Buffer foundations | General returned references, general reference/type gaps, guest Buffer/text, input/output and full accounting/runtime integration |
-| M3: typed host suspension | Not implemented | Engine/Instance stepping, authority chain, fake typed host request/reply, failure/cancel/poison and reply adoption |
+| M3: typed host suspension | Private Engine and typed host exchange execute; scalar calls lower from source | General typed source calls, public delivery, full work and memory budgets, deadlines, cancellation and poison containment |
 | M4: restricted Windows worker | Not implemented | Real AppContainer/Job/private IPC, broker publication/cancel races and I/O lease/budget evidence |
-| M5: embed and clean-machine delivery | Not implemented | Real DLL/C ABI/handle lifecycle, clean-machine packaging and measured workload/build footprint |
+| M5: embed and clean-machine delivery | Windows ABI query DLL and internal handle coordinator verified | Full C lifecycle exports and process-wide handles, clean-machine packaging and measured workload/build footprint |
 
 Current `core: true` advertises the experimental native CLI only. It does not
 certify full-profile completion. Restricted and embed availability remain false.

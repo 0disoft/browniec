@@ -628,8 +628,9 @@ storage/ownership, growth, writes, append/resize, leases, UTF-8 sessions and hos
 cleanup. None is reachable from the CLI's current local-module import graph.
 They are reusable foundations, not guest Buffer/Instance integration.
 
-M3 typed host suspension, M4 restricted Windows delivery and M5 public DLL/clean-
-machine delivery are not implemented. `core: true` in the experimental version
+M3 has [private Engine host suspension and reply adoption](../engineering/host-exchange.md).
+M4 restricted Windows delivery and M5 public embedding and clean-machine delivery
+remain unavailable. `core: true` in the experimental version
 JSON means that the narrow native CLI exists; it does not certify the full
 `brownie.safe/0.3` profile or completion of M3. Restricted/embed remain false.
 
@@ -870,7 +871,7 @@ requirements of this audit. They need a justified profile decision if desired.
 | V02 | Add risk-focused parser/verifier/lifetime/TLV/IPC mutation/fuzz and allocator/shim failure coverage as the corresponding boundaries are implemented. Check arithmetic/initialization/overlap/generation/rollback and the broker/layout/Buffer-fallback review counterexamples. |
 | V03 | Measure representative validation, byte-transform and rule workloads: cold/warm compile, explicit Program reuse, setup/run/publication, heap allocation, accounted/retained/process memory, worker/IPC/host costs and quantum invariance. No current performance target is a measured guarantee. |
 | V04 | Measure and bound retained build outputs/cache/symbols/toolchain costs and successful/failed scratch cleanup, including 100 retained edit builds. Keep invocation scratch separate and never prune user sources or another active build. |
-| V05 | Define a profile-specific release unit, compatibility/rollback and supported-platform evidence, minimal relevant CI checks and useful user examples/runbooks. There is currently no configured GitHub Actions workflow; do not create an expensive matrix merely to audit docs. Release/push decisions remain separately authorized. |
+| V05 | [Windows quickstart CI](../../.github/workflows/windows-quickstart.yml) builds the locked optimized CLI, verifies result 77 and checks CLI contracts and internal diagnostic rendering. Define a profile-specific release unit, compatibility/rollback and supported-platform evidence, remaining relevant release checks and useful user examples/runbooks. |
 
 ## Budget and compatibility decisions still open
 

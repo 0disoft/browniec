@@ -18,12 +18,11 @@ aggregate graphs; Core/Cursor/Machine remain 172400/1184/1792 bytes. See
 [value signature evidence](../evidence/runtime-compiler-value-signatures-windows-20261111.json) and preceding literal/record/
 signature/foundation evidence. Older unit receipts remain frozen snapshots.
 
-Known distinct body diagnostic: local four-wrapper annotation/owned-value use at
-the deepest of 32 controls overflows the native stack on predecessor `6a6c2a9`
-and current raw-adapter diagnostic. The evidence retains its source and logs.
-Do not drop this obligation or claim compositional depth coverage. The passing
-fixture has wrappers in the function signature. Isolate the failing private
-compile/proof/execution phase during recursive body lowering; no stack override.
+The [local annotation stack repair](native-stack-regressions.md#private-local-annotations)
+supersedes the raw-adapter overflow below this historical checkpoint. Both local
+annotation and function signature fixtures execute at 32 controls and reject 33
+in Windows development and O2 on the default stack. Keep the combined fixtures
+when changing recursive body lowering.
 
 The preceding [twenty compiler proof kernels](runtime-authority-metadata-stages.md#compiler-proof-stages)
 remain connected to owning input/output and borrowed-return compilation. The
@@ -38,7 +37,7 @@ and [lifecycle evidence](../evidence/runtime-lifecycle-windows-20261110.json).
 
 1. Body-derived canonical interning and repeated header admission remain separate
    from completed typed/value signature and canonical planning. Preserve the
-   known local-annotation/control-depth diagnostic for body lowering.
+   combined local-annotation/control-depth fixture for body lowering.
 2. Fixed scratch initialization/final Builder assignment and native image
    allocation/copy still need a compiler-level publication protocol.
 3. Slice origin inference, preserving all seventeen rounds and exact error
