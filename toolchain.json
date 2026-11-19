@@ -28,6 +28,7 @@
       "internal/cstdlib/stage0_linux_directory.c",
       "internal/cstdlib/stage0_linux_directory_paths.c"
     ],
+    "localVersionTag": true,
     "sourcePatchSha256": "4743a5f0b12e4f03962d4ef2a91e240347fb8a6e2bb6736664efd3a0e03f0b2f"
   },
   "platforms": {

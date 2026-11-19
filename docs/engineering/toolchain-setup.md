@@ -22,9 +22,10 @@ With Git and Go 1.27.1 on PATH, bootstrap in the Brownie checkout and build:
     ./build/toolchain/fairyc.exe build --release --locked
     ./build/browniec.exe run examples/answer.brc --json
 
-Setup checks the source commit, tag and patch SHA-256, applies the patch only in
-its disposable checkout, and checks the resulting executable SHA-256 before
-running or installing it. The compiler reports v0.1.0-preview.2+dirty and
+Setup fetches the exact source commit and checks the patch SHA-256. In the
+disposable checkout it creates a local version tag for Go metadata and applies
+the patch. The public release tag can point to a different commit. Setup checks
+the resulting executable SHA-256 before running or installing it. The compiler reports v0.1.0-preview.2+dirty and
 modified: true. The unpatched preview ZIP is a historical artifact. A matching
 rebuilt binary may be provisioned with --compiler-file. The SDK and root lock
 are unchanged. The Brownie retained dispatcher also separates return handling

@@ -79,6 +79,9 @@ def load_config(root):
             'internal/cstdlib/stage0_linux_directory.c',
             'internal/cstdlib/stage0_linux_directory_paths.c']):
         raise SetupError('Unsupported embedded source line endings.')
+    local_tag = recipe.get('localVersionTag', False)
+    if not isinstance(local_tag, bool) or (local_tag and (tag is None or 'sourcePatchSha256' not in recipe)):
+        raise SetupError('A local version tag requires a patched compiler and an explicit tag name.')
     if 'sourcePatchSha256' in recipe:
         patch_sha = recipe['sourcePatchSha256']
         if target != 'windows/amd64' or not re.fullmatch('[0-9a-f]{64}', patch_sha):
@@ -138,7 +141,8 @@ def build_source(config, root, scratch, target, source_repository=None):
     run(['git', '-C', checkout, 'fetch', '--quiet', '--no-tags', '--depth=1', '--', source, config['compiler']['revision']],
         env=env, error='Cannot fetch the selected compiler commit')
     tag = config['compiler'].get('tag')
-    if tag:
+    local_tag = config['bootstrap'].get('localVersionTag', False)
+    if tag and not local_tag:
         reference = f'refs/tags/{tag}'
         run(['git', '-C', checkout, 'fetch', '--quiet', '--no-tags', '--depth=1', '--', source, f'{reference}:{reference}'],
             env=env, error='Cannot fetch the selected compiler tag')
@@ -151,6 +155,11 @@ def build_source(config, root, scratch, target, source_repository=None):
     dirty = run(['git', '-C', checkout, 'status', '--porcelain', '--untracked-files=all'], env=env)
     if revision != config['compiler']['revision'] or dirty:
         raise SetupError('Compiler source identity mismatch or dirty isolated checkout.')
+    if local_tag:
+        # Reproduce the Go module version of the pinned patched build. The public
+        # release tag is independent of this source pin. Only this scratch ref is written.
+        run(['git', '-C', checkout, 'update-ref', f'refs/tags/{tag}', revision],
+            env=env, error='Cannot create the pinned compiler build version tag')
     # These distribution inputs are embedded as raw bytes. Reproduce their
     # reviewed CRLF while proving the normalized Git content remains unchanged.
     embedded = config['bootstrap'].get('embeddedSourceCrLf', [])
