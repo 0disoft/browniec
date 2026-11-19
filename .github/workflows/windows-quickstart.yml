@@ -29,7 +29,28 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
+          fetch-depth: 0
           persist-credentials: false
+
+      - name: Select Windows checks for this push
+        id: changes
+        shell: pwsh
+        env:
+          PUSH_BEFORE: ${{ github.event.before }}
+        run: |
+          $scope = 'full'
+          # Only skip public checks for a known, test-only diff.
+          if ($env:GITHUB_EVENT_NAME -eq 'push' -and $env:PUSH_BEFORE -cmatch '^[0-9a-f]{40}$' -and
+              $env:PUSH_BEFORE -ne ('0' * 40)) {
+            $PSNativeCommandUseErrorActionPreference = $false
+            $changed = @(git diff --no-renames --name-status $env:PUSH_BEFORE HEAD -- 2>$null)
+            if ($LASTEXITCODE -eq 0 -and $changed.Count -eq 1 -and
+                $changed[0] -ceq ('M' + [char]9 + 'tests/m2/cli_locations.fy')) {
+              $scope = 'verifier-only'
+            }
+          }
+          Write-Output "Windows check scope: $scope"
+          "scope=$scope" >> $env:GITHUB_OUTPUT
 
       - name: Check clean checkout and read the toolchain pin
         id: toolchain
@@ -57,12 +78,15 @@ jobs:
         run: python -B tools/setup-toolchain.py
 
       - name: Build the locked Windows release
+        if: steps.changes.outputs.scope != 'verifier-only'
         run: ./build/toolchain/fairyc.exe build --release --locked
 
       - name: Check the answer example
+        if: steps.changes.outputs.scope != 'verifier-only'
         run: ./build/browniec.exe check examples/answer.brc --json
 
       - name: Run the answer example and verify its output
+        if: steps.changes.outputs.scope != 'verifier-only'
         shell: pwsh
         run: |
           $stderr = Join-Path $env:RUNNER_TEMP 'browniec-answer.stderr'
@@ -82,6 +106,7 @@ jobs:
           }
 
       - name: Check CLI diagnostics and eval-i32 on the same release binary
+        if: steps.changes.outputs.scope != 'verifier-only'
         run: python -B tools/check-cli-contract.py --exe ./build/browniec.exe
 
       - name: Check internal verifier diagnostic output
