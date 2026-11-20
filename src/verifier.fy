@@ -143,6 +143,13 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records
                 ref mut array_states,live,ref mut static_states,static_live)){return .err(errors::instruction(pc));}
             pc+=1;continue;
         }
+        if(host_profile && op==126){
+            if(dst!=0 || b!=0 || p.code[at+4]!=0 || p.code[at+5]!=0 || p.code[at+6]!=0 || p.code[at+7]!=0 ||
+                !readable(p,ref defined,a,start,end) || p.types[a]!=14 || pc+1>=p.ends[f] ||
+                !merge(ref mut states,ref mut seen,ref defined,pc+1,ref mut array_states,live,
+                    ref mut static_states,static_live)){return .err(errors::instruction(pc));}
+            pc+=1;continue;
+        }
         if(op==116){
             let usize checked=output_ir::inspect(p,static_sites,pc,f,live,static_live)?;
             if(pc+1>=p.ends[f] || !merge(ref mut states,ref mut seen,ref defined,pc+1,

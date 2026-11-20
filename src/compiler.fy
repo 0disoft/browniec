@@ -4,6 +4,7 @@ import function_scan_work as signature_scan;
 
 import host_catalog as host_catalog;
 import host_source as host_source;
+import host_program as host_program;
 
 import errors as errors;
 import lexer as lexer;
@@ -2226,6 +2227,7 @@ fn Result<usize,errors::Error> scalar_assignment(ref u8[] source,ref mut lexer::
 fn Result<usize,errors::Error> output_statement(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
     u8 terminator,u8 result_type,usize depth,usize structure,ref mut loops::State loop_state){
+    if(signatures.scalar_host_calls){return host_output_statement(source,s,p,table,signatures,terminator,result_type);}
     let usize at=output_source::head(source,s,signatures,terminator,result_type)?;
     var locals::Table names=locals::snapshot(table);
     var usize site=16;var u8 kind=2;
@@ -2248,6 +2250,18 @@ fn Result<usize,errors::Error> output_statement(ref u8[] source,ref mut lexer::S
     let usize close=lexer::punctuation(source,s,41)?;let usize end=lexer::punctuation(source,s,59)?;
     let usize emitted=output_ir::emit(p,site,kind,at)?;
     let usize released=arrays::release_from(ref names,p,table.count,at)?;return .ok(64);
+}
+fn Result<usize,errors::Error> host_output_statement(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref locals::Table names,ref functions::Table signatures,u8 terminator,u8 result_type){
+    let usize at=s.begin;
+    if(!signatures.output || terminator!=59 || result_type==0){return .err(errors::make(3,at));}
+    discard lexer::next(source,s)?;
+    discard lexer::punctuation(source,s,40)?;
+    let usize value=host_source::byte_argument(source,s,p,names)?;
+    discard lexer::punctuation(source,s,41)?;
+    discard lexer::punctuation(source,s,59)?;
+    discard ir::raw(p,host_program::emit_opcode(),0,value,0,at)?;
+    return .ok(64);
 }
 fn Result<usize,errors::Error> void_call_statement(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
@@ -3211,6 +3225,7 @@ fn Result<usize,source_errors::Error> lower_project_host_body(ref u8[] source,re
     var functions::Table signatures=switch(signature_scan::scan_host_indexed(source,scope,index,selected)){
         case .ok(v):{v}case .err(e):{return .err(input_module_error(index,e,16));}
     };
+    signatures.output=true;
     let usize entry=signatures.entry;
     let usize formal=entry*8;
     let usize arity=signatures.arities[entry];

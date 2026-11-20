@@ -2,6 +2,7 @@ module host_exchange;
 import arithmetic as arithmetic;
 import host_catalog as catalog;
 import host_program as programs;
+import fuel as prices;
 import ir as ir;
 import runtime_policy as policy;
 import runtime_policy_limits as policy_limits;
@@ -415,6 +416,7 @@ fn void load_image(ref mut Exchange e,ref ir::Program p,usize arena_end,usize fr
         while(i<p.constant_count){store_wide(data,3168+i*8,p.constants[i]);i+=1;}
         let usize first=blob_base()+p.list_used;
         write(data,4192,first);
+        write(data,4208,arena_end);
         i=0;while(i<p.list_used){data[blob_base()+i]=p.list_operands[i];i+=1;}
         if(p.call_count!=0){
             write(data,88,arena_end);
@@ -425,7 +427,23 @@ fn void load_image(ref mut Exchange e,ref ir::Program p,usize arena_end,usize fr
     }
 }
 // A typed byte cell packs a header-relative offset and exact length.
-fn usize blob_base(){return 4208;}
+// The typed prefix records the reply arena limit independently of frames,
+// input bytes and output staging, all of which follow that arena.
+fn usize blob_base(){return 4224;}
+fn usize output_base(ref u8[] data){return if(wide(data)){read(data,4216)}else{0};}
+fn usize output_charge(ref programs::Program p,policy_limits::RunLimits limits){
+    return if(programs::emits(p)){24+limits.output_bytes}else{0};
+}
+pub fn bool has_guest_output(ref Exchange e){return header(e)[81]==3 && output_base(header(e))!=0;}
+pub fn ref u8[] guest_output(ref Exchange e){
+    let ref u8[] data=header(e);
+    if(!has_guest_output(e)){return data[..0];}
+    let usize base=output_base(data);
+    return data[base+24..base+24+read(data,base)];
+}
+pub fn usize guest_emits(ref Exchange e){
+    return if(has_guest_output(e)){read(header(e),output_base(header(e))+16)}else{0};
+}
 fn i64 pack_blob(usize start,usize length){
     return switch(num::i64_from_usize(start*4294967296+length)){case .ok(v):{v}case .err(_):{assert(false);0}};
 }
@@ -512,7 +530,9 @@ pub fn Result<Exchange,ScalarError> create_scalar_input(ref programs::Program p,
     let ref ir::Program code=programs::code(p);
     let usize end=if(typed){arena_end(code,envelope,limits)}else{scalar_header_size()};
     let usize size=end+frame_storage(code,limits.call_frames);
-    var Exchange e=switch(create_sized(exact,ref allowed[..count],bounds,run_id,limits.fuel,deadline,size+input.len,digest)){
+    let usize charged_output=output_charge(p,limits);
+    var Exchange e=switch(create_sized(exact,ref allowed[..count],bounds,run_id,limits.fuel,deadline,
+        size+input.len+charged_output,digest)){
         case .ok(v):{v}case .err(_):{return .err(.Allocation);}
     };
     load_image(ref mut e,code,end,limits.call_frames);
@@ -522,6 +542,7 @@ pub fn Result<Exchange,ScalarError> create_scalar_input(ref programs::Program p,
         while(i<input.len){image[size+i]=input[i];i+=1;}
         set_reg(image,code.register_starts[code.entry],pack_blob(size,input.len));
     }
+    if(charged_output!=0){write(scalar_header(ref mut e),4216,size+input.len);}
     return .ok(e);
 }
 // Reserve the exact maximum heap backing over this admitted scalar run.
@@ -530,7 +551,7 @@ pub fn usize scalar_storage_bound(ref programs::Program p,policy_limits::RunLimi
     if(programs::typed(programs::code(p))){
         let EnvelopeBounds envelope=typed_bounds(p,limits);
         let ref ir::Program code=programs::code(p);
-        return arena_end(code,envelope,limits)+frame_storage(code,limits.call_frames)+catalog_bytes+
+        return arena_end(code,envelope,limits)+frame_storage(code,limits.call_frames)+catalog_bytes+output_charge(p,limits)+
             if(limits.host_calls==0){0}else{envelope.request+envelope.reply};
     }
     let usize base=scalar_header_size()+catalog_bytes;
@@ -673,8 +694,7 @@ fn Result<ScalarEvent,ScalarError> install_bytes(ref mut Exchange e,usize dst,us
     let ref u8[] current=header(e);
     let usize start=read(current,4192);
     let usize copied=read(current,4200);
-    let usize base=call_base(current);
-    let usize end=if(base==0){current.len}else{base};
+    let usize end=read(current,4208);
     if(start>end || copied>field.length){return .err(.State);}
     if(field.length>end-start){discard stop(e,4,now);return .ok(scalar_event(e));}
     let usize left=field.length-copied;
@@ -797,6 +817,42 @@ fn void dispatch_scalar(ref mut u8[] data,u8 op,usize dst,usize a,usize b,usize 
     };
     set_reg(data,dst,value);data[80]+=1;
 }
+// Staged output suffix: committed length, partial copy cursor, emit count.
+fn Result<ScalarEvent,ScalarError> emit_guest(ref mut Exchange e,usize argument,usize now,ref mut usize work){
+    let ref u8[] current=header(e);
+    let usize base=output_base(current);
+    if(base==0){return .err(.State);}
+    let usize limit=current.len-base-24;
+    let usize bits=blob_bits(reg(current,argument));
+    let usize source=bits/4294967296;
+    let usize length=bits%4294967296;
+    if(source>base || length>base-source){return .err(.State);}
+    let usize used=read(current,base);
+    let usize copied=read(current,base+8);
+    if(used>limit || copied>length){return .err(.State);}
+    if(length>limit-used){
+        scalar_header(e)[81]=4;scalar_header(e)[82]=5;
+        return .ok(scalar_event(e));
+    }
+    if(copied==0 && !spend_guest(e,prices::output_emit(length),now).is_ok){return .ok(scalar_event(e));}
+    let usize left=length-copied;
+    let usize count=if(left<*work){left}else{*work};
+    *work-=if(count==0){1}else{count};
+    let usize next=copied+count;
+    {
+        let ref mut u8[] data=scalar_header(e);
+        let usize target=base+24+used;
+        var usize i=copied;while(i<next){data[target+i]=data[source+i];i+=1;}
+        if(next==length){
+            write(data,base,used+length);
+            write(data,base+8,0);
+            let usize emits=read(data,base+16);
+            write(data,base+16,emits+1);
+            data[80]+=1;
+        }else{write(data,base+8,next);}
+    }
+    return .ok(scalar_event(e));
+}
 pub fn Result<ScalarEvent,ScalarError> step_scalar(ref mut Exchange e,usize now,bool cancelled){
     var usize work=4096;
     return step_scalar_budget(e,now,cancelled,ref mut work);
@@ -818,6 +874,15 @@ pub fn Result<ScalarEvent,ScalarError> step_scalar_budget(ref mut Exchange e,usi
         if((op!=programs::request_opcode() && !programs::typed_request(op)) || b!=host.import_id){return .err(.State);}
         if(reply_kind(e)==0 && result_tag(e)==7){return install_bytes(e,dst,now,work);}
     };
+    let usize output=output_base(data);
+    if(output!=0 && data[5]==0){
+        let usize limit=data.len-output-24;
+        *work-=1;
+        if(spend_guest(e,prices::output_prepare(limit),now).is_ok){scalar_header(e)[5]=1;}
+        return .ok(scalar_event(e));
+    }
+    if(host.phase==0 && op==programs::emit_opcode()){return emit_guest(e,a,now,work);}
+    let bool seal=op==8 && output!=0 && frame_depth(data,call_base(data))==0;
     *work-=1;
     if(host.phase==2){return install_scalar(e,dst,now);}
     if(programs::typed_request(op)){return publish_typed(e,b,a,now);}
@@ -831,6 +896,8 @@ pub fn Result<ScalarEvent,ScalarError> step_scalar_budget(ref mut Exchange e,usi
             let usize cost=1+(data[at+5] as usize);
             if(spend_guest(e,cost,now).is_ok){begin_call(scalar_header(e),at);}
         }
-    }else if(spend_guest(e,1,now).is_ok){dispatch_scalar(scalar_header(e),op,dst,a,b,at);}
+    }else if(spend_guest(e,1+if(seal){prices::output_seal()}else{0},now).is_ok){
+        dispatch_scalar(scalar_header(e),op,dst,a,b,at);
+    }
     return .ok(scalar_event(e));
 }

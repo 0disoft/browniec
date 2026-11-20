@@ -91,18 +91,23 @@ fn i32 complete(render::Format format,ref mut engine::Engine owner,usize program
         case .ok(v):{v}case .err(e):{return failure(format,true,engine_error(e,false,8),8);}
     };
     if(!dispose(owner,program,instance)){return failure(format,true,errors::absent(5,0),8);}
+    return publish(format,value,ref output,selected,8);
+}
+
+@effects(console,filesystem)
+pub fn i32 publish(render::Format format,i64 value,ref engine::Output output,Selection selected,u8 profile){
     if(selected.output_file!=0){
-        let ref u8[] payload=if(engine::output_available(ref output)){engine::output_view(ref output)}else{b""};
+        let ref u8[] payload=if(engine::output_available(output)){engine::output_view(output)}else{b""};
         if(selected.output_text && !text::validate_utf8(payload).is_ok){
-            return failure(format,true,errors::absent(errors::output_encoding_kind(),0),8);
+            return failure(format,true,errors::absent(errors::output_encoding_kind(),0),profile);
         }
         if(!files::write_output(selected.output_file,payload)){
-            return failure(format,true,errors::absent(errors::output_io_kind(),0),8);
+            return failure(format,true,errors::absent(errors::output_io_kind(),0),profile);
         }
-    }else if(engine::output_available(ref output)){
-        return render::published_output(format,value,engine::output_view(ref output));
+    }else if(engine::output_available(output)){
+        return render::published_output_profile(format,value,engine::output_view(output),profile);
     }
-    return render::selected_outcome(format,true,false,value,errors::absent(0,0),8);
+    return render::selected_outcome(format,true,false,value,errors::absent(0,0),profile);
 }
 
 fn bool dispose(ref mut engine::Engine owner,usize program,usize instance){

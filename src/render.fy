@@ -190,9 +190,14 @@ fn i32 write_result(ref bytes::Buffer output,i32 code){
 
 @effects(console)
 pub fn i32 published_output(Format format,i64 value,ref u8[] payload){
-    if(text_mode(format)){return selected_outcome(format,true,true,0,errors::absent(10,0),8);}
+    return published_output_profile(format,value,payload,8);
+}
+
+@effects(console)
+pub fn i32 published_output_profile(Format format,i64 value,ref u8[] payload,u8 profile){
+    if(text_mode(format)){return selected_outcome(format,true,true,0,errors::absent(10,0),profile);}
     if(payload.len>output_limits::hard_limit()){return 7;}
-    let bytes::Buffer output=switch(encode(format,true,false,false,value,errors::absent(0,0),8,b"",
+    let bytes::Buffer output=switch(encode(format,true,false,false,value,errors::absent(0,0),profile,b"",
         sources::no_source(),sources::Position{.line=0,.byte_column=0},true,payload)){
         case .ok(v):{v}case .err(_):{return 7;}
     };

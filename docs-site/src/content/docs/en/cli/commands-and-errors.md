@@ -24,9 +24,9 @@ The public CLI checks and runs one source file at a time. `check` verifies witho
 | `browniec run SOURCE --catalog FILE --policy FILE --run FILE --host-replies FILE` | — | `stderr` | — |
 | `browniec run SOURCE --catalog FILE --policy FILE --run FILE --host-replies FILE` | `--json` | `stdout` | `browniec.result/v1` |
 | `browniec run SOURCE --catalog FILE --policy FILE --run FILE --host-replies FILE` | `--json-v2` | `stdout` | `browniec.result/v2` |
-| `browniec run --project FILE --catalog FILE --policy FILE --run FILE --host-replies FILE [--input FILE\|--stdin]` | — | `stderr` | — |
-| `browniec run --project FILE --catalog FILE --policy FILE --run FILE --host-replies FILE [--input FILE\|--stdin]` | `--json` | `stdout` | `browniec.result/v1` |
-| `browniec run --project FILE --catalog FILE --policy FILE --run FILE --host-replies FILE [--input FILE\|--stdin]` | `--json-v2` | `stdout` | `browniec.result/v2` |
+| `browniec run --project FILE --catalog FILE --policy FILE --run FILE --host-replies FILE [--input FILE\|--stdin] [--output FILE\|--output-text FILE]` | — | `stderr` | — |
+| `browniec run --project FILE --catalog FILE --policy FILE --run FILE --host-replies FILE [--input FILE\|--stdin] [--output FILE\|--output-text FILE]` | `--json` | `stdout` | `browniec.result/v1` |
+| `browniec run --project FILE --catalog FILE --policy FILE --run FILE --host-replies FILE [--input FILE\|--stdin] [--output FILE\|--output-text FILE]` | `--json-v2` | `stdout` | `browniec.result/v2` |
 | `browniec run SOURCE [--input FILE\|--stdin] [--fuel N]` | — | `stderr` | — |
 | `browniec run SOURCE [--input FILE\|--stdin] [--fuel N]` | `--json` | `stdout` | `browniec.result/v1` |
 | `browniec run SOURCE [--input FILE\|--stdin] [--fuel N]` | `--json-v2` | `stdout` | `browniec.result/v2` |

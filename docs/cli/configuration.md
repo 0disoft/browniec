@@ -170,7 +170,7 @@ slice entry can pass that immutable input directly to a catalog parameter of
 type `ref u8[]`.
 
     browniec check --project FILE --catalog FILE --policy FILE --run FILE
-    browniec run --project FILE --catalog FILE --policy FILE --run FILE --host-replies FILE [--input FILE|--stdin] --json
+    browniec run --project FILE --catalog FILE --policy FILE --run FILE --host-replies FILE [--input FILE|--stdin] [--output FILE|--output-text FILE] --json
 
 The manifest and run configuration must select the same entry and declare the
 same set of capabilities. The Engine checks that relation and the run's grants
@@ -190,13 +190,24 @@ the input length and charges the retained copy and temporary Snapshot overlap.
 The copy is synchronous and capped at 1 MiB. Host requests still use their own
 wire limits, Fuel and reply-file bounds.
 
+A project may declare and receive the `brownie.output.emit` capability alongside
+its host capabilities. The host dialect accepts `output::emit(ref data)` for a
+byte binding and `output::emit(b"...")` for a byte literal. Emitting programs
+require a JSON result format and may select the same binary or UTF-8 file sink as
+[configured project output](#configured-project-output). Output is staged across
+host calls, charged to the run memory and Fuel limits, and exposed only after
+successful return. Each step copies at most 4096 output bytes. The detached
+result retains the exchange backing until the caller drops it.
+
 The Windows development and /O2 CLI checks compile and run a two-module
 project, producing 77 through a typed host response. They also cover reused
 alias names across modules, qualified host calls, private guest helpers,
 original member diagnostics, authority denial before source collection, and
-exact binary input in requests from files, stdin and empty input. The owning
+exact binary input in requests from files, stdin and empty input. The same
+checks cover 4098 output bytes emitted across a host call, all three sinks,
+and no publication when the output quota or reply lookup fails. The owning
 Engine regression passed both profiles with zero live SDK allocations. Its
-receipt is `build/runtime-engine/20261120T165921444663Z/receipt.json`.
+receipt is `build/runtime-engine/20261120T172032317781Z/receipt.json`.
 
 ## Configured project output
 

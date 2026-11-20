@@ -1,6 +1,7 @@
 module cli_host_command;
 
 import cli_input as source_input;
+import cli_configured_project as configured;
 import cli_project_input as binary;
 import runtime_input as input;
 import runtime_policy_limits as limits;
@@ -19,19 +20,17 @@ import runtime_engine as engine;
 import runtime_policy as policies;
 import runtime_run_config as runs;
 
-struct Outcome { i64 value; errors::Error error; }
-
 unsafe extern C fn u32 bc_cli_enable_cancel();
 unsafe extern C fn u32 bc_cli_cancel_requested();
 
 @effects(console,filesystem)
-pub fn i32 execute(render::Format format,usize policy_file,usize run_file,usize catalog_file,usize reply_file,bool project,
+pub fn i32 execute(render::Format format,configured::Selection settings,usize catalog_file,usize reply_file,bool project,
     binary::Selection selection){
     let bool running=reply_file!=0;
-    let policies::Policy ceiling=switch(configuration::read_policy(policy_file)){
+    let policies::Policy ceiling=switch(configuration::read_policy(settings.policy_file)){
         case .ok(v):{v}case .err(e):{return failure(format,running,e);}
     };
-    let runs::RunConfig run=switch(configuration::read_run(run_file,ref ceiling)){
+    let runs::RunConfig run=switch(configuration::read_run(settings.run_file,ref ceiling)){
         case .ok(v):{v}case .err(e):{return failure(format,running,e);}
     };
     let catalog::Catalog imports=switch(configuration::read_catalog(catalog_file)){
@@ -49,7 +48,7 @@ pub fn i32 execute(render::Format format,usize policy_file,usize run_file,usize 
         case .ok(v):{v}case .err(e):{return failure(format,running,engine_error(e,true));}
     };
     if(project){
-        return execute_project(format,running,ref mut owner,ref run,imports,ref digest,responses,selection);
+        return execute_project(format,running,ref mut owner,ref run,imports,ref digest,responses,selection,settings);
     }
     let source_input::Source source=switch(source_input::read_source(2)){
         case .ok(v):{v}case .err(e):{return failure(format,running,e);}
@@ -58,12 +57,12 @@ pub fn i32 execute(render::Format format,usize policy_file,usize run_file,usize 
         imports,ref digest,ref run)){
         case .ok(v):{v}case .err(e):{return failure(format,running,engine_error(e,true));}
     };
-    return complete_command(format,running,ref mut owner,program,ref run,responses,selection);
+    return complete_command(format,running,ref mut owner,program,ref run,responses,selection,settings);
 }
 
 @effects(console,filesystem)
 fn i32 execute_project(render::Format format,bool running,ref mut engine::Engine owner,ref runs::RunConfig run,
-    catalog::Catalog imports,ref u32[] digest,Option<replies::Replies> responses,binary::Selection selection){
+    catalog::Catalog imports,ref u32[] digest,Option<replies::Replies> responses,binary::Selection selection,configured::Selection settings){
     var u8[3072] path=[0;3072];
     let usize size=switch(process::arg(3,ref mut path)){
         case .ok(v):{v}case .err(_):{return failure(format,running,errors::absent(10,0));}
@@ -79,7 +78,7 @@ fn i32 execute_project(render::Format format,bool running,ref mut engine::Engine
         case .ok(v):{v}
         case .err(e):{return project_failure(format,running,ref project,ref root,e);}
     };
-    return complete_command(format,running,owner,program,run,responses,selection);
+    return complete_command(format,running,owner,program,run,responses,selection,settings);
 }
 
 @effects(console)
@@ -97,32 +96,54 @@ fn i32 project_failure(render::Format format,bool running,ref manifest::Project 
 
 @effects(console,filesystem)
 fn i32 complete_command(render::Format format,bool running,ref mut engine::Engine owner,usize program,
-    ref runs::RunConfig run,Option<replies::Replies> responses,binary::Selection selection){
-    let Outcome result=switch(responses){
-        case .none:{success(0)}
-        case .some(table):{execute_guest(owner,program,run,ref table,selection)}
+    ref runs::RunConfig run,Option<replies::Replies> responses,binary::Selection selection,configured::Selection settings){
+    var i64 value=0;
+    var errors::Error problem=errors::absent(0,0);
+    let Option<engine::Output> publish=switch(responses){
+        case .none:{.none}
+        case .some(table):{switch(run_selected(owner,program,run,ref table,selection,settings,format,ref mut value)){
+            case .ok(v):{v}case .err(e):{problem=e;.none}
+        }}
     };
     if(!engine::release_program(owner,program).is_ok || !engine::destroy(owner).is_ok){
         return failure(format,running,errors::absent(5,0));
     }
-    return render::selected_outcome(format,running,result.error.kind!=0,result.value,result.error,0);
+    if(problem.kind!=0){return failure(format,running,problem);}
+    return switch(publish){
+        case .some(output):{configured::publish(format,value,ref output,settings,0)}
+        case .none:{render::selected_outcome(format,running,false,value,errors::absent(0,0),0)}
+    };
 }
 
-fn Outcome success(i64 value){return Outcome{.value=value,.error=errors::absent(0,0)};}
-fn Outcome failed(errors::Error error){return Outcome{.value=0,.error=error};}
-
 @effects(filesystem)
-fn Outcome execute_guest(ref mut engine::Engine owner,usize program,ref runs::RunConfig run,
-    ref replies::Replies responses,binary::Selection selection){
-    if(unsafe{bc_cli_enable_cancel()}==0){return failed(errors::absent(5,0));}
-    let usize instance=switch(prepare_guest(owner,program,run,selection)){
-        case .ok(v):{v}case .err(e):{return failed(e);}
+fn Result<Option<engine::Output>,errors::Error> run_selected(ref mut engine::Engine owner,usize program,
+    ref runs::RunConfig run,ref replies::Replies responses,binary::Selection selection,
+    configured::Selection settings,render::Format format,ref mut i64 value){
+    let bool emits=switch(engine::host_program_emits(owner,program)){
+        case .ok(v):{v}case .err(e):{return .err(engine_error(e,false));}
     };
-    let Outcome result=switch(complete(owner,instance,responses)){
-        case .ok(v):{success(v)}case .err(e):{failed(e)}
+    if(emits && render::text_mode(format)){return .err(errors::absent(10,0));}
+    if(settings.output_file!=0 && !emits){return .err(errors::absent(19,0));}
+    if(unsafe{bc_cli_enable_cancel()}==0){return .err(errors::absent(5,0));}
+    let usize instance=prepare_guest(owner,program,run,selection)?;
+    var errors::Error problem=errors::absent(0,0);
+    let Option<engine::Output> publish=switch(complete(owner,instance,responses)){
+        case .ok(v):{*value=v;switch(detach_output(owner,instance,emits)){
+            case .ok(output):{output}case .err(e):{problem=e;.none}
+        }}
+        case .err(e):{problem=e;.none}
     };
-    if(!engine::destroy_instance(owner,instance).is_ok){return failed(errors::absent(5,0));}
-    return result;
+    if(!engine::destroy_instance(owner,instance).is_ok){return .err(errors::absent(5,0));}
+    if(problem.kind!=0){return .err(problem);}
+    return .ok(publish);
+}
+
+fn Result<Option<engine::Output>,errors::Error> detach_output(ref mut engine::Engine owner,usize instance,bool emits){
+    if(!emits){return .ok(.none);}
+    return switch(engine::take_output(owner,instance)){
+        case .ok(output):{.ok(.some(output))}
+        case .err(e):{.err(engine_error(e,false))}
+    };
 }
 
 @effects(filesystem)

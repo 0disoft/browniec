@@ -30,6 +30,7 @@ pub fn u8 copy_opcode(){return 122;}
 pub fn u8 value_request_opcode(){return 123;}
 pub fn u8 project_opcode(){return 124;}
 pub fn u8 wrap_opcode(){return 125;}
+pub fn u8 emit_opcode(){return 126;}
 pub fn bool typed_request(u8 op){return op==typed_request_opcode() || op==result_request_opcode() || op==value_request_opcode();}
 
 fn bool typed_signature(ref ir::Program p,ref catalog::Catalog imports,usize at){
@@ -55,7 +56,9 @@ fn bool typed_signature(ref ir::Program p,ref catalog::Catalog imports,usize at)
 pub fn bool typed(ref ir::Program code){
     if(code.function_count>1 || code.call_count!=0 || (code.entry<16 && code.arities[code.entry]!=0)){return true;}
     var usize pc=0;
-    while(pc<code.count){if(typed_request(code.code[pc*8])){return true;}pc+=1;}
+    while(pc<code.count){
+        let u8 op=code.code[pc*8];if(typed_request(op) || op==emit_opcode()){return true;}pc+=1;
+    }
     return false;
 }
 
@@ -111,7 +114,7 @@ fn Result<usize,Error> inspect(ref ir::Program code,ref catalog::Catalog imports
             required|=one<<(code.code[at+3] as usize);
         }else if(op==9 && code.arities[code.entry]!=0 && (code.code[at+2] as usize)==code.entry){
             return .err(.Code);
-        }else if(op==9 || op==17 || op==18 || op==119 || op==120 || op==copy_opcode() || op==project_opcode() || op==wrap_opcode()){
+        }else if(op==emit_opcode() || op==9 || op==17 || op==18 || op==119 || op==120 || op==copy_opcode() || op==project_opcode() || op==wrap_opcode()){
             if(!typed_code){return .err(.Code);}
         }else if(op==2){
             let usize dst=code.code[at+1] as usize;
@@ -173,7 +176,8 @@ pub fn Result<Program,Error> retain(ref ir::Program code,catalog::Catalog import
     };
     if(!same_digest(expected,ref digest)){return .err(.Binding);}
     let usize required=inspect(code,ref imports)?;
-    if(!runs::narrowed_to(run,ceiling) || !allowed_imports(ref imports,required,run)){
+    if(!runs::narrowed_to(run,ceiling) || !allowed_imports(ref imports,required,run) ||
+        (has_emit(code) && !allows_output(run))){
         return .err(.Authority);
     }
     return publish(code,imports,digest,required,run);
@@ -204,8 +208,18 @@ pub fn u32[8] binding(ref Program p){return p.digest.words;}
 pub fn usize requirements(ref Program p){return p.required;}
 pub fn bool accepts_input(ref Program p){let ref ir::Program image=code(p);return image.arities[image.entry]==1;}
 
+fn bool has_emit(ref ir::Program code){
+    var usize pc=0;while(pc<code.count){if(code.code[pc*8]==emit_opcode()){return true;}pc+=1;}
+    return false;
+}
+pub fn bool emits(ref Program p){return has_emit(code(p));}
+fn bool allows_output(ref runs::RunConfig run){
+    let ref u8[] cap=b"brownie.output.emit";
+    return runs::declares(run,cap) && runs::grants(run,cap);
+}
 pub fn bool allows(ref Program p,ref policy::Policy ceiling,ref runs::RunConfig run){
     return bytes::equal(bytes::view(ref p.module_name),runs::module_name(run)) &&
         bytes::equal(bytes::view(ref p.function_name),runs::function_name(run)) &&
-        runs::narrowed_to(run,ceiling) && allowed_imports(imports(p),p.required,run);
+        runs::narrowed_to(run,ceiling) && allowed_imports(imports(p),p.required,run) &&
+        (!emits(p) || allows_output(run));
 }

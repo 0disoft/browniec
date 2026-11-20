@@ -1,6 +1,7 @@
 """Check the public scalar CLI contract using an already built executable."""
 
 import argparse
+import base64
 import hashlib
 import json
 from pathlib import Path
@@ -225,7 +226,7 @@ def check_host_project(exe, check_args, run_args):
     flags = b' --catalog FILE --policy FILE --run FILE'
     formats = b' [--json|--json-v2]'
     assert b'browniec check --project FILE' + flags + formats in usage
-    assert (b'browniec run --project FILE' + flags + b' --host-replies FILE [--input FILE|--stdin]'
+    assert (b'browniec run --project FILE' + flags + b' --host-replies FILE [--input FILE|--stdin] [--output FILE|--output-text FILE]'
             + formats in usage)
     project = check_args[2]
     helper = project.parent / 'helper.brc'
@@ -411,6 +412,42 @@ with subprocess.Popen(sys.argv[1:], stdout=subprocess.PIPE, stderr=subprocess.PI
         'error': {'kind': 'cancelled', 'location': {'kind': 'none'}},
     }
     print('PASS: Windows CTRL+BREAK cancels configured execution without publishing output')
+
+
+def check_host_project_output(exe, folder):
+    check, run = make_host_project(folder)
+    manifest, policy, config, replies = check[2], check[6], check[8], run[-1]
+    source = folder / 'app.brc'
+    source.write_bytes(b'module app; import helpers as h; pub fn i32 start(ref u8[] data){'
+                       b'output::emit(ref data); let i32 n=h::calculate(); output::emit(b"!"); return n+35;}')
+    assert check_json(exe, check, 4, version=2)['kind'] == 'unavailable'
+    config_obj = json.loads(config.read_bytes())
+    caps = [*config_obj['requires'], 'brownie.output.emit']
+    for path, fields in ((manifest, {'requires': caps}), (policy, {'capabilities': caps}),
+                         (config, {'requires': caps, 'grants': caps})):
+        path.write_text(json.dumps(json.loads(path.read_bytes()) | fields), encoding='utf-8')
+    allowed = json.loads(config.read_bytes())
+    message = b'X' * 4096 + b'\x00'
+    args = [*run, '--stdin']
+    assert check_json(exe, check, 0, version=2) is None
+    assert check_json(exe, args, 0, value=77, input_bytes=message,
+                      output_b64=base64.b64encode(message+b'!').decode('ascii')) is None
+    for flag in ('--output', '--output-text'):
+        destination = folder / (flag[2:] + '.txt')
+        assert check_json(exe, [*args, flag, destination], 0, version=2, value=77,
+                          input_bytes=message) is None
+        assert destination.read_bytes() == message+b'!'
+    destination = folder / 'unpublished.bin'
+    file_run = [*args, '--output', destination]
+    config.write_text(json.dumps(allowed | {'limits': allowed['limits'] | {'output_bytes': len(message)}}),
+                      encoding='utf-8')
+    assert check_json(exe, file_run, 5, version=2, input_bytes=message)['kind'] == 'output_limit'
+    assert not destination.exists()
+    config.write_text(json.dumps(allowed), encoding='utf-8')
+    replies.write_text(json.dumps(json.loads(replies.read_bytes()) | {'replies': []}), encoding='utf-8')
+    assert check_json(exe, file_run, 4, version=2, input_bytes=message)['kind'] == 'unavailable'
+    assert not destination.exists()
+    print('PASS: catalog project emits across host suspension, with exact file/JSON output and failure rollback')
 
 
 def check_configured_output(exe, folder):
@@ -829,6 +866,7 @@ def main():
         check_host_catalog(exe, host_check)
         check_host_project(exe, project_host_check, project_host_run)
         check_host_project_input(exe, project_host_check, project_host_run)
+        check_host_project_output(exe, Path(temp) / 'host-output')
         check_project(exe, Path(temp))
         check_project_input(exe, Path(temp))
         check_source_input(exe, Path(temp))
