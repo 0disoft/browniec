@@ -59,12 +59,12 @@ uint32_t bc_runtime_engine_take_output(void *raw,uintptr_t instance,void *outgoi
  s=B2(&e->f_0,owner.thread,owner.lifetime);
  if(s==8||s==14){
   /* Already-owned output extraction is bounded maintenance, not guest work. */
-  s=B16(&e->f_0,&e->f_3,&e->f_6,&e->f_7,instance,(bc_engine_outputs *)outgoing);
+  s=B16(&e->f_0,&e->f_3,&e->f_6,&e->f_7,instance,(bc_engine_outputs *)outgoing,&e->f_1);
   uint32_t end=bc_abi_guard_leave(owner);return end?end:s;
  }
  if(!s){ticket.owner=owner;ticket.epoch=e->f_0.f_3;}
  uint32_t end=bc_abi_guard_leave(owner);if(end)return end;if(s)return s;
- s=B16(&e->f_0,&e->f_3,&e->f_6,&e->f_7,instance,(bc_engine_outputs *)outgoing);return finish(e,ticket,s);
+ s=B16(&e->f_0,&e->f_3,&e->f_6,&e->f_7,instance,(bc_engine_outputs *)outgoing,&e->f_1);return finish(e,ticket,s);
 }
 uint32_t bc_runtime_engine_call(void *raw,uint32_t operation,uintptr_t id,uintptr_t argument){
  bc_engine *e=raw;bc_engine_ticket ticket={0};bc_abi_thread_identity owner;
@@ -165,7 +165,7 @@ uintptr_t bc_runtime_engine_output_fact(const void *source,uint32_t fact){
 uint32_t bc_runtime_engine_output_preflight(void *raw,uintptr_t instance){
  bc_engine *e=raw;bc_abi_thread_identity id;uint32_t s=bc_abi_guard_enter(&id);if(s)return s;
  s=B18(&e->f_0,id.thread,id.lifetime);
- if(!s)s=B24(&e->f_0,&e->f_3,&e->f_6,instance,sizeof(bc_engine_output));
+ if(!s)s=B24(&e->f_0,&e->f_3,&e->f_6,instance,sizeof(bc_engine_output),&e->f_1);
  uint32_t end=bc_abi_guard_leave(id);return end?end:s;
 }
 

@@ -130,6 +130,15 @@ def source_copy(path):
                                 '{return .err(diagnostics::absent(errors::make(5,0)));}', 1)
             text = text.replace(capacity_check, 'unsafe{bc_runtime_engine_test_output_fault(5)}!=0 || ' + capacity_check, 1)
             text = text.replace(publication, 'if(unsafe{bc_runtime_engine_test_output_fault(6)}!=0 || ' + publication[3:], 1)
+            take_lookup = 'let Result<usize,u32> located=output_index(outputs,id);'
+            take_charge = 'output_programs::heap_bytes(ref owner.run)!=child.output_bytes'
+            take_ledger = 'm.heap.current!=m.programs.external'
+            need(text.count(take_lookup) == text.count(take_charge) == text.count(take_ledger) == 1,
+                 'Output extraction fault anchors changed')
+            text = text.replace(take_lookup, 'let Result<usize,u32> located=if(unsafe{bc_runtime_engine_test_output_fault(7)}!=0)'
+                                '{.err(2)}else{output_index(outputs,id)};', 1)
+            text = text.replace(take_charge, 'unsafe{bc_runtime_engine_test_output_fault(8)}!=0 || ' + take_charge, 1)
+            text = text.replace(take_ledger, 'unsafe{bc_runtime_engine_test_output_fault(9)}!=0 || ' + take_ledger, 1)
             function = 'fn u32 prepare_host_inner('
             host_shape = '    if(program_variants(program)!=1){return contain_execution_fault(m,p,v,outputs);}'
             capacity = '    if(stride==0 || vec::len<Instance>(v)>=vec::capacity<Instance>(v) ||'

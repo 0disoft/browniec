@@ -354,7 +354,42 @@ fn Result<bool,engine::Error> output_fault_quarantines_engine(u32 stage){
     return .ok(true);
 }
 
+fn Result<bool,engine::Error> extraction_fault_quarantines_engine(u32 stage){
+    var engine::Engine e=created(1,3)?;
+    let usize p=code(ref mut e,b"module app;pub fn i32 chosen(){output::emit(ref b\"A\");return 42;}");
+    let usize prior=id(engine::create_output_instance(ref mut e,p,16000000,1,true));
+    let engine::Event prior_event=event(engine::execute_once(ref mut e,prior));
+    let usize peer=id(engine::create_output_instance(ref mut e,p,123,1,true));
+    let usize target=id(engine::create_output_instance(ref mut e,p,if(stage==7){0}else{16000000},1,true));
+    let engine::Event done=event(engine::execute_once(ref mut e,target));
+    assert(done.kind==if(stage==7){2}else{1});
+    let usize attempts=unsafe{probe_attempts()};
+    let usize live=unsafe{probe_live_bytes()};
+    unsafe{bc_runtime_engine_test_inject_output_fault(stage)};
+    rejected_take(engine::take_output(ref mut e,target),14);
+    assert(unsafe{probe_attempts()}==attempts && unsafe{probe_live_bytes()}==live);
+    same_event(done,event(engine::observe(ref mut e,target)));
+    same_event(prior_event,event(engine::observe(ref mut e,prior)));
+    let engine::Event stopped=event(engine::observe(ref mut e,peer));
+    assert(stopped.kind==2 && stopped.remaining==123 && stopped.diagnostic.code.kind==errors::engine_poisoned_kind());
+    rejected_event(engine::execute_once(ref mut e,peer),14);
+    let engine::Output output=engine::take_output(ref mut e,prior)?;
+    published(ref output,b"A",1);
+    let engine::Output retained=engine::take_output(ref mut e,target)?;
+    mapped(ref retained,done);
+    if(stage==7){unpublished(ref retained,8,0);}else{published(ref retained,b"A",1);}
+    rejected_take(engine::take_output(ref mut e,target),2);
+    assert(id(engine::destroy_instance(ref mut e,target))==target);
+    assert(id(engine::destroy_instance(ref mut e,peer))==peer);
+    assert(id(engine::destroy_instance(ref mut e,prior))==prior);
+    assert(id(engine::release_program(ref mut e,p))==p);
+    assert(id(engine::destroy(ref mut e))==0);
+    return .ok(true);
+}
 pub fn void run(){
+    assert(extraction_fault_quarantines_engine(7).is_ok);unsafe{bc_runtime_engine_test_closed_allocations()};
+    assert(extraction_fault_quarantines_engine(8).is_ok);unsafe{bc_runtime_engine_test_closed_allocations()};
+    assert(extraction_fault_quarantines_engine(9).is_ok);unsafe{bc_runtime_engine_test_closed_allocations()};
     assert(output_fault_quarantines_engine(3).is_ok);unsafe{bc_runtime_engine_test_closed_allocations()};
     assert(output_fault_quarantines_engine(5).is_ok);unsafe{bc_runtime_engine_test_closed_allocations()};
     assert(output_fault_quarantines_engine(6).is_ok);unsafe{bc_runtime_engine_test_closed_allocations()};

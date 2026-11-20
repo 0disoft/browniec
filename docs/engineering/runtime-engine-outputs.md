@@ -51,11 +51,25 @@ allocations at exit. Local receipt:
 
 `take_output(engine, instance)` first reserves the caller's single result slot.
 An allocation failure changes no Engine association, terminal event or bytes.
-Ready returns status 11; a missing, cancelled or already-taken record returns 2.
-It then moves the complete `Output` resource once, without copying payload or
-allocating after detachment. Removing a middle/front record uses preallocated
-scratch and restores all peer owners. The terminal Instance can still be
-observed after extraction.
+Ready returns status 11. A record that was never produced, was cancelled or
+was already taken returns status 2. The Instance records ownership separately
+from its byte charge, so losing even a zero-byte completion is detectable.
+Before allocating the result slot, the Engine checks the owner shape, the
+ordinary output's actual retained size, and agreement between the live and
+combined ledger balances. Host outputs retain their admitted Exchange
+reservation. A failed check quarantines the Engine with status 14 before
+moving ownership or issuing a refund. Previously terminal events stay stable.
+The final transfer validates the same facts, moves the complete `Output`
+resource, and commits a prepared refund to both ledgers. It uses preallocated
+scratch to restore peer owners and copies no payload. The terminal Instance
+remains observable after extraction.
+
+The Windows Engine verifier injected a missing zero-byte completion, a
+retained output charge mismatch and a disagreement between the two ledgers.
+All three were detected before any allocation or debit in development and
+/O2. Prior terminal events and valid outputs remained available, with zero
+live SDK allocations at exit. Local receipt:
+`build/runtime-engine/20261120T224015701461Z/receipt.json`.
 
 `output_completion`, `output_available` and `output_view` borrow the retained
 Output. The view is tied to this exact resource, including its empty case.
@@ -83,7 +97,7 @@ application in development and release. It loads an explicit policy, run config
 and manifest, compiles under the manifest's Windows directory anchor, and runs
 the Engine through a prepared Instance. The fixture checks return value 77,
 exact sealed output bytes `41 00`, and successful Instance, Program and Engine
-teardown. [Configured `browniec run`](../cli/configuration.md#configured-project-output)
+teardown. Both profiles passed this fixture after the extraction changes. [Configured `browniec run`](../cli/configuration.md#configured-project-output)
 uses the same bridge and publishes the detached bytes after Engine teardown.
 The public CLI contract uses the standard Windows binary to exercise both JSON
 versions, file and pipe input, authority denial, diagnostics, and output rollback.
