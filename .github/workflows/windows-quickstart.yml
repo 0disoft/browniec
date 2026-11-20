@@ -9,6 +9,9 @@ on:
       - '.gitattributes'
       - 'README.md'
       - 'examples/answer.brc'
+      - 'examples/array-read.brc'
+      - 'examples/branches.brc'
+      - 'examples/mutable-slices.brc'
       - 'examples/shipping-fee.brc'
       - 'fairy.lock'
       - 'fairy.toml'
@@ -16,6 +19,7 @@ on:
       - 'tests/m2/cli_locations.fy'
       - 'toolchain.json'
       - 'tools/check-cli-contract.py'
+      - 'tools/check-cli-examples.py'
       - 'tools/setup-toolchain.py'
       - 'tools/fairyc-windows-release.patch'
 
@@ -39,16 +43,23 @@ jobs:
           PUSH_BEFORE: ${{ github.event.before }}
         run: |
           $scope = 'full'
-          # Only skip public checks for a known, test-only diff.
+          $examples = @('examples/branches.brc', 'examples/array-read.brc', 'examples/mutable-slices.brc')
+          $selected = $examples
           if ($env:GITHUB_EVENT_NAME -eq 'push' -and $env:PUSH_BEFORE -cmatch '^[0-9a-f]{40}$' -and
               $env:PUSH_BEFORE -ne ('0' * 40)) {
             $PSNativeCommandUseErrorActionPreference = $false
-            $changed = @(git diff --no-renames --name-status $env:PUSH_BEFORE HEAD -- 2>$null)
-            if ($LASTEXITCODE -eq 0 -and $changed.Count -eq 1 -and
-                $changed[0] -ceq ('M' + [char]9 + 'tests/m2/cli_locations.fy')) {
-              $scope = 'verifier-only'
+            $changed = @(git diff --no-renames --name-only $env:PUSH_BEFORE HEAD -- 2>$null)
+            if ($LASTEXITCODE -eq 0 -and $changed.Count -gt 0) {
+              if ($changed.Count -eq 1 -and $changed[0] -ceq 'tests/m2/cli_locations.fy') {
+                $scope = 'verifier-only'
+                $selected = @()
+              } elseif (@($changed | Where-Object { $_ -cnotin $examples }).Count -eq 0) {
+                $scope = 'examples-only'
+                $selected = $changed
+              }
             }
           }
+          "examples=$($selected -join ',')" >> $env:GITHUB_OUTPUT
           Write-Output "Windows check scope: $scope"
           "scope=$scope" >> $env:GITHUB_OUTPUT
 
@@ -82,11 +93,11 @@ jobs:
         run: ./build/toolchain/fairyc.exe build --release --locked
 
       - name: Check the answer example
-        if: steps.changes.outputs.scope != 'verifier-only'
+        if: steps.changes.outputs.scope == 'full'
         run: ./build/browniec.exe check examples/answer.brc --json
 
       - name: Run the answer example and verify its output
-        if: steps.changes.outputs.scope != 'verifier-only'
+        if: steps.changes.outputs.scope == 'full'
         shell: pwsh
         run: |
           $stderr = Join-Path $env:RUNNER_TEMP 'browniec-answer.stderr'
@@ -106,10 +117,18 @@ jobs:
           }
 
       - name: Check CLI diagnostics and eval-i32 on the same release binary
-        if: steps.changes.outputs.scope != 'verifier-only'
+        if: steps.changes.outputs.scope == 'full'
         run: python -B tools/check-cli-contract.py --exe ./build/browniec.exe
 
+      - name: Run selected branch and array examples on the same release binary
+        if: steps.changes.outputs.examples != ''
+        shell: pwsh
+        env:
+          EXAMPLES: ${{ steps.changes.outputs.examples }}
+        run: python -B tools/check-cli-examples.py --exe ./build/browniec.exe ($env:EXAMPLES -split ',')
+
       - name: Check internal verifier diagnostic output
+        if: steps.changes.outputs.scope != 'examples-only'
         shell: pwsh
         run: |
           $compiler = (Resolve-Path ./build/toolchain/fairyc.exe).Path
