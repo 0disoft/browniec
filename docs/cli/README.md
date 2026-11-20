@@ -10,14 +10,16 @@
 browniec --version [--json]
 browniec --help
 browniec check SOURCE [--json]
-browniec run SOURCE [--fuel N] [--json]
+browniec run SOURCE [--input FILE|--stdin] [--fuel N] [--json|--json-v2]
 browniec check --project FILE [--json|--json-v2]
+browniec check --project FILE --policy FILE --run FILE [--json|--json-v2]
 browniec run --project FILE [--input FILE|--stdin] [--fuel N] [--json|--json-v2]
 browniec run --project FILE --policy FILE --run FILE [--input FILE|--stdin] (--json|--json-v2)
 ```
 
-SOURCE is one local UTF-8 code file, at most 4096 bytes. The entry is zero-argument
-`fn i32 main`. Fuel defaults to 256 and accepts 0..16000000; aggregate runs need an
+SOURCE is one local UTF-8 code file, at most 4096 bytes. With explicit binary guest
+input, Windows selects `pub fn i32 main(ref u8[] data)` in `module main`. Otherwise
+the entry is zero-argument `fn i32 main`. Fuel defaults to 256 and accepts 0..16000000; aggregate runs need an
 explicit larger budget, usually `--fuel 100000` or `--fuel 1000000`.
 
 The public frontend/VM supports six scalars, branches/loops, shallow i32/bool tags,
@@ -48,8 +50,7 @@ runtime/delivery gaps.
 
 Windows project execution and explicit binary project input are described in
 [project selection](configuration.md#project-selection). [Configured runs](configuration.md#configured-project-output)
-also support the output capability and compile/run deadlines. Source-mode guest input,
-catalog flags, workers, cancellation controls, host suspension and the public DLL
+also support the output capability and compile/run deadlines. Catalog flags, workers, cancellation controls, host suspension and the public DLL
 remain pending. `--isolated` reports unavailable.
 
 `core: true` in version JSON means this experimental native CLI exists; it does

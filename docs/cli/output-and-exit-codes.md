@@ -168,7 +168,8 @@ failure leaves the field absent, including a trap after an emit. The configured
 path reports `deadline` and `memory_limit` as exit 5. Its source diagnostics
 use the same canonical project locations described below.
 
-After successful compilation, project runs with `--input FILE` or `--stdin` report
+After successful compilation, Windows source and project runs with `--input FILE` or
+`--stdin` report
 `brownie.m2-reference/1`. Oversized input reports `input_limit` and exit 5.
 Input acquisition errors have no source location and use `input_io` and exit 7.
 Guest errors keep the ordinary source diagnostic and exit conventions.

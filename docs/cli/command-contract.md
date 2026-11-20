@@ -9,7 +9,7 @@
 | --- | --- | --- |
 | browniec --version | Report experimental profile and delivery availability; full metadata planned | Implemented for the bounded M1/M2 feature subsets |
 | browniec check SOURCE | Compile and verify without running guest code or host calls | Implemented for the bounded M1/M2 feature subsets |
-| browniec run SOURCE | Compile, verify, and run one selected source | Implemented for the bounded M1/M2 feature subsets |
+| browniec run SOURCE | Compile, verify, and run one selected source | Bounded M1/M2 feature subsets, with optional binary guest input on Windows |
 | browniec eval-i32 SOURCE N | Evaluate a scalar rule with one signed decimal i32 input | Implemented for `module main` sources with `fn i32 evaluate(i32 ...)` |
 | browniec check --project FILE | Check an explicit source map and its named entry | Windows, zero-argument i32 entry, empty requirements |
 | browniec run --project FILE [--input FILE or --stdin] | Run the checked named entry | Windows, zero-argument i32 entry or one shared-byte parameter with explicit input, empty requirements |
@@ -22,7 +22,7 @@
 | browniec worker | Broker-only restricted IPC endpoint | Designed; unavailable |
 
 The implemented grammar is `browniec check SOURCE [--json|--json-v2]` and
-`browniec run SOURCE [--fuel N] [--json|--json-v2]`, `browniec inspect SOURCE --ir [--json]`,
+`browniec run SOURCE [--input FILE or --stdin] [--fuel N] [--json|--json-v2]`, `browniec inspect SOURCE --ir [--json]`,
 `browniec inspect SOURCE --limits --json`, plus `--version [--json]` and `--help`.
 Scalar evaluation uses `browniec eval-i32 SOURCE N [--fuel N] [--json|--json-v2]`.
 On Windows, check and run also accept `--project FILE` in place of `SOURCE`.
@@ -45,7 +45,8 @@ output emission and compile/run deadlines. General Buffer delivery, catalog
 loading, workers and public cancellation remain unavailable. `--isolated` returns an availability
 denial, with no unrestricted fallback. Ordinary check/run use zero-argument i32
 `main`. The separate eval-i32 command selects a single-i32 `evaluate` entry.
-The source file is not a guest input snapshot.
+With explicit guest input, Windows `run SOURCE` instead selects the public shared-byte
+`main` entry in `module main`.
 
 ## Execution rules
 

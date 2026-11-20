@@ -38,7 +38,7 @@
   },
   {
     "command": "run",
-    "arguments": "SOURCE [--fuel N]",
+    "arguments": "SOURCE [--input FILE|--stdin] [--fuel N]",
     "formats": [
       {
         "option": "",

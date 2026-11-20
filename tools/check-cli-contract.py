@@ -322,14 +322,12 @@ def check_project_input(exe, folder):
     assert check_json(exe, [*args[:-1], 0], 5, version=2, profile=profile)['kind'] == 'fuel'
     for rejected in (
         ['check', '--project', manifest, '--input', payload],
-        ['run', source, '--input', payload],
         ['run', '--project', manifest, '--input'],
         [*args, '--input', payload],
         [*args, '--stdin'],
         [*stdin_args, '--input', payload],
         [*stdin_args, '--stdin'],
         ['check', '--project', manifest, '--stdin'],
-        ['run', source, '--stdin'],
     ):
         invoke(exe, rejected, 2)
     invoke(exe, ['run', '--project', manifest], 3)
@@ -400,6 +398,36 @@ def check_inspection_limits(exe, folder):
     print('PASS: limits at 15/16/17 functions, 4096/4097 source bytes, and retained IR')
 
 
+def check_source_input(exe, folder):
+    source = folder / 'source-input.brc'
+    payload = folder / 'source-input.bin'
+    original = (b'module main; pub fn i32 main(ref u8[] data) {'
+                b'if(data.len==0){return 0;}return data[data.len-1] as i32;}')
+    source.write_bytes(original)
+    payload.write_bytes(b'\x00\xff')
+    args = ['run', source, '--fuel', 16000000]
+    profile = 'brownie.m2-reference/1'
+    assert check_json(exe, [*args, '--input', payload], 0, value=255, profile=profile) is None
+    assert check_json(exe, [*args, '--stdin'], 0, version=2, value=255, profile=profile,
+                      input_bytes=b'\x00\xff') is None
+    assert check_json(exe, [*args, '--stdin'], 0, version=2, value=0, profile=profile,
+                      input_bytes=b'') is None
+    invoke(exe, [*args, '--input', payload, '--stdin'], 2)
+    invoke(exe, ['check', source, '--stdin'], 2)
+    invoke(exe, ['eval-i32', source, 0, '--stdin'], 2)
+
+    payload.unlink()
+    missing = check_json(exe, [*args, '--input', payload], 7, version=2, profile=profile)
+    assert missing == {'kind': 'input_io', 'location': {'kind': 'none'}}, missing
+    source.write_bytes(b'module main; pub fn i32 main(ref u8[] data){return true;}')
+    bad = check_json(exe, [*args, '--input', payload], 3, version=2)
+    assert bad['kind'] == 'type' and bad['location']['kind'] == 'source_byte', bad
+    source.write_bytes(b'\xff')
+    lexical = check_json(exe, [*args, '--input', payload], 3, version=2)
+    assert lexical == {'kind': 'lexical', 'location': {'kind': 'source_byte', 'offset': 0}}, lexical
+    print('PASS: source-mode binary file and pipe input, empty input and compile-first diagnostics')
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--exe', type=Path, required=True)
@@ -417,6 +445,7 @@ def main():
         check_output_table(exe, identity)
         check_project(exe, Path(temp))
         check_project_input(exe, Path(temp))
+        check_source_input(exe, Path(temp))
         check_configured_output(exe, Path(temp))
         check_inspection_limits(exe, Path(temp))
         check_diagnostic(exe, source_zero, 3, 'lexical',

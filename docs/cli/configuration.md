@@ -68,6 +68,14 @@ The [native project input primitives](../engineering/project-input.md) now suppl
 bounded JSON tokens and canonical spelling checks. The [typed native project format](project-format.md) now admits a complete owning
 source map, entry and declared requirements.
 
+## Single-source guest input
+
+On Windows, `run SOURCE --input FILE` and `run SOURCE --stdin` select
+`pub fn i32 main(ref u8[] data)` in `module main`. Compilation verifies that entry
+before opening guest input. It uses the same binary reader, 1 MiB limit and Fuel
+schedule as ordinary project input below. Source diagnostics report offsets in
+`SOURCE`. The input options are mutually exclusive and available only on `run`.
+
 ## Project selection
 
 On Windows use `browniec check --project FILE [--json|--json-v2]` or

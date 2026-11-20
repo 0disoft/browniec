@@ -14,6 +14,7 @@ import cli_project_input as binary;
 import cli_configured_project as configured;
 import runtime_input as input;
 import source_snapshot as sources;
+import source_error as diagnostics;
 import static_image as images;
 import errors as errors;
 import render as render;
@@ -120,11 +121,7 @@ fn i32 execute_entry(entries::Entry entry,ref sources::Snapshot snapshot,render:
 
 @effects(console)
 fn i32 binding_failure(render::Format format,bool run,ref sources::Snapshot snapshot,modules::Error e){
-    let u8 kind=switch(e.kind){
-        case .Lexical:{1}case .Syntax:{2}case .Limit:{4}case .Allocation:{15}
-        case .Duplicate:{3}case .Missing:{3}case .Private:{3}case .Reserved:{3}case .Bounds:{3}case .Kind:{3}
-    };
-    return render::project_failure(format,run,errors::make(kind,e.at.start),snapshot,e.at,0);
+    return render::project_failure(format,run,diagnostics::binding(e),snapshot,e.at,0);
 }
 @effects(console,filesystem)
 fn i32 execute_with_input(ref ProjectInput project,render::Format format,usize fuel,binary::Selection selection){
