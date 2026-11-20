@@ -445,8 +445,7 @@ The host owns the native slot. It keeps the slot and the associated Engine
 at stable addresses and polls close until the process and outstanding I/O
 are reaped. A nonwrapping slot generation binds each dispatch to one launch
 and prevents an old session from driving a reused slot. The [Windows CLI](../cli/configuration.md#windows-process-adapters)
-owns one transport slot and reaps it before continuing the guest. General
-aggregate transport admission for multiple host sessions remains open.
+owns one transport slot and reaps it before continuing the guest.
 
 The Engine fixture passed Windows development and /O2. A real process
 returned a typed value that produced guest result 77 while a peer Instance
@@ -455,6 +454,37 @@ start, crossed request ID, cancellation, expiry, and polling after close.
 Both profiles ended with zero live SDK allocations. The locked Windows CLI
 release build and existing CLI contract suite passed separately.
 Local Engine receipt: `build/runtime-engine/20261120T203608509249Z/receipt.json`.
+
+### Shared process adapter budget
+
+The trusted dispatch owner can share a budget across slots whose calls it
+serializes. The budget bounds live slots, launch attempts and cumulative wire
+reservations. Each attempt reserves two 64-byte headers, the actual request
+body, the allowed reply body (at most 4096 bytes), and the one-byte EOF probe.
+The reservation bounds bytes that Brownie C submits or accepts through the
+transport. Native body approval is capped by the reservation.
+
+Admission checks all three limits before copying or claiming the Engine
+request. Once admitted for launch, an attempt counts even when launch fails.
+A failed launch retains no live slot. A successful launch occupies one slot
+until child exit and I/O completion are reaped. Cancellation can end the guest
+exchange while this live charge remains. Reaping returns that charge exactly
+once. Launch and wire charges stay cumulative for the dispatch owner's lifetime.
+
+The CLI uses one slot and the supported run ceiling of 65535 host calls with
+at most 8321 reserved bytes each. Per-run host call and payload limits still
+apply. This budget covers the trusted adapter transport. General host
+checkpoints and restricted worker resource budgets remain open.
+
+The Windows transport verifier passed both profiles with two live children,
+exact and one-byte-short admission, a failed launch, a cancelled lease held
+through reaping, and zero parent handle growth. The Engine verifier passed
+both profiles with no SDK allocation on the short-budget rejection. The
+same request then completed with result 77, and Engine exit left zero live
+SDK allocations. The locked Windows /O2 CLI passed the source and project
+adapter contract. Local receipts:
+`build/host-adapter-process/20261120T211029690476Z/receipt.json` and
+`build/runtime-engine/20261120T211705437309Z/receipt.json`.
 
 ## Engine scalar pending memory
 

@@ -22,7 +22,12 @@ uint32_t bc_cli_cancel_requested(void){
 }
 
 /* The CLI runs one Instance and admits one adapter lease at a time. */
-static bc_adapter_slot adapter_slot;
+static bc_adapter_budget adapter_budget = {
+    .live_limit = 1,
+    .launch_limit = 65535,
+    .wire_limit = 65535 * (2 * BC_ADAPTER_HEADER_BYTES + 2 * BC_ADAPTER_BODY_LIMIT + 1)
+};
+static bc_adapter_slot adapter_slot = {.budget = &adapter_budget};
 void *bc_cli_adapter_slot(void){return &adapter_slot;}
 void bc_cli_adapter_wait(void){Sleep(1);}
 uint32_t bc_cli_adapter_reap(void){

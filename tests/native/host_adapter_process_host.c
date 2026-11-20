@@ -58,17 +58,25 @@ static int child(wchar_t mode) {
     return 0;
 }
 
-static bc_adapter_process *start(const wchar_t *path, wchar_t mode, uint64_t deadline) {
+static void fixture_mode(wchar_t mode) {
     wchar_t value[] = {mode, 0};
-    check(SetEnvironmentVariableW(L"BC_TEST_ADAPTER_FIXTURE", value), "fixture mode");
-    uint8_t header[BC_ADAPTER_HEADER_BYTES] = {0};
+    check(SetEnvironmentVariableW(L"BC_TEST_ADAPTER_FIXTURE", mode ? value : NULL), "fixture mode");
+}
+
+static void make_request(uint8_t *header, uint8_t *body) {
     memcpy(header, "BCA1", 4);
     header[29] = 16;
+    for (size_t i = 0; i < BC_ADAPTER_BODY_LIMIT; ++i) body[i] = (uint8_t)i;
+}
+
+static bc_adapter_process *start(const wchar_t *path, wchar_t mode, uint64_t deadline) {
+    fixture_mode(mode);
+    uint8_t header[BC_ADAPTER_HEADER_BYTES] = {0};
     uint8_t body[BC_ADAPTER_BODY_LIMIT];
-    for (size_t i = 0; i < sizeof(body); ++i) body[i] = (uint8_t)i;
+    make_request(header, body);
     bc_adapter_process *session = bc_adapter_process_start(path, wcslen(path),
         header, body, sizeof(body), deadline);
-    check(SetEnvironmentVariableW(L"BC_TEST_ADAPTER_FIXTURE", NULL), "clear fixture mode");
+    fixture_mode(0);
     return session;
 }
 
@@ -132,6 +140,71 @@ static void exchange(const wchar_t *path, wchar_t mode, bc_adapter_state expecte
     reap(session);
 }
 
+static uintptr_t start_slot(bc_adapter_slot *slot, const wchar_t *path, wchar_t mode) {
+    uint8_t path_utf8[4096], header[BC_ADAPTER_HEADER_BYTES] = {0}, body[BC_ADAPTER_BODY_LIMIT];
+    int length = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, path, (int)wcslen(path),
+        (char *)path_utf8, sizeof(path_utf8), NULL, NULL);
+    check(length > 0, "slot fixture path");
+    make_request(header, body);
+    fixture_mode(mode);
+    uintptr_t generation = bc_adapter_slot_start(slot, slot->budget, path_utf8, (size_t)length,
+        header, body, sizeof(body), 12, deadline_after(3000));
+    fixture_mode(0);
+    return generation;
+}
+
+static void reap_slot(bc_adapter_slot *slot) {
+    uint64_t until = GetTickCount64()+3000;
+    while (!bc_adapter_slot_close(slot)) {
+        check(GetTickCount64() < until, "slot reaping watchdog");
+        Sleep(1);
+    }
+}
+
+static void aggregate(const wchar_t *path, const wchar_t *missing) {
+    const size_t frame_budget = 2 * BC_ADAPTER_HEADER_BYTES + BC_ADAPTER_BODY_LIMIT + 12 + 1;
+    bc_adapter_budget short_wire = {.live_limit = 2, .launch_limit = 3, .wire_limit = frame_budget-1};
+    bc_adapter_slot denied = {.budget = &short_wire};
+    check(!start_slot(&denied, path, L'g') && !short_wire.live && !short_wire.launches &&
+        !short_wire.wire && !denied.generation, "one byte short leaves admission untouched");
+
+    bc_adapter_budget budget = {.live_limit = 2, .launch_limit = 3, .wire_limit = 4*frame_budget};
+    bc_adapter_slot a = {.budget = &budget}, b = {.budget = &budget}, c = {.budget = &budget};
+    uintptr_t first = start_slot(&a, path, L'g'), second = start_slot(&b, path, L's');
+    check(first && second && budget.live == 2 && budget.launches == 2 &&
+        budget.wire == 2*frame_budget, "two slots charge the shared budget");
+    bc_adapter_process *active = bc_adapter_slot_process(&a, &budget, first);
+    bc_adapter_process *stalled = bc_adapter_slot_process(&b, &budget, second);
+    check(active && stalled, "resolve concurrent leases");
+    uint64_t until = GetTickCount64()+3000;
+    check(wait_event(active, until) == BC_ADAPTER_HEADER, "admitted reply");
+    check(!bc_adapter_process_accept_body(active, 13) && bc_adapter_process_accept_body(active, 12),
+        "only reserved reply bytes may be read");
+    check(wait_event(stalled, until) == BC_ADAPTER_HEADER, "stalled reply header");
+    check(bc_adapter_process_accept_body(stalled, 12), "approve stalled reply");
+    bc_adapter_process_step(stalled);
+    bc_adapter_process_cancel(stalled);
+    check(!start_slot(&c, path, L'g') && budget.live == 2 && budget.launches == 2 &&
+        budget.wire == 2*frame_budget, "cancelled lease still consumes a slot");
+    reap_slot(&b);
+    check(budget.live == 1 && !bc_adapter_slot_process(&b, &budget, second),
+        "reaping releases the live slot and invalidates its generation");
+    check(!start_slot(&c, missing, L'g') && budget.live == 1 && budget.launches == 3 &&
+        budget.wire == 3*frame_budget, "failed launch keeps only its cumulative charges");
+    check(!bc_adapter_slot_admits(&b, BC_ADAPTER_BODY_LIMIT, 12),
+        "launch count can reject despite remaining wire and live capacity");
+    check(wait_event(active, until) == BC_ADAPTER_READY, "peer still completes");
+    reap_slot(&a);
+    check(bc_adapter_slot_close(&a) && budget.live == 0 && budget.launches == 3 &&
+        budget.wire == 3*frame_budget, "closing twice refunds only once");
+
+    bc_adapter_budget exact_wire = {.live_limit = 1, .launch_limit = 2, .wire_limit = frame_budget};
+    bc_adapter_slot exact = {.budget = &exact_wire};
+    check(start_slot(&exact, path, L'g') && exact_wire.wire == frame_budget, "exact wire limit accepted");
+    reap_slot(&exact);
+    check(!bc_adapter_slot_admits(&exact, BC_ADAPTER_BODY_LIMIT, 12), "reaping cannot replenish wire");
+}
+
 int wmain(void) {
     wchar_t mode[2];
     if (GetEnvironmentVariableW(L"BC_TEST_ADAPTER_FIXTURE", mode, _countof(mode)) == 1)
@@ -156,9 +229,10 @@ int wmain(void) {
     exchange(path, L's', BC_ADAPTER_CANCELLED);
     exchange(path, L'd', BC_ADAPTER_DEADLINE);
     exchange(path, L'h', BC_ADAPTER_DEADLINE);
+    aggregate(path, missing);
     check(GetProcessHandleCount(GetCurrentProcess(), &after), "final handle count");
     if (after != baseline) fprintf(stderr, "handles before=%lu after=%lu\n", baseline, after);
     check(after == baseline, "handle ownership balanced");
-    puts("{\"processCases\":8,\"launchRejections\":3,\"handleDelta\":0}");
+    puts("{\"processCases\":8,\"launchRejections\":3,\"aggregateCases\":1,\"handleDelta\":0}");
     return 0;
 }

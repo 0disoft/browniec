@@ -39,19 +39,28 @@ void bc_adapter_process_cancel(bc_adapter_process *session);
    Poll close again until one indicates completed cleanup and frees owner. */
 int bc_adapter_process_close(bc_adapter_process *session);
 
-/* A host-owned, zero-initialized slot. Keep it, and the associated Engine,
-   alive at stable addresses until close succeeds. All access is serialized. */
+/* Initialize the ceilings before use. All other fields start at zero.
+   The host serializes all access, including across slots sharing a budget. */
+typedef struct bc_adapter_budget {
+    size_t live_limit, launch_limit, wire_limit;
+    size_t live, launches, wire;
+} bc_adapter_budget;
+
+/* Bind the slot to its budget before use. Keep both and the associated
+   Engine alive at stable addresses until close succeeds. */
 typedef struct bc_adapter_slot {
     bc_adapter_process *process;
     const void *engine;
     uintptr_t generation;
+    bc_adapter_budget *budget;
 } bc_adapter_slot;
 
-uint32_t bc_adapter_slot_empty(const void *owner);
+/* Includes two headers and the trailing-byte probe. Admission is read-only. */
+uint32_t bc_adapter_slot_admits(const void *owner, size_t request_length, size_t reply_limit);
 void *bc_adapter_slot_process(const void *owner, const void *engine, uintptr_t generation);
 uintptr_t bc_adapter_slot_start(void *owner, const void *engine, const uint8_t *path,
     size_t path_len, const uint8_t *header, const uint8_t *body, size_t body_len,
-    uintptr_t deadline);
+    size_t reply_limit, uintptr_t deadline);
 uint32_t bc_adapter_slot_close(void *owner);
 
 #endif

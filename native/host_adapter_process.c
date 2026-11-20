@@ -14,7 +14,7 @@ struct bc_adapter_process {
     HANDLE job, process, input, output, event;
     OVERLAPPED io;
     uint64_t deadline;
-    size_t offset, target;
+    size_t offset, target, reply_limit;
     phase phase;
     bc_adapter_state state;
     int pending;
@@ -149,6 +149,7 @@ bc_adapter_process *bc_adapter_process_start(const wchar_t *path, size_t path_le
     s->deadline = deadline;
     s->phase = SEND;
     s->target = BC_ADAPTER_HEADER_BYTES + body_len;
+    s->reply_limit = BC_ADAPTER_BODY_LIMIT;
     memcpy(s->frame, header, BC_ADAPTER_HEADER_BYTES);
     if (body_len) memcpy(s->frame+BC_ADAPTER_HEADER_BYTES, body, body_len);
     SECURITY_ATTRIBUTES inherit = {sizeof(inherit), NULL, TRUE};
@@ -255,7 +256,7 @@ const uint8_t *bc_adapter_process_frame(const bc_adapter_process *s, size_t *len
 }
 
 int bc_adapter_process_accept_body(bc_adapter_process *s, size_t length) {
-    if (s->state != BC_ADAPTER_HEADER || length > BC_ADAPTER_BODY_LIMIT) return 0;
+    if (s->state != BC_ADAPTER_HEADER || length > s->reply_limit) return 0;
     if (now_ticks() >= s->deadline) { stop(s, BC_ADAPTER_DEADLINE); return 0; }
     s->target = BC_ADAPTER_HEADER_BYTES + length;
     s->state = BC_ADAPTER_PENDING;
@@ -280,9 +281,18 @@ int bc_adapter_process_close(bc_adapter_process *s) {
     return 1;
 }
 
-uint32_t bc_adapter_slot_empty(const void *owner) {
+static size_t wire_reservation(size_t request_length, size_t reply_limit) {
+    return 2 * BC_ADAPTER_HEADER_BYTES + request_length + reply_limit + 1;
+}
+
+uint32_t bc_adapter_slot_admits(const void *owner, size_t request_length, size_t reply_limit) {
     const bc_adapter_slot *slot = owner;
-    return slot && !slot->process && slot->generation != UINTPTR_MAX;
+    if (!slot || !slot->budget || slot->process || slot->generation == UINTPTR_MAX ||
+        request_length > BC_ADAPTER_BODY_LIMIT || reply_limit > BC_ADAPTER_BODY_LIMIT) return 0;
+    const bc_adapter_budget *budget = slot->budget;
+    return budget->live < budget->live_limit && budget->launches < budget->launch_limit &&
+        budget->wire <= budget->wire_limit &&
+        wire_reservation(request_length, reply_limit) <= budget->wire_limit - budget->wire;
 }
 
 void *bc_adapter_slot_process(const void *owner, const void *engine, uintptr_t generation) {
@@ -292,23 +302,32 @@ void *bc_adapter_slot_process(const void *owner, const void *engine, uintptr_t g
 
 uintptr_t bc_adapter_slot_start(void *owner, const void *engine, const uint8_t *path,
     size_t path_len, const uint8_t *header, const uint8_t *body, size_t body_len,
-    uintptr_t deadline) {
+    size_t reply_limit, uintptr_t deadline) {
     bc_adapter_slot *slot = owner;
-    if (!bc_adapter_slot_empty(slot) || !engine || !path || !path_len || path_len > 4096)
+    if (!engine || !path || !path_len || path_len > 4096 ||
+        !bc_adapter_slot_admits(slot, body_len, reply_limit))
         return 0;
+    bc_adapter_budget *budget = slot->budget;
+    ++budget->launches;
+    budget->wire += wire_reservation(body_len, reply_limit);
     wchar_t wide[4096];
     int units = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, (const char *)path,
         (int)path_len, wide, _countof(wide));
     if (!units) return 0;
     slot->process = bc_adapter_process_start(wide, (size_t)units, header, body, body_len, deadline);
     if (!slot->process) return 0;
+    slot->process->reply_limit = reply_limit;
+    ++budget->live;
     slot->engine = engine;
     return ++slot->generation;
 }
 
 uint32_t bc_adapter_slot_close(void *owner) {
     bc_adapter_slot *slot = owner;
-    if (!slot || !bc_adapter_process_close(slot->process)) return 0;
+    if (!slot) return 0;
+    if (!slot->process) return 1;
+    if (!bc_adapter_process_close(slot->process)) return 0;
+    --slot->budget->live;
     slot->process = NULL;
     slot->engine = NULL;
     return 1;

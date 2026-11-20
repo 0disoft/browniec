@@ -5,10 +5,10 @@ import host_memory_adapter as adapter;
 import runtime_engine as engine;
 import std::bytes as bytes;
 
-unsafe extern C fn u32 bc_adapter_slot_empty(ptr mut void slot);
+unsafe extern C fn u32 bc_adapter_slot_admits(ptr mut void slot,usize request_length,usize reply_limit);
 unsafe extern C fn ptr mut void bc_adapter_slot_process(ptr mut void slot,ptr void owner,usize generation);
 unsafe extern C fn usize bc_adapter_slot_start(ptr mut void slot,ptr void owner,ptr u8 path,
-    usize path_length,ptr u8 header,ptr u8 body,usize body_length,usize deadline);
+    usize path_length,ptr u8 header,ptr u8 body,usize body_length,usize reply_limit,usize deadline);
 unsafe extern C fn u32 bc_adapter_process_step(ptr mut void process);
 unsafe extern C fn ptr u8 bc_adapter_process_frame(ptr mut void process,ptr mut usize length);
 unsafe extern C fn i32 bc_adapter_process_accept_body(ptr mut void process,usize length);
@@ -40,7 +40,14 @@ pub fn Result<Route,adapter::Error> register(ref catalog::Catalog imports,usize 
 // throughout this call and subsequent polls. A claimed request is one-shot.
 pub fn Result<Session,adapter::Error> start(ref mut engine::Engine owner,usize instance,
     ref Route route,ptr mut void slot,usize request_limit){
-    if(unsafe{bc_adapter_slot_empty(slot)}==0){return .err(adapter::unavailable());}
+    let engine::HostRequestInfo before=switch(engine::host_request_info(owner,instance)){
+        case .ok(v):{v}case .err(e):{return .err(adapter::engine_failure(e));}
+    };
+    let usize cap=adapter::byte_limit();
+    let usize reply_limit=if(before.reply_limit<cap){before.reply_limit}else{cap};
+    if(unsafe{bc_adapter_slot_admits(slot,before.payload_bytes,reply_limit)}==0){
+        return .err(adapter::unavailable());
+    }
     let adapter::Dispatch request=adapter::claim_detached(owner,instance,ref route.signature,request_limit)?;
     let engine::HostRequestInfo info=adapter::dispatch_info(ref request);
     let u8[64] header=adapter::dispatch_header(ref request);
@@ -48,7 +55,7 @@ pub fn Result<Session,adapter::Error> start(ref mut engine::Engine owner,usize i
     let ref u8[] body=adapter::dispatch_bytes(ref request);
     let ref u8[] path=bytes::view(ref route.executable);
     let usize generation=unsafe{bc_adapter_slot_start(slot,owner as ptr void,path as ptr u8,
-        path.len,prefix as ptr u8,body as ptr u8,body.len,info.deadline)};
+        path.len,prefix as ptr u8,body as ptr u8,body.len,reply_limit,info.deadline)};
     if(generation==0){
         return switch(fatal(owner,ref info)){
             case .ok(_):{.err(adapter::unavailable())}case .err(e):{.err(e)}

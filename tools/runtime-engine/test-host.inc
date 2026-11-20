@@ -4,8 +4,13 @@
 #include "native/host_adapter_process.h"
 extern size_t probe_live(void);
 
-static bc_adapter_slot adapter_slot;
+enum { adapter_wire = 2 * BC_ADAPTER_HEADER_BYTES + 14 + BC_ADAPTER_BODY_LIMIT + 1 };
+static bc_adapter_budget adapter_budget = {.live_limit = 1, .launch_limit = 4, .wire_limit = 4 * adapter_wire};
+static bc_adapter_slot adapter_slot = {.budget = &adapter_budget};
+static bc_adapter_budget short_adapter_budget = {.live_limit = 1, .launch_limit = 1, .wire_limit = adapter_wire - 1};
+static bc_adapter_slot short_adapter_slot = {.budget = &short_adapter_budget};
 void *bc_runtime_engine_test_adapter_slot(void){return &adapter_slot;}
+void *bc_runtime_engine_test_short_adapter_slot(void){return &short_adapter_slot;}
 void bc_runtime_engine_test_adapter_mode(uint32_t mode){
  wchar_t value[2]={(wchar_t)mode,0};
  assert(SetEnvironmentVariableW(L"BC_ENGINE_ADAPTER_FIXTURE",mode?value:NULL));

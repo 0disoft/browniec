@@ -47,7 +47,7 @@ def main():
             runtime_env = {k: v for k, v in os.environ.items()
                            if k.upper() in {'SYSTEMROOT', 'WINDIR', 'TEMP', 'TMP'}}
             result = json.loads(run([exe], cwd=folder, env=runtime_env))
-            need(result == {'processCases': 8, 'launchRejections': 3, 'handleDelta': 0},
+            need(result == {'processCases': 8, 'launchRejections': 3, 'aggregateCases': 1, 'handleDelta': 0},
                  'Expected all real child-process cases and balanced handles')
             receipt['profiles'].append(dict(profile=profile, exe=helper.image(exe), result=result))
             print(f'PASS {profile}: {result}', flush=True)

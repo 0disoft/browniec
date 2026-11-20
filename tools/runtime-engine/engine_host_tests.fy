@@ -25,6 +25,7 @@ unsafe extern C fn void bc_runtime_engine_test_set_clock(usize ticks);
 unsafe extern C fn void bc_runtime_engine_test_use_os_clock();
 unsafe extern C fn void bc_runtime_engine_test_wait_for_clock(usize start,usize elapsed);
 unsafe extern C fn ptr mut void bc_runtime_engine_test_adapter_slot();
+unsafe extern C fn ptr mut void bc_runtime_engine_test_short_adapter_slot();
 unsafe extern C fn void bc_runtime_engine_test_adapter_mode(u32 mode);
 unsafe extern C fn void bc_runtime_engine_test_adapter_wait();
 unsafe extern C fn usize bc_runtime_engine_test_adapter_path(ptr mut u8 path,usize capacity);
@@ -1368,6 +1369,13 @@ fn Result<usize,u8> process_round_trip(){
     let usize p=id(engine::compile_scalar_host(ref mut owner,source,imports,ref binding,ref run));
     let usize peer=waiting(ref mut owner,p,ref run).run;
     let usize success=waiting(ref mut owner,p,ref run).run;
+    let ptr mut void short_slot=unsafe{bc_runtime_engine_test_short_adapter_slot()};
+    let usize allocations=unsafe{probe_attempts()};
+    switch(process_adapter::start(ref mut owner,success,ref selected,short_slot,14)){
+        case .ok(_):{assert(false);}
+        case .err(e):{assert(e.status==5);}
+    };
+    assert(unsafe{probe_attempts()}==allocations);
     process_exchange(ref mut owner,success,ref selected,103,0);
     assert(scalar(ref owner,peer).host.replies==0 && engine::host_request_info(ref owner,peer).is_ok);
     assert(id(engine::destroy_instance(ref mut owner,peer))==peer);

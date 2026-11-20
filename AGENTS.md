@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-21): [Windows process adapter CLI](docs/cli/configuration.md#windows-process-adapters)
-  runs its subprocess contract in the full Windows quick-start workflow.
-  The workflow's contract step passed locally with the locked /O2 CLI.
+- Latest runtime checkpoint (2026-11-21): [Shared Windows adapter budget](docs/engineering/host-exchange.md#shared-process-adapter-budget)
+  bounds live leases, launch attempts and cumulative wire reservations.
+  Development and /O2 transport and Engine checks passed, as did the locked /O2 CLI round trip.
 
 # Brownie C agent guidance
 
