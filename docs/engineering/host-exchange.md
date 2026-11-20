@@ -296,6 +296,20 @@ ends before any Engine mutation. Reading either field leaves Fuel and the
 exchange unchanged. Both reject after expiry or once reply receipt begins.
 The accessor does not advance expiry or claim the request for dispatch.
 
+To deliver a request, an internal adapter copies its validated TLV and then
+calls `claim_host_request` with the matching routing metadata. The owner-thread
+Engine authorizes one claim for the still-pending request. Crossed or stale
+metadata, repeated claims, and claims at or after the deadline fail. A later
+request on the same Instance starts with a fresh claim. This step changes
+neither Fuel nor reply state. The caller owns dispatch and returns a typed
+reply through the existing Engine path.
+
+The owning Engine suite passed Windows development and /O2 with zero live
+SDK allocations after teardown. The tests cover independent claims on two
+Instances, duplicate and crossed claims, exact-deadline rejection, and a new
+claim after the next byte request. The local receipt is
+`build/runtime-engine/20261120T150615755033Z/receipt.json`.
+
 Windows development and /O2 passed the owning Engine suite with zero live SDK
 allocations after teardown. The suite checks distinct run IDs with the same
 request ID, a 39-byte typed request, and rejection after expiry, complete reply,

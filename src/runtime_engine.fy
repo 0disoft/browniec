@@ -433,6 +433,16 @@ pub fn Result<HostRequestInfo,Error> host_request_info(ref Engine e,usize instan
         .payload_bytes=payload.len,.catalog=host::binding(exchange)});
 }
 
+// The adapter reserves dispatch after it has copied and validated the request.
+pub fn Result<usize,Error> claim_host_request(ref mut Engine e,usize instance,ref HostRequestInfo expected){
+    let HostRequestInfo current=host_request_info(e,instance)?;
+    if(expected.run!=current.run || expected.request!=current.request ||
+       expected.import_id!=current.import_id || expected.payload_bytes!=current.payload_bytes ||
+       !host_program::same_digest(ref expected.catalog.words,ref current.catalog.words)){return .err(error(1));}
+    let u32 status=unsafe{call_raw(e as ptr mut void,11,instance,current.request)};
+    return result(e,status);
+}
+
 // The borrow is scoped to the immutable Engine view. Copy into adapter-owned
 // storage before stepping, replying, cancelling or destroying the Instance.
 pub fn Result<ref u8[],Error> host_request_payload(ref Engine e,usize instance){
@@ -1066,6 +1076,9 @@ fn u32 drive_host_owner(ref mut vec::Vec<host::Exchange> owners,u32 mode,usize q
     u8 kind,ref u8[] payload,ref mut HostTransition transition,usize offset){
     if(vec::len<host::Exchange>(owners)!=1){return 7;}
     let ref mut host::Exchange exchange=vec::at_mut<host::Exchange>(owners,0);
+    if(mode==3){
+        return if(host::claim_scalar_dispatch(exchange,run,request,unsafe{monotonic_ticks_raw()})){0}else{11};
+    }
     var usize remaining=quantum;
     while(remaining>0 || mode==2){
         let usize now=unsafe{monotonic_ticks_raw()};
@@ -1525,6 +1538,17 @@ fn u32 close_inner(ref mut Meta m,ref vec::Vec<Program> p,ref vec::Vec<Instance>
     assert(control::release(ref mut m.control,bytes).is_ok);assert(control::close(ref mut m.control).is_ok);
     assert(live::close(ref mut m.heap).is_ok);assert(memory::close(ref mut m.programs).is_ok);m.closed=true;return success(m,0);
 }
+fn u32 claim_host_inner(ref mut Meta m,ref mut vec::Vec<Output> outputs,usize instance,usize request){
+    let usize oi=switch(output_index(outputs,instance)){
+        case .ok(v):{v}case .err(s):{return failed(m,s);}
+    };
+    let ref mut Output owner=vec::at_mut<Output>(outputs,oi);
+    var HostTransition unused=HostTransition{.event=pending(),.scalar=host::empty_scalar_event()};
+    let u32 status=unsafe{drive_host_raw(owner as ptr mut void,3,0,instance,request,0,b"" as ptr u8,0,
+        ref mut unused as ptr mut void,0)};
+    return if(status==0){success(m,request)}else{failed(m,status)};
+}
+
 fn u32 dispatch_inner(ref mut Meta m,ref mut vec::Vec<Program> p,ref mut vec::Vec<Program> scratch,
     ref mut vec::Vec<Instance> v,ref mut vec::Vec<BoundInput> inputs,ref mut vec::Vec<BoundInput> input_scratch,
     ref mut vec::Vec<Output> outputs,ref mut vec::Vec<Output> output_scratch,u32 operation,usize id,usize argument){
@@ -1538,6 +1562,7 @@ fn u32 dispatch_inner(ref mut Meta m,ref mut vec::Vec<Program> p,ref mut vec::Ve
     if(operation==8){return inspect_inner(m,p,v);}
     if(operation==9){return prepare_instance_inner(m,p,v,inputs,outputs,id);}
     if(operation==10){return step_instance_inner(m,p,v,inputs,outputs,output_scratch,id,argument);}
+    if(operation==11){return claim_host_inner(m,outputs,id,argument);}
     return failed(m,1);
 }
 // After the last epoch, only bounded owner maintenance may run, under the

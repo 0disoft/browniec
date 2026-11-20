@@ -257,6 +257,10 @@ fn Result<usize,u8> helper_host_calls(){
     assert(info_a.import_id==1 && info_b.import_id==1 && info_a.payload_bytes==14 && info_b.payload_bytes==14);
     assert(programs::same_digest(ref expected,ref info_a.catalog.words));
     assert(programs::same_digest(ref expected,ref info_b.catalog.words));
+    rejected(engine::claim_host_request(ref mut owner,a,ref info_b),1);
+    assert(id(engine::claim_host_request(ref mut owner,a,ref info_a))==1);
+    rejected(engine::claim_host_request(ref mut owner,a,ref info_a),11);
+    assert(id(engine::claim_host_request(ref mut owner,b,ref info_b))==1);
     let ref u8[] wire=b"\x01\x00\x03\x00\x00\x00\x04\x00\x00\x00\x29\x00\x00\x00";
     assert(ra.import_id==1 && rb.import_id==1 && bytes::equal(ref ra.payload,wire) && bytes::equal(ref rb.payload,wire));
     assert(!engine::reply_scalar_host(ref mut owner,a,rb.run,rb.request,0,answer()).is_ok);
@@ -414,6 +418,7 @@ fn Result<usize,u8> deadline_order(){
     let engine::HostRequest cancelled=waiting(ref mut owner,p,ref run);
     let engine::HostRequest fatal=waiting(ref mut owner,p,ref run);
     let engine::HostRequest expired=waiting(ref mut owner,p,ref run);
+    let engine::HostRequestInfo expiring=request_info(ref owner,expired.run);
     let engine::HostRequest late=waiting(ref mut owner,p,ref run);
     let engine::HostRequest tie=waiting(ref mut owner,p,ref run);
     let engine::HostRequest staged=waiting(ref mut owner,p,ref run);
@@ -432,6 +437,7 @@ fn Result<usize,u8> deadline_order(){
     unsafe{bc_runtime_engine_test_set_clock(deadline)};
     assert(!engine::scalar_host_request(ref owner,expired.run).is_ok);
     assert(!engine::host_request_info(ref owner,expired.run).is_ok);
+    rejected(engine::claim_host_request(ref mut owner,expired.run,ref expiring),11);
     assert(scalar(ref owner,expired.run).phase==1);
     assert(event(engine::step_instance(ref mut owner,expired.run,8)).kind==2);
     assert(event(engine::reply_scalar_host(ref mut owner,late.run,late.run,late.request,0,answer())).kind==2);
@@ -624,6 +630,8 @@ fn Result<usize,u8> variable_bytes(){
     assert(event(engine::step_instance(ref mut owner,b,8)).kind==4);
     check_bytes(ref owner,a,b"a\x00\xff");
     check_bytes(ref owner,b,b"a\x00\xff");
+    let engine::HostRequestInfo first=request_info(ref owner,a);
+    assert(id(engine::claim_host_request(ref mut owner,a,ref first))==1);
     assert(!engine::reply_scalar_host(ref mut owner,a,b,1,0,b"\x07\x00\x00\x00\x02\x00\x00\x00x").is_ok);
     assert(!engine::reply_scalar_host(ref mut owner,a,a,1,0,b"\x07\x00\x00\x00\x02\x00\x00\x00x").is_ok);
     assert(event(engine::reply_scalar_host(ref mut owner,a,a,1,0,b"\x07\x00\x00\x00\x06\x00\x00\x00hello\xff")).kind==0);
@@ -631,6 +639,9 @@ fn Result<usize,u8> variable_bytes(){
     assert(event(engine::step_instance(ref mut owner,a,8)).kind==4);
     assert(event(engine::step_instance(ref mut owner,b,8)).kind==4);
     check_bytes(ref owner,a,b"hello\xff");check_bytes(ref owner,b,b"");
+    let engine::HostRequestInfo second=request_info(ref owner,a);
+    rejected(engine::claim_host_request(ref mut owner,a,ref first),1);
+    assert(id(engine::claim_host_request(ref mut owner,a,ref second))==2);
     assert(event(engine::reply_scalar_host(ref mut owner,a,a,2,0,answer())).kind==0);
     assert(event(engine::reply_scalar_host(ref mut owner,b,b,2,0,answer())).kind==0);
     assert(event(engine::step_instance(ref mut owner,a,8)).value==48);
