@@ -3,18 +3,29 @@ title: CLI 用法与常见错误
 description: 公开 browniec 命令、退出码以及常见错误的快速排查方法。
 ---
 
-公开的 `browniec` CLI 直接针对单个 `.brc` 文件工作，提供四个核心命令：`--version`、`check`、`run` 和 `inspect`。
+公开 CLI 每次处理一个源文件。`check` 只检查，`run` 调用 `main()`，`eval-i32` 调用 `evaluate(i32)`。`inspect` 编译并验证代码，无需运行来宾程序。
 
 ## 公开命令
 
-| 命令 | 用途 |
-| --- | --- |
-| `browniec --version [--json]` | 打印当前启用的配置档以及默认/最大 Fuel 设置 |
-| `browniec check file.brc [--json]` | 检查语法、类型与借用规则，不执行代码 |
-| `browniec run file.brc [--fuel N] [--json]` | 在 Fuel 预算 `N` 下运行 `fn i32 main()`（默认 `256`，最大 `16000000`） |
-| `browniec inspect file.brc --ir [--json]` | 打印生成的私有 IR 诊断信息，不执行代码 |
+<!-- cli-output:start -->
+| 命令 | 输出选项 | 通道 | 模式 |
+| --- | --- | --- | --- |
+| `browniec --version` | — | `stdout` | — |
+| `browniec --version` | `--json` | `stdout` | `browniec.version/v1` |
+| `browniec check SOURCE` | — | `stderr` | — |
+| `browniec check SOURCE` | `--json` | `stdout` | `browniec.result/v1` |
+| `browniec check SOURCE` | `--json-v2` | `stdout` | `browniec.result/v2` |
+| `browniec run SOURCE [--fuel N]` | — | `stderr` | — |
+| `browniec run SOURCE [--fuel N]` | `--json` | `stdout` | `browniec.result/v1` |
+| `browniec run SOURCE [--fuel N]` | `--json-v2` | `stdout` | `browniec.result/v2` |
+| `browniec eval-i32 SOURCE N [--fuel N]` | — | `stderr` | — |
+| `browniec eval-i32 SOURCE N [--fuel N]` | `--json` | `stdout` | `browniec.result/v1` |
+| `browniec eval-i32 SOURCE N [--fuel N]` | `--json-v2` | `stdout` | `browniec.result/v2` |
+| `browniec inspect SOURCE --ir` | — | `stdout` | — |
+| `browniec inspect SOURCE --ir` | `--json` | `stdout` | `browniec.ir/v1` |
+<!-- cli-output:end -->
 
-文本模式下，状态行（`checked`、`return_i32=77`）会写入 stderr，stdout 保持为空。加上 `--json` 后，会在 stdout 输出单条 JSON 对象（`browniec.result/v1`），而 stderr 保持为空。
+表格列出成功时的输出。选项列中的破折号表示默认文本模式。文本错误写入 stderr。使用 JSON 选项时，结果或源代码错误均以单个对象写入 stdout。
 
 ## 退出码
 

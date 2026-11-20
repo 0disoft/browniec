@@ -5,7 +5,10 @@ import hashlib
 import json
 from pathlib import Path
 import subprocess
+import sys
 from tempfile import TemporaryDirectory
+
+ROOT = Path(__file__).resolve().parents[1]
 
 
 def invoke(exe, args, exit_code):
@@ -45,13 +48,46 @@ def check_diagnostic(exe, path, code, kind, location, text):
         assert type(v2['location']['offset']) is int, v2
 
 
+def check_output_table(exe, identity):
+    subprocess.run([sys.executable, '-B', str(ROOT / 'tools/sync-cli-output.py'), '--check'],
+                   check=True, timeout=10)
+    answer = ROOT / 'examples/answer.brc'
+    sources = {'check': [answer], 'run': [answer], 'eval-i32': [identity, 41]}
+    tokens = {'--version': b'Brownie C experimental:', 'check': b'checked',
+              'run': b'return_i32=77', 'eval-i32': b'return_i32=41',
+              'inspect': b'Brownie C private IR diagnostics;'}
+    rows = json.loads((ROOT / 'docs-site/cli-output.json').read_bytes())
+    for row in rows:
+        command = row['command']
+        if command == 'inspect':
+            args = [answer, row['arguments'].split()[-1]]
+        else:
+            args = sources.get(command, [])
+        for mode in row['formats']:
+            option = mode['option']
+            ran = invoke(exe, [command, *args, *([option] if option else [])], 0)
+            written = getattr(ran, mode['channel'])
+            other = ran.stderr if mode['channel'] == 'stdout' else ran.stdout
+            assert written and not other, (row, mode, ran)
+            schema = mode['schema']
+            if schema is None:
+                assert written.startswith(tokens[command]), (row, mode, ran)
+            else:
+                assert len(written.splitlines()) == 1 and written.endswith(b'\n'), ran
+                obj = json.loads(written)
+                assert type(obj) is dict and obj['schema'] == schema, (mode, obj)
+                if command != '--version':
+                    assert obj['command'] == command, obj
+    print('PASS: documented CLI channels and schemas match native output')
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--exe', type=Path, required=True)
     exe = parser.parse_args().exe.resolve(strict=True)
     print(f'CLI SHA-256: {hashlib.sha256(exe.read_bytes()).hexdigest()}', flush=True)
 
-    shipping = Path(__file__).resolve().parents[1] / 'examples' / 'shipping-fee.brc'
+    shipping = ROOT / 'examples/shipping-fee.brc'
     with TemporaryDirectory(prefix='browniec-cli-') as temp:
         source_zero = Path(temp) / 'source-zero.brc'
         source_zero.write_bytes(b'\xff')
@@ -59,6 +95,7 @@ def main():
         identity = Path(temp) / 'identity.brc'
         identity.write_bytes(b'module main; fn i32 evaluate(i32 x) { return x; }\n')
 
+        check_output_table(exe, identity)
         check_diagnostic(exe, source_zero, 3, 'lexical',
                          {'kind': 'source_byte', 'offset': 0}, b'browniec: lexical at byte 0')
         check_diagnostic(exe, missing, 7, 'input_io',

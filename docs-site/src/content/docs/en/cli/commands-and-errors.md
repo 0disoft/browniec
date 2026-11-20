@@ -3,18 +3,29 @@ title: CLI Usage and Common Errors
 description: Public browniec commands, exit codes, and quick fixes for common errors.
 ---
 
-The public `browniec` CLI works directly on single `.brc` files with four core commands: `--version`, `check`, `run`, and `inspect`.
+The public CLI checks and runs one source file at a time. `check` verifies without executing, `run` calls `main()`, and `eval-i32` calls `evaluate(i32)`. Inspection compiles and verifies without running the guest.
 
 ## Public Commands
 
-| Command | Purpose |
-| --- | --- |
-| `browniec --version [--json]` | Print active profiles and default/max Fuel settings |
-| `browniec check file.brc [--json]` | Check syntax, types, and borrows without executing |
-| `browniec run file.brc [--fuel N] [--json]` | Run `fn i32 main()` under Fuel budget `N` (default `256`, max `16000000`) |
-| `browniec inspect file.brc --ir [--json]` | Print generated private IR diagnostics without executing |
+<!-- cli-output:start -->
+| Command | Output option | Channel | Schema |
+| --- | --- | --- | --- |
+| `browniec --version` | — | `stdout` | — |
+| `browniec --version` | `--json` | `stdout` | `browniec.version/v1` |
+| `browniec check SOURCE` | — | `stderr` | — |
+| `browniec check SOURCE` | `--json` | `stdout` | `browniec.result/v1` |
+| `browniec check SOURCE` | `--json-v2` | `stdout` | `browniec.result/v2` |
+| `browniec run SOURCE [--fuel N]` | — | `stderr` | — |
+| `browniec run SOURCE [--fuel N]` | `--json` | `stdout` | `browniec.result/v1` |
+| `browniec run SOURCE [--fuel N]` | `--json-v2` | `stdout` | `browniec.result/v2` |
+| `browniec eval-i32 SOURCE N [--fuel N]` | — | `stderr` | — |
+| `browniec eval-i32 SOURCE N [--fuel N]` | `--json` | `stdout` | `browniec.result/v1` |
+| `browniec eval-i32 SOURCE N [--fuel N]` | `--json-v2` | `stdout` | `browniec.result/v2` |
+| `browniec inspect SOURCE --ir` | — | `stdout` | — |
+| `browniec inspect SOURCE --ir` | `--json` | `stdout` | `browniec.ir/v1` |
+<!-- cli-output:end -->
 
-Text mode writes status lines (`checked`, `return_i32=77`) to stderr and leaves stdout empty. Adding `--json` emits one JSON object (`browniec.result/v1`) to stdout with empty stderr.
+The table shows successful output. A dash in the option column means the default text mode. Text errors go to stderr. JSON options emit a single object to stdout, including source errors.
 
 ## Exit Codes
 

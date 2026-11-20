@@ -3,18 +3,29 @@ title: CLI 사용법과 자주 만나는 오류
 description: browniec 공개 명령어 사용법, 종료 코드, 그리고 자주 부딪히는 오류 원인과 해결 방법입니다.
 ---
 
-공개 `browniec` CLI는 단일 `.brc` 파일을 대상으로 딱 네 가지 역할(`--version`, `check`, `run`, `inspect`)을 수행합니다.
+공개 CLI는 한 번에 소스 파일 하나를 다룹니다. `check`는 실행 없이 검사하고, `run`은 `main()`을, `eval-i32`는 `evaluate(i32)`를 호출합니다. `inspect`는 컴파일과 검증까지만 수행합니다.
 
 ## 기본 명령어
 
-| 명령어 | 하는 일 |
-| --- | --- |
-| `browniec --version [--json]` | 현재 지원 프로파일과 `fuel_default`/`fuel_limit` 확인 |
-| `browniec check 파일.brc [--json]` | 실행 없이 문법·타입·배열/슬라이스 빌림 검사 |
-| `browniec run 파일.brc [--fuel N] [--json]` | `fn i32 main()`을 `--fuel` 예산(기본 `256`, 최대 `16000000`) 안에서 실행 |
-| `browniec inspect 파일.brc --ir [--json]` | 컴파일된 내부 바이트코드/레지스터 정보 조회 |
+<!-- cli-output:start -->
+| 명령 | 출력 옵션 | 채널 | 스키마 |
+| --- | --- | --- | --- |
+| `browniec --version` | — | `stdout` | — |
+| `browniec --version` | `--json` | `stdout` | `browniec.version/v1` |
+| `browniec check SOURCE` | — | `stderr` | — |
+| `browniec check SOURCE` | `--json` | `stdout` | `browniec.result/v1` |
+| `browniec check SOURCE` | `--json-v2` | `stdout` | `browniec.result/v2` |
+| `browniec run SOURCE [--fuel N]` | — | `stderr` | — |
+| `browniec run SOURCE [--fuel N]` | `--json` | `stdout` | `browniec.result/v1` |
+| `browniec run SOURCE [--fuel N]` | `--json-v2` | `stdout` | `browniec.result/v2` |
+| `browniec eval-i32 SOURCE N [--fuel N]` | — | `stderr` | — |
+| `browniec eval-i32 SOURCE N [--fuel N]` | `--json` | `stdout` | `browniec.result/v1` |
+| `browniec eval-i32 SOURCE N [--fuel N]` | `--json-v2` | `stdout` | `browniec.result/v2` |
+| `browniec inspect SOURCE --ir` | — | `stdout` | — |
+| `browniec inspect SOURCE --ir` | `--json` | `stdout` | `browniec.ir/v1` |
+<!-- cli-output:end -->
 
-`--json`을 빼고 실행하면 `checked`나 `return_i32=77` 같은 텍스트를 stderr에 찍고 stdout은 비워 둡니다. 프로그램에서 결과를 파싱해야 할 때는 `--json`을 붙이면 stdout으로 한 줄짜리 JSON(`browniec.result/v1`)을 받을 수 있습니다.
+표는 성공 시 출력을 보여 줍니다. 출력 옵션의 대시는 기본 텍스트 모드입니다. 텍스트 오류는 stderr로 나가고, JSON 옵션은 소스 오류도 stdout에 객체 하나로 출력합니다.
 
 ## 종료 코드 읽기
 

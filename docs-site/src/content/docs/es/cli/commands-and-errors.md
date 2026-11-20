@@ -3,18 +3,29 @@ title: Uso de la CLI y errores frecuentes
 description: Comandos públicos de browniec, códigos de salida y soluciones rápidas para los errores más habituales.
 ---
 
-La CLI pública de `browniec` trabaja directamente sobre archivos `.brc` individuales con cuatro comandos principales: `--version`, `check`, `run` e `inspect`.
+La CLI pública procesa un archivo fuente a la vez. `check` verifica sin ejecutar, `run` llama a `main()` y `eval-i32` llama a `evaluate(i32)`. La inspección compila y verifica el código sin ejecutarlo.
 
 ## Comandos públicos
 
-| Comando | Propósito |
-| --- | --- |
-| `browniec --version [--json]` | Imprime los perfiles activos y los ajustes de Fuel predeterminado y máximo |
-| `browniec check file.brc [--json]` | Verifica la sintaxis, los tipos y los préstamos sin ejecutar |
-| `browniec run file.brc [--fuel N] [--json]` | Ejecuta `fn i32 main()` bajo el presupuesto de Fuel `N` (predeterminado `256`, máximo `16000000`) |
-| `browniec inspect file.brc --ir [--json]` | Imprime el diagnóstico del IR privado generado sin ejecutar |
+<!-- cli-output:start -->
+| Comando | Opción de salida | Canal | Esquema |
+| --- | --- | --- | --- |
+| `browniec --version` | — | `stdout` | — |
+| `browniec --version` | `--json` | `stdout` | `browniec.version/v1` |
+| `browniec check SOURCE` | — | `stderr` | — |
+| `browniec check SOURCE` | `--json` | `stdout` | `browniec.result/v1` |
+| `browniec check SOURCE` | `--json-v2` | `stdout` | `browniec.result/v2` |
+| `browniec run SOURCE [--fuel N]` | — | `stderr` | — |
+| `browniec run SOURCE [--fuel N]` | `--json` | `stdout` | `browniec.result/v1` |
+| `browniec run SOURCE [--fuel N]` | `--json-v2` | `stdout` | `browniec.result/v2` |
+| `browniec eval-i32 SOURCE N [--fuel N]` | — | `stderr` | — |
+| `browniec eval-i32 SOURCE N [--fuel N]` | `--json` | `stdout` | `browniec.result/v1` |
+| `browniec eval-i32 SOURCE N [--fuel N]` | `--json-v2` | `stdout` | `browniec.result/v2` |
+| `browniec inspect SOURCE --ir` | — | `stdout` | — |
+| `browniec inspect SOURCE --ir` | `--json` | `stdout` | `browniec.ir/v1` |
+<!-- cli-output:end -->
 
-El modo de texto escribe líneas de estado (`checked`, `return_i32=77`) en stderr y deja stdout vacío. Añadir `--json` emite un objeto JSON (`browniec.result/v1`) en stdout con stderr vacío.
+La tabla muestra la salida en caso de éxito. Un guion en la columna de opciones indica el modo de texto predeterminado. Los errores de texto van a stderr. Las opciones JSON escriben en stdout un solo objeto, también para los errores de código fuente.
 
 ## Códigos de salida
 
