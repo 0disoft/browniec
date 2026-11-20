@@ -23,6 +23,7 @@ import module_index as modules;
 import source_snapshot as sources;
 import project_manifest as projects;
 import project_source_loader as project_loader;
+import anchored_source_loader as anchored;
 import project_sources as project_binding;
 import runtime_live_memory as live;
 import runtime_execution_memory as execution_heap;
@@ -216,7 +217,10 @@ fn usize project_source_limit(ref Engine e){
 }
 fn Result<sources::Snapshot,Error> load_project(ref Engine e,ref projects::Project metadata,ref u8[] root){
     let usize limit=project_source_limit(e);
-    return switch(project_loader::load(metadata,root,limit)){
+    return project_snapshot(project_loader::load(metadata,root,limit));
+}
+fn Result<sources::Snapshot,Error> project_snapshot(Result<sources::Snapshot,project_loader::Error> collected){
+    return switch(collected){
         case .ok(v):{.ok(v)}
         case .err(reason):{.err(error(switch(reason){case .Limit:{8}case .Acquisition:{1}case .Binding:{4}case .Compile:{4}}))}
     };
@@ -246,6 +250,10 @@ pub fn Result<usize,Error> compile_project_input(ref mut Engine e,ref projects::
 }
 fn Result<input_entries::InputEntry,Error> project_input_entry(ref Engine e,ref projects::Project metadata,ref u8[] root,usize deadline){
     let sources::Snapshot snapshot=load_project(e,metadata,root)?;
+    return select_project_input(metadata,snapshot,deadline);
+}
+fn Result<input_entries::InputEntry,Error> select_project_input(ref projects::Project metadata,
+    sources::Snapshot snapshot,usize deadline){
     if(deadline_reached(deadline)){return .err(compile_timeout());}
     return switch(project_binding::select_input(metadata,snapshot)){
         case .ok(v):{.ok(v)}
@@ -424,9 +432,7 @@ pub fn Result<HostRequest,Error> scalar_host_request(ref Engine e,usize instance
     return .ok(HostRequest{.run=state.run,.request=state.request,.import_id=state.import_id,.payload=payload});
 }
 
-// Compile the configured entry once. The retained Program starts with no pins.
-pub fn Result<usize,Error> compile_project_output(ref mut Engine e,ref projects::Project metadata,
-    ref u8[] root,ref run_config::RunConfig run,usize image_limit){
+fn Result<u32,Error> project_output_mode(ref mut Engine e,ref projects::Project metadata,ref run_config::RunConfig run){
     let usize checked=check_run_policy(e,run)?;
     let usize ready=unsafe{compile_preflight(e,3,null)}?;
     let usize declared=projects::requirements(metadata);
@@ -439,9 +445,27 @@ pub fn Result<usize,Error> compile_project_output(ref mut Engine e,ref projects:
         };
         if(!bytes::equal(name,b"brownie.output.emit") || !run_config::declares(run,name)){return .err(error(5));}
     }
+    return .ok(if(declared==1){3}else{2});
+}
+
+// Compile the configured entry once. The retained Program starts with no pins.
+pub fn Result<usize,Error> compile_project_output(ref mut Engine e,ref projects::Project metadata,
+    ref u8[] root,ref run_config::RunConfig run,usize image_limit){
+    let u32 mode=project_output_mode(e,metadata,run)?;
     let usize deadline=compile_deadline(e,0)?;
     let input_entries::InputEntry selected=project_input_entry(e,metadata,root,deadline)?;
-    return retain_input_entry(e,selected,image_limit,if(declared==1){3}else{2},deadline);
+    return retain_input_entry(e,selected,image_limit,mode,deadline);
+}
+
+// Use the directory owner that supplied the explicit manifest. Validate policy
+// and entry before consuming the anchor's single allowed member collection.
+pub fn Result<usize,Error> compile_anchored_project_output(ref mut Engine e,ref projects::Project metadata,
+    ref mut anchored::Root root,ref run_config::RunConfig run,usize image_limit){
+    let u32 mode=project_output_mode(e,metadata,run)?;
+    let usize deadline=compile_deadline(e,0)?;
+    let sources::Snapshot snapshot=project_snapshot(project_loader::load_from(metadata,root,project_source_limit(e)))?;
+    let input_entries::InputEntry selected=select_project_input(metadata,snapshot,deadline)?;
+    return retain_input_entry(e,selected,image_limit,mode,deadline);
 }
 
 pub fn Result<usize,Error> compile_granted_output(ref mut Engine e,modules::Index index,

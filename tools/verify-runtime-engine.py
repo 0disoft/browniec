@@ -364,6 +364,12 @@ def main():
             fixture = output / 'project-fixture'
             write(fixture / 'app.brc', b'module app; import helper as h; pub fn i32 start(){return h::answer()+35;}')
             write(fixture / 'input.brc', b'module input_app; import helper as h; pub fn i32 start(ref u8[] data){return h::answer()+data[0] as i32+data[1] as i32;}')
+            write(fixture / 'output.json', json.dumps({
+                'schema': 'brownie.project/0.3', 'name': 'fixture',
+                'entry': {'module': 'app', 'function': 'chosen'},
+                'sources': [{'module': 'app', 'path': 'output.brc'}],
+                'requires': ['brownie.output.emit'],
+            }))
             write(fixture / 'output.brc', b'module app; fn void send(ref u8[] data){output::emit(ref data);} pub fn i32 chosen(ref u8[] data){send(ref data);if(data.len==2){return 2;}return 1;}')
             write(fixture / 'quiet.brc', b'module app; pub fn i32 chosen(ref u8[] data){return 0;}')
             write(fixture / 'helper.brc', b'module helper; pub fn i32 answer(){return 42;}')

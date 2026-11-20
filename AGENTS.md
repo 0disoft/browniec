@@ -1,8 +1,8 @@
-- Latest delivery checkpoint (2026-11-20): [Sealed output JSON](docs/engineering/module-output-execution.md#cli-result-encoding)
-  renders successful VM publication as bounded Base64. Locked Windows development
-  and /O2 fixture builds each pass eight exact frames through 1 MiB, including
-  trap, quota and grant-denial cases with no output field. Public policy/run
-  and Engine delivery remain pending. Root check covers 383 sources / 4322 MIR.
+- Latest runtime checkpoint (2026-11-20): [Anchored policy-checked project output](docs/engineering/project-source-loader.md#policy-checked-output)
+  compiles from the directory owner that supplied the manifest. Windows
+  development and /O2 pass authority denial before collection, one-shot
+  collection and independent Instance output with zero live SDK allocations.
+  Reviewed Engine transport retains 41 bindings and 60 layouts.
 
 # Brownie C agent guidance
 

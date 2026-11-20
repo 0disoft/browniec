@@ -99,6 +99,13 @@ Engine-owned Policy must allow the run, and the run must grant every declared
 requirement. Reachable emission without a manifest declaration fails before
 Program publication.
 
+`runtime_engine::compile_anchored_project_output` accepts the directory owner
+returned by the manifest open. This lets a caller parse the manifest and then
+collect declared members through the same pinned directory without reopening
+it by pathname. Run policy, entry and requirements are checked before the
+owner's one-shot member collection. The existing source limit, compile deadline
+and Program publication gates apply to both Engine entry points.
+
 The retained Program records the manifest's output requirement even when no
 emit instruction is reachable. `prepare_granted_instance` rechecks it for
 every run and reserves output capacity only for a reachable emit. Each Instance

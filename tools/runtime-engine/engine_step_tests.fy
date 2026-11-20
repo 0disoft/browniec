@@ -17,6 +17,7 @@ import engine_lifecycle_tests as lifecycle;
 import runtime_policy as policy;
 import runtime_run_config as configs;
 import project_manifest as projects;
+import anchored_source_loader as anchored;
 
 // Engine.step fixtures only. The parent owns native transport and integration.
 unsafe extern C fn usize probe_live();
@@ -454,6 +455,21 @@ fn Result<usize,u8> configured_output(){
 fn Result<projects::Project,u8> project(ref u8[] source){
     return switch(projects::parse(source)){case .ok(v):{.ok(v)}case .err(_):{.err(4)}};
 }
+fn Result<usize,u8> anchored_output(ref mut engine::Engine e,ref u8[] root,
+    ref configs::RunConfig granted,ref configs::RunConfig omitted,ref configs::RunConfig wrong_entry){
+    var bytes::Buffer path=bytes::empty();
+    if(!bytes::append(ref mut path,root).is_ok || !bytes::append(ref mut path,b"\\output.json").is_ok){return .err(4);}
+    var u8[512] data=[0;512];
+    var anchored::Root anchor=switch(anchored::open_project(bytes::view(ref path),ref mut data[..])){
+        case .ok(v):{v}case .err(_):{return .err(4);}
+    };
+    let projects::Project manifest=project(ref data[..anchored::manifest_bytes(ref anchor)])?;
+    rejected_id(engine::compile_anchored_project_output(e,ref manifest,ref mut anchor,omitted,65536),5);
+    rejected_id(engine::compile_anchored_project_output(e,ref manifest,ref mut anchor,wrong_entry,65536),5);
+    let usize program=id(engine::compile_anchored_project_output(e,ref manifest,ref mut anchor,granted,65536));
+    rejected_id(engine::compile_anchored_project_output(e,ref manifest,ref mut anchor,granted,65536),1);
+    return .ok(program);
+}
 fn Result<usize,u8> project_output(){
     let ref u8[] declared=b"{\"schema\":\"brownie.project/0.3\",\"name\":\"fixture\",\"entry\":{\"module\":\"app\",\"function\":\"chosen\"},\"sources\":[{\"module\":\"app\",\"path\":\"output.brc\"}],\"requires\":[\"brownie.output.emit\"]}";
     let ref u8[] undeclared=b"{\"schema\":\"brownie.project/0.3\",\"name\":\"fixture\",\"entry\":{\"module\":\"app\",\"function\":\"chosen\"},\"sources\":[{\"module\":\"app\",\"path\":\"output.brc\"}],\"requires\":[]}";
@@ -496,7 +512,7 @@ fn Result<usize,u8> project_output(){
     assert(quiet_event.kind==1 && quiet_event.value==0);
     release(ref mut e,q);
     destroy(ref mut e,quiet_run);
-    let usize p=id(engine::compile_project_output(ref mut e,ref manifest,root,ref granted,65536));
+    let usize p=anchored_output(ref mut e,root,ref granted,ref omitted,ref wrong_entry)?;
     rejected_id(engine::prepare_granted_instance(ref mut e,p,ref omitted,captured(b"A")?),5);
     let usize i=id(engine::prepare_granted_instance(ref mut e,p,ref granted,captured(b"A\x00")?));
     let usize j=id(engine::prepare_granted_instance(ref mut e,p,ref narrow,captured(b"Z")?));
