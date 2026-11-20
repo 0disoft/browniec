@@ -102,6 +102,7 @@ def check_configured_output(exe, folder):
     project = folder / 'configured'
     shutil.copytree(CONFIGURED, project)
     args = configured_arguments(project)
+    check = ['check', *args[1:]]
     source = project / 'app.brc'
     original = source.read_bytes()
     payload = project / 'payload.bin'
@@ -114,6 +115,7 @@ def check_configured_output(exe, folder):
 
     profile = 'brownie.m2-reference/1'
     for version in (1, 2):
+        assert check_json(exe, check, 0, version=version, profile=profile) is None
         assert check_json(exe, [*args, '--input', payload], 0, value=77, version=version,
                           profile=profile, output_b64='QQA=') is None
     assert check_json(exe, [*args, '--stdin'], 0, value=77, version=2, profile=profile,
@@ -122,6 +124,9 @@ def check_configured_output(exe, folder):
     for invalid in (args, [*args[:-2], '--json'], [*args, '--fuel', 1, '--json'],
                     [*args, '--run', run_file, '--json']):
         invoke(exe, invalid, 2)
+    for invalid in (check[:-2], [*check, '--input', payload], [*check, '--stdin'],
+                    [*check, '--fuel', 1], [*check, '--policy', project / 'policy.json']):
+        invoke(exe, [*invalid, '--json'], 2)
 
     for field, limit, expected in (('input_bytes', 1, 'input_limit'),
                                    ('output_bytes', 1, 'output_limit')):
@@ -132,6 +137,7 @@ def check_configured_output(exe, folder):
 
     source.write_bytes(b'module app;pub fn i32 transform(ref u8[] data){'
                        b'output::emit(ref data);let i32 z=data[0] as i32;return 1/(z-z);}')
+    assert check_json(exe, check, 0, version=2, profile=profile) is None
     error = check_json(exe, [*args, '--input', payload], 5, version=2, profile=profile)
     assert error['kind'] == 'zero_divisor' and error['location']['path'] == 'app.brc', error
 
@@ -145,11 +151,13 @@ def check_configured_output(exe, folder):
     source.write_bytes(b'module app;pub fn i32 transform(ref u8[] data){return true;}')
     error = check_json(exe, [*args, '--input', folder / 'missing.bin'], 3, version=2)
     assert error['kind'] == 'type' and error['location']['path'] == 'app.brc', error
+    assert check_json(exe, check, 3, version=2) == error
     source.unlink()
     for overrides in ({'entry': {'module': 'app', 'function': 'wrong'}}, {'grants': []}):
         update(**overrides)
         error = check_json(exe, [*args, '--input', folder / 'missing.bin'], 4, version=2)
         assert error == {'kind': 'unavailable', 'location': {'kind': 'none'}}, error
+        assert check_json(exe, check, 4, version=2) == error
     update()
     source.write_bytes(original)
     no_requirements = json.loads((project / 'project.json').read_bytes()) | {'requires': []}
@@ -157,7 +165,8 @@ def check_configured_output(exe, folder):
     update(requires=[], grants=[])
     error = check_json(exe, [*args, '--input', folder / 'missing.bin'], 4, version=2)
     assert error == {'kind': 'unavailable', 'location': {'kind': 'none'}}, error
-    print('PASS: configured project grants, binary publication, quotas, diagnostics and deadline')
+    assert check_json(exe, check, 4, version=2) == error
+    print('PASS: configured compile-only checks, grants, binary publication, quotas, diagnostics and deadline')
 
 
 def check_project_location(exe, manifest, command, code, kind, index, name, source, offset, end):

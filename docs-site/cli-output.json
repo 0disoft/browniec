@@ -100,6 +100,27 @@
     ]
   },
   {
+    "command": "check",
+    "arguments": "--project FILE --policy FILE --run FILE",
+    "formats": [
+      {
+        "option": "",
+        "channel": "stderr",
+        "schema": null
+      },
+      {
+        "option": "--json",
+        "channel": "stdout",
+        "schema": "browniec.result/v1"
+      },
+      {
+        "option": "--json-v2",
+        "channel": "stdout",
+        "schema": "browniec.result/v2"
+      }
+    ]
+  },
+  {
     "command": "run",
     "arguments": "--project FILE --policy FILE --run FILE [--input FILE|--stdin]",
     "formats": [

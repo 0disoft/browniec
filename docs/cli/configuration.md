@@ -105,6 +105,11 @@ supplies an empty snapshot. The input limit is the smaller of the configured
 input and memory limits, capped at 1 MiB. Read completes before guest execution
 starts, after project compilation and authority checks.
 
+Use `check --project FILE --policy FILE --run FILE [--json|--json-v2]` to
+validate the same policy, grant, entry and source under the compile deadline.
+Check accepts text and both JSON formats. It opens no guest input, creates no
+Instance and executes no guest code. `--fuel`, `--input` and `--stdin` are run-only.
+
 The only configured guest capability in this command is `brownie.output.emit`.
 A project that calls it must declare it, the run must grant it, and the policy
 must allow it. A successful emit is published as `output_b64`. The guest return

@@ -44,19 +44,19 @@ pub fn i32 execute(render::Format format,bool run,usize fuel,binary::Selection s
     return execute_project(ref project,format,run,fuel);
 }
 @effects(console,filesystem)
-pub fn i32 execute_configured(render::Format format,configured::Selection settings,binary::Selection selection){
+pub fn i32 execute_configured(render::Format format,bool run,configured::Selection settings,binary::Selection selection){
     var u8[3072] path=[0;3072];
     let usize size=switch(process::arg(3,ref mut path)){
-        case .ok(v):{v}case .err(_):{return failure(format,true,errors::absent(10,0),0);}
+        case .ok(v):{v}case .err(_):{return failure(format,run,errors::absent(10,0),0);}
     };
     var bytes::Buffer data=bytes::empty();
     var anchored::Root root=switch(open_manifest(ref path[..size],ref mut data)){
-        case .ok(v):{v}case .err(e):{return failure(format,true,e,0);}
+        case .ok(v):{v}case .err(e):{return failure(format,run,e,0);}
     };
     let manifest::Project project=switch(parse_manifest(ref root,bytes::view(ref data))){
-        case .ok(v):{v}case .err(e):{return failure(format,true,e,0);}
+        case .ok(v):{v}case .err(e):{return failure(format,run,e,0);}
     };
-    return configured::execute(format,settings,selection,ref project,ref mut root);
+    return configured::execute(format,run,settings,selection,ref project,ref mut root);
 }
 
 fn Result<ProjectInput,errors::Error> acquire(ref u8[] path){

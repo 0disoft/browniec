@@ -159,6 +159,8 @@ requirements are unavailable (4), and failure to open or read the manifest or
 its declared files is an input I/O error (7). Source compilation and runtime
 failures use their existing error classes.
 
+Configured checks accept text and both JSON versions. A successful check reports
+`checked` with profile `brownie.m2-reference/1` and no guest output.
 Configured runs accept both JSON versions. A successful publication includes
 `output_b64` with standard padded Base64 and uses the existing `return_i32`.
 An emitted empty result is encoded as an empty string. Any compile or run
