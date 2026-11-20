@@ -2,7 +2,8 @@
 
 This private H01/C01 sidecar implements native Fairy admission of the exact
 `brownie.policy/0.3` and `brownie.run/0.3` design contracts. The base is `845a056`.
-No Engine/Program/Instance implementation depends on this API yet.
+The Windows Engine uses these typed owners for configured Program and Instance
+admission. See [policy-checked project output](project-source-loader.md#policy-checked-output).
 
 `runtime_policy::parse(bytes)` returns an owning `Policy` only after every required
 field, scalar range, duplicate/unknown field, capability and policy relation passes.
@@ -62,6 +63,20 @@ default 256, ceiling 16000000. Integration must enforce actual implementation
 capacities in addition to these accepted ceilings. Reachable-required catalog/
 program binding, entry resolution, host exchange, public CLI/gates, Engine resource
 reservations, enforcement of deadlines and full H01/C01 completion remain open.
+
+## Explicit Windows configuration acquisition
+
+The internal CLI adapters can now read a caller-selected policy and run file
+through the same bounded Windows disk reader as project input. Each file has
+a separate 65,536-byte ceiling and is parsed directly from its immutable
+native buffer. The native owner closes after parsing, and the typed results own
+their decoded data. Run admission requires the already admitted Policy.
+The public policy and run flags still require Engine delivery integration.
+
+`python -B tools/verify-cli-run-configuration.py` checks both locked native
+profiles. Its fixture accepts valid policy and run files at 65,536 bytes and
+rejects a 65,537-byte file, an unauthorized grant, malformed JSON and a missing
+path. The fixture runs as a separate executable.
 
 ## Focused verification and delivery
 
