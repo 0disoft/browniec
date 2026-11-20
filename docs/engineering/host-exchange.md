@@ -396,6 +396,33 @@ failure, and rejects crossed or short headers, one-byte-short caller
 limits, a declared 4097-byte body, and invalid typed or failure lengths.
 Local receipt: `build/runtime-engine/20261120T195900439402Z/receipt.json`.
 
+### Windows adapter process transport
+
+The private native transport launches a host-selected absolute executable with
+host authority. The child inherits two private local pipe ends and a NUL stderr.
+An explicit handle list and a one-process kill-on-close Job are applied at
+process creation. The caller provides a monotonic deadline and polls the
+transport serially.
+
+The transport sends one bounded request, closes stdin, and pauses after
+receiving the 64-byte reply header. The caller approves the body length before
+further reads. One 4161-byte buffer holds the outgoing frame, the incoming
+frame, or the one-byte trailing-data probe. Full reply bytes are available
+after the exact body, EOF, successful process exit and a final deadline check.
+Cancellation or deadline stops publication and closes the Job. Close retains
+the pipe, event, buffer and OVERLAPPED until I/O completion and child exit.
+The transport can launch a process once per session. The Fairy Engine
+orchestrator, route revision matching and public CLI selection remain open.
+
+`python -B tools/verify-host-adapter-process.py` passed development and /O2
+using real Windows processes and default stacks. Each profile checked eight
+cases (normal, empty, truncated, trailing bytes, nonzero exit, cancellation
+with a partial body, deadline with a partial body, and deadline with a child
+that closed stdout but stayed alive). Three startup rejections also passed.
+Steady-state parent handle growth was zero after warming process-wide
+initialization. Local receipt:
+`build/host-adapter-process/20261120T201403627682Z/receipt.json`.
+
 ## Engine scalar pending memory
 
 Admission charges the SDK backing for a Vec of eight Exchange slots, the

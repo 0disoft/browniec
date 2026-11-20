@@ -1,7 +1,7 @@
-- Latest runtime checkpoint (2026-11-21): [Detached adapter frames](docs/engineering/host-exchange.md#detached-adapter-frames)
-  preflight correlation and declared size from the 64-byte reply header
-  before reading the body. Windows development and /O2 passed with zero live
-  SDK allocations at Engine exit.
+- Latest runtime checkpoint (2026-11-21): [Windows adapter process transport](docs/engineering/host-exchange.md#windows-adapter-process-transport)
+  verifies a real one-shot child, split receive, EOF and exit gating, and
+  deadline/cancellation reaping. Windows development and /O2 passed with
+  zero net handle growth after process-wide initialization.
 
 # Brownie C agent guidance
 
