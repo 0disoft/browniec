@@ -54,6 +54,17 @@ fn void same_event(engine::Event a,engine::Event b){
     assert(a.kind==b.kind && a.value==b.value && a.remaining==b.remaining && a.fuel_known==b.fuel_known);
     same_diagnostic(a.diagnostic,b.diagnostic);
 }
+fn u8 state_number(engine::InstanceState state){
+    return switch(state){
+        case .Ready:{0}case .Running:{1}case .WaitingHost:{2}case .Stopping:{3}case .Terminal:{4}
+    };
+}
+fn engine::Event status_event(ref engine::Engine e,usize i,engine::InstanceState expected){
+    return switch(engine::instance_status(e,i)){
+        case .ok(v):{assert(state_number(v.state)==state_number(expected));v.event}
+        case .err(e):{event(.err(e))}
+    };
+}
 fn live::Observation instance(ref engine::Engine e){return switch(engine::instance_memory(e)){
     case .ok(v):{v}case .err(_):{assert(false);live::Observation{
         .instance_limit=0,.instances_limit=0,.current=0,.peak=0,.closed=false}}
@@ -167,7 +178,8 @@ fn void frozen(ref mut engine::Engine e,usize i,engine::Event first){
     while(n<2){
         rejected(engine::step_instance(e,i,1),11);rejected(engine::step_instance(e,i,4096),11);
         rejected(engine::execute_once(e,i),11);same_event(first,event(engine::cancel_ready(e,i)));
-        same_event(first,event(engine::observe(e,i)));n+=1;
+        same_event(first,event(engine::observe(e,i)));
+        same_event(first,status_event(e,i,.Terminal));n+=1;
     }
     assert(unsafe{probe_attempts()}==attempts);same_heap(ref h);unchanged(e,l,m);
 }
@@ -294,7 +306,9 @@ fn Result<usize,u8> running_cancel_refund_and_first_cause(){
     let ref u8[] source=b"module app;pub fn i32 chosen(ref u8[] data){output::emit(ref data);var a=[1,2];var i32 n=0;while(n<64){a[0]+=1;n+=1;}return a[0];}";
     var engine::Engine e=created()?;let usize p=compiled(ref mut e,source,true)?;
     let usize i=bound(ref mut e,p,b"prefix",16000000,12)?;
-    let usize input=instance(ref e).current;let Heap ready=heap();let engine::Event pending=prepare(ref mut e,i,p,12);
+    let usize input=instance(ref e).current;let Heap ready=heap();
+    same_event(event(engine::observe(ref mut e,i)),status_event(ref e,i,.Ready));
+    let engine::Event pending=prepare(ref mut e,i,p,12);
     lifecycle::warm(ref mut e,i);
     var usize n=0;while(n<64){assert(tick(ref mut e,i,1).kind==4);n+=1;}
     let engine::Event running=event(engine::observe(ref mut e,i));assert(running.remaining<pending.remaining);
@@ -320,6 +334,8 @@ fn Result<engine::Event,u8> parity(ref u8[] source,ref u8[] data,usize budget,us
         var usize visits=0;while(done.kind==4){assert(visits<8192);
             let usize phase=id(engine::lifecycle_phase(ref e,i));
             if(phase>=7){let usize fuel=done.remaining;let usize attempts=unsafe{probe_attempts()};
+                same_event(completion(ref baseline),status_event(ref e,i,.Stopping));
+                rejected_take(engine::take_output(ref mut e,i),11);
                 unsafe{bc_runtime_engine_test_fail(0)};let Result<engine::Event,engine::Error> stopped=engine::cancel_ready(ref mut e,i);
                 unsafe{bc_runtime_engine_test_fail(-1)};done=event(stopped);
                 assert(done.remaining==fuel && unsafe{probe_attempts()}==attempts);
@@ -599,15 +615,25 @@ fn Result<usize,u8> configured_deadline(){
     unsafe{bc_runtime_engine_test_set_clock(10000099)};
     let engine::Event before=tick(ref mut e,a,1);
     assert(before.kind==4 && id(engine::lifecycle_phase(ref e,a))==5);
+    same_event(before,status_event(ref e,a,.Running));
     let engine::Event cancelling=event(engine::cancel_ready(ref mut e,b));
     assert(cancelling.kind==4);
+    let engine::Event cancel_cause=status_event(ref e,b,.Stopping);
+    assert(cancel_cause.kind==3 && cancel_cause.remaining==cancelling.remaining);
+    rejected_take(engine::take_output(ref mut e,b),11);
     unsafe{bc_runtime_engine_test_set_clock(10000100)};
     let engine::Event expiring=event(engine::cancel_ready(ref mut e,a));
     assert(expiring.kind==4 && expiring.remaining==before.remaining);
+    let engine::Event expiry_cause=status_event(ref e,a,.Stopping);
+    assert(expiry_cause.kind==2 && expiry_cause.diagnostic.code.kind==errors::deadline_kind());
+    same_event(expiry_cause,status_event(ref e,a,.Stopping));
+    same_event(cancel_cause,status_event(ref e,b,.Stopping));
+    rejected_take(engine::take_output(ref mut e,a),11);
     let engine::Event expired_first=finish(ref mut e,a,1);
+    same_event(expiry_cause,expired_first);
     deadline_result(ref mut e,a,expired_first,before.remaining);
     let engine::Event cancelled=lifecycle::stop(ref mut e,b);
-    assert(cancelled.kind==3 && cancelled.remaining==cancelling.remaining);
+    same_event(cancel_cause,cancelled);
     frozen(ref mut e,b,cancelled);
     rejected_take(engine::take_output(ref mut e,b),2);
     frozen(ref mut e,c,success);

@@ -124,13 +124,15 @@ fn Execution early(errors::Error e,usize remaining){
 pub fn Execution vacant(usize remaining){return early(errors::make(0,0),remaining);}
 pub fn Completion cancelled_completion(usize remaining){var Completion result=failed(absent(errors::make(0,0)),remaining,0);result.cancelled=true;return result;}
 pub fn Completion pending_completion(usize remaining){return failed(absent(errors::make(0,0)),remaining,0);}
+pub fn diagnostics::Error runtime_diagnostic(ref Program p,errors::Error failure){
+    return if(failure.offset==0){absent(failure)}else{diagnostics::map(snapshot(p),failure,16)};
+}
 // The owning VM has already sealed into its reserved slot or discarded staging.
 // This maps the exact immutable Program's original error without re-verification.
 pub fn Completion resumed_completion(ref Program p,ref vec::Vec<output::Published> published,
     bool success,i64 value,usize remaining,errors::Error failure,usize emits){
     if(!success){
-        let diagnostics::Error diagnostic=if(failure.offset==0){absent(failure)}else{diagnostics::map(snapshot(p),failure,16)};
-        return failed(diagnostic,remaining,emits);
+        return failed(runtime_diagnostic(p,failure),remaining,emits);
     }
     assert(vec::len<output::Published>(published)==1);
     let output::Observation final=output::published_observation(vec::at<output::Published>(published,0));

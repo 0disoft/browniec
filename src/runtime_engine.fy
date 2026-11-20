@@ -47,7 +47,9 @@ import ir as ir;
 pub struct Limits { usize programs; usize instances; usize fuel; }
 pub struct Error { u32 status; diagnostics::Error diagnostic; }
 pub struct Event { u8 kind; i64 value; diagnostics::Error diagnostic; usize remaining; bool fuel_known; }
-// Event.kind 4 indicates a suspended host request. Request bytes are detached.
+pub enum InstanceState { Ready; Running; WaitingHost; Stopping; Terminal; }
+pub struct InstanceStatus { InstanceState state; Event event; }
+// Request bytes are detached from the exchange.
 pub struct HostRequest { usize run; usize request; usize import_id; u8[14] payload; }
 // Detached routing facts for typed adapters. Pair with an Engine-scoped payload borrow.
 pub struct HostRequestInfo { usize run; usize request; usize import_id; usize payload_bytes; host::Binding catalog; }
@@ -809,6 +811,45 @@ pub fn Result<Event,Error> execute_input_once(ref mut Engine e,usize instance,re
 pub fn Result<Event,Error> observe(ref mut Engine e,usize instance){
     let u32 s=unsafe{call_raw(e as ptr mut void,6,instance,0)};
     if(s!=0){return .err(error(s));}return .ok(e.meta.event);
+}
+// A detached observation of the current lifecycle. For Stopping, the event
+// describes the latched outcome, while the Instance still owns its scratch.
+pub fn Result<InstanceStatus,Error> instance_status(ref Engine e,usize instance){
+    let u32 status=unsafe{control_access_raw(e as ptr void)};
+    if(status!=0){return .err(error(status));}
+    if(e.meta.closed){return .err(error(2));}
+    let usize ii=switch(instance_index(ref e.instances,instance)){
+        case .ok(v):{v}case .err(s):{return .err(error(s));}
+    };
+    let ref Instance current=vec::at<Instance>(ref e.instances,ii);
+    if(current.phase==3){return pending_instance_status(e,current);}
+    let InstanceState state=if(current.phase==0){.Ready}else if(current.phase==2){.Terminal}
+        else if(current.phase==4 && current.event.kind==4){.WaitingHost}else{.Running};
+    return .ok(InstanceStatus{.state=state,.event=current.event});
+}
+fn Result<InstanceStatus,Error> pending_instance_status(ref Engine e,ref Instance current){
+    let usize oi=switch(output_index(ref e.outputs,current.id)){
+        case .ok(v):{v}case .err(_):{return .err(error(7));}
+    };
+    let ref Output output=vec::at<Output>(ref e.outputs,oi);
+    if(vec::len<machines::Machine>(ref output.pending)!=1){return .err(error(7));}
+    return switch(machines::stopping(vec::at<machines::Machine>(ref output.pending,0))){
+        case .some(stop):{stopping_instance_status(e,current,stop)}
+        case .none:{.ok(InstanceStatus{.state=.Running,.event=current.event})}
+    };
+}
+fn Result<InstanceStatus,Error> stopping_instance_status(ref Engine e,ref Instance current,machines::Stop stop){
+    var diagnostics::Error diagnostic=absent();
+    if(!stop.cancelled){
+        let usize pi=switch(program_index(ref e.programs,current.program,false)){
+            case .ok(v):{v}case .err(_):{return .err(error(7));}
+        };
+        let ref Program program=vec::at<Program>(ref e.programs,pi);
+        if(program.pins==0 || vec::len<output_programs::Program>(ref program.output)!=1){return .err(error(7));}
+        diagnostic=output_programs::runtime_diagnostic(vec::at<output_programs::Program>(ref program.output,0),stop.failure);
+    }
+    return .ok(InstanceStatus{.state=.Stopping,.event=Event{.kind=if(stop.cancelled){3}else{2},
+        .value=0,.diagnostic=diagnostic,.remaining=stop.remaining,.fuel_known=true}});
 }
 pub fn Result<Event,Error> cancel_ready(ref mut Engine e,usize instance){
     let u32 s=unsafe{call_raw(e as ptr mut void,7,instance,0)};

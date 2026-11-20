@@ -1,8 +1,8 @@
-- Latest runtime checkpoint (2026-11-21): [Zero-Fuel root cleanup](docs/engineering/runtime-engine-step.md#zero-fuel-root-cleanup)
-  invalidates one pending owner slot per step and retains the arena prefix
-  until the last slot. Seven focused groups and the owning Engine passed
-  Windows development and /O2, with zero live SDK allocations at Engine exit.
-  The reviewed transport retains 41 bindings and 60 layouts.
+- Latest runtime checkpoint (2026-11-21): [Instance lifecycle observation](docs/engineering/runtime-engine-step.md#instance-lifecycle-observation)
+  exposes the output machine's first latched reason and Fuel during Stopping,
+  and reads the stored terminal event. Windows development and /O2 Engine
+  verification passed with zero live SDK allocations at exit and 41 reviewed
+  bindings and 60 layouts.
 
 # Brownie C agent guidance
 

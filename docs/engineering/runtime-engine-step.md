@@ -219,6 +219,26 @@ generation exhaustion, dead extents and late orphaned leases. The Engine
 exited with zero live SDK allocations in both profiles. Local Engine receipt:
 `build/runtime-engine/20261120T181523209013Z/receipt.json`.
 
+## Instance lifecycle observation
+
+The owner-thread `instance_status` query exposes Ready, Running, WaitingHost,
+Stopping and Terminal. Polling reads the current state without stepping the VM
+or sampling the clock. During output-machine cleanup, Stopping carries the
+first latched cancellation, deadline or guest error and its Fuel balance.
+For a guest failure the query maps the error through the same retained
+Program source map as terminal publication. The Instance keeps its backing
+and rejects output extraction until cleanup finishes.
+
+Terminal reads return the stored event, including after output has been
+detached. Existing `step_instance`, `cancel_ready` and `observe` callers can
+continue driving all pending work using their event contract.
+
+Windows development and /O2 tests compare Stopping with the final event for
+cancellation, deadlines, guest traps and Fuel failures. They check output
+denial during cleanup, stable terminal observations and zero live SDK
+allocations at Engine exit. Local Engine receipt:
+`build/runtime-engine/20261120T183146980285Z/receipt.json`.
+
 ## Remaining accepted work
 
 Dispatch visits do not bound all bytes, metadata visits or native time. Output
