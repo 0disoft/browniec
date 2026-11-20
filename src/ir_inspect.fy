@@ -95,55 +95,80 @@ fn i32 write(bytes::Buffer output){
     let ref u8[] view=bytes::view(ref output);
     return switch(io::write_bytes(view)){case .ok(n):{if(n==view.len){0}else{7}}case .err(_):{7}};
 }
-fn Result<bytes::Buffer,Error> encode_failure(errors::Error e){
+fn Result<usize,Error> limit_row(ref mut bytes::Buffer out,ref u8[] name,usize used,usize maximum){
+    if(used>maximum){return .err(.Limit);}
+    let usize key=append(out,name)?;
+    let usize a=property(out,b"{\"used\":",used)?;
+    let usize b=property(out,b",\"limit\":",maximum)?;
+    let usize c=property(out,b",\"remaining\":",maximum-used)?;
+    return append(out,b"}");
+}
+fn Result<bytes::Buffer,Error> encode_limits(ref ir::Program p,u8 kind,usize source_bytes){
     var bytes::Buffer out=bytes::empty();
-    let usize header=append(ref mut out,b"{\"schema\":\"browniec.ir/v1\",\"command\":\"inspect\",\"status\":\"error\",\"error\":{\"kind\":\"")?;
+    let usize header=append(ref mut out,b"{\"schema\":\"")?;
+    let usize selected=append(ref mut out,b"browniec.limits/v1")?;
+    let usize prefix=append(ref mut out,b"\",\"command\":\"inspect\",\"status\":\"inspected\",\"profile\":\"")?;
+    let usize name=append(ref mut out,profile(kind))?;
+    let usize group=append(ref mut out,b"\",\"limits\":{")?;
+    let usize source=limit_row(ref mut out,b"\"source_bytes\":",source_bytes,4096)?;
+    let usize instructions=limit_row(ref mut out,b",\"instructions\":",p.count,256)?;
+    let usize functions=limit_row(ref mut out,b",\"functions\":",p.function_count,16)?;
+    let usize registers=limit_row(ref mut out,b",\"registers\":",p.registers,128)?;
+    let usize close=append(ref mut out,b"},\"error\":null}\n")?;
+    return .ok(out);
+}
+fn Result<bytes::Buffer,Error> encode_failure(errors::Error e,bool limits){
+    var bytes::Buffer out=bytes::empty();
+    let usize header=append(ref mut out,b"{\"schema\":\"")?;
+    let usize selected=append(ref mut out,if(limits){b"browniec.limits/v1"}else{b"browniec.ir/v1"})?;
+    let usize prefix=append(ref mut out,b"\",\"command\":\"inspect\",\"status\":\"error\",\"error\":{\"kind\":\"")?;
     let usize kind=append(ref mut out,text::as_bytes(render::kind(e.kind)))?;
     let usize offset=property(ref mut out,b"\",\"byte_offset\":",e.offset)?;
     let usize end=append(ref mut out,b"}}\n")?;return .ok(out);
 }
 @effects(console)
-fn i32 failure(bool json,errors::Error e){
+fn i32 failure(bool json,bool limits,errors::Error e){
     if(!json){return render::outcome(false,false,true,0,e);}
-    let bytes::Buffer output=switch(encode_failure(e)){case .ok(v):{v}case .err(_):{return 7;}};
+    let bytes::Buffer output=switch(encode_failure(e,limits)){case .ok(v):{v}case .err(_):{return 7;}};
     let i32 result=write(output);return if(result==0){render::exit_code(e.kind)}else{result};
 }
 @effects(console)
-fn i32 show(ref ir::Program p,u8 kind,usize literals,bool json){
-    let bytes::Buffer output=switch(encode(p,kind,literals,json)){case .ok(v):{v}case .err(_):{return 7;}};
+fn i32 show(ref ir::Program p,u8 kind,usize literals,usize length,bool json,bool limits){
+    let bytes::Buffer output=switch(if(limits){encode_limits(p,kind,length)}else{encode(p,kind,literals,json)}){case .ok(v):{v}case .err(_):{return 7;}};
     return write(output);
 }
 // Keep large owning compiler returns in separate, nonrecursive stack frames.
 @effects(console)
-fn i32 legacy(ref u8[] source,bool json){
-    let ir::Program p=switch(compiler::compile(source)){case .ok(v):{v}case .err(e):{return failure(json,e);}};
-    let usize checked=switch(verifier::verify(ref p)){case .ok(v):{v}case .err(e):{return failure(json,e);}};
-    return show(ref p,arrays::profile(ref p),0,json);
+fn i32 legacy(ref u8[] source,bool json,bool limits){
+    let ir::Program p=switch(compiler::compile(source)){case .ok(v):{v}case .err(e):{return failure(json,limits,e);}};
+    let usize checked=switch(verifier::verify(ref p)){case .ok(v):{v}case .err(e):{return failure(json,limits,e);}};
+    return show(ref p,arrays::profile(ref p),0,source.len,json,limits);
 }
 @effects(console)
-fn i32 retained(ref u8[] source,bool json){
+fn i32 retained(ref u8[] source,bool json,bool limits){
     let programs::ReferenceReturnProgram p=switch(compiler::compile_reference_returns(source,images::metadata_charge()+images::byte_limit())){
-        case .ok(v):{v}case .err(e):{return failure(json,compiler::public_error(e));}
+        case .ok(v):{v}case .err(e):{return failure(json,limits,compiler::public_error(e));}
     };
     let ref calls::Program code=programs::reference_return_code(ref p);
-    return show(ref code.body,8,images::payload_bytes(programs::reference_return_literals(ref p)),json);
+    return show(ref code.body,8,images::payload_bytes(programs::reference_return_literals(ref p)),source.len,json,limits);
 }
 @effects(console,filesystem)
 pub fn i32 cli(){
-    let usize argc=process::arg_count();var bool json=false;var bool ir_seen=false;var usize at=3;
-    if(argc<3){return failure(false,errors::make(10,0));}
+    let usize argc=process::arg_count();var bool json=false;var bool ir_seen=false;var bool limits=false;var usize at=3;
+    if(argc<3){return failure(false,false,errors::make(10,0));}
     while(at<argc){
         var u8[64] option=[0;64];
-        let usize n=switch(process::arg(at,ref mut option)){case .ok(v):{v}case .err(_):{return failure(json,errors::make(10,0));}};
+        let usize n=switch(process::arg(at,ref mut option)){case .ok(v):{v}case .err(_):{return failure(json,limits,errors::make(10,0));}};
         let ref u8[] all=ref option;
         if(lexer::equal(all[..n],b"--json") && !json){json=true;}
-        else if(lexer::equal(all[..n],b"--ir") && !ir_seen){ir_seen=true;}
-        else if(lexer::equal(all[..n],b"--isolated")){return failure(json,errors::make(11,0));}
-        else{return failure(json,errors::make(10,0));}at+=1;
+        else if(lexer::equal(all[..n],b"--ir") && !ir_seen && !limits){ir_seen=true;}
+        else if(lexer::equal(all[..n],b"--limits") && !limits && !ir_seen){limits=true;}
+        else if(lexer::equal(all[..n],b"--isolated")){return failure(json,limits,errors::make(11,0));}
+        else{return failure(json,limits,errors::make(10,0));}at+=1;
     }
-    if(!ir_seen){return failure(json,errors::make(10,0));}
-    let input::Source source=switch(input::read_source(2)){case .ok(v):{v}case .err(e):{return failure(json,e);}};
+    if(!ir_seen && !(limits && json)){return failure(json,limits,errors::make(10,0));}
+    let input::Source source=switch(input::read_source(2)){case .ok(v):{v}case .err(e):{return failure(json,limits,e);}};
     let ref u8[] all=ref source.data;let ref u8[] selected=all[..source.length];
-    let bool image=switch(features::retained(selected)){case .ok(v):{v}case .err(e):{return failure(json,e);}};
-    return if(image){retained(selected,json)}else{legacy(selected,json)};
+    let bool image=switch(features::retained(selected)){case .ok(v):{v}case .err(e):{return failure(json,limits,e);}};
+    return if(image){retained(selected,json,limits)}else{legacy(selected,json,limits)};
 }

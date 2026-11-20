@@ -15,11 +15,12 @@
 | browniec check SOURCE --isolated | Use a restricted compile-only worker | Designed; unavailable |
 | browniec run SOURCE --isolated | Use the restricted worker and parent broker | Designed; unavailable |
 | browniec inspect SOURCE --ir | Compile/verify and emit bounded private IR diagnostics without executing | Implemented for the same public M1/M2 admission as check; optional --json |
+| browniec inspect SOURCE --limits --json | Report consumed and remaining compile capacity without executing | Implemented for the same public M1/M2 admission as check |
 | browniec worker | Broker-only restricted IPC endpoint | Designed; unavailable |
 
 The implemented grammar is `browniec check SOURCE [--json|--json-v2]` and
 `browniec run SOURCE [--fuel N] [--json|--json-v2]`, `browniec inspect SOURCE --ir [--json]`,
-plus `--version [--json]` and `--help`.
+`browniec inspect SOURCE --limits --json`, plus `--version [--json]` and `--help`.
 Scalar evaluation uses `browniec eval-i32 SOURCE N [--fuel N] [--json|--json-v2]`.
 Fuel defaults to 256 and accepts 0..16000000; duplicate/unknown options are errors.
 Run grants no guest host capability. SOURCE selects one local disk file with a

@@ -23,6 +23,7 @@ The public CLI checks and runs one source file at a time. `check` verifies witho
 | `browniec eval-i32 SOURCE N [--fuel N]` | `--json-v2` | `stdout` | `browniec.result/v2` |
 | `browniec inspect SOURCE --ir` | — | `stdout` | — |
 | `browniec inspect SOURCE --ir` | `--json` | `stdout` | `browniec.ir/v1` |
+| `browniec inspect SOURCE --limits` | `--json` | `stdout` | `browniec.limits/v1` |
 <!-- cli-output:end -->
 
 The table shows successful output. A dash in the option column means the default text mode. Text errors go to stderr. JSON options emit a single object to stdout, including source errors.

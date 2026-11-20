@@ -23,6 +23,7 @@ description: 公开 browniec 命令、退出码以及常见错误的快速排查
 | `browniec eval-i32 SOURCE N [--fuel N]` | `--json-v2` | `stdout` | `browniec.result/v2` |
 | `browniec inspect SOURCE --ir` | — | `stdout` | — |
 | `browniec inspect SOURCE --ir` | `--json` | `stdout` | `browniec.ir/v1` |
+| `browniec inspect SOURCE --limits` | `--json` | `stdout` | `browniec.limits/v1` |
 <!-- cli-output:end -->
 
 表格列出成功时的输出。选项列中的破折号表示默认文本模式。文本错误写入 stderr。使用 JSON 选项时，结果或源代码错误均以单个对象写入 stdout。

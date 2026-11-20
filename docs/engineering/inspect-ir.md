@@ -53,3 +53,24 @@ Implementation `2b44bf9` passed both 19-case native CLI profiles plus version/he
 The [evidence](../evidence/inspect-ir-windows-20261107.json) records those exact
 224 inputs and default PE stacks. The [composed successor](parallel-integration.md)
 also checks public scalar/literal inspection after catalog/loop integration.
+
+
+## Compile capacity
+
+`browniec inspect SOURCE --limits --json` uses the same compile/verify path
+as IR inspection. It writes a single `browniec.limits/v1` object to stdout.
+A successful object has `command: "inspect"`, `status: "inspected"`,
+`profile`, `limits`, and `error: null`. The four limit rows report
+`used`, `limit`, and `remaining`:
+
+| Row | Limit | Counted units |
+| --- | --- | --- |
+| `source_bytes` | 4096 | Original file bytes |
+| `instructions` | 256 | Verified IR instructions across the Program |
+| `functions` | 16 | Declared functions, including the entry |
+| `registers` | 128 | Verified program-wide register cells, including mutable slots |
+
+Compile failures use the existing error kind and offset, with
+`status: "error"` and no `limits` object. The two inspection modes are
+mutually exclusive. `--json` is required for `--limits` and may appear before
+or after it. Version JSON advertises this mode with `inspect_limits: true`.

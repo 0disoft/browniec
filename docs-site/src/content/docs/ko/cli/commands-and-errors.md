@@ -23,6 +23,7 @@ description: browniec 공개 명령어 사용법, 종료 코드, 그리고 자�
 | `browniec eval-i32 SOURCE N [--fuel N]` | `--json-v2` | `stdout` | `browniec.result/v2` |
 | `browniec inspect SOURCE --ir` | — | `stdout` | — |
 | `browniec inspect SOURCE --ir` | `--json` | `stdout` | `browniec.ir/v1` |
+| `browniec inspect SOURCE --limits` | `--json` | `stdout` | `browniec.limits/v1` |
 <!-- cli-output:end -->
 
 표는 성공 시 출력을 보여 줍니다. 출력 옵션의 대시는 기본 텍스트 모드입니다. 텍스트 오류는 stderr로 나가고, JSON 옵션은 소스 오류도 stdout에 객체 하나로 출력합니다.

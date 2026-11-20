@@ -93,5 +93,16 @@
         "schema": "browniec.ir/v1"
       }
     ]
+  },
+  {
+    "command": "inspect",
+    "arguments": "SOURCE --limits",
+    "formats": [
+      {
+        "option": "--json",
+        "channel": "stdout",
+        "schema": "browniec.limits/v1"
+      }
+    ]
   }
 ]

@@ -81,6 +81,54 @@ def check_output_table(exe, identity):
     print('PASS: documented CLI channels and schemas match native output')
 
 
+def inspect_json(exe, source, *options, exit_code=0, schema='browniec.limits/v1'):
+    ran = invoke(exe, ['inspect', source, *options], exit_code)
+    assert not ran.stderr and len(ran.stdout.splitlines()) == 1 and ran.stdout.endswith(b'\n'), ran
+    obj = json.loads(ran.stdout)
+    assert type(obj) is dict and obj['schema'] == schema and obj['command'] == 'inspect', obj
+    return obj
+
+
+def check_inspection_limits(exe, folder):
+    path = folder / 'limits.brc'
+    ceilings = {'source_bytes': 4096, 'instructions': 256, 'functions': 16, 'registers': 128}
+    for count in (15, 16, 17):
+        raw = ('module main; fn i32 main(){ return 1/0; }\n' +
+               ''.join(f'fn i32 helper{i}(){{ return {i}; }}\n' for i in range(count - 1))).encode()
+        if count == 16:
+            raw = raw.ljust(4096, b' ')
+        path.write_bytes(raw)
+        if count == 17:
+            obj = inspect_json(exe, path, '--limits', '--json', exit_code=3)
+            assert obj['status'] == 'error' and obj['error']['kind'] == 'compile_limit', obj
+            assert 'limits' not in obj, obj
+            continue
+        result = inspect_json(exe, path, '--json', '--limits')
+        ir = inspect_json(exe, path, '--ir', '--json', schema='browniec.ir/v1')
+        used = {'source_bytes': len(raw), 'instructions': ir['instruction_count'],
+                'functions': len(ir['functions']), 'registers': ir['register_count']}
+        assert used['functions'] == count
+        expected = {key: {'used': value, 'limit': ceilings[key], 'remaining': ceilings[key] - value}
+                    for key, value in used.items()}
+        assert result['status'] == 'inspected' and result['error'] is None and result['limits'] == expected, result
+        assert result['profile'] == ir['profile'], result
+        # The divide by zero is reachable only when the VM executes the guest.
+        invoke(exe, ['run', path], 5)
+
+    path.write_bytes(b' ' * 4097)
+    too_large = inspect_json(exe, path, '--limits', '--json', exit_code=3)
+    assert too_large['error'] == {'kind': 'compile_limit', 'byte_offset': 4096}, too_large
+    path.write_bytes(b'module main; fn i32 main(){ return b"abc"[0] as i32; }')
+    retained = inspect_json(exe, path, '--limits', '--json')
+    assert retained['profile'] == 'brownie.m2-reference/1' and retained['limits']['functions']['used'] == 1, retained
+    for invalid in (('--limits', '--limits'), ('--limits', '--ir'), ('--limits', '--fuel', '1')):
+        obj = inspect_json(exe, path, '--json', *invalid, exit_code=2)
+        assert obj['error']['kind'] == 'usage', obj
+    text = invoke(exe, ['inspect', path, '--limits'], 2)
+    assert not text.stdout and b'usage' in text.stderr, text
+    print('PASS: limits at 15/16/17 functions, 4096/4097 source bytes, and retained IR')
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--exe', type=Path, required=True)
@@ -96,6 +144,7 @@ def main():
         identity.write_bytes(b'module main; fn i32 evaluate(i32 x) { return x; }\n')
 
         check_output_table(exe, identity)
+        check_inspection_limits(exe, Path(temp))
         check_diagnostic(exe, source_zero, 3, 'lexical',
                          {'kind': 'source_byte', 'offset': 0}, b'browniec: lexical at byte 0')
         check_diagnostic(exe, missing, 7, 'input_io',
