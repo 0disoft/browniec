@@ -761,19 +761,41 @@ pub fn Result<usize, Error> clear(ref mut Table table, usize capacity) {
     if (!valid(table, capacity)) { return .err(.State); }
     var usize checked = 0;
     while (checked < 16) { if (table.slots[checked].reading || table.slots[checked].writing) { return .err(.State); } checked += 1; }
-    let usize before = table.arena.used;
     var usize i = 0;
     while (i < 16) {
-        if (table.slots[i].live) {
-            let usize next = next_generation(table.slots[i].generation);
-            table.slots[i].generation = next;
-        }
-        forget(table, i);
-        table.order[i] = 0;
+        forget_root(table, i);
         i += 1;
     }
-    table.depth = 0; table.arena.used = 0;
-    return .ok(before);
+    return .ok(finish_root_cleanup(table));
+}
+
+fn void forget_root(ref mut Table table, usize slot) {
+    if (table.slots[slot].live) {
+        let usize next = next_generation(table.slots[slot].generation);
+        table.slots[slot].generation = next;
+    }
+    forget(table, slot);
+    table.order[slot] = 0;
+}
+
+// Staged abort authenticates the unpublished table once. The root cursor
+// then visits each slot exactly once and publishes only after the last visit.
+pub fn Result<usize, Error> inspect_root_cleanup(ref Table table, usize capacity) {
+    if (!valid(table, capacity)) { return .err(.State); }
+    return .ok(table.arena.used);
+}
+
+pub fn Result<usize, Error> clear_cleanup_root(ref mut Table table, usize slot) {
+    if (slot >= 16 || table.slots[slot].reading || table.slots[slot].writing) { return .err(.State); }
+    forget_root(table, slot);
+    return .ok(slot);
+}
+
+pub fn usize finish_root_cleanup(ref mut Table table) {
+    let usize before = table.arena.used;
+    table.depth = 0;
+    table.arena.used = 0;
+    return before;
 }
 
 // Record owners share the same slots, arena, generations and release order as

@@ -57,12 +57,20 @@ fn void same(ref runtime::State a,ref runtime::State b){same_pool(ref a.runtime.
 fn Result<usize,errors::Error> drive(ref mut runtime::State live,ref runtime::State before){
     var runtime::State scratch=runtime::empty(0);var work::State w=work::empty();var budget::State allowance=budget::empty();
     let usize started=work::begin(ref mut w,64)?;var usize n=0;
-    while(n<80){let usize reset=budget::reset(ref mut allowance,0)?;let usize total=allowance.total;
+    while(n<96){let usize reset=budget::reset(ref mut allowance,0)?;let usize total=allowance.total;
         let bool used=budget::admit(ref mut allowance,1,0)?;assert(used);let usize index=w.index;let u8 phase=w.phase;
         let bool partial=work::advance(ref mut w,ref mut scratch.runtime,live,ref mut allowance)?;
         assert(!partial && index==w.index && phase==w.phase && allowance.last==1 && allowance.total==total+1);same(live,before);
         let usize fresh=budget::reset(ref mut allowance,0)?;
         let bool done=work::advance(ref mut w,ref mut scratch.runtime,live,ref mut allowance)?;same(live,before);
+        if(phase==5){
+            let ref owners::Table table=ref scratch.runtime.owners;
+            assert(w.index==index+1 && !table.slots[index].occupied && !table.slots[index].live);
+            if(!done){
+                assert(table.arena.used==before.runtime.owners.arena.used);
+                assert(table.slots[w.index].live==before.runtime.owners.slots[w.index].live);
+            }
+        }
         assert(allowance.last==4096);n+=1;if(done){let usize again=budget::reset(ref mut allowance,0)?;
             assert(budget::admit(ref mut allowance,4096,0).is_ok);work::publish(ref w,ref scratch.runtime,live);return .ok(n);}
     }assert(false);return .err(errors::make(5,0));
@@ -77,7 +85,7 @@ fn Result<usize,errors::Error> parity(bool mixed,bool corrupt){
     if(corrupt){state.runtime.authority.depth=99;state.runtime.authority.kinds[30]=9;}
     let runtime::State before=state;var runtime::State raw=state;
     let usize aborted=runtime::abort(ref mut raw,64,0)?;assert(aborted==0);
-    let usize stages=drive(ref mut state,ref before)?;assert(stages==66);same(ref state,ref raw);return .ok(0);
+    let usize stages=drive(ref mut state,ref before)?;assert(stages==82);same(ref state,ref raw);return .ok(0);
 }
 @test fn void saturated_mixed_sessions_and_owners_match_raw_zero_fuel_cleanup(){assert(parity(true,false).is_ok);}
 @test fn void corrupt_authority_receipts_do_not_block_authenticated_cleanup(){assert(parity(true,true).is_ok);}
@@ -95,6 +103,38 @@ fn Result<usize,errors::Error> stale_lease(){
     return .ok(first.slot);
 }
 @test fn void stale_shared_lease_rejects_before_any_publication(){assert(stale_lease().is_ok);}
+fn Result<usize,errors::Error> owner_generations(){
+    var runtime::State live=runtime::empty(64);var u8[64] data=[0;64];
+    let owners::Token dead=create(ref mut live,ref mut data)?;
+    let owners::Token retiring=create(ref mut live,ref mut data)?;
+    let usize held=size(owners::release(ref mut live.runtime.owners,dead,64))?;
+    assert(held==0);
+    live.runtime.owners.slots[retiring.slot].generation=18446744073709551615;
+    let runtime::State before=live;
+    var runtime::State raw=live;
+    let usize aborted=runtime::abort(ref mut raw,64,0)?;
+    let usize stages=drive(ref mut live,ref before)?;
+    assert(aborted==0 && stages==82 && live.runtime.owners.arena.used==0);
+    same(ref raw,ref live);
+    assert(live.runtime.owners.slots[dead.slot].generation==dead.generation+1);
+    assert(live.runtime.owners.slots[retiring.slot].generation==0);
+    assert(!owners::read(ref live.runtime.owners,dead,0,ref data).is_ok);
+    return .ok(0);
+}
+@test fn void dead_extents_and_exhausted_generation_survive_root_cleanup(){assert(owner_generations().is_ok);}
+
+fn Result<usize,errors::Error> orphaned_lease(){
+    var runtime::State live=runtime::empty(64);var u8[64] data=[0;64];var usize i=0;
+    while(i<16){let owners::Token root=create(ref mut live,ref mut data)?;i+=1;}
+    live.runtime.owners.slots[15].reading=true;
+    let runtime::State before=live;
+    var runtime::State raw=live;
+    assert(!runtime::abort(ref mut raw,64,0).is_ok);same(ref raw,ref before);
+    assert(!drive(ref mut live,ref before).is_ok);same(ref live,ref before);
+    return .ok(0);
+}
+@test fn void late_orphaned_lease_discards_private_root_progress(){assert(orphaned_lease().is_ok);}
+
 @test fn void invalid_pool_rejects_without_publishing_or_touching_live_state(){
     var runtime::State live=runtime::empty(64);live.runtime.pool.slots[15].exclusive=true;let runtime::State before=live;
     var runtime::State raw=live;assert(!runtime::abort(ref mut raw,64,0).is_ok);same(ref raw,ref before);

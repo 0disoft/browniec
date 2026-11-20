@@ -45,17 +45,29 @@ fn Result<usize,errors::Error> stage(ref mut State w,ref mut runtime::Runtime pl
         // Cleanup intentionally ignores corrupted authority receipts, just like
         // raw finish. Only the authenticated pool/owner sessions are drained.
         authority::reset_cleanup_entry(ref mut planned.authority,w.index);w.index+=1;
-        if(w.index==31){planned.authority.depth=0;planned.authority.frame=0;w.phase=4;}
+        if(w.index==31){
+            planned.authority.depth=0;planned.authority.frame=0;w.phase=4;w.index=0;
+        }
         return .ok(0);
     }
     if(w.phase==4){
-        let usize released=count(owners::clear(ref mut planned.owners,w.capacity))?;
-        w.active=false;w.done=true;w.phase=5;return .ok(0);
+        let usize checked=count(owners::inspect_root_cleanup(ref planned.owners,w.capacity))?;
+        w.phase=5;return .ok(0);
+    }
+    if(w.phase==5){
+        let usize cleared=count(owners::clear_cleanup_root(ref mut planned.owners,w.index))?;
+        w.index+=1;
+        if(w.index==16){
+            let usize released=owners::finish_root_cleanup(ref mut planned.owners);
+            w.active=false;w.done=true;w.phase=6;
+        }
+        return .ok(0);
     }return .err(errors::make(5,0));
 }
 pub fn Result<bool,errors::Error> advance(ref mut State w,ref mut runtime::Runtime planned,
     ref runtime::State live,ref mut budget::State allowance){
-    if(!w.active || w.done || w.phase>4 || (w.phase==1 && w.index>=16) || (w.phase==2 && w.index>16) ||
+    if(!w.active || w.done || w.phase>5 ||
+        ((w.phase==1 || w.phase==5) && w.index>=16) || (w.phase==2 && w.index>16) ||
         (w.phase==3 && w.index>=31)){return .err(errors::make(5,0));}
     if(allowance.last!=0){return .ok(false);}
     if(!budget::admit(allowance,4096,0)?){return .ok(false);}

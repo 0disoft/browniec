@@ -1,8 +1,8 @@
-- Latest runtime checkpoint (2026-11-21): [Zero-Fuel slice cleanup](docs/engineering/runtime-engine-step.md#zero-fuel-slice-cleanup)
-  validates the unpublished slice pool one descriptor per step and reuses that
-  proof during ticket retirement. Five focused groups and the owning Engine
-  passed Windows development and /O2, with zero live SDK allocations at Engine
-  exit. The reviewed transport retains 41 bindings and 60 layouts.
+- Latest runtime checkpoint (2026-11-21): [Zero-Fuel root cleanup](docs/engineering/runtime-engine-step.md#zero-fuel-root-cleanup)
+  invalidates one pending owner slot per step and retains the arena prefix
+  until the last slot. Seven focused groups and the owning Engine passed
+  Windows development and /O2, with zero live SDK allocations at Engine exit.
+  The reviewed transport retains 41 bindings and 60 layouts.
 
 # Brownie C agent guidance
 

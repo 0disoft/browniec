@@ -199,6 +199,26 @@ groups compare staged cleanup with raw abort and cover full pools, stale lease
 generations and malformed descriptors. Local Engine receipt:
 `build/runtime-engine/20261120T180111816482Z/receipt.json`.
 
+## Zero-Fuel root cleanup
+
+After retiring the slice tickets, the pending output machine checks the
+unpublished owner table's allocation chain once. Each following step checks
+for an orphaned session and invalidates at most one of the 16 owner slots.
+An already-dead extent keeps its advanced generation. A live slot at the
+maximum generation retires to zero, so no stale token can become valid again.
+
+The arena prefix is retained until the final slot clears. If a later slot
+fails its session check, the partially cleared table is discarded. The
+final Engine publication applies the complete plan, preserving the first
+terminal cause and the Fuel balance. The fixed owner-table proof still
+visits at most 32 entries in one step.
+
+Seven focused groups and the owning Engine passed in Windows development and
+/O2. The groups compare against raw abort, check one-slot progress and cover
+generation exhaustion, dead extents and late orphaned leases. The Engine
+exited with zero live SDK allocations in both profiles. Local Engine receipt:
+`build/runtime-engine/20261120T181523209013Z/receipt.json`.
+
 ## Remaining accepted work
 
 Dispatch visits do not bound all bytes, metadata visits or native time. Output
