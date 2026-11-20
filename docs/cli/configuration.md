@@ -80,8 +80,10 @@ granted to it, and allowed by policy. The check releases the Program without
 creating an Instance or invoking an adapter.
 
 The current host compiler enforces its native dialect bounds and the policy's
-source byte, instruction, register and compile deadline limits. Full compile
-work accounting and multi-module catalog checks remain pending. See the
+source byte, lexical token (excluding EOF), function, instruction, per-function
+register and compile deadline limits. The token limit is checked during catalog
+binding before signature and body lowering. Function, instruction and register
+limits are checked before Program retention. Full compile work accounting and multi-module catalog checks remain pending. See the
 [host compiler contract](../engineering/host-exchange.md#scalar-host-calls-from-source).
 
 ## Single-source guest input

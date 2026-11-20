@@ -3177,9 +3177,13 @@ pub fn Result<ir::Program,errors::Error> compile_eval_i32(ref u8[] source){
 // Private candidate only. The Engine still verifies and binds the catalog digest
 // and Policy through the existing host Program admission.
 pub fn Result<usize,errors::Error> lower_scalar_host(ref u8[] source,ref host_catalog::Catalog imports,ref mut ir::Program code){
+    return lower_scalar_host_with_limit(source,imports,code,1024);
+}
+pub fn Result<usize,errors::Error> lower_scalar_host_with_limit(ref u8[] source,ref host_catalog::Catalog imports,
+    ref mut ir::Program code,usize token_limit){
     if(source.len>4096){return .err(errors::make(4,4096));}
     let ref str valid=switch(text::validate_utf8(source)){case .ok(v):{v}case .err(_):{return .err(errors::make(1,0));}};
-    let usize start=host_source::prepare(source,code,imports)?;
+    let usize start=host_source::prepare(source,code,imports,token_limit)?;
     var functions::Table signatures=signature_scan::scan_host_from(source,start)?;
     let literal_collection::Index literals=literal_collection::empty();
     var usize active=16;

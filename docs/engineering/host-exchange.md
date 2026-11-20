@@ -38,6 +38,11 @@ the ordinary compiler gate. Both profiles exit with zero live SDK allocations.
 Root fairyc check --locked passes 377 sources and 4,206 MIR functions. The
 local receipt is build/runtime-engine/20261119T085228115292Z/receipt.json.
 
+The Engine applies policy source bytes and lexical tokens (excluding EOF),
+then checks the lowered function and instruction totals and each function's
+register range before retention. The native global register capacity also
+applies. The same admission path backs the Windows single-source host check.
+
 ## Catalog module aliases from source
 
 The private single-source Engine accepts imports after the module header

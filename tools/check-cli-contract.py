@@ -140,6 +140,25 @@ def check_host_catalog(exe, args):
     assert check_json(exe, args, 4, version=2)['kind'] == 'unavailable'
     policy.write_text(json.dumps(ceiling), encoding='utf-8')
 
+    source.write_bytes(b'module main; fn i32 helper(){return 41;} fn i32 main(){return helper();}')
+    # 25 source tokens, four instructions, and one register in each of two functions.
+    exact = ceiling['compile'] | {'tokens': 25, 'functions': 2, 'instructions': 4,
+                                  'registers_per_function': 1}
+    policy.write_text(json.dumps(ceiling | {'compile': exact}), encoding='utf-8')
+    assert check_json(exe, args, 0, version=2) is None
+    for field in ('tokens', 'functions', 'instructions'):
+        bounds = exact | {field: exact[field] - 1}
+        policy.write_text(json.dumps(ceiling | {'compile': bounds}), encoding='utf-8')
+        assert check_json(exe, args, 3, version=2)['kind'] == 'compile_limit'
+
+    source.write_bytes(b'module main; fn i32 main(){return 1+2;}')
+    for registers, status in ((3, 0), (2, 3)):
+        bounds = ceiling['compile'] | {'registers_per_function': registers}
+        policy.write_text(json.dumps(ceiling | {'compile': bounds}), encoding='utf-8')
+        error = check_json(exe, args, status, version=2)
+        assert (error and error['kind']) == (None if status == 0 else 'compile_limit'), error
+    policy.write_text(json.dumps(ceiling), encoding='utf-8')
+
     source.write_bytes(b'module main; fn i32 main(){return host::example::check(true);}')
     bad = check_json(exe, args, 3, version=2)
     assert bad['kind'] == 'type' and bad['location']['kind'] == 'source_byte', bad
@@ -153,7 +172,7 @@ def check_host_catalog(exe, args):
     catalog.unlink()
     missing = check_json(exe, args, 7, version=2)
     assert missing == {'kind': 'input_io', 'location': {'kind': 'none'}}, missing
-    print('PASS: explicit host catalog, policy, grants, typed imports and compile-only routing')
+    print('PASS: explicit host catalog, grants, typed imports and exact compiler policy limits')
 
 
 def configured_arguments(folder):

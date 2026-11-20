@@ -325,7 +325,7 @@ pub fn Result<usize,Error> compile_scalar_host(ref mut Engine e,ref u8[] source,
     if(source.len>limits.source_bytes){return .err(error(8));}
     let usize deadline=deadline_after(limits.deadline_ms)?;
     var ir::Program code=ir::empty();
-    switch(compiler::lower_scalar_host(source,ref imports,ref mut code)){
+    switch(compiler::lower_scalar_host_with_limit(source,ref imports,ref mut code,limits.tokens)){
         case .ok(_):{}
         case .err(problem):{
             let usize at=problem.offset;
@@ -333,7 +333,12 @@ pub fn Result<usize,Error> compile_scalar_host(ref mut Engine e,ref u8[] source,
                 .code=problem,.at=sources::Span{.source=0,.start=at,.end=if(at<source.len){at+1}else{at}}}});
         }
     };
-    if(code.count>limits.instructions || code.registers>limits.registers_per_function){return .err(error(8));}
+    if(code.count>limits.instructions || code.function_count>limits.functions){return .err(error(8));}
+    var usize f=0;
+    while(f<code.function_count){
+        if(code.register_ends[f]-code.register_starts[f]>limits.registers_per_function){return .err(error(8));}
+        f+=1;
+    }
     return retain_verified_host(e,ref code,imports,digest,run,deadline);
 }
 

@@ -137,7 +137,7 @@ fn u8 small(usize value){
 }
 
 // Binding is advisory: the retaining verifier rechecks the exact catalog.
-pub fn Result<usize,errors::Error> prepare(ref u8[] source,ref mut ir::Program code,ref catalog::Catalog imports){
+pub fn Result<usize,errors::Error> prepare(ref u8[] source,ref mut ir::Program code,ref catalog::Catalog imports,usize token_limit){
     if(code.list_used!=0){return .err(errors::make(5,0));}
     code.list_used=scratch_bytes();
     var usize i=0;
@@ -196,6 +196,8 @@ pub fn Result<usize,errors::Error> prepare(ref u8[] source,ref mut ir::Program c
         }
         let usize next=lexer::next(source,ref mut s)?;
     }
+    // The lexer also counts its end-of-file marker. Policy counts source tokens.
+    if(s.tokens-1>token_limit){return .err(errors::make(4,s.begin));}
     code.list_operands[rows()]=small(count%256);
     code.list_operands[rows()+1]=small(count/256);
     return .ok(declarations);
