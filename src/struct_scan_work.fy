@@ -115,7 +115,11 @@ pub fn Result<bool,errors::Error> advance_scoped(ref u8[] source,ref context::Ta
 }
 // Owning synchronous drains. The Table remains private until all layout checks.
 pub fn Result<raw::Table,errors::Error> scan_single(ref u8[] source){
+    return scan_single_from(source,0);
+}
+pub fn Result<raw::Table,errors::Error> scan_single_from(ref u8[] source,usize start){
     var State w=single();var budget::State meter=budget::empty();
+    if(start!=0){w.token.cursor=start;next(ref mut w,4);}
     while(!w.done){let usize allowance=budget::reset(ref mut meter,0)?;let bool done=advance_single(source,ref mut w,ref mut meter)?;}
     return prepared(ref w);
 }

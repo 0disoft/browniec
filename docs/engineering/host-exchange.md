@@ -38,6 +38,35 @@ the ordinary compiler gate. Both profiles exit with zero live SDK allocations.
 Root fairyc check --locked passes 377 sources and 4,206 MIR functions. The
 local receipt is build/runtime-engine/20261119T085228115292Z/receipt.json.
 
+## Catalog module aliases from source
+
+The private single-source Engine accepts imports after the module header
+and before declarations:
+
+```text
+module main;
+import host::example as api;
+fn i32 main() {
+    return api::check(40 + 1) + 35;
+}
+```
+
+The compiler resolves each alias to an exact catalog module and resolves
+each call to a symbol in that module. Whitespace and comments inside the
+qualified path preserve its canonical identity. Unknown modules and symbols,
+duplicate aliases and late imports fail compilation at original source byte
+offsets. The same alias works in expressions, direct Result switches and
+annotated Result bindings. The emitted import IDs still require authorization
+under the retained Program's catalog digest, run declarations and grants.
+
+Windows development and /O2 passed with zero live SDK allocations. The
+aliased request selected catalog import 1, and two Instances sharing the
+same Program returned 77 and 28 after their own replies. A cross-run reply
+and an aliased call without a capability declaration were rejected.
+Native coverage also exercised direct and stored Result handling with aliases.
+Root locked check passed 377 sources and 4,266 MIR functions.
+Local receipt: `build/runtime-engine/20261120T094754745682Z/receipt.json`.
+
 ## Catalog-typed scalar arguments from source
 
 The same private entry accepts zero to 32 scalar arguments of the exact

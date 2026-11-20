@@ -1,10 +1,8 @@
-- Latest runtime checkpoint (2026-11-19): [Scalar host calls from source](docs/engineering/host-exchange.md#scalar-host-calls-from-source)
-  lower one i32 argument through the existing private Engine admission.
-  Windows development and /O2 verify two Instances from one source Program,
-  exact requests, cross-run rejection and zero live SDK allocations. Root
-  locked check passes 377 sources / 4206 MIR functions. The
-  [stack regression record](docs/engineering/native-stack-regressions.md)
-  preserves the earlier public O2 timeout.
+- Latest runtime checkpoint (2026-11-20): [Catalog module aliases](docs/engineering/host-exchange.md#catalog-module-aliases-from-source)
+  resolve host import aliases through the private single-source Engine.
+  Windows development and /O2 verify catalog binding, authorization, independent
+  replies for two Instances, and zero live SDK allocations. Root locked check
+  passes 377 sources / 4266 MIR functions.
 
 # Brownie C agent guidance
 
@@ -13,7 +11,7 @@
 This repository implements Brownie C in Fairy C, with small explicit allocator,
 codec and operating-system shims. The full accepted design is still incomplete.
 
-- Long-term objective (paused at the user's request): complete every accepted missing implementation item in
+- Long-term objective: complete every accepted missing implementation item in
   [the inventory](docs/product/04-remaining-work.md). Do not redefine completion
   around the experimental subset. Follow [the implementation plan](docs/engineering/completion-plan.md)
   for dependencies; remote delivery remains separate.

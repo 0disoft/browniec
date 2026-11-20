@@ -17,6 +17,7 @@ import array_local_source as array_locals;
 import std::vec as vec;
 import functions as functions;
 import struct_source as structs;
+import struct_scan_work as struct_scan;
 import struct_value_source as record_values;
 import types as types;
 import loops as loops;
@@ -445,7 +446,7 @@ fn Result<host_source::Invocation,errors::Error> host_invocation(ref u8[] source
     return host_source::invoke(p,call,args,item.begin);
 }
 fn Result<usize, errors::Error> named_operand(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref locals::Table table, ref functions::Table signatures, usize depth, u8 expected, u8 result_type, usize structure, ref mut loops::State loop_state) {
-    if(signatures.scalar_host_calls && host_source::qualified(source,s)?){
+    if(signatures.scalar_host_calls && host_source::qualified(source,s,p)?){
         let host_source::Invocation call=host_invocation(source,s,p,table,signatures,depth,result_type,structure,loop_state)?;
         return host_source::emit(p,ref call);
     }
@@ -2014,7 +2015,7 @@ fn Result<usize, errors::Error> declaration(ref u8[] source, ref mut lexer::Stat
             if(mutable || terminator!=59 || result_type==0){return .err(errors::make(3,s.begin));}
             let u8 tag=host_source::annotation(source,s)?;
             let inference::Header binding=inference::header(source,s,table)?;
-            if(!host_source::qualified(source,s)?){return .err(errors::make(3,s.begin));}
+            if(!host_source::qualified(source,s,p)?){return .err(errors::make(3,s.begin));}
             let host_source::Invocation call=host_invocation(source,s,p,table,signatures,expr_depth,result_type,structure,loop_state)?;
             if(tag!=call.call.result){return .err(errors::make(3,call.at));}
             let usize end=lexer::punctuation(source,s,terminator)?;
@@ -2437,7 +2438,7 @@ fn Result<bool,errors::Error> switch_join(ref u8[] source,ref mut lexer::State s
     if(result_type==0) {return .err(errors::make(3,at));}
     let usize keyword=lexer::next(source,s)?;
     let usize open=lexer::punctuation(source,s,40)?;
-    if(signatures.scalar_host_calls && host_source::qualified(source,s)?){
+    if(signatures.scalar_host_calls && host_source::qualified(source,s,p)?){
         var locals::Table names=locals::snapshot(table);
         return host_switch(source,s,p,ref mut names,signatures,join,true,result_type,structure,depth,loop_state);
     }
@@ -2565,7 +2566,7 @@ fn Result<bool, errors::Error> control_switch(ref u8[] source, ref mut lexer::St
     let usize at = s.begin;
     let usize keyword=lexer::next(source,s)?;
     let usize open=lexer::punctuation(source,s,40)?;
-    if(signatures.scalar_host_calls && host_source::qualified(source,s)?){
+    if(signatures.scalar_host_calls && host_source::qualified(source,s,p)?){
         var joins::Join unused=joins::empty(0,false);
         return host_switch(source,s,p,table,signatures,ref mut unused,false,result_type,depth,expr_depth,loop_state);
     }
@@ -3047,9 +3048,13 @@ fn Result<usize,errors::Error> body(ref u8[] source,ref functions::Table signatu
 
 // Release source-name/catalog scratch before recursive expression lowering.
 pub fn Result<usize, errors::Error> prepare_aggregates(ref u8[] source, ref mut functions::Table signatures, ref mut ir::Program p) {
+    return prepare_aggregates_from(source,signatures,p,0);
+}
+fn Result<usize,errors::Error> prepare_aggregates_from(ref u8[] source,ref mut functions::Table signatures,ref mut ir::Program p,usize start){
     let usize parameters = array_calls::prepare(signatures, p)?;
     let usize results = array_results::prepare(signatures, p)?;
-    let structs::Table records = if(signatures.context.modules==0){structs::scan(source)?}
+    let structs::Table records = if(start!=0){struct_scan::scan_single_from(source,start)?}
+        else if(signatures.context.modules==0){structs::scan(source)?}
         else{structs::scan_scoped(source,ref signatures.context)?};
     var usize f = 0;
     while (f < signatures.count) {
@@ -3081,10 +3086,10 @@ fn Result<usize, errors::Error> lower_into(ref u8[] source,bool origin_analysis,
     if(scalar_host_calls && signatures.count!=1){return .err(errors::make(3,0));}
     signatures.scalar_host_calls=scalar_host_calls;
     var usize active=16;
-    return lower_prepared(source,origin_analysis,references,returns,literals,ref mut signatures,p,ref mut active);
+    return lower_prepared(source,origin_analysis,references,returns,literals,ref mut signatures,p,ref mut active,0);
 }
 fn Result<usize,errors::Error> lower_prepared(ref u8[] source,bool origin_analysis,bool references,bool returns,
-    ref literal_collection::Index literals,ref mut functions::Table signatures,ref mut ir::Program p,ref mut usize active){
+    ref literal_collection::Index literals,ref mut functions::Table signatures,ref mut ir::Program p,ref mut usize active,usize start){
     signatures.literals=*literals;signatures.reference_calls=references;
     // Signature candidates do not prove a returned borrow's origin or lifetime.
     // Ordinary/public lowering rejects these declarations, even unreachable
@@ -3114,7 +3119,7 @@ fn Result<usize,errors::Error> lower_prepared(ref u8[] source,bool origin_analys
             declaration+=1;
         }
     }
-    let usize aggregates = prepare_aggregates(source, signatures, p)?;
+    let usize aggregates=prepare_aggregates_from(source,signatures,p,start)?;
     var usize f = 0;
     while (f < signatures.count) {
         if(signatures.context.modules!=0){
@@ -3152,7 +3157,7 @@ pub fn Result<ir::Program,errors::Error> compile_eval_i32(ref u8[] source){
     var functions::Table signatures=signature_scan::scan_eval(source)?;
     let literal_collection::Index literals=literal_collection::empty();
     var ir::Program p=ir::empty();var usize active=16;
-    let usize lowered=lower_prepared(source,false,false,false,ref literals,ref mut signatures,ref mut p,ref mut active)?;
+    let usize lowered=lower_prepared(source,false,false,false,ref literals,ref mut signatures,ref mut p,ref mut active,0)?;
     if(p.arrays.count!=0 || p.records.count!=0){return .err(errors::make(3,signatures.begins[signatures.entry]));}
     return .ok(p);
 }
@@ -3161,13 +3166,13 @@ pub fn Result<ir::Program,errors::Error> compile_eval_i32(ref u8[] source){
 pub fn Result<usize,errors::Error> lower_scalar_host(ref u8[] source,ref host_catalog::Catalog imports,ref mut ir::Program code){
     if(source.len>4096){return .err(errors::make(4,4096));}
     let ref str valid=switch(text::validate_utf8(source)){case .ok(v):{v}case .err(_):{return .err(errors::make(1,0));}};
-    var functions::Table signatures=lowering_signatures(source,false)?;
+    let usize start=host_source::prepare(source,code,imports)?;
+    var functions::Table signatures=signature_scan::scan_single_from(source,start,false)?;
     if(signatures.count!=1){return .err(errors::make(3,0));}
     signatures.scalar_host_calls=true;
-    let usize prepared=host_source::prepare(source,signatures.bodies[0],code,imports)?;
     let literal_collection::Index literals=literal_collection::empty();
     var usize active=16;
-    let usize count=lower_prepared(source,false,false,false,ref literals,ref mut signatures,code,ref mut active)?;
+    let usize count=lower_prepared(source,false,false,false,ref literals,ref mut signatures,code,ref mut active,start)?;
     return host_source::finish(source,code);
 }
 
@@ -3388,7 +3393,7 @@ fn source_errors::Error module_error(ref module_entries::Entry selected,errors::
 fn Result<usize,errors::Error> lower_module(ref u8[] source,ref source_context::Table scope,
     ref module_entries::Entry selected,bool references,ref literal_collection::Index literals,ref mut ir::Program code,ref mut usize active){
     var functions::Table signatures=functions::scan_scoped(source,scope,selected,references)?;
-    return lower_prepared(source,false,references,references,literals,ref mut signatures,code,active);
+    return lower_prepared(source,false,references,references,literals,ref mut signatures,code,active,0);
 }
 fn Result<usize,source_errors::Error> lower_module_references(ref u8[] source,ref source_context::Table scope,
     ref module_entries::Entry selected,ref mut static_images::Builder builder,ref mut reference_ir::Program code,bool output){
@@ -3401,7 +3406,7 @@ fn Result<usize,source_errors::Error> lower_module_references(ref u8[] source,re
     var functions::Table signatures=switch(functions::scan_scoped(source,scope,selected,true)){
         case .ok(v):{v}case .err(e):{return .err(module_error(selected,e,16));}
     };signatures.output=output;
-    switch(lower_prepared(source,false,true,true,ref literals,ref mut signatures,ref mut code.body,ref mut active)){
+    switch(lower_prepared(source,false,true,true,ref literals,ref mut signatures,ref mut code.body,ref mut active,0)){
         case .ok(_):{}case .err(e):{return .err(module_error(selected,e,active));}
     };
     return module_reference_signature(source,scope,selected,code);
@@ -3449,7 +3454,7 @@ fn Result<usize,source_errors::Error> lower_input_modules_mode(ref input_entries
         case .ok(v):{v}case .err(e):{return .err(input_module_error(index,e,16));}
     };signatures.output=output;
     var usize active=16;
-    switch(lower_prepared(source,false,true,true,ref literals,ref mut signatures,ref mut code.body,ref mut active)){
+    switch(lower_prepared(source,false,true,true,ref literals,ref mut signatures,ref mut code.body,ref mut active,0)){
         case .ok(_):{}case .err(e):{return .err(input_module_error(index,e,active));}
     };
     code.origins=signatures.return_slice_inputs;var usize f=0;

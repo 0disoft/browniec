@@ -152,6 +152,7 @@ fn Result<usize,u8> interleaved(){
     return .ok(1);
 }
 fn ref u8[] source_run_config(){return b"{\"schema\":\"brownie.run/0.3\",\"entry\":{\"module\":\"main\",\"function\":\"main\"},\"requires\":[\"host.example.check\"],\"grants\":[\"host.example.check\"],\"limits\":{\"memory_bytes\":16777216,\"object_bytes\":4194304,\"call_frames\":128,\"input_bytes\":1048576,\"output_bytes\":1048576,\"host_request_bytes\":1048576,\"host_response_bytes\":1048576,\"host_calls\":256,\"owner_entries\":16384,\"descriptor_entries\":16384,\"fuel\":10000000,\"deadline_ms\":1000}}";}
+fn ref u8[] source_run_undeclared(){return b"{\"schema\":\"brownie.run/0.3\",\"entry\":{\"module\":\"main\",\"function\":\"main\"},\"requires\":[],\"grants\":[\"host.example.check\"],\"limits\":{\"memory_bytes\":16777216,\"object_bytes\":4194304,\"call_frames\":128,\"input_bytes\":1048576,\"output_bytes\":1048576,\"host_request_bytes\":1048576,\"host_response_bytes\":1048576,\"host_calls\":256,\"owner_entries\":16384,\"descriptor_entries\":16384,\"fuel\":10000000,\"deadline_ms\":1000}}";}
 fn ref u8[] source_catalog(){
     return b"{\"schema\":\"brownie.catalog/1\",\"imports\":[{\"id\":0,\"module\":\"host::example\",\"symbol\":\"a\",\"parameters\":[\"i32\"],\"result\":\"Result<i32,u32>\",\"effect\":\"read\",\"capability\":\"host.example.check\",\"adapter_revision\":\"v1\"},{\"id\":1,\"module\":\"host::example\",\"symbol\":\"check\",\"parameters\":[\"i32\"],\"result\":\"Result<i32,u32>\",\"effect\":\"read\",\"capability\":\"host.example.check\",\"adapter_revision\":\"v1\"}]}";
 }
@@ -162,14 +163,24 @@ fn void source_rejected(Result<usize,engine::Error> result,usize offset){
     };
 }
 fn Result<usize,u8> source_round_trip(){
-    let ref u8[] source=b"module main; fn i32 main() { return host::example::check(40 + 1) + 35; }";
+    let ref u8[] source=b"module main; import host /* scope */ :: example as api; fn i32 main() { return api /* call */ :: check(40 + 1) + 35; }";
     assert(!compiler::compile(source).is_ok);
     let policy::Policy ceiling=parsed_policy(true)?;
     let runs::RunConfig run=switch(runs::parse(source_run_config(),ref ceiling)){case .ok(v):{v}case .err(_):{return .err(6);}};
+    let runs::RunConfig missing=switch(runs::parse(source_run_undeclared(),ref ceiling)){case .ok(v):{v}case .err(_):{return .err(6);}};
     var engine::Engine owner=configured(ceiling)?;
     let catalog::Catalog imports=catalog_from(source_catalog())?;
     let u32[8] expected=digest(ref imports)?;
     let u32[8] wrong=[0;8];
+    let ref u8[] unknown_scope=b"module main; import host::missing as api; fn i32 main(){ return 0; }";
+    let ref u8[] duplicate=b"module main; import host::example as api; import host::example as api; fn i32 main(){ return 0; }";
+    let ref u8[] late=b"module main; fn i32 main(){ return 0; } import host::example as api;";
+    let ref u8[] unknown_symbol=b"module main; import host::example as api; fn i32 main(){ return api::missing(41); }";
+    source_rejected(engine::compile_scalar_host(ref mut owner,unknown_scope,catalog_from(source_catalog())?,ref expected,ref run),20);
+    source_rejected(engine::compile_scalar_host(ref mut owner,duplicate,catalog_from(source_catalog())?,ref expected,ref run),66);
+    source_rejected(engine::compile_scalar_host(ref mut owner,unknown_symbol,catalog_from(source_catalog())?,ref expected,ref run),64);
+    rejected(engine::compile_scalar_host(ref mut owner,late,catalog_from(source_catalog())?,ref expected,ref run),4);
+    rejected(engine::compile_scalar_host(ref mut owner,source,catalog_from(source_catalog())?,ref expected,ref missing),5);
     let ref u8[] unknown=b"module main; fn i32 main() { return host::example::chec(41); }";
     let ref u8[] bad_arg=b"module main; fn i32 main() { return host::example::check(true); }";
     source_rejected(engine::compile_scalar_host(ref mut owner,unknown,catalog_from(source_catalog())?,ref expected,ref run),36);
@@ -671,8 +682,8 @@ fn Result<usize,u8> result_branch(){
     return .ok(1);
 }
 fn Result<usize,u8> result_source_round_trip(){
-    let ref u8[] statement=b"module main; fn i32 main(){ switch(host::example::check(41)){ case .err(code): { return host::example::next(code); } case .ok(value): { return value + 35; } } }";
-    let ref u8[] expression=b"module main; fn i32 main(){ return switch(host::example::check(41)){ case .ok(value): { value + 35 } case .err(code): { host::example::next(code) } }; }";
+    let ref u8[] statement=b"module main; import host::example as api; fn i32 main(){ switch(api::check(41)){ case .err(code): { return host::example::next(code); } case .ok(value): { return value + 35; } } }";
+    let ref u8[] expression=b"module main; import host::example as api; fn i32 main(){ return switch(api::check(41)){ case .ok(value): { value + 35 } case .err(code): { host /* path */ :: example :: next(code) } }; }";
     let ref u8[] duplicate=b"module main; fn i32 main(){ switch(host::example::check(41)){ case .ok(value): { return value; } case .ok(other): { return other; } } }";
     let ref u8[] wrong_scope=b"module main; fn i32 main(){ switch(host::example::check(41)){ case .ok(value): { return value; } case .err(code): { return value; } } }";
     let policy::Policy ceiling=parsed_policy(true)?;
@@ -712,7 +723,7 @@ fn void check_result_source(ref mut engine::Engine owner,usize program,ref runs:
     assert(id(engine::destroy_instance(owner,err.run))==err.run);
 }
 fn Result<usize,u8> saved_result_source(){
-    let ref u8[] source=b"module main; fn i32 main(){ let Result<i32,u32> reply=host::example::check(41); if(reply.is_ok){ return switch(reply){ case .ok(value): { value+35 } case .err(_): { 0 } }; } switch(reply){ case .err(code): { return host::example::next(code); } case .ok(_): { return 0; } } }";
+    let ref u8[] source=b"module main; import host::example as api; fn i32 main(){ let Result<i32,u32> reply=api::check(41); if(reply.is_ok){ return switch(reply){ case .ok(value): { value+35 } case .err(_): { 0 } }; } switch(reply){ case .err(code): { return host::example::next(code); } case .ok(_): { return 0; } } }";
     let ref u8[] mismatched=b"module main; fn i32 main(){ let Result<u32,u32> reply=host::example::check(41); return 0; }";
     let policy::Policy ceiling=parsed_policy(true)?;
     let runs::RunConfig run=switch(runs::parse(source_run_config(),ref ceiling)){case .ok(v):{v}case .err(_):{return .err(6);}};
