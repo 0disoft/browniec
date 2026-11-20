@@ -219,6 +219,13 @@ def make_host_project(folder):
 
 
 def check_host_project(exe, check_args, run_args):
+    help_text = invoke(exe, ['--help'], 0)
+    assert not help_text.stderr
+    usage = help_text.stdout.splitlines()
+    flags = b' --catalog FILE --policy FILE --run FILE'
+    formats = b' [--json|--json-v2]'
+    assert b'browniec check --project FILE' + flags + formats in usage
+    assert b'browniec run --project FILE' + flags + b' --host-replies FILE' + formats in usage
     project = check_args[2]
     helper = project.parent / 'helper.brc'
     run_file = check_args[8]
