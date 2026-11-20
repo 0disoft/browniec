@@ -110,10 +110,14 @@ pub fn Result<raw::Table,errors::Error> scan_eval(ref u8[] source){
 
 // Owning compatibility adapters; no public Pending compiler protocol.
 pub fn Result<raw::Table,errors::Error> scan_single(ref u8[] source,bool returns){
-    return scan_single_from(source,0,returns);
+    return scan_from(source,0,returns,false);
 }
-pub fn Result<raw::Table,errors::Error> scan_single_from(ref u8[] source,usize start,bool returns){
+pub fn Result<raw::Table,errors::Error> scan_host_from(ref u8[] source,usize start){
+    return scan_from(source,start,false,true);
+}
+fn Result<raw::Table,errors::Error> scan_from(ref u8[] source,usize start,bool returns,bool host){
     var State w=single(returns);var budget::State meter=budget::empty();
+    w.result.scalar_host_calls=host;
     if(start!=0){w.token.cursor=start;next(ref mut w,4);}
     while(!w.done){let usize allowance=budget::reset(ref mut meter,0)?;let bool done=advance_single(source,ref mut w,ref mut meter)?;}
     return prepared(ref w);

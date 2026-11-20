@@ -7,6 +7,7 @@ import ir as ir;
 import lexer as lexer;
 import literal_source as literals;
 import locals as locals;
+import array_source as arrays;
 import host_wire as wire;
 import std::num as num;
 import types as types;
@@ -291,7 +292,8 @@ pub fn Result<usize,errors::Error> byte_argument(ref u8[] source,ref mut lexer::
 pub fn bool fresh_bytes(ref ir::Program code,usize before,usize result){
     if(before>=code.count){return false;}
     let usize at=(code.count-1)*8;
-    return code.code[at]==programs::typed_request_opcode() && code.code[at+1] as usize==result;
+    return (code.code[at]==programs::typed_request_opcode() || code.code[at]==programs::project_opcode())
+        && code.code[at+1] as usize==result;
 }
 
 pub fn Result<Invocation,errors::Error> invoke(ref mut ir::Program code,Call call,ref usize[] args,usize at){
@@ -358,6 +360,25 @@ pub fn Result<usize,errors::Error> project(ref mut ir::Program code,usize value,
     let usize dst=ir::emit(code,programs::project_opcode(),value,variant as usize,at)?;
     code.types[dst]=tag;
     return .ok(dst);
+}
+
+pub fn Result<usize,errors::Error> wrap(ref mut ir::Program code,u8 result,u8 variant,usize value,usize at){
+    if(!types::host_result_type(result) || variant>1 || value>=code.registers ||
+        code.types[value]!=if(variant==0){11}else{result-128}){return .err(errors::make(3,at));}
+    let usize dst=code.registers;
+    let usize pair=ir::host_pair(code,dst,result,at)?;
+    let usize pc=ir::raw(code,programs::wrap_opcode(),dst,value,variant as usize,at)?;
+    return .ok(pair);
+}
+
+pub fn Result<usize,errors::Error> propagate(ref mut ir::Program code,ref locals::Table names,usize value,u8 result,usize at){
+    if(!types::host_result_type(result)){return .err(errors::make(3,at));}
+    let Branch route=branch_saved(code,value,at)?;
+    let usize error=enter_arm(code,ref route,0,true,at)?;
+    let usize returned=wrap(code,result,0,error,at)?;
+    let usize released=arrays::release_visible(names,code,at)?;
+    let usize finished=ir::emit(code,8,returned,0,at)?;
+    return enter_arm(code,ref route,1,true,at);
 }
 
 pub fn Result<Branch,errors::Error> branch_saved(ref mut ir::Program code,usize value,usize at){

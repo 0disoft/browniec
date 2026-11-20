@@ -170,7 +170,7 @@ fn Result<usize, errors::Error> compound_operand(ref u8[] source, ref mut lexer:
         return literal_projection(source,s,p,table,signatures,depth,result_type,structure,loop_state,false);
     }
     if (s.kind == 46) {
-        if (expected!=0 && !types::tagged(expected)) {return .err(errors::make(3,at));}
+        if (expected!=0 && !types::tagged(expected) && !types::host_result_type(expected)) {return .err(errors::make(3,at));}
         let usize dot=lexer::next(source,s)?;
         let bool positive=word_is(source,s,b"some") || word_is(source,s,b"ok");
         if(expected==0){
@@ -181,7 +181,8 @@ fn Result<usize, errors::Error> compound_operand(ref u8[] source, ref mut lexer:
             if (!word_is(source,s,b"some") && !word_is(source,s,b"none")) {return .err(errors::make(3,at));}
         } else if (!word_is(source,s,b"ok") && !word_is(source,s,b"err")) {return .err(errors::make(3,at));}
         let u8 variant=if(positive) {1} else {0};
-        let u8 payload_type=if(expected==0){0}else{types::payload(expected,variant)};
+        let u8 payload_type=if(types::host_result_type(expected)){if(variant==0){11}else{expected-128}}
+            else if(expected==0){0}else{types::payload(expected,variant)};
         let usize name=lexer::next(source,s)?;
         var usize value=0;
         if (payload_type!=0 || expected==0) {
@@ -195,6 +196,7 @@ fn Result<usize, errors::Error> compound_operand(ref u8[] source, ref mut lexer:
             tag=if(p.types[value]==1){3}else if(p.types[value]==2){4}else{0};
             if(tag==0){return .err(errors::make(3,at));}
         }
+        if(types::host_result_type(tag)){return host_source::wrap(p,tag,variant,value,at);}
         return ir::construct(p,tag,variant,value,at);
     }
     if (s.kind == 45 || s.kind == 33 || s.kind == 126) {
@@ -448,6 +450,10 @@ fn Result<host_source::Invocation,errors::Error> host_invocation(ref u8[] source
 fn Result<usize, errors::Error> named_operand(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref locals::Table table, ref functions::Table signatures, usize depth, u8 expected, u8 result_type, usize structure, ref mut loops::State loop_state) {
     if(signatures.scalar_host_calls && host_source::qualified(source,s,p)?){
         let host_source::Invocation call=host_invocation(source,s,p,table,signatures,depth,result_type,structure,loop_state)?;
+        if(s.kind==63 || types::host_result_type(expected)){
+            if(types::host_result_type(expected) && expected!=128+call.call.result){return .err(errors::make(3,call.at));}
+            return host_source::save(p,ref call);
+        }
         return host_source::emit(p,ref call);
     }
     let usize at = s.begin;
@@ -1377,7 +1383,9 @@ fn Result<usize, errors::Error> primary(ref u8[] source, ref mut lexer::State s,
             value=result_is_ok(p,value,at)?;continue;
         }
         let usize next=lexer::next(source,s)?;
-        value=propagation::lower(p,table,value,result_type,at)?;
+        if(signatures.scalar_host_calls && host_source::is_saved(p,value)){
+            value=host_source::propagate(p,table,value,result_type,at)?;
+        }else{value=propagation::lower(p,table,value,result_type,at)?;}
     }
     return .ok(value);
 }
@@ -2015,11 +2023,13 @@ fn Result<usize, errors::Error> declaration(ref u8[] source, ref mut lexer::Stat
             if(mutable || terminator!=59 || result_type==0){return .err(errors::make(3,s.begin));}
             let u8 tag=host_source::annotation(source,s)?;
             let inference::Header binding=inference::header(source,s,table)?;
-            if(!host_source::qualified(source,s,p)?){return .err(errors::make(3,s.begin));}
-            let host_source::Invocation call=host_invocation(source,s,p,table,signatures,expr_depth,result_type,structure,loop_state)?;
-            if(tag!=call.call.result){return .err(errors::make(3,call.at));}
+            let usize at=s.begin;
+            let usize before=p.registers;
+            let usize value=expression(source,s,p,table,signatures,1,expr_depth,128+tag,result_type,structure,loop_state)?;
+            if(value<before || !host_source::is_saved(p,value) || p.types[value+1]!=128+tag){
+                return .err(errors::make(3,at));
+            }
             let usize end=lexer::punctuation(source,s,terminator)?;
-            let usize value=host_source::save(p,ref call)?;
             return locals::declare(table,binding.begin,binding.end,value,false);
         }
         if(inference::follows(source,s)?){
@@ -2876,7 +2886,10 @@ fn Result<bool, errors::Error> control_return(ref u8[] source, ref mut lexer::St
         return .ok(true);
     }
     let usize value = expression(source,s,p,table,signatures,1,expr_depth,result_type,result_type,depth,loop_state)?;
-    if (p.types[value] != result_type) { return .err(errors::make(3, at)); }
+    let bool matches=if(types::host_result_type(result_type)){
+        host_source::is_saved(p,value) && p.types[value+1]==result_type
+    }else{p.types[value]==result_type};
+    if(!matches){return .err(errors::make(3,at));}
     let usize end = lexer::punctuation(source, s, 59)?;
     let usize dropped = arrays::release_visible(table, p, at)?;
     let usize returned = ir::emit(p, 8, value, 0, at)?;
@@ -3167,8 +3180,7 @@ pub fn Result<usize,errors::Error> lower_scalar_host(ref u8[] source,ref host_ca
     if(source.len>4096){return .err(errors::make(4,4096));}
     let ref str valid=switch(text::validate_utf8(source)){case .ok(v):{v}case .err(_):{return .err(errors::make(1,0));}};
     let usize start=host_source::prepare(source,code,imports)?;
-    var functions::Table signatures=signature_scan::scan_single_from(source,start,false)?;
-    signatures.scalar_host_calls=true;
+    var functions::Table signatures=signature_scan::scan_host_from(source,start)?;
     let literal_collection::Index literals=literal_collection::empty();
     var usize active=16;
     let usize count=lower_prepared(source,false,false,false,ref literals,ref mut signatures,code,ref mut active,start)?;

@@ -10,6 +10,7 @@ import struct_locate_work as discovery;
 import declaration_skip_work as skipping;
 import locals as locals;
 import errors as errors;
+import host_source as host_source;
 import metadata_budget as budget;
 
 // One untyped function signature. The owner pins source and private Table.
@@ -61,7 +62,14 @@ pub fn Result<bool,errors::Error> advance(ref u8[] source,ref mut functions::Tab
     if(w.phase==0){if(table.count>=16){return .err(errors::make(4,w.token.begin));}
         if(w.token.kind!=2 || !lexer::equal(source[w.token.begin..w.token.end],b"fn")){return .err(errors::make(2,w.token.begin));}
         w.function=table.count;next(w,1);return .ok(false);}
-    if(w.phase==1){let lexer::State current=w.token;w.annotation=annotations::begin(current,true);w.phase=2;return .ok(false);}
+    if(w.phase==1){
+        if(table.scalar_host_calls && w.token.kind==2 && lexer::equal(source[w.token.begin..w.token.end],b"Result")){
+            let u8 success=host_source::annotation(source,ref mut w.token)?;
+            w.result.tag=128+success;
+            w.phase=3;return .ok(false);
+        }
+        let lexer::State current=w.token;w.annotation=annotations::begin(current,true);w.phase=2;return .ok(false);
+    }
     if(w.phase==3){if(!name(source,ref w.token)){return .err(errors::make(2,w.token.begin));}
         if(table.context.modules!=0){w.name=names::begin(w.token.begin,w.token.end,false);w.phase=4;}
         else{w.row=0;w.phase=20;}return .ok(false);}

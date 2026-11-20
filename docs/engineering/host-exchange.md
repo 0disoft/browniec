@@ -91,6 +91,45 @@ Both profiles ended with zero live SDK allocations. Root locked check passed
 377 sources and 4,278 MIR functions.
 Local receipt: `build/runtime-engine/20261120T100343560778Z/receipt.json`.
 
+## Host Result propagation in guest helpers
+
+A guest helper returning `Result<T,u32>` can apply postfix `?` to a
+catalog Result. Success extracts the typed payload and continues. Failure
+returns the unchanged u32 to the guest caller, which can handle it with
+`.is_ok` or an exhaustive `switch`. The helper's success type can differ
+from the operand's success type. The entry still returns i32.
+
+```text
+module main;
+import host::example as api;
+
+fn Result<i32,u32> check(i32 n) {
+    let Result<i32,u32> reply = api::check(n);
+    return .ok(reply? + 35);
+}
+
+fn i32 main() {
+    return switch(check(41)) {
+        case .ok(value): { value }
+        case .err(_): { 0 }
+    };
+}
+```
+
+The verifier checks both cells and the exact return type at each CALL
+and RETURN. The runtime copies the tag and payload to the caller before
+resuming it. A Buffer payload refers to the Instance's reply arena, so
+returning it across guest frames performs no second byte copy. Host
+failure and cancellation retain their existing terminal paths.
+
+Windows development and /O2 verified the helper success path returning 77,
+early propagation of `u32::MAX` to the caller, and a Buffer returned across
+guest frames and forwarded to a second host request. The compiler rejected
+propagation from the i32 entry and an incompatible helper return type.
+Both profiles exited with zero live SDK allocations.
+Root locked check passed 377 sources and 4,285 MIR functions.
+Local receipt: `build/runtime-engine/20261120T101449651790Z/receipt.json`.
+
 ## Catalog-typed scalar arguments from source
 
 The same private entry accepts zero to 32 scalar arguments of the exact
@@ -427,7 +466,7 @@ in either order. The arms bind only their own payload, and a switch expression
 joins continuing scalar values using independently verified slot accesses.
 Each source call uses the same request and reply charges as opcode 121.
 Control flow instructions spend their regular one-Fuel dispatch charge.
-Host Result propagation and public delivery remain open.
+See [host Result propagation in guest helpers](#host-result-propagation-in-guest-helpers). Public delivery remains open.
 
 An annotated immutable local such as
 `let Result<i32,u32> reply = host::example::check(41);` retains the full

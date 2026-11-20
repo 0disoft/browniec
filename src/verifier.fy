@@ -32,6 +32,10 @@ import output_ir as output_ir;
 fn bool readable(ref ir::Program p, ref registers::Set defined, usize r, usize start, usize end) {
     return r >= start && r < end && p.types[r]!=0 && !types::host_storage(p.types[r]) && !p.slots[r] && p.array_parameters[r] == 0 && p.record_parameters[r] == 0 && p.slice_parameters[r] == 0 && registers::contains(defined, r);
 }
+fn bool pair(ref ir::Program p,usize r,usize start,usize end,u8 result){
+    return r>=start && r<end && end-r>=2 && p.types[r]==types::host_result() &&
+        p.types[r+1]==result && types::host_result_type(result) && !p.slots[r] && !p.slots[r+1];
+}
 fn bool merge(ref mut usize[] states, ref mut bool[] seen, ref registers::Set defined, usize target, ref mut usize[] array_states, usize live, ref mut usize[] static_states, usize static_live) {
     if (seen[target] && (array_states[target] != live || static_states[target] != static_live)) { return false; }
     array_states[target] = live;
@@ -78,10 +82,17 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records
         let usize dst = p.code[at + 1] as usize;
         let usize a = p.code[at + 2] as usize;
         let usize b = p.code[at + 3] as usize;
-        if(host_profile && (op>=118 && op<=124)){
+        if(host_profile && (op>=118 && op<=125)){
             if(dst<start || dst>=end || p.slots[dst] || registers::contains(ref written,dst) ||
                 (op!=121 && p.code[at+6]!=0) || p.code[at+7]!=0){return .err(errors::instruction(pc));}
-            if(op==124){
+            if(op==125){
+                if(dst+1>=end || !pair(p,dst,start,end,p.types[dst+1]) ||
+                    registers::contains(ref written,dst+1) || b>1 || p.code[at+4]!=0 || p.code[at+5]!=0 ||
+                    !readable(p,ref defined,a,start,end) || p.types[a]!=if(b==0){11}else{p.types[dst+1]-128}){
+                    return .err(errors::instruction(pc));
+                }
+                registers::insert(ref mut defined,dst+1);registers::insert(ref mut written,dst+1);
+            }else if(op==124){
                 if(a<start || a+1>=end || p.types[a]!=types::host_result() ||
                     p.types[a+1]<128 || !types::host_success(p.types[a+1]-128) ||
                     !registers::contains(ref defined,a) || !registers::contains(ref defined,a+1) ||
@@ -279,8 +290,15 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records
         }
         if (op == 8) {
             if(p.array_results[f]!=0 || p.record_results[f]!=0) {return .err(errors::instruction(pc));}
-            if (live != 0 || dst != 0 || b != 0 || !readable(p, ref defined, a, start, end)) { return .err(errors::instruction(pc)); }
-            if (p.types[a] != p.return_types[f]) { return .err(errors::instruction(pc)); }
+            if(live!=0 || dst!=0 || b!=0){return .err(errors::instruction(pc));}
+            let u8 result=p.return_types[f];
+            if(host_profile && types::host_result_type(result)){
+                if(!pair(p,a,start,end,result) || !registers::contains(ref defined,a) || !registers::contains(ref defined,a+1)){
+                    return .err(errors::instruction(pc));
+                }
+            }else if(!readable(p,ref defined,a,start,end) || p.types[a]!=result){
+                return .err(errors::instruction(pc));
+            }
             pc += 1; continue;
         }
         if (op == 22) {
@@ -340,7 +358,14 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records
             } else if (op == 9) {
                 if (a >= p.function_count || b >= p.call_count || used_calls[b] || ((p.arrays.count != 0 || p.records.count != 0) && a == p.entry)) { return .err(errors::instruction(pc)); }
                 let usize count = p.call_arities[b] as usize;
-                if (count != p.arities[a] || count > 8 || p.types[dst] != p.return_types[a]) { return .err(errors::instruction(pc)); }
+                if(count!=p.arities[a] || count>8){return .err(errors::instruction(pc));}
+                let u8 result=p.return_types[a];
+                if(host_profile && types::host_result_type(result)){
+                    if(!pair(p,dst,start,end,result) || registers::contains(ref written,dst+1)){
+                        return .err(errors::instruction(pc));
+                    }
+                    registers::insert(ref mut defined,dst+1);registers::insert(ref mut written,dst+1);
+                }else if(p.types[dst]!=result){return .err(errors::instruction(pc));}
                 let usize checked = array_parameters::arguments(p, a, b, f, ref defined, live, pc)?;
                 used_calls[b] = true;
             } else if (op == 17) {
@@ -407,7 +432,8 @@ fn Result<reborrows::Sites,errors::Error> validate_values_mode(ref ir::Program p
     var usize code_end = 0;
     var usize register_end = 0;
     while (f < p.function_count) {
-        if (p.record_results[f]==0 && static_sites.results[f]==0 && value_sites.results[f]==0 && p.return_types[f]!=13 && !types::valid(p.return_types[f])) { return .err(errors::instruction(code_end)); }
+        if (p.record_results[f]==0 && static_sites.results[f]==0 && value_sites.results[f]==0 && p.return_types[f]!=13 && !types::valid(p.return_types[f]) &&
+            !(host_profile && types::host_result_type(p.return_types[f]))) { return .err(errors::instruction(code_end)); }
         if (p.starts[f] != code_end || p.ends[f] <= code_end || p.ends[f] > p.count ||
             p.register_starts[f] != register_end || p.register_ends[f] < register_end ||
             p.register_ends[f] > p.registers || p.arities[f] > 8 ||

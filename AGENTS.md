@@ -1,8 +1,8 @@
-- Latest runtime checkpoint (2026-11-20): [Catalog module aliases](docs/engineering/host-exchange.md#catalog-module-aliases-from-source)
-  resolve host import aliases through the private single-source Engine.
-  Windows development and /O2 verify catalog binding, authorization, independent
-  replies for two Instances, and zero live SDK allocations. Root locked check
-  passes 377 sources / 4266 MIR functions.
+- Latest runtime checkpoint (2026-11-20): [Host Result propagation](docs/engineering/host-exchange.md#host-result-propagation-in-guest-helpers)
+  carries typed success and u32 errors across private guest helper frames.
+  Windows development and /O2 verify scalar and Buffer success, early error
+  propagation and zero live SDK allocations. Root locked check passes
+  377 sources / 4285 MIR functions.
 
 # Brownie C agent guidance
 

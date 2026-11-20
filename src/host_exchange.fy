@@ -7,6 +7,7 @@ import runtime_policy as policy;
 import runtime_policy_limits as policy_limits;
 import runtime_run_config as runs;
 import scalar_codec as scalar;
+import types as types;
 import host_wire as wire;
 import std::bytes as bytes;
 import std::num as num;
@@ -384,6 +385,7 @@ fn void load_image(ref mut Exchange e,ref ir::Program p,usize arena_end,usize fr
             data[at+6]=p.code[source+6];data[at+7]=p.code[source+7];
             // The verified destination type selects the checked negate width.
             if(data[at]==7){data[at+4]=p.types[data[at+1] as usize];}
+            if(data[at]==8 && p.types[data[at+2] as usize]==types::host_result()){data[at+4]=1;}
             if(data[at]==9){
                 let usize target=p.code[source+2] as usize;
                 data[at+2]=image_index(p.starts[target]);
@@ -713,7 +715,7 @@ fn void begin_call(ref mut u8[] data,usize at){
     if(data[at+5]==0){enter_call(data,at);}
     else{data[83]=1;}
 }
-fn void return_scalar(ref mut u8[] data,i64 value){
+fn void return_scalar(ref mut u8[] data,i64 value,bool pair,i64 payload){
     let usize base=call_base(data);
     let usize depth=frame_depth(data,base);
     if(depth==0){store_cell(data,84,1,value);data[81]=3;return;}
@@ -721,9 +723,15 @@ fn void return_scalar(ref mut u8[] data,i64 value){
     let usize dst=data[continuation+1] as usize;
     write(data,base+8,depth-1);
     set_reg(data,dst,value);
+    if(pair){set_reg(data,dst+1,payload);}
     data[80]=data[continuation];
 }
 fn void dispatch_scalar(ref mut u8[] data,u8 op,usize dst,usize a,usize b,usize at){
+    if(op==programs::wrap_opcode()){
+        let i64 payload=reg(data,a);
+        save_result(data,dst,b==1,payload);
+        data[80]+=1;return;
+    }
     if(op==programs::project_opcode()){
         let i64 tag=reg(data,a);
         if(b!=2 && tag!=if(b==1){1}else{0}){data[81]=4;data[82]=2;return;}
@@ -751,7 +759,9 @@ fn void dispatch_scalar(ref mut u8[] data,u8 op,usize dst,usize a,usize b,usize 
     }
     if(op==8){
         let i64 value=reg(data,a);
-        return_scalar(data,value);return;
+        let bool pair=data[at+4]!=0;
+        let i64 payload=if(pair){reg(data,a+1)}else{0};
+        return_scalar(data,value,pair,payload);return;
     }
     let i64 value=if(op==1){if(wide(data)){wide_cell(data,3168+a*8)}else{load_cell(data,at+4,1)}}else{
         assert(op==2 || op==7);

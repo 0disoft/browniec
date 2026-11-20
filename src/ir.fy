@@ -164,6 +164,15 @@ pub fn Result<usize,errors::Error> widen(ref mut Program p,usize source,u8 targe
     return .ok(result);
 }
 
+// One private value occupies a tag cell followed by a typed payload cell.
+pub fn Result<usize,errors::Error> host_pair(ref mut Program p,usize dst,u8 result,usize at){
+    if(dst!=p.registers || dst>126 || !types::host_result_type(result)){return .err(errors::make(4,at));}
+    p.types[dst]=types::host_result();
+    p.types[dst+1]=result;
+    p.registers+=2;
+    return .ok(dst);
+}
+
 pub fn Result<usize, errors::Error> call(ref mut Program p, usize target, ref usize[] arguments, usize offset) {
     if (p.call_count >= 32 || arguments.len > 8 || target>=16) { return .err(errors::make(4, offset)); }
     let usize site = p.call_count;
@@ -175,6 +184,13 @@ pub fn Result<usize, errors::Error> call(ref mut Program p, usize target, ref us
     p.call_arities[site] = byte(arguments.len, offset)?;
     p.call_count += 1;
     if(p.return_types[target]==13){let usize emitted=raw(p,9,0,target,site,offset)?;return .ok(256);}
+    let u8 result=p.return_types[target];
+    if(types::host_result_type(result)){
+        let usize dst=p.registers;
+        let usize pair=host_pair(p,dst,result,offset)?;
+        let usize pc=raw(p,9,dst,target,site,offset)?;
+        return .ok(pair);
+    }
     return emit(p, 9, target, site, offset);
 }
 

@@ -29,6 +29,7 @@ pub fn u8 result_request_opcode(){return 121;}
 pub fn u8 copy_opcode(){return 122;}
 pub fn u8 value_request_opcode(){return 123;}
 pub fn u8 project_opcode(){return 124;}
+pub fn u8 wrap_opcode(){return 125;}
 pub fn bool typed_request(u8 op){return op==typed_request_opcode() || op==result_request_opcode() || op==value_request_opcode();}
 
 fn bool typed_signature(ref ir::Program p,ref catalog::Catalog imports,usize at){
@@ -74,7 +75,8 @@ fn Result<usize,Error> inspect(ref ir::Program code,ref catalog::Catalog imports
     while(f<code.function_count){
         let usize first=code.register_starts[f];
         let usize arity=code.arities[f];
-        if(!types::scalar(code.return_types[f]) || first>code.registers || arity>code.registers-first){
+        if((!types::scalar(code.return_types[f]) && !types::host_result_type(code.return_types[f])) ||
+            first>code.registers || arity>code.registers-first){
             return .err(.Code);
         }
         var usize arg=0;
@@ -105,7 +107,7 @@ fn Result<usize,Error> inspect(ref ir::Program code,ref catalog::Catalog imports
         }else if(typed_request(op)){
             if(!typed_signature(code,imports,at)){return .err(.Catalog);}
             required|=one<<(code.code[at+3] as usize);
-        }else if(op==9 || op==17 || op==18 || op==119 || op==120 || op==copy_opcode() || op==project_opcode()){
+        }else if(op==9 || op==17 || op==18 || op==119 || op==120 || op==copy_opcode() || op==project_opcode() || op==wrap_opcode()){
             if(!typed_code){return .err(.Code);}
         }else if(op==2){
             let usize dst=code.code[at+1] as usize;

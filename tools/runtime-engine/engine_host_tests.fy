@@ -807,8 +807,31 @@ fn Result<usize,u8> saved_result_source(){
     assert(id(engine::destroy(ref mut owner))==0);
     return .ok(1);
 }
+fn Result<usize,u8> propagated_host_result(){
+    let ref u8[] source=b"module main; import host::example as api; fn Result<i32,u32> helper(i32 n){ let Result<i32,u32> reply=api::check(n); let value=reply?; return .ok(value+35); } fn i32 main(){ let Result<i32,u32> reply=helper(41); return switch(reply){ case .ok(value): { value } case .err(code): { api::next(code) } }; }";
+    let ref u8[] plain=b"module main; fn i32 main(){ let Result<i32,u32> reply=host::example::check(41); return reply?; }";
+    let ref u8[] mismatched=b"module main; fn Result<i64,u32> helper(){ return host::example::check(41); } fn i32 main(){ return 0; }";
+    assert(!compiler::compile(source).is_ok);
+    let policy::Policy ceiling=parsed_policy(true)?;
+    let runs::RunConfig run=switch(runs::parse(source_run_config(),ref ceiling)){case .ok(v):{v}case .err(_):{return .err(6);}};
+    var engine::Engine owner=configured(ceiling)?;
+    let catalog::Catalog imports=catalog_from(result_catalog())?;
+    let u32[8] expected=digest(ref imports)?;
+    rejected(engine::compile_scalar_host(ref mut owner,plain,catalog_from(result_catalog())?,ref expected,ref run),4);
+    rejected(engine::compile_scalar_host(ref mut owner,mismatched,catalog_from(result_catalog())?,ref expected,ref run),4);
+    let usize p=id(engine::compile_scalar_host(ref mut owner,source,imports,ref expected,ref run));
+    check_result_source(ref mut owner,p,ref run);
+    assert(id(engine::release_program(ref mut owner,p))==p);
+    assert(id(engine::destroy(ref mut owner))==0);
+    return .ok(1);
+}
 fn Result<usize,u8> saved_buffer_result_source(){
     let ref u8[] source=b"module main; fn i32 main(){ let Result<brownie::bytes::Buffer,u32> reply=host::example::check(b\"x\"); return switch(reply){ case .err(_): { 17 } case .ok(data): { host::example::next(ref data) + 35 } }; }";
+    let ref u8[] helper=b"module main; fn Result<brownie::bytes::Buffer,u32> fetch(){ let Result<brownie::bytes::Buffer,u32> reply=host::example::check(b\"x\"); return .ok(reply?); } fn i32 main(){ return switch(fetch()){ case .err(_): { 17 } case .ok(data): { host::example::next(ref data) + 35 } }; }";
+    let usize saved=check_buffer_result_source(source)?;
+    return check_buffer_result_source(helper);
+}
+fn Result<usize,u8> check_buffer_result_source(ref u8[] source){
     let policy::Policy ceiling=parsed_policy(true)?;
     let runs::RunConfig run=switch(runs::parse(source_run_config(),ref ceiling)){case .ok(v):{v}case .err(_):{return .err(6);}};
     var engine::Engine owner=configured(ceiling)?;
@@ -828,7 +851,7 @@ fn Result<usize,u8> saved_buffer_result_source(){
     assert(event(engine::step_instance(ref mut owner,a,1)).kind==0);
     assert(event(engine::step_instance(ref mut owner,a,1)).kind==0);
     assert(!engine::host_request_payload(ref owner,a).is_ok);
-    assert(event(engine::step_instance(ref mut owner,a,8)).kind==4);
+    assert(event(engine::step_instance(ref mut owner,a,16)).kind==4);
     check_bytes(ref owner,a,b"a\x00\xff");
     assert(event(engine::reply_scalar_host(ref mut owner,a,a,2,0,answer())).kind==0);
     let engine::Event done=event(engine::step_instance(ref mut owner,a,8));
@@ -1111,6 +1134,7 @@ pub fn void run(){
     assert(result_branch().is_ok);
     assert(result_source_round_trip().is_ok);
     assert(saved_result_source().is_ok);
+    assert(propagated_host_result().is_ok);
     assert(saved_buffer_result_source().is_ok);
     assert(chunked_reply().is_ok);
     unsafe{bc_runtime_engine_test_use_os_clock()};
