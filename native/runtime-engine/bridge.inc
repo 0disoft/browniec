@@ -57,7 +57,7 @@ uint32_t bc_runtime_engine_take_output(void *raw,uintptr_t instance,void *outgoi
  bc_engine *e=raw;bc_engine_ticket ticket={0};bc_abi_thread_identity owner;
  uint32_t s=bc_abi_guard_enter(&owner);if(s)return s;
  s=B2(&e->f_0,owner.thread,owner.lifetime);
- if(s==8){
+ if(s==8||s==14){
   /* Already-owned output extraction is bounded maintenance, not guest work. */
   s=B16(&e->f_0,&e->f_3,&e->f_6,&e->f_7,instance,(bc_engine_outputs *)outgoing);
   uint32_t end=bc_abi_guard_leave(owner);return end?end:s;
@@ -70,7 +70,7 @@ uint32_t bc_runtime_engine_call(void *raw,uint32_t operation,uintptr_t id,uintpt
  bc_engine *e=raw;bc_engine_ticket ticket={0};bc_abi_thread_identity owner;
  uint32_t s=bc_abi_guard_enter(&owner);if(s)return s;
  s=B2(&e->f_0,owner.thread,owner.lifetime);
- if(s==8){
+ if(s==8||s==14){
   s=B8(&e->f_0,&e->f_1,&e->f_2,&e->f_3,&e->f_4,&e->f_5,&e->f_6,&e->f_7,owner.thread,owner.lifetime,operation,id,argument);
   reset_closed(e,operation,s);uint32_t end=bc_abi_guard_leave(owner);return end?end:s;
  }

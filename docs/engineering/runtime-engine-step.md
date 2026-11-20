@@ -239,6 +239,29 @@ denial during cleanup, stable terminal observations and zero live SDK
 allocations at Engine exit. Local Engine receipt:
 `build/runtime-engine/20261120T183146980285Z/receipt.json`.
 
+## Containment after a cleanup invariant failure
+
+If staged cleanup rejects private metadata, the Engine discards that plan
+and records the original terminal event for the affected Instance. The
+Engine then refuses new compilation, Instance admission, execution and
+host dispatch. Already terminal children keep their events and detached or
+retained output. Children still stopping keep their first latched reason
+and Fuel. Other nonterminal children get an Engine-poisoned terminal event.
+
+The Engine snapshots its bounded Instance table without running guest code.
+Quarantined payloads remain charged until their owner's destruction.
+Observation, release, destruction and extraction of previously published
+output remain available. Guest errors such as ordinary traps, Fuel and
+output quota continue through their own terminal paths.
+
+The Windows development and /O2 Engine suite injected a malformed pending
+descriptor through both step and cancel. Both runs preserved the triggering
+cancellation, another stopping child's cause and a previously published
+result. Admission was refused and Engine exit had zero live SDK allocations.
+The host round-trip fixture isolates its ordinary compiler rejection so the
+source compiler result does not occupy the host compilation stack frame.
+Local Engine receipt: `build/runtime-engine/20261120T190344260709Z/receipt.json`.
+
 ## Remaining accepted work
 
 Dispatch visits do not bound all bytes, metadata visits or native time. Output

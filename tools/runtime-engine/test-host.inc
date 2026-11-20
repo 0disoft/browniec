@@ -17,6 +17,10 @@ void bc_runtime_engine_test_rewrite_project(void){
  assert(fclose(file)==0);
 }
 
+static uint32_t cleanup_fault;
+void bc_runtime_engine_test_inject_cleanup_fault(void){assert(!cleanup_fault);cleanup_fault=1;}
+uint32_t bc_runtime_engine_test_cleanup_fault(void){uint32_t active=cleanup_fault;cleanup_fault=0;return active;}
+
 static int host_clock_fixed;
 static ULONGLONG host_clock_ticks;
 static uintptr_t host_clock_reads_until_advance;

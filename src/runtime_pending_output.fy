@@ -202,6 +202,7 @@ fn u32 finish_stage(ref mut machines::Meta m,ref mut pending_runtime::State stat
     switch(finish_stage_impl(m,state,bank,places,staged,quantum)){case .ok(_):{return 0;}case .err(_):{
         // Invalid private cleanup never publishes its partial plan or replaces
         // the first terminal cause. Dropping the sole owner releases storage.
+        m.lifecycle.cleanup_failed=true;
         m.phase=m.lifecycle.terminal;m.lifecycle.phase=11;m.value=0;m.cursor.active=false;
         let pending_output::Observation dropped=if(m.phase==4){pending_output::cancel(staged)}else{pending_output::fail(staged)};return 0;}};
     return 5;

@@ -1,8 +1,7 @@
-- Latest runtime checkpoint (2026-11-21): [Instance lifecycle observation](docs/engineering/runtime-engine-step.md#instance-lifecycle-observation)
-  exposes the output machine's first latched reason and Fuel during Stopping,
-  and reads the stored terminal event. Windows development and /O2 Engine
-  verification passed with zero live SDK allocations at exit and 41 reviewed
-  bindings and 60 layouts.
+- Latest runtime checkpoint (2026-11-21): [Cleanup invariant containment](docs/engineering/runtime-engine-step.md#containment-after-a-cleanup-invariant-failure)
+  poisons an Engine after private cleanup failure and preserves committed child
+  events and output. Windows development and /O2 passed both injection routes
+  and the owning Engine suite with zero live SDK allocations at exit.
 
 # Brownie C agent guidance
 

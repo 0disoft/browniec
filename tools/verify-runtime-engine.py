@@ -81,6 +81,17 @@ def source_copy(path):
             text,count=re.subn(pattern,r'\1\n    let AllocationProbe probe=allocation_probe();',text)
             need(count==1,'Compiler allocation scope changed: '+name)
         return path.name,text.encode('utf-8')
+    if path == ROOT / 'src/runtime_cleanup_work.fy':
+        source = path.read_text(encoding='utf-8')
+        anchor = '    if(w.phase==1){'
+        need(source.count(anchor) == 1, 'Staged cleanup fault anchor changed')
+        declaration = 'import errors as errors;'
+        need(source.count(declaration) == 1, 'Staged cleanup import anchor changed')
+        source = source.replace(declaration, declaration +
+                                '\nunsafe extern C fn u32 bc_runtime_engine_test_cleanup_fault();', 1)
+        source = source.replace(anchor, anchor + '\n        if(w.index==15 && unsafe{bc_runtime_engine_test_cleanup_fault()}!=0){'
+                                'planned.pool.slots[15].exclusive=true;}', 1)
+        return path.name, source.encode('utf-8')
     if path == ROOT / 'src/retention_plan.fy':
         text=path.read_text(encoding='utf-8');anchor='    plan.admitted=true;'
         need(text.count(anchor)==1,'Retention admission probe anchor changed')

@@ -171,9 +171,10 @@ fn void source_rejected(Result<usize,engine::Error> result,usize offset){
         case .err(e):{assert(e.status==4 && e.diagnostic.at.source==0 && e.diagnostic.at.start==offset);}
     };
 }
+fn void ordinary_source_rejected(ref u8[] source){assert(!compiler::compile(source).is_ok);}
 fn Result<usize,u8> source_round_trip(){
     let ref u8[] source=b"module main; import host /* scope */ :: example as api; fn i32 main() { return api /* call */ :: check(40 + 1) + 35; }";
-    assert(!compiler::compile(source).is_ok);
+    ordinary_source_rejected(source);
     let policy::Policy ceiling=parsed_policy(true)?;
     let runs::RunConfig run=switch(runs::parse(source_run_config(),ref ceiling)){case .ok(v):{v}case .err(_):{return .err(6);}};
     let runs::RunConfig missing=switch(runs::parse(source_run_undeclared(),ref ceiling)){case .ok(v):{v}case .err(_):{return .err(6);}};

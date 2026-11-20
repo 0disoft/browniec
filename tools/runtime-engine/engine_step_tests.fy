@@ -26,6 +26,7 @@ unsafe extern C fn usize probe_attempts();
 unsafe extern C fn void bc_runtime_engine_test_proof_begin();
 unsafe extern C fn usize bc_runtime_engine_test_proof_count();
 unsafe extern C fn void bc_runtime_engine_test_fail(i64 count);
+unsafe extern C fn void bc_runtime_engine_test_inject_cleanup_fault();
 unsafe extern C fn usize bc_runtime_engine_test_project_path(ptr mut u8 out,usize capacity);
 unsafe extern C fn usize bc_runtime_engine_monotonic_ticks();
 unsafe extern C fn void bc_runtime_engine_test_set_clock(usize ticks);
@@ -652,6 +653,63 @@ fn Result<usize,u8> configured_deadline(){
     destroy(ref mut e,real);ledger(ref e,0);release(ref mut e,p);
     close(ref mut e);return .ok(0);
 }
+fn Result<usize,u8> rejected_poisoned_compile(ref mut engine::Engine e,ref u8[] source){
+    switch(engine::compile_input_output(e,selected_input(source)?,65536)){
+        case .ok(_):{assert(false);}case .err(err):{assert(err.status==14);}
+    };
+    return .ok(0);
+}
+fn Result<usize,u8> cleanup_fault_quarantines_engine(bool through_cancel){
+    let ref u8[] source=b"module app;pub fn i32 chosen(ref u8[] data){output::emit(ref data);return 42;}";
+    var engine::Engine e=created()?;let usize p=compiled(ref mut e,source,true)?;
+    let usize complete=bound(ref mut e,p,b"done",16000000,8)?;
+    let usize retiring=bound(ref mut e,p,b"discard",16000000,8)?;
+    let usize stopping=bound(ref mut e,p,b"stop",16000000,8)?;
+    let usize ready=bound(ref mut e,p,b"ready",16000000,8)?;
+    discard prepare(ref mut e,complete,p,8);
+    let engine::Event prior=finish(ref mut e,complete,4096);assert(prior.kind==1 && prior.value==42);
+    discard prepare(ref mut e,retiring,p,8);lifecycle::warm(ref mut e,retiring);
+    discard prepare(ref mut e,stopping,p,8);lifecycle::warm(ref mut e,stopping);
+    assert(event(engine::cancel_ready(ref mut e,stopping)).kind==4);
+    let engine::Event sibling_cause=status_event(ref e,stopping,.Stopping);
+    assert(event(engine::cancel_ready(ref mut e,retiring)).kind==4);
+    let engine::Event trigger=status_event(ref e,retiring,.Stopping);
+    let usize attempts=unsafe{probe_attempts()};
+    unsafe{bc_runtime_engine_test_inject_cleanup_fault()};
+    var engine::Event done=event(engine::observe(ref mut e,retiring));
+    var usize ticks=0;
+    while(done.kind==4){
+        assert(ticks<128);
+        done=event(if(through_cancel){engine::cancel_ready(ref mut e,retiring)}
+            else{engine::step_instance(ref mut e,retiring,4096)});
+        ticks+=1;
+    }
+    assert(unsafe{probe_attempts()}==attempts);
+    same_event(trigger,done);same_event(trigger,status_event(ref e,retiring,.Terminal));
+    same_event(sibling_cause,status_event(ref e,stopping,.Terminal));
+    same_event(sibling_cause,event(engine::cancel_ready(ref mut e,stopping)));
+    same_event(prior,event(engine::observe(ref mut e,complete)));
+    let engine::Event poisoned=status_event(ref e,ready,.Terminal);
+    assert(poisoned.kind==2 && poisoned.diagnostic.code.kind==errors::engine_poisoned_kind() &&
+        poisoned.remaining==16000000);
+    rejected(engine::step_instance(ref mut e,ready,1),14);
+    rejected(engine::execute_once(ref mut e,ready),14);
+    rejected(engine::prepare_instance(ref mut e,ready),14);
+    switch(engine::create_instance(ref mut e,p,16000000)){
+        case .ok(_):{assert(false);}case .err(err):{assert(err.status==14);}
+    };
+    discard rejected_poisoned_compile(ref mut e,source)?;
+    rejected_take(engine::take_output(ref mut e,retiring),2);
+    rejected_take(engine::take_output(ref mut e,stopping),2);
+    rejected_take(engine::take_output(ref mut e,ready),2);
+    let engine::Output saved=take(ref mut e,complete)?;
+    assert(bytes::equal(engine::output_view(ref saved),b"done"));
+    same_event(prior,event(engine::observe(ref mut e,complete)));
+    release(ref mut e,p);
+    destroy(ref mut e,retiring);destroy(ref mut e,stopping);
+    destroy(ref mut e,ready);destroy(ref mut e,complete);
+    ledger(ref e,0);counts(ref mut e,0,0,0);close(ref mut e);return .ok(0);
+}
 pub fn void run(){
     let Heap before=heap();
     assert(fixed_and_mixed_quanta().is_ok);same_heap(ref before);
@@ -664,4 +722,6 @@ pub fn void run(){
     assert(project_output().is_ok);same_heap(ref before);
     assert(configured_compile_deadline().is_ok);same_heap(ref before);
     assert(configured_deadline().is_ok);same_heap(ref before);
+    assert(cleanup_fault_quarantines_engine(false).is_ok);same_heap(ref before);
+    assert(cleanup_fault_quarantines_engine(true).is_ok);same_heap(ref before);
 }
