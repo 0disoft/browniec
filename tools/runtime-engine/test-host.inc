@@ -246,6 +246,23 @@ void bc_runtime_engine_test_program_storage(const void *raw,uintptr_t bytes){
  assert(bytes<=SIZE_MAX-control&&probe_live_bytes()==control+bytes);
 }
 static uintptr_t output_proof_visits=0;
-void bc_runtime_engine_test_proof_visit(void){assert(output_proof_visits<UINTPTR_MAX);output_proof_visits+=1;}
+static uintptr_t output_proof_expiry;
+static size_t output_proof_attempts;
+static int output_proof_expired;
+void bc_runtime_engine_test_expire_in_proof(uintptr_t deadline){
+ assert(host_clock_fixed&&deadline>host_clock_ticks&&!output_proof_expiry);
+ output_proof_expiry=deadline;
+}
+void bc_runtime_engine_test_proof_visit(void){
+ assert(output_proof_visits<UINTPTR_MAX);output_proof_visits+=1;
+ if(output_proof_expiry){
+  bc_runtime_engine_test_set_clock(output_proof_expiry);output_proof_expiry=0;
+  output_proof_attempts=probe_attempts();output_proof_expired=1;
+ }
+}
 void bc_runtime_engine_test_proof_begin(void){output_proof_visits=0;}
-uintptr_t bc_runtime_engine_test_proof_count(void){return output_proof_visits;}
+uintptr_t bc_runtime_engine_test_proof_count(void){
+ /* A late rejection at publication would already have attempted retention. */
+ if(output_proof_expired){assert(probe_attempts()==output_proof_attempts);output_proof_expired=0;}
+ return output_proof_visits;
+}

@@ -116,9 +116,24 @@ Engine receipt: `build/runtime-engine/20261120T231632275851Z/receipt.json`.
 The native collector tested expired and future deadlines using the real OS
 clock in both profiles: `build/anchored-sources/20261120T231507642754Z/receipt.json`.
 
-Compilation still runs synchronously between checks. The deadline prevents a
-late Program from becoming visible and leaves preemptible compilation,
-in-flight cancellation and cleanup latency as separate obligations.
+Output and input-output compilation sample the same absolute deadline after
+source lowering and before freezing the literal image. The proof driver then
+samples once before each bounded proof advance. Expiry ends the compile with
+the source-less deadline diagnostic and releases the image and any active
+reservation. Only a complete proof can enter Program retention. The final
+publication check still covers the synchronous work after proof.
+
+The Windows verifier advanced the clock to the exact deadline inside the
+canonical proof for both profiles that admit output. Each compile stopped
+before the next Program storage allocation, left the retained ledger and SDK
+heap at baseline, and preserved the next Program ID. One tick before expiry
+the same configured compiler admitted the Program. Development and /O2 both
+passed with zero live SDK allocations at exit. Local receipt:
+`build/runtime-engine/20261120T233149911244Z/receipt.json`.
+
+Source lowering, work between checkpoints, and cleanup remain synchronous.
+Public Pending compilation, in-flight cancellation, and a latency bound for
+the complete compiler remain open.
 
 Windows development and /O2 verify rejection at the exact publication deadline
 on all four module profiles and after anchored project collection. Publication

@@ -19,6 +19,7 @@ import output_reference_lifetimes_work as reference_work;
 import types as types;
 import errors as errors;
 import metadata_budget as budget;
+import runtime_clock as clock;
 import ir as ir;
 import output_return_ir as returns;
 import slice_result_origins as grounded_origins;
@@ -96,19 +97,37 @@ pub fn Result<raw::Proof,errors::Error> prepared(ref State w){
         .parameters=if(signature.borrowed){grounded.parameters}else{[0;16]},
         .elements=signature.elements};return .ok(proof);
 }
-// Synchronous compatibility adapters drain exactly these resumable stages.
-// They promise no wall-time bound or public Pending compile protocol.
-pub fn Result<raw::Proof,errors::Error> inspect(ref programs::Program unit,ref images::Image image,bool input){
+fn State seed(bool input){
     // Flatten both coordinator constructors: the bootstrap otherwise retains
     // multiple complete-State return frames on the deep owning compiler stack.
     // Keep these leaf seeds equivalent to empty() and canonical::empty().
-    var State w=State{.signature=signatures::empty(),.copy=copying::empty(),
+    return State{.signature=signatures::empty(),.copy=copying::empty(),
     .normalize=normalizing::empty(),.canonical=canonical::State{.recipes=recipe_work::empty(),.sites=site_work::empty(),
     .metadata=metadata_work::empty(input),.flow=flow_work::empty(),.task=task_work::empty(),
     .places=place_work::empty(),.references=reference_work::empty(),.function=0,.pc=0,.phase=0,.input=input,.output=true,.done=false},.origins=origins::empty(),
-    .borrowed=borrowed_calls::empty(),.phase=0,.input=input,.done=false};var programs::Program normalized=programs::Program{.body=ir::empty(),
+    .borrowed=borrowed_calls::empty(),.phase=0,.input=input,.done=false};
+}
+// The standalone proof can run without the Windows Engine clock.
+pub fn Result<raw::Proof,errors::Error> inspect(ref programs::Program unit,ref images::Image image,bool input){
+    var State w=seed(input);
+    var programs::Program normalized=programs::Program{.body=ir::empty(),
         .parameters=[0;128],.results=[0;16],.origins=[0;16]};var budget::State meter=budget::empty();
-    while(!w.done){let usize allowance=budget::reset(ref mut meter,0)?;
-        let bool done=advance(unit,image,ref mut normalized,ref mut w,ref mut meter)?;}
+    while(!w.done){
+        let usize allowance=budget::reset(ref mut meter,0)?;
+        let bool done=advance(unit,image,ref mut normalized,ref mut w,ref mut meter)?;
+    }
+    return prepared(ref w);
+}
+
+// Sample before each bounded proof stage. Only a fully verified proof can escape.
+pub fn Result<raw::Proof,errors::Error> inspect_until(ref programs::Program unit,ref images::Image image,bool input,usize deadline){
+    var State w=seed(input);
+    var programs::Program normalized=programs::Program{.body=ir::empty(),
+        .parameters=[0;128],.results=[0;16],.origins=[0;16]};var budget::State meter=budget::empty();
+    while(!w.done){
+        if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
+        let usize allowance=budget::reset(ref mut meter,0)?;
+        let bool done=advance(unit,image,ref mut normalized,ref mut w,ref mut meter)?;
+    }
     return prepared(ref w);
 }

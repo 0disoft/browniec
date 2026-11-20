@@ -19,6 +19,7 @@ import runtime_program_memory as memory;
 import retention_plan as retention;
 import compile_memory as compilation;
 import module_budgeted_compile as bounded;
+import runtime_clock as clock;
 import module_index as modules;
 import source_snapshot as sources;
 import project_manifest as projects;
@@ -84,7 +85,6 @@ pub resource Engine {
 @link_name("bc_runtime_engine_compile_preflight") unsafe extern C fn u32 compile_preflight_raw(ptr mut void owner,u32 mode,ptr void selected);
 @link_name("bc_runtime_engine_compile_fact") unsafe extern C fn usize compile_fact_raw(ptr void source,u32 kind,u32 fact);
 @link_name("bc_runtime_engine_policy_slot_bytes") unsafe extern C fn usize policy_slot_bytes_raw();
-@link_name("bc_runtime_engine_monotonic_ticks") unsafe extern C fn usize monotonic_ticks_raw();
 @link_name("bc_runtime_engine_prepare_host") unsafe extern C fn u32 prepare_host_raw(ptr mut void owner,usize program,ptr void run,ptr u8 input,usize length,usize selected);
 @link_name("bc_runtime_engine_reply_host") unsafe extern C fn u32 reply_host_raw(ptr mut void owner,usize instance,usize run,usize request,u8 kind,ptr u8 data,usize length,usize total,usize offset);
 @link_name("bc_runtime_engine_drive_host") unsafe extern C fn u32 drive_host_raw(ptr mut void owner,u32 mode,usize argument,usize run,usize request,u8 kind,ptr u8 data,usize length,ptr mut void transition,usize offset);
@@ -244,7 +244,7 @@ pub fn Result<usize,Error> compile_project(ref mut Engine e,ref projects::Projec
     if(projects::requirements(metadata)!=0){return .err(error(5));}
     let usize deadline=compile_deadline(e,0)?;
     let sources::Snapshot snapshot=load_project(e,metadata,root,deadline)?;
-    if(deadline_reached(deadline)){return .err(compile_timeout());}
+    if(clock::expired(deadline)){return .err(compile_timeout());}
     let entries::Entry selected=switch(project_binding::select(metadata,snapshot)){
         case .ok(v):{v}
         case .err(reason):{return .err(project_error(reason));}
@@ -264,7 +264,7 @@ fn Result<input_entries::InputEntry,Error> project_input_entry(ref Engine e,ref 
 }
 fn Result<input_entries::InputEntry,Error> select_project_input(ref projects::Project metadata,
     sources::Snapshot snapshot,usize deadline){
-    if(deadline_reached(deadline)){return .err(compile_timeout());}
+    if(clock::expired(deadline)){return .err(compile_timeout());}
     return switch(project_binding::select_input(metadata,snapshot)){
         case .ok(v):{.ok(v)}
         case .err(reason):{.err(project_error(reason))}
@@ -374,7 +374,7 @@ pub fn Result<usize,Error> compile_anchored_project_host(ref mut Engine e,ref pr
     if(projects::count(project)>limits.modules){return .err(error(8));}
     let usize deadline=deadline_after(limits.deadline_ms)?;
     let sources::Snapshot snapshot=project_snapshot(project_loader::load_from_until(project,root,project_source_limit(e),deadline))?;
-    if(deadline_reached(deadline)){return .err(compile_timeout());}
+    if(clock::expired(deadline)){return .err(compile_timeout());}
     let modules::Index index=switch(project_binding::index_host(project,snapshot,limits.tokens)){
         case .ok(v):{v}case .err(e):{return .err(host_binding_error(e));}
     };
@@ -414,7 +414,7 @@ pub fn Result<usize,Error> retain_scalar_host(ref mut Engine e,ref ir::Program c
 }
 fn Result<usize,Error> retain_verified_host(ref mut Engine e,ref ir::Program code,host_catalog::Catalog imports,
     ref u32[] digest,ref run_config::RunConfig run,usize deadline){
-    if(deadline_reached(deadline)){return .err(compile_timeout());}
+    if(clock::expired(deadline)){return .err(compile_timeout());}
     let host_program::Program verified=verify_scalar_host(e,code,imports,digest,run)?;
     var vec::Vec<host_program::Program> incoming=vec::empty<host_program::Program>();
     if(!vec::push<host_program::Program>(ref mut incoming,verified).is_ok){return .err(error(6));}
@@ -503,7 +503,7 @@ fn Result<ref host::Exchange,Error> request_exchange(ref Engine e,usize instance
     if(e.meta.poisoned){return .err(error(14));}
     let ref Output owner=vec::at<Output>(ref e.outputs,oi);
     let ref host::Exchange exchange=vec::at<host::Exchange>(ref owner.host,0);
-    if(host::deadline_reached(exchange,unsafe{monotonic_ticks_raw()})){return .err(error(11));}
+    if(host::deadline_reached(exchange,clock::now())){return .err(error(11));}
     return .ok(exchange);
 }
 
@@ -624,11 +624,10 @@ pub fn Result<usize,Error> prepare_granted_instance(ref mut Engine e,usize progr
 // Policy admits durations in 1..60000 ms; Windows interrupt time uses 100 ns ticks.
 fn Result<usize,Error> deadline_after(usize milliseconds){
     let usize duration=milliseconds*10000;
-    let usize start=unsafe{monotonic_ticks_raw()};
+    let usize start=clock::now();
     if(start>18446744073709551615-duration){return .err(error(8));}
     return .ok(start+duration);
 }
-fn bool deadline_reached(usize deadline){return deadline!=0 && unsafe{monotonic_ticks_raw()}>=deadline;}
 fn Result<usize,Error> compile_deadline(ref Engine e,usize existing){
     if(existing!=0){return .ok(existing);}
     if(!e.meta.configured){return .ok(0);}
@@ -1097,7 +1096,7 @@ fn u32 reserve_execution(ref mut Meta m,ref Program program,ref Instance instanc
     };
 }
 fn u32 compile_inner(ref mut Meta m,ref mut vec::Vec<Program> v,ref mut vec::Vec<entries::Entry> incoming,usize image_limit,usize deadline){
-    if(deadline_reached(deadline)){return compile_timed_out(m);}
+    if(clock::expired(deadline)){return compile_timed_out(m);}
     if(vec::len<Program>(v)>=m.limits.programs || m.next==0){return failed(m,8);}
     if(vec::len<entries::Entry>(incoming)!=1){return failed(m,1);}
     var retention::Plan plan=switch(retention_plan(m,0)){case .ok(p):{p}case .err(s):{return failed(m,s);}};
@@ -1118,7 +1117,7 @@ fn u32 publish_program(ref mut Meta m,ref mut vec::Vec<Program> v,programs::Prog
     var vec::Vec<programs::Program> retained=vec::empty<programs::Program>();
     if(!vec::reserve<programs::Program>(ref mut retained,1).is_ok){return failed(m,6);}
     if(!vec::push<programs::Program>(ref mut retained,code).is_ok){return failed(m,6);}
-    if(deadline_reached(deadline)){return compile_timed_out(m);}
+    if(clock::expired(deadline)){return compile_timed_out(m);}
     if(!vec::push<Program>(v,Program{.id=id,.pins=0,.released=false,.code=retained,.input=vec::empty<input_programs::Program>(),.output=vec::empty<output_programs::Program>(),.bytes=bytes,.execution_scratch=heap.scratch,.entry=empty_entry(),.host=vec::empty<host_program::Program>()}).is_ok){return failed(m,6);}
     assert(memory::publish(ref mut m.programs,bytes).is_ok);advance(m);return success(m,id);
 }
@@ -1126,7 +1125,7 @@ fn input_entries::InputEntry pop_input_entry(ref mut vec::Vec<input_entries::Inp
     case .some(e):{e}case .none:{assert(false);pop_input_entry(v)}
 };}
 fn u32 compile_input_inner(ref mut Meta m,ref mut vec::Vec<Program> v,ref mut vec::Vec<input_entries::InputEntry> incoming,usize image_limit,usize deadline){
-    if(deadline_reached(deadline)){return compile_timed_out(m);}
+    if(clock::expired(deadline)){return compile_timed_out(m);}
     if(vec::len<Program>(v)>=m.limits.programs || m.next==0){return failed(m,8);}
     if(vec::len<input_entries::InputEntry>(incoming)!=1){return failed(m,1);}
     var retention::Plan plan=switch(retention_plan(m,1)){case .ok(p):{p}case .err(s):{return failed(m,s);}};
@@ -1143,23 +1142,23 @@ fn u32 publish_input_program(ref mut Meta m,ref mut vec::Vec<Program> v,input_pr
     let usize id=m.next;var vec::Vec<input_programs::Program> retained=vec::empty<input_programs::Program>();
     if(!vec::reserve<input_programs::Program>(ref mut retained,1).is_ok){return failed(m,6);}
     if(!vec::push<input_programs::Program>(ref mut retained,code).is_ok){return failed(m,6);}
-    if(deadline_reached(deadline)){return compile_timed_out(m);}
+    if(clock::expired(deadline)){return compile_timed_out(m);}
     if(!vec::push<Program>(v,Program{.id=id,.pins=0,.released=false,.code=vec::empty<programs::Program>(),.input=retained,.output=vec::empty<output_programs::Program>(),.bytes=bytes,.execution_scratch=heap.scratch,.entry=empty_entry(),.host=vec::empty<host_program::Program>()}).is_ok){return failed(m,6);}
     assert(memory::publish(ref mut m.programs,bytes).is_ok);advance(m);return success(m,id);
 }
 fn u32 compile_output_inner(ref mut Meta m,ref mut vec::Vec<Program> v,ref mut vec::Vec<entries::Entry> incoming,usize limit,usize deadline){
-    if(deadline_reached(deadline)){return compile_timed_out(m);}
+    if(clock::expired(deadline)){return compile_timed_out(m);}
     if(vec::len<Program>(v)>=m.limits.programs || m.next==0){return failed(m,8);}
     if(vec::len<entries::Entry>(incoming)!=1){return failed(m,1);}
     var retention::Plan plan=switch(retention_plan(m,2)){case .ok(p):{p}case .err(s):{return failed(m,s);}};
     var compilation::Plan work=switch(compile_work(m,unsafe{compile_fact_raw(incoming as ptr void,0,2)},entry_heap(vec::at<entries::Entry>(incoming,0)))){case .ok(p):{p}case .err(status):{return failed(m,status);}};
-    let Result<output_programs::Program,diagnostics::Error> built=bounded::compile_output(pop_entry(incoming),limit,ref mut plan,ref mut work);
+    let Result<output_programs::Program,diagnostics::Error> built=bounded::compile_output_until(pop_entry(incoming),limit,ref mut plan,ref mut work,deadline);
     assert(memory::record_compile(ref mut m.programs,ref work).is_ok);
     assert(memory::record(ref mut m.programs,ref plan).is_ok);
     return switch(built){case .ok(code):{publish_output_program(m,v,code,plan.bytes,empty_entry(),0,deadline)}case .err(e):{compile_error(m,e)}};
 }
 fn u32 compile_input_output_inner(ref mut Meta m,ref mut vec::Vec<Program> v,ref mut vec::Vec<input_entries::InputEntry> incoming,usize limit,u32 mode,usize deadline){
-    if(deadline_reached(deadline)){return compile_timed_out(m);}
+    if(clock::expired(deadline)){return compile_timed_out(m);}
     if(mode>1 && !m.configured){return failed(m,5);}
     if(vec::len<Program>(v)>=m.limits.programs || m.next==0){return failed(m,8);}
     if(vec::len<input_entries::InputEntry>(incoming)!=1){return failed(m,1);}
@@ -1168,7 +1167,7 @@ fn u32 compile_input_output_inner(ref mut Meta m,ref mut vec::Vec<Program> v,ref
     let EntryBinding entry=switch(bind_entry(m.configured,vec::at<input_entries::InputEntry>(incoming,0))){
         case .ok(v):{v}case .err(status):{return failed(m,status);}
     };
-    let Result<output_programs::Program,diagnostics::Error> built=bounded::compile_input_output(pop_input_entry(incoming),limit,ref mut plan,ref mut work);
+    let Result<output_programs::Program,diagnostics::Error> built=bounded::compile_input_output_until(pop_input_entry(incoming),limit,ref mut plan,ref mut work,deadline);
     assert(memory::record_compile(ref mut m.programs,ref work).is_ok);
     assert(memory::record(ref mut m.programs,ref plan).is_ok);
     return switch(built){case .ok(code):{publish_output_program(m,v,code,plan.bytes,entry,mode,deadline)}case .err(e):{compile_error(m,e)}};
@@ -1209,7 +1208,7 @@ fn u32 publish_output_program(ref mut Meta m,ref mut vec::Vec<Program> v,output_
     let usize id=m.next;var vec::Vec<output_programs::Program> retained=vec::empty<output_programs::Program>();
     if(!vec::reserve<output_programs::Program>(ref mut retained,1).is_ok){return failed(m,6);}
     if(!vec::push<output_programs::Program>(ref mut retained,code).is_ok){return failed(m,6);}
-    if(deadline_reached(deadline)){return compile_timed_out(m);}
+    if(clock::expired(deadline)){return compile_timed_out(m);}
     if(!vec::push<Program>(v,Program{.id=id,.pins=0,.released=false,.code=vec::empty<programs::Program>(),
         .input=vec::empty<input_programs::Program>(),.output=retained,.bytes=bytes,.execution_scratch=scratch,.entry=entry,.host=vec::empty<host_program::Program>()}).is_ok){return failed(m,6);}
     assert(memory::publish(ref mut m.programs,bytes).is_ok);advance(m);return success(m,id);
@@ -1221,7 +1220,7 @@ fn host_program::Program pop_host_program(ref mut vec::Vec<host_program::Program
 }
 fn u32 publish_host_inner(ref mut Meta m,ref mut vec::Vec<Program> v,ref mut vec::Vec<host_program::Program> incoming,
     usize program_stride,usize ir_stride,usize deadline){
-    if(deadline_reached(deadline)){return compile_timed_out(m);}
+    if(clock::expired(deadline)){return compile_timed_out(m);}
     if(!m.configured || vec::len<host_program::Program>(incoming)!=1){return failed(m,5);}
     if(m.next==0 || vec::len<Program>(v)>=m.limits.programs){return failed(m,8);}
     let usize bytes=control_layout::capacity(1)*program_stride+host_program::heap_bytes(vec::at<host_program::Program>(incoming,0),ir_stride);
@@ -1231,7 +1230,7 @@ fn u32 publish_host_inner(ref mut Meta m,ref mut vec::Vec<Program> v,ref mut vec
     if(!vec::push<host_program::Program>(ref mut retained,code).is_ok){
         assert(memory::release(ref mut m.programs,bytes).is_ok);return failed(m,6);
     }
-    if(deadline_reached(deadline)){
+    if(clock::expired(deadline)){
         assert(memory::release(ref mut m.programs,bytes).is_ok);return compile_timed_out(m);
     }
     let usize id=m.next;
@@ -1298,13 +1297,13 @@ fn u32 drive_host_owner(ref mut vec::Vec<host::Exchange> owners,u32 mode,usize q
     if(vec::len<host::Exchange>(owners)!=1){return 14;}
     let ref mut host::Exchange exchange=vec::at_mut<host::Exchange>(owners,0);
     if(mode==3){
-        return switch(host::claim_scalar_dispatch(exchange,run,request,unsafe{monotonic_ticks_raw()})){
+        return switch(host::claim_scalar_dispatch(exchange,run,request,clock::now())){
             case .ok(claimed):{if(claimed){0}else{11}}case .err(_):{14}
         };
     }
     var usize remaining=quantum;
     while(remaining>0 || mode==2){
-        let usize now=unsafe{monotonic_ticks_raw()};
+        let usize now=clock::now();
         let Result<host::ScalarEvent,host::ScalarError> action=if(mode==2){
             host::receive_scalar_reply(exchange,run,request,kind,quantum,offset,payload,now)
         }else{host::step_scalar_budget(exchange,now,mode==1,ref mut remaining)};
@@ -1788,12 +1787,12 @@ fn u32 step_output_owner(ref mut vec::Vec<machines::Machine> saved,ref mut outpu
     var bool cleanup_failed=false;
     {
         let ref mut machines::Machine machine=vec::at_mut<machines::Machine>(saved,0);
-        if(deadline_reached(deadline) && !pending_vm::expire_pending_output(machine).is_ok){return 7;}
+        if(clock::expired(deadline) && !pending_vm::expire_pending_output(machine).is_ok){return 7;}
         let machines::Meta initial=machines::observe(machine);
         var machines::Meta progressed=if(initial.phase>=2){initial}else{switch(pending_vm::advance_pending_output(machine,code,input,quantum)){
             case .ok(v):{v}case .err(_):{return 7;}
         }};
-        if(progressed.lifecycle.terminal==0 && deadline_reached(deadline)){
+        if(progressed.lifecycle.terminal==0 && clock::expired(deadline)){
             progressed=switch(pending_vm::expire_pending_output(machine)){case .ok(v):{v}case .err(_):{return 7;}};
         }
         if(progressed.phase==1){
@@ -1806,7 +1805,7 @@ fn u32 step_output_owner(ref mut vec::Vec<machines::Machine> saved,ref mut outpu
         // actual sealed owner can authorize a successful Engine event.
         if(finished.phase==2 && vec::len<pending_output::Published>(published)!=1){return 7;}
         cleanup_failed=finished.lifecycle.cleanup_failed;
-        if(finished.phase==2 && deadline_reached(deadline)){
+        if(finished.phase==2 && clock::expired(deadline)){
             // The sealed owner is still private. Drop it before Engine publication.
             let Option<pending_output::Published> discarded=vec::pop<pending_output::Published>(published);
             *completed=output_programs::resumed_completion(code,published,false,0,finished.remaining,
@@ -1828,7 +1827,7 @@ fn vec::Vec<pending_output::Published> compact_cancelled_storage(vec::Vec<pendin
 fn u32 cancel_output_owner(ref mut vec::Vec<machines::Machine> saved,usize deadline){
     if(vec::len<machines::Machine>(saved)!=1){return 7;}
     let ref mut machines::Machine machine=vec::at_mut<machines::Machine>(saved,0);
-    if(deadline_reached(deadline) && !pending_vm::expire_pending_output(machine).is_ok){return 7;}
+    if(clock::expired(deadline) && !pending_vm::expire_pending_output(machine).is_ok){return 7;}
     return switch(pending_vm::cancel_pending_output(machine)){
         case .ok(v):{if(v.phase==1){12}else if(v.phase==3 || v.lifecycle.cleanup_failed){13}else{0}}case .err(_):{7}
     };

@@ -14,6 +14,7 @@ import output_proof_work as proof_work;
 import program_image as program_images;
 import std::vec as vec;
 import retention_plan as retention;
+import runtime_clock as clock;
 import std::bytes as bytes;
 import runtime_input as input_bytes;
 import runtime_output as output;
@@ -51,6 +52,14 @@ pub fn Result<Program,diagnostics::Error> compile_with_retention(entries::Entry 
     let usize lowered=compiler::lower_output_modules(ref selected,ref mut builder,ref mut code)?;
     return finish(modules::snapshot(entries::index(ref selected)),ref builder,ref code,image_limit,false,plan);
 }
+pub fn Result<Program,diagnostics::Error> compile_with_retention_until(entries::Entry selected,usize image_limit,ref mut retention::Plan plan,usize deadline){
+    var images::Builder builder=switch(images::builder(4096)){
+        case .ok(v):{v}case .err(e):{return .err(literal(e));}
+    };
+    var candidates::Program code=candidates::Program{.body=ir::empty(),.parameters=[0;128],.results=[0;16],.origins=[0;16]};
+    let usize lowered=compiler::lower_output_modules(ref selected,ref mut builder,ref mut code)?;
+    return finish_until(modules::snapshot(entries::index(ref selected)),ref builder,ref code,image_limit,false,plan,deadline);
+}
 pub fn Result<Program,diagnostics::Error> compile_input(input_entries::InputEntry selected,usize image_limit){
     var retention::Plan plan=retention::unlimited();return compile_input_with_retention(selected,image_limit,ref mut plan);
 }
@@ -62,19 +71,44 @@ pub fn Result<Program,diagnostics::Error> compile_input_with_retention(input_ent
     let usize lowered=compiler::lower_input_output_modules(ref selected,ref mut builder,ref mut code)?;
     return finish(modules::snapshot(input_entries::index(ref selected)),ref builder,ref code,image_limit,true,plan);
 }
-fn Result<Program,diagnostics::Error> finish(ref sources::Snapshot sources,ref images::Builder builder,
-    ref candidates::Program code,usize image_limit,bool input,ref mut retention::Plan plan){
-    let usize payload=switch(images::planned_payload(builder)){case .ok(v):{v}case .err(_):{return .err(absent(errors::make(5,0)));}};
-    if(!retention::admit(plan,payload).is_ok){return .err(absent(errors::make(retention::quota_kind(),0)));}
-    let images::Image image=switch(images::freeze(builder,image_limit)){
+pub fn Result<Program,diagnostics::Error> compile_input_with_retention_until(input_entries::InputEntry selected,usize image_limit,ref mut retention::Plan plan,usize deadline){
+    var images::Builder builder=switch(images::builder(4096)){
         case .ok(v):{v}case .err(e):{return .err(literal(e));}
     };
-    let output_proof::Proof proof=switch(proof_work::inspect(code,ref image,input)){
-        case .ok(v):{v}case .err(e):{
-            if(e.offset==0 || e.offset>=code.body.count){return .err(absent(e));}
-            return .err(diagnostics::map(sources,errors::make(e.kind,code.body.offsets[e.offset]),16));
-        }
+    var candidates::Program code=candidates::Program{.body=ir::empty(),.parameters=[0;128],.results=[0;16],.origins=[0;16]};
+    let usize lowered=compiler::lower_input_output_modules(ref selected,ref mut builder,ref mut code)?;
+    return finish_until(modules::snapshot(input_entries::index(ref selected)),ref builder,ref code,image_limit,true,plan,deadline);
+}
+fn Result<images::Image,diagnostics::Error> freeze(ref images::Builder builder,usize image_limit,ref mut retention::Plan plan){
+    let usize payload=switch(images::planned_payload(builder)){case .ok(v):{v}case .err(_):{return .err(absent(errors::make(5,0)));}};
+    if(!retention::admit(plan,payload).is_ok){return .err(absent(errors::make(retention::quota_kind(),0)));}
+    return switch(images::freeze(builder,image_limit)){
+        case .ok(v):{.ok(v)}case .err(e):{.err(literal(e))}
     };
+}
+fn diagnostics::Error proof_error(ref sources::Snapshot sources,ref candidates::Program code,errors::Error e){
+    if(e.offset==0 || e.offset>=code.body.count){return absent(e);}
+    return diagnostics::map(sources,errors::make(e.kind,code.body.offsets[e.offset]),16);
+}
+fn Result<Program,diagnostics::Error> finish(ref sources::Snapshot sources,ref images::Builder builder,
+    ref candidates::Program code,usize image_limit,bool input,ref mut retention::Plan plan){
+    let images::Image image=freeze(builder,image_limit,plan)?;
+    let output_proof::Proof proof=switch(proof_work::inspect(code,ref image,input)){
+        case .ok(v):{v}case .err(e):{return .err(proof_error(sources,code,e));}
+    };
+    return finish_verified(sources,code,image,input,ref proof);
+}
+fn Result<Program,diagnostics::Error> finish_until(ref sources::Snapshot sources,ref images::Builder builder,
+    ref candidates::Program code,usize image_limit,bool input,ref mut retention::Plan plan,usize deadline){
+    if(clock::expired(deadline)){return .err(absent(errors::absent(errors::deadline_kind(),0)));}
+    let images::Image image=freeze(builder,image_limit,plan)?;
+    let output_proof::Proof proof=switch(proof_work::inspect_until(code,ref image,input,deadline)){
+        case .ok(v):{v}case .err(e):{return .err(proof_error(sources,code,e));}
+    };
+    return finish_verified(sources,code,image,input,ref proof);
+}
+fn Result<Program,diagnostics::Error> finish_verified(ref sources::Snapshot sources,ref candidates::Program code,
+    images::Image image,bool input,ref output_proof::Proof proof){
     let lists::Requirement list=switch(lists::requirement(ref code.body)){case .ok(v):{v}case .err(e):{return .err(absent(e));}};
     let places::Requirement place=switch(places::requirement(ref code.body)){case .ok(v):{v}case .err(e):{return .err(absent(e));}};
     let usize work=switch(owned_calls::cost(ref code.body,code.body.entry,0)){case .ok(v):{v}case .err(e):{return .err(absent(e));}};

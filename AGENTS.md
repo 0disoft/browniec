@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-21): [Anchored loader deadline verification](docs/engineering/anchored-source-loader.md)
-  checks distinct Limit and Deadline results and owner cleanup in Windows
-  development and /O2.
+- Latest runtime checkpoint (2026-11-21): [Output proof deadlines](docs/engineering/runtime-engine-compile-memory.md#configured-compile-deadlines)
+  stop output and input-output compilation between proof advances before Program
+  retention. Windows development and /O2 passed with zero live SDK allocations.
 
 # Brownie C agent guidance
 
