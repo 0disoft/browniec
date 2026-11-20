@@ -1220,11 +1220,18 @@ fn u32 publish_host_inner(ref mut Meta m,ref mut vec::Vec<Program> v,ref mut vec
 fn u32 prepare_host_inner(ref mut Meta m,ref mut vec::Vec<Program> p,ref mut vec::Vec<Instance> v,
     ref mut vec::Vec<Output> outputs,ref vec::Vec<policy::Policy> policies,ref run_config::RunConfig run,
     usize code,usize stride,ref u8[] input,usize selected){
-    if(!m.configured || vec::len<policy::Policy>(policies)!=1){return failed(m,5);}
+    if(!m.configured){return failed(m,5);}
+    if(vec::len<policy::Policy>(policies)!=1){return contain_execution_fault(m,p,v,outputs);}
     let usize pi=switch(program_index(p,code,true)){case .ok(x):{x}case .err(status):{return failed(m,status);}};
-    if(vec::len<Instance>(v)>=m.limits.instances || m.next==0){return failed(m,8);}
     let ref Program program=vec::at<Program>(p,pi);
-    if(vec::len<host_program::Program>(ref program.host)!=1){return failed(m,1);}
+    let usize hosts=vec::len<host_program::Program>(ref program.host);
+    let usize variants=hosts+vec::len<programs::Program>(ref program.code)+
+        vec::len<input_programs::Program>(ref program.input)+vec::len<output_programs::Program>(ref program.output);
+    if(variants!=1){return contain_execution_fault(m,p,v,outputs);}
+    if(hosts==0){return failed(m,1);}
+    if(vec::len<Instance>(v)>=m.limits.instances || m.next==0){return failed(m,8);}
+    if(stride==0 || vec::len<Instance>(v)>=vec::capacity<Instance>(v) ||
+        vec::len<Output>(outputs)>=vec::capacity<Output>(outputs)){return contain_execution_fault(m,p,v,outputs);}
     let ref host_program::Program verified=vec::at<host_program::Program>(ref program.host,0);
     let ref policy::Policy ceiling=vec::at<policy::Policy>(policies,0);
     let policy_limits::RunLimits limits=run_config::run_limits(run);
@@ -1234,7 +1241,7 @@ fn u32 prepare_host_inner(ref mut Meta m,ref mut vec::Vec<Program> p,ref mut vec
     let usize exchange_bytes=host::scalar_storage_bound(verified,limits)+input.len;
     let usize slots=control_layout::capacity(1);
     let usize transient=if(selected==0){0}else{selected-1};
-    if(stride==0 || transient>limits.memory_bytes || exchange_bytes>limits.memory_bytes-transient ||
+    if(transient>limits.memory_bytes || exchange_bytes>limits.memory_bytes-transient ||
         stride>(limits.memory_bytes-transient-exchange_bytes)/slots){return failed(m,8);}
     let usize deadline=switch(deadline_after(limits.deadline_ms)){
         case .ok(v):{v}case .err(e):{return failed(m,e.status);}
@@ -1245,9 +1252,15 @@ fn u32 prepare_host_inner(ref mut Meta m,ref mut vec::Vec<Program> p,ref mut vec
     };
     let usize id=m.next;
     let host::Exchange exchange=switch(host::create_scalar_input(verified,ceiling,run,id,deadline,input)){
-        case .ok(value):{value}case .err(reason):{return failed(m,switch(reason){
-            case .Authority:{5}case .Allocation:{6}case .Binding:{7}case .State:{7}case .Rejected:{7}
-        });}
+        case .ok(value):{value}case .err(reason):{
+            // Authority, input bounds and run identity already passed admission.
+            let bool allocation=switch(reason){
+                case .Allocation:{true}
+                case .Authority:{false}case .Binding:{false}case .State:{false}case .Rejected:{false}
+            };
+            if(allocation){return failed(m,6);}
+            return contain_execution_fault(m,p,v,outputs);
+        }
     };
     var vec::Vec<host::Exchange> saved=vec::empty<host::Exchange>();
     if(!vec::push<host::Exchange>(ref mut saved,exchange).is_ok){return failed(m,6);}

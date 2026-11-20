@@ -98,6 +98,10 @@ def source_copy(path):
         need(text.count(anchor) == 1, 'Scalar host fault anchor changed')
         text = text.replace(anchor, 'unsafe extern C fn u32 bc_runtime_engine_test_host_fault();\n'
                             + anchor + '\n    if(unsafe{bc_runtime_engine_test_host_fault()}!=0){return false;}\n', 1)
+        opening = '    load_image(ref mut e,code,end,limits.call_frames);'
+        need(text.count(opening) == 1, 'Host construction fault anchor changed')
+        text = text.replace(anchor, 'unsafe extern C fn u32 bc_runtime_engine_test_host_prepare_fault(u32 stage);\n' + anchor, 1)
+        text = text.replace(opening, '    if(unsafe{bc_runtime_engine_test_host_prepare_fault(3)}!=0){return .err(.State);}\n' + opening, 1)
         return path.name, text.encode('utf-8')
     if path in (ROOT / 'src/runtime_seal_work.fy', ROOT / 'src/runtime_engine.fy'):
         text = path.read_text(encoding='utf-8')
@@ -121,6 +125,13 @@ def source_copy(path):
                                 '{.err(2)}else{input_index(inputs,id)};', 1)
             text = text.replace(opening, opening + '\n    if(unsafe{bc_runtime_engine_test_output_fault(4)}!=0)'
                                 '{return .err(diagnostics::absent(errors::make(5,0)));}', 1)
+            function = 'fn u32 prepare_host_inner('
+            host_count = 'vec::len<host_program::Program>(ref program.host);'
+            capacity = '    if(stride==0 || vec::len<Instance>(v)>=vec::capacity<Instance>(v) ||'
+            need(text.count(function) == text.count(host_count) == text.count(capacity) == 1, 'Host preparation fault anchors changed')
+            text = text.replace(function, 'unsafe extern C fn u32 bc_runtime_engine_test_host_prepare_fault(u32 stage);\n' + function, 1)
+            text = text.replace(host_count, 'if(unsafe{bc_runtime_engine_test_host_prepare_fault(1)}!=0){0}else{' + host_count[:-1] + '};', 1)
+            text = text.replace(capacity, capacity.replace('if(stride', 'if(unsafe{bc_runtime_engine_test_host_prepare_fault(2)}!=0 || stride'), 1)
         return path.name, text.encode('utf-8')
     if path == ROOT / 'src/retention_plan.fy':
         text=path.read_text(encoding='utf-8');anchor='    plan.admitted=true;'

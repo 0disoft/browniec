@@ -1,5 +1,5 @@
-- Latest runtime checkpoint (2026-11-21): [Output Instance preparation containment](docs/engineering/runtime-engine-prepared.md#containment-of-preparation-invariant-failures)
-  quarantines invalid retained state before a Machine is published.
+- Latest runtime checkpoint (2026-11-21): [Host preparation containment](docs/engineering/host-exchange.md#containment-of-host-preparation-invariant-failures)
+  quarantines invalid retained state before an Exchange is published.
   Windows development and /O2 Engine checks passed with zero live SDK allocations.
 
 # Brownie C agent guidance

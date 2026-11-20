@@ -518,6 +518,29 @@ zero live SDK allocations. Root `fairyc check --locked` passes 376 sources
 and 4,163 MIR functions. The local receipt is
 `build/runtime-engine/20261118T111819576719Z/receipt.json`.
 
+## Containment of host preparation invariant failures
+
+The Engine distinguishes an ordinary Program passed to host preparation
+(status 1) from a damaged retained Program with missing or multiple payloads.
+It also checks that the configured policy has its retained owner and the two
+preallocated Instance and Output slots are available before allocating an
+Exchange. Constructor errors that contradict completed admission quarantine
+the Engine with status 14. Allocation failure remains status 6.
+
+Preparation publishes the new Instance, Program pin and live reservation
+only after the Exchange is ready. A fault leaves the next ID and current
+ledger unchanged. Local owners are dropped, existing terminal children
+keep their cause, and active peers are quarantined without resuming guest
+work. Their storage remains owned until teardown.
+
+The Windows Engine verifier exercised an ordinary Program rejection and
+injected three faults: a missing retained host payload, an unavailable
+preallocated slot, and an internal constructor error after provisional
+allocation. The first two injected faults attempted zero allocations. The
+third returned all provisional bytes. Development and /O2 both passed with
+zero live SDK allocations at exit. Local receipt:
+`build/runtime-engine/20261120T220713315707Z/receipt.json`.
+
 ## Termination with staged guest output
 
 An output quota failure commits an exchange termination with its own cause and
