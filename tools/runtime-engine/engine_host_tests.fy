@@ -1172,6 +1172,22 @@ fn u8[76] reply_frame(engine::HostRequestInfo info){
     while(i<76){frame[i]=payload[i-64];i+=1;}
     return frame;
 }
+fn void check_reply_header(ref memory_adapter::Dispatch request,ref u8[] frame,ref u8[] crossed){
+    let Result<usize,memory_adapter::Error> sized=memory_adapter::frame_reply_size(request,frame[..64],12);
+    assert(switch(sized){case .ok(v):{v==12}case .err(_):{false}});
+    assert(!memory_adapter::frame_reply_size(request,frame[..64],11).is_ok);
+    assert(!memory_adapter::frame_reply_size(request,frame[..63],12).is_ok);
+    assert(!memory_adapter::frame_reply_size(request,crossed[..64],12).is_ok);
+    let engine::HostRequestInfo info=memory_adapter::dispatch_info(request);
+    let u8[64] oversized=frames::header(ref info,1,4097);
+    assert(!memory_adapter::frame_reply_size(request,ref oversized[..],4097).is_ok);
+    let u8[64] short_tlv=frames::header(ref info,1,7);
+    assert(!memory_adapter::frame_reply_size(request,ref short_tlv[..],4096).is_ok);
+    let u8[64] malformed_fatal=frames::header(ref info,3,1);
+    assert(!memory_adapter::frame_reply_size(request,ref malformed_fatal[..],4096).is_ok);
+    let u8[64] empty_fatal=frames::header(ref info,3,0);
+    assert(memory_adapter::frame_reply_size(request,ref empty_fatal[..],0).is_ok);
+}
 fn void framed_success(ref mut engine::Engine owner,usize instance,usize other,ref memory_adapter::Route check){
     switch(memory_adapter::claim_detached(owner,instance,check,14)){
         case .ok(request):{
@@ -1181,6 +1197,7 @@ fn void framed_success(ref mut engine::Engine owner,usize instance,usize other,r
             let u8[76] crossed=reply_frame(request_info(owner,other));
             assert(!memory_adapter::deliver_frame(owner,ref request,ref crossed[..],12).is_ok);
             var u8[76] frame=reply_frame(memory_adapter::dispatch_info(ref request));
+            check_reply_header(ref request,ref frame[..],ref crossed[..]);
             assert(!memory_adapter::deliver_frame(owner,ref request,ref frame[..],11).is_ok);
             assert(!memory_adapter::deliver_frame(owner,ref request,ref frame[..75],12).is_ok);
             let usize[8] offsets=[0,4,5,16,24,28,32,64];

@@ -373,9 +373,12 @@ little endian. The payload is the existing host TLV, or empty for adapter
 failure.
 
 Reply delivery accepts one complete frame from a channel scoped to the
-originating Engine session. It checks the caller's payload limit and the
-4096-byte adapter cap, then compares the header against the detached dispatch
-and validates the typed payload. The target Instance comes from the dispatch.
+originating Engine session. A transport can preflight the 64-byte reply
+header before allocating or reading the body. Preflight checks correlation
+against the detached dispatch, the caller's payload limit, the 4096-byte
+adapter cap, and the size rules for typed and empty failure replies. Delivery
+then requires exactly that many bytes and validates the typed payload. The
+target Instance comes from the dispatch.
 Rejected frames leave Engine reply receipt untouched. Valid frames enter
 the existing bounded receipt and installation path, which still rejects
 late, duplicate or cancelled replies.
@@ -386,6 +389,12 @@ Instance frames, duplicate delivery, and a reply after cancellation. The
 originating Instance returned 77 and both profiles reported zero live SDK
 allocations after teardown. Local receipt:
 `build/runtime-engine/20261120T192750442616Z/receipt.json`.
+
+Header-only preflight also passed Windows development and /O2 with zero
+live SDK allocations. It accepts the exact reply limit and a zero-byte
+failure, and rejects crossed or short headers, one-byte-short caller
+limits, a declared 4097-byte body, and invalid typed or failure lengths.
+Local receipt: `build/runtime-engine/20261120T195900439402Z/receipt.json`.
 
 ## Engine scalar pending memory
 

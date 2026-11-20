@@ -60,12 +60,21 @@ pub fn u8[64] dispatch_header(ref Dispatch request){
     return frames::header(ref request.info,0,request.info.payload_bytes);
 }
 
+fn usize bounded_reply_limit(usize limit){
+    return if(limit<byte_limit()){limit}else{byte_limit()};
+}
+
+pub fn Result<usize,Error> frame_reply_size(ref Dispatch request,ref u8[] prefix,usize limit){
+    return switch(frames::reply_size(ref request.info,prefix,bounded_reply_limit(limit))){
+        case .ok(v):{.ok(v)}case .err(_):{.err(invalid())}
+    };
+}
+
 // The transport keeps the Dispatch with its originating Engine session. A
 // frame supplies bytes and a reply tag, never the target Instance handle.
 pub fn Result<engine::Event,Error> deliver_frame(ref mut engine::Engine owner,
     ref Dispatch request,ref u8[] frame,usize limit){
-    let usize bounded=if(limit<byte_limit()){limit}else{byte_limit()};
-    let u8 kind=switch(frames::reply_kind(ref request.info,request.result,frame,bounded)){
+    let u8 kind=switch(frames::reply_kind(ref request.info,request.result,frame,bounded_reply_limit(limit))){
         case .ok(v):{v}case .err(_):{return .err(invalid());}
     };
     return switch(engine::reply_scalar_host(owner,request.info.run,request.info.run,
