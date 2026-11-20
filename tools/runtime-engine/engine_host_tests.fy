@@ -213,6 +213,63 @@ fn Result<usize,u8> source_round_trip(){
     assert(id(engine::destroy(ref mut owner))==0);
     return .ok(1);
 }
+fn Result<usize,u8> helper_host_calls(){
+    let ref u8[] source=b"module main; import host::example as api; fn i32 inner(bool recur, i32 n){ if(recur){ return inner(false,n) + n; } return api::check(n); } fn i32 main(){ return inner(true,41) + -6; }";
+    let ref u8[] recursion=b"module main; fn i32 main(){ return again(); } fn i32 again(){ return again(); }";
+    let policy::Policy ceiling=parsed_policy(true)?;
+    let runs::RunConfig run=switch(runs::parse(source_run_config(),ref ceiling)){case .ok(v):{v}case .err(_):{return .err(6);}};
+    var engine::Engine owner=configured(ceiling)?;
+    let catalog::Catalog imports=catalog_from(source_catalog())?;
+    let u32[8] expected=digest(ref imports)?;
+    let usize p=id(engine::compile_scalar_host(ref mut owner,source,imports,ref expected,ref run));
+    let usize a=id(engine::prepare_scalar_host(ref mut owner,p,ref run));
+    let usize b=id(engine::prepare_scalar_host(ref mut owner,p,ref run));
+    let usize cancelled=id(engine::prepare_scalar_host(ref mut owner,p,ref run));
+
+    // Two constants, then CALL debits three Fuel. The two argument copies
+    // advance in separate one-unit steps and do not debit again.
+    let engine::Event first=event(engine::step_instance(ref mut owner,a,2));
+    assert(first.kind==0 && first.remaining==9999998);
+    let engine::Event call=event(engine::step_instance(ref mut owner,a,1));
+    assert(call.kind==0 && call.remaining==9999995);
+    let engine::Event arg0=event(engine::step_instance(ref mut owner,a,1));
+    let engine::Event arg1=event(engine::step_instance(ref mut owner,a,1));
+    assert(arg0.kind==0 && arg1.kind==0 && arg0.remaining==call.remaining && arg1.remaining==call.remaining);
+
+    assert(event(engine::step_instance(ref mut owner,cancelled,4)).kind==0);
+    assert(event(engine::cancel_ready(ref mut owner,cancelled)).kind==3);
+    assert(!engine::host_request_payload(ref owner,cancelled).is_ok);
+    assert(id(engine::destroy_instance(ref mut owner,cancelled))==cancelled);
+
+    assert(event(engine::step_instance(ref mut owner,a,32)).kind==4);
+    assert(event(engine::step_instance(ref mut owner,b,32)).kind==4);
+    let engine::HostRequest ra=request(ref owner,a);
+    let engine::HostRequest rb=request(ref owner,b);
+    let ref u8[] wire=b"\x01\x00\x03\x00\x00\x00\x04\x00\x00\x00\x29\x00\x00\x00";
+    assert(ra.import_id==1 && rb.import_id==1 && bytes::equal(ref ra.payload,wire) && bytes::equal(ref rb.payload,wire));
+    assert(!engine::reply_scalar_host(ref mut owner,a,rb.run,rb.request,0,answer()).is_ok);
+    assert(event(engine::reply_scalar_host(ref mut owner,a,ra.run,ra.request,0,answer())).kind==0);
+    let engine::Event done=event(engine::step_instance(ref mut owner,a,16));
+    assert(done.kind==1 && done.value==77);
+    assert(event(engine::step_instance(ref mut owner,b,1)).kind==4);
+    let ref u8[] other=b"\x03\x00\x00\x00\x04\x00\x00\x00\xf9\xff\xff\xff";
+    assert(event(engine::reply_scalar_host(ref mut owner,b,rb.run,rb.request,0,other)).kind==0);
+    let engine::Event second=event(engine::step_instance(ref mut owner,b,16));
+    assert(second.kind==1 && second.value==28 && second.remaining==done.remaining);
+    assert(id(engine::destroy_instance(ref mut owner,a))==a);
+    assert(id(engine::destroy_instance(ref mut owner,b))==b);
+    assert(id(engine::release_program(ref mut owner,p))==p);
+
+    let usize loop=id(engine::compile_scalar_host(ref mut owner,recursion,catalog_from(source_catalog())?,ref expected,ref run));
+    let usize instance=id(engine::prepare_scalar_host(ref mut owner,loop,ref run));
+    let engine::Event limited=event(engine::step_instance(ref mut owner,instance,128));
+    assert(limited.kind==2 && limited.diagnostic.code.kind==12 && limited.remaining==9999872);
+    assert(id(engine::destroy_instance(ref mut owner,instance))==instance);
+    assert(id(engine::release_program(ref mut owner,loop))==loop);
+    assert(instance_bytes(ref owner)==0);
+    assert(id(engine::destroy(ref mut owner))==0);
+    return .ok(1);
+}
 fn Result<runs::RunConfig,u8> memory_config(ref policy::Policy ceiling,usize limit){
     var bytes::Buffer source=bytes::empty();
     assert(bytes::append(ref mut source,b"{\"schema\":\"brownie.run/0.3\",\"entry\":{\"module\":\"app\",\"function\":\"chosen\"},\"requires\":[\"host.example.check\"],\"grants\":[\"host.example.check\"],\"limits\":{\"memory_bytes\":").is_ok);
@@ -1045,6 +1102,7 @@ pub fn void run(){
     assert(admission().is_ok);
     assert(interleaved().is_ok);
     assert(source_round_trip().is_ok);
+    assert(helper_host_calls().is_ok);
     assert(typed_source_round_trip().is_ok);
     assert(pending_memory().is_ok);
     assert(multi_arguments().is_ok);

@@ -67,6 +67,30 @@ Native coverage also exercised direct and stored Result handling with aliases.
 Root locked check passed 377 sources and 4,266 MIR functions.
 Local receipt: `build/runtime-engine/20261120T094754745682Z/receipt.json`.
 
+## Calls from guest helper functions
+
+The private host entry accepts scalar guest helper functions, including
+forward calls and recursion. It uses the existing CALL verifier for
+exact formal types, initialized arguments and continuation edges. Entry
+starts at the verified `main` instruction even when a helper is declared
+first. A suspended request retains its guest frame and the caller's PC,
+registers and return destination in the same Instance.
+
+CALL charges one Fuel plus one per argument at entry. Each argument
+copy takes one subsequent work unit, and the callee is published once
+the final argument is stored. Cancellation or expiry while copying stops
+the run. The entry frame uses the existing register bank. Programs with
+CALL reserve 272 bytes of metadata and 1,026 bytes per additional frame
+up to the RunConfig limit. The byte reply arena ends before this suffix,
+and the reservation is refunded on terminal transition or destruction.
+
+Windows development and /O2 verified two Instances returning 77 and 28
+from one Program, cross-run reply rejection, cancellation between argument
+copies, and the 128-frame limit. Fixed and mixed quanta spent the same Fuel.
+Both profiles ended with zero live SDK allocations. Root locked check passed
+377 sources and 4,278 MIR functions.
+Local receipt: `build/runtime-engine/20261120T100343560778Z/receipt.json`.
+
 ## Catalog-typed scalar arguments from source
 
 The same private entry accepts zero to 32 scalar arguments of the exact

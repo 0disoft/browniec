@@ -52,6 +52,7 @@ fn bool typed_signature(ref ir::Program p,ref catalog::Catalog imports,usize at)
 }
 
 pub fn bool typed(ref ir::Program code){
+    if(code.function_count>1 || code.call_count!=0){return true;}
     var usize pc=0;
     while(pc<code.count){if(typed_request(code.code[pc*8])){return true;}pc+=1;}
     return false;
@@ -62,12 +63,26 @@ pub fn bool typed(ref ir::Program code){
 // through an ADD proxy. The proxy is temporary and never executes.
 fn Result<usize,Error> inspect(ref ir::Program code,ref catalog::Catalog imports){
     if(code.count==0 || code.count>256 || code.registers>128 ||
-        code.function_count!=1 || code.entry!=0 || code.arrays.count!=0 ||
+        code.function_count==0 || code.function_count>16 || code.entry>=code.function_count || code.arrays.count!=0 ||
         code.records.count!=0 || code.list_used>4096){return .err(.Code);}
     var usize reg=0;
     while(reg<code.registers){
         if(!types::scalar(code.types[reg]) && (code.slots[reg] || (code.types[reg]!=14 && !types::host_storage(code.types[reg])))){return .err(.Code);}
         reg+=1;
+    }
+    var usize f=0;
+    while(f<code.function_count){
+        let usize first=code.register_starts[f];
+        let usize arity=code.arities[f];
+        if(!types::scalar(code.return_types[f]) || first>code.registers || arity>code.registers-first){
+            return .err(.Code);
+        }
+        var usize arg=0;
+        while(arg<arity){
+            if(!types::scalar(code.types[first+arg])){return .err(.Code);}
+            arg+=1;
+        }
+        f+=1;
     }
     var ir::Program scalar=*code;
     let bool typed_code=typed(code);
@@ -90,7 +105,7 @@ fn Result<usize,Error> inspect(ref ir::Program code,ref catalog::Catalog imports
         }else if(typed_request(op)){
             if(!typed_signature(code,imports,at)){return .err(.Catalog);}
             required|=one<<(code.code[at+3] as usize);
-        }else if(op==17 || op==18 || op==119 || op==120 || op==copy_opcode() || op==project_opcode()){
+        }else if(op==9 || op==17 || op==18 || op==119 || op==120 || op==copy_opcode() || op==project_opcode()){
             if(!typed_code){return .err(.Code);}
         }else if(op==2){
             let usize dst=code.code[at+1] as usize;

@@ -3168,7 +3168,6 @@ pub fn Result<usize,errors::Error> lower_scalar_host(ref u8[] source,ref host_ca
     let ref str valid=switch(text::validate_utf8(source)){case .ok(v):{v}case .err(_):{return .err(errors::make(1,0));}};
     let usize start=host_source::prepare(source,code,imports)?;
     var functions::Table signatures=signature_scan::scan_single_from(source,start,false)?;
-    if(signatures.count!=1){return .err(errors::make(3,0));}
     signatures.scalar_host_calls=true;
     let literal_collection::Index literals=literal_collection::empty();
     var usize active=16;
