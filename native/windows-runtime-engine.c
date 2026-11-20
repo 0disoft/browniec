@@ -1,0 +1,71 @@
+#define FY_PROJECT_PRIVATE_BINDINGS
+#include "fy_project.h"
+#include "native/abi_thread_identity.c"
+
+typedef fy_private_type_72756e74696d655f656e67696e653a3a456e67696e65 bc_engine; /* runtime_engine::Engine */
+typedef fy_private_type_72756e74696d655f656e67696e653a3a50726f6772616d bc_engine_program; /* runtime_engine::Program */
+typedef fy_private_type_72756e74696d655f656e67696e653a3a426f756e64496e707574 bc_engine_bound_input; /* runtime_engine::BoundInput */
+typedef fy_private_type_72756e74696d655f656e67696e653a3a496e7374616e6365 bc_engine_instance; /* runtime_engine::Instance */
+typedef fy_private_type_72756e74696d655f656e67696e653a3a4f7574707574 bc_engine_output; /* runtime_engine::Output */
+typedef fy_private_type_72756e74696d655f696e7075743a3a536e617073686f74 bc_engine_snapshot; /* runtime_input::Snapshot */
+typedef fy_private_type_72756e74696d655f706f6c6963793a3a506f6c696379 bc_engine_policy; /* runtime_policy::Policy */
+typedef fy_private_type_736c6963655f726573756c745f6d616368696e653a3a436f7265 bc_pending_core; /* slice_result_machine::Core */
+typedef fy_private_type_736c6963655f726573756c745f6d616368696e653a3a4d616368696e65 bc_pending_machine; /* slice_result_machine::Machine */
+typedef fy_private_type_686f73745f70726f6772616d3a3a50726f6772616d bc_host_program; /* host_program::Program */
+typedef fy_private_type_69723a3a50726f6772616d bc_host_ir; /* ir::Program */
+typedef fy_private_type_686f73745f65786368616e67653a3a45786368616e6765 bc_host_exchange; /* host_exchange::Exchange */
+typedef fy_private_type_6d6f64756c655f656e7472793a3a456e747279 bc_ordinary_entry; /* module_entry::Entry */
+typedef fy_private_type_6d6f64756c655f696e7075745f656e7472793a3a496e707574456e747279 bc_input_entry; /* module_input_entry::InputEntry */
+typedef fy_private_type_6d6f64756c655f70726f6772616d3a3a50726f6772616d bc_ordinary_program; /* module_program::Program */
+typedef fy_private_type_6d6f64756c655f696e7075745f70726f6772616d3a3a50726f6772616d bc_input_program; /* module_input_program::Program */
+typedef fy_private_type_6d6f64756c655f6f75747075745f70726f6772616d3a3a50726f6772616d bc_output_program; /* module_output_program::Program */
+typedef fy_private_type_6d6f64756c655f70726f6772616d3a3a53746f726564 bc_ordinary_stored; /* module_program::Stored */
+typedef fy_private_type_6d6f64756c655f696e7075745f70726f6772616d3a3a53746f726564 bc_input_stored; /* module_input_program::Stored */
+typedef fy_private_type_6d6f64756c655f6f75747075745f70726f6772616d3a3a53746f726564 bc_output_stored; /* module_output_program::Stored */
+typedef fy_private_type_77696e646f77735f656e67696e655f62696e64696e67733a3a496e636f6d696e67 bc_windows_incoming; /* windows_engine_bindings::Incoming */
+
+typedef __typeof__(((bc_windows_incoming *)0)->f_0) bc_engine_input;
+typedef __typeof__(((bc_windows_incoming *)0)->f_1) bc_engine_input_entry;
+typedef __typeof__(((bc_windows_incoming *)0)->f_2) bc_engine_snapshots;
+typedef __typeof__(((bc_engine *)0)->f_6) bc_engine_outputs;
+
+#define B1 fy_private_fn_72756e74696d655f656e67696e653a3a62696e645f696e6e6572 /* runtime_engine::bind_inner */
+#define B2 fy_private_fn_72756e74696d655f656e67696e653a3a626567696e5f696e6e6572 /* runtime_engine::begin_inner */
+#define B3 fy_private_fn_72756e74696d655f656e67696e653a3a656e645f696e6e6572 /* runtime_engine::end_inner */
+#define B4 fy_private_fn_72756e74696d655f656e67696e653a3a636f6d70696c655f696e6e6572 /* runtime_engine::compile_inner */
+#define B5 fy_private_fn_72756e74696d655f656e67696e653a3a64697370617463685f696e6e6572 /* runtime_engine::dispatch_inner */
+#define B6 fy_private_fn_72756e74696d655f656e67696e653a3a72657365745f70726f6772616d5f73746f72616765 /* runtime_engine::reset_program_storage */
+#define B7 fy_private_fn_72756e74696d655f656e67696e653a3a72657365745f696e7374616e63655f73746f72616765 /* runtime_engine::reset_instance_storage */
+#define B8 fy_private_fn_72756e74696d655f656e67696e653a3a6d61696e74656e616e63655f696e6e6572 /* runtime_engine::maintenance_inner */
+#define B9 fy_private_fn_72756e74696d655f656e67696e653a3a636f6d70696c655f696e7075745f696e6e6572 /* runtime_engine::compile_input_inner */
+#define B10 fy_private_fn_72756e74696d655f656e67696e653a3a657865637574655f626f72726f7765645f696e7075745f696e6e6572 /* runtime_engine::execute_borrowed_input_inner */
+#define B11 fy_private_fn_72756e74696d655f656e67696e653a3a696e7075745f696e7374616e63655f696e6e6572 /* runtime_engine::input_instance_inner */
+#define B12 fy_private_fn_72756e74696d655f656e67696e653a3a72657365745f696e7075745f73746f72616765 /* runtime_engine::reset_input_storage */
+#define B13 fy_private_fn_72756e74696d655f656e67696e653a3a636f6d70696c655f6f75747075745f696e6e6572 /* runtime_engine::compile_output_inner */
+#define B14 fy_private_fn_72756e74696d655f656e67696e653a3a636f6d70696c655f696e7075745f6f75747075745f696e6e6572 /* runtime_engine::compile_input_output_inner */
+#define B15 fy_private_fn_72756e74696d655f656e67696e653a3a6f75747075745f696e7374616e63655f696e6e6572 /* runtime_engine::output_instance_inner */
+#define B16 fy_private_fn_72756e74696d655f656e67696e653a3a74616b655f6f75747075745f696e6e6572 /* runtime_engine::take_output_inner */
+#define B17 fy_private_fn_72756e74696d655f656e67696e653a3a72657365745f6f75747075745f73746f72616765 /* runtime_engine::reset_output_storage */
+#define B18 fy_private_fn_72756e74696d655f656e67696e653a3a636f6e74726f6c5f6163636573735f696e6e6572 /* runtime_engine::control_access_inner */
+#define B21 fy_private_fn_72756e74696d655f656e67696e653a3a636f6d70696c655f707265666c696768745f696e6e6572 /* runtime_engine::compile_preflight_inner */
+#define B23 fy_private_fn_72756e74696d655f656e67696e653a3a696e7075745f707265666c696768745f696e6e6572 /* runtime_engine::input_preflight_inner */
+#define B24 fy_private_fn_72756e74696d655f656e67696e653a3a6f75747075745f707265666c696768745f7769647468 /* runtime_engine::output_preflight_width */
+#define B26 fy_private_fn_72756e74696d655f70656e64696e675f6f75747075743a3a70656e64696e675f616476616e63655f696e6e6572 /* runtime_pending_output::pending_advance_inner */
+#define B27 fy_private_fn_72756e74696d655f70656e64696e675f6f75747075743a3a70656e64696e675f6d61696e74656e616e63655f696e6e6572 /* runtime_pending_output::pending_maintenance_inner */
+#define B29 fy_private_fn_736c6963655f726573756c745f6d616368696e653a3a696e697469616c697a655f6e6174697665 /* slice_result_machine::initialize_native */
+#define B31 fy_private_fn_72756e74696d655f656e67696e653a3a737465705f6f75747075745f6f776e6572 /* runtime_engine::step_output_owner */
+#define B32 fy_private_fn_72756e74696d655f656e67696e653a3a636f6d706163745f70656e64696e675f73746f72616765 /* runtime_engine::compact_pending_storage */
+#define B33 fy_private_fn_72756e74696d655f656e67696e653a3a63616e63656c5f6f75747075745f6f776e6572 /* runtime_engine::cancel_output_owner */
+#define B34 fy_private_fn_72756e74696d655f70656e64696e675f6f75747075743a3a70656e64696e675f73657475705f696e6e6572 /* runtime_pending_output::pending_setup_inner */
+#define B35 fy_private_fn_72756e74696d655f70656e64696e675f6f75747075743a3a70656e64696e675f636f72655f73657475705f696e6e6572 /* runtime_pending_output::pending_core_setup_inner */
+#define B36 fy_private_fn_72756e74696d655f656e67696e653a3a636f6d706163745f63616e63656c6c65645f73746f72616765 /* runtime_engine::compact_cancelled_storage */
+#define B37 fy_private_fn_72756e74696d655f656e67696e653a3a72657365745f706f6c6963795f73746f72616765 /* runtime_engine::reset_policy_storage */
+#define B38 fy_private_fn_72756e74696d655f656e67696e653a3a7075626c6973685f686f73745f696e6e6572 /* runtime_engine::publish_host_inner */
+#define B39 fy_private_fn_72756e74696d655f656e67696e653a3a707265706172655f686f73745f696e6e6572 /* runtime_engine::prepare_host_inner */
+#define B40 fy_private_fn_72756e74696d655f656e67696e653a3a7265706c795f686f73745f696e6e6572 /* runtime_engine::reply_host_inner */
+#define B41 fy_private_fn_72756e74696d655f656e67696e653a3a64726976655f686f73745f6f776e6572 /* runtime_engine::drive_host_owner */
+
+#include "native/runtime-engine/bridge.inc"
+
+/* Existing Engine witnesses are retained only by the evidence harness. */
+void bc_runtime_engine_binding(uint32_t number){(void)number;}

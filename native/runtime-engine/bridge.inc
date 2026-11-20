@@ -54,7 +54,7 @@ uint32_t bc_runtime_engine_instance_output(void *raw,uintptr_t program,void *inp
  s=B15(&e->f_0,&e->f_1,&e->f_3,&e->f_4,(bc_engine_snapshots *)input,program,budget,limit,allowed,deadline);return finish(e,ticket,s);
 }
 uint32_t bc_runtime_engine_take_output(void *raw,uintptr_t instance,void *outgoing){
- bc_engine *e=raw;bc_engine_ticket ticket;bc_abi_thread_identity owner;
+ bc_engine *e=raw;bc_engine_ticket ticket={0};bc_abi_thread_identity owner;
  uint32_t s=bc_abi_guard_enter(&owner);if(s)return s;
  s=B2(&e->f_0,owner.thread,owner.lifetime);
  if(s==8){
@@ -67,7 +67,7 @@ uint32_t bc_runtime_engine_take_output(void *raw,uintptr_t instance,void *outgoi
  s=B16(&e->f_0,&e->f_3,&e->f_6,&e->f_7,instance,(bc_engine_outputs *)outgoing);return finish(e,ticket,s);
 }
 uint32_t bc_runtime_engine_call(void *raw,uint32_t operation,uintptr_t id,uintptr_t argument){
- bc_engine *e=raw;bc_engine_ticket ticket;bc_abi_thread_identity owner;
+ bc_engine *e=raw;bc_engine_ticket ticket={0};bc_abi_thread_identity owner;
  uint32_t s=bc_abi_guard_enter(&owner);if(s)return s;
  s=B2(&e->f_0,owner.thread,owner.lifetime);
  if(s==8){

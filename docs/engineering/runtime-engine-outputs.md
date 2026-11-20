@@ -48,6 +48,21 @@ closed-state checks precede native incoming/outgoing storage inspection. No
 callback is introduced. This is a synchronous private API, not public pointer
 validation, in-flight cancellation or restricted-worker output delivery.
 
+## Standard Windows build bridge
+
+The standard Windows build can link the Engine's existing C bridge against
+named Fairy functions and types from its own generated header. The Windows
+adapter uses the emitted descriptor types, including the generic input vectors,
+and shares the same ownership and dispatch code as the private transport probe.
+
+Run `python -B tools/verify-windows-engine-build.py` to build a separate
+application in development and release. It loads an explicit policy, run config
+and manifest, compiles under the manifest's Windows directory anchor, and runs
+the Engine through a prepared Instance. The fixture checks return value 77,
+exact sealed output bytes `41 00`, and successful Instance, Program and Engine
+teardown. The public `browniec` application still needs the policy/run entry
+point and result wiring.
+
 ## Reserved storage and native evidence
 
 Engine creation now reserves seven vectors: Programs and scratch, Instances,
