@@ -54,7 +54,7 @@ def check_diagnostic(exe, path, code, kind, location, text):
         assert type(v2['location']['offset']) is int, v2
 
 
-def check_output_table(exe, identity):
+def check_output_table(exe, identity, host_check):
     subprocess.run([sys.executable, '-B', str(ROOT / 'tools/sync-cli-output.py'), '--check'],
                    check=True, timeout=10)
     answer = ROOT / 'examples/answer.brc'
@@ -68,6 +68,8 @@ def check_output_table(exe, identity):
         command = row['command']
         if command == 'inspect':
             args = [answer, row['arguments'].split()[-1]]
+        elif '--catalog' in row['arguments']:
+            args = host_check[1:]
         elif '--policy' in row['arguments']:
             args = configured_arguments(CONFIGURED)[1:]
         elif row['arguments'].startswith('--project '):
@@ -91,6 +93,67 @@ def check_output_table(exe, identity):
                 if command != '--version':
                     assert obj['command'] == command, obj
     print('PASS: documented CLI channels and schemas match native output')
+
+
+def make_host_check(folder):
+    source = folder / 'host-check.brc'
+    source.write_bytes(b'module main; import host::example as api; '
+                       b'fn i32 main(){return api::check(41)+35;}')
+    policy = folder / 'host-policy.json'
+    run = folder / 'host-run.json'
+    catalog = folder / 'host-catalog.json'
+    capability = 'host.example.check'
+    ceiling = json.loads((CONFIGURED / 'policy.json').read_bytes())
+    ceiling['capabilities'] = [capability]
+    config = {'schema': 'brownie.run/0.3', 'entry': {'module': 'main', 'function': 'main'},
+              'requires': [capability], 'grants': [capability], 'limits': ceiling['run']}
+    imports = {'schema': 'brownie.catalog/1', 'imports': [
+        {'id': 0, 'module': 'host::example', 'symbol': 'check', 'parameters': ['i32'],
+         'result': 'Result<i32,u32>', 'effect': 'read', 'capability': capability,
+         'adapter_revision': 'v1'},
+    ]}
+    for path, data in ((policy, ceiling), (run, config), (catalog, imports)):
+        path.write_text(json.dumps(data), encoding='utf-8')
+    return ['check', source, '--catalog', catalog, '--policy', policy, '--run', run]
+
+
+def check_host_catalog(exe, args):
+    _, source, _, catalog, _, policy, _, run = args
+    for version in (1, 2):
+        assert check_json(exe, args, 0, version=version) is None
+    # The ordinary run and compiler never inherit a catalog or grant.
+    invoke(exe, ['run', *args[1:]], 2)
+    invoke(exe, ['check', source], 3)
+    for invalid in (args[:-2], [*args, '--catalog', catalog], [*args, '--stdin']):
+        invoke(exe, invalid, 2)
+
+    config = json.loads(run.read_bytes())
+    for change in ({'requires': []}, {'requires': [], 'grants': []},
+                   {'entry': {'module': 'main', 'function': 'wrong'}}):
+        run.write_text(json.dumps(config | change), encoding='utf-8')
+        denied = check_json(exe, args, 4, version=2)
+        assert denied == {'kind': 'unavailable', 'location': {'kind': 'none'}}, denied
+    run.write_text(json.dumps(config), encoding='utf-8')
+
+    ceiling = json.loads(policy.read_bytes())
+    policy.write_text(json.dumps(ceiling | {'capabilities': []}), encoding='utf-8')
+    assert check_json(exe, args, 4, version=2)['kind'] == 'unavailable'
+    policy.write_text(json.dumps(ceiling), encoding='utf-8')
+
+    source.write_bytes(b'module main; fn i32 main(){return host::example::check(true);}')
+    bad = check_json(exe, args, 3, version=2)
+    assert bad['kind'] == 'type' and bad['location']['kind'] == 'source_byte', bad
+
+    # Invalid and missing catalogs take precedence over a missing source path.
+    source.unlink()
+    for malformed in (b'{"schema": "brownie.catalog/1", "imports": [], "imports": []}',
+                      b' ' * 16385):
+        catalog.write_bytes(malformed)
+        assert check_json(exe, args, 2, version=2)['kind'] == 'usage'
+    catalog.unlink()
+    missing = check_json(exe, args, 7, version=2)
+    assert missing == {'kind': 'input_io', 'location': {'kind': 'none'}}, missing
+    print('PASS: explicit host catalog, policy, grants, typed imports and compile-only routing')
 
 
 def configured_arguments(folder):
@@ -442,7 +505,9 @@ def main():
         identity = Path(temp) / 'identity.brc'
         identity.write_bytes(b'module main; fn i32 evaluate(i32 x) { return x; }\n')
 
-        check_output_table(exe, identity)
+        host_check = make_host_check(Path(temp))
+        check_output_table(exe, identity, host_check)
+        check_host_catalog(exe, host_check)
         check_project(exe, Path(temp))
         check_project_input(exe, Path(temp))
         check_source_input(exe, Path(temp))

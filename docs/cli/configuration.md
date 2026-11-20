@@ -47,7 +47,7 @@ output is diagnostic only and does not authorize execution.
 
 SOURCE selects one UTF-8 code file up to 4,096 bytes with a zero-argument
 i32 `main`. Run-only `--fuel` defaults to 256 and accepts 0..16000000.
-Catalog loading and effective-config reporting remain pending.
+Effective-config reporting remains pending.
 
 `--isolated` reports unavailable without fallback. Configured project runs enforce compile and execution deadlines. Public
 cancellation controls remain pending. See the
@@ -67,6 +67,22 @@ bytes.
 The [native project input primitives](../engineering/project-input.md) now supply
 bounded JSON tokens and canonical spelling checks. The [typed native project format](project-format.md) now admits a complete owning
 source map, entry and declared requirements.
+
+## Single-source host check
+
+On Windows, `check SOURCE --catalog FILE --policy FILE --run FILE` compiles
+and verifies the host dialect for the `main::main` entry. It accepts text and
+both JSON output formats. All three configuration paths must be given explicitly.
+Policy and run files are read first, followed by a catalog of up to 16 KiB using
+`brownie.catalog/1`. The Engine binds the retained Program to the SHA-256 digest
+of the parsed catalog. Each referenced capability must be declared by the run,
+granted to it, and allowed by policy. The check releases the Program without
+creating an Instance or invoking an adapter.
+
+The current host compiler enforces its native dialect bounds and the policy's
+source byte, instruction, register and compile deadline limits. Full compile
+work accounting and multi-module catalog checks remain pending. See the
+[host compiler contract](../engineering/host-exchange.md#scalar-host-calls-from-source).
 
 ## Single-source guest input
 

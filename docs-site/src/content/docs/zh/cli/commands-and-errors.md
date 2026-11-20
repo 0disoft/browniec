@@ -15,6 +15,9 @@ description: 公开 browniec 命令、退出码以及常见错误的快速排查
 | `browniec check SOURCE` | — | `stderr` | — |
 | `browniec check SOURCE` | `--json` | `stdout` | `browniec.result/v1` |
 | `browniec check SOURCE` | `--json-v2` | `stdout` | `browniec.result/v2` |
+| `browniec check SOURCE --catalog FILE --policy FILE --run FILE` | — | `stderr` | — |
+| `browniec check SOURCE --catalog FILE --policy FILE --run FILE` | `--json` | `stdout` | `browniec.result/v1` |
+| `browniec check SOURCE --catalog FILE --policy FILE --run FILE` | `--json-v2` | `stdout` | `browniec.result/v2` |
 | `browniec run SOURCE [--input FILE\|--stdin] [--fuel N]` | — | `stderr` | — |
 | `browniec run SOURCE [--input FILE\|--stdin] [--fuel N]` | `--json` | `stdout` | `browniec.result/v1` |
 | `browniec run SOURCE [--input FILE\|--stdin] [--fuel N]` | `--json-v2` | `stdout` | `browniec.result/v2` |

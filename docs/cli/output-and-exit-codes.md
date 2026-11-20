@@ -151,6 +151,13 @@ Canonical entry/leave prices apply even to image-only source, so small literal
 programs need an explicit larger Fuel budget. See [the public retained contract](../engineering/public-program.md)
 for exact pricing and current native/standalone evidence.
 
+## Single-source host check
+
+A successful catalog-backed check reports `checked` in the existing result schema.
+Invalid catalog syntax, schema, and size report `usage` (2). Failure to open or
+read the selected file reports `input_io` (7). Policy or grant denial reports
+`unavailable` (4). Source compilation uses the existing diagnostic kinds and byte offsets.
+
 ## Project check and run
 
 Windows project commands use the ordinary check/run results and exit classes.

@@ -9,6 +9,7 @@
 | --- | --- | --- |
 | browniec --version | Report experimental profile and delivery availability; full metadata planned | Implemented for the bounded M1/M2 feature subsets |
 | browniec check SOURCE | Compile and verify without running guest code or host calls | Implemented for the bounded M1/M2 feature subsets |
+| browniec check SOURCE --catalog FILE --policy FILE --run FILE | Verify typed host calls under explicit authority | Windows, single-source host dialect, text or JSON |
 | browniec run SOURCE | Compile, verify, and run one selected source | Bounded M1/M2 feature subsets, with optional binary guest input on Windows |
 | browniec eval-i32 SOURCE N | Evaluate a scalar rule with one signed decimal i32 input | Implemented for `module main` sources with `fn i32 evaluate(i32 ...)` |
 | browniec check --project FILE | Check an explicit source map and its named entry | Windows, zero-argument i32 entry, empty requirements |
@@ -41,8 +42,9 @@ byte/text literals, explicit text::bytes/equality and shared byte parameters/res
 General mutable/non-byte/Buffer/input results and host-visible reference tickets
 remain unavailable.
 [Configured project runs](configuration.md#configured-project-output) support
-output emission and compile/run deadlines. General Buffer delivery, catalog
-loading, workers and public cancellation remain unavailable. `--isolated` returns an availability
+output emission and compile/run deadlines. [Single-source host checks](configuration.md#single-source-host-check)
+load an explicit catalog. General Buffer delivery, host execution through the CLI,
+workers and public cancellation remain unavailable. `--isolated` returns an availability
 denial, with no unrestricted fallback. Ordinary check/run use zero-argument i32
 `main`. The separate eval-i32 command selects a single-i32 `evaluate` entry.
 With explicit guest input, Windows `run SOURCE` instead selects the public shared-byte
