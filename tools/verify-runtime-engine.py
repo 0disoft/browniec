@@ -112,7 +112,16 @@ def source_copy(path):
         need(text.count(anchor) == 1 and text.count(declaration_at) == 1, 'Output execution fault anchor changed')
         declaration = 'unsafe extern C fn u32 bc_runtime_engine_test_output_fault(u32 stage);'
         text = text.replace(declaration_at, declaration + '\n' + declaration_at, 1)
-        return path.name, text.replace(anchor, anchor + '\n' + injected, 1).encode('utf-8')
+        text = text.replace(anchor, anchor + '\n' + injected, 1)
+        if path.name == 'runtime_engine.fy':
+            binding = 'let Result<usize,u32> located=input_index(inputs,id);'
+            opening = '    ref vec::Vec<BoundInput> inputs,Option<usize> bound,usize budget,usize limit,bool allowed){'
+            need(text.count(binding) == 1 and text.count(opening) == 1, 'Output preparation fault anchor changed')
+            text = text.replace(binding, 'let Result<usize,u32> located=if(unsafe{bc_runtime_engine_test_output_fault(3)}!=0)'
+                                '{.err(2)}else{input_index(inputs,id)};', 1)
+            text = text.replace(opening, opening + '\n    if(unsafe{bc_runtime_engine_test_output_fault(4)}!=0)'
+                                '{return .err(diagnostics::absent(errors::make(5,0)));}', 1)
+        return path.name, text.encode('utf-8')
     if path == ROOT / 'src/retention_plan.fy':
         text=path.read_text(encoding='utf-8');anchor='    plan.admitted=true;'
         need(text.count(anchor)==1,'Retention admission probe anchor changed')

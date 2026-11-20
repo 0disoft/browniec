@@ -1,5 +1,5 @@
-- Latest runtime checkpoint (2026-11-21): [Output execution invariant containment](docs/engineering/runtime-engine-step.md#containment-before-output-publication)
-  quarantines internal faults during pending step, seal and cancellation.
+- Latest runtime checkpoint (2026-11-21): [Output Instance preparation containment](docs/engineering/runtime-engine-prepared.md#containment-of-preparation-invariant-failures)
+  quarantines invalid retained state before a Machine is published.
   Windows development and /O2 Engine checks passed with zero live SDK allocations.
 
 # Brownie C agent guidance

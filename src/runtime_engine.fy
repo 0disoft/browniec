@@ -1525,47 +1525,60 @@ fn u32 execute_output_inner(ref mut Meta m,ref vec::Vec<Program> p,ref mut vec::
         ref empty,current.fuel,current.output_limit,current.output_allowed));
 }
 fn Result<machines::Machine,diagnostics::Error> open_instance_machine(ref output_programs::Program code,
-    ref vec::Vec<BoundInput> inputs,usize id,usize budget,usize limit,bool allowed){
-    if(output_programs::accepts_input(code)){
-        let usize bi=switch(input_index(inputs,id)){
-            case .ok(x):{x}case .err(_):{return .err(diagnostics::absent(errors::make(5,0)));}
-        };
-        return pending_vm::prepare_pending_output(code,ref vec::at<BoundInput>(inputs,bi).input,budget,limit,allowed);
-    }
-    var usize unused=0;let input_bytes::Snapshot empty=switch(input_bytes::snapshot(b"",0,0,ref mut unused)){
-        case .ok(v):{v}case .err(_):{return .err(diagnostics::absent(errors::make(15,0)));}
+    ref vec::Vec<BoundInput> inputs,Option<usize> bound,usize budget,usize limit,bool allowed){
+    return switch(bound){
+        case .some(index):{pending_vm::prepare_pending_output(code,ref vec::at<BoundInput>(inputs,index).input,budget,limit,allowed)}
+        case .none:{
+            var usize unused=0;let input_bytes::Snapshot empty=switch(input_bytes::snapshot(b"",0,0,ref mut unused)){
+                case .ok(v):{v}case .err(_):{return .err(diagnostics::absent(errors::make(15,0)));}
+            };
+            pending_vm::prepare_pending_output(code,ref empty,budget,limit,allowed)
+        }
     };
-    return pending_vm::prepare_pending_output(code,ref empty,budget,limit,allowed);
 }
 fn u32 prepare_instance_inner(ref mut Meta m,ref vec::Vec<Program> p,ref mut vec::Vec<Instance> v,
     ref vec::Vec<BoundInput> inputs,ref mut vec::Vec<Output> outputs,usize id){
     let usize ii=switch(instance_index(v,id)){case .ok(x):{x}case .err(s):{return failed(m,s);}};
     let Instance before=*vec::at<Instance>(v,ii);
     if(before.phase!=0){return failed(m,3);}
-    let usize pi=switch(program_index(p,before.program,false)){case .ok(x):{x}case .err(s):{return failed(m,s);}};
+    let usize pi=switch(program_index(p,before.program,false)){case .ok(x):{x}case .err(_):{return contain_execution_fault(m,p,v,outputs);}};
     let ref Program code=vec::at<Program>(p,pi);
-    if(code.pins==0 || output_index(outputs,id).is_ok){return failed(m,7);}
+    let usize variants=vec::len<output_programs::Program>(ref code.output);
+    if(code.pins==0 || variants>1 || output_index(outputs,id).is_ok){return contain_execution_fault(m,p,v,outputs);}
+    if(variants==0){return failed(m,1);}
+    if(vec::len<Output>(outputs)>=vec::capacity<Output>(outputs)){return contain_execution_fault(m,p,v,outputs);}
+    let ref output_programs::Program retained=vec::at<output_programs::Program>(ref code.output,0);
+    var Option<usize> bound=.none;
+    if(output_programs::accepts_input(retained)){
+        let Result<usize,u32> located=input_index(inputs,id);
+        let usize index=switch(located){
+            case .ok(i):{i}case .err(_):{return contain_execution_fault(m,p,v,outputs);}
+        };
+        let ref input_bytes::Snapshot input=ref vec::at<BoundInput>(inputs,index).input;
+        if(input_bytes::capacity(input)!=before.input_bytes){return contain_execution_fault(m,p,v,outputs);}
+        bound=.some(index);
+    }
     let usize charge=switch(pending_bytes(code,before.output_limit)){case .ok(v):{v}case .err(e):{return failed(m,e.status);}};
     if(charge>18446744073709551615-before.input_bytes){return failed(m,8);}
     let live::Plan ownership=switch(prepare_payload(m,before.input_bytes,before.input_bytes+charge,0)){
         case .ok(v):{v}case .err(s):{return failed(m,s);}
     };
     // Everything remains local until all allocations and entry preparation
-    // succeed. Failed attempts leave the Ready Instance and its input untouched.
+    // succeed. Resource refusals leave the Ready Instance and its input intact.
     var vec::Vec<machines::Machine> saved=vec::empty<machines::Machine>();
     if(!vec::reserve<machines::Machine>(ref mut saved,1).is_ok){return failed(m,6);}
     let output_programs::Execution slot=switch(output_programs::pending_slot(before.fuel)){
         case .ok(v):{v}case .err(_):{return failed(m,6);}
     };
-    let machines::Machine machine=switch(open_instance_machine(vec::at<output_programs::Program>(ref code.output,0),
-        inputs,id,before.fuel,before.output_limit,before.output_allowed)){
+    let machines::Machine machine=switch(open_instance_machine(retained,inputs,bound,before.fuel,before.output_limit,before.output_allowed)){
         case .ok(v):{v}case .err(e):{
             if(e.code.kind==15){return failed(m,6);}
+            if(e.code.kind!=8){return contain_execution_fault(m,p,v,outputs);}
             m.error=Error{.status=4,.diagnostic=e};return 4;
         }
     };
     let machines::Meta state=machines::observe(ref machine);
-    assert(state.phase==1 && state.stats.dispatched==0);
+    if(state.phase!=1 || state.stats.dispatched!=0){return contain_execution_fault(m,p,v,outputs);}
     assert(vec::push<machines::Machine>(ref mut saved,machine).is_ok);
     let Event event=Event{.kind=4,.value=0,.diagnostic=absent(),.remaining=state.remaining,.fuel_known=true};
     assert(vec::push<Output>(outputs,Output{.instance=id,.run=slot,.pending=saved,.host=vec::empty<host::Exchange>()}).is_ok);

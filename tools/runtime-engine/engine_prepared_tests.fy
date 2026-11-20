@@ -24,6 +24,7 @@ unsafe extern C fn void bc_runtime_engine_test_fail(i64 count);
 unsafe extern C fn void bc_runtime_engine_test_seed(ptr mut void owner,u32 kind);
 unsafe extern C fn usize bc_runtime_engine_test_compile_epoch(ptr void owner);
 unsafe extern C fn usize bc_runtime_engine_test_compile_next(ptr void owner);
+unsafe extern C fn void bc_runtime_engine_test_inject_output_fault(u32 stage);
 
 struct Heap { usize blocks; usize bytes; }
 struct Plan { usize pending; usize input; usize combined; }
@@ -407,6 +408,29 @@ pub fn Result<usize,u8> engine_drop_reclaims_prepared_owners(){
     }
     same_heap(ref before);assert(bytes::equal(inputs::view(ref original),b"!\x00\xFFinput"));return .ok(0);
 }
+fn Result<usize,u8> preparation_invariant_quarantines_engine(bool during_open){
+    var engine::Engine e=generous()?;let usize p=compiled(ref mut e,3,input_source())?;
+    let usize prior=bound(ref mut e,p,64)?;let usize peer=bound(ref mut e,p,64)?;let usize target=bound(ref mut e,p,64)?;
+    let engine::Event cancelled=event(engine::cancel_ready(ref mut e,prior));
+    assert(cancelled.kind==3);
+    let usize charged=instance(ref e).current;
+    let usize next=unsafe{bc_runtime_engine_test_compile_next(ref e as ptr void)};
+    let usize attempts=unsafe{probe_attempts()};let Heap before=heap();
+    unsafe{bc_runtime_engine_test_inject_output_fault(if(during_open){4}else{3})};
+    rejected(engine::prepare_instance(ref mut e,target),14);
+    assert(unsafe{probe_attempts()}==attempts+if(during_open){2}else{0});
+    same_heap(ref before);ledger(ref e,charged);counts(ref mut e,1,3,3);
+    assert(unsafe{bc_runtime_engine_test_compile_next(ref e as ptr void)}==next);
+    same_event(cancelled,event(engine::observe(ref mut e,prior)));
+    let engine::Event quarantined=event(engine::observe(ref mut e,target));
+    assert(quarantined.kind==2 && quarantined.diagnostic.code.kind==errors::engine_poisoned_kind() &&
+        quarantined.remaining==16000000 && quarantined.fuel_known);
+    same_event(quarantined,event(engine::observe(ref mut e,peer)));
+    rejected(engine::prepare_instance(ref mut e,peer),14);
+    release(ref mut e,p);
+    destroy(ref mut e,prior);destroy(ref mut e,peer);destroy(ref mut e,target);
+    counts(ref mut e,0,0,0);ledger(ref e,0);close(ref mut e);return .ok(0);
+}
 pub fn void run(){
     let Heap before=heap();
     assert(pending_without_dispatch_and_replay().is_ok);same_heap(ref before);
@@ -416,6 +440,8 @@ pub fn void run(){
     assert(wrong_mode_and_exhausted_epoch_preserve_owners().is_ok);same_heap(ref before);
     assert(engine_drop_reclaims_prepared_owners().is_ok);same_heap(ref before);
     assert(preparation_fuel_failure_preserves_diagnostic_and_ready_state().is_ok);same_heap(ref before);
+    assert(preparation_invariant_quarantines_engine(false).is_ok);same_heap(ref before);
+    assert(preparation_invariant_quarantines_engine(true).is_ok);same_heap(ref before);
 }
 // Group 7: failed preparation returns its original diagnostic while preserving
 // the Ready Instance, Fuel, pins and current balance after partial allocation.

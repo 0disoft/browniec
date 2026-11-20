@@ -42,10 +42,29 @@ Existing retained input and Engine control are charged separately.
 
 Instance, aggregate Instance and combined Engine ceilings are checked before
 allocation. Only successful preparation publishes the new retained charge.
-Native allocation failure returns status 6 and drops partial owners. Preparation
-errors retain their original diagnostic (including Fuel exhaustion), preserving
-Ready state, original Fuel, input, Program pins and current ledger balances.
-Admitted reservation peaks remain historical pressure, including failed attempts.
+Native allocation failure returns status 6 and drops partial owners. Fuel
+exhaustion retains its preparation diagnostic. Both preserve the Ready Instance,
+original Fuel, input, Program pins and current ledger balances. Admitted peaks
+remain historical pressure, including failed attempts.
+
+## Containment of preparation invariant failures
+
+The Engine checks the retained Program pin, bound input and its charge, and
+the private output slot before reserving preparation storage. An internal
+invariant failure quarantines the Engine through the
+[execution containment path](runtime-engine-step.md#containment-before-output-publication).
+If the constructor detects invalid retained state after reservation, local
+owners are reclaimed before returning. The failed preparation publishes no
+Machine. Previously terminal children retain their results, and quarantined
+Instances retain their input owners until destruction.
+
+The Windows Engine verifier injected a failed input lookup before reservation
+and an internal error after two provisional allocations. Development and /O2
+both quarantined the Engine with the original current ledger and pins. The
+failed lookup attempted zero allocations. Both provisional allocations were
+returned on the constructor failure. Earlier cancellation remained observable,
+and Engine exit left zero live SDK allocations. Local receipt:
+`build/runtime-engine/20261120T215209439278Z/receipt.json`.
 
 Adding the inline pending Vec widens Output by 48 bytes. Native one-slot control
 backing is 7744 bytes (previously 6976), and 64-slot backing is 61952 (previously
