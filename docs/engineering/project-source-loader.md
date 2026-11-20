@@ -48,6 +48,21 @@ an invalid root cannot publish a Program. Nonempty requirements reject even
 with an invalid root. Both native profiles ended with zero live SDK
 allocations. Local receipt: `build/runtime-engine/20261120T102944067619Z/receipt.json`.
 
+### Shared-byte input
+
+`runtime_engine::compile_project_input` selects the declared public
+`i32(ref u8[])` entry against the same anchored snapshot and header mapping.
+It rejects nonempty requirements before opening project members. Each
+`create_input_instance` consumes a separate immutable input snapshot and
+pins the retained Program through execution and destruction.
+
+The Windows Engine fixture compiles a two-module project once and executes
+two Instances after releasing the Program ID. Inputs containing NUL bytes
+return 77 and 42 respectively. The fixture also checks denial before source
+acquisition, an invalid root, a mismatched entry signature, and zero live SDK
+allocations after teardown in development and /O2. Local receipt:
+`build/runtime-engine/20261120T105539545392Z/receipt.json`.
+
 ## Verification
 
 Run `python tools/verify-project-source-loader.py` with Windows/MSVC/SDK and the
@@ -73,7 +88,7 @@ bridge/collector owners and zero tracked Fairy heap allocations after all projec
 owners drop. Fixtures are removed and checked. Receipts include exact core/new/
 prerequisite/compiler/runtime/transport/object/executable/fixture hashes.
 
-Project input/output entry selection, host dispatch, CLI delivery, bounded
+Project output entry selection, host dispatch, CLI delivery, bounded
 collection, and complete Engine accounting remain open. Source bytes
 remain an owned bounded copy, not a point-in-time snapshot against preexisting
 writable mappings. No source collection is implicitly repeated on runtime failure.

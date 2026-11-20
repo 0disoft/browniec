@@ -3,6 +3,7 @@ import project_manifest as project;
 import source_snapshot as sources;
 import module_index as modules;
 import module_entry as entries;
+import module_input_entry as input_entries;
 import std::bytes as bytes;
 
 // Pure native snapshot binding. The caller retains project requirements;
@@ -55,13 +56,21 @@ fn Result<usize,modules::Error> headers(ref project::Project map,ref modules::In
 // Match exact decoded path identities irrespective of snapshot order, prove
 // every matching canonical header, then select the named public i32() entry.
 // Existing Index checks all imports/declarations; body admission follows later.
-pub fn Result<entries::Entry,modules::Error> select(ref project::Project map,sources::Snapshot snapshot){
+fn Result<modules::Index,modules::Error> build_index(ref project::Project map,sources::Snapshot snapshot){
     var usize[16] order=[32;16];let usize mapped=file_map(map,ref snapshot,ref mut order)?;
     let modules::Index index=modules::build(snapshot)?;
     let usize checked=headers(map,ref index,ref order)?;
+    return .ok(index);
+}
+pub fn Result<entries::Entry,modules::Error> select(ref project::Project map,sources::Snapshot snapshot){
+    let modules::Index index=build_index(map,snapshot)?;
     // Preserve the existing owning result and original diagnostic directly.
     // Reboxing Entry into a second error domain amplifies native stack slots.
     return entries::select_i32(index,project::entry_module(map),project::entry_function(map));
+}
+pub fn Result<input_entries::InputEntry,modules::Error> select_input(ref project::Project map,sources::Snapshot snapshot){
+    let modules::Index index=build_index(map,snapshot)?;
+    return input_entries::select_i32_input(index,project::entry_module(map),project::entry_function(map));
 }
 
 // Recheck independently selected native entries before project admission.

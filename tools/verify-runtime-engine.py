@@ -368,6 +368,7 @@ def main():
             run([cl, '/nologo', *objects, 'ntdll.lib', '/Fe' + str(exe), '/link', '/INCREMENTAL:NO', '/Brepro'], env=env)
             fixture = output / 'project-fixture'
             write(fixture / 'app.brc', b'module app; import helper as h; pub fn i32 start(){return h::answer()+35;}')
+            write(fixture / 'input.brc', b'module input_app; import helper as h; pub fn i32 start(ref u8[] data){return h::answer()+data[0] as i32+data[1] as i32;}')
             write(fixture / 'helper.brc', b'module helper; pub fn i32 answer(){return 42;}')
             need(run([exe], env=runtime_env) == b'' and
                  receipt['commands'][-1]['stderrSha256'] == sha(b''), 'Expected silent native success')

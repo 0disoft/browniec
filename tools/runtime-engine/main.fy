@@ -4,6 +4,7 @@ import source_snapshot as sources;
 import module_index as modules;
 import module_entry as entries;
 import project_manifest as projects;
+import runtime_input as inputs;
 import source_error as diagnostics;
 import errors as errors;
 import engine_input_tests as input_tests;
@@ -106,7 +107,44 @@ fn void project_engine(){
     counts(ref mut e,0,0,0);
     assert(id(engine::destroy(ref mut e))==0);
 }
+fn inputs::Snapshot input_snapshot(ref u8[] data){
+    var usize fuel=0;
+    return switch(inputs::snapshot(data,2,0,ref mut fuel)){
+        case .ok(v):{v}case .err(_):{assert(false);input_snapshot(b"")}
+    };
+}
+fn void project_input_engine(){
+    let projects::Project manifest=project(b"{\"schema\":\"brownie.project/0.3\",\"name\":\"fixture\",\"entry\":{\"module\":\"input_app\",\"function\":\"start\"},\"sources\":[{\"module\":\"input_app\",\"path\":\"input.brc\"},{\"module\":\"helper\",\"path\":\"helper.brc\"}],\"requires\":[]}");
+    let projects::Project requires=project(b"{\"schema\":\"brownie.project/0.3\",\"name\":\"fixture\",\"entry\":{\"module\":\"input_app\",\"function\":\"start\"},\"sources\":[{\"module\":\"input_app\",\"path\":\"input.brc\"}],\"requires\":[\"host.demo.read\"]}");
+    let projects::Project wrong=project(b"{\"schema\":\"brownie.project/0.3\",\"name\":\"fixture\",\"entry\":{\"module\":\"app\",\"function\":\"start\"},\"sources\":[{\"module\":\"app\",\"path\":\"app.brc\"},{\"module\":\"helper\",\"path\":\"helper.brc\"}],\"requires\":[]}");
+    var engine::Engine e=create(1,2);
+    var u8[3072] path=[0;3072];
+    let usize length=unsafe{bc_runtime_engine_test_project_path(ref mut path[..] as ptr mut u8,3072)};
+    let ref u8[] root=ref path[..length];
+    rejected(engine::compile_project_input(ref mut e,ref requires,b"",65536),5);
+    rejected(engine::compile_project_input(ref mut e,ref manifest,b"",65536),1);
+    switch(engine::compile_project_input(ref mut e,ref wrong,root,65536)){
+        case .ok(_):{assert(false);}
+        case .err(problem):{assert(problem.status==4 && problem.diagnostic.at.source==0);}
+    };
+    counts(ref mut e,0,0,0);
+    let usize program=id(engine::compile_project_input(ref mut e,ref manifest,root,65536));
+    let usize a=id(engine::create_input_instance(ref mut e,program,input_snapshot(b"\x00\x23"),16000000));
+    let usize b=id(engine::create_input_instance(ref mut e,program,input_snapshot(b"\x00\x00"),16000000));
+    counts(ref mut e,1,2,2);
+    assert(id(engine::release_program(ref mut e,program))==program);
+    let engine::Event first=event(engine::execute_once(ref mut e,a));
+    let engine::Event second=event(engine::execute_once(ref mut e,b));
+    assert(first.kind==1 && first.value==77 && first.fuel_known);
+    assert(second.kind==1 && second.value==42 && second.fuel_known);
+    assert(id(engine::destroy_instance(ref mut e,a))==a);
+    assert(id(engine::destroy_instance(ref mut e,b))==b);
+    counts(ref mut e,0,0,0);
+    assert(id(engine::destroy(ref mut e))==0);
+}
 fn i32 main(){
+    project_input_engine();
+    unsafe{bc_runtime_engine_test_closed_allocations()};
     project_engine();
     unsafe{bc_runtime_engine_test_closed_allocations()};
     engine::retain_native_bindings();

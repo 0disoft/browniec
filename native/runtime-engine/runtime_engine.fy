@@ -207,22 +207,36 @@ fn usize project_source_limit(ref Engine e){
     let policy_limits::CompileLimits bounds=policy::compile_limits(vec::at<policy::Policy>(ref e.policy,0));
     return if(bounds.source_bytes<ceiling){bounds.source_bytes}else{ceiling};
 }
-// This entry selects the ordinary zero-argument Program, which cannot
-// satisfy capability requirements. Preflight before touching the filesystem.
+fn Result<sources::Snapshot,Error> load_project(ref Engine e,ref projects::Project metadata,ref u8[] root){
+    let usize limit=project_source_limit(e);
+    return switch(project_loader::load(metadata,root,limit)){
+        case .ok(v):{.ok(v)}
+        case .err(reason):{.err(error(switch(reason){case .Limit:{8}case .Acquisition:{1}case .Binding:{4}case .Compile:{4}}))}
+    };
+}
+fn Error project_error(modules::Error reason){
+    return Error{.status=4,.diagnostic=diagnostics::Error{.code=errors::make(3,reason.at.start),.at=reason.at}};
+}
+// Pure project profiles deny requirements before touching the filesystem.
 pub fn Result<usize,Error> compile_project(ref mut Engine e,ref projects::Project metadata,ref u8[] root,usize image_limit){
     let usize ready=unsafe{compile_preflight(e,0,null)}?;
     if(projects::requirements(metadata)!=0){return .err(error(5));}
-    let usize limit=project_source_limit(e);
-    let sources::Snapshot snapshot=switch(project_loader::load(metadata,root,limit)){
-        case .ok(v):{v}
-        case .err(reason):{return .err(error(switch(reason){case .Limit:{8}case .Acquisition:{1}case .Binding:{4}case .Compile:{4}}));}
-    };
+    let sources::Snapshot snapshot=load_project(e,metadata,root)?;
     let entries::Entry selected=switch(project_binding::select(metadata,snapshot)){
         case .ok(v):{v}
-        case .err(reason):{return .err(Error{.status=4,.diagnostic=diagnostics::Error{
-            .code=errors::make(3,reason.at.start),.at=reason.at}});}
+        case .err(reason):{return .err(project_error(reason));}
     };
     return compile(e,selected,image_limit);
+}
+pub fn Result<usize,Error> compile_project_input(ref mut Engine e,ref projects::Project metadata,ref u8[] root,usize image_limit){
+    let usize ready=unsafe{compile_preflight(e,1,null)}?;
+    if(projects::requirements(metadata)!=0){return .err(error(5));}
+    let sources::Snapshot snapshot=load_project(e,metadata,root)?;
+    let input_entries::InputEntry selected=switch(project_binding::select_input(metadata,snapshot)){
+        case .ok(v):{v}
+        case .err(reason):{return .err(project_error(reason));}
+    };
+    return compile_input(e,selected,image_limit);
 }
 pub fn Result<usize,Error> compile_input(ref mut Engine e,input_entries::InputEntry selected,usize image_limit){
     let usize admitted=unsafe{compile_preflight(e,1,ref selected as ptr void)}?;
