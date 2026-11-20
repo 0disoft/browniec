@@ -1,7 +1,7 @@
-- Latest runtime checkpoint (2026-11-21): [Windows adapter process transport](docs/engineering/host-exchange.md#windows-adapter-process-transport)
-  uses the Engine's Windows interrupt-time clock for absolute deadlines.
-  The real child-process checks passed development and /O2 with zero net
-  handle growth after process-wide initialization.
+- Latest runtime checkpoint (2026-11-21): [Engine-driven process adapter](docs/engineering/host-exchange.md#engine-driven-process-adapter)
+  checks catalog route and revision before launching a trusted child.
+  Windows development and /O2 verified reply delivery, rejection,
+  cancellation, expiry and zero live SDK allocations.
 
 # Brownie C agent guidance
 

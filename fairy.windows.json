@@ -2,12 +2,14 @@
   "schema": "fairyc.windows-build/v1",
   "subsystem": "console",
   "libraries": [
-    "ntdll.lib"
+    "ntdll.lib",
+    "bcrypt.lib"
   ],
   "sources": [
     "native/windows-project-cli.c",
     "native/windows-project-input-reader.c",
-    "native/windows-runtime-engine.c"
+    "native/windows-runtime-engine.c",
+    "native/windows-host-adapter-process.c"
   ],
   "privateFunctions": [
     "runtime_engine::bind_inner",

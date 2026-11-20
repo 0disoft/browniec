@@ -137,6 +137,8 @@ pub fn Observation poll(ref mut Exchange e,usize now,bool cancelled){
     return poll_exchange(e,now,cancelled);
 }
 pub fn bool deadline_reached(ref Exchange e,usize now){return e.deadline!=0 && now>=e.deadline;}
+pub fn usize deadline(ref Exchange e){return e.deadline;}
+pub fn usize reply_limit(ref Exchange e){return e.limits.reply_bytes;}
 fn Observation poll_exchange(ref mut Exchange e,usize now,bool cancelled){
     if(state(e).phase!=3){
         if(cancelled){terminate(e,1,now);}

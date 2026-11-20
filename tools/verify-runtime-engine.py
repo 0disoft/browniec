@@ -171,12 +171,14 @@ def main():
         os_sources = ['native/runtime_input_reader.c', 'native/runtime_input_reader.h',
                       'native/runtime-input-adoption/bridge.c',
                       'native/anchored_sources.c', 'native/anchored_sources.h',
-                      'native/anchored-source-loader/bridge.c', 'native/anchored-source-loader/bridge.h']
+                      'native/anchored-source-loader/bridge.c', 'native/anchored-source-loader/bridge.h',
+                      'native/host_adapter_process.c', 'native/host_adapter_process.h']
         extras = ['fairy.toml', 'toolchain.json', 'tools/verify-runtime-engine.py',
                   'tools/verify-runtime-store-probe.py', 'tools/compiler_scratch_layouts.py', 'tools/runtime-engine/test-host.inc',
                   'native/runtime-engine/bridge.inc', 'native/runtime-engine/transport.json',
                   'native/abi_thread_identity.c', 'native/abi_thread_identity.h',
-                  'tools/runtime-engine/heap-observer.c', 'tools/runtime-engine/compile-test-host.inc'] + os_sources
+                  'tools/runtime-engine/heap-observer.c', 'tools/runtime-engine/compile-test-host.inc',
+                  'tools/runtime-engine/adapter-fixture.c'] + os_sources
         inputs = {p.relative_to(ROOT).as_posix(): p.read_bytes() for p in sources}
         inputs.update({name: (ROOT / name).read_bytes() for name in extras})
         need(all(b'\r' not in raw for name, raw in inputs.items()
@@ -317,6 +319,7 @@ def main():
             write(output / name, inputs['native/' + name])
         for name in os_sources:
             write(output / name, inputs[name])
+        write(output / 'adapter-fixture.c', inputs['tools/runtime-engine/adapter-fixture.c'])
         write(output / 'bridge.inc', inputs['native/runtime-engine/bridge.inc'])
         write(output / 'test-host.inc', inputs['tools/runtime-engine/test-host.inc'])
         write(output / 'compile-test-host.inc', inputs['tools/runtime-engine/compile-test-host.inc'])
@@ -359,7 +362,8 @@ def main():
             native_sources.update(input_reader=output / 'native/runtime_input_reader.c',
                                   input_adoption=output / 'native/runtime-input-adoption/bridge.c',
                                   anchored=output / 'native/anchored_sources.c',
-                                  anchored_adoption=output / 'native/anchored-source-loader/bridge.c')
+                                  anchored_adoption=output / 'native/anchored-source-loader/bridge.c',
+                                  host_adapter_process=output / 'native/host_adapter_process.c')
             for name, source in native_sources.items():
                 obj = folder / (name + '.obj')
                 # MSVC can spend several minutes optimizing the generated Engine unit.
@@ -369,7 +373,12 @@ def main():
                      '/Fo' + str(obj)], env=env, timeout=timeout)
                 objects.append(obj)
             exe = folder / 'runtime-engine.exe'
-            run([cl, '/nologo', *objects, 'ntdll.lib', '/Fe' + str(exe), '/link', '/INCREMENTAL:NO', '/Brepro'], env=env)
+            run([cl, '/nologo', *objects, 'ntdll.lib', 'bcrypt.lib', '/Fe' + str(exe),
+                 '/link', '/INCREMENTAL:NO', '/Brepro'], env=env)
+            child = folder / 'adapter-fixture.exe'
+            run([cl, '/nologo', '/std:c11', '/MT', '/W4', '/WX',
+                 '/Od' if profile == 'development' else '/O2', output / 'adapter-fixture.c',
+                 '/Fe' + str(child), '/link', '/INCREMENTAL:NO', '/Brepro'], cwd=folder, env=env)
             fixture = output / 'project-fixture'
             write(fixture / 'app.brc', b'module app; import helper as h; pub fn i32 start(){return h::answer()+35;}')
             write(fixture / 'input.brc', b'module input_app; import helper as h; pub fn i32 start(ref u8[] data){return h::answer()+data[0] as i32+data[1] as i32;}')
@@ -406,7 +415,7 @@ def main():
                  fill_metrics['combinedPendingVecExtraBytes']==8*(fill_metrics['arrayWorkBytes']+fill_metrics['callWorkBytes']+fill_metrics['returnWorkBytes']),
                  'Unexpected CALL/RET work cursor accounting')
             write(folder / 'array-fill-metrics.json',fill_raw)
-            receipt['profiles'].append(dict(profile=profile, artifact=probe.image(exe), exit=0,
+            receipt['profiles'].append(dict(profile=profile, artifact=probe.image(exe), adapterFixture=probe.image(child), exit=0,
                 controlMetrics=metrics, preparationMetrics=preparation, arrayFillMetrics=fill_metrics,
                 liveHeapAllocationsAtExit=0, assertions='native Fairy and C, no parsed trace',
                 objects=[dict(path=p.relative_to(ROOT).as_posix(), sha256=sha(p.read_bytes())) for p in objects]))

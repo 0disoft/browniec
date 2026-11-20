@@ -1,7 +1,24 @@
 #include <windows.h>
 #include <assert.h>
 #include <stdio.h>
+#include "native/host_adapter_process.h"
 extern size_t probe_live(void);
+
+static bc_adapter_slot adapter_slot;
+void *bc_runtime_engine_test_adapter_slot(void){return &adapter_slot;}
+void bc_runtime_engine_test_adapter_mode(uint32_t mode){
+ wchar_t value[2]={(wchar_t)mode,0};
+ assert(SetEnvironmentVariableW(L"BC_ENGINE_ADAPTER_FIXTURE",mode?value:NULL));
+}
+void bc_runtime_engine_test_adapter_wait(void){Sleep(1);}
+uintptr_t bc_runtime_engine_test_adapter_path(uint8_t *out,uintptr_t capacity){
+ wchar_t path[4096];DWORD n=GetModuleFileNameW(NULL,path,_countof(path));
+ assert(n&&n<_countof(path)&&capacity<=4096);
+ wchar_t *leaf=wcsrchr(path,L'\\');assert(leaf);
+ assert(wcscpy_s(leaf+1,_countof(path)-(leaf+1-path),L"adapter-fixture.exe")==0);
+ int size=WideCharToMultiByte(CP_UTF8,WC_ERR_INVALID_CHARS,path,(int)wcslen(path),(char *)out,(int)capacity,NULL,NULL);
+ assert(size>0);return (uintptr_t)size;
+}
 
 uintptr_t bc_runtime_engine_test_project_path(uint8_t *out,uintptr_t capacity){
  wchar_t root[1025];

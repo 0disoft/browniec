@@ -412,8 +412,7 @@ frame, or the one-byte trailing-data probe. Full reply bytes are available
 after the exact body, EOF, successful process exit and a final deadline check.
 Cancellation or deadline stops publication and closes the Job. Close retains
 the pipe, event, buffer and OVERLAPPED until I/O completion and child exit.
-The transport can launch a process once per session. The Fairy Engine
-orchestrator, route revision matching and public CLI selection remain open.
+The transport can launch a process once per session.
 
 `python -B tools/verify-host-adapter-process.py` passed development and /O2
 using real Windows processes and default stacks. Each profile checked eight
@@ -423,6 +422,38 @@ that closed stdout but stayed alive). Three startup rejections also passed.
 Steady-state parent handle growth was zero after warming process-wide
 initialization. Local receipt:
 `build/host-adapter-process/20261120T201701991921Z/receipt.json`.
+
+### Engine-driven process adapter
+
+A trusted host registers an executable for one catalog import and supplies
+its revision explicitly. Registration requires an exact match to the
+catalog's adapter revision. Starting from a live Engine request also checks
+the catalog digest and import ID, takes the one-shot dispatch claim, and
+uses the existing run deadline for the transport. An occupied slot rejects a
+second start before taking a claim.
+
+Each poll confirms the same live request and advances the process once.
+Fairy validates the reply header against the dispatch and both reply
+limits before approving a body read. After exact EOF and successful child
+exit, the existing Engine receipt validates and submits the complete typed
+reply. A malformed frame or transport failure terminates the live exchange
+with a host failure. A cancelled or expired request stops dispatch without
+submitting reply bytes. The Engine remains the authority for its terminal
+cause and guest publication.
+
+The host owns the native slot. It keeps the slot and the associated Engine
+at stable addresses and polls close until the process and outstanding I/O
+are reaped. A nonwrapping slot generation binds each dispatch to one launch
+and prevents an old session from driving a reused slot. Public external
+adapter selection and aggregate transport admission remain open.
+
+The Engine fixture passed Windows development and /O2. A real process
+returned a typed value that produced guest result 77 while a peer Instance
+remained waiting. The fixture also checked revision mismatch, duplicate
+start, crossed request ID, cancellation, expiry, and polling after close.
+Both profiles ended with zero live SDK allocations. The locked Windows CLI
+release build and existing CLI contract suite passed separately.
+Local Engine receipt: `build/runtime-engine/20261120T203608509249Z/receipt.json`.
 
 ## Engine scalar pending memory
 

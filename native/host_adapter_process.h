@@ -39,4 +39,19 @@ void bc_adapter_process_cancel(bc_adapter_process *session);
    Poll close again until one indicates completed cleanup and frees owner. */
 int bc_adapter_process_close(bc_adapter_process *session);
 
+/* A host-owned, zero-initialized slot. Keep it, and the associated Engine,
+   alive at stable addresses until close succeeds. All access is serialized. */
+typedef struct bc_adapter_slot {
+    bc_adapter_process *process;
+    const void *engine;
+    uintptr_t generation;
+} bc_adapter_slot;
+
+uint32_t bc_adapter_slot_empty(const void *owner);
+void *bc_adapter_slot_process(const void *owner, const void *engine, uintptr_t generation);
+uintptr_t bc_adapter_slot_start(void *owner, const void *engine, const uint8_t *path,
+    size_t path_len, const uint8_t *header, const uint8_t *body, size_t body_len,
+    uintptr_t deadline);
+uint32_t bc_adapter_slot_close(void *owner);
+
 #endif

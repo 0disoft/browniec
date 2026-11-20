@@ -6,6 +6,7 @@ import host_exchange as host;
 import host_wire as wire;
 import host_adapter_frame as frames;
 import host_memory_adapter as memory_adapter;
+import host_process_adapter as process_adapter;
 import verifier as verifier;
 import errors as errors;
 import std::bytes as bytes;
@@ -23,6 +24,11 @@ unsafe extern C fn usize bc_runtime_engine_monotonic_ticks();
 unsafe extern C fn void bc_runtime_engine_test_set_clock(usize ticks);
 unsafe extern C fn void bc_runtime_engine_test_use_os_clock();
 unsafe extern C fn void bc_runtime_engine_test_wait_for_clock(usize start,usize elapsed);
+unsafe extern C fn ptr mut void bc_runtime_engine_test_adapter_slot();
+unsafe extern C fn void bc_runtime_engine_test_adapter_mode(u32 mode);
+unsafe extern C fn void bc_runtime_engine_test_adapter_wait();
+unsafe extern C fn usize bc_runtime_engine_test_adapter_path(ptr mut u8 path,usize capacity);
+unsafe extern C fn u32 bc_adapter_slot_close(ptr mut void slot);
 unsafe extern C fn usize probe_live();
 unsafe extern C fn usize probe_live_bytes();
 unsafe extern C fn usize probe_peak_bytes();
@@ -103,7 +109,8 @@ fn engine::Event event(Result<engine::Event,engine::Error> result){
 fn engine::HostRequestInfo request_info(ref engine::Engine owner,usize instance){
     return switch(engine::host_request_info(owner,instance)){
         case .ok(v):{v}case .err(_):{assert(false);engine::HostRequestInfo{
-            .run=0,.request=0,.import_id=0,.payload_bytes=0,.catalog=host::Binding{.words=[0;8]}}}
+            .run=0,.request=0,.import_id=0,.payload_bytes=0,.catalog=host::Binding{.words=[0;8]},
+            .deadline=0,.reply_limit=0}}
     };
 }
 fn engine::HostRequest request(ref engine::Engine owner,usize instance){
@@ -1292,6 +1299,88 @@ fn Result<usize,u8> memory_adapter_round_trip(){
     assert(id(engine::destroy(ref mut owner))==0);
     return .ok(1);
 }
+fn u8 process_progress(Result<process_adapter::Progress,memory_adapter::Error> update){
+    return switch(update){
+        case .ok(progress):{switch(progress){case .Pending:{0}case .Submitted:{1}case .Stopped:{2}}}
+        case .err(_):{assert(false);3}
+    };
+}
+fn void reap_adapter(ptr mut void slot){
+    var usize i=0;
+    while(unsafe{bc_adapter_slot_close(slot)}==0){
+        assert(i<3000);i+=1;
+        unsafe{bc_runtime_engine_test_adapter_wait()};
+    }
+}
+fn void process_exchange(ref mut engine::Engine owner,usize instance,ref process_adapter::Route selected,
+    u32 mode,u8 expected){
+    let ptr mut void slot=unsafe{bc_runtime_engine_test_adapter_slot()};
+    unsafe{bc_runtime_engine_test_adapter_mode(mode)};
+    switch(process_adapter::start(owner,instance,selected,slot,14)){
+        case .ok(session):{
+            unsafe{bc_runtime_engine_test_adapter_mode(0)};
+            assert(!process_adapter::start(owner,instance,selected,slot,14).is_ok);
+            var u8 progress=0;
+            var usize i=0;
+            while(progress==0){
+                assert(i<3000);
+                progress=process_progress(process_adapter::poll(owner,ref session,12));
+                if(mode==115 && i==3){
+                    if(expected==1){assert(event(engine::cancel_ready(owner,instance)).kind==3);}
+                    else{unsafe{bc_runtime_engine_test_set_clock(request_info(owner,instance).deadline)};}
+                }
+                i+=1;
+                unsafe{bc_runtime_engine_test_adapter_wait()};
+            }
+            if(expected==0 || expected==3){assert(progress==1);}
+            else{assert(progress==2);}
+            reap_adapter(slot);
+            assert(!process_adapter::poll(owner,ref session,12).is_ok);
+        }
+        case .err(_):{assert(false);}
+    };
+    if(expected==0){
+        let engine::Event done=event(engine::step_instance(owner,instance,16));
+        assert(done.kind==1 && done.value==77);
+    }
+    else{
+        if(expected==2){assert(event(engine::step_instance(owner,instance,16)).kind==2);}
+        let host::ScalarEvent terminal=scalar(owner,instance);
+        assert(terminal.host.cause==expected && terminal.host.replies==0 && terminal.value==0);
+    }
+    assert(id(engine::destroy_instance(owner,instance))==instance);
+    unsafe{bc_runtime_engine_test_use_os_clock()};
+}
+fn Result<usize,u8> process_round_trip(){
+    let ref u8[] source=b"module main; fn i32 main(){ return switch(host::example::check(41)){ case .ok(value): { value+35 } case .err(code): { 0 } }; }";
+    let policy::Policy ceiling=parsed_policy(true)?;
+    let runs::RunConfig run=switch(runs::parse(source_run_config(),ref ceiling)){case .ok(v):{v}case .err(_):{return .err(6);}};
+    var engine::Engine owner=configured(ceiling)?;
+    let catalog::Catalog imports=catalog_from(result_catalog())?;
+    let u32[8] binding=digest(ref imports)?;
+    var u8[4096] path=[0;4096];
+    let ref mut u8[] output=ref mut path[..];
+    let usize size=unsafe{bc_runtime_engine_test_adapter_path(output as ptr mut u8,output.len)};
+    assert(!process_adapter::register(ref imports,0,b"wrong",ref path[..size]).is_ok);
+    let process_adapter::Route selected=switch(process_adapter::register(ref imports,0,b"v1",ref path[..size])){
+        case .ok(v):{v}case .err(_):{return .err(6);}
+    };
+    let usize p=id(engine::compile_scalar_host(ref mut owner,source,imports,ref binding,ref run));
+    let usize peer=waiting(ref mut owner,p,ref run).run;
+    let usize success=waiting(ref mut owner,p,ref run).run;
+    process_exchange(ref mut owner,success,ref selected,103,0);
+    assert(scalar(ref owner,peer).host.replies==0 && engine::host_request_info(ref owner,peer).is_ok);
+    assert(id(engine::destroy_instance(ref mut owner,peer))==peer);
+    let usize crossed=waiting(ref mut owner,p,ref run).run;
+    process_exchange(ref mut owner,crossed,ref selected,120,3);
+    let usize cancelled=waiting(ref mut owner,p,ref run).run;
+    process_exchange(ref mut owner,cancelled,ref selected,115,1);
+    let usize expired=waiting(ref mut owner,p,ref run).run;
+    process_exchange(ref mut owner,expired,ref selected,115,2);
+    assert(id(engine::release_program(ref mut owner,p))==p);
+    assert(id(engine::destroy(ref mut owner))==0);
+    return .ok(1);
+}
 fn Result<policy::Policy,u8> emitting_policy(){
     let ref u8[] base=policy_json_yes();
     var bytes::Buffer text=bytes::empty();
@@ -1427,6 +1516,7 @@ pub fn void run(){
     unsafe{bc_runtime_engine_test_set_clock(1000)};
     assert(memory_adapter_round_trip().is_ok);
     unsafe{bc_runtime_engine_test_use_os_clock()};
+    assert(process_round_trip().is_ok);
     unsafe{bc_runtime_engine_test_set_clock(1000)};
     assert(chunked_receive().is_ok);
     unsafe{bc_runtime_engine_test_use_os_clock()};

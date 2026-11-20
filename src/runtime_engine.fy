@@ -52,7 +52,10 @@ pub struct InstanceStatus { InstanceState state; Event event; }
 // Request bytes are detached from the exchange.
 pub struct HostRequest { usize run; usize request; usize import_id; u8[14] payload; }
 // Detached routing facts for typed adapters. Pair with an Engine-scoped payload borrow.
-pub struct HostRequestInfo { usize run; usize request; usize import_id; usize payload_bytes; host::Binding catalog; }
+pub struct HostRequestInfo {
+    usize run; usize request; usize import_id; usize payload_bytes; host::Binding catalog;
+    usize deadline; usize reply_limit;
+}
 struct HostTransition { Event event; host::ScalarEvent scalar; }
 pub struct Snapshot { usize programs; usize instances; usize pins; bool closed; }
 struct Meta {
@@ -510,15 +513,21 @@ pub fn Result<HostRequestInfo,Error> host_request_info(ref Engine e,usize instan
         case .ok(data):{data}case .err(_):{return .err(error(7));}
     };
     return .ok(HostRequestInfo{.run=state.run,.request=state.request,.import_id=state.import_id,
-        .payload_bytes=payload.len,.catalog=host::binding(exchange)});
+        .payload_bytes=payload.len,.catalog=host::binding(exchange),
+        .deadline=host::deadline(exchange),.reply_limit=host::reply_limit(exchange)});
+}
+
+pub fn bool same_host_request(ref HostRequestInfo expected,ref HostRequestInfo current){
+    return expected.run==current.run && expected.request==current.request &&
+        expected.import_id==current.import_id && expected.payload_bytes==current.payload_bytes &&
+        expected.deadline==current.deadline && expected.reply_limit==current.reply_limit &&
+        host_program::same_digest(ref expected.catalog.words,ref current.catalog.words);
 }
 
 // The adapter reserves dispatch after it has copied and validated the request.
 pub fn Result<usize,Error> claim_host_request(ref mut Engine e,usize instance,ref HostRequestInfo expected){
     let HostRequestInfo current=host_request_info(e,instance)?;
-    if(expected.run!=current.run || expected.request!=current.request ||
-       expected.import_id!=current.import_id || expected.payload_bytes!=current.payload_bytes ||
-       !host_program::same_digest(ref expected.catalog.words,ref current.catalog.words)){return .err(error(1));}
+    if(!same_host_request(expected,ref current)){return .err(error(1));}
     let u32 status=unsafe{call_raw(e as ptr mut void,11,instance,current.request)};
     return result(e,status);
 }

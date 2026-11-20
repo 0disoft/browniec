@@ -279,3 +279,37 @@ int bc_adapter_process_close(bc_adapter_process *s) {
     release(s);
     return 1;
 }
+
+uint32_t bc_adapter_slot_empty(const void *owner) {
+    const bc_adapter_slot *slot = owner;
+    return slot && !slot->process && slot->generation != UINTPTR_MAX;
+}
+
+void *bc_adapter_slot_process(const void *owner, const void *engine, uintptr_t generation) {
+    const bc_adapter_slot *slot = owner;
+    return slot && slot->engine == engine && slot->generation == generation ? slot->process : NULL;
+}
+
+uintptr_t bc_adapter_slot_start(void *owner, const void *engine, const uint8_t *path,
+    size_t path_len, const uint8_t *header, const uint8_t *body, size_t body_len,
+    uintptr_t deadline) {
+    bc_adapter_slot *slot = owner;
+    if (!bc_adapter_slot_empty(slot) || !engine || !path || !path_len || path_len > 4096)
+        return 0;
+    wchar_t wide[4096];
+    int units = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, (const char *)path,
+        (int)path_len, wide, _countof(wide));
+    if (!units) return 0;
+    slot->process = bc_adapter_process_start(wide, (size_t)units, header, body, body_len, deadline);
+    if (!slot->process) return 0;
+    slot->engine = engine;
+    return ++slot->generation;
+}
+
+uint32_t bc_adapter_slot_close(void *owner) {
+    bc_adapter_slot *slot = owner;
+    if (!slot || !bc_adapter_process_close(slot->process)) return 0;
+    slot->process = NULL;
+    slot->engine = NULL;
+    return 1;
+}
