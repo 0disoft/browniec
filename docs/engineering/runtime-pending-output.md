@@ -19,9 +19,9 @@ now advances it and seals terminal output without resume allocations.
   with the synchronous path. `step_output_saved` returns Pending after at most
   the requested instruction visits; it does not recreate entry or drain Pending
   in a hidden loop. Error cleanup uses the existing canonical abort.
-- [Native Fairy coordinator](../../native/runtime-engine/runtime_pending_output.fy)
+- [Native Fairy coordinator](../../src/runtime_pending_output.fy)
   supplies prepare, advance, cancel and once-only seal through the existing
-  [internal facade](../../native/runtime-engine/runtime_engine.fy). The
+  [internal facade](../../src/runtime_engine.fy). The
   [C projector](../../native/runtime-engine/bridge.inc) only passes field addresses,
   constructs exact typed slices and supplies `sizeof(Core)`.
 

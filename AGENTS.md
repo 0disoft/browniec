@@ -1,8 +1,8 @@
-- Latest runtime checkpoint (2026-11-20): [Anchored policy-checked project output](docs/engineering/project-source-loader.md#policy-checked-output)
-  compiles from the directory owner that supplied the manifest. Windows
-  development and /O2 pass authority denial before collection, one-shot
-  collection and independent Instance output with zero live SDK allocations.
-  Reviewed Engine transport retains 41 bindings and 60 layouts.
+- Latest runtime checkpoint (2026-11-20): [Configured Windows project output](docs/cli/configuration.md#configured-project-output)
+  runs through the standard CLI and owning Engine. Development and /O2 passed
+  the CLI contract, authority denial, quotas, source diagnostics and success-only
+  Base64 publication. The Engine regression passed with zero live SDK allocations
+  in both profiles and retains 41 reviewed bindings and 60 layouts.
 
 # Brownie C agent guidance
 

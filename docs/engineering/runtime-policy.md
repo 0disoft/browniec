@@ -66,12 +66,12 @@ reservations, enforcement of deadlines and full H01/C01 completion remain open.
 
 ## Explicit Windows configuration acquisition
 
-The internal CLI adapters can now read a caller-selected policy and run file
+The Windows CLI reads a caller-selected policy and run file
 through the same bounded Windows disk reader as project input. Each file has
 a separate 65,536-byte ceiling and is parsed directly from its immutable
 native buffer. The native owner closes after parsing, and the typed results own
 their decoded data. Run admission requires the already admitted Policy.
-The public policy and run flags still require Engine delivery integration.
+[Configured project runs](../cli/configuration.md#configured-project-output) bind both files to the owning Engine.
 
 `python -B tools/verify-cli-run-configuration.py` checks both locked native
 profiles. Its fixture accepts valid policy and run files at 65,536 bytes and

@@ -11,7 +11,6 @@ from tempfile import mkdtemp
 
 ROOT = Path(__file__).resolve().parent.parent
 COMPILER = ROOT / 'build/toolchain/fairyc.exe'
-NATIVE = ROOT / 'native/runtime-engine'
 
 
 def verify():
@@ -24,8 +23,6 @@ def verify():
         shutil.copytree(ROOT / folder, project / folder)
     shutil.copyfile(ROOT / 'fairy.toml', project / 'fairy.toml')
     shutil.copyfile(ROOT / 'tools/windows-engine-build/main.fy', project / 'src/main.fy')
-    for module in ('runtime_engine', 'runtime_pending_output', 'windows_engine_bindings'):
-        shutil.copyfile(NATIVE / f'{module}.fy', project / 'src' / f'{module}.fy')
 
     def write(name, value):
         (project / name).write_text(json.dumps(value) + '\n', encoding='utf-8', newline='\n')
@@ -36,8 +33,8 @@ def verify():
     assert len(bindings) == len({name for _, name in bindings}) == 35
     assert all(bytes.fromhex(encoded).decode('utf-8') == name for encoded, name in bindings)
     manifest = json.loads((ROOT / 'fairy.windows.json').read_bytes())
-    manifest['sources'].append(source)
-    manifest['privateFunctions'] = [name for _, name in bindings] + ['windows_engine_bindings::incoming']
+    assert source in manifest['sources']
+    assert manifest['privateFunctions'] == [name for _, name in bindings] + ['windows_engine_bindings::incoming']
     write('fairy.windows.json', manifest)
 
     policy = json.loads((ROOT / 'tools/runtime-policy/reference/policy.output.json').read_bytes())

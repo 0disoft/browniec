@@ -4,7 +4,7 @@ The private owning Engine now integrates the separately admitted
 [guest-output Program](module-output-execution.md). It compiles exact selected
 zero-argument or shared-byte input entries, executes the real VM once, retains
 its terminal result and moves immutable successful output to the caller.
-Public CLI/C handles, policy loading and sinks remain separate work.
+Public C handles and additional sinks remain separate work.
 
 ## Admission and execution
 
@@ -60,8 +60,10 @@ application in development and release. It loads an explicit policy, run config
 and manifest, compiles under the manifest's Windows directory anchor, and runs
 the Engine through a prepared Instance. The fixture checks return value 77,
 exact sealed output bytes `41 00`, and successful Instance, Program and Engine
-teardown. The public `browniec` application still needs the policy/run entry
-point and result wiring.
+teardown. [Configured `browniec run`](../cli/configuration.md#configured-project-output)
+uses the same bridge and publishes the detached bytes after Engine teardown.
+The public CLI contract uses the standard Windows binary to exercise both JSON
+versions, file and pipe input, authority denial, diagnostics, and output rollback.
 
 ## Reserved storage and native evidence
 

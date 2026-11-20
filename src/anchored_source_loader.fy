@@ -10,7 +10,7 @@ unsafe extern C fn u32 bc_asl_collect(ptr mut void owner,usize source_bytes);
 unsafe extern C fn usize bc_asl_copy(ptr mut void owner,usize index,u32 part,ptr mut u8 out,usize capacity);
 unsafe extern C fn void bc_asl_close(ptr mut void owner);
 pub resource Root { ptr mut void owner; usize manifest_bytes; cleanup { unsafe {bc_asl_close(this.owner)}; } }
-pub enum Error { Request; Native; Admission; }
+pub enum Error { Request; Native; Admission; Limit; }
 pub enum ProjectOpen { Input; Limit; Allocation; }
 
 pub fn Result<Root,ProjectOpen> open_project(ref u8[] path,ref mut u8[] data){
@@ -56,12 +56,19 @@ fn Result<sources::Snapshot,Error> collect(ref mut Root owner,ref u8[] names,ref
         if(unsafe {bc_asl_member(owner.owner,name as ptr u8,name.len)}!=0){return .err(.Native);}
         begin=ends[i];i+=1;
     }
-    if(unsafe {bc_asl_collect(owner.owner,source_bytes)}!=0){return .err(.Native);}
+    let u32 status=unsafe {bc_asl_collect(owner.owner,source_bytes)};
+    if(status!=0){return .err(if(status==3){.Limit}else{.Native});}
+    return copy_collected(owner,ends.len,source_bytes,name_bytes);
+}
+
+// Copies the bounded, already acquired bytes for source diagnostics.
+pub fn Result<sources::Snapshot,Error> copy_collected(ref Root owner,usize count,usize source_bytes,usize name_bytes){
+    if(count==0 || count>sources::file_limit()){return .err(.Request);}
     var sources::Builder builder=switch(sources::builder(source_bytes,name_bytes)){
         case .ok(v):{v}case .err(_):{return .err(.Admission);}
     };
-    var u8[240] name=[0;240];var u8[4096] data=[0;4096];i=0;
-    while(i<ends.len){
+    var u8[240] name=[0;240];var u8[4096] data=[0;4096];var usize i=0;
+    while(i<count){
         let usize nl=unsafe {bc_asl_copy(owner.owner,i,0,ref mut name[..] as ptr mut u8,240)};
         let usize dl=unsafe {bc_asl_copy(owner.owner,i,1,ref mut data[..] as ptr mut u8,4096)};
         if(nl==0 || nl>240 || dl>4096){return .err(.Native);}

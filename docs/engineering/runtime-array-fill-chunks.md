@@ -62,7 +62,7 @@ Saved recipes are comparison facts, never authority for arbitrary guest/raw IR.
 Chunks allocate no storage, take no table/payload snapshots and rescan no payload.
 Existing atomic owner `create`/`fill` APIs remain unchanged.
 
-The private [native Engine](../../native/runtime-engine/runtime_engine.fy) exposes guarded
+The private [native Engine](../../src/runtime_engine.fy) exposes guarded
 `array_fill_progress` beside `output_copy_progress` for prepared/running Instances.
 It returns saved recipe/counters, not payload; terminal states reject inspection.
 [Program preparation caching](runtime-program-preparation-cache.md) still owns

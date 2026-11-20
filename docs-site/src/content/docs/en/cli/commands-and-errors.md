@@ -24,6 +24,8 @@ The public CLI checks and runs one source file at a time. `check` verifies witho
 | `browniec run --project FILE [--input FILE\|--stdin] [--fuel N]` | — | `stderr` | — |
 | `browniec run --project FILE [--input FILE\|--stdin] [--fuel N]` | `--json` | `stdout` | `browniec.result/v1` |
 | `browniec run --project FILE [--input FILE\|--stdin] [--fuel N]` | `--json-v2` | `stdout` | `browniec.result/v2` |
+| `browniec run --project FILE --policy FILE --run FILE [--input FILE\|--stdin]` | `--json` | `stdout` | `browniec.result/v1` |
+| `browniec run --project FILE --policy FILE --run FILE [--input FILE\|--stdin]` | `--json-v2` | `stdout` | `browniec.result/v2` |
 | `browniec eval-i32 SOURCE N [--fuel N]` | — | `stderr` | — |
 | `browniec eval-i32 SOURCE N [--fuel N]` | `--json` | `stdout` | `browniec.result/v1` |
 | `browniec eval-i32 SOURCE N [--fuel N]` | `--json-v2` | `stdout` | `browniec.result/v2` |

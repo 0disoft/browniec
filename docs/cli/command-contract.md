@@ -13,6 +13,7 @@
 | browniec eval-i32 SOURCE N | Evaluate a scalar rule with one signed decimal i32 input | Implemented for `module main` sources with `fn i32 evaluate(i32 ...)` |
 | browniec check --project FILE | Check an explicit source map and its named entry | Windows, zero-argument i32 entry, empty requirements |
 | browniec run --project FILE [--input FILE or --stdin] | Run the checked named entry | Windows, zero-argument i32 entry or one shared-byte parameter with explicit input, empty requirements |
+| browniec run --project FILE --policy FILE --run FILE | Run the checked entry under explicit policy | Windows, shared-byte i32 entry, JSON output required, optional input file or stdin |
 | browniec check SOURCE --isolated | Use a restricted compile-only worker | Designed; unavailable |
 | browniec run SOURCE --isolated | Use the restricted worker and parent broker | Designed; unavailable |
 | browniec inspect SOURCE --ir | Compile/verify and emit bounded private IR diagnostics without executing | Implemented for the same public M1/M2 admission as check; optional --json |
@@ -25,7 +26,7 @@ The implemented grammar is `browniec check SOURCE [--json|--json-v2]` and
 Scalar evaluation uses `browniec eval-i32 SOURCE N [--fuel N] [--json|--json-v2]`.
 On Windows, check and run also accept `--project FILE` in place of `SOURCE`.
 Fuel defaults to 256 and accepts 0..16000000; duplicate/unknown options are errors.
-Run grants no guest host capability. SOURCE selects one local disk file with a
+Unconfigured run grants no guest host capability. SOURCE selects one local disk file with a
 4096-byte UTF-8 source limit. The public language supports six scalar types,
 fixed scalar arrays, nominal scalar/nested records, aggregate parameters/results,
 shared/exclusive scalar slices, inline whole/ranged/temporary CALL borrows and
@@ -38,8 +39,9 @@ The [retained reference profile](../engineering/public-program.md) admits immuta
 byte/text literals, explicit text::bytes/equality and shared byte parameters/results.
 General mutable/non-byte/Buffer/input results and host-visible reference tickets
 remain unavailable.
-Guest Buffer/output, policy/catalog/grant CLI loaders, worker,
-cancellation and deadlines remain unavailable. `--isolated` returns an availability
+[Configured project runs](configuration.md#configured-project-output) support
+output emission and compile/run deadlines. General Buffer delivery, catalog
+loading, workers and public cancellation remain unavailable. `--isolated` returns an availability
 denial, with no unrestricted fallback. Ordinary check/run use zero-argument i32
 `main`. The separate eval-i32 command selects a single-i32 `evaluate` entry.
 The source file is not a guest input snapshot.

@@ -1,6 +1,6 @@
 # Private owning Engine lifecycle
 
-`native/runtime-engine/runtime_engine.fy` now owns real immutable executable
+`src/runtime_engine.fy` now owns real immutable executable
 Programs and one-shot Instances. This succeeds the [owning Store probe](runtime-store-probe.md).
 `compile` consumes an admitted selected source Entry and invokes the existing
 complete `module_program::compile`; execution invokes `module_program::run` on

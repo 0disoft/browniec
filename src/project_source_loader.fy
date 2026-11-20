@@ -25,13 +25,13 @@ fn Result<Members,Error> members(ref project::Project metadata,usize source_byte
 pub fn Result<sources::Snapshot,Error> load(ref project::Project metadata,ref u8[] root,usize source_bytes){
     let Members paths=members(metadata,source_bytes)?;
     return switch(anchored::load(root,ref paths.names[..paths.used],ref paths.ends[..paths.count],source_bytes,3840)){
-        case .ok(v):{.ok(v)}case .err(_):{.err(.Acquisition)}
+        case .ok(v):{.ok(v)}case .err(e):{.err(switch(e){case .Limit:{.Limit}case .Request:{.Acquisition}case .Native:{.Acquisition}case .Admission:{.Acquisition}})}
     };
 }
 pub fn Result<sources::Snapshot,Error> load_from(ref project::Project metadata,ref mut anchored::Root root,usize source_bytes){
     let Members paths=members(metadata,source_bytes)?;
     return switch(anchored::load_from(root,ref paths.names[..paths.used],ref paths.ends[..paths.count],source_bytes,3840)){
-        case .ok(v):{.ok(v)}case .err(_):{.err(.Acquisition)}
+        case .ok(v):{.ok(v)}case .err(e):{.err(switch(e){case .Limit:{.Limit}case .Request:{.Acquisition}case .Native:{.Acquisition}case .Admission:{.Acquisition}})}
     };
 }
 pub fn Result<entries::Entry,Error> select(ref project::Project metadata,ref u8[] root,usize source_bytes){

@@ -1,0 +1,17 @@
+{
+  "schema": "brownie.project/0.3",
+  "name": "configured-output",
+  "entry": {
+    "module": "app",
+    "function": "transform"
+  },
+  "sources": [
+    {
+      "module": "app",
+      "path": "app.brc"
+    }
+  ],
+  "requires": [
+    "brownie.output.emit"
+  ]
+}

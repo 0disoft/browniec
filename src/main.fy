@@ -19,6 +19,7 @@ import std::io as io;
 import ir_inspect as inspect;
 import cli_project as projects;
 import cli_project_input as project_input;
+import cli_configured_project as configured;
 
 @effects(console)
 fn i32 fail(render::Format format, bool run, u8 kind) {
@@ -46,7 +47,7 @@ fn i32 main() {
         return render::version("{\"schema\":\"browniec.version/v1\",\"profile\":\"brownie.m1-scalar/1\",\"array_profile\":\"brownie.m2-array-read/1\",\"array_write_profile\":\"brownie.m2-array-write/1\",\"array_copy_profile\":\"brownie.m2-array-copy/1\",\"array_element_list_declarations\":true,\"array_element_list_arguments\":true,\"array_element_list_returns\":true,\"array_element_list_temporary_borrows\":true,\"array_element_list_replacement\":true,\"array_literal_projections\":true,\"array_expression_projections\":true,\"array_grouped_values\":true,\"grouped_assignment_targets\":true,\"scalar_local_compound_assignment\":true,\"array_selected_place_assignment\":true,\"array_element_compound_assignment\":true,\"array_utf8_element_lists\":true,\"struct_read_profile\":\"brownie.m2-struct-read/1\",\"struct_write_profile\":\"brownie.m2-struct-write/1\",\"struct_selected_place_assignment\":true,\"struct_field_compound_assignment\":true,\"struct_copy_profile\":\"brownie.m2-struct-copy/1\",\"struct_nested_profile\":\"brownie.m2-struct-nested/1\",\"struct_child_binding_initializers\":true,\"struct_child_path_initializers\":true,\"struct_subrecord_initializers\":true,\"struct_subrecord_assignment\":true,\"struct_subrecord_assignment_atomic\":true,\"struct_constructor_assignment\":true,\"struct_subrecord_constructor_assignment\":true,\"struct_helper_locals\":true,\"struct_parameters\":true,\"struct_field_shorthand\":true,\"struct_results\":true,\"record_expression_projections\":true,\"record_grouped_values\":true,\"if_expressions\":true,\"array_if_expressions\":true,\"record_if_expressions\":true,\"array_switch_expressions\":true,\"record_switch_expressions\":true,\"constructor_join_inference\":true,\"void_functions\":true,\"result_is_ok\":true,\"explicit_discard\":true,\"array_utf8_predicate\":true,\"array_utf8_call_results\":true,\"array_utf8_literals\":true,\"array_utf8_ranges\":true,\"array_utf8_temporary_ranges\":true,\"array_utf8_open_ranges\":true,\"array_utf8_dynamic_ranges\":true,\"array_utf8_temporary_dynamic_ranges\":true,\"array_utf8_computed_ranges\":true,\"array_utf8_temporary_computed_ranges\":true,\"array_utf8_slices\":true,\"array_slice_length\":true,\"array_slice_index\":true,\"array_slice_sub\":true,\"array_slice_alias\":true,\"array_slice_parameters\":true,\"array_slice_scalar_elements\":true,\"array_slice_mutable\":true,\"slice_selected_place_assignment\":true,\"slice_element_compound_assignment\":true,\"array_slice_mutable_parameters\":true,\"array_slice_mutable_reborrow\":true,\"array_slice_reborrow_owned_arguments\":true,\"array_slice_reborrow_array_results\":true,\"array_slice_reborrow_record_results\":true,\"array_slice_array_arguments\":true,\"array_slice_array_range_arguments\":true,\"array_slice_named_range_arguments\":true,\"array_slice_temporary_arguments\":true,\"reference_profile\":\"brownie.m2-reference/1\",\"byte_literals\":true,\"text_literals\":true,\"immutable_byte_views\":true,\"shared_byte_parameters\":true,\"shared_byte_results\":true,\"core\":true,\"restricted\":false,\"embed\":false");
     }
     if (lexer::equal(command_view[..command_length], b"--help") && argc == 2) {
-        return if (io::write("browniec check SOURCE [--json|--json-v2]\nbrowniec run SOURCE [--fuel N] [--json|--json-v2]\nbrowniec check --project FILE [--json|--json-v2]\nbrowniec run --project FILE [--input FILE|--stdin] [--fuel N] [--json|--json-v2]\nbrowniec eval-i32 SOURCE N [--fuel N] [--json|--json-v2]\nbrowniec inspect SOURCE --ir [--json]\nbrowniec inspect SOURCE --limits --json\nTrusted local source only; experimental scalar/aggregate functions, byte/text literals and shared byte results.\nLiteral/reference execution uses the canonical Fuel schedule; use --fuel 16000000 for larger programs.\n").is_ok) { 0 } else { 7 };
+        return if (io::write("browniec check SOURCE [--json|--json-v2]\nbrowniec run SOURCE [--fuel N] [--json|--json-v2]\nbrowniec check --project FILE [--json|--json-v2]\nbrowniec run --project FILE [--input FILE|--stdin] [--fuel N] [--json|--json-v2]\nbrowniec run --project FILE --policy FILE --run FILE [--input FILE|--stdin] (--json|--json-v2)\nbrowniec eval-i32 SOURCE N [--fuel N] [--json|--json-v2]\nbrowniec inspect SOURCE --ir [--json]\nbrowniec inspect SOURCE --limits --json\nTrusted local source only; experimental scalar/aggregate functions, byte/text literals and shared byte results.\nLiteral/reference execution uses the canonical Fuel schedule; use --fuel 16000000 for larger programs.\n").is_ok) { 0 } else { 7 };
     }
     if(lexer::equal(command_view[..command_length],b"inspect")){return inspect::cli();}
     let bool eval=lexer::equal(command_view[..command_length],b"eval-i32");
@@ -58,6 +59,7 @@ fn i32 main() {
     let bool project=!eval && projects::selected();
     var render::Format format = .Text;
     var bool fuel_seen = false;
+    var configured::Selection settings=configured::Selection{.policy_file=0,.run_file=0};
     var project_input::Selection payload=project_input::Selection{.argument=0,.stdin=false};
     var usize fuel = meter::cli_default();
     var usize at = if(eval || project){4}else{3};
@@ -76,6 +78,14 @@ fn i32 main() {
         }
         else if (project && run && payload.argument==0 && !payload.stdin && lexer::equal(view[..length],b"--stdin")) {
             payload.stdin=true;
+        }
+        else if (project && run && settings.policy_file==0 && at+1<argc && lexer::equal(view[..length],b"--policy")) {
+            at+=1;
+            settings.policy_file=at;
+        }
+        else if (project && run && settings.run_file==0 && at+1<argc && lexer::equal(view[..length],b"--run")) {
+            at+=1;
+            settings.run_file=at;
         }
         else if (lexer::equal(view[..length], b"--fuel") && run && !fuel_seen && at + 1 < argc) {
             at += 1;
@@ -102,6 +112,12 @@ fn i32 main() {
             case .ok(v):{v}case .err(_):{return command_failure(format,run,true,10);}
         };
         return evaluate(argument,format,fuel);
+    }
+    if(settings.policy_file!=0 || settings.run_file!=0){
+        if(settings.policy_file==0 || settings.run_file==0 || fuel_seen || render::text_mode(format)){
+            return fail(format,true,10);
+        }
+        return projects::execute_configured(format,settings,payload);
     }
     if(project){return projects::execute(format,run,fuel,payload);}
     let input::Source source = switch (input::read_source(2)) {

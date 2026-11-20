@@ -4,11 +4,13 @@ import argparse
 import hashlib
 import json
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 from tempfile import TemporaryDirectory
 
 ROOT = Path(__file__).resolve().parents[1]
+CONFIGURED = ROOT / 'examples/projects/configured-output'
 
 
 def invoke(exe, args, exit_code, *, cwd=None, input_bytes=None, stdin=None):
@@ -19,7 +21,7 @@ def invoke(exe, args, exit_code, *, cwd=None, input_bytes=None, stdin=None):
 
 
 def check_json(exe, args, exit_code, *, version=1, value=None, profile='brownie.m1-scalar/1',
-               input_bytes=None, stdin=None):
+               input_bytes=None, stdin=None, output_b64=None):
     flag = '--json' if version == 1 else '--json-v2'
     ran = invoke(exe, [*args, flag], exit_code, input_bytes=input_bytes, stdin=stdin)
     assert not ran.stderr and len(ran.stdout.splitlines()) == 1, ran
@@ -33,6 +35,8 @@ def check_json(exe, args, exit_code, *, version=1, value=None, profile='brownie.
         'status': 'error' if exit_code else 'checked' if args[0] == 'check' else 'completed',
         'return_i32': value,
     }
+    if output_b64 is not None:
+        expected['output_b64'] = output_b64
     assert result == expected and type(result['return_i32']) is type(value), (args, result)
     return error
 
@@ -64,6 +68,8 @@ def check_output_table(exe, identity):
         command = row['command']
         if command == 'inspect':
             args = [answer, row['arguments'].split()[-1]]
+        elif '--policy' in row['arguments']:
+            args = configured_arguments(CONFIGURED)[1:]
         elif row['arguments'].startswith('--project '):
             args = ['--project', project]
         else:
@@ -85,6 +91,73 @@ def check_output_table(exe, identity):
                 if command != '--version':
                     assert obj['command'] == command, obj
     print('PASS: documented CLI channels and schemas match native output')
+
+
+def configured_arguments(folder):
+    return ['run', '--project', folder / 'project.json', '--policy', folder / 'policy.json',
+            '--run', folder / 'run.json']
+
+
+def check_configured_output(exe, folder):
+    project = folder / 'configured'
+    shutil.copytree(CONFIGURED, project)
+    args = configured_arguments(project)
+    source = project / 'app.brc'
+    original = source.read_bytes()
+    payload = project / 'payload.bin'
+    payload.write_bytes(b'A\x00')
+    run_file = project / 'run.json'
+    config = json.loads(run_file.read_bytes())
+
+    def update(**overrides):
+        run_file.write_text(json.dumps(config | overrides), encoding='utf-8')
+
+    profile = 'brownie.m2-reference/1'
+    for version in (1, 2):
+        assert check_json(exe, [*args, '--input', payload], 0, value=77, version=version,
+                          profile=profile, output_b64='QQA=') is None
+    assert check_json(exe, [*args, '--stdin'], 0, value=77, version=2, profile=profile,
+                      input_bytes=b'A\x00', output_b64='QQA=') is None
+    assert check_json(exe, args, 0, value=77, version=2, profile=profile, output_b64='') is None
+    for invalid in (args, [*args[:-2], '--json'], [*args, '--fuel', 1, '--json'],
+                    [*args, '--run', run_file, '--json']):
+        invoke(exe, invalid, 2)
+
+    for field, limit, expected in (('input_bytes', 1, 'input_limit'),
+                                   ('output_bytes', 1, 'output_limit')):
+        update(limits=config['limits'] | {field: limit})
+        error = check_json(exe, [*args, '--input', payload], 5, version=2, profile=profile)
+        assert error['kind'] == expected, error
+    update()
+
+    source.write_bytes(b'module app;pub fn i32 transform(ref u8[] data){'
+                       b'output::emit(ref data);let i32 z=data[0] as i32;return 1/(z-z);}')
+    error = check_json(exe, [*args, '--input', payload], 5, version=2, profile=profile)
+    assert error['kind'] == 'zero_divisor' and error['location']['path'] == 'app.brc', error
+
+    source.write_bytes(b'module app;pub fn i32 transform(ref u8[] data){'
+                       b'output::emit(ref data);while(true){}return 77;}')
+    update(limits=config['limits'] | {'deadline_ms': 1})
+    error = check_json(exe, [*args, '--input', payload], 5, version=2, profile=profile)
+    assert error == {'kind': 'deadline', 'location': {'kind': 'none'}}, error
+    update()
+
+    source.write_bytes(b'module app;pub fn i32 transform(ref u8[] data){return true;}')
+    error = check_json(exe, [*args, '--input', folder / 'missing.bin'], 3, version=2)
+    assert error['kind'] == 'type' and error['location']['path'] == 'app.brc', error
+    source.unlink()
+    for overrides in ({'entry': {'module': 'app', 'function': 'wrong'}}, {'grants': []}):
+        update(**overrides)
+        error = check_json(exe, [*args, '--input', folder / 'missing.bin'], 4, version=2)
+        assert error == {'kind': 'unavailable', 'location': {'kind': 'none'}}, error
+    update()
+    source.write_bytes(original)
+    no_requirements = json.loads((project / 'project.json').read_bytes()) | {'requires': []}
+    (project / 'project.json').write_text(json.dumps(no_requirements), encoding='utf-8')
+    update(requires=[], grants=[])
+    error = check_json(exe, [*args, '--input', folder / 'missing.bin'], 4, version=2)
+    assert error == {'kind': 'unavailable', 'location': {'kind': 'none'}}, error
+    print('PASS: configured project grants, binary publication, quotas, diagnostics and deadline')
 
 
 def check_project_location(exe, manifest, command, code, kind, index, name, source, offset, end):
@@ -335,6 +408,7 @@ def main():
         check_output_table(exe, identity)
         check_project(exe, Path(temp))
         check_project_input(exe, Path(temp))
+        check_configured_output(exe, Path(temp))
         check_inspection_limits(exe, Path(temp))
         check_diagnostic(exe, source_zero, 3, 'lexical',
                          {'kind': 'source_byte', 'offset': 0}, b'browniec: lexical at byte 0')

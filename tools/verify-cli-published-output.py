@@ -22,8 +22,11 @@ def sha(path):
 
 def verify(profile):
     project = Path(mkdtemp(prefix=f'published-output-{profile}-', dir=ROOT / 'build'))
-    for name in ('fairy.toml', 'fairy.windows.json'):
-        shutil.copyfile(ROOT / name, project / name)
+    shutil.copyfile(ROOT / 'fairy.toml', project / 'fairy.toml')
+    windows = json.loads((ROOT / 'fairy.windows.json').read_bytes())
+    windows['sources'].remove('native/windows-runtime-engine.c')
+    windows.pop('privateFunctions')
+    (project / 'fairy.windows.json').write_text(json.dumps(windows), encoding='utf-8')
     for name in ('src', 'native'):
         shutil.copytree(ROOT / name, project / name)
     shutil.copyfile(FIXTURE, project / 'src/main.fy')

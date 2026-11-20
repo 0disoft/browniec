@@ -32,7 +32,7 @@ does not authorize unrelated raw IR or a different image/ABI.
 repeat the full verifier or rebuild the cached list/place/entry-work plans.
 Invocation-specific entry, input and runtime-authority checks still run.
 
-[`runtime_pending_output`](../../native/runtime-engine/runtime_pending_output.fy)
+[`runtime_pending_output`](../../src/runtime_pending_output.fy)
 passes the same sites, origins, requirements and work into `open_prepared` and
 `start_output_prepared`. Advance uses saved Machine state and the pinned Program;
 it neither repeats proof nor recreates entry. Engine publication also reads the

@@ -120,7 +120,7 @@ calls `execute_output_admitted` with the retained sites, origins, parameters and
 plans; it reuses admission proof while retaining invocation-specific input,
 entry and live-authority checks. It does not repeat canonical proof on each run.
 
-[`runtime_pending_output`](../../native/runtime-engine/runtime_pending_output.fy)
+[`runtime_pending_output`](../../src/runtime_pending_output.fy)
 borrows the same pinned Program's preparation when entering and advancing:
 
 - Entry calls `start_output_prepared_with_parameters` with the retained work

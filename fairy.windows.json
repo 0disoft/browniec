@@ -1,6 +1,50 @@
 {
   "schema": "fairyc.windows-build/v1",
   "subsystem": "console",
-  "libraries": ["ntdll.lib"],
-  "sources": ["native/windows-project-cli.c", "native/windows-project-input-reader.c"]
+  "libraries": [
+    "ntdll.lib"
+  ],
+  "sources": [
+    "native/windows-project-cli.c",
+    "native/windows-project-input-reader.c",
+    "native/windows-runtime-engine.c"
+  ],
+  "privateFunctions": [
+    "runtime_engine::bind_inner",
+    "runtime_engine::begin_inner",
+    "runtime_engine::end_inner",
+    "runtime_engine::compile_inner",
+    "runtime_engine::dispatch_inner",
+    "runtime_engine::reset_program_storage",
+    "runtime_engine::reset_instance_storage",
+    "runtime_engine::maintenance_inner",
+    "runtime_engine::compile_input_inner",
+    "runtime_engine::execute_borrowed_input_inner",
+    "runtime_engine::input_instance_inner",
+    "runtime_engine::reset_input_storage",
+    "runtime_engine::compile_output_inner",
+    "runtime_engine::compile_input_output_inner",
+    "runtime_engine::output_instance_inner",
+    "runtime_engine::take_output_inner",
+    "runtime_engine::reset_output_storage",
+    "runtime_engine::control_access_inner",
+    "runtime_engine::compile_preflight_inner",
+    "runtime_engine::input_preflight_inner",
+    "runtime_engine::output_preflight_width",
+    "runtime_pending_output::pending_advance_inner",
+    "runtime_pending_output::pending_maintenance_inner",
+    "slice_result_machine::initialize_native",
+    "runtime_engine::step_output_owner",
+    "runtime_engine::compact_pending_storage",
+    "runtime_engine::cancel_output_owner",
+    "runtime_pending_output::pending_setup_inner",
+    "runtime_pending_output::pending_core_setup_inner",
+    "runtime_engine::compact_cancelled_storage",
+    "runtime_engine::reset_policy_storage",
+    "runtime_engine::publish_host_inner",
+    "runtime_engine::prepare_host_inner",
+    "runtime_engine::reply_host_inner",
+    "runtime_engine::drive_host_owner",
+    "windows_engine_bindings::incoming"
+  ]
 }

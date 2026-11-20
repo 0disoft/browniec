@@ -1,0 +1,27 @@
+{
+  "schema": "brownie.run/0.3",
+  "entry": {
+    "module": "app",
+    "function": "transform"
+  },
+  "requires": [
+    "brownie.output.emit"
+  ],
+  "grants": [
+    "brownie.output.emit"
+  ],
+  "limits": {
+    "memory_bytes": 16777216,
+    "object_bytes": 4194304,
+    "call_frames": 128,
+    "input_bytes": 1048576,
+    "output_bytes": 1048576,
+    "host_request_bytes": 1048576,
+    "host_response_bytes": 1048576,
+    "host_calls": 256,
+    "owner_entries": 16384,
+    "descriptor_entries": 16384,
+    "fuel": 10000000,
+    "deadline_ms": 1000
+  }
+}

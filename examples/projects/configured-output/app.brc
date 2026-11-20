@@ -1,0 +1,6 @@
+module app;
+
+pub fn i32 transform(ref u8[] data) {
+    output::emit(ref data);
+    return 77;
+}

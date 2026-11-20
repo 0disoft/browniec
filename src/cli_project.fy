@@ -11,6 +11,7 @@ import module_index as modules;
 import module_input_program as input_programs;
 import module_input_entry as input_entries;
 import cli_project_input as binary;
+import cli_configured_project as configured;
 import runtime_input as input;
 import source_snapshot as sources;
 import static_image as images;
@@ -42,6 +43,22 @@ pub fn i32 execute(render::Format format,bool run,usize fuel,binary::Selection s
     if(selection.stdin || selection.argument!=0){return execute_with_input(ref project,format,fuel,selection);}
     return execute_project(ref project,format,run,fuel);
 }
+@effects(console,filesystem)
+pub fn i32 execute_configured(render::Format format,configured::Selection settings,binary::Selection selection){
+    var u8[3072] path=[0;3072];
+    let usize size=switch(process::arg(3,ref mut path)){
+        case .ok(v):{v}case .err(_):{return failure(format,true,errors::absent(10,0),0);}
+    };
+    var bytes::Buffer data=bytes::empty();
+    var anchored::Root root=switch(open_manifest(ref path[..size],ref mut data)){
+        case .ok(v):{v}case .err(e):{return failure(format,true,e,0);}
+    };
+    let manifest::Project project=switch(parse_manifest(ref root,bytes::view(ref data))){
+        case .ok(v):{v}case .err(e):{return failure(format,true,e,0);}
+    };
+    return configured::execute(format,settings,selection,ref project,ref mut root);
+}
+
 fn Result<ProjectInput,errors::Error> acquire(ref u8[] path){
     var bytes::Buffer data=bytes::empty();
     var anchored::Root root=open_manifest(path,ref mut data)?;

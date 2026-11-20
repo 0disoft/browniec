@@ -1,6 +1,6 @@
 # CLI Configuration
 
-- Status: SOURCE/JSON/Fuel flags, explicit Windows project manifests and binary project input implemented. Policy loaders are pending.
+- Status: SOURCE/JSON/Fuel flags, explicit Windows project manifests and binary project input implemented. Configured Windows project runs load explicit policy and run files.
 - Default host capability: deny
 
 ## Explicit inputs
@@ -47,10 +47,10 @@ output is diagnostic only and does not authorize execution.
 
 SOURCE selects one UTF-8 code file up to 4,096 bytes with a zero-argument
 i32 `main`. Run-only `--fuel` defaults to 256 and accepts 0..16000000.
-Policy, catalog, effective-config and run-grant loaders remain pending.
+Catalog loading and effective-config reporting remain pending.
 
-`--isolated` reports unavailable without fallback. Guest output, deadline and
-cancellation settings remain pending. See the
+`--isolated` reports unavailable without fallback. Configured project runs enforce compile and execution deadlines. Public
+cancellation controls remain pending. See the
 [complete remaining-work audit](../product/04-remaining-work.md) before treating any
 target configuration field or reference-package schema as accepted by this CLI.
 
@@ -78,7 +78,7 @@ are read under the same local NTFS anchor. The manifest limit is 65,536
 bytes. The current compiler reads at most 16 declared files and 4,096 source
 bytes in total. The manifest selects a public, zero-argument i32 entry.
 
-The current run profile permits an empty requirements array. Any declared
+Without policy and run files, the current run profile permits only an empty requirements array. Any declared
 requirement is rejected before project members are opened. Project execution
 uses the ordinary Fuel option and result formats.
 
@@ -90,6 +90,35 @@ compilation and can block until EOF. The reader accepts 0 through 1,048,576 raw
 bytes, including NUL and invalid UTF-8. The VM borrows an immutable snapshot.
 Use `--fuel 16000000` when trying input programs because input metadata alone
 needs 32,768 Fuel. With neither input option the project entry takes zero arguments.
+
+## Configured project output
+
+On Windows, supply both `--policy FILE` and `--run FILE` to `run --project`.
+Choose `--json` or `--json-v2` to receive the result. Fuel comes from the
+run configuration. The configured command rejects an additional `--fuel` flag.
+
+Policy and run files are explicitly selected disk files up to 65,536 bytes
+each. The run selects the same entry and requirements as the manifest and can
+only narrow the policy ceiling. The configured entry takes a single shared
+byte slice. Pick `--input FILE` or `--stdin` for binary input. Omitting both
+supplies an empty snapshot. The input limit is the smaller of the configured
+input and memory limits, capped at 1 MiB. Read completes before guest execution
+starts, after project compilation and authority checks.
+
+The only configured guest capability in this command is `brownie.output.emit`.
+A project that calls it must declare it, the run must grant it, and the policy
+must allow it. A successful emit is published as `output_b64`. The guest return
+value remains a separate field in the same JSON object.
+
+From the repository root on Windows, run the checked-in example:
+
+```powershell
+$project = 'examples/projects/configured-output'
+./build/browniec.exe run --project "$project/project.json" --policy "$project/policy.json" --run "$project/run.json" --input "$project/app.brc" --json-v2
+```
+
+The command returns 77 in `return_i32` and encodes the exact bytes passed to
+the entry in `output_b64`.
 
 `inspect SOURCE --ir [--json]` uses the same explicit source selection and public
 admission as check. `--ir` is required once; Fuel and guest-input options do not

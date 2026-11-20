@@ -83,7 +83,7 @@ labels source bytes and instruction indices explicitly and omits absent location
 
 
 For check/run/eval-i32, text mode leaves stdout empty and writes checked status, return_i32, or diagnostics
-to stderr. Guest output bytes and output_b64 are not implemented. Version JSON uses
+to stderr. Configured project runs require JSON. Version JSON uses
 `browniec.version/v1`, preserves `profile` as `brownie.m1-scalar/1`, adds the
 `array_profile`, `array_write_profile`, and `array_copy_profile` fields, and
 reports delivery availability. The following shows selected fields only: actual
@@ -110,10 +110,9 @@ No second success/error document is appended to partially written JSON.
 
 ## Completion and failure
 
-The general cancellation/deadline/worker publication rules below are target
-contracts; these lifecycle paths and guest output are not currently implemented.
-Native result-JSON buffering is implemented and is separate from guest Buffer or
-`output::emit` support.
+Configured Windows project runs enforce compile and execution deadlines and
+publish sealed `output::emit` transactions. General cancellation and worker
+publication remain target contracts.
 
 A normal result requires the expected computation to complete, required output staging
 to succeed, and publication checks to pass. Guest nonzero remains a normal run result.
@@ -159,6 +158,13 @@ A malformed or oversized manifest is a configuration error (2). Nonempty
 requirements are unavailable (4), and failure to open or read the manifest or
 its declared files is an input I/O error (7). Source compilation and runtime
 failures use their existing error classes.
+
+Configured runs accept both JSON versions. A successful publication includes
+`output_b64` with standard padded Base64 and uses the existing `return_i32`.
+An emitted empty result is encoded as an empty string. Any compile or run
+failure leaves the field absent, including a trap after an emit. The configured
+path reports `deadline` and `memory_limit` as exit 5. Its source diagnostics
+use the same canonical project locations described below.
 
 After successful compilation, project runs with `--input FILE` or `--stdin` report
 `brownie.m2-reference/1`. Oversized input reports `input_limit` and exit 5.

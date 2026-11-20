@@ -87,7 +87,7 @@ Saved fields are comparison facts, not guest/raw-IR authority. Chunk work takes
 no Table snapshots, scratch allocations or payload snapshots. Existing atomic
 `owners::copy` and `owners::assign`, and existing fill behavior, remain unchanged.
 
-The private [native Engine](../../native/runtime-engine/runtime_engine.fy) exposes
+The private [native Engine](../../src/runtime_engine.fy) exposes
 `array_copy_progress` through the existing guarded array progress accessor.
 It reports the shared recipe/counters, not payload; terminal states reject access.
 

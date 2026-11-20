@@ -20,8 +20,6 @@ need, sha, write, record = probe.need, probe.sha, probe.write, probe.record
 def closure():
     files = {p.stem: p for p in (ROOT / 'src').glob('*.fy')}
     files.update({p.stem: p for p in (ROOT / 'tools/runtime-engine').glob('*.fy')})
-    files['runtime_engine'] = NATIVE / 'runtime_engine.fy'
-    files['runtime_pending_output'] = NATIVE / 'runtime_pending_output.fy'
     files['retention_plan_contracts'] = ROOT / 'tests/m2/retention_plan.fy'
     files['program_compile_contracts'] = ROOT / 'tests/m2/runtime_program_compile_memory.fy'
     files['control_budget_contracts'] = ROOT / 'tests/m2/runtime_control_budget.fy'
