@@ -12,6 +12,9 @@ import std::bytes as bytes;
 unsafe extern C fn void bc_runtime_engine_test_seed(ptr mut void e,u32 kind);
 unsafe extern C fn void bc_runtime_engine_test_fail(i64 count);
 unsafe extern C fn void bc_runtime_engine_test_closed_allocations();
+unsafe extern C fn void bc_runtime_engine_test_inject_output_fault(u32 stage);
+unsafe extern C fn usize probe_live_bytes();
+unsafe extern C fn usize probe_attempts();
 
 // No recursive fixture fallbacks: construction failures must not masquerade as
 // native stack exhaustion. Each group owns and drops its complete fixture.
@@ -311,7 +314,50 @@ fn void implicit_owning_cleanup(){
     // No explicit destroy or take of the remaining records.
 }
 
+fn Result<bool,engine::Error> output_fault_quarantines_engine(u32 stage){
+    var engine::Engine e=created(1,3)?;
+    let usize p=input_code(ref mut e,b"module app;pub fn i32 chosen(ref u8[] data){output::emit(ref data);return 42;}");
+    let usize prior=bound(ref mut e,p,b"A",16000000,1,true);
+    let engine::Event done=event(engine::execute_once(ref mut e,prior));
+    assert(done.kind==1 && done.value==42);
+    let usize peer=id(engine::create_instance(ref mut e,p,123));
+    let engine::Event ready=event(engine::observe(ref mut e,peer));
+    rejected_event(engine::execute_once(ref mut e,peer),1);
+    rejected_event(engine::prepare_instance(ref mut e,peer),1);
+    same_event(ready,event(engine::observe(ref mut e,peer)));
+
+    let usize target=bound(ref mut e,p,if(stage==3){b""}else{b"A"},16000000,1,true);
+    if(stage==5){assert(event(engine::prepare_instance(ref mut e,target)).kind==4);}
+    let engine::Event before=event(engine::observe(ref mut e,target));
+    let usize attempts=unsafe{probe_attempts()};
+    let usize live=unsafe{probe_live_bytes()};
+    unsafe{bc_runtime_engine_test_inject_output_fault(stage)};
+    if(stage==5){rejected_event(engine::step_instance(ref mut e,target,1),14);}
+    else{rejected_event(engine::execute_once(ref mut e,target),14);}
+    assert(unsafe{probe_live_bytes()}==live);
+    if(stage==6){assert(unsafe{probe_attempts()}>attempts);}
+    else{assert(unsafe{probe_attempts()}==attempts);}
+    rejected_take(engine::take_output(ref mut e,target),2);
+    let engine::Event terminal=event(engine::observe(ref mut e,target));
+    assert(terminal.kind==2 && terminal.diagnostic.code.kind==errors::engine_poisoned_kind() && terminal.fuel_known);
+    assert(terminal.remaining==if(stage==6){done.remaining}else{before.remaining});
+    let engine::Event stopped=event(engine::observe(ref mut e,peer));
+    assert(stopped.kind==2 && stopped.remaining==123 && stopped.diagnostic.code.kind==errors::engine_poisoned_kind());
+    same_event(done,event(engine::observe(ref mut e,prior)));
+    let engine::Output output=engine::take_output(ref mut e,prior)?;
+    published(ref output,b"A",1);
+    assert(id(engine::destroy_instance(ref mut e,target))==target);
+    assert(id(engine::destroy_instance(ref mut e,peer))==peer);
+    assert(id(engine::destroy_instance(ref mut e,prior))==prior);
+    assert(id(engine::release_program(ref mut e,p))==p);
+    assert(id(engine::destroy(ref mut e))==0);
+    return .ok(true);
+}
+
 pub fn void run(){
+    assert(output_fault_quarantines_engine(3).is_ok);unsafe{bc_runtime_engine_test_closed_allocations()};
+    assert(output_fault_quarantines_engine(5).is_ok);unsafe{bc_runtime_engine_test_closed_allocations()};
+    assert(output_fault_quarantines_engine(6).is_ok);unsafe{bc_runtime_engine_test_closed_allocations()};
     take_once_and_detached_lifetime();unsafe{bc_runtime_engine_test_closed_allocations()};
     default_denial_explicit_grant_and_noemit();unsafe{bc_runtime_engine_test_closed_allocations()};
     moved_input_released_pin_and_engine_move();unsafe{bc_runtime_engine_test_closed_allocations()};

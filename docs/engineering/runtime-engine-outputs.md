@@ -24,6 +24,29 @@ No failed prefix, staging transaction or seal authority escapes. Observe and
 cancel preserve the first terminal event; no second invocation reconstructs
 Fuel or output. Wrong execution API rejects before consuming Ready.
 
+## Containment before synchronous publication
+
+Synchronous execution, preparation and resume validate the same bound input
+association and Snapshot capacity. The Engine detects loss of a retained empty
+Snapshot, whose charge is zero. A Ready Instance created without a required
+input returns status 1. Once prepared, a missing required input is an
+invariant failure.
+
+The synchronous executor checks its reserved Output slot before dispatch.
+After execution, it validates the retained bytes against the admitted output
+bound and ledger before transferring ownership. An invariant failure returns
+status 14 and quarantines the Engine. A failed publication drops the local
+output owner and records the Fuel already spent. Earlier terminal events and
+published output remain available to the owner.
+
+The Windows verifier injected three faults: a missing empty Snapshot in
+synchronous execution, a charge mismatch during resume and invalid
+publication accounting after successful execution. The first two attempted
+zero SDK allocations. The third reclaimed its newly allocated output and
+preserved the consumed Fuel. Both profiles passed with zero live SDK
+allocations at exit. Local receipt:
+`build/runtime-engine/20261120T223041520821Z/receipt.json`.
+
 ## Ownership and extraction
 
 `take_output(engine, instance)` first reserves the caller's single result slot.

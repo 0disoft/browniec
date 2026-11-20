@@ -1502,7 +1502,7 @@ fn u32 execute_inner(ref mut Meta m,ref vec::Vec<Program> p,ref mut vec::Vec<Ins
     };
     let ref Program code=vec::at<Program>(p,pi);
     if(code.pins==0 || program_variants(code)!=1){return contain_execution_fault(m,p,v,outputs);}
-    if(vec::len<output_programs::Program>(ref code.output)!=0){return execute_output_inner(m,p,v,inputs,outputs,id);}
+    if(vec::len<output_programs::Program>(ref code.output)!=0){return execute_output_inner(m,p,v,inputs,outputs,pi,ii);}
     if(vec::len<input_programs::Program>(ref code.input)!=0){
         let Result<usize,u32> bound_input=input_index(inputs,id);
         if(bound_input.is_ok!=current.input_bound){return contain_execution_fault(m,p,v,outputs);}
@@ -1521,29 +1521,51 @@ fn u32 execute_inner(ref mut Meta m,ref vec::Vec<Program> p,ref mut vec::Vec<Ins
     {let ref mut Instance target=vec::at_mut<Instance>(v,ii);target.event=event;target.phase=2;}
     m.event=event;return success(m,id);
 }
-fn u32 execute_output_inner(ref mut Meta m,ref vec::Vec<Program> p,ref mut vec::Vec<Instance> v,
-    ref vec::Vec<BoundInput> inputs,ref mut vec::Vec<Output> outputs,usize id){
-    let usize ii=switch(instance_index(v,id)){case .ok(x):{x}case .err(s):{return failed(m,s);}};
-    let Instance current=*vec::at<Instance>(v,ii);
-    if(current.phase==1 || current.phase==3 || current.phase==4){return failed(m,3);}if(current.phase==2){return failed(m,11);}
-    let usize pi=switch(program_index(p,current.program,false)){case .ok(x):{x}case .err(s):{return failed(m,s);}};
-    let ref Program code=vec::at<Program>(p,pi);
-    if(code.pins==0 || vec::len<output_programs::Program>(ref code.output)!=1 || output_index(outputs,id).is_ok){return failed(m,7);}
-    let ref output_programs::Program retained=vec::at<output_programs::Program>(ref code.output,0);
-    if(output_programs::accepts_input(retained) && !input_index(inputs,id).is_ok){return failed(m,1);}
-    let u32 memory_status=reserve_execution(m,code,ref current);if(memory_status!=0){return memory_status;}
-    if(output_programs::accepts_input(retained)){
-        let usize bi=switch(input_index(inputs,id)){case .ok(x):{x}case .err(_):{return failed(m,1);}};
-        {let ref mut Instance target=vec::at_mut<Instance>(v,ii);target.phase=1;}
-        return publish_output_run(m,v,outputs,ii,id,output_programs::complete(retained,
-            ref vec::at<BoundInput>(inputs,bi).input,current.fuel,current.output_limit,current.output_allowed));
-    }
-    var usize budget=0;let input_bytes::Snapshot empty=switch(input_bytes::snapshot(b"",0,0,ref mut budget)){
-        case .ok(value):{value}case .err(_):{return failed(m,7);}
+fn Result<Option<usize>,u32> locate_output_input(ref vec::Vec<BoundInput> inputs,ref Instance child,bool accepts_input){
+    let Result<usize,u32> located=input_index(inputs,child.id);
+    if(located.is_ok!=child.input_bound){return .err(14);}
+    let Option<usize> index=switch(located){
+        case .ok(i):{
+            let ref input_bytes::Snapshot input=ref vec::at<BoundInput>(inputs,i).input;
+            if(!accepts_input || input_bytes::capacity(input)!=child.input_bytes){return .err(14);}
+            let Option<usize> found=.some(i);found
+        }
+        case .err(_):{
+            if(child.input_bytes!=0){return .err(14);}
+            if(accepts_input){return .err(1);}
+            let Option<usize> empty=.none;empty
+        }
     };
+    return .ok(index);
+}
+fn u32 execute_output_inner(ref mut Meta m,ref vec::Vec<Program> p,ref mut vec::Vec<Instance> v,
+    ref vec::Vec<BoundInput> inputs,ref mut vec::Vec<Output> outputs,usize pi,usize ii){
+    let Instance current=*vec::at<Instance>(v,ii);
+    if(output_index(outputs,current.id).is_ok || current.output_bytes!=0 ||
+        vec::len<Output>(outputs)>=vec::capacity<Output>(outputs)){return contain_execution_fault(m,p,v,outputs);}
+    let ref Program code=vec::at<Program>(p,pi);
+    let ref output_programs::Program retained=vec::at<output_programs::Program>(ref code.output,0);
+    let Option<usize> bound=switch(locate_output_input(inputs,ref current,output_programs::accepts_input(retained))){
+        case .ok(index):{index}
+        case .err(status):{
+            if(status==14){return contain_execution_fault(m,p,v,outputs);}
+            return failed(m,status);
+        }
+    };
+    let u32 memory_status=reserve_execution(m,code,ref current);if(memory_status!=0){return memory_status;}
     {let ref mut Instance target=vec::at_mut<Instance>(v,ii);target.phase=1;}
-    return publish_output_run(m,v,outputs,ii,id,output_programs::complete(retained,
-        ref empty,current.fuel,current.output_limit,current.output_allowed));
+    let output_programs::Execution run=switch(bound){
+        case .some(i):{output_programs::complete(retained,ref vec::at<BoundInput>(inputs,i).input,
+            current.fuel,current.output_limit,current.output_allowed)}
+        case .none:{
+            var usize unused=0;
+            let input_bytes::Snapshot empty=switch(input_bytes::snapshot(b"",0,0,ref mut unused)){
+                case .ok(value):{value}case .err(_):{return contain_execution_fault(m,p,v,outputs);}
+            };
+            output_programs::complete(retained,ref empty,current.fuel,current.output_limit,current.output_allowed)
+        }
+    };
+    return publish_output_run(m,p,v,outputs,ii,run);
 }
 fn Result<machines::Machine,diagnostics::Error> open_instance_machine(ref output_programs::Program code,
     ref vec::Vec<BoundInput> inputs,Option<usize> bound,usize budget,usize limit,bool allowed){
@@ -1564,21 +1586,19 @@ fn u32 prepare_instance_inner(ref mut Meta m,ref vec::Vec<Program> p,ref mut vec
     if(before.phase!=0){return failed(m,3);}
     let usize pi=switch(program_index(p,before.program,false)){case .ok(x):{x}case .err(_):{return contain_execution_fault(m,p,v,outputs);}};
     let ref Program code=vec::at<Program>(p,pi);
-    let usize variants=vec::len<output_programs::Program>(ref code.output);
-    if(code.pins==0 || variants>1 || output_index(outputs,id).is_ok){return contain_execution_fault(m,p,v,outputs);}
-    if(variants==0){return failed(m,1);}
+    if(code.pins==0 || program_variants(code)!=1 || output_index(outputs,id).is_ok || before.output_bytes!=0){
+        return contain_execution_fault(m,p,v,outputs);
+    }
+    if(vec::len<output_programs::Program>(ref code.output)==0){return failed(m,1);}
     if(vec::len<Output>(outputs)>=vec::capacity<Output>(outputs)){return contain_execution_fault(m,p,v,outputs);}
     let ref output_programs::Program retained=vec::at<output_programs::Program>(ref code.output,0);
-    var Option<usize> bound=.none;
-    if(output_programs::accepts_input(retained)){
-        let Result<usize,u32> located=input_index(inputs,id);
-        let usize index=switch(located){
-            case .ok(i):{i}case .err(_):{return contain_execution_fault(m,p,v,outputs);}
-        };
-        let ref input_bytes::Snapshot input=ref vec::at<BoundInput>(inputs,index).input;
-        if(input_bytes::capacity(input)!=before.input_bytes){return contain_execution_fault(m,p,v,outputs);}
-        bound=.some(index);
-    }
+    let Option<usize> bound=switch(locate_output_input(inputs,ref before,output_programs::accepts_input(retained))){
+        case .ok(index):{index}
+        case .err(status):{
+            if(status==14){return contain_execution_fault(m,p,v,outputs);}
+            return failed(m,status);
+        }
+    };
     let usize charge=switch(pending_bytes(code,before.output_limit)){case .ok(v):{v}case .err(e):{return failed(m,e.status);}};
     if(charge>18446744073709551615-before.input_bytes){return failed(m,8);}
     let live::Plan ownership=switch(prepare_payload(m,before.input_bytes,before.input_bytes+charge,0)){
@@ -1606,13 +1626,19 @@ fn u32 prepare_instance_inner(ref mut Meta m,ref vec::Vec<Program> p,ref mut vec
     {let ref mut Instance target=vec::at_mut<Instance>(v,ii);target.phase=3;target.event=event;target.output_bytes=charge;}
     commit_payload(m,ref ownership);m.event=event;return success(m,id);
 }
-fn u32 publish_output_run(ref mut Meta m,ref mut vec::Vec<Instance> v,ref mut vec::Vec<Output> outputs,
-    usize ii,usize id,output_programs::Execution run){
+fn u32 publish_output_run(ref mut Meta m,ref vec::Vec<Program> p,ref mut vec::Vec<Instance> v,
+    ref mut vec::Vec<Output> outputs,usize ii,output_programs::Execution run){
     let output_programs::Completion completed=output_programs::observe(ref run);
     let usize bytes=output_programs::heap_bytes(ref run);
     let Instance before=*vec::at<Instance>(v,ii);
+    let usize id=before.id;
+    // Keep consumed Fuel visible if publication itself fails.
+    {let ref mut Instance target=vec::at_mut<Instance>(v,ii);target.event.remaining=completed.remaining;}
+    if(bytes>616+before.output_limit || bytes>18446744073709551615-before.input_bytes){
+        return contain_execution_fault(m,p,v,outputs);
+    }
     let live::Plan ownership=switch(live::prepare(ref m.heap,before.input_bytes,before.input_bytes+bytes,0)){
-        case .ok(v):{v}case .err(_):{assert(false);return failed(m,7);}
+        case .ok(v):{v}case .err(_):{return contain_execution_fault(m,p,v,outputs);}
     };
     let Event event=Event{.kind=if(completed.success){1}else{2},.value=completed.value,
         .diagnostic=completed.diagnostic,.remaining=completed.remaining,.fuel_known=true};
@@ -1689,19 +1715,25 @@ fn u32 step_instance_inner(ref mut Meta m,ref vec::Vec<Program> p,ref mut vec::V
     if(code.pins==0 || vec::len<output_programs::Program>(ref code.output)!=1){return contain_execution_fault(m,p,v,outputs);}
     let ref output_programs::Program retained=vec::at<output_programs::Program>(ref code.output,0);
     let usize oi=switch(output_index(outputs,id)){case .ok(x):{x}case .err(_):{return contain_execution_fault(m,p,v,outputs);}};
+    let Option<usize> bound=switch(locate_output_input(inputs,ref before,output_programs::accepts_input(retained))){
+        case .ok(index):{index}
+        case .err(_):{return contain_execution_fault(m,p,v,outputs);}
+    };
     var u32 status=0;
-    if(output_programs::accepts_input(retained)){
-        let usize bi=switch(input_index(inputs,id)){case .ok(x):{x}case .err(_):{return contain_execution_fault(m,p,v,outputs);}};
-        let ref input_bytes::Snapshot input=ref vec::at<BoundInput>(inputs,bi).input;
-        let ref mut Output saved=vec::at_mut<Output>(outputs,oi);
-        status=unsafe{step_output_raw(saved as ptr mut void,retained as ptr void,input as ptr void,quantum,before.deadline)};
-    }else{
-        var usize unused=0;let input_bytes::Snapshot empty=switch(input_bytes::snapshot(b"",0,0,ref mut unused)){
-            case .ok(v):{v}case .err(_):{return contain_execution_fault(m,p,v,outputs);}
-        };
-        let ref mut Output saved=vec::at_mut<Output>(outputs,oi);
-        status=unsafe{step_output_raw(saved as ptr mut void,retained as ptr void,ref empty as ptr void,quantum,before.deadline)};
-    }
+    switch(bound){
+        case .some(i):{
+            let ref input_bytes::Snapshot input=ref vec::at<BoundInput>(inputs,i).input;
+            let ref mut Output saved=vec::at_mut<Output>(outputs,oi);
+            status=unsafe{step_output_raw(saved as ptr mut void,retained as ptr void,input as ptr void,quantum,before.deadline)};
+        }
+        case .none:{
+            var usize unused=0;let input_bytes::Snapshot empty=switch(input_bytes::snapshot(b"",0,0,ref mut unused)){
+                case .ok(v):{v}case .err(_):{return contain_execution_fault(m,p,v,outputs);}
+            };
+            let ref mut Output saved=vec::at_mut<Output>(outputs,oi);
+            status=unsafe{step_output_raw(saved as ptr mut void,retained as ptr void,ref empty as ptr void,quantum,before.deadline)};
+        }
+    };
     if(status!=0 && status!=14){return contain_execution_fault(m,p,v,outputs);}
     let ref Output saved=vec::at<Output>(outputs,oi);
     let bool pending=vec::len<machines::Machine>(ref saved.pending)==1;

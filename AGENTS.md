@@ -1,5 +1,5 @@
-- Latest runtime checkpoint (2026-11-21): [Synchronous input containment](docs/engineering/runtime-engine-inputs.md#containment-of-input-association-faults)
-  quarantines lost Snapshot associations and charge mismatches before VM entry.
+- Latest runtime checkpoint (2026-11-21): [Synchronous output containment](docs/engineering/runtime-engine-outputs.md#containment-before-synchronous-publication)
+  quarantines input binding and output ownership failures around VM execution.
   Windows development and /O2 Engine checks passed with zero live SDK allocations.
 
 # Brownie C agent guidance

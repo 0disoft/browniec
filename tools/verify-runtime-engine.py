@@ -118,13 +118,18 @@ def source_copy(path):
         text = text.replace(declaration_at, declaration + '\n' + declaration_at, 1)
         text = text.replace(anchor, anchor + '\n' + injected, 1)
         if path.name == 'runtime_engine.fy':
-            binding = 'let Result<usize,u32> located=input_index(inputs,id);'
+            binding = 'let Result<usize,u32> located=input_index(inputs,child.id);'
             opening = '    ref vec::Vec<BoundInput> inputs,Option<usize> bound,usize budget,usize limit,bool allowed){'
-            need(text.count(binding) == 1 and text.count(opening) == 1, 'Output preparation fault anchor changed')
+            capacity_check = 'input_bytes::capacity(input)!=child.input_bytes'
+            publication = 'if(bytes>616+before.output_limit ||'
+            need(text.count(binding) == text.count(opening) == text.count(capacity_check) == text.count(publication) == 1,
+                 'Output fault anchors changed')
             text = text.replace(binding, 'let Result<usize,u32> located=if(unsafe{bc_runtime_engine_test_output_fault(3)}!=0)'
-                                '{.err(2)}else{input_index(inputs,id)};', 1)
+                                '{.err(2)}else{input_index(inputs,child.id)};', 1)
             text = text.replace(opening, opening + '\n    if(unsafe{bc_runtime_engine_test_output_fault(4)}!=0)'
                                 '{return .err(diagnostics::absent(errors::make(5,0)));}', 1)
+            text = text.replace(capacity_check, 'unsafe{bc_runtime_engine_test_output_fault(5)}!=0 || ' + capacity_check, 1)
+            text = text.replace(publication, 'if(unsafe{bc_runtime_engine_test_output_fault(6)}!=0 || ' + publication[3:], 1)
             function = 'fn u32 prepare_host_inner('
             host_shape = '    if(program_variants(program)!=1){return contain_execution_fault(m,p,v,outputs);}'
             capacity = '    if(stride==0 || vec::len<Instance>(v)>=vec::capacity<Instance>(v) ||'
