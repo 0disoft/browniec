@@ -57,7 +57,8 @@ def check_diagnostic(exe, path, code, kind, location, text):
         assert type(v2['location']['offset']) is int, v2
 
 
-def check_output_table(exe, identity, host_check, host_run, project_host_check, project_host_run):
+def check_output_table(exe, identity, host_check, host_run, project_host_check, project_host_run,
+                       adapter):
     subprocess.run([sys.executable, '-B', str(ROOT / 'tools/sync-cli-output.py'), '--check'],
                    check=True, timeout=10)
     answer = ROOT / 'examples/answer.brc'
@@ -69,8 +70,14 @@ def check_output_table(exe, identity, host_check, host_run, project_host_check, 
     rows = json.loads((ROOT / 'docs-site/cli-output.json').read_bytes())
     for row in rows:
         command = row['command']
+        adapter_row = '--host-adapter' in row['arguments']
         if command == 'inspect':
             args = [answer, row['arguments'].split()[-1]]
+        elif adapter_row:
+            if adapter is None:
+                continue
+            request = project_host_check if row['arguments'].startswith('--project ') else host_check
+            args = [*request[1:], '--host-adapter', '0', 'v1', adapter]
         elif row['arguments'].startswith('--project FILE --catalog'):
             args = (project_host_run if command == 'run' else project_host_check)[1:]
         elif '--host-replies' in row['arguments']:
@@ -85,7 +92,9 @@ def check_output_table(exe, identity, host_check, host_run, project_host_check, 
             args = sources.get(command, [])
         for mode in row['formats']:
             option = mode['option']
-            ran = invoke(exe, [command, *args, *([option] if option else [])], 0)
+            fixture_environment = {'BC_ENGINE_ADAPTER_FIXTURE': 'g'} if adapter_row else {}
+            with patch.dict(os.environ, fixture_environment):
+                ran = invoke(exe, [command, *args, *([option] if option else [])], 0)
             written = getattr(ran, mode['channel'])
             other = ran.stderr if mode['channel'] == 'stdout' else ran.stdout
             assert written and not other, (row, mode, ran)
@@ -101,6 +110,8 @@ def check_output_table(exe, identity, host_check, host_run, project_host_check, 
                 if command != '--version':
                     assert obj['command'] == command, obj
     print('PASS: documented CLI channels and schemas match native output')
+    if adapter is None:
+        print('SKIP: documented process-adapter output requires --adapter-exe')
 
 
 def make_host_check(folder):
@@ -881,6 +892,7 @@ def main():
     parser.add_argument('--adapter-exe', type=Path, help='Built tools/runtime-engine/adapter-fixture.c')
     settings = parser.parse_args()
     exe = settings.exe.resolve(strict=True)
+    adapter = settings.adapter_exe.resolve(strict=True) if settings.adapter_exe else None
     print(f'CLI SHA-256: {hashlib.sha256(exe.read_bytes()).hexdigest()}', flush=True)
 
     shipping = ROOT / 'examples/shipping-fee.brc'
@@ -894,12 +906,12 @@ def main():
         host_check = make_host_check(Path(temp))
         host_run = make_host_run(host_check, Path(temp) / 'host-replies.json')
         project_host_check, project_host_run = make_host_project(Path(temp) / 'host-project')
-        check_output_table(exe, identity, host_check, host_run, project_host_check, project_host_run)
+        check_output_table(exe, identity, host_check, host_run, project_host_check, project_host_run, adapter)
         check_host_run(exe, host_check, host_run)
-        if settings.adapter_exe:
+        if adapter:
             adapter_dir = Path(temp) / 'process-adapter'
             adapter_dir.mkdir()
-            check_process_adapter(exe, settings.adapter_exe.resolve(strict=True), adapter_dir)
+            check_process_adapter(exe, adapter, adapter_dir)
         check_host_catalog(exe, host_check)
         check_host_project(exe, project_host_check, project_host_run)
         check_host_project_input(exe, project_host_check, project_host_run)

@@ -101,7 +101,49 @@
   },
   {
     "command": "run",
+    "arguments": "SOURCE --catalog FILE --policy FILE --run FILE --host-adapter ID REVISION EXE",
+    "formats": [
+      {
+        "option": "",
+        "channel": "stderr",
+        "schema": null
+      },
+      {
+        "option": "--json",
+        "channel": "stdout",
+        "schema": "browniec.result/v1"
+      },
+      {
+        "option": "--json-v2",
+        "channel": "stdout",
+        "schema": "browniec.result/v2"
+      }
+    ]
+  },
+  {
+    "command": "run",
     "arguments": "--project FILE --catalog FILE --policy FILE --run FILE --host-replies FILE [--input FILE|--stdin] [--output FILE|--output-text FILE]",
+    "formats": [
+      {
+        "option": "",
+        "channel": "stderr",
+        "schema": null
+      },
+      {
+        "option": "--json",
+        "channel": "stdout",
+        "schema": "browniec.result/v1"
+      },
+      {
+        "option": "--json-v2",
+        "channel": "stdout",
+        "schema": "browniec.result/v2"
+      }
+    ]
+  },
+  {
+    "command": "run",
+    "arguments": "--project FILE --catalog FILE --policy FILE --run FILE --host-adapter ID REVISION EXE [--input FILE|--stdin] [--output FILE|--output-text FILE]",
     "formats": [
       {
         "option": "",

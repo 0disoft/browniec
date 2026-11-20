@@ -24,9 +24,15 @@ La CLI pública procesa un archivo fuente a la vez. `check` verifica sin ejecuta
 | `browniec run SOURCE --catalog FILE --policy FILE --run FILE --host-replies FILE` | — | `stderr` | — |
 | `browniec run SOURCE --catalog FILE --policy FILE --run FILE --host-replies FILE` | `--json` | `stdout` | `browniec.result/v1` |
 | `browniec run SOURCE --catalog FILE --policy FILE --run FILE --host-replies FILE` | `--json-v2` | `stdout` | `browniec.result/v2` |
+| `browniec run SOURCE --catalog FILE --policy FILE --run FILE --host-adapter ID REVISION EXE` | — | `stderr` | — |
+| `browniec run SOURCE --catalog FILE --policy FILE --run FILE --host-adapter ID REVISION EXE` | `--json` | `stdout` | `browniec.result/v1` |
+| `browniec run SOURCE --catalog FILE --policy FILE --run FILE --host-adapter ID REVISION EXE` | `--json-v2` | `stdout` | `browniec.result/v2` |
 | `browniec run --project FILE --catalog FILE --policy FILE --run FILE --host-replies FILE [--input FILE\|--stdin] [--output FILE\|--output-text FILE]` | — | `stderr` | — |
 | `browniec run --project FILE --catalog FILE --policy FILE --run FILE --host-replies FILE [--input FILE\|--stdin] [--output FILE\|--output-text FILE]` | `--json` | `stdout` | `browniec.result/v1` |
 | `browniec run --project FILE --catalog FILE --policy FILE --run FILE --host-replies FILE [--input FILE\|--stdin] [--output FILE\|--output-text FILE]` | `--json-v2` | `stdout` | `browniec.result/v2` |
+| `browniec run --project FILE --catalog FILE --policy FILE --run FILE --host-adapter ID REVISION EXE [--input FILE\|--stdin] [--output FILE\|--output-text FILE]` | — | `stderr` | — |
+| `browniec run --project FILE --catalog FILE --policy FILE --run FILE --host-adapter ID REVISION EXE [--input FILE\|--stdin] [--output FILE\|--output-text FILE]` | `--json` | `stdout` | `browniec.result/v1` |
+| `browniec run --project FILE --catalog FILE --policy FILE --run FILE --host-adapter ID REVISION EXE [--input FILE\|--stdin] [--output FILE\|--output-text FILE]` | `--json-v2` | `stdout` | `browniec.result/v2` |
 | `browniec run SOURCE [--input FILE\|--stdin] [--fuel N]` | — | `stderr` | — |
 | `browniec run SOURCE [--input FILE\|--stdin] [--fuel N]` | `--json` | `stdout` | `browniec.result/v1` |
 | `browniec run SOURCE [--input FILE\|--stdin] [--fuel N]` | `--json-v2` | `stdout` | `browniec.result/v2` |

@@ -50,8 +50,10 @@ remain unavailable.
 output emission, compile/run deadlines and console cancellation during execution. [Single-source host checks](configuration.md#single-source-host-check)
 load an explicit catalog. [Single-source host runs](configuration.md#single-source-host-execution)
 add precomputed replies, run deadlines and console cancellation. [Project host runs](configuration.md#project-host-execution)
-apply the same reply contract to an anchored multi-module project. General Buffer delivery,
-external host adapters, workers and cancellation outside configured execution remain unavailable. `--isolated` returns an availability
+apply the same reply contract to an anchored multi-module project.
+[Windows process adapters](configuration.md#windows-process-adapters) can supply
+replies for one explicitly selected import in either run mode. General Buffer
+delivery, workers and cancellation outside configured execution remain unavailable. `--isolated` returns an availability
 denial, with no unrestricted fallback. Ordinary check/run use zero-argument i32
 `main`. The separate eval-i32 command selects a single-i32 `evaluate` entry.
 With explicit guest input, Windows `run SOURCE` instead selects the public shared-byte

@@ -13,12 +13,14 @@ browniec check SOURCE [--json|--json-v2]
 browniec check SOURCE --catalog FILE --policy FILE --run FILE [--json|--json-v2]
 browniec run SOURCE [--input FILE|--stdin] [--fuel N] [--json|--json-v2]
 browniec run SOURCE --catalog FILE --policy FILE --run FILE --host-replies FILE [--json|--json-v2]
+browniec run SOURCE --catalog FILE --policy FILE --run FILE --host-adapter ID REVISION EXE [--json|--json-v2]
 browniec check --project FILE [--json|--json-v2]
 browniec check --project FILE --policy FILE --run FILE [--json|--json-v2]
 browniec check --project FILE --catalog FILE --policy FILE --run FILE [--json|--json-v2]
 browniec run --project FILE [--input FILE|--stdin] [--fuel N] [--json|--json-v2]
 browniec run --project FILE --policy FILE --run FILE [--input FILE|--stdin] (--json|--json-v2)
-browniec run --project FILE --catalog FILE --policy FILE --run FILE --host-replies FILE [--json|--json-v2]
+browniec run --project FILE --catalog FILE --policy FILE --run FILE --host-replies FILE [--input FILE|--stdin] [--output FILE|--output-text FILE] [--json|--json-v2]
+browniec run --project FILE --catalog FILE --policy FILE --run FILE --host-adapter ID REVISION EXE [--input FILE|--stdin] [--output FILE|--output-text FILE] [--json|--json-v2]
 ```
 
 SOURCE is one local UTF-8 code file, at most 4096 bytes. With explicit binary guest
