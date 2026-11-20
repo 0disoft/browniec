@@ -3,6 +3,20 @@
 #include <stdio.h>
 extern size_t probe_live(void);
 
+uintptr_t bc_runtime_engine_test_project_path(uint8_t *out,uintptr_t capacity){
+ wchar_t root[1025];
+ DWORD n=GetFullPathNameW(L"project-fixture",1025,root,NULL);
+ assert(n&&n<1025&&capacity<=3072);
+ int length=WideCharToMultiByte(CP_UTF8,WC_ERR_INVALID_CHARS,root,(int)n,(char *)out,(int)capacity,NULL,NULL);
+ assert(length>0);return (uintptr_t)length;
+}
+void bc_runtime_engine_test_rewrite_project(void){
+ FILE *file=NULL;
+ assert(_wfopen_s(&file,L"project-fixture\\helper.brc",L"wb")==0&&file);
+ assert(fputs("module helper; pub fn i32 answer(){return 7;}",file)!=EOF);
+ assert(fclose(file)==0);
+}
+
 static int host_clock_fixed;
 static ULONGLONG host_clock_ticks;
 static void bc_test_interrupt_time(PULONGLONG now){

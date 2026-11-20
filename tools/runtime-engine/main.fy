@@ -3,6 +3,7 @@ import runtime_engine as engine;
 import source_snapshot as sources;
 import module_index as modules;
 import module_entry as entries;
+import project_manifest as projects;
 import source_error as diagnostics;
 import errors as errors;
 import engine_input_tests as input_tests;
@@ -42,6 +43,8 @@ import output_chunk_contracts as output_chunk_tests;
 import engine_output_chunk_tests as engine_chunk_tests;
 import pending_memory_contracts as pending_memory_tests;
 unsafe extern C fn void bc_runtime_engine_test_closed_allocations();
+unsafe extern C fn usize bc_runtime_engine_test_project_path(ptr mut u8 out,usize capacity);
+unsafe extern C fn void bc_runtime_engine_test_rewrite_project();
 unsafe extern C fn void bc_runtime_engine_test_seed(ptr mut void e,u32 kind);
 unsafe extern C fn void bc_runtime_engine_test_guards(ptr mut void e);
 fn sources::Builder builder(){return switch(sources::builder(4096,4096)){case .ok(v):{v}case .err(_):{assert(false);builder()}};}
@@ -61,7 +64,51 @@ fn engine::Event event(Result<engine::Event,engine::Error> r){return switch(r){c
 fn void counts(ref mut engine::Engine e,usize programs,usize instances,usize pins){switch(engine::inspect(e)){
     case .ok(s):{assert(s.programs==programs && s.instances==instances && s.pins==pins && !s.closed);}case .err(_):{assert(false);}
 };}
+fn projects::Project project(ref u8[] json){
+    return switch(projects::parse(json)){case .ok(value):{value}case .err(_):{assert(false);project(json)}};
+}
+fn void run_project(ref mut engine::Engine e,usize program,i64 expected){
+    let usize instance=id(engine::create_instance(e,program,256));
+    let engine::Event done=event(engine::execute_once(e,instance));
+    assert(done.kind==1 && done.value==expected);
+    assert(id(engine::destroy_instance(e,instance))==instance);
+}
+fn void project_engine(){
+    let projects::Project manifest=project(b"{\"schema\":\"brownie.project/0.3\",\"name\":\"fixture\",\"entry\":{\"module\":\"app\",\"function\":\"start\"},\"sources\":[{\"module\":\"app\",\"path\":\"app.brc\"},{\"module\":\"helper\",\"path\":\"helper.brc\"}],\"requires\":[]}");
+    let projects::Project requires=project(b"{\"schema\":\"brownie.project/0.3\",\"name\":\"fixture\",\"entry\":{\"module\":\"app\",\"function\":\"start\"},\"sources\":[{\"module\":\"app\",\"path\":\"app.brc\"}],\"requires\":[\"host.demo.read\"]}");
+    let projects::Project wrong=project(b"{\"schema\":\"brownie.project/0.3\",\"name\":\"fixture\",\"entry\":{\"module\":\"app\",\"function\":\"start\"},\"sources\":[{\"module\":\"app\",\"path\":\"helper.brc\"},{\"module\":\"helper\",\"path\":\"app.brc\"}],\"requires\":[]}");
+    var engine::Engine e=create(2,2);
+    var u8[3072] path=[0;3072];
+    let usize length=unsafe{bc_runtime_engine_test_project_path(ref mut path[..] as ptr mut u8,3072)};
+    let ref u8[] root=ref path[..length];
+    rejected(engine::compile_project(ref mut e,ref requires,b"",65536),5);
+    rejected(engine::compile_project(ref mut e,ref manifest,b"",65536),1);
+    switch(engine::compile_project(ref mut e,ref wrong,root,65536)){
+        case .ok(_):{assert(false);}
+        case .err(problem):{assert(problem.status==4 && problem.diagnostic.at.source<2);}
+    };
+    counts(ref mut e,0,0,0);
+    let usize program=id(engine::compile_project(ref mut e,ref manifest,root,65536));
+    assert(program==1);
+    unsafe{bc_runtime_engine_test_rewrite_project()};
+    let usize fresh=id(engine::compile_project(ref mut e,ref manifest,root,65536));
+    let usize a=id(engine::create_instance(ref mut e,program,256));
+    let usize b=id(engine::create_instance(ref mut e,program,256));
+    counts(ref mut e,2,2,2);
+    assert(id(engine::release_program(ref mut e,program))==program);
+    let engine::Event first=event(engine::execute_once(ref mut e,a));
+    let engine::Event second=event(engine::execute_once(ref mut e,b));
+    assert(first.kind==1 && second.kind==1 && first.value==77 && second.value==77);
+    assert(id(engine::destroy_instance(ref mut e,a))==a);
+    assert(id(engine::destroy_instance(ref mut e,b))==b);
+    run_project(ref mut e,fresh,42);
+    assert(id(engine::release_program(ref mut e,fresh))==fresh);
+    counts(ref mut e,0,0,0);
+    assert(id(engine::destroy(ref mut e))==0);
+}
 fn i32 main(){
+    project_engine();
+    unsafe{bc_runtime_engine_test_closed_allocations()};
     engine::retain_native_bindings();
     pending_tests::run();
     prepared_tests::run();

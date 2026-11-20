@@ -138,7 +138,7 @@ uint32_t bc_runtime_engine_compile_preflight(void *raw,uint32_t mode,const void 
  bc_engine *e=raw;bc_abi_thread_identity id;uint32_t s=bc_abi_guard_enter(&id);if(s)return s;
  s=B18(&e->f_0,id.thread,id.lifetime);
  if(!s)s=B21(&e->f_0,&e->f_1,mode,0,0);
- if(!s){
+ if(!s&&selected){
   uint32_t kind=mode==1||mode==3;
   s=B21(&e->f_0,&e->f_1,mode,bc_runtime_engine_compile_fact(selected,kind,1),bc_runtime_engine_compile_fact(selected,kind,0));
  }

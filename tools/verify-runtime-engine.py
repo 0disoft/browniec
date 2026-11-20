@@ -33,6 +33,8 @@ def closure():
     files['dispatch_cursor_contracts'] = ROOT / 'tests/m2/slice_result_cursor.fy'
     files['dispatch_quantum_contracts'] = ROOT / 'tests/m2/module_dispatch_quantum.fy'
     files['runtime_input_adoption'] = ROOT / 'native/runtime-input-adoption/adoption.fy'
+    files['project_source_loader'] = ROOT / 'native/project-source-loader/loader.fy'
+    files['anchored_source_loader'] = ROOT / 'native/anchored-source-loader/loader.fy'
     seen, todo = {}, ['main']
     while todo:
         name = todo.pop()
@@ -47,6 +49,9 @@ def closure():
 
 
 def source_copy(path):
+    for module in ('project', 'anchored'):
+        if path == ROOT / f'native/{module}-source-loader/loader.fy':
+            return f'{module}_source_loader.fy', path.read_bytes()
     if path == ROOT / 'src/slice_result_call_ir.fy':
         source = path.read_text(encoding='utf-8')
         signatures = ['pub fn Result<usize,errors::Error> binding(ref ir::Program p,usize pc){',
@@ -159,13 +164,15 @@ def main():
         need({p.relative_to(ROOT).as_posix() for p in sources} == set(expected), 'Reviewed closure changed')
         for path in sources:
             need(sha(path.read_bytes()) == expected[path.relative_to(ROOT).as_posix()], f'Source changed: {path}')
+        os_sources = ['native/runtime_input_reader.c', 'native/runtime_input_reader.h',
+                      'native/runtime-input-adoption/bridge.c',
+                      'native/anchored_sources.c', 'native/anchored_sources.h',
+                      'native/anchored-source-loader/bridge.c', 'native/anchored-source-loader/bridge.h']
         extras = ['fairy.toml', 'toolchain.json', 'tools/verify-runtime-engine.py',
                   'tools/verify-runtime-store-probe.py', 'tools/compiler_scratch_layouts.py', 'tools/runtime-engine/test-host.inc',
                   'native/runtime-engine/bridge.inc', 'native/runtime-engine/transport.json',
                   'native/abi_thread_identity.c', 'native/abi_thread_identity.h',
-                  'native/runtime_input_reader.c', 'native/runtime_input_reader.h',
-                  'native/runtime-input-adoption/bridge.c',
-                  'tools/runtime-engine/heap-observer.c', 'tools/runtime-engine/compile-test-host.inc']
+                  'tools/runtime-engine/heap-observer.c', 'tools/runtime-engine/compile-test-host.inc'] + os_sources
         inputs = {p.relative_to(ROOT).as_posix(): p.read_bytes() for p in sources}
         inputs.update({name: (ROOT / name).read_bytes() for name in extras})
         need(all(b'\r' not in raw for name, raw in inputs.items()
@@ -304,8 +311,7 @@ def main():
         write(output / 'bindings.h', bindings)
         for name in ['abi_thread_identity.c', 'abi_thread_identity.h']:
             write(output / name, inputs['native/' + name])
-        for name in ['native/runtime_input_reader.c', 'native/runtime_input_reader.h',
-                     'native/runtime-input-adoption/bridge.c']:
+        for name in os_sources:
             write(output / name, inputs[name])
         write(output / 'bridge.inc', inputs['native/runtime-engine/bridge.inc'])
         write(output / 'test-host.inc', inputs['tools/runtime-engine/test-host.inc'])
@@ -347,7 +353,9 @@ def main():
             objects = []
             native_sources = {name: output / (name + '.c') for name in ['transport', 'runtime', 'abi_thread_identity']}
             native_sources.update(input_reader=output / 'native/runtime_input_reader.c',
-                                  input_adoption=output / 'native/runtime-input-adoption/bridge.c')
+                                  input_adoption=output / 'native/runtime-input-adoption/bridge.c',
+                                  anchored=output / 'native/anchored_sources.c',
+                                  anchored_adoption=output / 'native/anchored-source-loader/bridge.c')
             for name, source in native_sources.items():
                 obj = folder / (name + '.obj')
                 # MSVC can spend several minutes optimizing the generated Engine unit.
@@ -358,6 +366,9 @@ def main():
                 objects.append(obj)
             exe = folder / 'runtime-engine.exe'
             run([cl, '/nologo', *objects, 'ntdll.lib', '/Fe' + str(exe), '/link', '/INCREMENTAL:NO', '/Brepro'], env=env)
+            fixture = output / 'project-fixture'
+            write(fixture / 'app.brc', b'module app; import helper as h; pub fn i32 start(){return h::answer()+35;}')
+            write(fixture / 'helper.brc', b'module helper; pub fn i32 answer(){return 42;}')
             need(run([exe], env=runtime_env) == b'' and
                  receipt['commands'][-1]['stderrSha256'] == sha(b''), 'Expected silent native success')
             metrics_raw = (output / 'control-metrics.json').read_bytes()
