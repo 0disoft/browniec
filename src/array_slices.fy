@@ -29,26 +29,34 @@ fn Result<usize, owners::Error> validate(ref Pool pool, ref owners::Table table,
     var usize count = 0;
     var usize i = 0;
     while (i < 16) {
-        let Slot entry = pool.slots[i];
-        if (entry.live) {
-            if (entry.generation == 0) { return .err(.State); }
-            if (!same_root(entry.view.root, entry.lease.root)) { return .err(.Token); }
-            if (entry.exclusive) {
-                let owners::WriteLease lease = writer(ref entry);
-                let usize length = owners::exclusive_length(table, ref lease, capacity)?;
-                var usize j = 0;
-                while (j < 16) {
-                    if (j != i && pool.slots[j].live && same_root(pool.slots[j].view.root, entry.view.root)) { return .err(.State); }
-                    j += 1;
-                }
-            } else { let usize length = owners::leased_length(table, entry.lease, ref entry.view, capacity)?; }
-            count += 1;
-        } else if (entry.exclusive) { return .err(.State); }
+        count += inspect_cleanup_slot(pool, table, capacity, i)?;
         i += 1;
     }
     return .ok(count);
 }
-// Private staged cleanup preflight; no pool or owner mutation.
+// Private staged cleanup preflight. Each visit authenticates one descriptor.
+pub fn Result<usize, owners::Error> inspect_cleanup_slot(ref Pool pool,
+    ref owners::Table table, usize capacity, usize index) {
+    if (index >= 16) { return .err(.State); }
+    let Slot entry = pool.slots[index];
+    if (!entry.live) {
+        if (entry.exclusive) { return .err(.State); }
+        return .ok(0);
+    }
+    if (entry.generation == 0) { return .err(.State); }
+    if (!same_root(entry.view.root, entry.lease.root)) { return .err(.Token); }
+    if (entry.exclusive) {
+        let owners::WriteLease lease = writer(ref entry);
+        let usize length = owners::exclusive_length(table, ref lease, capacity)?;
+        var usize other = 0;
+        while (other < 16) {
+            if (other != index && pool.slots[other].live &&
+                same_root(pool.slots[other].view.root, entry.view.root)) { return .err(.State); }
+            other += 1;
+        }
+    } else { let usize length = owners::leased_length(table, entry.lease, ref entry.view, capacity)?; }
+    return .ok(1);
+}
 pub fn Result<usize,owners::Error> inspect_cleanup(ref Pool pool,ref owners::Table table,usize capacity){return validate(pool,table,capacity);}
 // Identity only. Batch admission uses this after validating the immutable pool.
 fn Result<usize, owners::Error> lookup(ref Pool pool, Ticket ticket) {
@@ -177,6 +185,13 @@ pub fn Result<Ticket, owners::Error> rotate_exclusive(ref mut Pool pool, Ticket 
 pub fn Result<usize, owners::Error> close(ref mut Pool pool, Ticket ticket,
     ref mut owners::Table table, usize capacity) {
     let usize index = resolve(pool, ticket, table, capacity)?;
+    return close_prepared(pool, index, table, capacity);
+}
+// Staged cleanup may reuse its complete proof on the same unpublished pool
+// and owner table. Only authenticated retirements may occur after preflight.
+pub fn Result<usize, owners::Error> close_cleanup_slot(ref mut Pool pool, Ticket ticket,
+    ref mut owners::Table table, usize capacity) {
+    let usize index = lookup(pool, ticket)?;
     return close_prepared(pool, index, table, capacity);
 }
 // The caller authenticated this live slot and the entire pool. Retiring one

@@ -77,11 +77,24 @@ fn Result<usize,errors::Error> parity(bool mixed,bool corrupt){
     if(corrupt){state.runtime.authority.depth=99;state.runtime.authority.kinds[30]=9;}
     let runtime::State before=state;var runtime::State raw=state;
     let usize aborted=runtime::abort(ref mut raw,64,0)?;assert(aborted==0);
-    let usize stages=drive(ref mut state,ref before)?;assert(stages>31);same(ref state,ref raw);return .ok(0);
+    let usize stages=drive(ref mut state,ref before)?;assert(stages==66);same(ref state,ref raw);return .ok(0);
 }
 @test fn void saturated_mixed_sessions_and_owners_match_raw_zero_fuel_cleanup(){assert(parity(true,false).is_ok);}
 @test fn void corrupt_authority_receipts_do_not_block_authenticated_cleanup(){assert(parity(true,true).is_ok);}
 @test fn void owner_only_cleanup_keeps_generation_and_arena_parity(){assert(parity(false,false).is_ok);}
+fn Result<usize,errors::Error> stale_lease(){
+    var runtime::State live=runtime::empty(64);var u8[64] data=[0;64];
+    let owners::Token root=create(ref mut live,ref mut data)?;
+    let slices::Ticket first=open(ref mut live,root,false)?;
+    let slices::Ticket second=open(ref mut live,root,false)?;
+    live.runtime.pool.slots[second.slot].lease.generation+=1;
+    let runtime::State before=live;
+    var runtime::State raw=live;
+    assert(!runtime::abort(ref mut raw,64,0).is_ok);same(ref raw,ref before);
+    assert(!drive(ref mut live,ref before).is_ok);same(ref live,ref before);
+    return .ok(first.slot);
+}
+@test fn void stale_shared_lease_rejects_before_any_publication(){assert(stale_lease().is_ok);}
 @test fn void invalid_pool_rejects_without_publishing_or_touching_live_state(){
     var runtime::State live=runtime::empty(64);live.runtime.pool.slots[15].exclusive=true;let runtime::State before=live;
     var runtime::State raw=live;assert(!runtime::abort(ref mut raw,64,0).is_ok);same(ref raw,ref before);

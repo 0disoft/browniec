@@ -178,15 +178,36 @@ preserved success, staged output discard and an actual OS-clock expiry.
 Windows development and /O2 both pass with zero live SDK allocations.
 Local receipt: `build/runtime-engine/20261120T112523906857Z/receipt.json`.
 
+## Zero-Fuel slice cleanup
+
+The pending output machine validates one slice descriptor per cleanup step.
+It authenticates the whole unpublished pool before retiring any ticket.
+Retirement reuses that proof, checks the selected ticket generation and
+ends a shared owner session only when its last ticket closes. Stale leases
+and malformed descriptors leave live metadata untouched. The machine keeps
+its latched cause and remaining Fuel until final cleanup.
+
+With all 16 tickets live, descriptor validation visits 16 pool slots across
+16 steps. Previously the preflight and 16 retirements each validated all
+16 slots, for 272 descriptor visits. This count excludes the retained
+per-descriptor owner and peer checks. Live metadata is published only after
+the entire cleanup plan succeeds.
+
+Windows development and /O2 each passed five focused cleanup groups and the
+owning Engine suite, with zero live SDK allocations at Engine exit. The focused
+groups compare staged cleanup with raw abort and cover full pools, stale lease
+generations and malformed descriptors. Local Engine receipt:
+`build/runtime-engine/20261120T180111816482Z/receipt.json`.
+
 ## Remaining accepted work
 
 Dispatch visits do not bound all bytes, metadata visits or native time. Output
 copy, scalar array initialization/fill, copy/assignment and element-list gather/
 encode/commit plus record staging/commit share one 4096-byte step allowance,
 including bool scans. Catalog planning, nominal walks and owner-table checks,
-setup/proof and other bulk
-copy/tag/store/transfer, CALL metadata/RET, seal and cleanup remain atomic.
-Chunk those recipes and preserve quantum-independent Fuel/results before
+setup/proof, bulk copy/tag/store/transfer, CALL metadata/RET, seal and
+cleanup still have atomic substeps. Bound those substeps and preserve
+quantum-independent Fuel/results before
 claiming the accepted work-bounded Engine step contract. General compile/run
 deadlines, full STOPPING/poison containment, public lifecycle/ABI/CLI integration
 and the full accepted inventory remain open. R03-R05 are incomplete.

@@ -24,8 +24,12 @@ fn Result<usize,errors::Error> stage(ref mut State w,ref mut runtime::Runtime pl
         let ref slices::Pool pool=ref original.pool;let ref owners::Table table=ref original.owners;
         planned.pool=*pool;planned.owners=*table;w.phase=1;return .ok(0);
     }
-    if(w.phase==1){let usize checked=count(slices::inspect_cleanup(ref planned.pool,ref planned.owners,w.capacity))?;
-        w.index=16;w.phase=2;return .ok(0);}
+    if(w.phase==1){
+        let usize checked=count(slices::inspect_cleanup_slot(ref planned.pool,ref planned.owners,w.capacity,w.index))?;
+        w.index+=1;
+        if(w.index==16){w.phase=2;}
+        return .ok(0);
+    }
     if(w.phase==2){
         if(w.index==0){w.index=0;w.phase=3;return .ok(0);}
         let usize at=w.index-1;
@@ -33,7 +37,7 @@ fn Result<usize,errors::Error> stage(ref mut State w,ref mut runtime::Runtime pl
         if(selected.live){
             var slices::Pool pool=*original_pool;let ref owners::Table original_table=ref planned.owners;
             var owners::Table table=*original_table;
-            let usize closed=count(slices::close(ref mut pool,slices::Ticket{.slot=at,.generation=selected.generation},ref mut table,w.capacity))?;
+            let usize closed=count(slices::close_cleanup_slot(ref mut pool,slices::Ticket{.slot=at,.generation=selected.generation},ref mut table,w.capacity))?;
             planned.pool=pool;planned.owners=table;
         }w.index=at;return .ok(0);
     }
@@ -51,7 +55,7 @@ fn Result<usize,errors::Error> stage(ref mut State w,ref mut runtime::Runtime pl
 }
 pub fn Result<bool,errors::Error> advance(ref mut State w,ref mut runtime::Runtime planned,
     ref runtime::State live,ref mut budget::State allowance){
-    if(!w.active || w.done || w.phase>4 || (w.phase==2 && w.index>16) ||
+    if(!w.active || w.done || w.phase>4 || (w.phase==1 && w.index>=16) || (w.phase==2 && w.index>16) ||
         (w.phase==3 && w.index>=31)){return .err(errors::make(5,0));}
     if(allowance.last!=0){return .ok(false);}
     if(!budget::admit(allowance,4096,0)?){return .ok(false);}

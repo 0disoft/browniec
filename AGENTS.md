@@ -1,8 +1,8 @@
-- Latest runtime checkpoint (2026-11-20): [Configured Windows project output](docs/cli/configuration.md#configured-project-output)
-  runs through the standard CLI and owning Engine. Development and /O2 passed
-  the CLI contract, authority denial, quotas, source diagnostics and success-only
-  Base64 publication. The Engine regression passed with zero live SDK allocations
-  in both profiles and retains 41 reviewed bindings and 60 layouts.
+- Latest runtime checkpoint (2026-11-21): [Zero-Fuel slice cleanup](docs/engineering/runtime-engine-step.md#zero-fuel-slice-cleanup)
+  validates the unpublished slice pool one descriptor per step and reuses that
+  proof during ticket retirement. Five focused groups and the owning Engine
+  passed Windows development and /O2, with zero live SDK allocations at Engine
+  exit. The reviewed transport retains 41 bindings and 60 layouts.
 
 # Brownie C agent guidance
 
