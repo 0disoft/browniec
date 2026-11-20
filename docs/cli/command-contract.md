@@ -12,11 +12,13 @@
 | browniec check SOURCE --catalog FILE --policy FILE --run FILE | Verify typed host calls under explicit authority | Windows, single-source host dialect, text or JSON |
 | browniec run SOURCE | Compile, verify, and run one selected source | Bounded M1/M2 feature subsets, with optional binary guest input on Windows |
 | browniec run SOURCE --catalog FILE --policy FILE --run FILE --host-replies FILE | Execute typed host calls with explicit authority and precomputed replies | Windows, single-source host dialect, text or JSON |
+| browniec run SOURCE --catalog FILE --policy FILE --run FILE --host-adapter ID REVISION EXE | Execute typed host calls using an explicitly registered executable | Windows, one catalog route, text or JSON |
 | browniec eval-i32 SOURCE N | Evaluate a scalar rule with one signed decimal i32 input | Implemented for `module main` sources with `fn i32 evaluate(i32 ...)` |
 | browniec check --project FILE | Check an explicit source map and its named entry | Windows, zero-argument i32 entry, empty requirements |
 | browniec run --project FILE [--input FILE or --stdin] | Run the checked named entry | Windows, zero-argument i32 entry or one shared-byte parameter with explicit input, empty requirements |
 | browniec check --project FILE --catalog FILE --policy FILE --run FILE | Verify a project and its typed host imports | Windows, public i32 entry, text or JSON |
 | browniec run --project FILE --catalog FILE --policy FILE --run FILE --host-replies FILE [--input FILE or --stdin] | Run a project with typed precomputed host replies | Windows, public i32 entry with zero arguments or one shared byte slice, text or JSON |
+| browniec run --project FILE --catalog FILE --policy FILE --run FILE --host-adapter ID REVISION EXE | Run a project using an explicitly registered executable | Windows, one catalog route, existing project I/O and result formats |
 | browniec check --project FILE --policy FILE --run FILE | Verify source, entry and grants under an explicit policy without running guest code | Windows, shared-byte i32 entry, text or JSON |
 | browniec run --project FILE --policy FILE --run FILE [--output FILE or --output-text FILE] | Run the checked entry under explicit policy | Windows, shared-byte i32 entry, JSON result required, optional binary input and binary or UTF-8 output file |
 | browniec check SOURCE --isolated | Use a restricted compile-only worker | Designed; unavailable |

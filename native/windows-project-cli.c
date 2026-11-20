@@ -3,6 +3,7 @@
 #include "native/anchored-source-loader/bridge.c"
 
 #include "native/runtime_input_reader.h"
+#include "native/host_adapter_process.h"
 
 // One configured run per CLI process. The console thread only latches a flag.
 static volatile LONG cancel_requested;
@@ -18,6 +19,19 @@ uint32_t bc_cli_enable_cancel(void){
 }
 uint32_t bc_cli_cancel_requested(void){
     return InterlockedCompareExchange(&cancel_requested,0,0)!=0;
+}
+
+/* The CLI runs one Instance and admits one adapter lease at a time. */
+static bc_adapter_slot adapter_slot;
+void *bc_cli_adapter_slot(void){return &adapter_slot;}
+void bc_cli_adapter_wait(void){Sleep(1);}
+uint32_t bc_cli_adapter_reap(void){
+    ULONGLONG started=GetTickCount64();
+    while(!bc_adapter_slot_close(&adapter_slot)){
+        if(GetTickCount64()-started>=1000)return 0;
+        Sleep(1);
+    }
+    return 1;
 }
 
 /* Resolve only an explicitly selected host file. Project member containment

@@ -1,7 +1,6 @@
-- Latest runtime checkpoint (2026-11-21): [Engine-driven process adapter](docs/engineering/host-exchange.md#engine-driven-process-adapter)
-  checks catalog route and revision before launching a trusted child.
-  Windows development and /O2 verified reply delivery, rejection,
-  cancellation, expiry and zero live SDK allocations.
+- Latest runtime checkpoint (2026-11-21): [Windows process adapter CLI](docs/cli/configuration.md#windows-process-adapters)
+  selects one explicit catalog route and executable. Locked development
+  and /O2 builds passed the CLI contract with a real adapter subprocess.
 
 # Brownie C agent guidance
 

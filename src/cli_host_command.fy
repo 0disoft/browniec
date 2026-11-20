@@ -12,6 +12,8 @@ import source_snapshot as sources;
 import std::bytes as bytes;
 import std::process as process;
 import cli_host_replies as replies;
+import cli_host_process as child;
+import host_process_adapter as adapters;
 import cli_run_configuration as configuration;
 import errors as errors;
 import host_catalog as catalog;
@@ -24,9 +26,9 @@ unsafe extern C fn u32 bc_cli_enable_cancel();
 unsafe extern C fn u32 bc_cli_cancel_requested();
 
 @effects(console,filesystem)
-pub fn i32 execute(render::Format format,configured::Selection settings,usize catalog_file,usize reply_file,bool project,
+pub fn i32 execute(render::Format format,configured::Selection settings,usize catalog_file,usize reply_file,usize adapter_arg,bool project,
     binary::Selection selection){
-    let bool running=reply_file!=0;
+    let bool running=reply_file!=0 || adapter_arg!=0;
     let policies::Policy ceiling=switch(configuration::read_policy(settings.policy_file)){
         case .ok(v):{v}case .err(e):{return failure(format,running,e);}
     };
@@ -39,8 +41,13 @@ pub fn i32 execute(render::Format format,configured::Selection settings,usize ca
     let u32[8] digest=switch(catalog::digest(ref imports)){
         case .ok(v):{v}case .err(e):{return failure(format,running,configuration::catalog_failure(e));}
     };
-    let Option<replies::Replies> responses=if(running){
+    let Option<replies::Replies> responses=if(reply_file!=0){
         switch(replies::read(reply_file,ref imports,digest)){
+            case .ok(v):{.some(v)}case .err(e):{return failure(format,true,e);}
+        }
+    }else{.none};
+    let Option<adapters::Route> executable=if(adapter_arg!=0){
+        switch(child::read(adapter_arg,ref imports)){
             case .ok(v):{.some(v)}case .err(e):{return failure(format,true,e);}
         }
     }else{.none};
@@ -48,7 +55,7 @@ pub fn i32 execute(render::Format format,configured::Selection settings,usize ca
         case .ok(v):{v}case .err(e):{return failure(format,running,engine_error(e,true));}
     };
     if(project){
-        return execute_project(format,running,ref mut owner,ref run,imports,ref digest,responses,selection,settings);
+        return execute_project(format,running,ref mut owner,ref run,imports,ref digest,responses,executable,selection,settings);
     }
     let source_input::Source source=switch(source_input::read_source(2)){
         case .ok(v):{v}case .err(e):{return failure(format,running,e);}
@@ -57,12 +64,13 @@ pub fn i32 execute(render::Format format,configured::Selection settings,usize ca
         imports,ref digest,ref run)){
         case .ok(v):{v}case .err(e):{return failure(format,running,engine_error(e,true));}
     };
-    return complete_command(format,running,ref mut owner,program,ref run,responses,selection,settings);
+    return complete_command(format,running,ref mut owner,program,ref run,responses,executable,selection,settings);
 }
 
 @effects(console,filesystem)
 fn i32 execute_project(render::Format format,bool running,ref mut engine::Engine owner,ref runs::RunConfig run,
-    catalog::Catalog imports,ref u32[] digest,Option<replies::Replies> responses,binary::Selection selection,configured::Selection settings){
+    catalog::Catalog imports,ref u32[] digest,Option<replies::Replies> responses,
+    Option<adapters::Route> executable,binary::Selection selection,configured::Selection settings){
     var u8[3072] path=[0;3072];
     let usize size=switch(process::arg(3,ref mut path)){
         case .ok(v):{v}case .err(_):{return failure(format,running,errors::absent(10,0));}
@@ -78,7 +86,7 @@ fn i32 execute_project(render::Format format,bool running,ref mut engine::Engine
         case .ok(v):{v}
         case .err(e):{return project_failure(format,running,ref project,ref root,e);}
     };
-    return complete_command(format,running,owner,program,run,responses,selection,settings);
+    return complete_command(format,running,owner,program,run,responses,executable,selection,settings);
 }
 
 @effects(console)
@@ -96,14 +104,22 @@ fn i32 project_failure(render::Format format,bool running,ref manifest::Project 
 
 @effects(console,filesystem)
 fn i32 complete_command(render::Format format,bool running,ref mut engine::Engine owner,usize program,
-    ref runs::RunConfig run,Option<replies::Replies> responses,binary::Selection selection,configured::Selection settings){
+    ref runs::RunConfig run,Option<replies::Replies> responses,Option<adapters::Route> executable,
+    binary::Selection selection,configured::Selection settings){
     var i64 value=0;
     var errors::Error problem=errors::absent(0,0);
-    let Option<engine::Output> publish=switch(responses){
-        case .none:{.none}
-        case .some(table):{switch(run_selected(owner,program,run,ref table,selection,settings,format,ref mut value)){
-            case .ok(v):{v}case .err(e):{problem=e;.none}
+    let Result<Option<engine::Output>,errors::Error> execution=switch(responses){
+        case .some(table):{switch(executable){
+            case .none:{run_selected(owner,program,run,.some(ref table),.none,selection,settings,format,ref mut value)}
+            case .some(_):{.err(errors::absent(10,0))}
         }}
+        case .none:{switch(executable){
+            case .some(route):{run_selected(owner,program,run,.none,.some(ref route),selection,settings,format,ref mut value)}
+            case .none:{.ok(.none)}
+        }}
+    };
+    let Option<engine::Output> publish=switch(execution){
+        case .ok(v):{v}case .err(e):{problem=e;.none}
     };
     if(!engine::release_program(owner,program).is_ok || !engine::destroy(owner).is_ok){
         return failure(format,running,errors::absent(5,0));
@@ -117,7 +133,8 @@ fn i32 complete_command(render::Format format,bool running,ref mut engine::Engin
 
 @effects(filesystem)
 fn Result<Option<engine::Output>,errors::Error> run_selected(ref mut engine::Engine owner,usize program,
-    ref runs::RunConfig run,ref replies::Replies responses,binary::Selection selection,
+    ref runs::RunConfig run,Option<ref replies::Replies> responses,Option<ref adapters::Route> executable,
+    binary::Selection selection,
     configured::Selection settings,render::Format format,ref mut i64 value){
     let bool emits=switch(engine::host_program_emits(owner,program)){
         case .ok(v):{v}case .err(e):{return .err(engine_error(e,false));}
@@ -127,7 +144,7 @@ fn Result<Option<engine::Output>,errors::Error> run_selected(ref mut engine::Eng
     if(unsafe{bc_cli_enable_cancel()}==0){return .err(errors::absent(5,0));}
     let usize instance=prepare_guest(owner,program,run,selection)?;
     var errors::Error problem=errors::absent(0,0);
-    let Option<engine::Output> publish=switch(complete(owner,instance,responses)){
+    let Option<engine::Output> publish=switch(complete(owner,instance,responses,executable)){
         case .ok(v):{*value=v;switch(detach_output(owner,instance,emits)){
             case .ok(output):{output}case .err(e):{problem=e;.none}
         }}
@@ -163,9 +180,10 @@ fn Result<usize,errors::Error> prepare_guest(ref mut engine::Engine owner,usize 
     };
 }
 
-fn Result<i64,errors::Error> complete(ref mut engine::Engine owner,usize instance,ref replies::Replies responses){
+fn Result<i64,errors::Error> complete(ref mut engine::Engine owner,usize instance,
+    Option<ref replies::Replies> responses,Option<ref adapters::Route> executable){
     while(true){
-        let engine::Event event=switch(next(owner,instance,responses)){
+        let engine::Event event=switch(next(owner,instance,responses,executable)){
             case .ok(v):{v}case .err(e):{return .err(e);}
         };
         if(event.kind==0){continue;}
@@ -177,10 +195,21 @@ fn Result<i64,errors::Error> complete(ref mut engine::Engine owner,usize instanc
     return .err(errors::absent(5,0));
 }
 
-fn Result<engine::Event,errors::Error> next(ref mut engine::Engine owner,usize instance,ref replies::Replies responses){
+fn Result<engine::Event,errors::Error> next(ref mut engine::Engine owner,usize instance,
+    Option<ref replies::Replies> responses,Option<ref adapters::Route> executable){
     let engine::Event state=step(owner,instance)?;
     if(state.kind!=4){return .ok(state);}
     if(unsafe{bc_cli_cancel_requested()}!=0){return step(owner,instance);}
+    return switch(executable){
+        case .some(route):{child::dispatch(owner,instance,route)}
+        case .none:{switch(responses){
+            case .some(table):{replay(owner,instance,table)}
+            case .none:{.err(errors::absent(11,0))}
+        }}
+    };
+}
+
+fn Result<engine::Event,errors::Error> replay(ref mut engine::Engine owner,usize instance,ref replies::Replies responses){
     let u32 status=switch(replies::dispatch(responses,owner,instance)){
         case .ok(v):{return .ok(v);}case .err(e):{e.status}
     };

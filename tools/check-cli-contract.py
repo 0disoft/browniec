@@ -4,11 +4,13 @@ import argparse
 import base64
 import hashlib
 import json
+import os
 from pathlib import Path
 import shutil
 import subprocess
 import sys
 from tempfile import TemporaryDirectory
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 CONFIGURED = ROOT / 'examples/projects/configured-output'
@@ -217,6 +219,35 @@ def make_host_project(folder):
     }), encoding='utf-8')
     run_args = make_host_run(base, folder / 'replies.json')
     return ['check', '--project', project, *base[2:]], ['run', '--project', project, *run_args[2:]]
+
+
+def check_process_adapter(exe, adapter, folder):
+    check_args = make_host_check(folder)
+    args = ['run', *check_args[1:], '--host-adapter', '0', 'v1', adapter]
+    _, project_run = make_host_project(folder / 'adapter-project')
+    assert b'--host-adapter ID REVISION EXE' in invoke(exe, ['--help'], 0).stdout
+    with patch.dict(os.environ, {'BC_ENGINE_ADAPTER_FIXTURE': 'g'}):
+        for version in (1, 2):
+            assert check_json(exe, args, 0, version=version, value=77) is None
+        assert check_json(exe, [*project_run[:-2], *args[-4:]], 0, version=2, value=77) is None
+        for invalid in ([*args, '--host-replies', folder/'missing.json'], args[:-1],
+                        [*check_args, *args[-4:]], [*args[:-3], '-1', 'v1', adapter]):
+            invoke(exe, invalid, 2)
+        for denied in ([*args[:-3], '1', 'v1', adapter], [*args[:-2], 'v2', adapter],
+                       [*args[:-1], adapter.name]):
+            assert check_json(exe, denied, 4, version=2)['kind'] == 'unavailable'
+        run = check_args[7]
+        original = json.loads(run.read_bytes())
+        run.write_text(json.dumps(original | {'grants': []}), encoding='utf-8')
+        assert check_json(exe, args, 4, version=2)['kind'] == 'unavailable'
+        run.write_text(json.dumps(original), encoding='utf-8')
+    with patch.dict(os.environ, {'BC_ENGINE_ADAPTER_FIXTURE': 'x'}):
+        assert check_json(exe, args, 4, version=2)['kind'] == 'unavailable'
+    with patch.dict(os.environ, {'BC_ENGINE_ADAPTER_FIXTURE': 's'}):
+        run.write_text(json.dumps(original | {'limits': original['limits'] | {'deadline_ms': 150}}),
+                       encoding='utf-8')
+        assert check_json(exe, args, 5, version=2)['kind'] == 'deadline'
+    print('PASS: Windows process adapter for source and project, revision and authority, crossed reply and expiry')
 
 
 def check_host_project(exe, check_args, run_args):
@@ -847,7 +878,9 @@ def check_source_input(exe, folder):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--exe', type=Path, required=True)
-    exe = parser.parse_args().exe.resolve(strict=True)
+    parser.add_argument('--adapter-exe', type=Path, help='Built tools/runtime-engine/adapter-fixture.c')
+    settings = parser.parse_args()
+    exe = settings.exe.resolve(strict=True)
     print(f'CLI SHA-256: {hashlib.sha256(exe.read_bytes()).hexdigest()}', flush=True)
 
     shipping = ROOT / 'examples/shipping-fee.brc'
@@ -863,6 +896,10 @@ def main():
         project_host_check, project_host_run = make_host_project(Path(temp) / 'host-project')
         check_output_table(exe, identity, host_check, host_run, project_host_check, project_host_run)
         check_host_run(exe, host_check, host_run)
+        if settings.adapter_exe:
+            adapter_dir = Path(temp) / 'process-adapter'
+            adapter_dir.mkdir()
+            check_process_adapter(exe, settings.adapter_exe.resolve(strict=True), adapter_dir)
         check_host_catalog(exe, host_check)
         check_host_project(exe, project_host_check, project_host_run)
         check_host_project_input(exe, project_host_check, project_host_run)

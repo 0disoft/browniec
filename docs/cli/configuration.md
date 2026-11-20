@@ -126,6 +126,35 @@ Windows development and /O2 passed the CLI contract. It checks return values
 77 and -7, text and both JSON formats, exact-match rejection, malformed and
 duplicate rows, catalog binding, authority and Fuel. The owning Engine
 regression passed both profiles with zero live SDK allocations after teardown.
+
+## Windows process adapters
+
+Select one trusted adapter executable and its catalog import and revision
+explicitly:
+
+    browniec run SOURCE --catalog CATALOG --policy POLICY --run RUN --host-adapter ID REVISION EXE --json
+    browniec run --project FILE --catalog CATALOG --policy POLICY --run RUN --host-adapter ID REVISION EXE --json
+
+`ID` is a decimal catalog import ID from 0 through 63. `REVISION` must exactly
+match the selected import's `adapter_revision`. `EXE` must be an absolute
+Windows drive path to an executable. The adapter runs with host authority
+and receives the [BCA1 frame](../engineering/host-exchange.md#detached-adapter-frames)
+on stdin. It writes a single reply to stdout and exits with code 0. A run
+admits one child at a time and starts a fresh child for each request to the
+selected import. Requests for any other import fail.
+
+The catalog, policy, run configuration and grants still control admission.
+`--host-adapter` and `--host-replies` are mutually exclusive. Project input and
+output options and both JSON schemas work through the same host run path.
+Cancellation, expiry or invalid replies stop dispatch. Brownie C can discard
+unpublished guest output, but external effects may already have occurred.
+
+Locked Windows development and /O2 builds passed
+`tools/check-cli-contract.py --exe EXE --adapter-exe FIXTURE` with the
+native adapter fixture. The checks cover source and project result 77,
+JSON v1 and v2, conflicting options, revision, grants, relative path
+rejection, a crossed request ID, and a deadline during reply receipt. The
+same runs also passed the existing precomputed-reply contract.
 The local Engine receipt is
 `build/runtime-engine/20261120T155908271691Z/receipt.json`.
 
@@ -181,7 +210,7 @@ verifier checks the catalog digest and grants for every compiled host call.
 
 Check accepts text and both result schemas without creating an Instance or
 reading a reply file. Run accepts the same output formats and requires a reply
-file. The policy bounds source bytes, module count, tokens, functions,
+file or an [explicit process adapter](#windows-process-adapters). The policy bounds source bytes, module count, tokens, functions,
 instructions, per-function registers and the compilation deadline within the
 host dialect's native limits. Supply `--input FILE` or `--stdin` to a shared byte
 slice entry, or omit both for empty input. Zero-argument entries reject either

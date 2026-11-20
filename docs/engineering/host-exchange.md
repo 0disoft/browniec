@@ -444,8 +444,9 @@ cause and guest publication.
 The host owns the native slot. It keeps the slot and the associated Engine
 at stable addresses and polls close until the process and outstanding I/O
 are reaped. A nonwrapping slot generation binds each dispatch to one launch
-and prevents an old session from driving a reused slot. Public external
-adapter selection and aggregate transport admission remain open.
+and prevents an old session from driving a reused slot. The [Windows CLI](../cli/configuration.md#windows-process-adapters)
+owns one transport slot and reaps it before continuing the guest. General
+aggregate transport admission for multiple host sessions remains open.
 
 The Engine fixture passed Windows development and /O2. A real process
 returned a typed value that produced guest result 77 while a peer Instance
