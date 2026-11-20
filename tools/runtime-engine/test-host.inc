@@ -45,6 +45,12 @@ uint32_t bc_runtime_engine_test_cleanup_fault(void){uint32_t active=cleanup_faul
 static uint32_t host_fault;
 void bc_runtime_engine_test_inject_host_fault(void){assert(!host_fault);host_fault=1;}
 uint32_t bc_runtime_engine_test_host_fault(void){uint32_t active=host_fault;host_fault=0;return active;}
+static uint32_t output_fault;
+void bc_runtime_engine_test_inject_output_fault(uint32_t stage){assert(!output_fault);output_fault=stage;}
+uint32_t bc_runtime_engine_test_output_fault(uint32_t stage){
+ if(output_fault!=stage)return 0;
+ output_fault=0;return 1;
+}
 
 static int host_clock_fixed;
 static ULONGLONG host_clock_ticks;

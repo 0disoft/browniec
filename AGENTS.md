@@ -1,5 +1,5 @@
-- Latest runtime checkpoint (2026-11-21): [Host execution invariant containment](docs/engineering/runtime-engine-step.md#containment-after-a-host-execution-invariant-failure)
-  poisons the Engine on internal state faults in host step, cancellation, receipt and claim.
+- Latest runtime checkpoint (2026-11-21): [Output execution invariant containment](docs/engineering/runtime-engine-step.md#containment-before-output-publication)
+  quarantines internal faults during pending step, seal and cancellation.
   Windows development and /O2 Engine checks passed with zero live SDK allocations.
 
 # Brownie C agent guidance

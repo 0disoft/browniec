@@ -99,6 +99,20 @@ def source_copy(path):
         text = text.replace(anchor, 'unsafe extern C fn u32 bc_runtime_engine_test_host_fault();\n'
                             + anchor + '\n    if(unsafe{bc_runtime_engine_test_host_fault()}!=0){return false;}\n', 1)
         return path.name, text.encode('utf-8')
+    if path in (ROOT / 'src/runtime_seal_work.fy', ROOT / 'src/runtime_engine.fy'):
+        text = path.read_text(encoding='utf-8')
+        if path.name == 'runtime_seal_work.fy':
+            anchor = '    if(allowance.last!=0){return .ok(false);}'
+            declaration_at = 'pub fn Result<bool,errors::Error> advance('
+            injected = '    if(unsafe{bc_runtime_engine_test_output_fault(1)}!=0){return .ok(false);}'
+        else:
+            anchor = 'fn u32 cancel_output_owner(ref mut vec::Vec<machines::Machine> saved,usize deadline){'
+            declaration_at = anchor
+            injected = '    if(unsafe{bc_runtime_engine_test_output_fault(2)}!=0){return 7;}'
+        need(text.count(anchor) == 1 and text.count(declaration_at) == 1, 'Output execution fault anchor changed')
+        declaration = 'unsafe extern C fn u32 bc_runtime_engine_test_output_fault(u32 stage);'
+        text = text.replace(declaration_at, declaration + '\n' + declaration_at, 1)
+        return path.name, text.replace(anchor, anchor + '\n' + injected, 1).encode('utf-8')
     if path == ROOT / 'src/retention_plan.fy':
         text=path.read_text(encoding='utf-8');anchor='    plan.admitted=true;'
         need(text.count(anchor)==1,'Retention admission probe anchor changed')

@@ -284,6 +284,27 @@ zero live SDK allocations at exit. The locked /O2 CLI passed a real adapter
 round trip. Local Engine receipt:
 `build/runtime-engine/20261120T213215101631Z/receipt.json`.
 
+### Containment before output publication
+
+Pending input/output execution checks the retained Program, bound input,
+owning Machine and reserved output at the Engine boundary. An internal
+step or cancellation failure enters the same Engine quarantine as a host
+execution fault. A successful terminal event requires the sealed owner in
+the reserved publication slot. If sealing cannot complete and the Machine
+has no latched guest failure, the Engine quarantines the private output.
+An ordinary seal Fuel failure continues through the staged cleanup path.
+
+The quarantine preserves previously published output and latched stop
+causes. Affected private backing stays charged until Instance destruction.
+
+The Windows Engine verifier injected a deferred seal and a private
+cancellation refusal in separate executions. Both development and /O2
+preserved the sibling's latched stop and previously published bytes. The
+affected Instance published no output. Fault handling required zero SDK
+allocation attempts, and destruction returned live allocation and memory
+counts to zero. Local receipt:
+`build/runtime-engine/20261120T214220161873Z/receipt.json`.
+
 ## Remaining accepted work
 
 Dispatch visits do not bound all bytes, metadata visits or native time. Output

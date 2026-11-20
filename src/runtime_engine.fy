@@ -1291,7 +1291,7 @@ fn u32 drive_host_owner(ref mut vec::Vec<host::Exchange> owners,u32 mode,usize q
     }
     return 0;
 }
-fn u32 contain_host_fault(ref mut Meta m,ref vec::Vec<Program> programs,ref mut vec::Vec<Instance> instances,
+fn u32 contain_execution_fault(ref mut Meta m,ref vec::Vec<Program> programs,ref mut vec::Vec<Instance> instances,
     ref vec::Vec<Output> outputs){
     poison_children(m,programs,instances,outputs);
     return failed(m,14);
@@ -1299,13 +1299,13 @@ fn u32 contain_host_fault(ref mut Meta m,ref vec::Vec<Program> programs,ref mut 
 fn u32 drive_host(ref mut Meta m,ref vec::Vec<Program> p,ref mut vec::Vec<Instance> v,ref mut vec::Vec<Output> outputs,
     ref mut vec::Vec<Output> scratch,usize ii,u32 mode,usize quantum,usize run,usize request,u8 kind,ref u8[] payload,usize offset){
     let usize id=vec::at<Instance>(v,ii).id;
-    let usize oi=switch(output_index(outputs,id)){case .ok(i):{i}case .err(_):{return contain_host_fault(m,p,v,outputs);}};
+    let usize oi=switch(output_index(outputs,id)){case .ok(i):{i}case .err(_):{return contain_execution_fault(m,p,v,outputs);}};
     var HostTransition next=HostTransition{.scalar=host::empty_scalar_event(),.event=pending()};
     var u32 status=0;
     {let ref mut Output saved=vec::at_mut<Output>(outputs,oi);
      status=unsafe{drive_host_raw(saved as ptr mut void,mode,quantum,run,request,kind,
         payload as ptr u8,payload.len,ref mut next as ptr mut void,offset)};}
-    if(status==14){return contain_host_fault(m,p,v,outputs);}
+    if(status==14){return contain_execution_fault(m,p,v,outputs);}
     if(status!=0){return failed(m,status);}
     if(mode==3){return success(m,request);}
     let ref mut Instance target=vec::at_mut<Instance>(v,ii);
@@ -1611,6 +1611,9 @@ fn u32 step_output_owner(ref mut vec::Vec<machines::Machine> saved,ref mut outpu
         if(progressed.phase==2){discard pending_vm::seal_pending_output_into(machine,published);}
         let machines::Meta finished=machines::observe(machine);
         if(finished.phase==1){*completed=output_programs::pending_completion(finished.remaining);return 0;}
+        // A refused seal can leave the machine ready to publish. Only an
+        // actual sealed owner can authorize a successful Engine event.
+        if(finished.phase==2 && vec::len<pending_output::Published>(published)!=1){return 7;}
         cleanup_failed=finished.lifecycle.cleanup_failed;
         if(finished.phase==2 && deadline_reached(deadline)){
             // The sealed owner is still private. Drop it before Engine publication.
@@ -1647,32 +1650,32 @@ fn u32 step_instance_inner(ref mut Meta m,ref vec::Vec<Program> p,ref mut vec::V
     if(before.phase==2){return failed(m,11);}
     if(before.phase==4){return drive_host(m,p,v,outputs,scratch,ii,0,quantum,0,0,0,b"",0);}
     if(before.phase!=3){return failed(m,3);}
-    let usize pi=switch(program_index(p,before.program,false)){case .ok(x):{x}case .err(s):{return failed(m,s);}};
+    let usize pi=switch(program_index(p,before.program,false)){case .ok(x):{x}case .err(_):{return contain_execution_fault(m,p,v,outputs);}};
     let ref Program code=vec::at<Program>(p,pi);
-    if(code.pins==0 || vec::len<output_programs::Program>(ref code.output)!=1){return failed(m,7);}
+    if(code.pins==0 || vec::len<output_programs::Program>(ref code.output)!=1){return contain_execution_fault(m,p,v,outputs);}
     let ref output_programs::Program retained=vec::at<output_programs::Program>(ref code.output,0);
-    let usize oi=switch(output_index(outputs,id)){case .ok(x):{x}case .err(_):{return failed(m,7);}};
+    let usize oi=switch(output_index(outputs,id)){case .ok(x):{x}case .err(_):{return contain_execution_fault(m,p,v,outputs);}};
     var u32 status=0;
     if(output_programs::accepts_input(retained)){
-        let usize bi=switch(input_index(inputs,id)){case .ok(x):{x}case .err(_):{return failed(m,7);}};
+        let usize bi=switch(input_index(inputs,id)){case .ok(x):{x}case .err(_):{return contain_execution_fault(m,p,v,outputs);}};
         let ref input_bytes::Snapshot input=ref vec::at<BoundInput>(inputs,bi).input;
         let ref mut Output saved=vec::at_mut<Output>(outputs,oi);
         status=unsafe{step_output_raw(saved as ptr mut void,retained as ptr void,input as ptr void,quantum,before.deadline)};
     }else{
         var usize unused=0;let input_bytes::Snapshot empty=switch(input_bytes::snapshot(b"",0,0,ref mut unused)){
-            case .ok(v):{v}case .err(_):{return failed(m,7);}
+            case .ok(v):{v}case .err(_):{return contain_execution_fault(m,p,v,outputs);}
         };
         let ref mut Output saved=vec::at_mut<Output>(outputs,oi);
         status=unsafe{step_output_raw(saved as ptr mut void,retained as ptr void,ref empty as ptr void,quantum,before.deadline)};
     }
-    if(status!=0 && status!=14){return failed(m,status);}
+    if(status!=0 && status!=14){return contain_execution_fault(m,p,v,outputs);}
     let ref Output saved=vec::at<Output>(outputs,oi);
     let bool pending=vec::len<machines::Machine>(ref saved.pending)==1;
     let output_programs::Completion completed=output_programs::observe(ref saved.run);
     let usize bytes=if(pending){before.output_bytes}else{output_programs::heap_bytes(ref saved.run)};
-    if(bytes>before.output_bytes){return failed(m,7);}
+    if(bytes>before.output_bytes){return contain_execution_fault(m,p,v,outputs);}
     let live::Plan ownership=switch(live::prepare(ref m.heap,before.input_bytes+before.output_bytes,before.input_bytes+bytes,0)){
-        case .ok(v):{v}case .err(_):{return failed(m,7);}
+        case .ok(v):{v}case .err(_):{return contain_execution_fault(m,p,v,outputs);}
     };
     let Event event=Event{.kind=if(pending){4}else if(completed.cancelled){3}else{if(completed.success){1}else{2}},.value=completed.value,
         .diagnostic=completed.diagnostic,.remaining=completed.remaining,.fuel_known=true};
@@ -1715,7 +1718,7 @@ fn u32 cancel_inner(ref mut Meta m,ref vec::Vec<Program> p,ref mut vec::Vec<Inst
     let Instance before=*vec::at<Instance>(v,ii);
     if(before.phase==4){return drive_host(m,p,v,outputs,scratch,ii,1,1,0,0,0,b"",0);}
     if(before.phase==3){
-        let usize oi=switch(output_index(outputs,id)){case .ok(x):{x}case .err(_):{return failed(m,7);}};
+        let usize oi=switch(output_index(outputs,id)){case .ok(x):{x}case .err(_):{return contain_execution_fault(m,p,v,outputs);}};
         // Drain canonical private metadata and discard any staged prefix before
         // releasing its sole owner; no guest effects are replayed or rolled back.
         var u32 status=0;
@@ -1724,7 +1727,7 @@ fn u32 cancel_inner(ref mut Meta m,ref vec::Vec<Program> p,ref mut vec::Vec<Inst
         // A prior failure wins. Finalize it through the same Program diagnostic
         // and retained-output path as step, even if the caller repeats cancel.
         if(status==13){return step_instance_inner(m,p,v,inputs,outputs,scratch,id,1);}
-        if(status!=0){return failed(m,7);}
+        if(status!=0){return contain_execution_fault(m,p,v,outputs);}
         remove_output(outputs,scratch,id);
         release_payload(m,before.output_bytes);
         let ref mut Instance target=vec::at_mut<Instance>(v,ii);target.output_bytes=0;
