@@ -4,6 +4,22 @@
 
 #include "native/runtime_input_reader.h"
 
+// One configured run per CLI process. The console thread only latches a flag.
+static volatile LONG cancel_requested;
+static BOOL WINAPI configured_run_control(DWORD event){
+    if(event!=CTRL_C_EVENT&&event!=CTRL_BREAK_EVENT){return FALSE;}
+    InterlockedExchange(&cancel_requested,1);
+    return TRUE;
+}
+uint32_t bc_cli_enable_cancel(void){
+    DWORD process;
+    if(!GetConsoleProcessList(&process,1)){return 1;}
+    return SetConsoleCtrlHandler(configured_run_control,TRUE)?1:0;
+}
+uint32_t bc_cli_cancel_requested(void){
+    return InterlockedCompareExchange(&cancel_requested,0,0)!=0;
+}
+
 /* Resolve only an explicitly selected host file. Project member containment
    remains the separate anchored-source contract. */
 void *bc_cli_read_input(const uint8_t *path,size_t length,size_t limit,uint32_t *status){

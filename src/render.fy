@@ -30,6 +30,7 @@ pub fn ref str kind(u8 code) {
     if (code == 18) { return "must_use_result"; }
     if (code == 19) { return "output_denied"; }
     if (code == 20) { return "output_limit"; }
+    if (code == errors::cancelled_kind()) { return "cancelled"; }
     if (code == errors::deadline_kind()) { return "deadline"; }
     if (code == errors::memory_limit_kind()) { return "memory_limit"; }
     if (code == input_limit_kind()) { return "input_limit"; }
@@ -39,7 +40,7 @@ pub fn i32 exit_code(u8 kind) {
     if ((kind >= 1 && kind <= 4) || kind == 18) { return 3; }
     if (kind == 5) { return 6; }
     if ((kind >= 6 && kind <= 8) || (kind >= 12 && kind <= 15) || kind == 20 || kind == input_limit_kind()) { return 5; }
-    if (kind == errors::deadline_kind() || kind == errors::memory_limit_kind()) { return 5; }
+    if (kind == errors::deadline_kind() || kind == errors::memory_limit_kind() || kind == errors::cancelled_kind()) { return 5; }
     if (kind == 9) { return 7; }
     if (kind == 10) { return 2; }
     return 4;

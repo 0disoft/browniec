@@ -15,9 +15,8 @@
 | 6 | Internal compiler or VM invariant failure |
 | 7 | Worker, IPC, forced termination, or output-sink failure |
 
-The CLI uses these exit classes for its bounded scalar, array, record and scalar-slice subsets. There is no
-cancellation, deadline, worker IPC, or host-binding implementation yet. A source-file read failure
-uses code 7. Invalid or missing source main declarations are compile/type errors
+The CLI uses these exit classes for its bounded scalar, array, record and scalar-slice subsets.
+A source-file read failure uses code 7. Invalid or missing source main declarations are compile/type errors
 (code 3); external entry binding in code 4 remains a future interface. Verification
 failure is an internal code 6, not a guest trap. The direct-call slice adds
 frame_limit as a guest quota error (code 5). The source-array slice adds
@@ -172,7 +171,7 @@ Configured runs accept both JSON versions. A successful publication includes
 `output_b64` with standard padded Base64 and uses the existing `return_i32`.
 An emitted empty result is encoded as an empty string. Any compile or run
 failure leaves the field absent, including a trap after an emit. The configured
-path reports `deadline` and `memory_limit` as exit 5. Its source diagnostics
+path reports `deadline`, `memory_limit`, and console `cancelled` as exit 5. Its source diagnostics
 use the same canonical project locations described below.
 
 After successful compilation, Windows source and project runs with `--input FILE` or

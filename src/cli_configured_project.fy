@@ -16,6 +16,8 @@ import source_snapshot as sources;
 import static_image as images;
 
 pub struct Selection { usize policy_file; usize run_file; }
+unsafe extern C fn u32 bc_cli_enable_cancel();
+unsafe extern C fn u32 bc_cli_cancel_requested();
 
 @effects(console,filesystem)
 pub fn i32 execute(render::Format format,bool execute_guest,Selection selected,binary::Selection selection,
@@ -45,6 +47,7 @@ pub fn i32 execute(render::Format format,bool execute_guest,Selection selected,b
     let input::Snapshot payload=switch(binary::read_with_limit(selection,limit)){
         case .ok(v):{v}case .err(e):{return failure(format,true,e,8);}
     };
+    if(unsafe{bc_cli_enable_cancel()}==0){return failure(format,true,errors::absent(5,0),8);}
     let usize instance=switch(engine::prepare_granted_instance(ref mut owner,program,ref run,payload)){
         case .ok(v):{v}
         case .err(e):{return project_failure(format,true,project,root,engine_error(e,false,8),e.diagnostic.at,8);}
@@ -57,11 +60,20 @@ fn i32 complete(render::Format format,ref mut engine::Engine owner,usize program
     ref manifest::Project project,ref anchored::Root root){
     var i64 value=0;
     while(true){
-        let engine::Event event=switch(engine::step_instance(owner,instance,4096)){
+        let Result<engine::Event,engine::Error> action=if(unsafe{bc_cli_cancel_requested()}!=0){
+            engine::cancel_ready(owner,instance)
+        }else{
+            engine::step_instance(owner,instance,4096)
+        };
+        let engine::Event event=switch(action){
             case .ok(v):{v}
             case .err(e):{return project_failure(format,true,project,root,engine_error(e,false,8),e.diagnostic.at,8);}
         };
         if(event.kind==4){continue;}
+        if(event.kind==3){
+            if(!dispose(owner,program,instance)){return failure(format,true,errors::absent(5,0),8);}
+            return failure(format,true,errors::absent(errors::cancelled_kind(),0),8);
+        }
         if(event.kind!=1){
             let diagnostics::Error diagnostic=event.diagnostic;
             let errors::Error problem=if(diagnostic.code.kind==0){errors::absent(5,0)}else{diagnostic.code};
@@ -73,12 +85,16 @@ fn i32 complete(render::Format format,ref mut engine::Engine owner,usize program
     let engine::Output output=switch(engine::take_output(owner,instance)){
         case .ok(v):{v}case .err(e):{return failure(format,true,engine_error(e,false,8),8);}
     };
-    if(!engine::destroy_instance(owner,instance).is_ok || !engine::release_program(owner,program).is_ok ||
-       !engine::destroy(owner).is_ok){return failure(format,true,errors::absent(5,0),8);}
+    if(!dispose(owner,program,instance)){return failure(format,true,errors::absent(5,0),8);}
     if(engine::output_available(ref output)){
         return render::published_output(format,value,engine::output_view(ref output));
     }
     return render::selected_outcome(format,true,false,value,errors::absent(0,0),8);
+}
+
+fn bool dispose(ref mut engine::Engine owner,usize program,usize instance){
+    return engine::destroy_instance(owner,instance).is_ok && engine::release_program(owner,program).is_ok &&
+        engine::destroy(owner).is_ok;
 }
 
 fn errors::Error engine_error(engine::Error error,bool compiling,u8 profile){

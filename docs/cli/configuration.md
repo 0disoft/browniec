@@ -49,8 +49,8 @@ SOURCE selects one UTF-8 code file up to 4,096 bytes with a zero-argument
 i32 `main`. Run-only `--fuel` defaults to 256 and accepts 0..16000000.
 Effective-config reporting remains pending.
 
-`--isolated` reports unavailable without fallback. Configured project runs enforce compile and execution deadlines. Public
-cancellation controls remain pending. See the
+`--isolated` reports unavailable without fallback. Configured project runs enforce
+compile and execution deadlines and support console cancellation while executing. See the
 [complete remaining-work audit](../product/04-remaining-work.md) before treating any
 target configuration field or reference-package schema as accepted by this CLI.
 
@@ -140,6 +140,12 @@ The only configured guest capability in this command is `brownie.output.emit`.
 A project that calls it must declare it, the run must grant it, and the policy
 must allow it. A successful emit is published as `output_b64`. The guest return
 value remains a separate field in the same JSON object.
+
+During configured execution on a Windows console, Ctrl+C or Ctrl+Break requests
+cancellation. The Engine samples the request between steps and preserves any
+already committed terminal result. A cancelled run exits 5 with `cancelled`
+and discards staged output. Compilation and synchronous input acquisition finish
+before the console handler is registered.
 
 From the repository root on Windows, run the checked-in example:
 

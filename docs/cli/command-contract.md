@@ -42,9 +42,9 @@ byte/text literals, explicit text::bytes/equality and shared byte parameters/res
 General mutable/non-byte/Buffer/input results and host-visible reference tickets
 remain unavailable.
 [Configured project runs](configuration.md#configured-project-output) support
-output emission and compile/run deadlines. [Single-source host checks](configuration.md#single-source-host-check)
+output emission, compile/run deadlines and console cancellation during execution. [Single-source host checks](configuration.md#single-source-host-check)
 load an explicit catalog. General Buffer delivery, host execution through the CLI,
-workers and public cancellation remain unavailable. `--isolated` returns an availability
+workers and cancellation outside configured execution remain unavailable. `--isolated` returns an availability
 denial, with no unrestricted fallback. Ordinary check/run use zero-argument i32
 `main`. The separate eval-i32 command selects a single-i32 `evaluate` entry.
 With explicit guest input, Windows `run SOURCE` instead selects the public shared-byte

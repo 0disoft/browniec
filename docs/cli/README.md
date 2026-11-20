@@ -51,8 +51,8 @@ runtime/delivery gaps.
 
 Windows project execution and explicit binary project input are described in
 [project selection](configuration.md#project-selection). [Configured runs](configuration.md#configured-project-output)
-also support the output capability and compile/run deadlines. [Single-source host checks](configuration.md#single-source-host-check)
-verify typed host calls using an explicit catalog and grants. Workers, cancellation controls,
+also support the output capability, compile/run deadlines and console cancellation during execution. [Single-source host checks](configuration.md#single-source-host-check)
+verify typed host calls using an explicit catalog and grants. Workers, other cancellation controls,
 public host suspension and the public DLL
 remain pending. `--isolated` reports unavailable.
 

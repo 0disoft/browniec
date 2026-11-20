@@ -180,6 +180,44 @@ def configured_arguments(folder):
             '--run', folder / 'run.json']
 
 
+def check_console_cancellation(exe, args, project):
+    # The helper owns a separate console. Target only the test CLI process group.
+    driver = r"""
+import signal
+import subprocess
+import sys
+import time
+
+with subprocess.Popen(sys.argv[1:], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                      creationflags=subprocess.CREATE_NEW_PROCESS_GROUP) as guest:
+    try:
+        time.sleep(0.6)
+        assert guest.poll() is None, guest.communicate()
+        guest.send_signal(signal.CTRL_BREAK_EVENT)
+        out, err = guest.communicate(timeout=8)
+        assert guest.returncode == 5, (guest.returncode, out, err)
+    finally:
+        if guest.poll() is None:
+            guest.kill()
+    sys.stdout.buffer.write(out)
+    sys.stderr.buffer.write(err)
+"""
+    startup = subprocess.STARTUPINFO()
+    startup.dwFlags = subprocess.STARTF_USESHOWWINDOW
+    startup.wShowWindow = subprocess.SW_HIDE
+    run = subprocess.run([sys.executable, '-B', '-c', driver, str(exe),
+                          *map(str, args), '--input', str(project / 'payload.bin'), '--json-v2'],
+                         creationflags=subprocess.CREATE_NEW_CONSOLE, startupinfo=startup,
+                         capture_output=True, timeout=12)
+    assert run.returncode == 0 and not run.stderr and len(run.stdout.splitlines()) == 1, run
+    assert json.loads(run.stdout) == {
+        'schema': 'browniec.result/v2', 'command': 'run', 'status': 'error',
+        'profile': 'brownie.m2-reference/1', 'return_i32': None,
+        'error': {'kind': 'cancelled', 'location': {'kind': 'none'}},
+    }
+    print('PASS: Windows CTRL+BREAK cancels configured execution without publishing output')
+
+
 def check_configured_output(exe, folder):
     project = folder / 'configured'
     shutil.copytree(CONFIGURED, project)
@@ -228,6 +266,15 @@ def check_configured_output(exe, folder):
     update(limits=config['limits'] | {'deadline_ms': 1})
     error = check_json(exe, [*args, '--input', payload], 5, version=2, profile=profile)
     assert error == {'kind': 'deadline', 'location': {'kind': 'none'}}, error
+
+    policy_file = project / 'policy.json'
+    original_policy = policy_file.read_bytes()
+    ceiling = json.loads(original_policy)
+    extended = config['limits'] | {'fuel': 16000000, 'deadline_ms': 10000}
+    policy_file.write_text(json.dumps(ceiling | {'run': extended}), encoding='utf-8')
+    update(limits=extended)
+    check_console_cancellation(exe, args, project)
+    policy_file.write_bytes(original_policy)
     update()
 
     source.write_bytes(b'module app;pub fn i32 transform(ref u8[] data){return true;}')
