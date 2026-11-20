@@ -15,6 +15,8 @@
 | browniec eval-i32 SOURCE N | Evaluate a scalar rule with one signed decimal i32 input | Implemented for `module main` sources with `fn i32 evaluate(i32 ...)` |
 | browniec check --project FILE | Check an explicit source map and its named entry | Windows, zero-argument i32 entry, empty requirements |
 | browniec run --project FILE [--input FILE or --stdin] | Run the checked named entry | Windows, zero-argument i32 entry or one shared-byte parameter with explicit input, empty requirements |
+| browniec check --project FILE --catalog FILE --policy FILE --run FILE | Verify a project and its typed host imports | Windows, public i32 entry, text or JSON |
+| browniec run --project FILE --catalog FILE --policy FILE --run FILE --host-replies FILE | Run a project with typed precomputed host replies | Windows, public i32 entry, text or JSON |
 | browniec check --project FILE --policy FILE --run FILE | Verify source, entry and grants under an explicit policy without running guest code | Windows, shared-byte i32 entry, text or JSON |
 | browniec run --project FILE --policy FILE --run FILE | Run the checked entry under explicit policy | Windows, shared-byte i32 entry, JSON output required, optional input file or stdin |
 | browniec check SOURCE --isolated | Use a restricted compile-only worker | Designed; unavailable |
@@ -45,7 +47,8 @@ remain unavailable.
 [Configured project runs](configuration.md#configured-project-output) support
 output emission, compile/run deadlines and console cancellation during execution. [Single-source host checks](configuration.md#single-source-host-check)
 load an explicit catalog. [Single-source host runs](configuration.md#single-source-host-execution)
-add precomputed replies, run deadlines and console cancellation. General Buffer delivery,
+add precomputed replies, run deadlines and console cancellation. [Project host runs](configuration.md#project-host-execution)
+apply the same reply contract to an anchored multi-module project. General Buffer delivery,
 external host adapters, workers and cancellation outside configured execution remain unavailable. `--isolated` returns an availability
 denial, with no unrestricted fallback. Ordinary check/run use zero-argument i32
 `main`. The separate eval-i32 command selects a single-i32 `evaluate` entry.

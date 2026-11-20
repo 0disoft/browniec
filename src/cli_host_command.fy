@@ -1,6 +1,12 @@
 module cli_host_command;
 
 import cli_input as source_input;
+import cli_project as projects;
+import anchored_source_loader as anchored;
+import project_manifest as manifest;
+import source_snapshot as sources;
+import std::bytes as bytes;
+import std::process as process;
 import cli_host_replies as replies;
 import cli_run_configuration as configuration;
 import errors as errors;
@@ -16,7 +22,7 @@ unsafe extern C fn u32 bc_cli_enable_cancel();
 unsafe extern C fn u32 bc_cli_cancel_requested();
 
 @effects(console,filesystem)
-pub fn i32 execute(render::Format format,usize policy_file,usize run_file,usize catalog_file,usize reply_file){
+pub fn i32 execute(render::Format format,usize policy_file,usize run_file,usize catalog_file,usize reply_file,bool project){
     let bool running=reply_file!=0;
     let policies::Policy ceiling=switch(configuration::read_policy(policy_file)){
         case .ok(v):{v}case .err(e):{return failure(format,running,e);}
@@ -35,21 +41,64 @@ pub fn i32 execute(render::Format format,usize policy_file,usize run_file,usize 
             case .ok(v):{.some(v)}case .err(e):{return failure(format,true,e);}
         }
     }else{.none};
-    let source_input::Source source=switch(source_input::read_source(2)){
-        case .ok(v):{v}case .err(e):{return failure(format,running,e);}
-    };
     var engine::Engine owner=switch(engine::create_with_policy(ceiling)){
         case .ok(v):{v}case .err(e):{return failure(format,running,engine_error(e,true));}
+    };
+    if(project){
+        return execute_project(format,running,ref mut owner,ref run,imports,ref digest,responses);
+    }
+    let source_input::Source source=switch(source_input::read_source(2)){
+        case .ok(v):{v}case .err(e):{return failure(format,running,e);}
     };
     let usize program=switch(engine::compile_scalar_host(ref mut owner,ref source.data[..source.length],
         imports,ref digest,ref run)){
         case .ok(v):{v}case .err(e):{return failure(format,running,engine_error(e,true));}
     };
+    return complete_command(format,running,ref mut owner,program,ref run,responses);
+}
+
+@effects(console,filesystem)
+fn i32 execute_project(render::Format format,bool running,ref mut engine::Engine owner,ref runs::RunConfig run,
+    catalog::Catalog imports,ref u32[] digest,Option<replies::Replies> responses){
+    var u8[3072] path=[0;3072];
+    let usize size=switch(process::arg(3,ref mut path)){
+        case .ok(v):{v}case .err(_):{return failure(format,running,errors::absent(10,0));}
+    };
+    var bytes::Buffer data=bytes::empty();
+    var anchored::Root root=switch(projects::open_manifest(ref path[..size],ref mut data)){
+        case .ok(v):{v}case .err(e):{return failure(format,running,e);}
+    };
+    let manifest::Project project=switch(projects::parse_manifest(ref root,bytes::view(ref data))){
+        case .ok(v):{v}case .err(e):{return failure(format,running,e);}
+    };
+    let usize program=switch(engine::compile_anchored_project_host(owner,ref project,ref mut root,imports,digest,run)){
+        case .ok(v):{v}
+        case .err(e):{return project_failure(format,running,ref project,ref root,e);}
+    };
+    return complete_command(format,running,owner,program,run,responses);
+}
+
+@effects(console)
+fn i32 project_failure(render::Format format,bool running,ref manifest::Project project,ref anchored::Root root,
+    engine::Error failure_info){
+    let errors::Error problem=if(failure_info.status==1){errors::absent(9,0)}else{engine_error(failure_info,true)};
+    let sources::Span at=failure_info.diagnostic.at;
+    if(at.source>=manifest::count(project) || problem.location!=0){return failure(format,running,problem);}
+    let sources::Snapshot snapshot=switch(anchored::copy_collected(
+        root,manifest::count(project),sources::source_limit(),sources::name_limit())){
+        case .ok(v):{v}case .err(_):{return failure(format,running,problem);}
+    };
+    return render::project_failure(format,running,problem,ref snapshot,at,0);
+}
+
+@effects(console)
+fn i32 complete_command(render::Format format,bool running,ref mut engine::Engine owner,usize program,
+    ref runs::RunConfig run,Option<replies::Replies> responses){
     let Outcome result=switch(responses){
         case .none:{success(0)}
-        case .some(table):{execute_guest(ref mut owner,program,ref run,ref table)}
+        case .some(table):{execute_guest(owner,program,run,ref table)}
     };
-    if(!engine::release_program(ref mut owner,program).is_ok || !engine::destroy(ref mut owner).is_ok){
+    if(!engine::release_program(owner,program).is_ok || !engine::destroy(owner).is_ok){
         return failure(format,running,errors::absent(5,0));
     }
     return render::selected_outcome(format,running,result.error.kind!=0,result.value,result.error,0);

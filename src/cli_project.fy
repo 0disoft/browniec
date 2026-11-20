@@ -72,7 +72,7 @@ fn Result<ProjectInput,errors::Error> acquire(ref u8[] path){
 }
 
 // Retain the anchor independently of the manifest buffer and decoded metadata.
-fn Result<anchored::Root,errors::Error> open_manifest(ref u8[] path,ref mut bytes::Buffer data){
+pub fn Result<anchored::Root,errors::Error> open_manifest(ref u8[] path,ref mut bytes::Buffer data){
     if(!bytes::resize_zeroed(data,json::byte_limit()).is_ok){return .err(errors::absent(15,0));}
     return switch(anchored::open_project(path,bytes::view_mut(data))){
         case .ok(v):{.ok(v)}
@@ -80,7 +80,7 @@ fn Result<anchored::Root,errors::Error> open_manifest(ref u8[] path,ref mut byte
     };
 }
 
-fn Result<manifest::Project,errors::Error> parse_manifest(ref anchored::Root root,ref u8[] data){
+pub fn Result<manifest::Project,errors::Error> parse_manifest(ref anchored::Root root,ref u8[] data){
     return switch(manifest::parse(data[..anchored::manifest_bytes(root)])){
         case .ok(v):{.ok(v)}
         case .err(e):{

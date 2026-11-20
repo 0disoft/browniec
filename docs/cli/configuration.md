@@ -83,7 +83,7 @@ The current host compiler enforces its native dialect bounds and the policy's
 source byte, lexical token (excluding EOF), function, instruction, per-function
 register and compile deadline limits. The token limit is checked during catalog
 binding before signature and body lowering. Function, instruction and register
-limits are checked before Program retention. Full compile work accounting and multi-module catalog checks remain pending. See the
+limits are checked before Program retention. Full compile work accounting remains pending. See the
 [host compiler contract](../engineering/host-exchange.md#scalar-host-calls-from-source).
 
 ## Single-source host execution
@@ -159,6 +159,39 @@ compilation and can block until EOF. The reader accepts 0 through 1,048,576 raw
 bytes, including NUL and invalid UTF-8. The VM borrows an immutable snapshot.
 Use `--fuel 16000000` when trying input programs because input metadata alone
 needs 32,768 Fuel. With neither input option the project entry takes zero arguments.
+
+## Project host execution
+
+Windows projects can use the same catalog and precomputed reply format as
+[single-source runs](#single-source-host-execution). The project selects a
+public zero-argument i32 entry. It may call guest helpers across modules and
+use typed host imports inside those helpers.
+
+    browniec check --project FILE --catalog FILE --policy FILE --run FILE
+    browniec run --project FILE --catalog FILE --policy FILE --run FILE --host-replies FILE --json
+
+The manifest and run configuration must select the same entry and declare the
+same set of capabilities. The Engine checks that relation and the run's grants
+against its policy before collecting source members from the manifest's directory
+anchor. Each source module resolves its own host aliases against the explicit
+catalog. The normal guest module visibility rules still apply. The retaining
+verifier checks the catalog digest and grants for every compiled host call.
+
+Check accepts text and both result schemas without creating an Instance or
+reading a reply file. Run accepts the same output formats and requires a reply
+file. The policy bounds source bytes, module count, tokens, functions,
+instructions, per-function registers and the compilation deadline within the
+host dialect's native limits. This mode supports the existing host dialect and
+its reply-file bounds. Project input, emit and external adapters are separate
+delivery paths.
+
+The Windows development and /O2 CLI checks compile and run a two-module
+project, producing 77 through a typed host response. They also cover reused
+alias names across modules, qualified host calls, private guest helpers,
+original member diagnostics and authority denial before source collection.
+The owning Engine regression passed both profiles with zero live SDK
+allocations. Its receipt is
+`build/runtime-engine/20261120T161854659274Z/receipt.json`.
 
 ## Configured project output
 

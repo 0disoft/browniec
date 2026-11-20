@@ -68,6 +68,7 @@ import source_context_work as collecting;
 import module_entry as module_entries;
 import module_input_entry as input_entries;
 import source_error as source_errors;
+import source_snapshot as source_snapshot;
 import module_index as module_index;
 import output_source as output_source;
 import output_ir as output_ir;
@@ -3189,6 +3190,37 @@ pub fn Result<usize,errors::Error> lower_scalar_host_with_limit(ref u8[] source,
     var usize active=16;
     let usize count=lower_prepared(source,false,false,false,ref literals,ref mut signatures,code,ref mut active,start)?;
     return host_source::finish(source,code);
+}
+
+// The selected Index owns the original modules and scoped guest aliases.
+pub fn Result<usize,source_errors::Error> lower_project_host(ref module_entries::Entry selected,
+    ref host_catalog::Catalog imports,ref mut ir::Program code){
+    let ref module_index::Index index=module_entries::index(selected);
+    let ref source_snapshot::Snapshot snapshot=module_index::snapshot(index);
+    var usize active=16;
+    switch(host_source::prepare_project(index,code,imports,ref mut active)){
+        case .ok(_):{}case .err(e):{return .err(source_errors::map(snapshot,e,active));}
+    };
+    let source_context::Input input=switch(collecting::collect(index)){
+        case .ok(v):{v}case .err(e):{return .err(source_errors::Error{.code=source_errors::binding(e),.at=e.at});}
+    };
+    let ref u8[] source=ref input.data[..input.used];
+    return lower_project_host_body(source,ref input.context,selected,code);
+}
+fn Result<usize,source_errors::Error> lower_project_host_body(ref u8[] source,ref source_context::Table scope,
+    ref module_entries::Entry selected,ref mut ir::Program code){
+    let ref module_index::Index index=module_entries::index(selected);
+    var functions::Table signatures=switch(signature_scan::scan_host_indexed(source,scope,index,module_entries::selected(selected))){
+        case .ok(v):{v}case .err(e):{return .err(module_error(selected,e,16));}
+    };
+    let literal_collection::Index literals=literal_collection::empty();
+    var usize active=16;
+    switch(lower_prepared(source,false,false,false,ref literals,ref mut signatures,code,ref mut active,0)){
+        case .ok(_):{}case .err(e):{return .err(module_error(selected,e,active));}
+    };
+    return switch(host_source::finish(source,code)){
+        case .ok(v):{.ok(v)}case .err(e):{.err(module_error(selected,e,16))}
+    };
 }
 
 // The analysis Program stays private and is never returned to an executor.

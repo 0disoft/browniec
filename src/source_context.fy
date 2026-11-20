@@ -53,11 +53,13 @@ pub fn Result<Input,modules::Error> collect(ref modules::Index index){
         if(source.len==0 || source.len>4096-used){return .err(error(all));}
         var usize j=0;while(j<source.len){data[used+j]=source[j];j+=1;}used+=source.len;ends[i]=word(used,all)?;i+=1;
     }
+    var usize alias_count=0;
     i=0;while(i<modules::import_count(index)){
         let modules::Import item=modules::import_at(index,i)?;
+        if(item.target==16){i+=1;continue;}
         if(item.owner>=count || item.target>=count){return .err(error(item.alias));}
         let usize base=if(item.owner==0){0}else{ends[item.owner-1] as usize};
-        aliases[i]=word((base+item.alias.start) | ((base+item.alias.end)<<13) | (item.target<<26),item.alias)?;i+=1;
+        aliases[alias_count]=word((base+item.alias.start) | ((base+item.alias.end)<<13) | (item.target<<26),item.alias)?;alias_count+=1;i+=1;
     }
     i=0;while(i<modules::symbol_count(index)){
         let modules::Symbol item=modules::symbol(index,i)?;if(item.owner>=count){return .err(error(item.name));}
@@ -67,7 +69,7 @@ pub fn Result<Input,modules::Error> collect(ref modules::Index index){
         else{if(item.kind!=2 || rc==32){return .err(error(item.name));}records[rc]=packed;rc+=1;}i+=1;
     }
     let Table context=Table{.ends=ends,.aliases=aliases,.functions=functions,.records=records,
-        .modules=count,.imports=modules::import_count(index),.function_count=fc,.record_count=rc};
+        .modules=count,.imports=alias_count,.function_count=fc,.record_count=rc};
     let ref u8[] initialized=ref data;
     if(!valid(initialized[..used],ref context)){return .err(error(sources::no_source()));}
     return .ok(Input{.data=data,.used=used,.context=context});

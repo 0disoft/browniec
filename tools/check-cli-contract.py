@@ -54,7 +54,7 @@ def check_diagnostic(exe, path, code, kind, location, text):
         assert type(v2['location']['offset']) is int, v2
 
 
-def check_output_table(exe, identity, host_check, host_run):
+def check_output_table(exe, identity, host_check, host_run, project_host_check, project_host_run):
     subprocess.run([sys.executable, '-B', str(ROOT / 'tools/sync-cli-output.py'), '--check'],
                    check=True, timeout=10)
     answer = ROOT / 'examples/answer.brc'
@@ -68,6 +68,8 @@ def check_output_table(exe, identity, host_check, host_run):
         command = row['command']
         if command == 'inspect':
             args = [answer, row['arguments'].split()[-1]]
+        elif row['arguments'].startswith('--project FILE --catalog'):
+            args = (project_host_run if command == 'run' else project_host_check)[1:]
         elif '--host-replies' in row['arguments']:
             args = host_run[1:]
         elif '--catalog' in row['arguments']:
@@ -86,7 +88,8 @@ def check_output_table(exe, identity, host_check, host_run):
             assert written and not other, (row, mode, ran)
             schema = mode['schema']
             if schema is None:
-                expected = b'return_i32=42' if command == 'run' and args[0] == '--project' else tokens[command]
+                legacy_project = command == 'run' and args[0] == '--project' and '--catalog' not in args
+                expected = b'return_i32=42' if legacy_project else tokens[command]
                 assert written.startswith(expected), (row, mode, ran)
             else:
                 assert len(written.splitlines()) == 1 and written.endswith(b'\n'), ran
@@ -192,6 +195,64 @@ def check_host_run(exe, check_args, args):
     assert check_json(exe, args, 5, version=2)['kind'] == 'fuel'
     run.write_text(json.dumps(config), encoding='utf-8')
     print('PASS: configured host run, typed Result arms, exact matching, fail-closed replies and Fuel')
+
+
+def make_host_project(folder):
+    folder.mkdir()
+    base = make_host_check(folder)
+    app = folder / 'app.brc'
+    helper = folder / 'helper.brc'
+    project = folder / 'project.json'
+    app.write_bytes(b'module app; import helpers as service; pub fn i32 start(){return service::calculate()+35;}')
+    helper.write_bytes(b'module helpers; import host::example as service; pub fn i32 calculate(){return service::check(41);}')
+    run = base[7]
+    config = json.loads(run.read_bytes())
+    config['entry'] = {'module': 'app', 'function': 'start'}
+    run.write_text(json.dumps(config), encoding='utf-8')
+    project.write_text(json.dumps({
+        'schema': 'brownie.project/0.3', 'name': 'host-project', 'entry': config['entry'],
+        'sources': [{'module': 'app', 'path': app.name}, {'module': 'helpers', 'path': helper.name}],
+        'requires': config['requires'],
+    }), encoding='utf-8')
+    run_args = make_host_run(base, folder / 'replies.json')
+    return ['check', '--project', project, *base[2:]], ['run', '--project', project, *run_args[2:]]
+
+
+def check_host_project(exe, check_args, run_args):
+    project = check_args[2]
+    helper = project.parent / 'helper.brc'
+    run_file = check_args[8]
+    assert check_json(exe, check_args, 0, version=2) is None
+    assert check_json(exe, run_args, 0, version=2, value=77) is None
+    config = json.loads(run_file.read_bytes())
+    for change in ({'requires': []}, {'entry': {'module': 'app', 'function': 'wrong'}}):
+        run_file.write_text(json.dumps(config | change), encoding='utf-8')
+        assert check_json(exe, check_args, 4, version=2)['kind'] == 'unavailable'
+    run_file.write_text(json.dumps(config), encoding='utf-8')
+
+    original = helper.read_bytes()
+    absolute = b'module helpers; pub fn i32 calculate(){return host /* scope */ :: example::check(41);}'
+    helper.write_bytes(absolute)
+    assert check_json(exe, run_args, 0, version=2, value=77) is None
+    helper.write_bytes(original.replace(b'host::example', b'host::unknown'))
+    error = check_json(exe, check_args, 3, version=2)
+    assert error['kind'] == 'type' and error['location']['path'] == 'helper.brc', error
+    assert error['location']['source_index'] == 1, error
+    helper.write_bytes(original.replace(b'check(41)', b'check(true)'))
+    error = check_json(exe, check_args, 3, version=2)
+    assert error['kind'] == 'type' and error['location']['path'] == 'helper.brc', error
+    helper.write_bytes(original.replace(b'pub fn', b'fn'))
+    assert check_json(exe, check_args, 3, version=2)['kind'] == 'type'
+    helper.write_bytes(original)
+
+    manifest = json.loads(project.read_bytes())
+    project.write_text(json.dumps(manifest | {'requires': []}), encoding='utf-8')
+    helper.unlink()
+    assert check_json(exe, check_args, 4, version=2)['kind'] == 'unavailable'
+    project.write_text(json.dumps(manifest), encoding='utf-8')
+    assert check_json(exe, check_args, 7, version=2)['kind'] == 'input_io'
+    helper.write_bytes(original)
+    print('PASS: catalog-backed project calls, lexical scopes, source locations and authority-before-file-read')
 
 
 def check_host_catalog(exe, args):
@@ -650,9 +711,11 @@ def main():
 
         host_check = make_host_check(Path(temp))
         host_run = make_host_run(host_check, Path(temp) / 'host-replies.json')
-        check_output_table(exe, identity, host_check, host_run)
+        project_host_check, project_host_run = make_host_project(Path(temp) / 'host-project')
+        check_output_table(exe, identity, host_check, host_run, project_host_check, project_host_run)
         check_host_run(exe, host_check, host_run)
         check_host_catalog(exe, host_check)
+        check_host_project(exe, project_host_check, project_host_run)
         check_project(exe, Path(temp))
         check_project_input(exe, Path(temp))
         check_source_input(exe, Path(temp))

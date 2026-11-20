@@ -123,7 +123,15 @@ fn Result<raw::Table,errors::Error> scan_from(ref u8[] source,usize start,bool r
     return prepared(ref w);
 }
 pub fn Result<raw::Table,errors::Error> scan_indexed(ref u8[] source,ref context::Table scope,ref modules::Index index,usize selected,bool returns){
+    return scan_indexed_mode(source,scope,index,selected,returns,false);
+}
+pub fn Result<raw::Table,errors::Error> scan_host_indexed(ref u8[] source,ref context::Table scope,ref modules::Index index,usize selected){
+    return scan_indexed_mode(source,scope,index,selected,false,true);
+}
+fn Result<raw::Table,errors::Error> scan_indexed_mode(ref u8[] source,ref context::Table scope,ref modules::Index index,
+    usize selected,bool returns,bool host){
     var State w=indexed(selected,returns);var budget::State meter=budget::empty();
+    w.result.scalar_host_calls=host;
     while(!w.done){let usize allowance=budget::reset(ref mut meter,0)?;let bool done=advance_indexed(source,scope,index,ref mut w,ref mut meter)?;}
     return prepared(ref w);
 }

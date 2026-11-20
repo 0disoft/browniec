@@ -91,11 +91,11 @@ fn i32 main() {
             at+=1;
             settings.run_file=at;
         }
-        else if (!eval && !project && catalog_file==0 && at+1<argc && lexer::equal(view[..length],b"--catalog")) {
+        else if (!eval && catalog_file==0 && at+1<argc && lexer::equal(view[..length],b"--catalog")) {
             at+=1;
             catalog_file=at;
         }
-        else if (run && !eval && !project && reply_file==0 && at+1<argc && lexer::equal(view[..length],b"--host-replies")) {
+        else if (run && !eval && reply_file==0 && at+1<argc && lexer::equal(view[..length],b"--host-replies")) {
             at+=1;
             reply_file=at;
         }
@@ -125,12 +125,12 @@ fn i32 main() {
         };
         return evaluate(argument,format,fuel);
     }
-    if(!project && (catalog_file!=0 || reply_file!=0 || settings.policy_file!=0 || settings.run_file!=0)){
+    if(catalog_file!=0 || reply_file!=0 || (!project && (settings.policy_file!=0 || settings.run_file!=0))){
         if(catalog_file==0 || settings.policy_file==0 || settings.run_file==0 ||
            run!=(reply_file!=0) || fuel_seen || payload.argument!=0 || payload.stdin){
             return fail(format,run,10);
         }
-        return hosts::execute(format,settings.policy_file,settings.run_file,catalog_file,reply_file);
+        return hosts::execute(format,settings.policy_file,settings.run_file,catalog_file,reply_file,project);
     }
     if(settings.policy_file!=0 || settings.run_file!=0){
         if(settings.policy_file==0 || settings.run_file==0 || fuel_seen || (run && render::text_mode(format))){

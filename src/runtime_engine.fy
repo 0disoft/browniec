@@ -316,6 +316,9 @@ fn Result<policy_limits::CompileLimits,Error> source_host_limits(ref Engine e,re
     let usize checked=check_run_policy(e,run)?;
     if(!bytes::equal(run_config::module_name(run),b"main") ||
         !bytes::equal(run_config::function_name(run),b"main")){return .err(error(5));}
+    return host_compile_limits(e);
+}
+fn Result<policy_limits::CompileLimits,Error> host_compile_limits(ref Engine e){
     if(e.meta.admission==0 || e.meta.next==0 || vec::len<Program>(ref e.programs)>=e.meta.limits.programs){return .err(error(8));}
     return .ok(policy::compile_limits(vec::at<policy::Policy>(ref e.policy,0)));
 }
@@ -335,13 +338,57 @@ pub fn Result<usize,Error> compile_scalar_host(ref mut Engine e,ref u8[] source,
                 .code=problem,.at=sources::Span{.source=0,.start=at,.end=if(at<source.len){at+1}else{at}}}});
         }
     };
+    return retain_limited_host(e,ref code,imports,digest,run,limits,deadline);
+}
+
+fn bool project_host_authority(ref projects::Project project,ref run_config::RunConfig run){
+    let usize count=projects::requirements(project);
+    if(count!=run_config::requires_count(run) ||
+       !bytes::equal(projects::entry_module(project),run_config::module_name(run)) ||
+       !bytes::equal(projects::entry_function(project),run_config::function_name(run))){return false;}
+    var usize i=0;
+    while(i<count){
+        let ref u8[] name=switch(projects::requirement(project,i)){
+            case .ok(v):{v}case .err(_):{return false;}
+        };
+        if(!run_config::declares(run,name)){return false;}
+        i+=1;
+    }
+    return true;
+}
+
+pub fn Result<usize,Error> compile_anchored_project_host(ref mut Engine e,ref projects::Project project,
+    ref mut anchored::Root root,host_catalog::Catalog imports,ref u32[] digest,ref run_config::RunConfig run){
+    discard check_run_policy(e,run)?;
+    if(!project_host_authority(project,run)){return .err(error(5));}
+    let policy_limits::CompileLimits limits=host_compile_limits(e)?;
+    if(projects::count(project)>limits.modules){return .err(error(8));}
+    let usize deadline=deadline_after(limits.deadline_ms)?;
+    let sources::Snapshot snapshot=project_snapshot(project_loader::load_from(project,root,project_source_limit(e)))?;
+    if(deadline_reached(deadline)){return .err(compile_timeout());}
+    let entries::Entry selected=switch(project_binding::select_host(project,snapshot,limits.tokens)){
+        case .ok(v):{v}
+        case .err(e):{return .err(Error{.status=4,.diagnostic=diagnostics::Error{.code=diagnostics::binding(e),.at=e.at}});}
+    };
+    return retain_project_host(e,ref selected,imports,digest,run,limits,deadline);
+}
+fn Result<usize,Error> retain_project_host(ref mut Engine e,ref entries::Entry selected,host_catalog::Catalog imports,
+    ref u32[] digest,ref run_config::RunConfig run,policy_limits::CompileLimits limits,usize deadline){
+    var ir::Program code=ir::empty();
+    switch(compiler::lower_project_host(selected,ref imports,ref mut code)){
+        case .ok(_):{}case .err(e):{return .err(Error{.status=4,.diagnostic=e});}
+    };
+    return retain_limited_host(e,ref code,imports,digest,run,limits,deadline);
+}
+fn Result<usize,Error> retain_limited_host(ref mut Engine e,ref ir::Program code,host_catalog::Catalog imports,
+    ref u32[] digest,ref run_config::RunConfig run,policy_limits::CompileLimits limits,usize deadline){
     if(code.count>limits.instructions || code.function_count>limits.functions){return .err(error(8));}
     var usize f=0;
     while(f<code.function_count){
         if(code.register_ends[f]-code.register_starts[f]>limits.registers_per_function){return .err(error(8));}
         f+=1;
     }
-    return retain_verified_host(e,ref code,imports,digest,run,deadline);
+    return retain_verified_host(e,code,imports,digest,run,deadline);
 }
 
 // Trusted internal IR admission. The Engine retains the resulting verified owner.

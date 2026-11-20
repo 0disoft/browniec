@@ -5,6 +5,8 @@ import host_catalog as catalog;
 import host_program as programs;
 import ir as ir;
 import lexer as lexer;
+import module_index as modules;
+import source_snapshot as sources;
 import literal_source as literals;
 import locals as locals;
 import array_source as arrays;
@@ -29,15 +31,25 @@ fn bool word(ref u8[] source,ref lexer::State s,ref u8[] text){
 }
 
 pub fn Result<bool,errors::Error> qualified(ref u8[] source,ref lexer::State s,ref ir::Program code){
-    if(s.kind!=2){return .ok(false);}
+    if(s.kind!=2 && s.kind!=5){return .ok(false);}
     if(lookup(code,s.begin).is_ok){return .ok(true);}
-    if(!word(source,s,b"host")){return .ok(false);}
+    if(s.kind==5 || !word(source,s,b"host")){return .ok(false);}
     var lexer::State next=lexer::snapshot(s);
     let usize read=lexer::next(source,ref mut next)?;
     return .ok(next.kind==58);
 }
 
 pub fn Result<Name,errors::Error> name(ref u8[] source,ref mut lexer::State s){
+    if(s.kind!=5){return raw_name(source,s);}
+    var lexer::State raw=lexer::empty();raw.cursor=s.begin;
+    discard lexer::next(source,ref mut raw)?;
+    let Name item=raw_name(source,ref mut raw)?;
+    if(item.end!=s.end){return .err(errors::make(2,s.begin));}
+    discard lexer::next(source,s)?;
+    if(s.kind!=40){return .err(errors::make(2,s.begin));}
+    return .ok(item);
+}
+fn Result<Name,errors::Error> raw_name(ref u8[] source,ref mut lexer::State s){
     let usize begin=s.begin;
     let bool absolute=word(source,s,b"host");
     let usize first=lexer::next(source,s)?;
@@ -137,7 +149,7 @@ fn u8 small(usize value){
 }
 
 // Binding is advisory: the retaining verifier rechecks the exact catalog.
-pub fn Result<usize,errors::Error> prepare(ref u8[] source,ref mut ir::Program code,ref catalog::Catalog imports,usize token_limit){
+fn Result<usize,errors::Error> prepare_signatures(ref mut ir::Program code,ref catalog::Catalog imports){
     if(code.list_used!=0){return .err(errors::make(5,0));}
     code.list_used=scratch_bytes();
     var usize i=0;
@@ -153,6 +165,11 @@ pub fn Result<usize,errors::Error> prepare(ref u8[] source,ref mut ir::Program c
         }
         i+=1;
     }
+    return .ok(i);
+}
+
+pub fn Result<usize,errors::Error> prepare(ref u8[] source,ref mut ir::Program code,ref catalog::Catalog imports,usize token_limit){
+    discard prepare_signatures(code,imports)?;
     var lexer::State s=lexer::empty();
     let usize first=lexer::next(source,ref mut s)?;
     let usize module_word=lexer::word(source,ref mut s,b"module")?;
@@ -170,37 +187,110 @@ pub fn Result<usize,errors::Error> prepare(ref u8[] source,ref mut ir::Program c
         aliases_used+=1;
     }
     let usize declarations=s.begin;
-    var usize count=0;
+    let usize count=collect_calls(source,ref mut s,code,imports,ref aliases[..aliases_used],0,0)?;
+    // The lexer also counts its end-of-file marker. Policy counts source tokens.
+    if(s.tokens-1>token_limit){return .err(errors::make(4,s.begin));}
+    store_count(code,count);
+    return .ok(declarations);
+}
+
+fn void store_count(ref mut ir::Program code,usize count){
+    code.list_operands[rows()]=small(count%256);
+    code.list_operands[rows()+1]=small(count/256);
+}
+
+fn Result<usize,errors::Error> collect_calls(ref u8[] source,ref mut lexer::State s,ref mut ir::Program code,
+    ref catalog::Catalog imports,ref Alias[] aliases,usize base,usize initial){
+    var usize count=initial;
     while(s.kind!=0){
         if(s.kind==2){
-            let bool absolute=word(source,ref s,b"host");
-            let usize mask=alias_mask(source,ref aliases,aliases_used,s.begin,s.end);
+            let bool absolute=word(source,s,b"host");
+            let usize mask=alias_mask(source,aliases,aliases.len,s.begin,s.end);
             if(absolute || mask!=0){
-                var lexer::State look=lexer::snapshot(ref s);
-                switch(name(source,ref mut look)){
+                var lexer::State look=lexer::snapshot(s);
+                switch(raw_name(source,ref mut look)){
                 case .ok(item):{
                     let u8 id=import_id(source,item,imports,absolute,mask)?;
                     if(id==64){return .err(errors::make(3,item.begin));}
                     if(count==256){return .err(errors::make(4,item.begin));}
                     let usize at=rows()+2+3*count;
-                    code.list_operands[at]=small(item.begin%256);
-                    code.list_operands[at+1]=small(item.begin/256);
+                    let usize offset=base+item.begin;
+                    code.list_operands[at]=small(offset%256);
+                    code.list_operands[at+1]=small(offset/256);
                     code.list_operands[at+2]=id;
                     count+=1;
-                    s=look;
+                    *s=look;
                     continue;
                 }
                 case .err(_):{}
                 };
             }
         }
-        let usize next=lexer::next(source,ref mut s)?;
+        discard lexer::next(source,s)?;
     }
-    // The lexer also counts its end-of-file marker. Policy counts source tokens.
-    if(s.tokens-1>token_limit){return .err(errors::make(4,s.begin));}
-    code.list_operands[rows()]=small(count%256);
-    code.list_operands[rows()+1]=small(count/256);
-    return .ok(declarations);
+    return .ok(count);
+}
+
+fn errors::Error binding_error(modules::Error error){return errors::make(5,error.at.start);}
+
+fn Result<usize,errors::Error> module_calls(ref u8[] source,ref modules::Index index,usize file,usize base,
+    ref mut ir::Program code,ref catalog::Catalog imports,usize calls){
+    var Alias[64] aliases=[Alias{.begin=0,.end=0,.imports=0};64];
+    var usize used=0;
+    var usize row=0;
+    while(row<modules::import_count(index)){
+        let modules::Import item=switch(modules::import_at(index,row)){
+            case .ok(v):{v}case .err(e):{return .err(binding_error(e));}
+        };
+        if(item.owner==file && item.target==16){
+            let ref u8[] path=switch(modules::import_path(index,row)){
+                case .ok(v):{v}case .err(e):{return .err(binding_error(e));}
+            };
+            let usize mask=scope_mask(imports,path);
+            if(mask==0){return .err(errors::make(3,item.path.start));}
+            aliases[used]=Alias{.begin=item.alias.start,.end=item.alias.end,.imports=mask};
+            used+=1;
+        }
+        row+=1;
+    }
+    var lexer::State s=lexer::empty();
+    discard lexer::next(source,ref mut s)?;
+    return collect_calls(source,ref mut s,code,imports,ref aliases[..used],base,calls);
+}
+
+fn usize scope_mask(ref catalog::Catalog imports,ref u8[] path){
+    var usize mask=0;var usize i=0;let usize one=1;
+    while(i<catalog::count(imports)){
+        let ref u8[] scope=switch(catalog::module_name(imports,i)){
+            case .ok(v):{v}case .err(_):{assert(false);b""}
+        };
+        if(lexer::equal(path,scope)){mask|=one<<i;}
+        i+=1;
+    }
+    return mask;
+}
+
+pub fn Result<usize,errors::Error> prepare_project(ref modules::Index index,ref mut ir::Program code,
+    ref catalog::Catalog imports,ref mut usize active){
+    discard prepare_signatures(code,imports)?;
+    let ref sources::Snapshot snapshot=modules::snapshot(index);
+    var usize base=0;var usize file=0;var usize count=0;
+    while(file<modules::count(index)){
+        *active=file;
+        let sources::Span all=switch(sources::whole(snapshot,file)){
+            case .ok(v):{v}case .err(_):{return .err(errors::make(5,base));}
+        };
+        let ref u8[] source=switch(sources::view(snapshot,all)){
+            case .ok(v):{v}case .err(_):{return .err(errors::make(5,base));}
+        };
+        count=switch(module_calls(source,index,file,base,code,imports,count)){
+            case .ok(v):{v}case .err(e):{return .err(errors::make(e.kind,base+e.offset));}
+        };
+        base+=source.len;file+=1;
+    }
+    *active=16;
+    store_count(code,count);
+    return .ok(count);
 }
 
 fn usize alias_mask(ref u8[] source,ref Alias[] aliases,usize count,usize begin,usize end){

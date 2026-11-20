@@ -104,11 +104,11 @@ fn Result<usize,Error> declaration(ref u8[] source,usize id,ref mut lexer::State
         .name=name,.definition=span(id,begin,end)};t.symbol_count=at+1;
     if(function){t.functions+=1;}else{t.records+=1;}return .ok(at);
 }
-fn Result<usize,Error> file(ref u8[] source,usize id,ref mut Table t){
+fn Result<usize,Error> file(ref u8[] source,usize id,ref mut Table t,bool host){
     var lexer::State s=lexer::empty();let usize first=next(source,id,ref mut s)?;
     if(!word(source,ref s,b"module")){return .err(error(.Syntax,token(id,ref s)));}
     let usize advanced=next(source,id,ref mut s)?;
-    let bool reserved=word(source,ref s,b"std") || word(source,ref s,b"brownie");
+    let bool reserved=word(source,ref s,b"std") || word(source,ref s,b"brownie") || (host && word(source,ref s,b"host"));
     let Path name=path(source,id,ref mut s,t)?;
     if(reserved){return .err(error(.Reserved,name.at));}
     let usize semicolon=punctuation(source,id,ref mut s,59)?;
@@ -124,7 +124,7 @@ fn Result<usize,Error> file(ref u8[] source,usize id,ref mut Table t){
             let usize advance_1=next(source,id,ref mut s)?;let Path target=path(source,id,ref mut s,t)?;
             if(!word(source,ref s,b"as")){return .err(error(.Syntax,token(id,ref s)));}
             let usize advance_2=next(source,id,ref mut s)?;
-            if(s.kind!=2 || locals::reserved(source[s.begin..s.end])){return .err(error(.Syntax,token(id,ref s)));}
+            if(s.kind!=2 || locals::reserved(source[s.begin..s.end]) || (host && word(source,ref s,b"host"))){return .err(error(.Syntax,token(id,ref s)));}
             let sources::Span alias=token(id,ref s);if(alias.end-alias.start>64){return .err(error(.Limit,alias));}
             i=0;while(i<t.import_count){let Import prior=t.imports[i];
                 if(prior.owner==id && bytes::equal(source[alias.start..alias.end],source[prior.alias.start..prior.alias.end])){return .err(error(.Duplicate,alias));}i+=1;
@@ -136,27 +136,37 @@ fn Result<usize,Error> file(ref u8[] source,usize id,ref mut Table t){
     }
     return .ok(s.tokens);
 }
-fn Result<usize,Error> prepare(ref sources::Snapshot snapshot,ref mut Table t){
+fn Result<usize,Error> prepare(ref sources::Snapshot snapshot,ref mut Table t,bool host,usize token_limit){
     let usize count=sources::count(snapshot);if(count==0){return .err(error(.Missing,sources::no_source()));}
     var usize id=0;var usize tokens=0;
     while(id<count){
         let sources::Span all=switch(sources::whole(snapshot,id)){case .ok(v):{v}case .err(_):{return .err(error(.Bounds,sources::no_source()));}};
         let ref u8[] source=switch(sources::view(snapshot,all)){case .ok(v):{v}case .err(_):{return .err(error(.Bounds,all));}};
-        let usize used=file(source,id,t)?;
-        if(used>1024-tokens){return .err(error(.Limit,span(id,source.len,source.len)));}tokens+=used;id+=1;
+        let usize scanned=file(source,id,t,host)?;
+        let usize used=if(host){scanned-1}else{scanned};
+        if(used>token_limit-tokens){return .err(error(.Limit,span(id,source.len,source.len)));}tokens+=used;id+=1;
     }
     var Import[64] bound=t.imports;
     let ref u8[] names=ref t.names;
     var usize i=0;while(i<t.import_count){let Import candidate=t.imports[i];var usize target=16;id=0;
         while(id<t.count){let Module m=t.modules[id];if(bytes::equal(names[candidate.begin..candidate.end],names[m.begin..m.end])){target=id;break;}id+=1;}
-        if(target==16){return .err(error(.Missing,candidate.path));}
+        if(target==16 && !(host && candidate.end-candidate.begin>6 &&
+            bytes::equal(names[candidate.begin..candidate.begin+6],b"host::"))){
+            return .err(error(.Missing,candidate.path));
+        }
         bound[i]=Import{.owner=candidate.owner,.target=target,.alias=candidate.alias,.path=candidate.path,.begin=candidate.begin,.end=candidate.end};i+=1;
     }
     t.imports=bound;
     return .ok(t.count);
 }
 pub fn Result<Index,Error> build(sources::Snapshot snapshot){
-    var Table t=empty();let usize ready=prepare(ref snapshot,ref mut t)?;
+    return build_mode(snapshot,false,1024);
+}
+pub fn Result<Index,Error> build_host(sources::Snapshot snapshot,usize token_limit){
+    return build_mode(snapshot,true,if(token_limit<1024){token_limit}else{1024});
+}
+fn Result<Index,Error> build_mode(sources::Snapshot snapshot,bool host,usize token_limit){
+    var Table t=empty();let usize ready=prepare(ref snapshot,ref mut t,host,token_limit)?;
     var vec::Vec<Stored> stored=vec::empty<Stored>();
     let usize capacity=switch(vec::reserve<Stored>(ref mut stored,1)){
         case .ok(v):{v}case .err(_):{return .err(error(.Allocation,sources::no_source()));}
@@ -174,6 +184,10 @@ pub fn usize symbol_count(ref Index p){return table(p).symbol_count;}
 pub fn usize import_count(ref Index p){return table(p).import_count;}
 pub fn Result<Import,Error> import_at(ref Index p,usize id){
     let ref Table t=table(p);if(id>=t.import_count){return .err(error(.Bounds,sources::no_source()));}return .ok(t.imports[id]);
+}
+pub fn Result<ref u8[],Error> import_path(ref Index p,usize id){
+    let Import item=import_at(p,id)?;let ref Table t=table(p);let ref u8[] names=ref t.names;
+    return .ok(names[item.begin..item.end]);
 }
 pub fn Result<Module,Error> module_at(ref Index p,usize id){
     let ref Table t=table(p);if(id>=t.count){return .err(error(.Bounds,sources::no_source()));}return .ok(t.modules[id]);

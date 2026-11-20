@@ -166,6 +166,10 @@ A guest-handled `u32` error reply follows the guest's Result branch and can
 complete with exit 0. Fuel exhaustion, run deadline and cancellation report
 `fuel`, `deadline` and `cancelled` (5).
 
+The [catalog-backed project mode](configuration.md#project-host-execution) uses the same
+host result and exit classes. Compile diagnostics include the original project
+member path and span in JSON v2.
+
 ## Project check and run
 
 Windows project commands use the ordinary check/run results and exit classes.

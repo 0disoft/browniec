@@ -18,9 +18,15 @@ description: 公开 browniec 命令、退出码以及常见错误的快速排查
 | `browniec check SOURCE --catalog FILE --policy FILE --run FILE` | — | `stderr` | — |
 | `browniec check SOURCE --catalog FILE --policy FILE --run FILE` | `--json` | `stdout` | `browniec.result/v1` |
 | `browniec check SOURCE --catalog FILE --policy FILE --run FILE` | `--json-v2` | `stdout` | `browniec.result/v2` |
+| `browniec check --project FILE --catalog FILE --policy FILE --run FILE` | — | `stderr` | — |
+| `browniec check --project FILE --catalog FILE --policy FILE --run FILE` | `--json` | `stdout` | `browniec.result/v1` |
+| `browniec check --project FILE --catalog FILE --policy FILE --run FILE` | `--json-v2` | `stdout` | `browniec.result/v2` |
 | `browniec run SOURCE --catalog FILE --policy FILE --run FILE --host-replies FILE` | — | `stderr` | — |
 | `browniec run SOURCE --catalog FILE --policy FILE --run FILE --host-replies FILE` | `--json` | `stdout` | `browniec.result/v1` |
 | `browniec run SOURCE --catalog FILE --policy FILE --run FILE --host-replies FILE` | `--json-v2` | `stdout` | `browniec.result/v2` |
+| `browniec run --project FILE --catalog FILE --policy FILE --run FILE --host-replies FILE` | — | `stderr` | — |
+| `browniec run --project FILE --catalog FILE --policy FILE --run FILE --host-replies FILE` | `--json` | `stdout` | `browniec.result/v1` |
+| `browniec run --project FILE --catalog FILE --policy FILE --run FILE --host-replies FILE` | `--json-v2` | `stdout` | `browniec.result/v2` |
 | `browniec run SOURCE [--input FILE\|--stdin] [--fuel N]` | — | `stderr` | — |
 | `browniec run SOURCE [--input FILE\|--stdin] [--fuel N]` | `--json` | `stdout` | `browniec.result/v1` |
 | `browniec run SOURCE [--input FILE\|--stdin] [--fuel N]` | `--json-v2` | `stdout` | `browniec.result/v2` |

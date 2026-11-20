@@ -41,7 +41,7 @@ pub fn Result<bool,modules::Error> advance(ref modules::Index index,ref mut Stat
     if(w.phase==0){
         if(count==0 || count>16 || modules::import_count(index)>64 || modules::symbol_count(index)>48){return .err(invalid(sources::no_source()));}
         w.result.context.modules=count;w.imports=modules::import_count(index);w.symbols=modules::symbol_count(index);
-        w.result.context.imports=w.imports;w.phase=1;return .ok(false);
+        w.phase=1;return .ok(false);
     }
     if(w.phase==1){
         if(w.file==count){w.phase=3;w.row=0;return .ok(false);}
@@ -66,10 +66,13 @@ pub fn Result<bool,modules::Error> advance(ref modules::Index index,ref mut Stat
     if(w.phase==3){
         if(w.row==w.imports){w.row=0;w.phase=4;return .ok(false);}
         let modules::Import item=modules::import_at(index,w.row)?;
+        if(item.target==16){w.row+=1;return .ok(false);}
         if(item.owner>=count || item.target>=count){return .err(invalid(item.alias));}
         let ref context::Table t=ref w.result.context;
         let usize base=if(item.owner==0){0}else{t.ends[item.owner-1] as usize};
-        let usize row=w.row;let u32 packed=word((base+item.alias.start)|((base+item.alias.end)<<13)|(item.target<<26),item.alias)?;w.result.context.aliases[row]=packed;
+        let usize row=w.result.context.imports;
+        let u32 packed=word((base+item.alias.start)|((base+item.alias.end)<<13)|(item.target<<26),item.alias)?;
+        w.result.context.aliases[row]=packed;w.result.context.imports+=1;
         w.row+=1;return .ok(false);
     }
     if(w.phase==4){
@@ -87,7 +90,7 @@ pub fn Result<bool,modules::Error> advance(ref modules::Index index,ref mut Stat
     if(w.phase==5){
         // All ends were checked while copying; the table retains initialized
         // zeros in unused rows, exactly as context::collect.
-        if(w.row==w.imports){w.row=0;w.phase=6;return .ok(false);}
+        if(w.row==t.imports){w.row=0;w.phase=6;return .ok(false);}
         let u32 item=t.aliases[w.row];
         if((item>>30)!=0 || (item as usize>>26)>=count || !name(ref w.result,item)){return .err(invalid(sources::no_source()));}
         w.row+=1;return .ok(false);
