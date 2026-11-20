@@ -19,6 +19,7 @@ unsafe extern C fn void bc_runtime_engine_test_input_measure();
 unsafe extern C fn void bc_runtime_engine_test_inject_input_fault(u32 stage);
 unsafe extern C fn usize probe_attempts();
 unsafe extern C fn usize probe_live_bytes();
+unsafe extern C fn usize bc_runtime_engine_test_compile_next(ptr void owner);
 
 fn sources::Builder builder(){return switch(sources::builder(4096,4096)){
     case .ok(v):{v}case .err(_):{assert(false);builder()}
@@ -309,6 +310,38 @@ fn void input_fault_quarantines_engine(u32 stage){
     assert(id(engine::release_program(ref mut owner,p))==p);
     assert(id(engine::destroy(ref mut owner))==0);
 }
+fn usize next_id(ref engine::Engine owner){return unsafe{bc_runtime_engine_test_compile_next(owner as ptr void)};}
+fn usize retained_bytes(ref engine::Engine owner){
+    return switch(engine::instance_memory(owner)){case .ok(v):{v.current}case .err(_):{assert(false);0}};
+}
+fn void input_admission_quarantines_engine(u32 stage){
+    var engine::Engine owner=create(1,3);
+    let ref u8[] source=b"module app;pub fn i32 chosen(ref u8[] data){return data[0] as i32;}";
+    let usize p=id(engine::compile_input(ref mut owner,entry(source,b""),65536));
+    let usize prior=id(engine::create_input_instance(ref mut owner,p,captured(b"*"),16000000));
+    let engine::Event done=event(engine::execute_once(ref mut owner,prior));
+    assert(done.kind==1 && done.value==42);
+    let usize peer=id(engine::create_input_instance(ref mut owner,p,captured(b"+"),123));
+    let usize attempts=unsafe{probe_attempts()};
+    let usize live=unsafe{probe_live_bytes()};
+    let usize next=next_id(ref owner);
+    let usize retained=retained_bytes(ref owner);
+    let inputs::Snapshot incoming=captured(b"");
+    unsafe{bc_runtime_engine_test_inject_input_fault(stage)};
+    rejected(engine::create_input_instance(ref mut owner,p,incoming,16000000),14);
+    assert(unsafe{probe_live_bytes()}==live && retained_bytes(ref owner)==retained);
+    assert(unsafe{probe_attempts()}==attempts+if(stage==6){1}else{0});
+    assert(next_id(ref owner)==next);
+    counts(ref mut owner,1,2,2);
+    same_event(done,event(engine::observe(ref mut owner,prior)));
+    let engine::Event stopped=event(engine::observe(ref mut owner,peer));
+    assert(stopped.kind==2 && stopped.remaining==123 && stopped.diagnostic.code.kind==errors::engine_poisoned_kind());
+    assert(id(engine::destroy_instance(ref mut owner,peer))==peer);
+    assert(id(engine::destroy_instance(ref mut owner,prior))==prior);
+    assert(retained_bytes(ref owner)==0);
+    assert(id(engine::release_program(ref mut owner,p))==p);
+    assert(id(engine::destroy(ref mut owner))==0);
+}
 fn void owning_input_instances(){
     let ref u8[] source=b"module app;pub fn i32 chosen(ref u8[] data){if(data.len!=3){return -1;}let ref u8[] marker=b\"*\";return data[0] as i32+data[1] as i32+data[2] as i32+marker[0] as i32;}";
     var engine::Engine original=create(3,4);
@@ -409,5 +442,6 @@ pub fn void run(){
     move_and_mixed_relocation();original_diagnostics();exact_and_one_less_fuel();
     exhausted_admission_preserves_input_event();owning_input_instances();
     input_fault_quarantines_engine(1);input_fault_quarantines_engine(2);input_fault_quarantines_engine(3);
+    input_admission_quarantines_engine(4);input_admission_quarantines_engine(5);input_admission_quarantines_engine(6);
     actual_os_input_to_instance();
 }

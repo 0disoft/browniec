@@ -986,6 +986,13 @@ fn u32 compile_preflight_inner(ref mut Meta m,ref vec::Vec<Program> programs,u32
         case .ok(_):{0}case .err(_):{8}
     };
 }
+fn bool payload_ledger_intact(ref Meta m){
+    return m.heap.current==m.programs.external && !m.programs.closed &&
+        m.programs.control<=m.programs.engine &&
+        m.programs.retained<=m.programs.engine-m.programs.control &&
+        m.programs.external<=m.programs.engine-m.programs.control-m.programs.retained &&
+        live::prepare(ref m.heap,0,0,0).is_ok;
+}
 fn Result<live::Plan,u32> prepare_payload(ref mut Meta m,usize old,usize next,usize transient){
     let live::Plan plan=switch(live::prepare(ref m.heap,old,next,transient)){
         case .ok(v):{v}case .err(_):{return .err(8);}
@@ -1005,20 +1012,29 @@ fn void release_payload(ref mut Meta m,usize bytes){
     let usize retained=live::observe(ref m.heap).current;
     assert(memory::commit_external(ref mut m.programs,retained).is_ok);
 }
-fn u32 input_preflight_inner(ref mut Meta m,ref vec::Vec<Program> p,ref vec::Vec<Instance> v,
-    usize code,usize budget,ref input_bytes::Snapshot input,u32 output,usize limit,u32 allowed,usize width){
+fn bool input_admission_intact(ref Meta m,ref vec::Vec<Instance> v,ref vec::Vec<BoundInput> inputs,bool bound){
+    if(vec::len<Instance>(v)>=vec::capacity<Instance>(v) || !payload_ledger_intact(m)){return false;}
+    return !bound || (vec::len<BoundInput>(inputs)<vec::capacity<BoundInput>(inputs) &&
+        vec::len<BoundInput>(inputs)<=vec::len<Instance>(v));
+}
+fn u32 input_preflight_inner(ref mut Meta m,ref vec::Vec<Program> p,ref mut vec::Vec<Instance> v,
+    usize code,usize budget,ref input_bytes::Snapshot input,u32 output,usize limit,u32 allowed,usize width,
+    ref vec::Vec<BoundInput> inputs,ref vec::Vec<Output> outputs){
     if(m.closed){return 2;}if(m.poisoned){return 14;}if(m.admission==0){return 8;}
     if(output>1 || limit>1048576 || allowed>3){return 1;}
     if(m.configured!=(allowed>=2) || (output==0 && m.configured) || budget>m.limits.fuel){return 5;}
     let usize pi=switch(program_index(p,code,true)){case .ok(index):{index}case .err(status):{return status;}};
     let ref Program program=vec::at<Program>(p,pi);
+    if(program_variants(program)!=1){return contain_execution_fault(m,p,v,outputs);}
     if(output==0){if(vec::len<input_programs::Program>(ref program.input)!=1){return 1;}}
     else{
         if(vec::len<output_programs::Program>(ref program.output)!=1){return 1;}
         if(!output_programs::accepts_input(vec::at<output_programs::Program>(ref program.output,0))){return 1;}
     }
     if(vec::len<Instance>(v)>=m.limits.instances || m.next==0){return 8;}
-    if(width==0 || width>18446744073709551615/8){return 7;}
+    if(width==0 || width>18446744073709551615/8 || !input_admission_intact(m,v,inputs,true)){
+        return contain_execution_fault(m,p,v,outputs);
+    }
     return switch(prepare_payload(m,0,input_bytes::capacity(input),8*width)){
         case .ok(_):{0}case .err(status):{status}
     };
@@ -1343,15 +1359,18 @@ fn u32 reply_host_inner(ref mut Meta m,ref vec::Vec<Program> p,ref mut vec::Vec<
 }
 
 fn u32 output_instance_inner(ref mut Meta m,ref mut vec::Vec<Program> p,ref mut vec::Vec<Instance> v,
-    ref mut vec::Vec<BoundInput> inputs,ref mut vec::Vec<input_bytes::Snapshot> incoming,usize code,usize budget,usize limit,u32 allowed,usize deadline){
+    ref mut vec::Vec<BoundInput> inputs,ref mut vec::Vec<input_bytes::Snapshot> incoming,usize code,usize budget,usize limit,u32 allowed,usize deadline,
+    ref vec::Vec<Output> outputs){
     if(limit>1048576 || allowed>3){return failed(m,1);}
     if(m.configured!=(allowed>=2) || m.configured!=(deadline!=0) || budget>m.limits.fuel){return failed(m,5);}
     let usize pi=switch(program_index(p,code,true)){case .ok(x):{x}case .err(s):{return failed(m,s);}};
     let ref Program program=vec::at<Program>(p,pi);
+    if(program_variants(program)!=1){return contain_execution_fault(m,p,v,outputs);}
     if(vec::len<output_programs::Program>(ref program.output)!=1){return failed(m,1);}
     let bool input=output_programs::accepts_input(vec::at<output_programs::Program>(ref program.output,0));
     if(vec::len<Instance>(v)>=m.limits.instances || m.next==0){return failed(m,8);}
     if(vec::len<input_bytes::Snapshot>(incoming)!=if(input){1}else{0}){return failed(m,1);}
+    if(!input_admission_intact(m,v,inputs,input)){return contain_execution_fault(m,p,v,outputs);}
     let usize capacity=if(input){input_bytes::capacity(vec::at<input_bytes::Snapshot>(incoming,0))}else{0};
     let usize transport=unsafe{input_fact_raw(incoming as ptr void,1)};
     let live::Plan storage=switch(prepare_payload(m,0,capacity,transport)){
@@ -1359,10 +1378,8 @@ fn u32 output_instance_inner(ref mut Meta m,ref mut vec::Vec<Program> p,ref mut 
     };
     let usize id=m.next;
     if(input){let input_bytes::Snapshot snapshot=pop_snapshot(incoming);
-        if(!vec::push<BoundInput>(inputs,BoundInput{.instance=id,.input=snapshot}).is_ok){return failed(m,6);}}
-    if(!vec::push<Instance>(v,Instance{.id=id,.program=code,.fuel=budget,.phase=0,.output_owned=false,.event=ready(budget),.output_limit=limit,.output_allowed=allowed==1 || allowed==3,.input_bound=input,.input_bytes=capacity,.output_bytes=0,.host_terminal=host::empty_scalar_event(),.deadline=deadline}).is_ok){
-        if(input){let Option<BoundInput> disposed=vec::pop<BoundInput>(inputs);}return failed(m,6);
-    }
+        assert(vec::push<BoundInput>(inputs,BoundInput{.instance=id,.input=snapshot}).is_ok);}
+    assert(vec::push<Instance>(v,Instance{.id=id,.program=code,.fuel=budget,.phase=0,.output_owned=false,.event=ready(budget),.output_limit=limit,.output_allowed=allowed==1 || allowed==3,.input_bound=input,.input_bytes=capacity,.output_bytes=0,.host_terminal=host::empty_scalar_event(),.deadline=deadline}).is_ok);
     commit_payload(m,ref storage);
     let ref mut Program target=vec::at_mut<Program>(p,pi);target.pins+=1;advance(m);return success(m,id);
 }
@@ -1406,10 +1423,7 @@ fn Result<OutputTake,u32> plan_output_take(ref mut Meta m,ref vec::Vec<Instance>
     }
     if(child.output_bytes>18446744073709551615-child.input_bytes){return .err(14);}
     let usize retained=child.input_bytes+child.output_bytes;
-    if(retained>m.heap.instance_limit || m.heap.current!=m.programs.external ||
-        m.programs.closed || m.programs.control>m.programs.engine ||
-        m.programs.retained>m.programs.engine-m.programs.control ||
-        m.programs.external>m.programs.engine-m.programs.control-m.programs.retained){return .err(14);}
+    if(retained>m.heap.instance_limit || !payload_ledger_intact(m)){return .err(14);}
     let live::Plan plan=switch(live::prepare(ref m.heap,retained,child.input_bytes,transport)){
         case .ok(v):{v}case .err(reason):{
             let u32 status=switch(reason){case .Quota:{8}case .State:{14}case .Invalid:{14}};
@@ -1470,21 +1484,22 @@ fn input_bytes::Snapshot pop_snapshot(ref mut vec::Vec<input_bytes::Snapshot> v)
     case .some(value):{value}case .none:{assert(false);pop_snapshot(v)}
 };}
 fn u32 input_instance_inner(ref mut Meta m,ref mut vec::Vec<Program> p,ref mut vec::Vec<Instance> v,
-    ref mut vec::Vec<BoundInput> inputs,ref mut vec::Vec<input_bytes::Snapshot> incoming,usize code,usize budget){
+    ref mut vec::Vec<BoundInput> inputs,ref mut vec::Vec<input_bytes::Snapshot> incoming,usize code,usize budget,ref vec::Vec<Output> outputs){
     if(m.configured || budget>m.limits.fuel){return failed(m,5);}
     let usize pi=switch(program_index(p,code,true)){case .ok(x):{x}case .err(s):{return failed(m,s);}};
-    if(vec::len<input_programs::Program>(ref vec::at<Program>(p,pi).input)!=1){return failed(m,1);}
+    let ref Program program=vec::at<Program>(p,pi);
+    if(program_variants(program)!=1){return contain_execution_fault(m,p,v,outputs);}
+    if(vec::len<input_programs::Program>(ref program.input)!=1){return failed(m,1);}
     if(vec::len<Instance>(v)>=m.limits.instances || m.next==0){return failed(m,8);}
     if(vec::len<input_bytes::Snapshot>(incoming)!=1){return failed(m,1);}
+    if(!input_admission_intact(m,v,inputs,true)){return contain_execution_fault(m,p,v,outputs);}
     let usize capacity=input_bytes::capacity(vec::at<input_bytes::Snapshot>(incoming,0));
     let live::Plan storage=switch(prepare_payload(m,0,capacity,unsafe{input_fact_raw(incoming as ptr void,1)})){
         case .ok(v):{v}case .err(status):{return failed(m,status);}
     };
     let usize id=m.next;let input_bytes::Snapshot snapshot=pop_snapshot(incoming);
-    if(!vec::push<BoundInput>(inputs,BoundInput{.instance=id,.input=snapshot}).is_ok){return failed(m,6);}
-    if(!vec::push<Instance>(v,Instance{.id=id,.program=code,.fuel=budget,.phase=0,.output_owned=false,.event=ready(budget),.output_limit=0,.output_allowed=false,.input_bound=true,.input_bytes=capacity,.output_bytes=0,.host_terminal=host::empty_scalar_event(),.deadline=0}).is_ok){
-        let Option<BoundInput> disposed=vec::pop<BoundInput>(inputs);return failed(m,6);
-    }
+    assert(vec::push<BoundInput>(inputs,BoundInput{.instance=id,.input=snapshot}).is_ok);
+    assert(vec::push<Instance>(v,Instance{.id=id,.program=code,.fuel=budget,.phase=0,.output_owned=false,.event=ready(budget),.output_limit=0,.output_allowed=false,.input_bound=true,.input_bytes=capacity,.output_bytes=0,.host_terminal=host::empty_scalar_event(),.deadline=0}).is_ok);
     commit_payload(m,ref storage);
     let ref mut Program target=vec::at_mut<Program>(p,pi);target.pins+=1;advance(m);return success(m,id);
 }
@@ -1953,10 +1968,10 @@ pub fn void retain_native_bindings(){
     let input_bytes::Snapshot snapshot=switch(input_bytes::snapshot(b"",0,0,ref mut budget)){
         case .ok(value):{value}case .err(_):{assert(false);return;}
     };
-    unsafe{binding_raw(23)};discard input_preflight_inner(ref mut m,ref input_program,ref input_instances,0,0,ref snapshot,0,0,0,1);
+    unsafe{binding_raw(23)};discard input_preflight_inner(ref mut m,ref input_program,ref mut input_instances,0,0,ref snapshot,0,0,0,1,ref bound,ref outputs);
     unsafe{binding_raw(10)};discard execute_borrowed_input_inner(ref mut m,ref input_program,ref mut input_instances,ref bound,0,ref snapshot,ref outputs);
     var vec::Vec<input_bytes::Snapshot> incoming_snapshot=vec::empty<input_bytes::Snapshot>();
-    unsafe{binding_raw(11)};discard input_instance_inner(ref mut m,ref mut input_program,ref mut input_instances,ref mut bound,ref mut incoming_snapshot,0,0);
+    unsafe{binding_raw(11)};discard input_instance_inner(ref mut m,ref mut input_program,ref mut input_instances,ref mut bound,ref mut incoming_snapshot,0,0,ref outputs);
     unsafe{binding_raw(12)};let vec::Vec<BoundInput> empty_inputs=reset_input_storage(bound);
     var vec::Vec<Program> output_program=vec::empty<Program>();var vec::Vec<Instance> output_instances=vec::empty<Instance>();
     var vec::Vec<entries::Entry> output_entry=vec::empty<entries::Entry>();
@@ -1964,7 +1979,7 @@ pub fn void retain_native_bindings(){
     var vec::Vec<BoundInput> output_input=vec::empty<BoundInput>();
     unsafe{binding_raw(13)};discard compile_output_inner(ref mut m,ref mut output_program,ref mut output_entry,0,0);
     unsafe{binding_raw(14)};discard compile_input_output_inner(ref mut m,ref mut output_program,ref mut output_input_entry,0,1,0);
-    unsafe{binding_raw(15)};discard output_instance_inner(ref mut m,ref mut output_program,ref mut output_instances,ref mut output_input,ref mut incoming_snapshot,0,0,0,0,0);
+    unsafe{binding_raw(15)};discard output_instance_inner(ref mut m,ref mut output_program,ref mut output_instances,ref mut output_input,ref mut incoming_snapshot,0,0,0,0,0,ref outputs);
     var vec::Vec<Output> outgoing=vec::empty<Output>();
     unsafe{binding_raw(24)};discard output_preflight_width(ref mut m,ref mut output_instances,ref outputs,0,1,ref output_program);
     unsafe{binding_raw(16)};discard take_output_inner(ref mut m,ref mut output_instances,ref mut outputs,ref mut output_scratch,0,ref mut outgoing,ref output_program);

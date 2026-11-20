@@ -51,6 +51,20 @@ preserve its ledger. Instance destruction first drops actual input/output owners
 then returns the input charge once; peer inputs remain charged. Closing refuses
 outstanding owners, and preserves historical peaks after current bytes reach zero.
 
+Both preflight and typed publication verify the retained Program variant,
+Instance and input slot capacity, and consistency of the live and combined
+ledgers. An internal mismatch quarantines the Engine with status 14 before a
+Snapshot moves. Ordinary caller errors still use the existing statuses. A
+failure during the typed check drops the temporary transport and prevents
+any new ID, pin or retained charge.
+
+The Windows verifier injected an invalid retained Program, an unavailable
+slot in preflight and an unavailable slot at typed publication. The first
+two attempted zero allocations. The third allocated and reclaimed exactly
+one transport vector. No fault changed current charges, pins or the next ID.
+Development and /O2 both exited with zero live SDK allocations. Local receipt:
+`build/runtime-engine/20261120T225342525733Z/receipt.json`.
+
 ## Next execution slice: static heap audit
 
 A read-only review of pinned SDK 0.0.0-stage0.87 and the preceding emitted native

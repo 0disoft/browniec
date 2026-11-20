@@ -42,7 +42,7 @@ uint32_t bc_runtime_engine_execute_input(void *raw,uintptr_t instance,const void
 }
 uint32_t bc_runtime_engine_instance_input(void *raw,uintptr_t program,void *incoming,uintptr_t budget){
  bc_engine *e=raw;bc_engine_ticket ticket;uint32_t s=admission(e,&ticket);if(s)return s;
- s=B11(&e->f_0,&e->f_1,&e->f_3,&e->f_4,(bc_engine_snapshots *)incoming,program,budget);return finish(e,ticket,s);
+ s=B11(&e->f_0,&e->f_1,&e->f_3,&e->f_4,(bc_engine_snapshots *)incoming,program,budget,&e->f_6);return finish(e,ticket,s);
 }
 uint32_t bc_runtime_engine_compile_output(void *raw,void *incoming,uintptr_t limit,uint32_t mode,uintptr_t deadline){
  bc_engine *e=raw;bc_engine_ticket ticket;uint32_t s=admission(e,&ticket);if(s)return s;
@@ -51,7 +51,7 @@ uint32_t bc_runtime_engine_compile_output(void *raw,void *incoming,uintptr_t lim
 }
 uint32_t bc_runtime_engine_instance_output(void *raw,uintptr_t program,void *input,uintptr_t budget,uintptr_t limit,uint32_t allowed,uintptr_t deadline){
  bc_engine *e=raw;bc_engine_ticket ticket;uint32_t s=admission(e,&ticket);if(s)return s;
- s=B15(&e->f_0,&e->f_1,&e->f_3,&e->f_4,(bc_engine_snapshots *)input,program,budget,limit,allowed,deadline);return finish(e,ticket,s);
+ s=B15(&e->f_0,&e->f_1,&e->f_3,&e->f_4,(bc_engine_snapshots *)input,program,budget,limit,allowed,deadline,&e->f_6);return finish(e,ticket,s);
 }
 uint32_t bc_runtime_engine_take_output(void *raw,uintptr_t instance,void *outgoing){
  bc_engine *e=raw;bc_engine_ticket ticket={0};bc_abi_thread_identity owner;
@@ -154,7 +154,7 @@ uint32_t bc_runtime_engine_input_preflight(void *raw,uintptr_t program,uintptr_t
  const void *input,uint32_t output,uintptr_t limit,uint32_t allowed){
  bc_engine *e=raw;bc_abi_thread_identity id;uint32_t s=bc_abi_guard_enter(&id);if(s)return s;
  s=B18(&e->f_0,id.thread,id.lifetime);
- if(!s)s=B23(&e->f_0,&e->f_1,&e->f_3,program,budget,(const bc_engine_snapshot *)input,output,limit,allowed,sizeof(bc_engine_snapshot));
+ if(!s)s=B23(&e->f_0,&e->f_1,&e->f_3,program,budget,(const bc_engine_snapshot *)input,output,limit,allowed,sizeof(bc_engine_snapshot),&e->f_4,&e->f_6);
  uint32_t end=bc_abi_guard_leave(id);return end?end:s;
 }
 uintptr_t bc_runtime_engine_output_fact(const void *source,uint32_t fact){

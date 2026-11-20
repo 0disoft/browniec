@@ -132,15 +132,16 @@ def source_copy(path):
             text = text.replace(publication, 'if(unsafe{bc_runtime_engine_test_output_fault(6)}!=0 || ' + publication[3:], 1)
             take_lookup = 'let Result<usize,u32> located=output_index(outputs,id);'
             take_charge = 'output_programs::heap_bytes(ref owner.run)!=child.output_bytes'
-            take_ledger = 'm.heap.current!=m.programs.external'
+            take_ledger = 'm.heap.current==m.programs.external'
             need(text.count(take_lookup) == text.count(take_charge) == text.count(take_ledger) == 1,
                  'Output extraction fault anchors changed')
             text = text.replace(take_lookup, 'let Result<usize,u32> located=if(unsafe{bc_runtime_engine_test_output_fault(7)}!=0)'
                                 '{.err(2)}else{output_index(outputs,id)};', 1)
             text = text.replace(take_charge, 'unsafe{bc_runtime_engine_test_output_fault(8)}!=0 || ' + take_charge, 1)
-            text = text.replace(take_ledger, 'unsafe{bc_runtime_engine_test_output_fault(9)}!=0 || ' + take_ledger, 1)
+            text = text.replace(take_ledger, 'unsafe{bc_runtime_engine_test_output_fault(9)}==0 && ' + take_ledger, 1)
             function = 'fn u32 prepare_host_inner('
-            host_shape = '    if(program_variants(program)!=1){return contain_execution_fault(m,p,v,outputs);}'
+            variant_check = '    if(program_variants(program)!=1){return contain_execution_fault(m,p,v,outputs);}'
+            host_shape = variant_check + '\n    if(vec::len<host_program::Program>(ref program.host)==0)'
             capacity = '    if(stride==0 || vec::len<Instance>(v)>=vec::capacity<Instance>(v) ||'
             need(text.count(function) == text.count(host_shape) == text.count(capacity) == 1, 'Host preparation fault anchors changed')
             text = text.replace(function, 'unsafe extern C fn u32 bc_runtime_engine_test_host_prepare_fault(u32 stage);\n' + function, 1)
@@ -159,6 +160,15 @@ def source_copy(path):
                                 '(if(unsafe{bc_runtime_engine_test_input_fault(2)}!=0){let usize zero=0;zero}else{input_bytes::capacity(input)})'), 1)
             text = text.replace(borrowed, borrowed.replace('input_index(inputs,id).is_ok',
                                 'unsafe{bc_runtime_engine_test_input_fault(3)}==0 && input_index(inputs,id).is_ok'), 1)
+            input_shape = variant_check + '\n    if(output==0)'
+            early_slot = '|| !input_admission_intact(m,v,inputs,true)){'
+            late_slot = 'if(!input_admission_intact(m,v,inputs,true)){'
+            need(text.count(input_shape) == text.count(early_slot) == text.count(late_slot) == 1,
+                 'Input admission fault anchors changed')
+            text = text.replace(input_shape, input_shape.replace('program_variants(program)',
+                                '(if(unsafe{bc_runtime_engine_test_input_fault(4)}!=0){let usize zero=0;zero}else{program_variants(program)})'), 1)
+            text = text.replace(early_slot, '|| unsafe{bc_runtime_engine_test_input_fault(5)}!=0 ' + early_slot, 1)
+            text = text.replace(late_slot, 'if(unsafe{bc_runtime_engine_test_input_fault(6)}!=0 || ' + late_slot[3:], 1)
         return path.name, text.encode('utf-8')
     if path == ROOT / 'src/retention_plan.fy':
         text=path.read_text(encoding='utf-8');anchor='    plan.admitted=true;'
