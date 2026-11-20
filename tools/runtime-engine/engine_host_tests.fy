@@ -4,6 +4,7 @@ import compiler as compiler;
 import host_program as programs;
 import host_exchange as host;
 import host_wire as wire;
+import host_memory_adapter as memory_adapter;
 import verifier as verifier;
 import errors as errors;
 import std::bytes as bytes;
@@ -1150,6 +1151,72 @@ fn void terminal_without_bytes(ref engine::Engine owner,usize instance,u8 cause,
     assert(final_state.host.calls==1 && final_state.host.replies==8203 && final_state.host.fuel==fuel);
     assert(!engine::host_request_payload(owner,instance).is_ok);
 }
+fn engine::Event dispatched(Result<engine::Event,memory_adapter::Error> result){
+    return switch(result){case .ok(v):{v}case .err(_):{assert(false);dispatched(result)}};
+}
+fn memory_adapter::Route route(ref catalog::Catalog imports,usize import_id){
+    return switch(memory_adapter::register(imports,import_id)){
+        case .ok(v):{v}case .err(_):{assert(false);route(imports,import_id)}
+    };
+}
+fn Result<usize,u8> memory_adapter_round_trip(){
+    let ref u8[] source=b"module main; fn i32 main(){ return switch(host::example::check(41)){ case .ok(value): { value+35 } case .err(code): { host::example::next(code) } }; }";
+    let ref u8[] argument=b"\x01\x00\x03\x00\x00\x00\x04\x00\x00\x00\x29\x00\x00\x00";
+    let ref u8[] host_error=b"\x05\x00\x00\x00\x04\x00\x00\x00\xff\xff\xff\xff";
+    let policy::Policy ceiling=parsed_policy(true)?;
+    let runs::RunConfig run=switch(runs::parse(source_run_config(),ref ceiling)){case .ok(v):{v}case .err(_):{return .err(6);}};
+    var engine::Engine owner=configured(ceiling)?;
+    let catalog::Catalog imports=catalog_from(result_catalog())?;
+    let catalog::Catalog other=catalog_from(json())?;
+    let u32[8] binding=digest(ref imports)?;
+    let memory_adapter::Route check=route(ref imports,0);
+    let memory_adapter::Route next=route(ref imports,1);
+    let memory_adapter::Route foreign=route(ref other,0);
+    assert(!memory_adapter::register(ref imports,2).is_ok);
+    let usize p=id(engine::compile_scalar_host(ref mut owner,source,imports,ref binding,ref run));
+    let usize ok=waiting(ref mut owner,p,ref run).run;
+    let usize err=waiting(ref mut owner,p,ref run).run;
+    let usize claimed=waiting(ref mut owner,p,ref run).run;
+    let usize expired=waiting(ref mut owner,p,ref run).run;
+
+    assert(!memory_adapter::dispatch(ref mut owner,ok,ref foreign,argument,0,answer()).is_ok);
+    assert(!memory_adapter::dispatch(ref mut owner,ok,ref next,argument,0,answer()).is_ok);
+    let ref u8[] wrong_argument=b"\x01\x00\x03\x00\x00\x00\x04\x00\x00\x00\x28\x00\x00\x00";
+    assert(!memory_adapter::dispatch(ref mut owner,ok,ref check,wrong_argument,0,answer()).is_ok);
+    unsafe{probe_rebase()};
+    assert(!memory_adapter::dispatch(ref mut owner,ok,ref check,argument,1,answer()).is_ok);
+    assert(unsafe{probe_attempts()}==0);
+    let engine::HostRequestInfo pending=request_info(ref owner,claimed);
+    assert(id(engine::claim_host_request(ref mut owner,claimed,ref pending))==1);
+    assert(!memory_adapter::dispatch(ref mut owner,claimed,ref check,argument,0,answer()).is_ok);
+    assert(scalar(ref owner,claimed).host.replies==0);
+    assert(event(engine::cancel_ready(ref mut owner,claimed)).kind==3);
+    assert(!memory_adapter::dispatch(ref mut owner,claimed,ref check,argument,0,answer()).is_ok);
+
+    assert(dispatched(memory_adapter::dispatch(ref mut owner,ok,ref check,argument,0,answer())).kind==0);
+    assert(!memory_adapter::dispatch(ref mut owner,ok,ref check,argument,0,answer()).is_ok);
+    let engine::Event done=event(engine::step_instance(ref mut owner,ok,16));
+    assert(done.kind==1 && done.value==77);
+    assert(dispatched(memory_adapter::dispatch(ref mut owner,err,ref check,argument,1,host_error)).kind==0);
+    assert(event(engine::step_instance(ref mut owner,err,16)).kind==4);
+    let ref u8[] recovery=b"\x01\x00\x05\x00\x00\x00\x04\x00\x00\x00\xff\xff\xff\xff";
+    let ref u8[] negative=b"\x03\x00\x00\x00\x04\x00\x00\x00\xf9\xff\xff\xff";
+    assert(dispatched(memory_adapter::dispatch(ref mut owner,err,ref next,recovery,0,negative)).kind==0);
+    let engine::Event recovered=event(engine::step_instance(ref mut owner,err,16));
+    assert(recovered.kind==1 && recovered.value==-7);
+
+    unsafe{bc_runtime_engine_test_set_clock(10001000)};
+    assert(!memory_adapter::dispatch(ref mut owner,expired,ref check,argument,0,answer()).is_ok);
+    let engine::Event elapsed=event(engine::step_instance(ref mut owner,expired,16));
+    assert(elapsed.kind==2 && elapsed.diagnostic.code.kind==errors::deadline_kind());
+    assert(id(engine::destroy_instance(ref mut owner,ok))==ok);
+    assert(id(engine::destroy_instance(ref mut owner,err))==err);
+    assert(id(engine::destroy_instance(ref mut owner,claimed))==claimed);
+    assert(id(engine::destroy_instance(ref mut owner,expired))==expired);
+    assert(id(engine::release_program(ref mut owner,p))==p);
+    assert(id(engine::destroy(ref mut owner))==0);
+    return .ok(1);
+}
 pub fn void run(){
     unsafe{bc_runtime_engine_test_set_clock(1000)};
     assert(admission().is_ok);
@@ -1167,6 +1234,9 @@ pub fn void run(){
     assert(propagated_host_result().is_ok);
     assert(saved_buffer_result_source().is_ok);
     assert(chunked_reply().is_ok);
+    unsafe{bc_runtime_engine_test_use_os_clock()};
+    unsafe{bc_runtime_engine_test_set_clock(1000)};
+    assert(memory_adapter_round_trip().is_ok);
     unsafe{bc_runtime_engine_test_use_os_clock()};
     unsafe{bc_runtime_engine_test_set_clock(1000)};
     assert(chunked_receive().is_ok);

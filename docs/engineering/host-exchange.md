@@ -316,6 +316,31 @@ request ID, a 39-byte typed request, and rejection after expiry, complete reply,
 or partial receipt. The local receipt is
 `build/runtime-engine/20261120T145534752830Z/receipt.json`.
 
+## In-memory adapter
+
+The internal adapter registers an import against a host-owned Catalog. A route
+retains the canonical digest, import ID and argument/result tags. Each dispatch
+matches the active Instance's digest and import ID, decodes the caller's expected
+request, and compares it to the entire live request before releasing the borrow.
+The request and reply are each limited to 4096 wire bytes in this adapter.
+The caller supplies immutable request and response bytes for this synchronous
+operation. The adapter does no I/O and needs no separate copy of the request.
+
+The adapter validates the complete response, including its Result arm, before
+claiming the request. A mismatch or malformed response leaves the request
+available. A successful claim leads to one response submission through the
+Engine's existing receipt path. A failed submission after the claim returns an
+error to the caller without automatic retry. The Engine still checks the
+deadline and reply quota and publishes the result only after installation.
+
+Windows development and /O2 both passed the owning Engine suite with zero live
+SDK allocations after teardown. One verified Program returned 77 and -7 in
+separate Instances through the success and guest error arms. The suite also
+checks wrong catalogs and imports, mismatched request bytes, malformed reply
+rejection without allocation, duplicate claims, cancellation and exact-deadline
+rejection. The local receipt covers 392 hashed inputs at
+`build/runtime-engine/20261120T153907045621Z/receipt.json`.
+
 ## Engine scalar pending memory
 
 Admission charges the SDK backing for a Vec of eight Exchange slots, the
