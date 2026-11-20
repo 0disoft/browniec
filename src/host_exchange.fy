@@ -484,9 +484,14 @@ fn usize request_bound(ref catalog::Catalog c,usize id){
 }
 pub fn Result<Exchange,ScalarError> create_scalar(ref programs::Program p,ref policy::Policy ceiling,
     ref runs::RunConfig run,usize run_id,usize deadline){
+    return create_scalar_input(p,ceiling,run,run_id,deadline,b"");
+}
+pub fn Result<Exchange,ScalarError> create_scalar_input(ref programs::Program p,ref policy::Policy ceiling,
+    ref runs::RunConfig run,usize run_id,usize deadline,ref u8[] input){
     if(!programs::allows(p,ceiling,run)){return .err(.Authority);}
-    if(run_id==0){return .err(.State);}
+    if(run_id==0 || (input.len!=0 && !programs::accepts_input(p))){return .err(.State);}
     let policy_limits::RunLimits limits=runs::run_limits(run);
+    if(input.len>limits.input_bytes || input.len>1048576){return .err(.Rejected);}
     let ref catalog::Catalog original=programs::imports(p);
     let catalog::Catalog exact=switch(catalog::duplicate(original)){
         case .ok(v):{v}case .err(_):{return .err(.Allocation);}
@@ -507,10 +512,16 @@ pub fn Result<Exchange,ScalarError> create_scalar(ref programs::Program p,ref po
     let ref ir::Program code=programs::code(p);
     let usize end=if(typed){arena_end(code,envelope,limits)}else{scalar_header_size()};
     let usize size=end+frame_storage(code,limits.call_frames);
-    var Exchange e=switch(create_sized(exact,ref allowed[..count],bounds,run_id,limits.fuel,deadline,size,digest)){
+    var Exchange e=switch(create_sized(exact,ref allowed[..count],bounds,run_id,limits.fuel,deadline,size+input.len,digest)){
         case .ok(v):{v}case .err(_):{return .err(.Allocation);}
     };
     load_image(ref mut e,code,end,limits.call_frames);
+    if(programs::accepts_input(p)){
+        let ref mut u8[] image=scalar_header(ref mut e);
+        var usize i=0;
+        while(i<input.len){image[size+i]=input[i];i+=1;}
+        set_reg(image,code.register_starts[code.entry],pack_blob(size,input.len));
+    }
     return .ok(e);
 }
 // Reserve the exact maximum heap backing over this admitted scalar run.

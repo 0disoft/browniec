@@ -164,11 +164,13 @@ needs 32,768 Fuel. With neither input option the project entry takes zero argume
 
 Windows projects can use the same catalog and precomputed reply format as
 [single-source runs](#single-source-host-execution). The project selects a
-public zero-argument i32 entry. It may call guest helpers across modules and
-use typed host imports inside those helpers.
+public i32 entry with zero arguments or one shared byte slice. It may call guest
+helpers across modules and use typed host imports inside those helpers. A byte
+slice entry can pass that immutable input directly to a catalog parameter of
+type `ref u8[]`.
 
     browniec check --project FILE --catalog FILE --policy FILE --run FILE
-    browniec run --project FILE --catalog FILE --policy FILE --run FILE --host-replies FILE --json
+    browniec run --project FILE --catalog FILE --policy FILE --run FILE --host-replies FILE [--input FILE|--stdin] --json
 
 The manifest and run configuration must select the same entry and declare the
 same set of capabilities. The Engine checks that relation and the run's grants
@@ -181,17 +183,20 @@ Check accepts text and both result schemas without creating an Instance or
 reading a reply file. Run accepts the same output formats and requires a reply
 file. The policy bounds source bytes, module count, tokens, functions,
 instructions, per-function registers and the compilation deadline within the
-host dialect's native limits. This mode supports the existing host dialect and
-its reply-file bounds. Project input, emit and external adapters are separate
-delivery paths.
+host dialect's native limits. Supply `--input FILE` or `--stdin` to a shared byte
+slice entry, or omit both for empty input. Zero-argument entries reject either
+input flag. The CLI acquires input after compilation. Instance admission checks
+the input length and charges the retained copy and temporary Snapshot overlap.
+The copy is synchronous and capped at 1 MiB. Host requests still use their own
+wire limits, Fuel and reply-file bounds.
 
 The Windows development and /O2 CLI checks compile and run a two-module
 project, producing 77 through a typed host response. They also cover reused
 alias names across modules, qualified host calls, private guest helpers,
-original member diagnostics and authority denial before source collection.
-The owning Engine regression passed both profiles with zero live SDK
-allocations. Its receipt is
-`build/runtime-engine/20261120T161854659274Z/receipt.json`.
+original member diagnostics, authority denial before source collection, and
+exact binary input in requests from files, stdin and empty input. The owning
+Engine regression passed both profiles with zero live SDK allocations. Its
+receipt is `build/runtime-engine/20261120T165921444663Z/receipt.json`.
 
 ## Configured project output
 

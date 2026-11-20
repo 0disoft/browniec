@@ -85,9 +85,10 @@ uint32_t bc_runtime_engine_retain_host(void *raw,void *incoming,uintptr_t deadli
  s=B38(&e->f_0,&e->f_1,incoming,sizeof(bc_host_program),sizeof(bc_host_ir),deadline);return finish(e,ticket,s);
 }
 
-uint32_t bc_runtime_engine_prepare_host(void *raw,uintptr_t program,const void *run){
+uint32_t bc_runtime_engine_prepare_host(void *raw,uintptr_t program,const void *run,
+ const uint8_t *data,uintptr_t length,uintptr_t selected){
  bc_engine *e=raw;bc_engine_ticket ticket;uint32_t s=admission(e,&ticket);if(s)return s;
- s=B39(&e->f_0,&e->f_1,&e->f_3,&e->f_6,&e->f_8,run,program,sizeof(bc_host_exchange));return finish(e,ticket,s);
+ s=B39(&e->f_0,&e->f_1,&e->f_3,&e->f_6,&e->f_8,run,program,sizeof(bc_host_exchange),(fy_byte_slice){data,length},selected);return finish(e,ticket,s);
 }
 uint32_t bc_runtime_engine_reply_host(void *raw,uintptr_t instance,uintptr_t run,uintptr_t request,
  uint8_t kind,const uint8_t *data,uintptr_t length,uintptr_t total,uintptr_t offset){

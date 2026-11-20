@@ -3193,9 +3193,8 @@ pub fn Result<usize,errors::Error> lower_scalar_host_with_limit(ref u8[] source,
 }
 
 // The selected Index owns the original modules and scoped guest aliases.
-pub fn Result<usize,source_errors::Error> lower_project_host(ref module_entries::Entry selected,
+pub fn Result<usize,source_errors::Error> lower_project_host(ref module_index::Index index,usize selected,
     ref host_catalog::Catalog imports,ref mut ir::Program code){
-    let ref module_index::Index index=module_entries::index(selected);
     let ref source_snapshot::Snapshot snapshot=module_index::snapshot(index);
     var usize active=16;
     switch(host_source::prepare_project(index,code,imports,ref mut active)){
@@ -3205,21 +3204,33 @@ pub fn Result<usize,source_errors::Error> lower_project_host(ref module_entries:
         case .ok(v):{v}case .err(e):{return .err(source_errors::Error{.code=source_errors::binding(e),.at=e.at});}
     };
     let ref u8[] source=ref input.data[..input.used];
-    return lower_project_host_body(source,ref input.context,selected,code);
+    return lower_project_host_body(source,ref input.context,index,selected,code);
 }
 fn Result<usize,source_errors::Error> lower_project_host_body(ref u8[] source,ref source_context::Table scope,
-    ref module_entries::Entry selected,ref mut ir::Program code){
-    let ref module_index::Index index=module_entries::index(selected);
-    var functions::Table signatures=switch(signature_scan::scan_host_indexed(source,scope,index,module_entries::selected(selected))){
-        case .ok(v):{v}case .err(e):{return .err(module_error(selected,e,16));}
+    ref module_index::Index index,usize selected,ref mut ir::Program code){
+    var functions::Table signatures=switch(signature_scan::scan_host_indexed(source,scope,index,selected)){
+        case .ok(v):{v}case .err(e):{return .err(input_module_error(index,e,16));}
     };
+    let usize entry=signatures.entry;
+    let usize formal=entry*8;
+    let usize arity=signatures.arities[entry];
+    if(signatures.return_types[entry]!=1 || signatures.return_lengths[entry]!=0 ||
+        signatures.return_records[entry]!=0 || signatures.return_slice_elements[entry]!=0 ||
+        (arity!=0 && (arity!=1 || !signatures.param_slices[formal] || signatures.param_slice_elements[formal]!=10))){
+        return .err(input_module_error(index,errors::make(3,signatures.begins[entry]),16));
+    }
+    if(arity==1){
+        // Host byte cells carry only immutable descriptors owned by the exchange.
+        signatures.param_slices[formal]=false;
+        signatures.param_types[formal]=14;
+    }
     let literal_collection::Index literals=literal_collection::empty();
     var usize active=16;
     switch(lower_prepared(source,false,false,false,ref literals,ref mut signatures,code,ref mut active,0)){
-        case .ok(_):{}case .err(e):{return .err(module_error(selected,e,active));}
+        case .ok(_):{}case .err(e):{return .err(input_module_error(index,e,active));}
     };
     return switch(host_source::finish(source,code)){
-        case .ok(v):{.ok(v)}case .err(e):{.err(module_error(selected,e,16))}
+        case .ok(v):{.ok(v)}case .err(e):{.err(input_module_error(index,e,16))}
     };
 }
 

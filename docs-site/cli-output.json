@@ -101,7 +101,7 @@
   },
   {
     "command": "run",
-    "arguments": "--project FILE --catalog FILE --policy FILE --run FILE --host-replies FILE",
+    "arguments": "--project FILE --catalog FILE --policy FILE --run FILE --host-replies FILE [--input FILE|--stdin]",
     "formats": [
       {
         "option": "",

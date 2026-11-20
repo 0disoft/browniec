@@ -424,6 +424,8 @@ fn Result<reborrows::Sites,errors::Error> validate_values_mode(ref ir::Program p
         let usize first=p.register_starts[p.entry];
         if(p.arities[p.entry]!=1 || first>=p.registers){return .err(errors::absent(5,0));}
         if(entry_kind==1 && static_sites.parameters[first]!=3){return .err(errors::absent(5,0));}
+        if(entry_kind==3 && (p.types[first]!=14 || p.array_parameters[first]!=0 ||
+            p.record_parameters[first]!=0 || p.slice_parameters[first]!=0)){return .err(errors::absent(5,0));}
         if(entry_kind==2 && (p.types[first]!=1 || p.array_parameters[first]!=0 || p.record_parameters[first]!=0 ||
             p.slice_parameters[first]!=0 || p.arrays.count!=0 || p.records.count!=0)){return .err(errors::absent(5,0));}
     }
@@ -541,7 +543,9 @@ pub fn Result<usize,errors::Error> verify_eval_i32(ref ir::Program p){
 pub fn Result<usize,errors::Error> inspect_host(ref ir::Program p){
     let statics::Sites static_sites=statics::empty();
     let value_ir::Sites values=value_ir::empty();
-    let reborrows::Sites loans=validate_values_mode(p,false,4,ref static_sites,ref values,0,true)?;
+    if(p.entry>=16){return .err(errors::absent(5,0));}
+    let u8 entry_kind=if(p.arities[p.entry]==0){0}else{3};
+    let reborrows::Sites loans=validate_values_mode(p,false,4,ref static_sites,ref values,entry_kind,true)?;
     return .ok(p.count);
 }
 // Analysis-only proof does not impose the executable derived CALL subset.

@@ -53,7 +53,7 @@ fn bool typed_signature(ref ir::Program p,ref catalog::Catalog imports,usize at)
 }
 
 pub fn bool typed(ref ir::Program code){
-    if(code.function_count>1 || code.call_count!=0){return true;}
+    if(code.function_count>1 || code.call_count!=0 || (code.entry<16 && code.arities[code.entry]!=0)){return true;}
     var usize pc=0;
     while(pc<code.count){if(typed_request(code.code[pc*8])){return true;}pc+=1;}
     return false;
@@ -79,9 +79,11 @@ fn Result<usize,Error> inspect(ref ir::Program code,ref catalog::Catalog imports
             first>code.registers || arity>code.registers-first){
             return .err(.Code);
         }
+        let bool input=f==code.entry && arity==1 && code.types[first]==14;
+        if(f==code.entry && arity!=0 && !input){return .err(.Code);}
         var usize arg=0;
         while(arg<arity){
-            if(!types::scalar(code.types[first+arg])){return .err(.Code);}
+            if(!input && !types::scalar(code.types[first+arg])){return .err(.Code);}
             arg+=1;
         }
         f+=1;
@@ -107,6 +109,8 @@ fn Result<usize,Error> inspect(ref ir::Program code,ref catalog::Catalog imports
         }else if(typed_request(op)){
             if(!typed_signature(code,imports,at)){return .err(.Catalog);}
             required|=one<<(code.code[at+3] as usize);
+        }else if(op==9 && code.arities[code.entry]!=0 && (code.code[at+2] as usize)==code.entry){
+            return .err(.Code);
         }else if(op==9 || op==17 || op==18 || op==119 || op==120 || op==copy_opcode() || op==project_opcode() || op==wrap_opcode()){
             if(!typed_code){return .err(.Code);}
         }else if(op==2){
@@ -198,6 +202,7 @@ pub fn ref ir::Program code(ref Program p){return vec::at<ir::Program>(ref p.cod
 pub fn ref catalog::Catalog imports(ref Program p){return ref p.catalog;}
 pub fn u32[8] binding(ref Program p){return p.digest.words;}
 pub fn usize requirements(ref Program p){return p.required;}
+pub fn bool accepts_input(ref Program p){let ref ir::Program image=code(p);return image.arities[image.entry]==1;}
 
 pub fn bool allows(ref Program p,ref policy::Policy ceiling,ref runs::RunConfig run){
     return bytes::equal(bytes::view(ref p.module_name),runs::module_name(run)) &&

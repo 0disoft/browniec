@@ -225,7 +225,8 @@ def check_host_project(exe, check_args, run_args):
     flags = b' --catalog FILE --policy FILE --run FILE'
     formats = b' [--json|--json-v2]'
     assert b'browniec check --project FILE' + flags + formats in usage
-    assert b'browniec run --project FILE' + flags + b' --host-replies FILE' + formats in usage
+    assert (b'browniec run --project FILE' + flags + b' --host-replies FILE [--input FILE|--stdin]'
+            + formats in usage)
     project = check_args[2]
     helper = project.parent / 'helper.brc'
     run_file = check_args[8]
@@ -260,6 +261,55 @@ def check_host_project(exe, check_args, run_args):
     assert check_json(exe, check_args, 7, version=2)['kind'] == 'input_io'
     helper.write_bytes(original)
     print('PASS: catalog-backed project calls, lexical scopes, source locations and authority-before-file-read')
+
+
+def check_host_project_input(exe, check_args, run_args):
+    project = check_args[2]
+    source = project.parent / 'app.brc'
+    catalog = check_args[4]
+    run = check_args[8]
+    replies = run_args[-1]
+    payload = project.parent / 'input.bin'
+    original_run = json.loads(run.read_bytes())
+    imports = json.loads(catalog.read_bytes())
+    imports['imports'][0]['parameters'] = ['ref u8[]']
+    (project.parent / 'helper.brc').write_bytes(b'module helpers; pub fn i32 calculate(){return 35;}')
+    catalog.write_text(json.dumps(imports), encoding='utf-8')
+    make_host_run(check_args[1:], replies)
+    table = json.loads(replies.read_bytes())
+    row = table['replies'][0]
+
+    def request(data, result):
+        return row | {
+            'request_hex': (b'\x01\x00\x07\x00\x00\x00' + len(data).to_bytes(4, 'little') + data).hex(),
+            'reply_hex': (b'\x03\x00\x00\x00\x04\x00\x00\x00' + result.to_bytes(4, 'little')).hex(),
+        }
+
+    message = b'A\x00\xff'
+    payload.write_bytes(message)
+    replies.write_text(json.dumps(table | {'replies': [request(message, 42), request(b'', 7)]}),
+                       encoding='utf-8')
+    source.write_bytes(b'module app; import host::example as service; '
+                       b'pub fn i32 start(ref u8[] data){return service::check(ref data)+35;}')
+    assert check_json(exe, check_args, 0, version=2) is None
+    assert check_json(exe, [*run_args, '--input', payload], 0, version=2, value=77) is None
+    assert check_json(exe, [*run_args, '--stdin'], 0, value=77, input_bytes=message) is None
+    assert check_json(exe, run_args, 0, version=2, value=42) is None
+    assert check_json(exe, [*run_args, '--stdin'], 4, version=2, input_bytes=b'B\x00\xff')['kind'] == 'unavailable'
+    error = check_json(exe, [*run_args, '--input', project.parent / 'missing.bin'], 7, version=2)
+    assert error['kind'] == 'input_io', error
+    run.write_text(json.dumps(original_run | {'limits': original_run['limits'] | {'input_bytes': 2}}),
+                   encoding='utf-8')
+    assert check_json(exe, [*run_args, '--input', payload], 5, version=2)['kind'] == 'input_limit'
+    run.write_text(json.dumps(original_run), encoding='utf-8')
+
+    source.write_bytes(b'module app; pub fn i32 start(){return 77;}')
+    assert check_json(exe, [*run_args, '--stdin'], 2, input_bytes=b'')['kind'] == 'usage'
+    for signature in (b'ref mut u8[]', b'ref i32[]', b'i32'):
+        source.write_bytes(b'module app; pub fn i32 start(' + signature + b' data){return 77;}')
+        error = check_json(exe, check_args, 3, version=2)
+        assert error['kind'] == 'type' and error['location']['path'] == 'app.brc', error
+    print('PASS: project guest bytes reach catalog-bound requests from files, stdin and empty input')
 
 
 def check_host_catalog(exe, args):
@@ -778,6 +828,7 @@ def main():
         check_host_run(exe, host_check, host_run)
         check_host_catalog(exe, host_check)
         check_host_project(exe, project_host_check, project_host_run)
+        check_host_project_input(exe, project_host_check, project_host_run)
         check_project(exe, Path(temp))
         check_project_input(exe, Path(temp))
         check_source_input(exe, Path(temp))

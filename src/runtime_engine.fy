@@ -80,7 +80,7 @@ pub resource Engine {
 @link_name("bc_runtime_engine_compile_fact") unsafe extern C fn usize compile_fact_raw(ptr void source,u32 kind,u32 fact);
 @link_name("bc_runtime_engine_policy_slot_bytes") unsafe extern C fn usize policy_slot_bytes_raw();
 @link_name("bc_runtime_engine_monotonic_ticks") unsafe extern C fn usize monotonic_ticks_raw();
-@link_name("bc_runtime_engine_prepare_host") unsafe extern C fn u32 prepare_host_raw(ptr mut void owner,usize program,ptr void run);
+@link_name("bc_runtime_engine_prepare_host") unsafe extern C fn u32 prepare_host_raw(ptr mut void owner,usize program,ptr void run,ptr u8 input,usize length,usize selected);
 @link_name("bc_runtime_engine_reply_host") unsafe extern C fn u32 reply_host_raw(ptr mut void owner,usize instance,usize run,usize request,u8 kind,ptr u8 data,usize length,usize total,usize offset);
 @link_name("bc_runtime_engine_drive_host") unsafe extern C fn u32 drive_host_raw(ptr mut void owner,u32 mode,usize argument,usize run,usize request,u8 kind,ptr u8 data,usize length,ptr mut void transition,usize offset);
 @link_name("bc_runtime_engine_retain_host") unsafe extern C fn u32 retain_host_raw(ptr mut void owner,ptr mut void incoming,usize deadline);
@@ -366,16 +366,21 @@ pub fn Result<usize,Error> compile_anchored_project_host(ref mut Engine e,ref pr
     let usize deadline=deadline_after(limits.deadline_ms)?;
     let sources::Snapshot snapshot=project_snapshot(project_loader::load_from(project,root,project_source_limit(e)))?;
     if(deadline_reached(deadline)){return .err(compile_timeout());}
-    let entries::Entry selected=switch(project_binding::select_host(project,snapshot,limits.tokens)){
-        case .ok(v):{v}
-        case .err(e):{return .err(Error{.status=4,.diagnostic=diagnostics::Error{.code=diagnostics::binding(e),.at=e.at}});}
+    let modules::Index index=switch(project_binding::index_host(project,snapshot,limits.tokens)){
+        case .ok(v):{v}case .err(e):{return .err(host_binding_error(e));}
     };
-    return retain_project_host(e,ref selected,imports,digest,run,limits,deadline);
+    let usize selected=switch(modules::entry(ref index,projects::entry_module(project),projects::entry_function(project))){
+        case .ok(v):{v}case .err(e):{return .err(host_binding_error(e));}
+    };
+    return retain_project_host(e,ref index,selected,imports,digest,run,limits,deadline);
 }
-fn Result<usize,Error> retain_project_host(ref mut Engine e,ref entries::Entry selected,host_catalog::Catalog imports,
-    ref u32[] digest,ref run_config::RunConfig run,policy_limits::CompileLimits limits,usize deadline){
+fn Error host_binding_error(modules::Error e){
+    return Error{.status=4,.diagnostic=diagnostics::Error{.code=diagnostics::binding(e),.at=e.at}};
+}
+fn Result<usize,Error> retain_project_host(ref mut Engine e,ref modules::Index index,usize selected,
+    host_catalog::Catalog imports,ref u32[] digest,ref run_config::RunConfig run,policy_limits::CompileLimits limits,usize deadline){
     var ir::Program code=ir::empty();
-    switch(compiler::lower_project_host(selected,ref imports,ref mut code)){
+    switch(compiler::lower_project_host(index,selected,ref imports,ref mut code)){
         case .ok(_):{}case .err(e):{return .err(Error{.status=4,.diagnostic=e});}
     };
     return retain_limited_host(e,ref code,imports,digest,run,limits,deadline);
@@ -421,7 +426,18 @@ fn Result<host_program::Program,Error> verify_scalar_host(ref Engine e,ref ir::P
 }
 
 pub fn Result<usize,Error> prepare_scalar_host(ref mut Engine e,usize program,ref run_config::RunConfig run){
-    let u32 status=unsafe{prepare_host_raw(e as ptr mut void,program,run as ptr void)};
+    return prepare_host(e,program,run,b"",0);
+}
+pub fn Result<usize,Error> prepare_input_host(ref mut Engine e,usize program,ref run_config::RunConfig run,
+    ref input_bytes::Snapshot input){
+    let policy_limits::RunLimits limits=check_run_input(e,run,input)?;
+    // Charge the caller's immutable Snapshot during the handoff as well as the
+    // exchange's own retained copy. No source pointer survives this call.
+    return prepare_host(e,program,run,input_bytes::view(input),input_bytes::capacity(input)+1);
+}
+fn Result<usize,Error> prepare_host(ref mut Engine e,usize program,ref run_config::RunConfig run,
+    ref u8[] input,usize selected){
+    let u32 status=unsafe{prepare_host_raw(e as ptr mut void,program,run as ptr void,input as ptr u8,input.len,selected)};
     return result(e,status);
 }
 pub fn Result<Event,Error> reply_scalar_host(ref mut Engine e,usize instance,usize run,usize request,u8 kind,ref u8[] payload){
@@ -1082,7 +1098,7 @@ fn u32 publish_host_inner(ref mut Meta m,ref mut vec::Vec<Program> v,ref mut vec
 }
 fn u32 prepare_host_inner(ref mut Meta m,ref mut vec::Vec<Program> p,ref mut vec::Vec<Instance> v,
     ref mut vec::Vec<Output> outputs,ref vec::Vec<policy::Policy> policies,ref run_config::RunConfig run,
-    usize code,usize stride){
+    usize code,usize stride,ref u8[] input,usize selected){
     if(!m.configured || vec::len<policy::Policy>(policies)!=1){return failed(m,5);}
     let usize pi=switch(program_index(p,code,true)){case .ok(x):{x}case .err(status):{return failed(m,status);}};
     if(vec::len<Instance>(v)>=m.limits.instances || m.next==0){return failed(m,8);}
@@ -1092,18 +1108,22 @@ fn u32 prepare_host_inner(ref mut Meta m,ref mut vec::Vec<Program> p,ref mut vec
     let ref policy::Policy ceiling=vec::at<policy::Policy>(policies,0);
     let policy_limits::RunLimits limits=run_config::run_limits(run);
     if(!host_program::allows(verified,ceiling,run) || limits.fuel>m.limits.fuel){return failed(m,5);}
-    let usize exchange_bytes=host::scalar_storage_bound(verified,limits);
+    if(selected!=0 && !host_program::accepts_input(verified)){return failed(m,1);}
+    if(input.len>limits.input_bytes || input.len>input_bytes::hard_limit()){return failed(m,8);}
+    let usize exchange_bytes=host::scalar_storage_bound(verified,limits)+input.len;
     let usize slots=control_layout::capacity(1);
-    if(stride==0 || exchange_bytes>limits.memory_bytes || stride>(limits.memory_bytes-exchange_bytes)/slots){return failed(m,8);}
+    let usize transient=if(selected==0){0}else{selected-1};
+    if(stride==0 || transient>limits.memory_bytes || exchange_bytes>limits.memory_bytes-transient ||
+        stride>(limits.memory_bytes-transient-exchange_bytes)/slots){return failed(m,8);}
     let usize deadline=switch(deadline_after(limits.deadline_ms)){
         case .ok(v):{v}case .err(e):{return failed(m,e.status);}
     };
     let usize charge=slots*stride+exchange_bytes;
-    let live::Plan reservation=switch(prepare_payload(m,0,charge,0)){
+    let live::Plan reservation=switch(prepare_payload(m,0,charge,transient)){
         case .ok(plan):{plan}case .err(status):{return failed(m,status);}
     };
     let usize id=m.next;
-    let host::Exchange exchange=switch(host::create_scalar(verified,ceiling,run,id,deadline)){
+    let host::Exchange exchange=switch(host::create_scalar_input(verified,ceiling,run,id,deadline,input)){
         case .ok(value):{value}case .err(reason):{return failed(m,switch(reason){
             case .Authority:{5}case .Allocation:{6}case .Binding:{7}case .State:{7}case .Rejected:{7}
         });}
@@ -1732,7 +1752,7 @@ fn void retain_host_bindings(ref mut Meta m,ref mut vec::Vec<Program> p,
             switch(run_config::parse(b"",ref ceiling)){
                 case .ok(run):{
                     let vec::Vec<policy::Policy> empty=vec::empty<policy::Policy>();
-                    unsafe{binding_raw(39)};discard prepare_host_inner(m,p,v,outputs,ref empty,ref run,0,0);
+                    unsafe{binding_raw(39)};discard prepare_host_inner(m,p,v,outputs,ref empty,ref run,0,0,b"",0);
                 }
                 case .err(_):{}
             };
