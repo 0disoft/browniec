@@ -401,6 +401,30 @@ def check_configured_output(exe, folder):
     assert check_json(exe, [*args, '--output', f'{sink}:extra'],
                       7, version=2, profile=profile) == output_error
     assert sink.read_bytes() == b'A\x00'
+    text_sink = project / 'output.txt'
+    utf8 = '한😀\x00\r\n'.encode()
+    assert check_json(exe, [*args, '--stdin', '--output-text', text_sink], 0, value=77,
+                      version=2, profile=profile, input_bytes=utf8) is None
+    assert text_sink.read_bytes() == utf8
+    assert check_json(exe, [*args, '--output-text', text_sink], 7,
+                      version=2, profile=profile) == output_error
+    assert text_sink.read_bytes() == utf8
+    empty_text = project / 'empty.txt'
+    assert check_json(exe, [*args, '--output-text', empty_text], 0, value=77, profile=profile) is None
+    assert empty_text.read_bytes() == b''
+    invalid_text = project / 'invalid.txt'
+    for malformed in (b'\xff', b'\xc0\x80', b'\xf0\x9f'):
+        assert check_json(exe, [*args, '--stdin', '--output-text', invalid_text], 7,
+                          version=2, profile=profile, input_bytes=malformed) == {
+            'kind': 'output_encoding', 'location': {'kind': 'none'},
+        }
+        assert not invalid_text.exists()
+    binary_sink = project / 'non-utf8.bin'
+    assert check_json(exe, [*args, '--stdin', '--output', binary_sink], 0, value=77,
+                      profile=profile, input_bytes=b'\xff') is None
+    assert binary_sink.read_bytes() == b'\xff'
+    invoke(exe, [*args, '--json-v2', '--output', invalid_text, '--output-text', text_sink], 2)
+    assert not invalid_text.exists()
     unpublished = project / 'unpublished.bin'
     file_run = [*args, '--input', payload, '--output', unpublished]
     for invalid in (['check', *args[1:]], ['run', *args[1:3]]):
@@ -442,7 +466,7 @@ def check_configured_output(exe, folder):
     extended = config['limits'] | {'fuel': 16000000, 'deadline_ms': 10000}
     policy_file.write_text(json.dumps(ceiling | {'run': extended}), encoding='utf-8')
     update(limits=extended)
-    check_console_cancellation(exe, [*args, '--output', unpublished], project)
+    check_console_cancellation(exe, [*args, '--output-text', unpublished], project)
     assert not unpublished.exists()
     policy_file.write_bytes(original_policy)
     update()
@@ -471,7 +495,7 @@ def check_configured_output(exe, folder):
         'kind': 'output_denied', 'location': {'kind': 'none'},
     }
     assert not unpublished.exists()
-    print('PASS: configured checks, grants, Base64 and file sinks, quotas, diagnostics and deadline')
+    print('PASS: configured checks, grants, Base64 and binary/UTF-8 file sinks, quotas, diagnostics and deadline')
 
 
 def check_project_location(exe, manifest, command, code, kind, index, name, source, offset, end):

@@ -18,7 +18,7 @@
 | browniec check --project FILE --catalog FILE --policy FILE --run FILE | Verify a project and its typed host imports | Windows, public i32 entry, text or JSON |
 | browniec run --project FILE --catalog FILE --policy FILE --run FILE --host-replies FILE | Run a project with typed precomputed host replies | Windows, public i32 entry, text or JSON |
 | browniec check --project FILE --policy FILE --run FILE | Verify source, entry and grants under an explicit policy without running guest code | Windows, shared-byte i32 entry, text or JSON |
-| browniec run --project FILE --policy FILE --run FILE [--output FILE] | Run the checked entry under explicit policy | Windows, shared-byte i32 entry, JSON result required, optional binary input and output file |
+| browniec run --project FILE --policy FILE --run FILE [--output FILE or --output-text FILE] | Run the checked entry under explicit policy | Windows, shared-byte i32 entry, JSON result required, optional binary input and binary or UTF-8 output file |
 | browniec check SOURCE --isolated | Use a restricted compile-only worker | Designed; unavailable |
 | browniec run SOURCE --isolated | Use the restricted worker and parent broker | Designed; unavailable |
 | browniec inspect SOURCE --ir | Compile/verify and emit bounded private IR diagnostics without executing | Implemented for the same public M1/M2 admission as check; optional --json |

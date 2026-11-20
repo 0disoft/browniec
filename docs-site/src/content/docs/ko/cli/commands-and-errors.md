@@ -39,8 +39,8 @@ description: browniec 공개 명령어 사용법, 종료 코드, 그리고 자�
 | `browniec check --project FILE --policy FILE --run FILE` | — | `stderr` | — |
 | `browniec check --project FILE --policy FILE --run FILE` | `--json` | `stdout` | `browniec.result/v1` |
 | `browniec check --project FILE --policy FILE --run FILE` | `--json-v2` | `stdout` | `browniec.result/v2` |
-| `browniec run --project FILE --policy FILE --run FILE [--input FILE\|--stdin] [--output FILE]` | `--json` | `stdout` | `browniec.result/v1` |
-| `browniec run --project FILE --policy FILE --run FILE [--input FILE\|--stdin] [--output FILE]` | `--json-v2` | `stdout` | `browniec.result/v2` |
+| `browniec run --project FILE --policy FILE --run FILE [--input FILE\|--stdin] [--output FILE\|--output-text FILE]` | `--json` | `stdout` | `browniec.result/v1` |
+| `browniec run --project FILE --policy FILE --run FILE [--input FILE\|--stdin] [--output FILE\|--output-text FILE]` | `--json-v2` | `stdout` | `browniec.result/v2` |
 | `browniec eval-i32 SOURCE N [--fuel N]` | — | `stderr` | — |
 | `browniec eval-i32 SOURCE N [--fuel N]` | `--json` | `stdout` | `browniec.result/v1` |
 | `browniec eval-i32 SOURCE N [--fuel N]` | `--json-v2` | `stdout` | `browniec.result/v2` |

@@ -9,6 +9,7 @@ pub fn u8 deadline_kind(){return 30;}
 pub fn u8 memory_limit_kind(){return 32;}
 pub fn u8 cancelled_kind(){return 33;}
 pub fn u8 output_io_kind(){return 34;}
+pub fn u8 output_encoding_kind(){return 35;}
 pub struct Error { u8 kind; u8 location; usize offset; }
 pub fn Error make(u8 kind, usize offset) {
     return Error{.kind=kind,.offset=offset,.location=0};

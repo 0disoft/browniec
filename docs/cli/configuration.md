@@ -218,6 +218,10 @@ must allow it. By default a successful emit is published as `output_b64`.
 With `--output FILE`, a configured run with the emit grant creates a new disk
 file and writes the exact sealed bytes there, including an empty result. The
 JSON result still goes to stdout with `return_i32` and omits `output_b64`.
+Choose `--output-text FILE` instead to validate the entire sealed result as
+UTF-8 before creating the file. Valid text is written byte for byte, preserving
+line endings. Invalid UTF-8 reports `output_encoding` and exits 7 without opening
+the destination. The two file options are mutually exclusive.
 Use an explicit local path. An existing file is left intact. The command opens
 the sink only after successful execution and sealing. A sink failure reports
 `output_io` and exits 7. A file created before a write failure can contain a

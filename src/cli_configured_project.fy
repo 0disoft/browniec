@@ -15,8 +15,9 @@ import runtime_run_config as runs;
 import source_error as diagnostics;
 import source_snapshot as sources;
 import static_image as images;
+import std::text as text;
 
-pub struct Selection { usize policy_file; usize run_file; usize output_file; }
+pub struct Selection { usize policy_file; usize run_file; usize output_file; bool output_text; }
 unsafe extern C fn u32 bc_cli_enable_cancel();
 unsafe extern C fn u32 bc_cli_cancel_requested();
 
@@ -56,11 +57,11 @@ pub fn i32 execute(render::Format format,bool execute_guest,Selection selected,b
         case .ok(v):{v}
         case .err(e):{return project_failure(format,true,project,root,engine_error(e,false,8),e.diagnostic.at,8);}
     };
-    return complete(format,ref mut owner,program,instance,selected.output_file,project,root);
+    return complete(format,ref mut owner,program,instance,selected,project,root);
 }
 
 @effects(console,filesystem)
-fn i32 complete(render::Format format,ref mut engine::Engine owner,usize program,usize instance,usize output_file,
+fn i32 complete(render::Format format,ref mut engine::Engine owner,usize program,usize instance,Selection selected,
     ref manifest::Project project,ref anchored::Root root){
     var i64 value=0;
     while(true){
@@ -90,9 +91,12 @@ fn i32 complete(render::Format format,ref mut engine::Engine owner,usize program
         case .ok(v):{v}case .err(e):{return failure(format,true,engine_error(e,false,8),8);}
     };
     if(!dispose(owner,program,instance)){return failure(format,true,errors::absent(5,0),8);}
-    if(output_file!=0){
+    if(selected.output_file!=0){
         let ref u8[] payload=if(engine::output_available(ref output)){engine::output_view(ref output)}else{b""};
-        if(!files::write_output(output_file,payload)){
+        if(selected.output_text && !text::validate_utf8(payload).is_ok){
+            return failure(format,true,errors::absent(errors::output_encoding_kind(),0),8);
+        }
+        if(!files::write_output(selected.output_file,payload)){
             return failure(format,true,errors::absent(errors::output_io_kind(),0),8);
         }
     }else if(engine::output_available(ref output)){
