@@ -15,7 +15,7 @@ import std::num as num;
 
 // Private native coordinator and scalar VM driver. No public ABI.
 // Phase: 0 Ready, 1 Waiting, 2 Install, 3 Terminal, 4 Receiving.
-// Cause: 0 None, 1 Cancelled, 2 Deadline, 3 HostFailure, 4 Quota, 5 Fuel, 6 Identity.
+// Cause: 0 None, 1 Cancelled, 2 Deadline, 3 HostFailure, 4 Quota, 5 Fuel, 6 Identity, 7 OutputLimit.
 pub enum Error { State; Identity; Catalog; Denied; Malformed; Allocation; Terminated; }
 pub struct Limits {
     usize request_bytes; usize reply_bytes; usize requests_total; usize replies_total;
@@ -830,10 +830,7 @@ fn Result<ScalarEvent,ScalarError> emit_guest(ref mut Exchange e,usize argument,
     let usize used=read(current,base);
     let usize copied=read(current,base+8);
     if(used>limit || copied>length){return .err(.State);}
-    if(length>limit-used){
-        scalar_header(e)[81]=4;scalar_header(e)[82]=5;
-        return .ok(scalar_event(e));
-    }
+    if(length>limit-used){discard stop(e,7,now);return .ok(scalar_event(e));}
     if(copied==0 && !spend_guest(e,prices::output_emit(length),now).is_ok){return .ok(scalar_event(e));}
     let usize left=length-copied;
     let usize count=if(left<*work){left}else{*work};

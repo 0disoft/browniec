@@ -373,6 +373,21 @@ zero live SDK allocations. Root `fairyc check --locked` passes 376 sources
 and 4,163 MIR functions. The local receipt is
 `build/runtime-engine/20261118T111819576719Z/receipt.json`.
 
+## Termination with staged guest output
+
+An output quota failure commits an exchange termination with its own cause and
+timestamp. If a host call already happened, the terminal observation reports
+that external effects may be unknown. Later cancellation preserves the failure
+and the remaining Fuel.
+
+The fixed-clock Engine test covers cancellation while waiting for a host reply,
+expiry on the last chunk of a second emit, and a one-byte-short output quota.
+Each failure leaves the output unavailable. The exact-fit peer publishes 8194
+bytes once, with two emits and unchanged terminal Fuel and result after the
+deadline. Taking the output clears the Engine's charge, and the detached result
+outlives the Engine. Both Windows profiles passed with zero live SDK allocations.
+The local receipt is `build/runtime-engine/20261120T174149316579Z/receipt.json`.
+
 ## Engine scalar run deadline
 
 The Windows Engine samples interrupt time with [QueryInterruptTimePrecise](https://learn.microsoft.com/en-us/windows/win32/api/realtimeapiset/nf-realtimeapiset-queryinterrupttimeprecise).

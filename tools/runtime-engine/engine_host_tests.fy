@@ -12,6 +12,8 @@ import std::num as num;
 import ir as ir;
 import runtime_engine as engine;
 import runtime_policy as policy;
+import runtime_input as input;
+import fuel as fuel;
 import runtime_run_config as runs;
 import runtime_live_memory as live_memory;
 import runtime_program_memory as program_memory;
@@ -1217,6 +1219,120 @@ fn Result<usize,u8> memory_adapter_round_trip(){
     assert(id(engine::destroy(ref mut owner))==0);
     return .ok(1);
 }
+fn Result<policy::Policy,u8> emitting_policy(){
+    let ref u8[] base=policy_json_yes();
+    var bytes::Buffer text=bytes::empty();
+    assert(bytes::append(ref mut text,base[..base.len-2]).is_ok);
+    assert(bytes::append(ref mut text,b",\"brownie.output.emit\"]}").is_ok);
+    return switch(policy::parse(bytes::view(ref text))){case .ok(v):{.ok(v)}case .err(_):{.err(1)}};
+}
+fn Result<runs::RunConfig,u8> emitting_run(ref policy::Policy ceiling,usize limit){
+    var bytes::Buffer text=bytes::empty();
+    assert(bytes::append(ref mut text,b"{\"schema\":\"brownie.run/0.3\",\"entry\":{\"module\":\"app\",\"function\":\"chosen\"},\"requires\":[\"host.example.check\",\"brownie.output.emit\"],\"grants\":[\"host.example.check\",\"brownie.output.emit\"],\"limits\":{\"memory_bytes\":16777216,\"object_bytes\":1,\"call_frames\":1,\"input_bytes\":8192,\"output_bytes\":").is_ok);
+    let i64 value=switch(num::i64_from_usize(limit)){case .ok(v):{v}case .err(_):{return .err(1);}};
+    assert(bytes::append_i64(ref mut text,value).is_ok);
+    assert(bytes::append(ref mut text,b",\"host_request_bytes\":14,\"host_response_bytes\":12,\"host_calls\":1,\"owner_entries\":1,\"descriptor_entries\":1,\"fuel\":10000000,\"deadline_ms\":1000}}").is_ok);
+    return switch(runs::parse(bytes::view(ref text),ceiling)){case .ok(v):{.ok(v)}case .err(_):{.err(1)}};
+}
+fn Result<ir::Program,u8> emitting_code(){
+    var ir::Program code=ir::empty();
+    code.registers=1;code.types[0]=14;code.arities[0]=1;
+    assert(ir::raw(ref mut code,programs::emit_opcode(),0,0,0,0).is_ok);
+    let usize arg=switch(ir::literal(ref mut code,41,0)){case .ok(v):{v}case .err(_):{return .err(1);}};
+    let usize reply=switch(ir::emit(ref mut code,programs::typed_request_opcode(),arg,0,0)){
+        case .ok(v):{v}case .err(_):{return .err(1);}
+    };
+    code.types[reply]=1;code.code[20]=1;
+    assert(ir::raw(ref mut code,programs::emit_opcode(),0,0,0,0).is_ok);
+    assert(ir::emit(ref mut code,8,reply,0,0).is_ok);
+    let usize end=code.count;let usize registers=code.registers;
+    code.function_count=1;code.ends[0]=end;code.register_ends[0]=registers;code.return_types[0]=1;
+    return .ok(code);
+}
+fn usize emitting_wait(ref mut engine::Engine owner,usize instance){
+    // One work unit prepares output. 4096+1 bytes then fill the first emit.
+    assert(event(engine::step_instance(owner,instance,1)).kind==0);
+    let engine::Event prefix=event(engine::step_instance(owner,instance,4096));
+    assert(prefix.kind==0 && prefix.remaining==10000000-fuel::output_prepare(8194)-fuel::output_emit(4097));
+    assert(!engine::take_output(owner,instance).is_ok);
+    let engine::Event waiting=event(engine::step_instance(owner,instance,3));
+    assert(waiting.kind==4);
+    return waiting.remaining;
+}
+fn Result<usize,u8> staged_output_terminal(){
+    let policy::Policy ceiling=emitting_policy()?;
+    let runs::RunConfig run=emitting_run(ref ceiling,8194)?;
+    let runs::RunConfig short=emitting_run(ref ceiling,8193)?;
+    var engine::Engine owner=configured(ceiling)?;
+    let ir::Program code=emitting_code()?;
+    let catalog::Catalog imports=catalog_from(json())?;
+    let u32[8] expected=digest(ref imports)?;
+    let usize p=id(engine::retain_scalar_host(ref mut owner,ref code,imports,ref expected,ref run));
+    let bytes::Buffer fixture=large_reply()?;
+    let ref u8[] whole=bytes::view(ref fixture);
+    let ref u8[] raw=whole[whole.len-4097..];
+    var usize unused=0;
+    let input::Snapshot bytes_in=switch(input::snapshot(raw,4097,0,ref mut unused)){
+        case .ok(v):{v}case .err(_):{return .err(1);}
+    };
+    let usize cancel=id(engine::prepare_input_host(ref mut owner,p,ref run,ref bytes_in));
+    let usize expires=id(engine::prepare_input_host(ref mut owner,p,ref run,ref bytes_in));
+    let usize quota=id(engine::prepare_input_host(ref mut owner,p,ref short,ref bytes_in));
+    let usize success=id(engine::prepare_input_host(ref mut owner,p,ref run,ref bytes_in));
+    let usize start=1000;
+    let usize deadline=start+10000000;
+    let usize waiting_fuel=emitting_wait(ref mut owner,cancel);
+    assert(emitting_wait(ref mut owner,expires)==waiting_fuel);
+    assert(emitting_wait(ref mut owner,success)==waiting_fuel);
+
+    assert(event(engine::reply_scalar_host(ref mut owner,success,success,1,0,answer())).kind==0);
+    let engine::Event prefix=event(engine::step_instance(ref mut owner,success,4096));
+    assert(prefix.kind==0 && prefix.remaining==waiting_fuel-12-fuel::output_emit(4097));
+    assert(!engine::take_output(ref mut owner,success).is_ok);
+    let engine::Event done=event(engine::step_instance(ref mut owner,success,3));
+    assert(done.kind==1 && done.value==42 && done.remaining==prefix.remaining-1-fuel::output_seal());
+
+    assert(event(engine::step_instance(ref mut owner,quota,4096)).kind==0);
+    assert(event(engine::step_instance(ref mut owner,quota,8)).kind==4);
+    assert(event(engine::reply_scalar_host(ref mut owner,quota,quota,1,0,answer())).kind==0);
+    let engine::Event limited=event(engine::step_instance(ref mut owner,quota,4));
+    assert(limited.kind==2 && limited.diagnostic.code.kind==20);
+    assert(scalar(ref owner,quota).host.cause==7 && scalar(ref owner,quota).host.terminal_at==start);
+    assert(scalar(ref owner,quota).host.external_effects_unknown);
+    assert(!engine::take_output(ref mut owner,quota).is_ok);
+
+    assert(event(engine::cancel_ready(ref mut owner,cancel)).kind==3);
+    assert(!engine::take_output(ref mut owner,cancel).is_ok);
+    assert(event(engine::reply_scalar_host(ref mut owner,expires,expires,1,0,answer())).kind==0);
+    let engine::Event pending=event(engine::step_instance(ref mut owner,expires,4096));
+    assert(pending.kind==0 && pending.remaining==prefix.remaining);
+    unsafe{bc_runtime_engine_test_set_clock(deadline)};
+    let engine::Event expired=event(engine::step_instance(ref mut owner,expires,1));
+    assert(expired.kind==2 && expired.diagnostic.code.kind==errors::deadline_kind());
+    assert(expired.remaining==pending.remaining);
+    assert(event(engine::cancel_ready(ref mut owner,expires)).kind==2);
+    assert(event(engine::cancel_ready(ref mut owner,quota)).diagnostic.code.kind==20);
+    assert(event(engine::cancel_ready(ref mut owner,cancel)).kind==3);
+    assert(event(engine::cancel_ready(ref mut owner,success)).value==42);
+    assert(!engine::take_output(ref mut owner,expires).is_ok);
+
+    let engine::Output output=switch(engine::take_output(ref mut owner,success)){
+        case .ok(v):{v}case .err(_):{return .err(1);}
+    };
+    let ref u8[] view=engine::output_view(ref output);
+    assert(view.len==8194 && bytes::equal(view[..4097],raw) && bytes::equal(view[4097..],raw));
+    assert(engine::output_completion(ref output).emits==2);
+    assert(!engine::take_output(ref mut owner,success).is_ok);
+    assert(instance_bytes(ref owner)==0);
+    assert(id(engine::destroy_instance(ref mut owner,cancel))==cancel);
+    assert(id(engine::destroy_instance(ref mut owner,expires))==expires);
+    assert(id(engine::destroy_instance(ref mut owner,quota))==quota);
+    assert(id(engine::destroy_instance(ref mut owner,success))==success);
+    assert(id(engine::release_program(ref mut owner,p))==p);
+    assert(id(engine::destroy(ref mut owner))==0);
+    assert(engine::output_view(ref output).len==8194);
+    return .ok(1);
+}
 pub fn void run(){
     unsafe{bc_runtime_engine_test_set_clock(1000)};
     assert(admission().is_ok);
@@ -1243,6 +1359,9 @@ pub fn void run(){
     unsafe{bc_runtime_engine_test_use_os_clock()};
     unsafe{bc_runtime_engine_test_set_clock(1000)};
     assert(compact_receive().is_ok);
+    unsafe{bc_runtime_engine_test_use_os_clock()};
+    unsafe{bc_runtime_engine_test_set_clock(1000)};
+    assert(staged_output_terminal().is_ok);
     unsafe{bc_runtime_engine_test_use_os_clock()};
     assert(deadline_order().is_ok);
     unsafe{bc_runtime_engine_test_use_os_clock()};
