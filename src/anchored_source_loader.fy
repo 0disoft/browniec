@@ -6,11 +6,11 @@ unsafe extern C fn ptr mut void bc_asl_open(ptr u8 root,usize length);
 unsafe extern C fn ptr mut void bc_asl_open_project(ptr u8 path,usize length,ptr mut u8 out,
     usize capacity,ptr mut usize used,ptr mut u32 status);
 unsafe extern C fn u32 bc_asl_member(ptr mut void owner,ptr u8 name,usize length);
-unsafe extern C fn u32 bc_asl_collect(ptr mut void owner,usize source_bytes);
+unsafe extern C fn u32 bc_asl_collect_until(ptr mut void owner,usize source_bytes,usize deadline);
 unsafe extern C fn usize bc_asl_copy(ptr mut void owner,usize index,u32 part,ptr mut u8 out,usize capacity);
 unsafe extern C fn void bc_asl_close(ptr mut void owner);
 pub resource Root { ptr mut void owner; usize manifest_bytes; cleanup { unsafe {bc_asl_close(this.owner)}; } }
-pub enum Error { Request; Native; Admission; Limit; }
+pub enum Error { Request; Native; Admission; Limit; Deadline; }
 pub enum ProjectOpen { Input; Limit; Allocation; }
 
 pub fn Result<Root,ProjectOpen> open_project(ref u8[] path,ref mut u8[] data){
@@ -37,27 +37,35 @@ fn bool valid(ref u8[] names,ref usize[] ends,usize source_bytes,usize name_byte
 }
 pub fn Result<sources::Snapshot,Error> load(ref u8[] root,ref u8[] names,ref usize[] ends,
                                            usize source_bytes,usize name_bytes){
+    return load_until(root,names,ends,source_bytes,name_bytes,0);
+}
+pub fn Result<sources::Snapshot,Error> load_until(ref u8[] root,ref u8[] names,ref usize[] ends,
+                                                 usize source_bytes,usize name_bytes,usize deadline){
     if(!valid(names,ends,source_bytes,name_bytes)){return .err(.Request);}
     let ptr mut void address=unsafe {bc_asl_open(root as ptr u8,root.len)};
     if(address==null){return .err(.Native);}
     var Root owner=Root{.owner=address,.manifest_bytes=0};
-    return collect(ref mut owner,names,ends,source_bytes,name_bytes);
+    return collect(ref mut owner,names,ends,source_bytes,name_bytes,deadline);
 }
 pub fn Result<sources::Snapshot,Error> load_from(ref mut Root owner,ref u8[] names,ref usize[] ends,
                                                 usize source_bytes,usize name_bytes){
+    return load_from_until(owner,names,ends,source_bytes,name_bytes,0);
+}
+pub fn Result<sources::Snapshot,Error> load_from_until(ref mut Root owner,ref u8[] names,ref usize[] ends,
+                                                      usize source_bytes,usize name_bytes,usize deadline){
     if(!valid(names,ends,source_bytes,name_bytes)){return .err(.Request);}
-    return collect(owner,names,ends,source_bytes,name_bytes);
+    return collect(owner,names,ends,source_bytes,name_bytes,deadline);
 }
 fn Result<sources::Snapshot,Error> collect(ref mut Root owner,ref u8[] names,ref usize[] ends,
-                                          usize source_bytes,usize name_bytes){
+                                          usize source_bytes,usize name_bytes,usize deadline){
     var usize begin=0;var usize i=0;
     while(i<ends.len){
         let ref u8[] name=names[begin..ends[i]];
         if(unsafe {bc_asl_member(owner.owner,name as ptr u8,name.len)}!=0){return .err(.Native);}
         begin=ends[i];i+=1;
     }
-    let u32 status=unsafe {bc_asl_collect(owner.owner,source_bytes)};
-    if(status!=0){return .err(if(status==3){.Limit}else{.Native});}
+    let u32 status=unsafe {bc_asl_collect_until(owner.owner,source_bytes,deadline)};
+    if(status!=0){return .err(if(status==3){.Limit}else if(status==11){.Deadline}else{.Native});}
     return copy_collected(owner,ends.len,source_bytes,name_bytes);
 }
 

@@ -32,6 +32,7 @@ unsafe extern C fn usize bc_runtime_engine_test_project_path(ptr mut u8 out,usiz
 unsafe extern C fn usize bc_runtime_engine_monotonic_ticks();
 unsafe extern C fn void bc_runtime_engine_test_set_clock(usize ticks);
 unsafe extern C fn void bc_runtime_engine_test_clock_advance(usize read,usize ticks);
+unsafe extern C fn usize bc_runtime_engine_test_handle_count();
 unsafe extern C fn void bc_runtime_engine_test_use_os_clock();
 unsafe extern C fn void bc_runtime_engine_test_wait_for_clock(usize start,usize elapsed);
 struct Heap { usize blocks; usize bytes; }
@@ -492,6 +493,7 @@ fn Result<usize,u8> project_output(){
     let ref u8[] declared=b"{\"schema\":\"brownie.project/0.3\",\"name\":\"fixture\",\"entry\":{\"module\":\"app\",\"function\":\"chosen\"},\"sources\":[{\"module\":\"app\",\"path\":\"output.brc\"}],\"requires\":[\"brownie.output.emit\"]}";
     let ref u8[] undeclared=b"{\"schema\":\"brownie.project/0.3\",\"name\":\"fixture\",\"entry\":{\"module\":\"app\",\"function\":\"chosen\"},\"sources\":[{\"module\":\"app\",\"path\":\"output.brc\"}],\"requires\":[]}";
     let ref u8[] quiet=b"{\"schema\":\"brownie.project/0.3\",\"name\":\"fixture\",\"entry\":{\"module\":\"app\",\"function\":\"chosen\"},\"sources\":[{\"module\":\"app\",\"path\":\"quiet.brc\"}],\"requires\":[\"brownie.output.emit\"]}";
+    let projects::Project unfinished=project(b"{\"schema\":\"brownie.project/0.3\",\"name\":\"fixture\",\"entry\":{\"module\":\"app\",\"function\":\"chosen\"},\"sources\":[{\"module\":\"app\",\"path\":\"output.brc\"},{\"module\":\"missing\",\"path\":\"absent.brc\"}],\"requires\":[\"brownie.output.emit\"]}")?;
     let projects::Project manifest=project(declared)?;
     let projects::Project missing=project(undeclared)?;
     let projects::Project quiet_manifest=project(quiet)?;
@@ -517,9 +519,17 @@ fn Result<usize,u8> project_output(){
     counts(ref mut e,0,0,0);
     same_heap(ref idle);
     unsafe{bc_runtime_engine_test_set_clock(100)};
-    // The fourth read is the publication gate, after collection and compilation.
+    rejected_id(engine::compile_project_output(ref mut e,ref unfinished,root,ref granted,65536),1);
+    let usize handles=unsafe{bc_runtime_engine_test_handle_count()};
+    // The fourth sample is between the real first file and the missing second.
     unsafe{bc_runtime_engine_test_clock_advance(4,20000100)};
+    rejected_compile_deadline(engine::compile_project_output(ref mut e,ref unfinished,root,ref granted,65536));
+    assert(unsafe{bc_runtime_engine_test_handle_count()}==handles);
+    counts(ref mut e,0,0,0);same_heap(ref idle);
+    // A separate deadline expires at the final Program publication gate.
+    unsafe{bc_runtime_engine_test_clock_advance(8,40000100)};
     rejected_compile_deadline(engine::compile_project_output(ref mut e,ref manifest,root,ref granted,65536));
+    assert(unsafe{bc_runtime_engine_test_handle_count()}==handles);
     unsafe{bc_runtime_engine_test_use_os_clock()};
     counts(ref mut e,0,0,0);same_heap(ref idle);
     let usize q=id(engine::compile_project_output(ref mut e,ref quiet_manifest,root,ref granted,65536));

@@ -99,6 +99,23 @@ it across lowering, verification and retention. Expiry at a checked boundary
 returns a deadline diagnostic with no source location. The publication check
 precedes adding the Program to the Engine or advancing its ID.
 
+Configured Windows project collection samples the same deadline before
+root reinspection, before opening each declared member, before final
+revalidation and before publishing the native snapshot. An expired collection
+closes its member and root handles, produces no Snapshot, and returns the
+source-less deadline diagnostic before compiling or assigning a Program ID.
+The collector uses synchronous OS I/O. A file operation already in progress
+returns to the next checkpoint before expiry is delivered.
+
+The Windows Engine verifier set an exact deadline between the first source
+read and a missing second member. Without expiry the same project reported
+acquisition failure. With expiry it reported a deadline, left the process
+handle count and SDK heap unchanged, and preserved the next Program ID.
+Both profiles also passed the separate final publication control. Local
+Engine receipt: `build/runtime-engine/20261120T231632275851Z/receipt.json`.
+The native collector tested expired and future deadlines using the real OS
+clock in both profiles: `build/anchored-sources/20261120T231507642754Z/receipt.json`.
+
 Compilation still runs synchronously between checks. The deadline prevents a
 late Program from becoming visible and leaves preemptible compilation,
 in-flight cancellation and cleanup latency as separate obligations.

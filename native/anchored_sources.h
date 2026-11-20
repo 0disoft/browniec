@@ -23,7 +23,7 @@ typedef struct bc_as_view {
 typedef enum bc_as_status {
     BC_AS_OK=0, BC_AS_ARGUMENT, BC_AS_NAME, BC_AS_LIMIT, BC_AS_OS,
     BC_AS_REPARSE, BC_AS_KIND, BC_AS_IDENTITY, BC_AS_CHANGED,
-    BC_AS_ALLOCATION, BC_AS_UNSUPPORTED
+    BC_AS_ALLOCATION, BC_AS_UNSUPPORTED, BC_AS_DEADLINE
 } bc_as_status;
 typedef struct bc_as_error { uint32_t win32; int32_t ntstatus; size_t index; } bc_as_error;
 
@@ -51,6 +51,9 @@ bc_as_status bc_as_read_config(const bc_as_root *root,const wchar_t *name,size_t
    *out must be NULL; failure publishes nothing and releases temporary handles. */
 bc_as_status bc_as_collect(const bc_as_root *root,const bc_as_path *paths,size_t count,
                           size_t source_bytes,bc_as_snapshot **out,bc_as_error *error);
+/* Absolute Windows interrupt-time ticks; zero disables expiry checks. */
+bc_as_status bc_as_collect_until(const bc_as_root *root,const bc_as_path *paths,size_t count,
+                                size_t source_bytes,uint64_t deadline,bc_as_snapshot **out,bc_as_error *error);
 size_t bc_as_count(const bc_as_snapshot *snapshot);
 size_t bc_as_size(const bc_as_snapshot *snapshot);
 bc_as_status bc_as_file(const bc_as_snapshot *snapshot,size_t index,bc_as_view *out);

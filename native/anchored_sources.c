@@ -170,7 +170,28 @@ done:
     if(s==BC_AS_OK){*length=used;}
     return s;
 }
+#ifdef BC_AS_TEST_ENGINE_CLOCK
+extern uintptr_t bc_runtime_engine_monotonic_ticks(void);
+#endif
+static int expired(uint64_t deadline){
+    if(!deadline){return 0;}
+#ifdef BC_AS_TEST_ENGINE_CLOCK
+    return bc_runtime_engine_monotonic_ticks()>=deadline;
+#else
+    ULONGLONG now;
+    QueryInterruptTimePrecise(&now);
+    return now>=deadline;
+#endif
+}
+#ifndef BC_AS_TEST_ENGINE_CLOCK
+#pragma comment(lib, "mincore.lib")
+#endif
+
 bc_as_status bc_as_collect(const bc_as_root *r,const bc_as_path *paths,size_t count,size_t budget,bc_as_snapshot **out,bc_as_error *e){
+    return bc_as_collect_until(r,paths,count,budget,0,out,e);
+}
+bc_as_status bc_as_collect_until(const bc_as_root *r,const bc_as_path *paths,size_t count,size_t budget,
+                                 uint64_t deadline,bc_as_snapshot **out,bc_as_error *e){
     bc_as_snapshot stage,*published;HANDLE handles[BC_AS_HANDLES],leaves[BC_AS_FILES];bc_as_info before[BC_AS_FILES],info;
     LONGLONG changes[BC_AS_HANDLES],root_changes[BC_AS_ROOT_COMPONENTS+1u];
     size_t held=0,i,j,at,start,n;bc_as_status s=BC_AS_OK;wchar_t name[BC_AS_PATH];HANDLE parent,h=NULL;DWORD got;uint8_t extra;
@@ -182,8 +203,10 @@ bc_as_status bc_as_collect(const bc_as_root *r,const bc_as_path *paths,size_t co
         for(j=0;j<i;++j){bc_as_path a={stage.rows[i].name,stage.rows[i].name_length},b={stage.rows[j].name,stage.rows[j].name_length};
             if(same_name(&a,&b)){return fail(e,BC_AS_IDENTITY,0,0,i);}}
     }
+    if(expired(deadline)){return fail(e,BC_AS_DEADLINE,0,0,0);}
     for(i=0;i<r->count;++i){s=inspect(r->handles[i],1,&info,e,i);if(s!=BC_AS_OK){return s;}root_changes[i]=info.basic.ChangeTime.QuadPart;}
     for(i=0;i<count;++i){
+        if(expired(deadline)){s=fail(e,BC_AS_DEADLINE,0,0,i);goto done;}
         const bc_as_row *row=&stage.rows[i];parent=r->handles[r->count-1];start=0;
         for(at=0;at<=row->name_length;++at){if(at==row->name_length||row->name[at]=='/'){
             n=at-start;for(j=0;j<n;++j){name[j]=(wchar_t)row->name[start+j];}
@@ -206,6 +229,7 @@ bc_as_status bc_as_collect(const bc_as_root *r,const bc_as_path *paths,size_t co
         if(got!=0){s=fail(e,BC_AS_CHANGED,0,0,i);goto done;}
         stage.used+=n;stage.count=i+1;CHECKPOINT(4,h);
     }
+    if(expired(deadline)){s=fail(e,BC_AS_DEADLINE,0,0,count);goto done;}
     for(i=0;i<count;++i){s=inspect(leaves[i],0,&info,e,i);if(s!=BC_AS_OK){goto done;}
         if(!stable(&before[i],&info)){s=fail(e,BC_AS_CHANGED,0,0,i);goto done;}}
     for(i=0;i<held;++i){FILE_ATTRIBUTE_TAG_INFO tag;FILE_BASIC_INFO basic;
@@ -215,6 +239,7 @@ bc_as_status bc_as_collect(const bc_as_root *r,const bc_as_path *paths,size_t co
         if(basic.ChangeTime.QuadPart!=changes[i]){s=fail(e,BC_AS_CHANGED,0,0,i);goto done;}}
     for(i=0;i<r->count;++i){s=inspect(r->handles[i],1,&info,e,i);if(s!=BC_AS_OK){goto done;}
         if(info.basic.ChangeTime.QuadPart!=root_changes[i]){s=fail(e,BC_AS_CHANGED,0,0,i);goto done;}}
+    if(expired(deadline)){s=fail(e,BC_AS_DEADLINE,0,0,count);goto done;}
     published=allocate(sizeof(*published));if(!published){s=fail(e,BC_AS_ALLOCATION,0,0,0);goto done;}
     *published=stage;*out=published;
 done:

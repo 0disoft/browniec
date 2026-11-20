@@ -222,14 +222,17 @@ fn usize project_source_limit(ref Engine e){
     let policy_limits::CompileLimits bounds=policy::compile_limits(vec::at<policy::Policy>(ref e.policy,0));
     return if(bounds.source_bytes<ceiling){bounds.source_bytes}else{ceiling};
 }
-fn Result<sources::Snapshot,Error> load_project(ref Engine e,ref projects::Project metadata,ref u8[] root){
+fn Result<sources::Snapshot,Error> load_project(ref Engine e,ref projects::Project metadata,ref u8[] root,usize deadline){
     let usize limit=project_source_limit(e);
-    return project_snapshot(project_loader::load(metadata,root,limit));
+    return project_snapshot(project_loader::load_until(metadata,root,limit,deadline));
 }
 fn Result<sources::Snapshot,Error> project_snapshot(Result<sources::Snapshot,project_loader::Error> collected){
     return switch(collected){
         case .ok(v):{.ok(v)}
-        case .err(reason):{.err(error(switch(reason){case .Limit:{8}case .Acquisition:{1}case .Binding:{4}case .Compile:{4}}))}
+        case .err(reason):{.err(switch(reason){
+            case .Limit:{error(8)}case .Acquisition:{error(1)}case .Binding:{error(4)}
+            case .Compile:{error(4)}case .Deadline:{compile_timeout()}
+        })}
     };
 }
 fn Error project_error(modules::Error reason){
@@ -240,7 +243,7 @@ pub fn Result<usize,Error> compile_project(ref mut Engine e,ref projects::Projec
     let usize ready=unsafe{compile_preflight(e,0,null)}?;
     if(projects::requirements(metadata)!=0){return .err(error(5));}
     let usize deadline=compile_deadline(e,0)?;
-    let sources::Snapshot snapshot=load_project(e,metadata,root)?;
+    let sources::Snapshot snapshot=load_project(e,metadata,root,deadline)?;
     if(deadline_reached(deadline)){return .err(compile_timeout());}
     let entries::Entry selected=switch(project_binding::select(metadata,snapshot)){
         case .ok(v):{v}
@@ -256,7 +259,7 @@ pub fn Result<usize,Error> compile_project_input(ref mut Engine e,ref projects::
     return retain_input_entry(e,selected,image_limit,0,deadline);
 }
 fn Result<input_entries::InputEntry,Error> project_input_entry(ref Engine e,ref projects::Project metadata,ref u8[] root,usize deadline){
-    let sources::Snapshot snapshot=load_project(e,metadata,root)?;
+    let sources::Snapshot snapshot=load_project(e,metadata,root,deadline)?;
     return select_project_input(metadata,snapshot,deadline);
 }
 fn Result<input_entries::InputEntry,Error> select_project_input(ref projects::Project metadata,
@@ -370,7 +373,7 @@ pub fn Result<usize,Error> compile_anchored_project_host(ref mut Engine e,ref pr
     let policy_limits::CompileLimits limits=host_compile_limits(e)?;
     if(projects::count(project)>limits.modules){return .err(error(8));}
     let usize deadline=deadline_after(limits.deadline_ms)?;
-    let sources::Snapshot snapshot=project_snapshot(project_loader::load_from(project,root,project_source_limit(e)))?;
+    let sources::Snapshot snapshot=project_snapshot(project_loader::load_from_until(project,root,project_source_limit(e),deadline))?;
     if(deadline_reached(deadline)){return .err(compile_timeout());}
     let modules::Index index=switch(project_binding::index_host(project,snapshot,limits.tokens)){
         case .ok(v):{v}case .err(e):{return .err(host_binding_error(e));}
@@ -583,7 +586,7 @@ pub fn Result<usize,Error> compile_anchored_project_output(ref mut Engine e,ref 
     ref mut anchored::Root root,ref run_config::RunConfig run,usize image_limit){
     let u32 mode=project_output_mode(e,metadata,run)?;
     let usize deadline=compile_deadline(e,0)?;
-    let sources::Snapshot snapshot=project_snapshot(project_loader::load_from(metadata,root,project_source_limit(e)))?;
+    let sources::Snapshot snapshot=project_snapshot(project_loader::load_from_until(metadata,root,project_source_limit(e),deadline))?;
     let input_entries::InputEntry selected=select_project_input(metadata,snapshot,deadline)?;
     return retain_input_entry(e,selected,image_limit,mode,deadline);
 }

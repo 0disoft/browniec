@@ -458,7 +458,8 @@ def main():
                 obj = folder / (name + '.obj')
                 # MSVC can spend several minutes optimizing the generated Engine unit.
                 timeout = 900 if profile == 'release' and name == 'transport' else 180
-                run([cl, '/nologo', '/TC', '/std:c11', '/MT', '/W3',
+                clock = ['/DBC_AS_TEST_ENGINE_CLOCK'] if name == 'anchored' else []
+                run([cl, '/nologo', '/TC', '/std:c11', '/MT', '/W3', *clock,
                      '/Od' if profile == 'development' else '/O2', '/c', source,
                      '/Fo' + str(obj)], env=env, timeout=timeout)
                 objects.append(obj)

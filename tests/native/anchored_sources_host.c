@@ -97,7 +97,9 @@ static void limits_and_cleanup(void){
     REQUIRE(bc_as_collect(anchor,p,1,4097,&s,&error)==BC_AS_LIMIT&&s==NULL);
     REQUIRE(bc_as_collect(anchor,p,0,4096,&s,&error)==BC_AS_ARGUMENT&&s==NULL);
     for(i=0;i<16;++i){wchar_t leaf[32];static char names[16][32];REQUIRE(swprintf_s(leaf,32,L"f%zu.fy",i)>0);join(path,root_path,leaf);file(path,data,1);REQUIRE(sprintf_s(names[i],32,"f%zu.fy",i)>0);p[i]=member(names[i]);}
-    REQUIRE(bc_as_collect(anchor,p,16,16,&s,&error)==BC_AS_OK&&bc_as_count(s)==16);bc_as_snapshot_close(s);s=NULL;
+    REQUIRE(bc_as_collect_until(anchor,p,16,16,1,&s,&error)==BC_AS_DEADLINE&&s==NULL);
+    REQUIRE(bc_as_collect_until(anchor,p,16,16,UINT64_MAX,&s,&error)==BC_AS_OK&&bc_as_count(s)==16);
+    bc_as_snapshot_close(s);s=NULL;
     REQUIRE(GetProcessHandleCount(GetCurrentProcess(),&before));
     for(i=0;i<64;++i){denied("missing.fy",BC_AS_OS);denied("sub/missing.fy",BC_AS_OS);denied("large.fy",BC_AS_LIMIT);}
     bc_as_test_fail_alloc_after(0);status=bc_as_collect(anchor,p,16,16,&s,&error);REQUIRE(status==BC_AS_ALLOCATION&&s==NULL);bc_as_test_fail_alloc_after(-1);

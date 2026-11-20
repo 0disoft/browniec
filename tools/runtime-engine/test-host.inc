@@ -64,6 +64,9 @@ uint32_t bc_runtime_engine_test_output_fault(uint32_t stage){
  output_fault=0;return 1;
 }
 
+uintptr_t bc_runtime_engine_test_handle_count(void){
+ DWORD count=0;assert(GetProcessHandleCount(GetCurrentProcess(),&count));return count;
+}
 static int host_clock_fixed;
 static ULONGLONG host_clock_ticks;
 static uintptr_t host_clock_reads_until_advance;

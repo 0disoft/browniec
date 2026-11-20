@@ -1,5 +1,5 @@
-- Latest runtime checkpoint (2026-11-21): [Teardown containment](docs/engineering/runtime-engine.md#teardown-containment)
-  checks Program pins, retained owners and ledger balances before reclaiming storage.
+- Latest runtime checkpoint (2026-11-21): [Project collection deadlines](docs/engineering/runtime-engine-compile-memory.md#configured-compile-deadlines)
+  stop Windows source collection between member acquisitions and before snapshot publication.
   Windows development and /O2 Engine checks passed with zero live SDK allocations.
 
 # Brownie C agent guidance

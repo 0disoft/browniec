@@ -81,9 +81,12 @@ uint32_t bc_asl_member(void *owner,const uint8_t *name,size_t length){
     p->paths[p->count].data=p->names[p->count];p->paths[p->count].length=length;++p->count;return BC_AS_OK;
 }
 uint32_t bc_asl_collect(void *owner,size_t source_bytes){
+    return bc_asl_collect_until(owner,source_bytes,0);
+}
+uint32_t bc_asl_collect_until(void *owner,size_t source_bytes,size_t deadline){
     loader *p=(loader*)owner;bc_as_status s;
     if(!p||p->attempted){return BC_AS_ARGUMENT;}p->attempted=1;
-    s=bc_as_collect(p->root,p->paths,p->count,source_bytes,&p->snapshot,NULL);
+    s=bc_as_collect_until(p->root,p->paths,p->count,source_bytes,deadline,&p->snapshot,NULL);
     bc_as_root_close(p->root);p->root=NULL;return (uint32_t)s;
 }
 size_t bc_asl_copy(void *owner,size_t index,uint32_t part,uint8_t *out,size_t capacity){
