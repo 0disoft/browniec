@@ -19,13 +19,22 @@ void bc_runtime_engine_test_rewrite_project(void){
 
 static int host_clock_fixed;
 static ULONGLONG host_clock_ticks;
+static uintptr_t host_clock_reads_until_advance;
+static ULONGLONG host_clock_next_ticks;
 static void bc_test_interrupt_time(PULONGLONG now){
- if(host_clock_fixed){*now=host_clock_ticks;return;}
+ if(host_clock_fixed){
+  if(host_clock_reads_until_advance&&!--host_clock_reads_until_advance)host_clock_ticks=host_clock_next_ticks;
+  *now=host_clock_ticks;return;
+ }
  QueryInterruptTimePrecise(now);
 }
 void bc_runtime_engine_test_set_clock(uintptr_t ticks){
  assert(!host_clock_fixed||ticks>=host_clock_ticks);
- host_clock_ticks=ticks;host_clock_fixed=1;
+ host_clock_ticks=ticks;host_clock_fixed=1;host_clock_reads_until_advance=0;
+}
+void bc_runtime_engine_test_clock_advance(uintptr_t read,uintptr_t ticks){
+ assert(host_clock_fixed&&read&&ticks>=host_clock_ticks);
+ host_clock_reads_until_advance=read;host_clock_next_ticks=ticks;
 }
 void bc_runtime_engine_test_use_os_clock(void){host_clock_fixed=0;}
 void bc_runtime_engine_test_wait_for_clock(uintptr_t start,uintptr_t elapsed){
@@ -68,10 +77,10 @@ static DWORD WINAPI wrong_thread(void *raw){
  assert(bc_runtime_engine_call(raw,8,0,0)==10);
  assert(bc_runtime_engine_call(raw,9,0,0)==10);
  assert(bc_runtime_engine_call(raw,10,0,1)==10);
- assert(bc_runtime_engine_compile(raw,(void *)(uintptr_t)1,0)==10);
- assert(bc_runtime_engine_compile_input(raw,(void *)(uintptr_t)1,0)==10);
+ assert(bc_runtime_engine_compile(raw,(void *)(uintptr_t)1,0,0)==10);
+ assert(bc_runtime_engine_compile_input(raw,(void *)(uintptr_t)1,0,0)==10);
  assert(bc_runtime_engine_instance_input(raw,0,(void *)(uintptr_t)1,0)==10);
- assert(bc_runtime_engine_compile_output(raw,(void *)(uintptr_t)1,0,0)==10);
+ assert(bc_runtime_engine_compile_output(raw,(void *)(uintptr_t)1,0,0,0)==10);
  assert(bc_runtime_engine_instance_output(raw,0,(void *)(uintptr_t)1,0,0,0,0)==10);
  assert(bc_runtime_engine_take_output(raw,0,(void *)(uintptr_t)1)==10);
  assert(bc_runtime_engine_execute_input(raw,0,(const void *)(uintptr_t)1)==10);return 0;
@@ -87,10 +96,10 @@ void bc_runtime_engine_test_guards(void *raw){
  assert(bc_runtime_engine_call(raw,8,0,0)==3);
  assert(bc_runtime_engine_call(raw,9,0,0)==3);
  assert(bc_runtime_engine_call(raw,10,0,1)==3);
- assert(bc_runtime_engine_compile(raw,(void *)(uintptr_t)1,0)==3);
- assert(bc_runtime_engine_compile_input(raw,(void *)(uintptr_t)1,0)==3);
+ assert(bc_runtime_engine_compile(raw,(void *)(uintptr_t)1,0,0)==3);
+ assert(bc_runtime_engine_compile_input(raw,(void *)(uintptr_t)1,0,0)==3);
  assert(bc_runtime_engine_instance_input(raw,0,(void *)(uintptr_t)1,0)==3);
- assert(bc_runtime_engine_compile_output(raw,(void *)(uintptr_t)1,0,0)==3);
+ assert(bc_runtime_engine_compile_output(raw,(void *)(uintptr_t)1,0,0,0)==3);
  assert(bc_runtime_engine_instance_output(raw,0,(void *)(uintptr_t)1,0,0,0,0)==3);
  assert(bc_runtime_engine_take_output(raw,0,(void *)(uintptr_t)1)==3);
  assert(bc_runtime_engine_execute_input(raw,0,(const void *)(uintptr_t)1)==3);

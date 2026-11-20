@@ -28,13 +28,13 @@ static uint32_t finish(bc_engine *e,bc_engine_ticket ticket,uint32_t result){
 static void reset_closed(bc_engine *e,uint32_t operation,uint32_t status){
  if(!status && operation==4){e->f_1=B6(e->f_1);e->f_2=B6(e->f_2);e->f_3=B7(e->f_3);e->f_4=B12(e->f_4);e->f_5=B12(e->f_5);e->f_6=B17(e->f_6);e->f_7=B17(e->f_7);e->f_8=B37(e->f_8);}
 }
-uint32_t bc_runtime_engine_compile(void *raw,void *incoming,uintptr_t limit){
+uint32_t bc_runtime_engine_compile(void *raw,void *incoming,uintptr_t limit,uintptr_t deadline){
  bc_engine *e=raw;bc_engine_ticket ticket;uint32_t s=admission(e,&ticket);if(s)return s;
- s=B4(&e->f_0,&e->f_1,(bc_engine_input *)incoming,limit);return finish(e,ticket,s);
+ s=B4(&e->f_0,&e->f_1,(bc_engine_input *)incoming,limit,deadline);return finish(e,ticket,s);
 }
-uint32_t bc_runtime_engine_compile_input(void *raw,void *incoming,uintptr_t limit){
+uint32_t bc_runtime_engine_compile_input(void *raw,void *incoming,uintptr_t limit,uintptr_t deadline){
  bc_engine *e=raw;bc_engine_ticket ticket;uint32_t s=admission(e,&ticket);if(s)return s;
- s=B9(&e->f_0,&e->f_1,(bc_engine_input_entry *)incoming,limit);return finish(e,ticket,s);
+ s=B9(&e->f_0,&e->f_1,(bc_engine_input_entry *)incoming,limit,deadline);return finish(e,ticket,s);
 }
 uint32_t bc_runtime_engine_execute_input(void *raw,uintptr_t instance,const void *input){
  bc_engine *e=raw;bc_engine_ticket ticket;uint32_t s=admission(e,&ticket);if(s)return s;
@@ -44,9 +44,9 @@ uint32_t bc_runtime_engine_instance_input(void *raw,uintptr_t program,void *inco
  bc_engine *e=raw;bc_engine_ticket ticket;uint32_t s=admission(e,&ticket);if(s)return s;
  s=B11(&e->f_0,&e->f_1,&e->f_3,&e->f_4,(bc_engine_snapshots *)incoming,program,budget);return finish(e,ticket,s);
 }
-uint32_t bc_runtime_engine_compile_output(void *raw,void *incoming,uintptr_t limit,uint32_t mode){
+uint32_t bc_runtime_engine_compile_output(void *raw,void *incoming,uintptr_t limit,uint32_t mode,uintptr_t deadline){
  bc_engine *e=raw;bc_engine_ticket ticket;uint32_t s=admission(e,&ticket);if(s)return s;
- s=mode>3?1:mode?B14(&e->f_0,&e->f_1,(bc_engine_input_entry *)incoming,limit,mode):B13(&e->f_0,&e->f_1,(bc_engine_input *)incoming,limit);
+ s=mode>3?1:mode?B14(&e->f_0,&e->f_1,(bc_engine_input_entry *)incoming,limit,mode,deadline):B13(&e->f_0,&e->f_1,(bc_engine_input *)incoming,limit,deadline);
  return finish(e,ticket,s);
 }
 uint32_t bc_runtime_engine_instance_output(void *raw,uintptr_t program,void *input,uintptr_t budget,uintptr_t limit,uint32_t allowed,uintptr_t deadline){
@@ -80,9 +80,9 @@ uint32_t bc_runtime_engine_call(void *raw,uint32_t operation,uintptr_t id,uintpt
  return finish(e,ticket,s);
 }
 
-uint32_t bc_runtime_engine_retain_host(void *raw,void *incoming){
+uint32_t bc_runtime_engine_retain_host(void *raw,void *incoming,uintptr_t deadline){
  bc_engine *e=raw;bc_engine_ticket ticket;uint32_t s=admission(e,&ticket);if(s)return s;
- s=B38(&e->f_0,&e->f_1,incoming,sizeof(bc_host_program),sizeof(bc_host_ir));return finish(e,ticket,s);
+ s=B38(&e->f_0,&e->f_1,incoming,sizeof(bc_host_program),sizeof(bc_host_ir),deadline);return finish(e,ticket,s);
 }
 
 uint32_t bc_runtime_engine_prepare_host(void *raw,uintptr_t program,const void *run){

@@ -28,6 +28,7 @@ unsafe extern C fn void bc_runtime_engine_test_fail(i64 count);
 unsafe extern C fn usize bc_runtime_engine_test_project_path(ptr mut u8 out,usize capacity);
 unsafe extern C fn usize bc_runtime_engine_monotonic_ticks();
 unsafe extern C fn void bc_runtime_engine_test_set_clock(usize ticks);
+unsafe extern C fn void bc_runtime_engine_test_clock_advance(usize read,usize ticks);
 unsafe extern C fn void bc_runtime_engine_test_use_os_clock();
 unsafe extern C fn void bc_runtime_engine_test_wait_for_clock(usize start,usize elapsed);
 struct Heap { usize blocks; usize bytes; }
@@ -481,7 +482,14 @@ fn Result<usize,u8> project_output(){
     rejected_id(engine::compile_project_output(ref mut e,ref missing,root,ref omitted,65536),5);
     counts(ref mut e,0,0,0);
     same_heap(ref idle);
+    unsafe{bc_runtime_engine_test_set_clock(100)};
+    // The fourth read is the publication gate, after collection and compilation.
+    unsafe{bc_runtime_engine_test_clock_advance(4,20000100)};
+    rejected_compile_deadline(engine::compile_project_output(ref mut e,ref manifest,root,ref granted,65536));
+    unsafe{bc_runtime_engine_test_use_os_clock()};
+    counts(ref mut e,0,0,0);same_heap(ref idle);
     let usize q=id(engine::compile_project_output(ref mut e,ref quiet_manifest,root,ref granted,65536));
+    assert(q==1);
     rejected_id(engine::prepare_granted_instance(ref mut e,q,ref omitted,captured(b"")?),5);
     let usize quiet_run=id(engine::prepare_granted_instance(ref mut e,q,ref granted,captured(b"")?));
     let engine::Event quiet_event=finish(ref mut e,quiet_run,2);
@@ -509,6 +517,43 @@ fn Result<usize,u8> project_output(){
     same_heap(ref idle);
     close(ref mut e);
     return .ok(0);
+}
+fn void rejected_compile_deadline(Result<usize,engine::Error> r){
+    switch(r){
+        case .ok(_):{assert(false);}
+        case .err(failure):{assert(failure.status==4 && failure.diagnostic.code.kind==errors::deadline_kind() &&
+            failure.diagnostic.code.location==errors::absent_location() && failure.diagnostic.at.source==sources::no_source().source);}
+    };
+}
+fn Result<usize,u8> compile_deadline(ref mut engine::Engine e,ref configs::RunConfig run){
+    let ref u8[] ordinary=b"module app;pub fn i32 chosen(){return 42;}";
+    let ref u8[] input=b"module app;pub fn i32 chosen(ref u8[] data){return 42;}";
+    let Heap idle=heap();
+    var usize mode=0;
+    while(mode<4){
+        unsafe{bc_runtime_engine_test_set_clock(100+mode*20000000)};
+        unsafe{bc_runtime_engine_test_clock_advance(3,100+(mode+1)*20000000)};
+        let Result<usize,engine::Error> result=if(mode==0){engine::compile(e,selected(ordinary)?,65536)}
+            else if(mode==1){engine::compile_input(e,selected_input(input)?,65536)}
+            else if(mode==2){engine::compile_output(e,selected(ordinary)?,65536)}
+            else{engine::compile_granted_output(e,indexed(input)?,run,65536)};
+        rejected_compile_deadline(result);
+        counts(e,0,0,0);same_heap(ref idle);
+        assert(retained(e).program_bytes==0);
+        mode+=1;
+    }
+    unsafe{bc_runtime_engine_test_clock_advance(3,100+5*20000000-1)};
+    let usize p=id(engine::compile_granted_output(e,indexed(input)?,run,65536));
+    assert(p==1);
+    unsafe{bc_runtime_engine_test_use_os_clock()};
+    release(e,p);counts(e,0,0,0);same_heap(ref idle);return .ok(0);
+}
+fn Result<usize,u8> configured_compile_deadline(){
+    let policy::Policy ceiling=output_policy(true)?;
+    let configs::RunConfig granted=run_config(ref ceiling,0)?;
+    var engine::Engine e=configured_engine(ceiling)?;
+    let usize checked=compile_deadline(ref mut e,ref granted)?;
+    close(ref mut e);return .ok(0);
 }
 fn void deadline_result(ref mut engine::Engine e,usize i,engine::Event done,usize remaining){
     assert(done.kind==2 && done.value==0 && done.remaining==remaining && done.fuel_known);
@@ -575,5 +620,6 @@ pub fn void run(){
     assert(empty_output_and_running_drop().is_ok);same_heap(ref before);
     assert(configured_output().is_ok);same_heap(ref before);
     assert(project_output().is_ok);same_heap(ref before);
+    assert(configured_compile_deadline().is_ok);same_heap(ref before);
     assert(configured_deadline().is_ok);same_heap(ref before);
 }

@@ -90,6 +90,25 @@ using an old numerical generated type ID can otherwise select an unrelated
 struct after metadata changes. Current inline Engine is 736 bytes; control heap
 is 7,872 bytes for one slot and 62,976 at all-64 counts.
 
+## Configured compile deadlines
+
+The private Engine takes the duration from its owned Policy and samples
+Windows interrupt time. The same absolute deadline crosses project collection,
+entry selection and executable compilation. Retained host compilation carries
+it across lowering, verification and retention. Expiry at a checked boundary
+returns a deadline diagnostic with no source location. The publication check
+precedes adding the Program to the Engine or advancing its ID.
+
+Compilation still runs synchronously between checks. The deadline prevents a
+late Program from becoming visible and leaves preemptible compilation,
+in-flight cancellation and cleanup latency as separate obligations.
+
+Windows development and /O2 verify rejection at the exact publication deadline
+on all four module profiles and after anchored project collection. Publication
+one tick before the deadline succeeds. Rejections retain no Program or SDK
+allocation and leave the next Program ID available. Local receipt:
+`build/runtime-engine/20261120T113808949152Z/receipt.json`.
+
 ## Executed verification and remaining work
 
 [Windows evidence](../evidence/runtime-engine-compile-memory-windows-20261107.json)
@@ -112,6 +131,6 @@ limit; exact/one-less denial, pins, rollback and physical cleanup remain checked
 
 Per-Instance frames/input/owners/loans/descriptors/output, simultaneous Instance
 peaks, pending host state, native stacks and the remaining combined Engine quota
-are open. Bounded steps, deadlines, cancellation/poison and public delivery remain
+are open. Bounded compilation, cancellation/poison and public delivery remain
 in [the accepted inventory](../product/04-remaining-work.md). Public gates, VM
 capacities, opcode prices and Fuel defaults/ceiling are unchanged.
