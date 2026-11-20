@@ -206,7 +206,7 @@
   },
   {
     "command": "run",
-    "arguments": "--project FILE --policy FILE --run FILE [--input FILE|--stdin]",
+    "arguments": "--project FILE --policy FILE --run FILE [--input FILE|--stdin] [--output FILE]",
     "formats": [
       {
         "option": "--json",

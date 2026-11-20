@@ -22,6 +22,7 @@ pub fn ref str kind(u8 code) {
     if (code == 7) { return "zero_divisor"; }
     if (code == 8) { return "fuel"; }
     if (code == 9) { return "input_io"; }
+    if (code == errors::output_io_kind()) { return "output_io"; }
     if (code == 10) { return "usage"; }
     if (code == 12) { return "frame_limit"; }
     if (code == 13) { return "array_limit"; }
@@ -41,7 +42,7 @@ pub fn i32 exit_code(u8 kind) {
     if (kind == 5) { return 6; }
     if ((kind >= 6 && kind <= 8) || (kind >= 12 && kind <= 15) || kind == 20 || kind == input_limit_kind()) { return 5; }
     if (kind == errors::deadline_kind() || kind == errors::memory_limit_kind() || kind == errors::cancelled_kind()) { return 5; }
-    if (kind == 9) { return 7; }
+    if (kind == 9 || kind == errors::output_io_kind()) { return 7; }
     if (kind == 10) { return 2; }
     return 4;
 }

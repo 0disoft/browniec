@@ -2,6 +2,7 @@ module cli_configured_project;
 
 import anchored_source_loader as anchored;
 import cli_project_input as binary;
+import cli_local_file as files;
 import cli_run_configuration as configuration;
 import errors as errors;
 import project_manifest as manifest;
@@ -15,7 +16,7 @@ import source_error as diagnostics;
 import source_snapshot as sources;
 import static_image as images;
 
-pub struct Selection { usize policy_file; usize run_file; }
+pub struct Selection { usize policy_file; usize run_file; usize output_file; }
 unsafe extern C fn u32 bc_cli_enable_cancel();
 unsafe extern C fn u32 bc_cli_cancel_requested();
 
@@ -42,6 +43,9 @@ pub fn i32 execute(render::Format format,bool execute_guest,Selection selected,b
         }
         return render::selected_outcome(format,false,false,0,errors::absent(0,0),8);
     }
+    if(selected.output_file!=0 && !runs::grants(ref run,b"brownie.output.emit")){
+        return failure(format,true,errors::absent(19,0),8);
+    }
     let limits::RunLimits bounds=runs::run_limits(ref run);
     let usize limit=if(bounds.input_bytes<bounds.memory_bytes){bounds.input_bytes}else{bounds.memory_bytes};
     let input::Snapshot payload=switch(binary::read_with_limit(selection,limit)){
@@ -52,11 +56,11 @@ pub fn i32 execute(render::Format format,bool execute_guest,Selection selected,b
         case .ok(v):{v}
         case .err(e):{return project_failure(format,true,project,root,engine_error(e,false,8),e.diagnostic.at,8);}
     };
-    return complete(format,ref mut owner,program,instance,project,root);
+    return complete(format,ref mut owner,program,instance,selected.output_file,project,root);
 }
 
-@effects(console)
-fn i32 complete(render::Format format,ref mut engine::Engine owner,usize program,usize instance,
+@effects(console,filesystem)
+fn i32 complete(render::Format format,ref mut engine::Engine owner,usize program,usize instance,usize output_file,
     ref manifest::Project project,ref anchored::Root root){
     var i64 value=0;
     while(true){
@@ -86,7 +90,12 @@ fn i32 complete(render::Format format,ref mut engine::Engine owner,usize program
         case .ok(v):{v}case .err(e):{return failure(format,true,engine_error(e,false,8),8);}
     };
     if(!dispose(owner,program,instance)){return failure(format,true,errors::absent(5,0),8);}
-    if(engine::output_available(ref output)){
+    if(output_file!=0){
+        let ref u8[] payload=if(engine::output_available(ref output)){engine::output_view(ref output)}else{b""};
+        if(!files::write_output(output_file,payload)){
+            return failure(format,true,errors::absent(errors::output_io_kind(),0),8);
+        }
+    }else if(engine::output_available(ref output)){
         return render::published_output(format,value,engine::output_view(ref output));
     }
     return render::selected_outcome(format,true,false,value,errors::absent(0,0),8);

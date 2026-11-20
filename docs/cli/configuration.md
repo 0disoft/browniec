@@ -214,8 +214,14 @@ Instance and executes no guest code. `--fuel`, `--input` and `--stdin` are run-o
 
 The only configured guest capability in this command is `brownie.output.emit`.
 A project that calls it must declare it, the run must grant it, and the policy
-must allow it. A successful emit is published as `output_b64`. The guest return
-value remains a separate field in the same JSON object.
+must allow it. By default a successful emit is published as `output_b64`.
+With `--output FILE`, a configured run with the emit grant creates a new disk
+file and writes the exact sealed bytes there, including an empty result. The
+JSON result still goes to stdout with `return_i32` and omits `output_b64`.
+Use an explicit local path. An existing file is left intact. The command opens
+the sink only after successful execution and sealing. A sink failure reports
+`output_io` and exits 7. A file created before a write failure can contain a
+partial result. The command makes one write attempt.
 
 During configured execution on a Windows console, Ctrl+C or Ctrl+Break requests
 cancellation. The Engine samples the request between steps and preserves any

@@ -22,20 +22,42 @@ uint32_t bc_cli_cancel_requested(void){
 
 /* Resolve only an explicitly selected host file. Project member containment
    remains the separate anchored-source contract. */
-void *bc_cli_read_input(const uint8_t *path,size_t length,size_t limit,uint32_t *status){
-    wchar_t raw[BC_AS_ROOT_CHARS+1],absolute[BC_AS_ROOT_CHARS+1];
-    bc_rir_snapshot *snapshot=NULL;
+static DWORD cli_disk_path(const uint8_t *path,size_t length,wchar_t *absolute){
+    wchar_t raw[BC_AS_ROOT_CHARS+1];
     int units=decode_path(path,length,raw,BC_AS_ROOT_CHARS);
-    *status=BC_RIR_ARGUMENT;
-    if(!units||raw[0]=='\\'||raw[0]=='/'){return NULL;}
-    if(units>=2&&raw[1]==':'&&(units<3||(raw[2]!='\\'&&raw[2]!='/'))){return NULL;}
-    for(int i=0;i<units;++i){if(raw[i]==':'&&i!=1){return NULL;}}
-    if(raw[units-1]==' '||raw[units-1]=='.'||raw[units-1]=='\\'||raw[units-1]=='/'){return NULL;}
+    if(!units||raw[0]=='\\'||raw[0]=='/'){return 0;}
+    if(units>=2&&raw[1]==':'&&(units<3||(raw[2]!='\\'&&raw[2]!='/'))){return 0;}
+    for(int i=0;i<units;++i){if(raw[i]==':'&&i!=1){return 0;}}
+    if(raw[units-1]==' '||raw[units-1]=='.'||raw[units-1]=='\\'||raw[units-1]=='/'){return 0;}
     raw[units]=0;
     DWORD resolved=GetFullPathNameW(raw,BC_AS_ROOT_CHARS+1,absolute,NULL);
-    if(!resolved||resolved>BC_AS_ROOT_CHARS){return NULL;}
+    return resolved<=BC_AS_ROOT_CHARS?resolved:0;
+}
+
+void *bc_cli_read_input(const uint8_t *path,size_t length,size_t limit,uint32_t *status){
+    wchar_t absolute[BC_AS_ROOT_CHARS+1];
+    bc_rir_snapshot *snapshot=NULL;
+    DWORD resolved=cli_disk_path(path,length,absolute);
+    *status=BC_RIR_ARGUMENT;
+    if(!resolved){return NULL;}
     *status=(uint32_t)bc_rir_path(absolute,resolved,limit,&snapshot,NULL);
     return snapshot;
+}
+
+/* The caller supplies only sealed output, at most 1 MiB. CREATE_NEW makes
+   collision handling atomic; never retry or delete after a partial write. */
+uint32_t bc_cli_write_output(const uint8_t *path,size_t length,const uint8_t *data,size_t count){
+    wchar_t extended[4+BC_AS_ROOT_CHARS+1]={L'\\',L'\\',L'?',L'\\'};
+    wchar_t *absolute=extended+4;
+    DWORD resolved=cli_disk_path(path,length,absolute);
+    if(resolved<4||absolute[1]!=L':'||absolute[2]!=L'\\'||count>1048576){return 0;}
+    HANDLE file=CreateFileW(extended,GENERIC_WRITE,0,NULL,CREATE_NEW,FILE_ATTRIBUTE_NORMAL,NULL);
+    if(file==INVALID_HANDLE_VALUE){return 0;}
+    DWORD written=0;
+    BOOL ok=GetFileType(file)==FILE_TYPE_DISK &&
+        (!count||(WriteFile(file,data,(DWORD)count,&written,NULL)&&written==count));
+    BOOL closed=CloseHandle(file);
+    return ok&&closed;
 }
 
 void *bc_cli_read_stdin(size_t limit,uint32_t *status){

@@ -386,6 +386,26 @@ def check_configured_output(exe, folder):
     assert check_json(exe, [*args, '--stdin'], 0, value=77, version=2, profile=profile,
                       input_bytes=b'A\x00', output_b64='QQA=') is None
     assert check_json(exe, args, 0, value=77, version=2, profile=profile, output_b64='') is None
+    empty_sink = project / 'empty.bin'
+    assert check_json(exe, [*args, '--output', empty_sink], 0, value=77, profile=profile) is None
+    assert empty_sink.read_bytes() == b''
+    sink = project / '출력.bin'
+    file_run = [*args, '--input', payload, '--output', sink]
+    assert check_json(exe, file_run, 0, value=77, version=2, profile=profile) is None
+    assert sink.read_bytes() == b'A\x00'
+    output_error = {'kind': 'output_io', 'location': {'kind': 'none'}}
+    assert check_json(exe, [*args, '--output', sink], 7, version=2, profile=profile) == output_error
+    assert sink.read_bytes() == b'A\x00'
+    assert check_json(exe, [*args, '--output', folder / 'missing' / 'result.bin'],
+                      7, version=2, profile=profile) == output_error
+    assert check_json(exe, [*args, '--output', f'{sink}:extra'],
+                      7, version=2, profile=profile) == output_error
+    assert sink.read_bytes() == b'A\x00'
+    unpublished = project / 'unpublished.bin'
+    file_run = [*args, '--input', payload, '--output', unpublished]
+    for invalid in (['check', *args[1:]], ['run', *args[1:3]]):
+        invoke(exe, [*invalid, '--json-v2', '--output', unpublished], 2)
+    assert not unpublished.exists()
     for invalid in (args, [*args[:-2], '--json'], [*args, '--fuel', 1, '--json'],
                     [*args, '--run', run_file, '--json']):
         invoke(exe, invalid, 2)
@@ -405,12 +425,16 @@ def check_configured_output(exe, folder):
     assert check_json(exe, check, 0, version=2, profile=profile) is None
     error = check_json(exe, [*args, '--input', payload], 5, version=2, profile=profile)
     assert error['kind'] == 'zero_divisor' and error['location']['path'] == 'app.brc', error
+    assert check_json(exe, file_run, 5, version=2, profile=profile) == error
+    assert not unpublished.exists()
 
     source.write_bytes(b'module app;pub fn i32 transform(ref u8[] data){'
                        b'output::emit(ref data);while(true){}return 77;}')
     update(limits=config['limits'] | {'deadline_ms': 1})
     error = check_json(exe, [*args, '--input', payload], 5, version=2, profile=profile)
     assert error == {'kind': 'deadline', 'location': {'kind': 'none'}}, error
+    assert check_json(exe, file_run, 5, version=2, profile=profile) == error
+    assert not unpublished.exists()
 
     policy_file = project / 'policy.json'
     original_policy = policy_file.read_bytes()
@@ -418,7 +442,8 @@ def check_configured_output(exe, folder):
     extended = config['limits'] | {'fuel': 16000000, 'deadline_ms': 10000}
     policy_file.write_text(json.dumps(ceiling | {'run': extended}), encoding='utf-8')
     update(limits=extended)
-    check_console_cancellation(exe, args, project)
+    check_console_cancellation(exe, [*args, '--output', unpublished], project)
+    assert not unpublished.exists()
     policy_file.write_bytes(original_policy)
     update()
 
@@ -440,7 +465,13 @@ def check_configured_output(exe, folder):
     error = check_json(exe, [*args, '--input', folder / 'missing.bin'], 4, version=2)
     assert error == {'kind': 'unavailable', 'location': {'kind': 'none'}}, error
     assert check_json(exe, check, 4, version=2) == error
-    print('PASS: configured compile-only checks, grants, binary publication, quotas, diagnostics and deadline')
+    source.write_bytes(b'module app;pub fn i32 transform(ref u8[] data){return 77;}')
+    assert check_json(exe, args, 0, value=77, version=2, profile=profile, output_b64='') is None
+    assert check_json(exe, file_run, 4, version=2, profile=profile) == {
+        'kind': 'output_denied', 'location': {'kind': 'none'},
+    }
+    assert not unpublished.exists()
+    print('PASS: configured checks, grants, Base64 and file sinks, quotas, diagnostics and deadline')
 
 
 def check_project_location(exe, manifest, command, code, kind, index, name, source, offset, end):

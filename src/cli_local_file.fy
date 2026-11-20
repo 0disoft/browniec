@@ -9,6 +9,17 @@ unsafe extern C fn ptr mut void bc_cli_read_stdin(usize limit,ptr mut u32 status
 unsafe extern C fn usize bc_cli_input_length(ptr mut void owner);
 unsafe extern C fn ptr u8 bc_cli_input_bytes(ptr mut void owner);
 unsafe extern C fn void bc_cli_input_close(ptr mut void owner);
+unsafe extern C fn u32 bc_cli_write_output(ptr u8 path,usize length,ptr u8 data,usize count);
+
+@effects(filesystem)
+pub fn bool write_output(usize argument,ref u8[] data){
+    var u8[3072] path=[0;3072];
+    let usize length=switch(process::arg(argument,ref mut path)){
+        case .ok(v):{v}case .err(_):{return false;}
+    };
+    let ref u8[] name=ref path[..length];
+    return unsafe{bc_cli_write_output(name as ptr u8,length,data as ptr u8,data.len)}!=0;
+}
 
 pub resource File { ptr mut void owner; cleanup { unsafe {bc_cli_input_close(this.owner)}; } }
 
