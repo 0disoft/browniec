@@ -1,8 +1,8 @@
-- Latest delivery checkpoint (2026-11-20): [Windows project diagnostics](docs/cli/output-and-exit-codes.md#project-check-and-run)
-  preserve canonical member paths, original byte spans and line/byte-column
-  coordinates in text and JSON v2. Development and /O2 pass the public CLI
-  contract. The internal /O2 test preserves instruction indices 0 and 1 and
-  the JSON v1 offset. Locked builds use 380 sources / 4310 MIR functions.
+- Latest delivery checkpoint (2026-11-20): [Windows project binary input](docs/engineering/project-source-loader.md#public-binary-input)
+  connects explicit disk files to the verified shared-byte entry. The public
+  CLI contract passes Windows development and /O2 for binary input through
+  1 MiB, over-limit rejection, Fuel, and compile/requirement denials before
+  input acquisition. Locked builds use 381 sources / 4316 MIR functions.
 
 # Brownie C agent guidance
 

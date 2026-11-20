@@ -8,6 +8,8 @@ import std::bytes as bytes;
 import std::io as io;
 import std::text as text;
 
+pub fn u8 input_limit_kind(){return 31;}
+
 pub fn ref str kind(u8 code) {
     if (code == 1) { return "lexical"; }
     if (code == 2) { return "syntax"; }
@@ -24,12 +26,13 @@ pub fn ref str kind(u8 code) {
     if (code == 14) { return "bounds"; }
     if (code == 15) { return "allocation"; }
     if (code == 18) { return "must_use_result"; }
+    if (code == input_limit_kind()) { return "input_limit"; }
     return "unavailable";
 }
 pub fn i32 exit_code(u8 kind) {
     if ((kind >= 1 && kind <= 4) || kind == 18) { return 3; }
     if (kind == 5) { return 6; }
-    if ((kind >= 6 && kind <= 8) || (kind >= 12 && kind <= 15)) { return 5; }
+    if ((kind >= 6 && kind <= 8) || (kind >= 12 && kind <= 15) || kind == input_limit_kind()) { return 5; }
     if (kind == 9) { return 7; }
     if (kind == 10) { return 2; }
     return 4;

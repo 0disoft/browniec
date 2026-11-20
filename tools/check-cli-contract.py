@@ -17,7 +17,7 @@ def invoke(exe, args, exit_code, *, cwd=None):
     return ran
 
 
-def check_json(exe, args, exit_code, *, version=1, value=None):
+def check_json(exe, args, exit_code, *, version=1, value=None, profile='brownie.m1-scalar/1'):
     flag = '--json' if version == 1 else '--json-v2'
     ran = invoke(exe, [*args, flag], exit_code)
     assert not ran.stderr and len(ran.stdout.splitlines()) == 1, ran
@@ -26,7 +26,7 @@ def check_json(exe, args, exit_code, *, version=1, value=None):
     error = result.pop('error')
     expected = {
         'schema': f'browniec.result/v{version}',
-        'profile': 'brownie.m1-scalar/1',
+        'profile': profile,
         'command': args[0],
         'status': 'error' if exit_code else 'checked' if args[0] == 'check' else 'completed',
         'return_i32': value,
@@ -185,6 +185,66 @@ def check_project(exe, folder):
     print('PASS: project entry, rooted files, checks without execution, Fuel, and denial paths')
 
 
+def check_project_input(exe, folder):
+    assert b'--input FILE' in invoke(exe, ['--help'], 0).stdout
+    manifest = folder / 'binary-project.json'
+    source = folder / 'binary.brc'
+    payload = folder / '입력.bin'
+    config = {
+        'schema': 'brownie.project/0.3', 'name': 'binary',
+        'entry': {'module': 'app', 'function': 'chosen'},
+        'sources': [{'module': 'app', 'path': source.name}], 'requires': [],
+    }
+    manifest.write_text(json.dumps(config), encoding='utf-8')
+    source.write_bytes(
+        b'module app;pub fn i32 chosen(ref u8[] data){if(data.len==0){return 0;}'
+        b'if(data[0]!=0){return -1;}let i32 last=data[data.len-1] as i32;'
+        b'if(data.len==3){return last+1;}if(data.len==4097){return last+2;}'
+        b'if(data.len==1048576){return last+3;}return -1;}'
+    )
+    args = ['run', '--project', manifest, '--input', payload, '--fuel', 16000000]
+    profile = 'brownie.m2-reference/1'
+    for length, value in ((0, 0), (3, 256), (4097, 257), (1048576, 258)):
+        binary = bytes(length-1) + bytes([255]) if length else b''
+        payload.write_bytes(binary)
+        for version in (1, 2):
+            assert check_json(exe, args, 0, value=value, version=version, profile=profile) is None
+    ran = invoke(exe, ['run', '--project', manifest.name, '--input', payload.name, '--fuel', 16000000],
+                 0, cwd=folder)
+    assert not ran.stdout and ran.stderr == b'return_i32=258\n', ran
+
+    payload.write_bytes(bytes(1048577))
+    assert check_json(exe, args, 5, version=2, profile=profile) == {
+        'kind': 'input_limit', 'location': {'kind': 'none'},
+    }
+    payload.unlink()
+    assert check_json(exe, args, 7, version=2, profile=profile) == {
+        'kind': 'input_io', 'location': {'kind': 'none'},
+    }
+    payload.write_bytes(b'\x00\xff')
+    assert check_json(exe, [*args[:-1], 0], 5, version=2, profile=profile)['kind'] == 'fuel'
+    for rejected in (
+        ['check', '--project', manifest, '--input', payload],
+        ['run', source, '--input', payload],
+        ['run', '--project', manifest, '--input'],
+        [*args, '--input', payload],
+    ):
+        invoke(exe, rejected, 2)
+    invoke(exe, ['run', '--project', manifest], 3)
+
+    payload.unlink()
+    source.write_bytes(b'module app;pub fn i32 chosen(ref u8[] data){return true;}')
+    bad = check_json(exe, args, 3, version=2)
+    assert bad['kind'] == 'type' and bad['location']['path'] == source.name, bad
+    config['requires'] = ['host.demo.read']
+    manifest.write_text(json.dumps(config), encoding='utf-8')
+    source.unlink()
+    assert check_json(exe, args, 4, version=2) == {
+        'kind': 'unavailable', 'location': {'kind': 'none'},
+    }
+    print('PASS: project binary input, 0/3/4097/1048576-byte boundaries, Fuel and denials')
+
+
 def inspect_json(exe, source, *options, exit_code=0, schema='browniec.limits/v1'):
     ran = invoke(exe, ['inspect', source, *options], exit_code)
     assert not ran.stderr and len(ran.stdout.splitlines()) == 1 and ran.stdout.endswith(b'\n'), ran
@@ -249,6 +309,7 @@ def main():
 
         check_output_table(exe, identity)
         check_project(exe, Path(temp))
+        check_project_input(exe, Path(temp))
         check_inspection_limits(exe, Path(temp))
         check_diagnostic(exe, source_zero, 3, 'lexical',
                          {'kind': 'source_byte', 'offset': 0}, b'browniec: lexical at byte 0')

@@ -21,6 +21,16 @@ printing. The first diagnostic is bounded to one path (up to 240 bytes)
 and a fixed set of numeric fields, with one position scan over at most 4,096
 source bytes. See [project output](../cli/output-and-exit-codes.md#project-check-and-run).
 
+### Public binary input
+
+`run --project FILE --input FILE` selects the manifest's shared-byte entry.
+It binds and compiles against the same anchored sources before acquiring the
+input. The Windows reader accepts at most 1 MiB from the explicit disk path
+and transfers an exact copy to the existing immutable Fairy Snapshot. The
+compiled Program borrows that snapshot through the ordinary input VM, which
+enforces the existing input Fuel schedule. This path grants no guest file
+operations. See the [CLI configuration](../cli/configuration.md#project-selection).
+
 ## Private source loader
 
 `select(ref Project, root UTF-8 bytes, source_bytes)` borrows explicitly admitted

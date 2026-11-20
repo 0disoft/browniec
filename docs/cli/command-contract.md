@@ -12,7 +12,7 @@
 | browniec run SOURCE | Compile, verify, and run one selected source | Implemented for the bounded M1/M2 feature subsets |
 | browniec eval-i32 SOURCE N | Evaluate a scalar rule with one signed decimal i32 input | Implemented for `module main` sources with `fn i32 evaluate(i32 ...)` |
 | browniec check --project FILE | Check an explicit source map and its named entry | Windows, zero-argument i32 entry, empty requirements |
-| browniec run --project FILE | Run the checked named entry | Windows, zero-argument i32 entry, empty requirements |
+| browniec run --project FILE [--input FILE] | Run the checked named entry | Windows, zero-argument i32 entry or one shared-byte parameter with explicit input, empty requirements |
 | browniec check SOURCE --isolated | Use a restricted compile-only worker | Designed; unavailable |
 | browniec run SOURCE --isolated | Use the restricted worker and parent broker | Designed; unavailable |
 | browniec inspect SOURCE --ir | Compile/verify and emit bounded private IR diagnostics without executing | Implemented for the same public M1/M2 admission as check; optional --json |
@@ -38,7 +38,7 @@ The [retained reference profile](../engineering/public-program.md) admits immuta
 byte/text literals, explicit text::bytes/equality and shared byte parameters/results.
 General mutable/non-byte/Buffer/input results and host-visible reference tickets
 remain unavailable.
-Guest Buffer/input/output, policy/catalog/grant CLI loaders, worker,
+Guest Buffer/output, policy/catalog/grant CLI loaders, worker,
 cancellation and deadlines remain unavailable. `--isolated` returns an availability
 denial, with no unrestricted fallback. Ordinary check/run use zero-argument i32
 `main`. The separate eval-i32 command selects a single-i32 `evaluate` entry.

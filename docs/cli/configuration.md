@@ -1,6 +1,6 @@
 # CLI Configuration
 
-- Status: SOURCE/JSON/Fuel flags and explicit Windows project manifests implemented. Policy and input loaders are pending.
+- Status: SOURCE/JSON/Fuel flags, explicit Windows project manifests and binary project input implemented. Policy loaders are pending.
 - Default host capability: deny
 
 ## Explicit inputs
@@ -49,8 +49,8 @@ SOURCE selects one UTF-8 code file up to 4,096 bytes with a zero-argument
 i32 `main`. Run-only `--fuel` defaults to 256 and accepts 0..16000000.
 Policy, catalog, effective-config and run-grant loaders remain pending.
 
-`--isolated` reports unavailable without fallback. Guest input/output, deadline and
-cancellation settings have no implementation. See the
+`--isolated` reports unavailable without fallback. Guest output, deadline and
+cancellation settings remain pending. See the
 [complete remaining-work audit](../product/04-remaining-work.md) before treating any
 target configuration field or reference-package schema as accepted by this CLI.
 
@@ -71,7 +71,7 @@ source map, entry and declared requirements.
 ## Project selection
 
 On Windows use `browniec check --project FILE [--json|--json-v2]` or
-`browniec run --project FILE [--fuel N] [--json|--json-v2]`. The manifest
+`browniec run --project FILE [--input FILE] [--fuel N] [--json|--json-v2]`. The manifest
 may be selected by an absolute drive path or a path relative to the working
 directory. Its parent is the project root. The manifest and declared sources
 are read under the same local NTFS anchor. The manifest limit is 65,536
@@ -81,6 +81,15 @@ bytes in total. The manifest selects a public, zero-argument i32 entry.
 The current run profile permits an empty requirements array. Any declared
 requirement is rejected before project members are opened. Project execution
 uses the ordinary Fuel option and result formats.
+
+Select `--input FILE` once on project run to use a public
+`i32(ref u8[])` entry. The input file is independently selected by local
+absolute drive path or a path relative to the process working directory.
+The compiler checks the project before the file opens. The reader accepts
+0 through 1,048,576 raw bytes, including NUL and invalid UTF-8, from a disk file.
+The VM borrows an immutable snapshot. Use `--fuel 16000000` when trying input
+programs because input metadata alone needs 32,768 Fuel. Without `--input`,
+the project entry takes zero arguments.
 
 `inspect SOURCE --ir [--json]` uses the same explicit source selection and public
 admission as check. `--ir` is required once; Fuel and guest-input options do not

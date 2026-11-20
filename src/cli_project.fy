@@ -6,6 +6,11 @@ import project_manifest as manifest;
 import project_sources as binding;
 import module_entry as entries;
 import module_program as programs;
+import module_index as modules;
+import module_input_program as input_programs;
+import module_input_entry as input_entries;
+import cli_project_input as binary;
+import runtime_input as input;
 import source_snapshot as sources;
 import static_image as images;
 import errors as errors;
@@ -26,7 +31,7 @@ pub fn bool selected(){
     return size==9 && bytes::equal(ref flag,b"--project");
 }
 @effects(console,filesystem)
-pub fn i32 execute(render::Format format,bool run,usize fuel){
+pub fn i32 execute(render::Format format,bool run,usize fuel,usize input_argument){
     var u8[3072] path=[0;3072];
     let usize size=switch(process::arg(3,ref mut path)){
         case .ok(v):{v}case .err(_):{return failure(format,run,errors::absent(10,0),0);}
@@ -34,6 +39,7 @@ pub fn i32 execute(render::Format format,bool run,usize fuel){
     let ProjectInput project=switch(acquire(ref path[..size])){
         case .ok(v):{v}case .err(e):{return failure(format,run,e,0);}
     };
+    if(input_argument!=0){return execute_with_input(ref project,format,fuel,input_argument);}
     return execute_project(ref project,format,run,fuel);
 }
 fn Result<ProjectInput,errors::Error> acquire(ref u8[] path){
@@ -70,13 +76,7 @@ fn i32 execute_project(ref ProjectInput project,render::Format format,bool run,u
     // Keep the original bytes available if binding or compilation consumes its input.
     let entries::Entry entry=switch(binding::select(ref project.metadata,sources::duplicate(snapshot))){
         case .ok(v):{v}
-        case .err(e):{
-            let u8 kind=switch(e.kind){
-                case .Lexical:{1}case .Syntax:{2}case .Limit:{4}case .Allocation:{15}
-                case .Duplicate:{3}case .Missing:{3}case .Private:{3}case .Reserved:{3}case .Bounds:{3}case .Kind:{3}
-            };
-            return render::project_failure(format,run,errors::make(kind,e.at.start),snapshot,e.at,0);
-        }
+        case .err(e):{return binding_failure(format,run,snapshot,e);}
     };
     return execute_entry(entry,snapshot,format,run,fuel);
 }
@@ -94,5 +94,31 @@ fn i32 execute_entry(entries::Entry entry,ref sources::Snapshot snapshot,render:
     return switch(programs::run(ref program,fuel)){
         case .ok(v):{render::selected_outcome(format,true,false,v,errors::absent(0,0),profile)}
         case .err(e):{render::project_failure(format,true,e.code,programs::snapshot(ref program),e.at,profile)}
+    };
+}
+
+@effects(console)
+fn i32 binding_failure(render::Format format,bool run,ref sources::Snapshot snapshot,modules::Error e){
+    let u8 kind=switch(e.kind){
+        case .Lexical:{1}case .Syntax:{2}case .Limit:{4}case .Allocation:{15}
+        case .Duplicate:{3}case .Missing:{3}case .Private:{3}case .Reserved:{3}case .Bounds:{3}case .Kind:{3}
+    };
+    return render::project_failure(format,run,errors::make(kind,e.at.start),snapshot,e.at,0);
+}
+@effects(console,filesystem)
+fn i32 execute_with_input(ref ProjectInput project,render::Format format,usize fuel,usize input_argument){
+    let ref sources::Snapshot snapshot=ref project.snapshot;
+    let input_entries::InputEntry entry=switch(binding::select_input(ref project.metadata,sources::duplicate(snapshot))){
+        case .ok(v):{v}case .err(e):{return binding_failure(format,true,snapshot,e);}
+    };
+    let input_programs::Program program=switch(input_programs::compile(entry,images::metadata_charge()+images::byte_limit())){
+        case .ok(v):{v}case .err(e):{return render::project_failure(format,true,e.code,snapshot,e.at,0);}
+    };
+    let input::Snapshot payload=switch(binary::read(input_argument)){
+        case .ok(v):{v}case .err(e):{return failure(format,true,e,8);}
+    };
+    return switch(input_programs::run(ref program,ref payload,fuel)){
+        case .ok(v):{render::selected_outcome(format,true,false,v.value,errors::absent(0,0),8)}
+        case .err(e):{render::project_failure(format,true,e.code,input_programs::snapshot(ref program),e.at,8)}
     };
 }

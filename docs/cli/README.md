@@ -11,6 +11,8 @@ browniec --version [--json]
 browniec --help
 browniec check SOURCE [--json]
 browniec run SOURCE [--fuel N] [--json]
+browniec check --project FILE [--json|--json-v2]
+browniec run --project FILE [--input FILE] [--fuel N] [--json|--json-v2]
 ```
 
 SOURCE is one local UTF-8 code file, at most 4096 bytes. The entry is zero-argument
@@ -43,8 +45,9 @@ runtime/delivery gaps.
 
 ## Planned surfaces
 
-Project, policy, catalog, run grants, guest `--input`, output capabilities, inspect
-and worker commands are not implemented. `--isolated` reports unavailable and
+Windows project execution and explicit binary project input are described in
+[project selection](configuration.md#project-selection). Source-mode guest input,
+policy/catalog/run grants, guest output and worker commands remain pending. `--isolated` reports unavailable and
 never launches an unrestricted fallback. Cancellation, deadlines, Engine/Instance
 stepping, host suspension and the public DLL are also unavailable.
 

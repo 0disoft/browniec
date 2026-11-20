@@ -160,6 +160,11 @@ requirements are unavailable (4), and failure to open or read the manifest or
 its declared files is an input I/O error (7). Source compilation and runtime
 failures use their existing error classes.
 
+After successful compilation, project runs with `--input FILE` report
+`brownie.m2-reference/1`. Oversized input reports `input_limit` and exit 5.
+Input acquisition errors have no source location and use `input_io` and exit 7.
+Guest errors keep the ordinary source diagnostic and exit conventions.
+
 When a project source error has a validated span, text prints one line in the
 form `browniec: type at lib/helper.brc:2:31`. In JSON v2 the
 `source_byte` location includes the root-relative `path`, zero-based
