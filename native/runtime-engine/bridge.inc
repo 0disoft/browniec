@@ -38,7 +38,7 @@ uint32_t bc_runtime_engine_compile_input(void *raw,void *incoming,uintptr_t limi
 }
 uint32_t bc_runtime_engine_execute_input(void *raw,uintptr_t instance,const void *input){
  bc_engine *e=raw;bc_engine_ticket ticket;uint32_t s=admission(e,&ticket);if(s)return s;
- s=B10(&e->f_0,&e->f_1,&e->f_3,&e->f_4,instance,(const bc_engine_snapshot *)input);return finish(e,ticket,s);
+ s=B10(&e->f_0,&e->f_1,&e->f_3,&e->f_4,instance,(const bc_engine_snapshot *)input,&e->f_6);return finish(e,ticket,s);
 }
 uint32_t bc_runtime_engine_instance_input(void *raw,uintptr_t program,void *incoming,uintptr_t budget){
  bc_engine *e=raw;bc_engine_ticket ticket;uint32_t s=admission(e,&ticket);if(s)return s;

@@ -35,6 +35,30 @@ input pointer. It rejects an already-bound input Instance. Using the wrong
 execution API rejects status 1 before changing Ready or consuming guest Fuel.
 This convenience path is private; the accepted owning lifecycle is the API above.
 
+## Containment of input association faults
+
+An explicit Instance field records whether the Engine owns its Snapshot,
+including an empty Snapshot with zero charged bytes. Each synchronous input
+entry checks that its binding agrees with the retained association. Owning
+execution also checks the Snapshot capacity against the Instance charge.
+A lost association or charge mismatch quarantines the Engine before VM
+entry. A missing Program pin or inconsistent Program payload count has
+the same outcome.
+
+Passing a borrowed Snapshot to a valid owning Instance still returns status 1.
+Asking to execute a valid borrowed-input Instance without supplying its input
+also returns status 1. An invariant fault returns status 14, preserves existing
+terminal events and freezes Ready peers at their current Fuel. The retained
+input stays alive until Instance destruction.
+
+Development and /O2 tests injected a lost zero-byte Snapshot in each entry
+path and a capacity mismatch in owning execution. The three faults attempted
+zero SDK allocations and preserved the active allocation bytes. Earlier
+success remained observable, and teardown left zero live SDK allocations.
+The new flag fits in the existing Instance layout padding. The measured
+one-slot control backing remained 13,888 bytes. Local receipt:
+`build/runtime-engine/20261120T222100639544Z/receipt.json`.
+
 ## Terminal events and Fuel
 
 Events include `remaining` and `fuel_known`. Input completions carry the actual

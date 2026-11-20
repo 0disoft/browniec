@@ -51,6 +51,12 @@ uint32_t bc_runtime_engine_test_host_prepare_fault(uint32_t stage){
  if(host_prepare_fault!=stage)return 0;
  host_prepare_fault=0;return 1;
 }
+static uint32_t input_fault;
+void bc_runtime_engine_test_inject_input_fault(uint32_t stage){assert(!input_fault);input_fault=stage;}
+uint32_t bc_runtime_engine_test_input_fault(uint32_t stage){
+ if(input_fault!=stage)return 0;
+ input_fault=0;return 1;
+}
 static uint32_t output_fault;
 void bc_runtime_engine_test_inject_output_fault(uint32_t stage){assert(!output_fault);output_fault=stage;}
 uint32_t bc_runtime_engine_test_output_fault(uint32_t stage){

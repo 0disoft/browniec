@@ -16,6 +16,9 @@ unsafe extern C fn void bc_runtime_engine_test_closed_allocations();
 unsafe extern C fn usize bc_runtime_engine_test_input_open(u32 kind,usize length);
 unsafe extern C fn void bc_runtime_engine_test_input_close();
 unsafe extern C fn void bc_runtime_engine_test_input_measure();
+unsafe extern C fn void bc_runtime_engine_test_inject_input_fault(u32 stage);
+unsafe extern C fn usize probe_attempts();
+unsafe extern C fn usize probe_live_bytes();
 
 fn sources::Builder builder(){return switch(sources::builder(4096,4096)){
     case .ok(v):{v}case .err(_):{assert(false);builder()}
@@ -275,6 +278,37 @@ fn void exhausted_admission_preserves_input_event(){
     same_event(cancelled,event(engine::observe(ref mut e,ready)));assert(id(engine::destroy_instance(ref mut e,ready))==ready);
     counts(ref mut e,0,0,0);assert(id(engine::destroy(ref mut e))==0);
 }
+fn void input_fault_quarantines_engine(u32 stage){
+    var engine::Engine owner=create(1,3);
+    let ref u8[] source=b"module app;pub fn i32 chosen(ref u8[] data){if(data.len==0){return 0;}return data[0] as i32;}";
+    let usize p=id(engine::compile_input(ref mut owner,entry(source,b""),65536));
+    let usize prior=id(engine::create_input_instance(ref mut owner,p,captured(b""),16000000));
+    let engine::Event completed=event(engine::execute_once(ref mut owner,prior));
+    assert(completed.kind==1 && completed.value==0);
+    let usize peer=id(engine::create_instance(ref mut owner,p,123));
+    let usize target=id(engine::create_input_instance(ref mut owner,p,captured(if(stage==2){b"+"}else{b""}),16000000));
+    let inputs::Snapshot substitute=captured(b"*");
+    let engine::Event before=event(engine::observe(ref mut owner,target));
+    let usize attempts=unsafe{probe_attempts()};
+    let usize live=unsafe{probe_live_bytes()};
+    unsafe{bc_runtime_engine_test_inject_input_fault(stage)};
+    if(stage==3){rejected_event(engine::execute_input_once(ref mut owner,target,ref substitute),14);}
+    else{rejected_event(engine::execute_once(ref mut owner,target),14);}
+    assert(unsafe{probe_attempts()}==attempts && unsafe{probe_live_bytes()}==live);
+    counts(ref mut owner,1,3,3);
+    same_event(completed,event(engine::cancel_ready(ref mut owner,prior)));
+    let engine::Event terminal=event(engine::observe(ref mut owner,target));
+    assert(terminal.kind==2 && terminal.diagnostic.code.kind==errors::engine_poisoned_kind());
+    assert(terminal.remaining==before.remaining && terminal.fuel_known);
+    let engine::Event stopped=event(engine::observe(ref mut owner,peer));
+    assert(stopped.kind==2 && stopped.diagnostic.code.kind==errors::engine_poisoned_kind() && stopped.remaining==123);
+    rejected_event(engine::execute_input_once(ref mut owner,peer,ref substitute),14);
+    assert(id(engine::destroy_instance(ref mut owner,target))==target);
+    assert(id(engine::destroy_instance(ref mut owner,peer))==peer);
+    assert(id(engine::destroy_instance(ref mut owner,prior))==prior);
+    assert(id(engine::release_program(ref mut owner,p))==p);
+    assert(id(engine::destroy(ref mut owner))==0);
+}
 fn void owning_input_instances(){
     let ref u8[] source=b"module app;pub fn i32 chosen(ref u8[] data){if(data.len!=3){return -1;}let ref u8[] marker=b\"*\";return data[0] as i32+data[1] as i32+data[2] as i32+marker[0] as i32;}";
     var engine::Engine original=create(3,4);
@@ -374,5 +408,6 @@ pub fn void run(){
     binary_reuse();full_length_and_last_byte();wrong_api_preserves_ready();released_pinned_reuse();
     move_and_mixed_relocation();original_diagnostics();exact_and_one_less_fuel();
     exhausted_admission_preserves_input_event();owning_input_instances();
+    input_fault_quarantines_engine(1);input_fault_quarantines_engine(2);input_fault_quarantines_engine(3);
     actual_os_input_to_instance();
 }

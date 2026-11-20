@@ -126,12 +126,25 @@ def source_copy(path):
             text = text.replace(opening, opening + '\n    if(unsafe{bc_runtime_engine_test_output_fault(4)}!=0)'
                                 '{return .err(diagnostics::absent(errors::make(5,0)));}', 1)
             function = 'fn u32 prepare_host_inner('
-            host_count = 'vec::len<host_program::Program>(ref program.host);'
+            host_shape = '    if(program_variants(program)!=1){return contain_execution_fault(m,p,v,outputs);}'
             capacity = '    if(stride==0 || vec::len<Instance>(v)>=vec::capacity<Instance>(v) ||'
-            need(text.count(function) == text.count(host_count) == text.count(capacity) == 1, 'Host preparation fault anchors changed')
+            need(text.count(function) == text.count(host_shape) == text.count(capacity) == 1, 'Host preparation fault anchors changed')
             text = text.replace(function, 'unsafe extern C fn u32 bc_runtime_engine_test_host_prepare_fault(u32 stage);\n' + function, 1)
-            text = text.replace(host_count, 'if(unsafe{bc_runtime_engine_test_host_prepare_fault(1)}!=0){0}else{' + host_count[:-1] + '};', 1)
+            text = text.replace(host_shape, host_shape.replace('program_variants(program)',
+                                '(if(unsafe{bc_runtime_engine_test_host_prepare_fault(1)}!=0){let usize zero=0;zero}else{program_variants(program)})'), 1)
             text = text.replace(capacity, capacity.replace('if(stride', 'if(unsafe{bc_runtime_engine_test_host_prepare_fault(2)}!=0 || stride'), 1)
+            owned = 'let Result<usize,u32> bound_input=input_index(inputs,id);'
+            bytes_check = 'if(input_bytes::capacity(input)!=current.input_bytes)'
+            borrowed = 'let bool bound=input_index(inputs,id).is_ok;'
+            need(text.count(owned) == text.count(bytes_check) == text.count(borrowed) == 1,
+                 'Input execution fault anchors changed')
+            text = text.replace(function, 'unsafe extern C fn u32 bc_runtime_engine_test_input_fault(u32 stage);\n' + function, 1)
+            text = text.replace(owned, owned.replace('input_index(inputs,id)',
+                                'if(unsafe{bc_runtime_engine_test_input_fault(1)}!=0){.err(2)}else{input_index(inputs,id)}'), 1)
+            text = text.replace(bytes_check, bytes_check.replace('input_bytes::capacity(input)',
+                                '(if(unsafe{bc_runtime_engine_test_input_fault(2)}!=0){let usize zero=0;zero}else{input_bytes::capacity(input)})'), 1)
+            text = text.replace(borrowed, borrowed.replace('input_index(inputs,id).is_ok',
+                                'unsafe{bc_runtime_engine_test_input_fault(3)}==0 && input_index(inputs,id).is_ok'), 1)
         return path.name, text.encode('utf-8')
     if path == ROOT / 'src/retention_plan.fy':
         text=path.read_text(encoding='utf-8');anchor='    plan.admitted=true;'
