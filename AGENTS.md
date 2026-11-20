@@ -1,8 +1,8 @@
-- Latest runtime checkpoint (2026-11-20): [Host Result propagation](docs/engineering/host-exchange.md#host-result-propagation-in-guest-helpers)
-  carries typed success and u32 errors across private guest helper frames.
-  Windows development and /O2 verify scalar and Buffer success, early error
-  propagation and zero live SDK allocations. Root locked check passes
-  377 sources / 4285 MIR functions.
+- Latest delivery checkpoint (2026-11-20): [Windows project CLI](docs/engineering/project-source-loader.md#public-cli)
+  checks and runs explicit anchored manifests with an empty requirements list
+  and a public zero-argument i32 entry. Development and /O2 pass the CLI contract
+  and selected examples. The private Engine and anchored adapter pass both
+  profiles. Root locked check passes 380 sources / 4307 MIR functions.
 
 # Brownie C agent guidance
 

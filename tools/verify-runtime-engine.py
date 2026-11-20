@@ -33,8 +33,6 @@ def closure():
     files['dispatch_cursor_contracts'] = ROOT / 'tests/m2/slice_result_cursor.fy'
     files['dispatch_quantum_contracts'] = ROOT / 'tests/m2/module_dispatch_quantum.fy'
     files['runtime_input_adoption'] = ROOT / 'native/runtime-input-adoption/adoption.fy'
-    files['project_source_loader'] = ROOT / 'native/project-source-loader/loader.fy'
-    files['anchored_source_loader'] = ROOT / 'native/anchored-source-loader/loader.fy'
     seen, todo = {}, ['main']
     while todo:
         name = todo.pop()
@@ -49,9 +47,6 @@ def closure():
 
 
 def source_copy(path):
-    for module in ('project', 'anchored'):
-        if path == ROOT / f'native/{module}-source-loader/loader.fy':
-            return f'{module}_source_loader.fy', path.read_bytes()
     if path == ROOT / 'src/slice_result_call_ir.fy':
         source = path.read_text(encoding='utf-8')
         signatures = ['pub fn Result<usize,errors::Error> binding(ref ir::Program p,usize pc){',

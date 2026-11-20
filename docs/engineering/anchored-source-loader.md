@@ -1,9 +1,14 @@
-# Private anchored collector to Fairy Snapshot adapter
+# Windows anchored collector to Fairy Snapshot adapter
 
-`native/anchored-source-loader/loader.fy` is an isolated private Fairy module,
-copied into a focused build project by the verifier. It is deliberately outside
-root `src`; it adds no unresolved FFI to the public CLI. The frozen collector must
-already be present. No existing production file, collector file or lock changes.
+`src/anchored_source_loader.fy` is shared by the Windows CLI and private Engine
+admission. The Windows application build links the collector and bridge via
+`fairy.windows.json`. The focused verifier copies the adapter into its own project.
+
+`open_project` resolves the selected manifest to an absolute local drive path.
+It opens its parent directory and reads the exact manifest leaf through that
+anchor. `load_from` uses the same owner to collect the declared source paths.
+The owner closes on every return, including manifest parse and requirement
+denials before source collection.
 
 `load(root, names, ends, source_bytes, name_bytes)` accepts an explicit UTF-8 local
 root and packed exact member names with exclusive end offsets. It validates all
@@ -29,8 +34,8 @@ before writing and returns SIZE_MAX on failure. Native callers serialize access
 and provide valid buffers; these are private trusted-pointer APIs. Collection is
 synchronous; this is not a deadline/work-quantum contract. Returned bytes are an
 owned bounded copy, not a point-in-time filesystem snapshot, including against
-preexisting writable mappings. Project parsing/admission, Engine binding and CLI
-availability remain open.
+preexisting writable mappings. See [project source admission](project-source-loader.md)
+for the public CLI and private Engine gates.
 
 Run `python tools/verify-anchored-source-loader.py` on Windows with MSVC/SDK and
 the repository's exact pinned compiler/runtime Git objects. Generated projects,

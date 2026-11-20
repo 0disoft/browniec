@@ -11,8 +11,8 @@ from tempfile import TemporaryDirectory
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def invoke(exe, args, exit_code):
-    ran = subprocess.run([str(exe), *map(str, args)], capture_output=True, timeout=10)
+def invoke(exe, args, exit_code, *, cwd=None):
+    ran = subprocess.run([str(exe), *map(str, args)], cwd=cwd, capture_output=True, timeout=10)
     assert ran.returncode == exit_code, (args, exit_code, ran)
     return ran
 
@@ -28,7 +28,7 @@ def check_json(exe, args, exit_code, *, version=1, value=None):
         'schema': f'browniec.result/v{version}',
         'profile': 'brownie.m1-scalar/1',
         'command': args[0],
-        'status': 'error' if exit_code else 'completed',
+        'status': 'error' if exit_code else 'checked' if args[0] == 'check' else 'completed',
         'return_i32': value,
     }
     assert result == expected and type(result['return_i32']) is type(value), (args, result)
@@ -52,6 +52,7 @@ def check_output_table(exe, identity):
     subprocess.run([sys.executable, '-B', str(ROOT / 'tools/sync-cli-output.py'), '--check'],
                    check=True, timeout=10)
     answer = ROOT / 'examples/answer.brc'
+    project = ROOT / 'examples/projects/hello/project.json'
     sources = {'check': [answer], 'run': [answer], 'eval-i32': [identity, 41]}
     tokens = {'--version': b'Brownie C experimental:', 'check': b'checked',
               'run': b'return_i32=77', 'eval-i32': b'return_i32=41',
@@ -61,6 +62,8 @@ def check_output_table(exe, identity):
         command = row['command']
         if command == 'inspect':
             args = [answer, row['arguments'].split()[-1]]
+        elif row['arguments'].startswith('--project '):
+            args = ['--project', project]
         else:
             args = sources.get(command, [])
         for mode in row['formats']:
@@ -71,7 +74,8 @@ def check_output_table(exe, identity):
             assert written and not other, (row, mode, ran)
             schema = mode['schema']
             if schema is None:
-                assert written.startswith(tokens[command]), (row, mode, ran)
+                expected = b'return_i32=42' if command == 'run' and args[0] == '--project' else tokens[command]
+                assert written.startswith(expected), (row, mode, ran)
             else:
                 assert len(written.splitlines()) == 1 and written.endswith(b'\n'), ran
                 obj = json.loads(written)
@@ -79,6 +83,68 @@ def check_output_table(exe, identity):
                 if command != '--version':
                     assert obj['command'] == command, obj
     print('PASS: documented CLI channels and schemas match native output')
+
+
+def check_project(exe, folder):
+    help_text = invoke(exe, ['--help'], 0)
+    assert b'check --project FILE' in help_text.stdout and b'run --project FILE' in help_text.stdout
+    project = folder / '프로젝트'
+    project.mkdir()
+    manifest = project / 'rules.json'
+    main = project / 'app.brc'
+    helper = project / 'helper.brc'
+    config = {
+        'schema': 'brownie.project/0.3', 'name': 'fixture',
+        'entry': {'module': 'app', 'function': 'chosen'},
+        'sources': [{'module': 'app', 'path': main.name}, {'module': 'helper', 'path': helper.name}],
+        'requires': [],
+    }
+
+    def write():
+        manifest.write_text(json.dumps(config), encoding='utf-8')
+
+    args = ['run', '--project', manifest]
+    main.write_bytes(b'module app; import helper as h; pub fn i32 chosen(){return h::answer()+35;}')
+    helper.write_bytes(b'module helper; pub fn i32 answer(){return 42;}')
+    write()
+    assert not invoke(exe, [*args, '--json'], 0, cwd=folder).stderr
+    assert check_json(exe, args, 0, value=77) is None
+    assert check_json(exe, args, 0, version=2, value=77) is None
+    relative = invoke(exe, ['run', '--project', manifest.name], 0, cwd=project)
+    assert not relative.stdout and relative.stderr.strip() == b'return_i32=77', relative
+    assert check_json(exe, ['check', '--project', manifest], 0) is None
+    assert check_json(exe, [*args, '--fuel', '0'], 5)['kind'] == 'fuel'
+
+    main.write_bytes(b'module app; pub fn i32 chosen(){return 1/0;}')
+    assert check_json(exe, ['check', '--project', manifest], 0) is None
+    assert check_json(exe, args, 5)['kind'] == 'zero_divisor'
+
+    config['sources'][1]['path'] = 'absent.brc'
+    config['requires'] = ['host.demo.read']
+    write()
+    denied = check_json(exe, args, 4, version=2)
+    assert denied == {'kind': 'unavailable', 'location': {'kind': 'none'}}, denied
+    config['requires'] = []
+    write()
+    assert check_json(exe, args, 7)['kind'] == 'input_io'
+
+    config['sources'][1]['path'] = '../helper.brc'
+    write()
+    assert check_json(exe, args, 2)['kind'] == 'usage'
+    config['sources'][1]['path'] = helper.name
+    write()
+    alias = folder / 'outside.brc'
+    alias.hardlink_to(helper)
+    assert check_json(exe, args, 7)['kind'] == 'input_io'
+    alias.unlink()
+    alias.hardlink_to(manifest)
+    assert check_json(exe, args, 7)['kind'] == 'input_io'
+    alias.unlink()
+
+    manifest.write_bytes(b' ' * 65537)
+    assert check_json(exe, args, 2)['kind'] == 'usage'
+    assert not invoke(exe, ['run', '--project'], 2).stdout
+    print('PASS: project entry, rooted files, checks without execution, Fuel, and denial paths')
 
 
 def inspect_json(exe, source, *options, exit_code=0, schema='browniec.limits/v1'):
@@ -144,6 +210,7 @@ def main():
         identity.write_bytes(b'module main; fn i32 evaluate(i32 x) { return x; }\n')
 
         check_output_table(exe, identity)
+        check_project(exe, Path(temp))
         check_inspection_limits(exe, Path(temp))
         check_diagnostic(exe, source_zero, 3, 'lexical',
                          {'kind': 'source_byte', 'offset': 0}, b'browniec: lexical at byte 0')

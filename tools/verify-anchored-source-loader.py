@@ -11,7 +11,7 @@ import sys
 
 sys.dont_write_bytecode = True
 ROOT = Path(__file__).resolve().parent.parent
-NEW = ['native/anchored-source-loader/loader.fy', 'native/anchored-source-loader/bridge.c',
+NEW = ['src/anchored_source_loader.fy', 'native/anchored-source-loader/bridge.c',
        'native/anchored-source-loader/bridge.h', 'tools/anchored-source-loader/main.fy',
        'tools/anchored-source-loader/support.c', 'tools/verify-anchored-source-loader.py',
        'docs/engineering/anchored-source-loader.md']
@@ -69,13 +69,17 @@ def main():
         receipt['compiler'] = dict(path=str(compiler), sha256=sha(compiler.read_bytes()), version=run([compiler, '--version']).decode())
         project = out / 'project'
         for src, dst in [('src/source_snapshot.fy', 'src/source_snapshot.fy'),
-                         ('native/anchored-source-loader/loader.fy', 'src/anchored_source_loader.fy'),
+                         ('src/anchored_source_loader.fy', 'src/anchored_source_loader.fy'),
                          ('tools/anchored-source-loader/main.fy', 'src/main.fy'), ('fairy.toml', 'fairy.toml')]:
             write(project / dst, inputs[src])
         run([compiler, 'check'], cwd=project)
         lock = (project / 'fairy.lock').read_bytes()
         sdk = [p for p in json.loads(lock)['packages'] if p['role'] != 'root']
-        need(len(sdk) == 1 and sdk[0]['sourceDigest'] == tc['sdk']['sourceDigest'], 'SDK mismatch')
+        # This isolated source closure imports fewer SDK modules than the root CLI.
+        need(len(sdk) == 1 and sdk[0]['sdkIdentity'] == tc['sdk']['identity']
+             and sdk[0]['version'] == tc['sdk']['version'] and sdk[0]['runtimeAbi'] == tc['runtimeAbi']
+             and sdk[0]['sourceDigest'] == 'fysrc1-sha256-c531e88e52b684a34cf9688eda19e5cafcc5788e7a4bbf7e5121e86874a7246a',
+             'Isolated anchored-loader SDK mismatch')
         receipt['isolatedLockSha256'] = sha(lock)
         emitted = run([compiler, 'experimental', 'emit-workspace-c', '--target', 'x86_64-windows-msvc', '--locked'], cwd=project)
         write(out / 'generated.c', emitted)

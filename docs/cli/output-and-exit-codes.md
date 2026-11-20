@@ -152,6 +152,14 @@ Canonical entry/leave prices apply even to image-only source, so small literal
 programs need an explicit larger Fuel budget. See [the public retained contract](../engineering/public-program.md)
 for exact pricing and current native/standalone evidence.
 
+## Project check and run
+
+Windows project commands use the ordinary check/run results and exit classes.
+A malformed or oversized manifest is a configuration error (2). Nonempty
+requirements are unavailable (4), and failure to open or read the manifest or
+its declared files is an input I/O error (7). Source compilation and runtime
+failures use their existing error classes.
+
 ## IR inspection
 
 Inspection uses its own `browniec.ir/v1` schema with `command: "inspect"` and

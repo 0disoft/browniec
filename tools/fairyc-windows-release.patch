@@ -1,8 +1,7 @@
 diff --git a/internal/cdriver/native_msvc.go b/internal/cdriver/native_msvc.go
-index 729046ee91b5fe9fbc2cc75068fe3a952968933e..75f2489904e34fb976c24baa95e5dd05d5e9c071 100644
 --- a/internal/cdriver/native_msvc.go
 +++ b/internal/cdriver/native_msvc.go
-@@ -31,11 +31,21 @@ func resolveWindowsNative(name string) (result NativeToolchain, err error) {
+@@ -31,11 +31,26 @@ func resolveWindowsNative(name string) (result NativeToolchain, err error) {
 
  func (toolchain windowsNativeToolchain) Build(options NativeBuildOptions) (result NativeArtifact, err error) {
  	defer func() { err = driverError(ErrorBuild, "Build", err) }()
@@ -12,8 +11,8 @@ index 729046ee91b5fe9fbc2cc75068fe3a952968933e..75f2489904e34fb976c24baa95e5dd05
  	var artifact WindowsHostArtifact
 -	if options.Windows != nil {
 +	if options.Partitions != nil {
-+		if options.Windows != nil || options.UnitSource != "" {
-+			return NativeArtifact{}, fmt.Errorf("partitioned Windows console build has conflicting inputs")
++		if options.UnitSource != "" {
++			return NativeArtifact{}, fmt.Errorf("partitioned Windows build has a second generated C source")
 +		}
 +		units := make([]string, len(options.Partitions.Sources))
 +		for i, unit := range options.Partitions.Sources {
@@ -23,13 +22,17 @@ index 729046ee91b5fe9fbc2cc75068fe3a952968933e..75f2489904e34fb976c24baa95e5dd05
 +			}
 +			units[i] = "#include \"fy_project.h\"\n" + body
 +		}
-+		artifact, err = BuildWindowsMSVCTargetPartsImageWithStackReserve(toolchain.toolchain, options.Profile, options.Partitions.Header, "#include \"fy_project.h\"\n", units, options.RuntimeSource, commandTimeout, 0)
++		header, literals := options.Partitions.Header, "#include \"fy_project.h\"\n"
++		if options.Windows != nil {
++			artifact, err = BuildWindowsApplicationParts(toolchain.toolchain, options.Profile, header, literals, units, options.RuntimeSource, commandTimeout, options.Windows)
++		} else {
++			artifact, err = BuildWindowsMSVCTargetPartsImageWithStackReserve(toolchain.toolchain, options.Profile, header, literals, units, options.RuntimeSource, commandTimeout, 0)
++		}
 +	} else if options.Windows != nil {
  		artifact, err = BuildWindowsApplicationParts(toolchain.toolchain, options.Profile, "/* application */\n", "typedef int fy_application_literals_unit;\n", []string{options.UnitSource}, options.RuntimeSource, commandTimeout, options.Windows)
  	} else {
  		artifact, err = BuildWindowsMSVCTargetCached(toolchain.toolchain, options.Profile, options.UnitSource, options.RuntimeSource)
 diff --git a/internal/cli/native_compile.go b/internal/cli/native_compile.go
-index 29b6cad47f7c5fe3325cdac818b409153103fbcc..d14ae86b7d02ad11bc8e3c111553b36a78dfa686 100644
 --- a/internal/cli/native_compile.go
 +++ b/internal/cli/native_compile.go
 @@ -1,6 +1,7 @@
@@ -48,7 +51,7 @@ index 29b6cad47f7c5fe3325cdac818b409153103fbcc..d14ae86b7d02ad11bc8e3c111553b36a
 +	profile := cbackend.Profile{Target: options.targetID, Dialect: cbackend.DialectC11, PackageTrapSources: policy.packageTrapSources}
 +	var build cbackend.BuildUnit
 +	var err error
-+	if options.targetID == target.X8664WindowsMSVC && options.windows == nil && options.profile == cdriver.OptimizedProfile && !policy.runTrapReceipt {
++	if options.targetID == target.X8664WindowsMSVC && (options.windows != nil || options.profile == cdriver.OptimizedProfile && !policy.runTrapReceipt) {
 +		// MSVC applies the host deadline to each partition. Bound the optimizer input.
 +		build, err = cbackend.EmitBuildContext(context.Background(), program, entry, profile, sdkStorage, 512<<10)
 +	} else {

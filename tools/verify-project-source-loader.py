@@ -13,10 +13,10 @@ import sys
 
 sys.dont_write_bytecode = True
 ROOT = Path(__file__).resolve().parent.parent
-NEW = ['native/project-source-loader/loader.fy', 'tools/project-source-loader/main.fy',
+NEW = ['src/project_source_loader.fy', 'tools/project-source-loader/main.fy',
        'tools/project-source-loader/support.c', 'tools/project-source-loader/heap-observer.h',
        'tools/verify-project-source-loader.py', 'docs/engineering/project-source-loader.md']
-PREREQUISITES = ['native/anchored-source-loader/loader.fy', 'native/anchored-source-loader/bridge.c',
+PREREQUISITES = ['src/anchored_source_loader.fy', 'native/anchored-source-loader/bridge.c',
                  'native/anchored-source-loader/bridge.h', 'native/anchored_sources.c', 'native/anchored_sources.h',
                  'tools/verify-runtime-store-probe.py', 'toolchain.json', 'fairy.toml', 'fairy.lock']
 
@@ -122,17 +122,16 @@ def main():
         write(project / 'fairy.toml', local['fairy.toml'])
         for path, body in inputs.items():
             write(project / path, body)
-        for path, target in [('native/project-source-loader/loader.fy', 'project_source_loader.fy'),
-                             ('native/anchored-source-loader/loader.fy', 'anchored_source_loader.fy'),
+        for path, target in [('src/project_source_loader.fy', 'project_source_loader.fy'),
+                             ('src/anchored_source_loader.fy', 'anchored_source_loader.fy'),
                              ('tools/project-source-loader/main.fy', 'main.fy')]:
             write(project / 'src' / target, local[path])
         run([compiler, 'check'], cwd=project)
         lock = (project / 'fairy.lock').read_bytes()
         sdk = [p for p in json.loads(lock)['packages'] if p['role'] != 'root']
         need(len(sdk) == 1 and sdk[0]['sdkIdentity'] == tc['sdk']['identity'] and sdk[0]['version'] == tc['sdk']['version']
-             and sdk[0]['runtimeAbi'] == tc['runtimeAbi'] and sdk[0]['sourceDigest'] ==
-             'fysrc1-sha256-e256aabfe2a16a603f947d4ef5b55b5a4ae80915fdd855e18c6016910fbcc597',
-             'Pinned isolated bytes/text/vec SDK closure mismatch')
+             and sdk[0]['runtimeAbi'] == tc['runtimeAbi'] and sdk[0]['sourceDigest'] == tc['sdk']['sourceDigest'],
+             'Pinned Windows SDK mismatch')
         receipt['sdk'] = sdk
         receipt['isolatedLockSha256'] = sha(lock)
         emitted = run([compiler, 'experimental', 'emit-workspace-c', '--target', 'x86_64-windows-msvc', '--locked'], cwd=project)

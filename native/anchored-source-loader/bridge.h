@@ -5,6 +5,8 @@
 /* Private scalar/pointer ABI. Live caller buffers and serialized owner access
    are trusted native obligations. No Fairy resource/array/slice layout crosses. */
 void *bc_asl_open(const uint8_t *root,size_t length);
+void *bc_asl_open_project(const uint8_t *path,size_t length,uint8_t *out,
+                          size_t capacity,size_t *used,uint32_t *status);
 uint32_t bc_asl_member(void *owner,const uint8_t *name,size_t length);
 uint32_t bc_asl_collect(void *owner,size_t source_bytes);
 /* part 0=name, 1=source. SIZE_MAX on any error; destination unchanged on error. */

@@ -37,6 +37,10 @@ int bc_as_member_path(const uint8_t *path,size_t length);
 bc_as_status bc_as_root_open(const wchar_t *path,size_t length,bc_as_root **out,bc_as_error *error);
 void bc_as_root_close(bc_as_root *root);
 bc_as_status bc_as_root_identity(const bc_as_root *root,bc_as_identity *out);
+/* Read one explicit UTF-16 configuration leaf under the same root used for
+   source collection. Destination bytes are defined only on success. */
+bc_as_status bc_as_read_config(const bc_as_root *root,const wchar_t *name,size_t units,
+                              uint8_t *out,size_t capacity,size_t *length);
 /* All-or-error publication of bounded owned copied bytes; no point-in-time file
    consistency or global filesystem transaction is promised.
    1..16 explicit relative names; total source_bytes <=4096. All requested names

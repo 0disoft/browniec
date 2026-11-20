@@ -759,5 +759,5 @@ general references and public promotion remain next.
 Native project metadata now admits the complete explicit source map and entry
 under the [owning format](../cli/project-format.md). Exact snapshot/header binding
 and the [retained native project Program](project-program.md) now connect that
-map and its preserved requirements to complete executable admission. The [anchored collector](anchored-sources.md) and [owning Fairy adapter](anchored-source-loader.md) now acquire exact bounded source snapshots on Windows. Next connect project/Engine admission and public project CLI, then policy/grant integration.
+map and its preserved requirements to complete executable admission. The [anchored collector](anchored-sources.md) and [owning Fairy adapter](anchored-source-loader.md) now acquire exact bounded source snapshots on Windows. The private Engine and Windows project CLI now use those snapshots. Continue with project host-capability association and public policy/grant and input/output delivery.
 The full completion objective remains open.

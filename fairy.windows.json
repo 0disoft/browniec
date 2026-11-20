@@ -1,0 +1,6 @@
+{
+  "schema": "fairyc.windows-build/v1",
+  "subsystem": "console",
+  "libraries": ["ntdll.lib"],
+  "sources": ["native/windows-project-cli.c"]
+}

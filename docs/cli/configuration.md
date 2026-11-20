@@ -1,6 +1,6 @@
 # CLI Configuration
 
-- Status: SOURCE/JSON/Fuel flags and native project metadata implemented; project file/CLI, policy and input loaders pending (2026-11-05)
+- Status: SOURCE/JSON/Fuel flags and explicit Windows project manifests implemented. Policy and input loaders are pending.
 - Default host capability: deny
 
 ## Explicit inputs
@@ -45,10 +45,9 @@ Diagnostics may report selected source names, limits, and policy identities. The
 must not expose secret values or unrelated file contents. A future effective-config
 output is diagnostic only and does not authorize execution.
 
-The current scalar/array/record/scalar-slice CLI implements only SOURCE selection,
-`--json` and run-only `--fuel` (default 256, range 0..16000000). SOURCE is one UTF-8
-code file up to 4096 bytes, not guest input; zero-argument i32 `main` is fixed. This CLI has no project, policy, catalog, environment configuration, effective-config, or
-run-grant loader exists. Unsupported options are rejected rather than ignored.
+SOURCE selects one UTF-8 code file up to 4,096 bytes with a zero-argument
+i32 `main`. Run-only `--fuel` defaults to 256 and accepts 0..16000000.
+Policy, catalog, effective-config and run-grant loaders remain pending.
 
 `--isolated` reports unavailable without fallback. Guest input/output, deadline and
 cancellation settings have no implementation. See the
@@ -63,12 +62,25 @@ price formulas, full-arity CALL rationale and verification scope.
 The [retained public path](../engineering/public-program.md) admits byte/text and
 shared-byte result source with its canonical Fuel schedule. Native [source
 snapshots](../engineering/module-sources.md) now own explicit identities and original
-bytes, but no filesystem project/source-map loader or additional CLI flag is implemented.
+bytes.
 
 The [native project input primitives](../engineering/project-input.md) now supply
 bounded JSON tokens and canonical spelling checks. The [typed native project format](project-format.md) now admits a complete owning
-source map, entry and declared requirements. File collection, filesystem anchoring,
-a CLI flag and grants remain pending.
+source map, entry and declared requirements.
+
+## Project selection
+
+On Windows use `browniec check --project FILE [--json|--json-v2]` or
+`browniec run --project FILE [--fuel N] [--json|--json-v2]`. The manifest
+may be selected by an absolute drive path or a path relative to the working
+directory. Its parent is the project root. The manifest and declared sources
+are read under the same local NTFS anchor. The manifest limit is 65,536
+bytes. The current compiler reads at most 16 declared files and 4,096 source
+bytes in total. The manifest selects a public, zero-argument i32 entry.
+
+The current run profile permits an empty requirements array. Any declared
+requirement is rejected before project members are opened. Project execution
+uses the ordinary Fuel option and result formats.
 
 `inspect SOURCE --ir [--json]` uses the same explicit source selection and public
 admission as check. `--ir` is required once; Fuel and guest-input options do not

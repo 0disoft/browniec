@@ -18,6 +18,12 @@ La CLI pública procesa un archivo fuente a la vez. `check` verifica sin ejecuta
 | `browniec run SOURCE [--fuel N]` | — | `stderr` | — |
 | `browniec run SOURCE [--fuel N]` | `--json` | `stdout` | `browniec.result/v1` |
 | `browniec run SOURCE [--fuel N]` | `--json-v2` | `stdout` | `browniec.result/v2` |
+| `browniec check --project FILE` | — | `stderr` | — |
+| `browniec check --project FILE` | `--json` | `stdout` | `browniec.result/v1` |
+| `browniec check --project FILE` | `--json-v2` | `stdout` | `browniec.result/v2` |
+| `browniec run --project FILE [--fuel N]` | — | `stderr` | — |
+| `browniec run --project FILE [--fuel N]` | `--json` | `stdout` | `browniec.result/v1` |
+| `browniec run --project FILE [--fuel N]` | `--json-v2` | `stdout` | `browniec.result/v2` |
 | `browniec eval-i32 SOURCE N [--fuel N]` | — | `stderr` | — |
 | `browniec eval-i32 SOURCE N [--fuel N]` | `--json` | `stdout` | `browniec.result/v1` |
 | `browniec eval-i32 SOURCE N [--fuel N]` | `--json-v2` | `stdout` | `browniec.result/v2` |

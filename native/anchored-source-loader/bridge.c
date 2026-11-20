@@ -21,13 +21,15 @@ void bc_asl_close(void *owner){
 #endif
     HeapFree(GetProcessHeap(),0,p);
 }
-void *bc_asl_open(const uint8_t *root,size_t length){
-    wchar_t wide[BC_AS_ROOT_CHARS];int units;loader *p;
+static int decode_path(const uint8_t *path,size_t length,wchar_t *wide,int capacity){
     /* UTF-8 has at most three bytes per UTF-16 code unit. Check before decode,
        allocation, int conversion or dereference; embedded NUL is never accepted. */
-    if(!root||!length||length>BC_AS_ROOT_CHARS*3u||memchr(root,0,length)){return NULL;}
-    units=MultiByteToWideChar(CP_UTF8,MB_ERR_INVALID_CHARS,(LPCCH)root,(int)length,wide,BC_AS_ROOT_CHARS);
-    if(!units){return NULL;}
+    if(!path||!length||length>(size_t)capacity*3u||memchr(path,0,length)){return 0;}
+    return MultiByteToWideChar(CP_UTF8,MB_ERR_INVALID_CHARS,(LPCCH)path,(int)length,wide,capacity);
+}
+static loader *open_root(const wchar_t *wide,size_t units,bc_as_status *status){
+    loader *p;
+    *status=BC_AS_ALLOCATION;
 #ifdef BC_ASL_TEST
     if(fail_allocation){return NULL;}
 #endif
@@ -35,7 +37,40 @@ void *bc_asl_open(const uint8_t *root,size_t length){
 #ifdef BC_ASL_TEST
     ++live;
 #endif
-    if(bc_as_root_open(wide,(size_t)units,&p->root,NULL)!=BC_AS_OK){bc_asl_close(p);return NULL;}
+    *status=bc_as_root_open(wide,units,&p->root,NULL);
+    if(*status!=BC_AS_OK){bc_asl_close(p);return NULL;}
+    return p;
+}
+void *bc_asl_open(const uint8_t *root,size_t length){
+    wchar_t wide[BC_AS_ROOT_CHARS];
+    bc_as_status status;
+    int units=decode_path(root,length,wide,BC_AS_ROOT_CHARS);
+    return units?open_root(wide,(size_t)units,&status):NULL;
+}
+void *bc_asl_open_project(const uint8_t *path,size_t length,uint8_t *out,
+                          size_t capacity,size_t *used,uint32_t *status){
+    wchar_t raw[BC_AS_ROOT_CHARS+1],absolute[BC_AS_ROOT_CHARS+1],*leaf=NULL;
+    DWORD resolved;
+    bc_as_status result;
+    loader *p;
+    int units=decode_path(path,length,raw,BC_AS_ROOT_CHARS);
+    *status=BC_AS_NAME;
+    if(!units){return NULL;}
+    raw[units]=0;
+    /* Reject rooted-relative, UNC, device and drive-relative paths before
+       Win32 can reinterpret them. Ordinary relative paths use the process CWD. */
+    if(raw[0]=='\\'||raw[0]=='/'||(units>=2&&raw[1]==':'&&
+       (units<3||(raw[2]!='\\'&&raw[2]!='/')))){return NULL;}
+    if(raw[units-1]=='.'||raw[units-1]==' '||raw[units-1]=='\\'||raw[units-1]=='/'){return NULL;}
+    resolved=GetFullPathNameW(raw,BC_AS_ROOT_CHARS+1,absolute,&leaf);
+    if(!resolved||resolved>BC_AS_ROOT_CHARS||!leaf||leaf-absolute<3){return NULL;}
+    size_t root_units=(size_t)(leaf-absolute);
+    p=open_root(absolute,root_units==3?3:root_units-1,&result);
+    if(p){
+        result=bc_as_read_config(p->root,leaf,resolved-root_units,out,capacity,used);
+        if(result!=BC_AS_OK){bc_asl_close(p);p=NULL;}
+    }
+    *status=(uint32_t)result;
     return p;
 }
 uint32_t bc_asl_member(void *owner,const uint8_t *name,size_t length){

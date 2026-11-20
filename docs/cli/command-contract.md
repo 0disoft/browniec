@@ -11,7 +11,8 @@
 | browniec check SOURCE | Compile and verify without running guest code or host calls | Implemented for the bounded M1/M2 feature subsets |
 | browniec run SOURCE | Compile, verify, and run one selected source | Implemented for the bounded M1/M2 feature subsets |
 | browniec eval-i32 SOURCE N | Evaluate a scalar rule with one signed decimal i32 input | Implemented for `module main` sources with `fn i32 evaluate(i32 ...)` |
-| browniec run --project FILE | Use an explicit source map, policy, entry, grants, and run limits | Not implemented |
+| browniec check --project FILE | Check an explicit source map and its named entry | Windows, zero-argument i32 entry, empty requirements |
+| browniec run --project FILE | Run the checked named entry | Windows, zero-argument i32 entry, empty requirements |
 | browniec check SOURCE --isolated | Use a restricted compile-only worker | Designed; unavailable |
 | browniec run SOURCE --isolated | Use the restricted worker and parent broker | Designed; unavailable |
 | browniec inspect SOURCE --ir | Compile/verify and emit bounded private IR diagnostics without executing | Implemented for the same public M1/M2 admission as check; optional --json |
@@ -22,6 +23,7 @@ The implemented grammar is `browniec check SOURCE [--json|--json-v2]` and
 `browniec run SOURCE [--fuel N] [--json|--json-v2]`, `browniec inspect SOURCE --ir [--json]`,
 `browniec inspect SOURCE --limits --json`, plus `--version [--json]` and `--help`.
 Scalar evaluation uses `browniec eval-i32 SOURCE N [--fuel N] [--json|--json-v2]`.
+On Windows, check and run also accept `--project FILE` in place of `SOURCE`.
 Fuel defaults to 256 and accepts 0..16000000; duplicate/unknown options are errors.
 Run grants no guest host capability. SOURCE selects one local disk file with a
 4096-byte UTF-8 source limit. The public language supports six scalar types,
@@ -36,15 +38,13 @@ The [retained reference profile](../engineering/public-program.md) admits immuta
 byte/text literals, explicit text::bytes/equality and shared byte parameters/results.
 General mutable/non-byte/Buffer/input results and host-visible reference tickets
 remain unavailable.
-Guest Buffer/input/output, project/policy/catalog/grant CLI loaders, worker,
+Guest Buffer/input/output, policy/catalog/grant CLI loaders, worker,
 cancellation and deadlines remain unavailable. `--isolated` returns an availability
 denial, with no unrestricted fallback. Ordinary check/run use zero-argument i32
 `main`. The separate eval-i32 command selects a single-i32 `evaluate` entry.
 The source file is not a guest input snapshot.
 
 ## Execution rules
-
-Project and worker rules below are target contracts, not implemented loaders.
 
 check and run read bounded source snapshots and invoke the native Brownie frontend
 directly. Neither may launch Go, MSVC, a C compiler, or another compiler child.
@@ -53,8 +53,9 @@ Worker mode is not an interactive interpreter and rejects user-supplied handles.
 Project members are explicit, root-relative paths. Glob expansion, ambient
 policy/catalog lookup, absolute or parent member paths, alternate streams, device
 names, duplicate canonical paths, and
-case collisions are rejected by design. Untrusted file collection requires anchored
-root membership and reparse-point checks; until implemented, use a host snapshot.
+case collisions are rejected. On Windows, the explicitly selected manifest and
+its members are read through the same directory anchor. See the
+[project configuration contract](configuration.md#project-selection).
 
 ## Failure and compatibility
 

@@ -140,6 +140,36 @@ static int stable(const bc_as_info *a,const bc_as_info *b){
         a->basic.LastWriteTime.QuadPart==b->basic.LastWriteTime.QuadPart&&a->basic.ChangeTime.QuadPart==b->basic.ChangeTime.QuadPart&&
         a->tag.FileAttributes==b->tag.FileAttributes;
 }
+bc_as_status bc_as_read_config(const bc_as_root *r,const wchar_t *name,size_t units,
+                              uint8_t *out,size_t capacity,size_t *length){
+    HANDLE file=NULL;
+    bc_as_info before,after;
+    DWORD got;
+    uint8_t extra;
+    size_t used=0,size;
+    bc_as_status s;
+    if(!r||!name||units==0||units>255||!out||capacity>65536||!length){return BC_AS_ARGUMENT;}
+    if(!component(name,units)){return BC_AS_NAME;}
+    s=open_component(r->handles[r->count-1],name,units,0,&file,NULL,0);
+    if(s!=BC_AS_OK){return s;}
+    s=inspect(file,0,&before,NULL,0);if(s!=BC_AS_OK){goto done;}
+    if(identity(before.id).volume!=r->identity.volume){s=BC_AS_IDENTITY;goto done;}
+    if((uint64_t)before.standard.EndOfFile.QuadPart>capacity){s=BC_AS_LIMIT;goto done;}
+    size=(size_t)before.standard.EndOfFile.QuadPart;
+    while(used<size){
+        if(!ReadFile(file,out+used,(DWORD)(size-used),&got,NULL)){s=BC_AS_OS;goto done;}
+        if(got==0||got>size-used){s=BC_AS_CHANGED;goto done;}
+        used+=got;
+    }
+    if(!ReadFile(file,&extra,1,&got,NULL)){s=BC_AS_OS;goto done;}
+    if(got!=0){s=BC_AS_CHANGED;goto done;}
+    s=inspect(file,0,&after,NULL,0);
+    if(s==BC_AS_OK&&!stable(&before,&after)){s=BC_AS_CHANGED;}
+done:
+    if(!CloseHandle(file)&&s==BC_AS_OK){s=BC_AS_OS;}
+    if(s==BC_AS_OK){*length=used;}
+    return s;
+}
 bc_as_status bc_as_collect(const bc_as_root *r,const bc_as_path *paths,size_t count,size_t budget,bc_as_snapshot **out,bc_as_error *e){
     bc_as_snapshot stage,*published;HANDLE handles[BC_AS_HANDLES],leaves[BC_AS_FILES];bc_as_info before[BC_AS_FILES],info;
     LONGLONG changes[BC_AS_HANDLES],root_changes[BC_AS_ROOT_COMPONENTS+1u];

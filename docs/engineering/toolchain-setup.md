@@ -13,8 +13,15 @@ The Windows pin now builds the same Fairy C revision with the
 builds use the existing function-boundary partition emitter with a 512 KiB
 target per group and one shared header. Fairy C invokes MSVC with /O2 and links
 once. Each invocation keeps its existing 60-second limit; the complete build
-can take longer. The patch preserves the default stack and SDK; development
-builds, diagnostic run/test policy, and Linux retain their original routes.
+can take longer. Windows application builds configured by `fairy.windows.json`
+also use the partitioner in development and release and link their declared native
+sources and libraries with the generated objects. The default stack and SDK
+remain unchanged. Diagnostic tests and Linux retain their existing build routes.
+
+Current Windows compiler SHA-256:
+`2ef3100b7726d49c8eff4fb1b3f8420d2561ccb718bca5c0db21eb7150d11089`.
+Current patch SHA-256:
+`57ad69258c4d682b449ac3b437ac2664ab32f47dfad603355a33618ae57ef4cc`.
 
 With Git and Go 1.27.1 on PATH, bootstrap in the Brownie checkout and build:
 
@@ -27,8 +34,8 @@ disposable checkout it creates a local version tag for Go metadata and applies
 the patch. The public release tag can point to a different commit. Setup checks
 the resulting executable SHA-256 before running or installing it. The compiler reports v0.1.0-preview.2+dirty and
 modified: true. The unpatched preview ZIP is a historical artifact. A matching
-rebuilt binary may be provisioned with --compiler-file. The SDK and root lock
-are unchanged. The Brownie retained dispatcher also separates return handling
+rebuilt binary may be provisioned with --compiler-file. The SDK identity is
+unchanged. The Brownie retained dispatcher also separates return handling
 and bulk-work startup from the instruction loop; the unchanged dispatcher
 still timed out at 512 KiB. Fuel debit, continuation order, and return
 publication stay in their existing order.

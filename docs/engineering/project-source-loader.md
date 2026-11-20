@@ -1,10 +1,19 @@
-# Private OS project source admission and execution
+# Windows project source admission and execution
 
-`native/project-source-loader/loader.fy` composes the existing anchored source
-loader, project source admission and project executable APIs. It stays outside
-root `src`, so the public CLI gains no unresolved FFI or availability claim.
-All collector, source loader, manifest/parser/compiler/VM and lock files remain
-unchanged. This is a private synchronous zero-argument i32 project path.
+`src/project_source_loader.fy` composes the anchored source loader, project
+source admission and project executable APIs. This is a synchronous Windows path.
+
+## Public CLI
+
+`check --project FILE` and `run --project FILE` accept an explicit manifest.
+The manifest's parent directory anchors both the manifest and declared source
+reads. The manifest limit is 65,536 bytes. The current source limit is 16 files
+and 4,096 cumulative bytes. The CLI selects a public zero-argument i32 entry
+and rejects nonempty requirements before opening any source member.
+`check` compiles and verifies without guest execution. `run` uses the normal
+Fuel, exit codes and result formats. See the [CLI configuration](../cli/configuration.md#project-selection).
+
+## Private source loader
 
 `select(ref Project, root UTF-8 bytes, source_bytes)` borrows explicitly admitted
 metadata and an explicit root. It packs only `project_manifest::path` values in
@@ -87,8 +96,8 @@ Run `python tools/verify-project-source-loader.py` with Windows/MSVC/SDK and the
 exact pinned compiler. `--core-root` optionally selects a read-only core checkout
 or archive; default is the current checkout. The verifier copies that actual
 import closure byte-for-byte into an ignored build project. Its isolated
-bytes/text/vec SDK closure is pinned to `e256aabf...`, distinct from the full-root
-SDK source digest; compiler/version/runtime ABI remain the exact repository pin.
+bytes/text/vec SDK closure is checked against the Windows SDK identity in
+`toolchain.json`, along with the compiler, SDK version and runtime ABI.
 Runtime C comes from
 the compiler revision's exact Git objects. The emitted C is compiled unchanged
 for development and O2 with default 1MiB/4KiB stacks and no CL/_CL_/LINK overrides.
@@ -106,7 +115,7 @@ bridge/collector owners and zero tracked Fairy heap allocations after all projec
 owners drop. Fixtures are removed and checked. Receipts include exact core/new/
 prerequisite/compiler/runtime/transport/object/executable/fixture hashes.
 
-General project host dispatch, CLI delivery, bounded
+General project host dispatch, public input/output and policy loaders, work-bounded
 collection, and complete Engine accounting remain open. Source bytes
 remain an owned bounded copy, not a point-in-time snapshot against preexisting
 writable mappings. No source collection is implicitly repeated on runtime failure.
