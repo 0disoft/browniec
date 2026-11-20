@@ -26,6 +26,10 @@ unsafe extern C fn void bc_runtime_engine_test_proof_begin();
 unsafe extern C fn usize bc_runtime_engine_test_proof_count();
 unsafe extern C fn void bc_runtime_engine_test_fail(i64 count);
 unsafe extern C fn usize bc_runtime_engine_test_project_path(ptr mut u8 out,usize capacity);
+unsafe extern C fn usize bc_runtime_engine_monotonic_ticks();
+unsafe extern C fn void bc_runtime_engine_test_set_clock(usize ticks);
+unsafe extern C fn void bc_runtime_engine_test_use_os_clock();
+unsafe extern C fn void bc_runtime_engine_test_wait_for_clock(usize start,usize elapsed);
 struct Heap { usize blocks; usize bytes; }
 fn Heap heap(){return Heap{.blocks=unsafe{probe_live()},.bytes=unsafe{probe_live_bytes()}};}
 fn void same_heap(ref Heap h){assert(unsafe{probe_live()}==h.blocks && unsafe{probe_live_bytes()}==h.bytes);}
@@ -506,6 +510,61 @@ fn Result<usize,u8> project_output(){
     close(ref mut e);
     return .ok(0);
 }
+fn void deadline_result(ref mut engine::Engine e,usize i,engine::Event done,usize remaining){
+    assert(done.kind==2 && done.value==0 && done.remaining==remaining && done.fuel_known);
+    assert(done.diagnostic.code.kind==errors::deadline_kind() && done.diagnostic.at.source==sources::no_source().source);
+    frozen(e,i,done);
+    switch(engine::take_output(e,i)){
+        case .ok(o):{assert(!engine::output_available(ref o) && engine::output_view(ref o).len==0);}
+        case .err(_):{assert(false);}
+    };
+}
+fn Result<usize,u8> configured_deadline(){
+    let policy::Policy ceiling=output_policy(true)?;
+    let configs::RunConfig granted=run_config(ref ceiling,0)?;
+    var engine::Engine e=configured_engine(ceiling)?;
+    let ref u8[] source=b"module app;pub fn i32 chosen(ref u8[] data){output::emit(ref data);var i32 n=0;while(n<64){n+=1;}return 42;}";
+    let usize p=id(engine::compile_granted_output(ref mut e,indexed(source)?,ref granted,65536));
+    unsafe{bc_runtime_engine_test_set_clock(100)};
+    let usize a=id(engine::prepare_granted_instance(ref mut e,p,ref granted,captured(b"A\x00")?));
+    let usize b=id(engine::prepare_granted_instance(ref mut e,p,ref granted,captured(b"B")?));
+    let usize c=id(engine::prepare_granted_instance(ref mut e,p,ref granted,captured(b"C")?));
+    lifecycle::warm(ref mut e,a);
+    lifecycle::warm(ref mut e,b);
+    let engine::Event success=finish(ref mut e,c,4096);
+    assert(success.kind==1 && success.value==42);
+    var usize n=0;
+    while(n<16){assert(tick(ref mut e,a,1).kind==4 && tick(ref mut e,b,1).kind==4);n+=1;}
+    unsafe{bc_runtime_engine_test_set_clock(10000099)};
+    let engine::Event before=tick(ref mut e,a,1);
+    assert(before.kind==4 && id(engine::lifecycle_phase(ref e,a))==5);
+    let engine::Event cancelling=event(engine::cancel_ready(ref mut e,b));
+    assert(cancelling.kind==4);
+    unsafe{bc_runtime_engine_test_set_clock(10000100)};
+    let engine::Event expiring=event(engine::cancel_ready(ref mut e,a));
+    assert(expiring.kind==4 && expiring.remaining==before.remaining);
+    let engine::Event expired_first=finish(ref mut e,a,1);
+    deadline_result(ref mut e,a,expired_first,before.remaining);
+    let engine::Event cancelled=lifecycle::stop(ref mut e,b);
+    assert(cancelled.kind==3 && cancelled.remaining==cancelling.remaining);
+    frozen(ref mut e,b,cancelled);
+    rejected_take(engine::take_output(ref mut e,b),2);
+    frozen(ref mut e,c,success);
+    {
+        let engine::Output result=take(ref mut e,c)?;
+        assert(bytes::equal(engine::output_view(ref result),b"C"));
+    }
+    destroy(ref mut e,a);destroy(ref mut e,b);destroy(ref mut e,c);ledger(ref e,0);
+    unsafe{bc_runtime_engine_test_use_os_clock()};
+    let usize real=id(engine::prepare_granted_instance(ref mut e,p,ref granted,captured(b"D")?));
+    let engine::Event prepared=event(engine::observe(ref mut e,real));
+    let usize now=unsafe{bc_runtime_engine_monotonic_ticks()};
+    unsafe{bc_runtime_engine_test_wait_for_clock(now,10000000)};
+    let engine::Event expired=tick(ref mut e,real,1);
+    deadline_result(ref mut e,real,expired,prepared.remaining);
+    destroy(ref mut e,real);ledger(ref e,0);release(ref mut e,p);
+    close(ref mut e);return .ok(0);
+}
 pub fn void run(){
     let Heap before=heap();
     assert(fixed_and_mixed_quanta().is_ok);same_heap(ref before);
@@ -516,4 +575,5 @@ pub fn void run(){
     assert(empty_output_and_running_drop().is_ok);same_heap(ref before);
     assert(configured_output().is_ok);same_heap(ref before);
     assert(project_output().is_ok);same_heap(ref before);
+    assert(configured_deadline().is_ok);same_heap(ref before);
 }

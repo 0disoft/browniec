@@ -72,7 +72,7 @@ static DWORD WINAPI wrong_thread(void *raw){
  assert(bc_runtime_engine_compile_input(raw,(void *)(uintptr_t)1,0)==10);
  assert(bc_runtime_engine_instance_input(raw,0,(void *)(uintptr_t)1,0)==10);
  assert(bc_runtime_engine_compile_output(raw,(void *)(uintptr_t)1,0,0)==10);
- assert(bc_runtime_engine_instance_output(raw,0,(void *)(uintptr_t)1,0,0,0)==10);
+ assert(bc_runtime_engine_instance_output(raw,0,(void *)(uintptr_t)1,0,0,0,0)==10);
  assert(bc_runtime_engine_take_output(raw,0,(void *)(uintptr_t)1)==10);
  assert(bc_runtime_engine_execute_input(raw,0,(const void *)(uintptr_t)1)==10);return 0;
 }
@@ -91,7 +91,7 @@ void bc_runtime_engine_test_guards(void *raw){
  assert(bc_runtime_engine_compile_input(raw,(void *)(uintptr_t)1,0)==3);
  assert(bc_runtime_engine_instance_input(raw,0,(void *)(uintptr_t)1,0)==3);
  assert(bc_runtime_engine_compile_output(raw,(void *)(uintptr_t)1,0,0)==3);
- assert(bc_runtime_engine_instance_output(raw,0,(void *)(uintptr_t)1,0,0,0)==3);
+ assert(bc_runtime_engine_instance_output(raw,0,(void *)(uintptr_t)1,0,0,0,0)==3);
  assert(bc_runtime_engine_take_output(raw,0,(void *)(uintptr_t)1)==3);
  assert(bc_runtime_engine_execute_input(raw,0,(const void *)(uintptr_t)1)==3);
  bc_engine_ticket stale=ticket;stale.epoch+=1;assert(finish(e,stale,0)==7);

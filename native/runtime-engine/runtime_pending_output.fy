@@ -55,6 +55,11 @@ pub fn Result<machines::Meta,errors::Error> cancel_pending_output(ref mut machin
     let u32 status=unsafe{pending_maintenance_raw(machine as ptr mut void,0,ref mut unused as ptr mut void)};
     if(status!=0){return .err(errors::make(5,0));}return .ok(machines::observe(machine));
 }
+pub fn Result<machines::Meta,errors::Error> expire_pending_output(ref mut machines::Machine machine){
+    var vec::Vec<pending_output::Published> unused=vec::empty<pending_output::Published>();
+    let u32 status=unsafe{pending_maintenance_raw(machine as ptr mut void,2,ref mut unused as ptr mut void)};
+    if(status!=0){return .err(errors::make(5,0));}return .ok(machines::observe(machine));
+}
 pub fn usize pending_staged_emits(ref machines::Machine m){return machines::staged_emits(m);}
 pub fn Result<machines::Meta,errors::Error> seal_pending_output_into(ref mut machines::Machine machine,ref mut vec::Vec<pending_output::Published> outgoing){
     if(machines::observe(machine).phase!=2 || vec::len<pending_output::Published>(outgoing)!=0 ||
@@ -204,6 +209,17 @@ fn u32 finish_stage(ref mut machines::Meta m,ref mut pending_runtime::State stat
 fn u32 pending_maintenance_inner(ref mut machines::Meta m,ref mut pending_runtime::State state,
     ref pending_bytes::Buffer payload,ref mut vec::Vec<usize> places,ref mut pending_output::Transaction staged,
     ref mut vec::Vec<pending_output::Published> outgoing,u32 operation,ref mut metadata_work::State bank){
+    if(operation==2){
+        if(m.phase>=3 || m.lifecycle.terminal!=0){return 0;}
+        m.failure=errors::absent(errors::deadline_kind(),0);
+        m.lifecycle.terminal=3;m.value=0;
+        if(m.lifecycle.phase<4){
+            let pending_output::Observation dropped=pending_output::fail(staged);
+            m.phase=3;m.cursor.active=false;m.lifecycle.phase=11;return 0;
+        }
+        // Latch the deadline without spending a second work allowance.
+        m.phase=1;m.lifecycle.phase=7;m.cursor.active=true;return 0;
+    }
     if(operation==0){
         if(m.phase>=2){return 0;}
         if(m.lifecycle.terminal==0){m.lifecycle.terminal=4;

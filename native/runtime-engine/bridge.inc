@@ -49,9 +49,9 @@ uint32_t bc_runtime_engine_compile_output(void *raw,void *incoming,uintptr_t lim
  s=mode>3?1:mode?B14(&e->f_0,&e->f_1,(bc_engine_input_entry *)incoming,limit,mode):B13(&e->f_0,&e->f_1,(bc_engine_input *)incoming,limit);
  return finish(e,ticket,s);
 }
-uint32_t bc_runtime_engine_instance_output(void *raw,uintptr_t program,void *input,uintptr_t budget,uintptr_t limit,uint32_t allowed){
+uint32_t bc_runtime_engine_instance_output(void *raw,uintptr_t program,void *input,uintptr_t budget,uintptr_t limit,uint32_t allowed,uintptr_t deadline){
  bc_engine *e=raw;bc_engine_ticket ticket;uint32_t s=admission(e,&ticket);if(s)return s;
- s=B15(&e->f_0,&e->f_1,&e->f_3,&e->f_4,(bc_engine_snapshots *)input,program,budget,limit,allowed);return finish(e,ticket,s);
+ s=B15(&e->f_0,&e->f_1,&e->f_3,&e->f_4,(bc_engine_snapshots *)input,program,budget,limit,allowed,deadline);return finish(e,ticket,s);
 }
 uint32_t bc_runtime_engine_take_output(void *raw,uintptr_t instance,void *outgoing){
  bc_engine *e=raw;bc_engine_ticket ticket;bc_abi_thread_identity owner;
@@ -190,11 +190,11 @@ uint32_t bc_runtime_pending_initialize(void *raw,const void *state,const void *s
  bc_pending_machine *owner=raw;bc_pending_core *c=owner->f_0.f_0;
  B29(owner,c,state,sites,(fy_byte_slice){origins,length});return 0;
 }
-uint32_t bc_runtime_engine_step_output(void *raw,const void *program,const void *input,uintptr_t quantum){
+uint32_t bc_runtime_engine_step_output(void *raw,const void *program,const void *input,uintptr_t quantum,uintptr_t deadline){
  bc_engine_output *owner=raw;
- uint32_t status=B31(&owner->f_2,&owner->f_1.f_0,&owner->f_1.f_1,program,input,quantum);
+ uint32_t status=B31(&owner->f_2,&owner->f_1.f_0,&owner->f_1.f_1,program,input,quantum,deadline);
  owner->f_2=B32(owner->f_2);owner->f_1.f_1=B36(owner->f_1.f_1,owner->f_1.f_0.f_6);return status;
 }
-uint32_t bc_runtime_engine_cancel_output(void *raw){
- bc_engine_output *owner=raw;return B33(&owner->f_2);
+uint32_t bc_runtime_engine_cancel_output(void *raw,uintptr_t deadline){
+ bc_engine_output *owner=raw;return B33(&owner->f_2,deadline);
 }

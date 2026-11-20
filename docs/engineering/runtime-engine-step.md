@@ -156,6 +156,28 @@ pins and reclamation on the last destroy. Both outputs match their inputs
 and the process exits with zero live SDK allocations. Release verification,
 deadlines, typed host request/reply and public C ABI delivery remain open.
 
+## Configured input/output deadlines
+
+`prepare_granted_instance` binds a deadline to the new Instance using its
+admitted run duration and Windows interrupt time. Each configured step checks
+that deadline before guest work and before handing a result to the Engine.
+The cancellation path checks the same deadline before selecting a cause.
+Expiry during cleanup preserves a previously selected guest failure or
+cancellation. An already committed success and its output remain available.
+
+When expiry wins, it latches a no-source deadline diagnostic. The continuation
+uses its existing cleanup stages, retaining the original Fuel balance until
+terminal cleanup. If the output was sealed in the current step but the deadline
+elapsed before Engine publication, the private sealed owner is dropped.
+Expired runs expose no guest output.
+
+The Instance adds one deadline word (8 bytes on Windows x64), included in
+the existing control ledger. The native tests check one tick before the
+deadline, expiry at the exact tick, cancellation chosen before expiry,
+preserved success, staged output discard and an actual OS-clock expiry.
+Windows development and /O2 both pass with zero live SDK allocations.
+Local receipt: `build/runtime-engine/20261120T112523906857Z/receipt.json`.
+
 ## Remaining accepted work
 
 Dispatch visits do not bound all bytes, metadata visits or native time. Output
@@ -165,8 +187,8 @@ including bool scans. Catalog planning, nominal walks and owner-table checks,
 setup/proof and other bulk
 copy/tag/store/transfer, CALL metadata/RET, seal and cleanup remain atomic.
 Chunk those recipes and preserve quantum-independent Fuel/results before
-claiming the accepted work-bounded Engine step contract. Deadlines, in-flight
-cancellation, STOPPING/poison containment, public lifecycle/ABI/CLI integration
+claiming the accepted work-bounded Engine step contract. General compile/run
+deadlines, full STOPPING/poison containment, public lifecycle/ABI/CLI integration
 and the full accepted inventory remain open. R03-R05 are incomplete.
 
 Existing VM capacities, guest prices, Fuel default 256 and ceiling 16000000 are
