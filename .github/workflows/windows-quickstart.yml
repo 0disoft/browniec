@@ -40,6 +40,7 @@ on:
       - 'tools/sync-cli-output.py'
       - 'tools/check-cli-contract.py'
       - 'tools/check-cli-examples.py'
+      - 'tools/runtime-engine/adapter-fixture.c'
       - 'tools/setup-toolchain.py'
       - 'tools/fairyc-windows-release.patch'
 
@@ -136,9 +137,24 @@ jobs:
             throw 'Expected a completed run with return_i32: 77 and no error.'
           }
 
-      - name: Check CLI diagnostics and eval-i32 on the same release binary
+      - name: Check CLI contracts and the process adapter on the same release binary
         if: steps.changes.outputs.scope == 'full'
-        run: python -B tools/check-cli-contract.py --exe ./build/browniec.exe
+        shell: pwsh
+        run: |
+          $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio/Installer/vswhere.exe'
+          $vs = & $vswhere -latest -products '*' -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          if ($LASTEXITCODE -ne 0 -or -not $vs) { throw 'Expected an installed MSVC x64 toolchain.' }
+          Import-Module (Join-Path $vs 'Common7/Tools/Microsoft.VisualStudio.DevShell.dll')
+          Enter-VsDevShell -VsInstallPath $vs -SkipAutomaticLocation -DevCmdArguments '-arch=x64 -host_arch=x64'
+
+          Push-Location build
+          try {
+            cl.exe /nologo /std:c11 /TC /MT /W4 /WX /O2 ../tools/runtime-engine/adapter-fixture.c /Fe:adapter-fixture.exe
+            if ($LASTEXITCODE -ne 0) { throw "Adapter fixture build exited with code $LASTEXITCODE." }
+          } finally {
+            Pop-Location
+          }
+          python -B tools/check-cli-contract.py --exe ./build/browniec.exe --adapter-exe ./build/adapter-fixture.exe
 
       - name: Run selected branch and array examples on the same release binary
         if: steps.changes.outputs.examples != ''

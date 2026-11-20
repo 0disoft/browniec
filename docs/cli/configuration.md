@@ -155,6 +155,9 @@ native adapter fixture. The checks cover source and project result 77,
 JSON v1 and v2, conflicting options, revision, grants, relative path
 rejection, a crossed request ID, and a deadline during reply receipt. The
 same runs also passed the existing precomputed-reply contract.
+The [Windows quick-start workflow](../../.github/workflows/windows-quickstart.yml)
+compiles the adapter fixture once in its full check scope and passes it to
+the CLI contract checker alongside the existing locked release binary.
 The local Engine receipt is
 `build/runtime-engine/20261120T155908271691Z/receipt.json`.
 

@@ -1,6 +1,6 @@
 - Latest runtime checkpoint (2026-11-21): [Windows process adapter CLI](docs/cli/configuration.md#windows-process-adapters)
-  selects one explicit catalog route and executable. Locked development
-  and /O2 builds passed the CLI contract with a real adapter subprocess.
+  runs its subprocess contract in the full Windows quick-start workflow.
+  The workflow's contract step passed locally with the locked /O2 CLI.
 
 # Brownie C agent guidance
 
