@@ -54,7 +54,7 @@ def check_diagnostic(exe, path, code, kind, location, text):
         assert type(v2['location']['offset']) is int, v2
 
 
-def check_output_table(exe, identity, host_check):
+def check_output_table(exe, identity, host_check, host_run):
     subprocess.run([sys.executable, '-B', str(ROOT / 'tools/sync-cli-output.py'), '--check'],
                    check=True, timeout=10)
     answer = ROOT / 'examples/answer.brc'
@@ -68,6 +68,8 @@ def check_output_table(exe, identity, host_check):
         command = row['command']
         if command == 'inspect':
             args = [answer, row['arguments'].split()[-1]]
+        elif '--host-replies' in row['arguments']:
+            args = host_run[1:]
         elif '--catalog' in row['arguments']:
             args = host_check[1:]
         elif '--policy' in row['arguments']:
@@ -115,6 +117,81 @@ def make_host_check(folder):
     for path, data in ((policy, ceiling), (run, config), (catalog, imports)):
         path.write_text(json.dumps(data), encoding='utf-8')
     return ['check', source, '--catalog', catalog, '--policy', policy, '--run', run]
+
+
+def make_host_run(check_args, path):
+    entries = json.loads(check_args[3].read_bytes())['imports']
+
+    def size(value):
+        return value.to_bytes(4, 'little')
+
+    def string(value):
+        raw = value.encode('ascii')
+        return size(len(raw)) + raw
+
+    canonical = bytearray(b'BRC-CATALOG-1\n' + size(len(entries)))
+    for entry in entries:
+        canonical.extend(size(entry['id']))
+        for field in ('module', 'symbol', 'result', 'effect', 'capability', 'adapter_revision'):
+            canonical.extend(string(entry[field]))
+        canonical.extend(size(len(entry['parameters'])))
+        canonical.extend(b''.join(map(string, entry['parameters'])))
+    row = {'import_id': 0, 'request_hex': '0100030000000400000029000000',
+           'kind': 0, 'reply_hex': '03000000040000002a000000'}
+    table = {'schema': 'brownie.host-replies/1',
+             'catalog_sha256': hashlib.sha256(canonical).hexdigest(), 'replies': [row]}
+    path.write_text(json.dumps(table), encoding='utf-8')
+    return ['run', *check_args[1:], '--host-replies', path]
+
+
+def check_host_run(exe, check_args, args):
+    source, run, response = args[1], args[7], args[9]
+    for version in (1, 2):
+        assert check_json(exe, args, 0, version=version, value=77) is None
+    for invalid in ([*args, '--fuel', 256], [*args, '--stdin'],
+                    [*args, '--host-replies', response], args[:-2],
+                    [*check_args, '--host-replies', response]):
+        invoke(exe, invalid, 2)
+
+    config = json.loads(run.read_bytes())
+    run.write_text(json.dumps(config | {'requires': []}), encoding='utf-8')
+    assert check_json(exe, args, 4, version=2)['kind'] == 'unavailable'
+    run.write_text(json.dumps(config), encoding='utf-8')
+
+    table = json.loads(response.read_bytes())
+    row = table['replies'][0]
+    for bad in (table | {'catalog_sha256': '0' * 64},
+                table | {'replies': [row, row]},
+                table | {'replies': [row | {'request_hex': '0aXz'}]},
+                table | {'replies': [row | {'request_hex': '00'}]},
+                table | {'replies': [row | {'import_id': 1}]},
+                table | {'replies': [row | {'kind': 1}]},
+                table | {'replies': [row | {'reply_hex': row['reply_hex'] + '00'}]}):
+        response.write_text(json.dumps(bad), encoding='utf-8')
+        assert check_json(exe, args, 2, version=2)['kind'] == 'usage'
+    serialized = json.dumps(table)
+    for bad in (serialized + ' {}', serialized[:-1] + ', "replies": []}'):
+        response.write_text(bad, encoding='utf-8')
+        assert check_json(exe, args, 2, version=2)['kind'] == 'usage'
+
+    for entries in ([], [row | {'request_hex': '0100030000000400000028000000'}],
+                    [row | {'kind': 2, 'reply_hex': ''}]):
+        response.write_text(json.dumps(table | {'replies': entries}), encoding='utf-8')
+        assert check_json(exe, args, 4, version=2)['kind'] == 'unavailable'
+
+    original = source.read_bytes()
+    source.write_bytes(b'module main; fn i32 main(){return switch(host::example::check(41)){'
+                       b'case .ok(n): { n } case .err(_): { -7 } };}')
+    response.write_text(json.dumps(table | {'replies': [
+        row | {'kind': 1, 'reply_hex': '0500000004000000ffffffff'}]}), encoding='utf-8')
+    assert check_json(exe, args, 0, version=2, value=-7) is None
+    source.write_bytes(original)
+    response.write_text(serialized, encoding='utf-8')
+
+    run.write_text(json.dumps(config | {'limits': config['limits'] | {'fuel': 1}}), encoding='utf-8')
+    assert check_json(exe, args, 5, version=2)['kind'] == 'fuel'
+    run.write_text(json.dumps(config), encoding='utf-8')
+    print('PASS: configured host run, typed Result arms, exact matching, fail-closed replies and Fuel')
 
 
 def check_host_catalog(exe, args):
@@ -572,7 +649,9 @@ def main():
         identity.write_bytes(b'module main; fn i32 evaluate(i32 x) { return x; }\n')
 
         host_check = make_host_check(Path(temp))
-        check_output_table(exe, identity, host_check)
+        host_run = make_host_run(host_check, Path(temp) / 'host-replies.json')
+        check_output_table(exe, identity, host_check, host_run)
+        check_host_run(exe, host_check, host_run)
         check_host_catalog(exe, host_check)
         check_project(exe, Path(temp))
         check_project_input(exe, Path(temp))

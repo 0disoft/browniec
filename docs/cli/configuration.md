@@ -86,6 +86,49 @@ binding before signature and body lowering. Function, instruction and register
 limits are checked before Program retention. Full compile work accounting and multi-module catalog checks remain pending. See the
 [host compiler contract](../engineering/host-exchange.md#scalar-host-calls-from-source).
 
+## Single-source host execution
+
+On Windows, run trusted local source with explicit policy, run, catalog and reply
+files:
+
+    browniec run SOURCE --catalog CATALOG --policy POLICY --run RUN --host-replies REPLIES --json
+
+This mode uses the catalog-backed `main::main` entry and the run file's Fuel,
+memory, host quotas and deadline. It also accepts text and JSON v2. The source
+input flags and `--fuel` are unavailable in this mode. Console interruption
+cancels the owning Instance at a runtime checkpoint.
+
+The reply file is one UTF-8 JSON object with schema `brownie.host-replies/1`,
+`catalog_sha256` (the 64 lowercase hexadecimal digits of the [canonical catalog
+digest](../engineering/host-catalog.md#exact-canonical-identity)) and a
+`replies` array. Each row contains exactly four fields:
+
+| Field | Value |
+| --- | --- |
+| `import_id` | Numeric import ID in the selected catalog |
+| `request_hex` | Complete typed request encoded as lowercase hexadecimal |
+| `kind` | `0` for success, `1` for the guest's `u32` error arm, `2` for a fatal reply |
+| `reply_hex` | Typed reply encoded as lowercase hexadecimal, empty for kind `2` |
+
+For an import with ID 0 that takes i32 41 and returns i32 42, a row is
+`{"import_id":0,"request_hex":"0100030000000400000029000000","kind":0,"reply_hex":"03000000040000002a000000"}`.
+See the [typed wire format](../engineering/host-wire.md) for the field encoding.
+The file fits in 65,536 bytes and at most 64 rows. Each wire message fits in 4,096
+bytes. Hex strings use literal ASCII digits without escapes. Duplicate
+`(import_id, request_hex)` pairs, invalid typed payloads and digest mismatches
+fail before execution. Missing matches fail at the suspended request. A later
+guest call with the same exact request can use the same row. Only an explicit
+file supplies replies, and policy still controls whether the guest may call the
+import. This adapter serves precomputed data from memory and causes no external
+I/O when the guest calls an import.
+
+Windows development and /O2 passed the CLI contract. It checks return values
+77 and -7, text and both JSON formats, exact-match rejection, malformed and
+duplicate rows, catalog binding, authority and Fuel. The owning Engine
+regression passed both profiles with zero live SDK allocations after teardown.
+The local Engine receipt is
+`build/runtime-engine/20261120T155908271691Z/receipt.json`.
+
 ## Single-source guest input
 
 On Windows, `run SOURCE --input FILE` and `run SOURCE --stdin` select

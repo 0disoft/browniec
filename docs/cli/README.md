@@ -12,6 +12,7 @@ browniec --help
 browniec check SOURCE [--json|--json-v2]
 browniec check SOURCE --catalog FILE --policy FILE --run FILE [--json|--json-v2]
 browniec run SOURCE [--input FILE|--stdin] [--fuel N] [--json|--json-v2]
+browniec run SOURCE --catalog FILE --policy FILE --run FILE --host-replies FILE [--json|--json-v2]
 browniec check --project FILE [--json|--json-v2]
 browniec check --project FILE --policy FILE --run FILE [--json|--json-v2]
 browniec run --project FILE [--input FILE|--stdin] [--fuel N] [--json|--json-v2]

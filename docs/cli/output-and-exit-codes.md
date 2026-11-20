@@ -157,6 +157,15 @@ Invalid catalog syntax, schema, and size report `usage` (2). Failure to open or
 read the selected file reports `input_io` (7). Policy or grant denial reports
 `unavailable` (4). Source compilation uses the existing diagnostic kinds and byte offsets.
 
+## Single-source host run
+
+The [configured host run](configuration.md#single-source-host-execution)
+publishes the ordinary signed i32 run result. An invalid reply file reports
+`usage` (2). A missing exact match or a fatal reply reports `unavailable` (4).
+A guest-handled `u32` error reply follows the guest's Result branch and can
+complete with exit 0. Fuel exhaustion, run deadline and cancellation report
+`fuel`, `deadline` and `cancelled` (5).
+
 ## Project check and run
 
 Windows project commands use the ordinary check/run results and exit classes.
