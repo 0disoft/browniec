@@ -1,6 +1,7 @@
 module cli_project;
 
 import anchored_source_loader as anchored;
+import json_tokens as json;
 import project_source_loader as loader;
 import project_manifest as manifest;
 import project_sources as binding;
@@ -14,7 +15,6 @@ import runtime_input as input;
 import source_snapshot as sources;
 import static_image as images;
 import errors as errors;
-import json_tokens as json;
 import render as render;
 import std::bytes as bytes;
 import std::process as process;
@@ -43,32 +43,36 @@ pub fn i32 execute(render::Format format,bool run,usize fuel,usize input_argumen
     return execute_project(ref project,format,run,fuel);
 }
 fn Result<ProjectInput,errors::Error> acquire(ref u8[] path){
-    let usize limit=json::byte_limit();
-    var bytes::Buffer data=switch(bytes::with_capacity(limit)){
-        case .ok(v):{v}case .err(_):{return .err(errors::absent(15,0));}
+    var bytes::Buffer data=bytes::empty();
+    var anchored::Root root=open_manifest(path,ref mut data)?;
+    let manifest::Project project=parse_manifest(ref root,bytes::view(ref data))?;
+    if(manifest::requirements(ref project)!=0){return .err(errors::absent(11,0));}
+    let sources::Snapshot snapshot=switch(loader::load_from(ref project,ref mut root,sources::source_limit())){
+        case .ok(v):{v}case .err(e):{return .err(errors::absent(switch(e){case .Limit:{4}case .Acquisition:{9}case .Binding:{3}case .Compile:{3}},0));}
     };
-    if(!bytes::resize_zeroed(ref mut data,limit).is_ok){return .err(errors::absent(15,0));}
-    var anchored::Root root=switch(anchored::open_project(path,bytes::view_mut(ref mut data))){
-        case .ok(v):{v}
-        case .err(e):{return .err(errors::absent(switch(e){case .Input:{9}case .Limit:{10}case .Allocation:{15}},0));}
+    return .ok(ProjectInput{.metadata=project,.snapshot=snapshot});
+}
+
+// Retain the anchor independently of the manifest buffer and decoded metadata.
+fn Result<anchored::Root,errors::Error> open_manifest(ref u8[] path,ref mut bytes::Buffer data){
+    if(!bytes::resize_zeroed(data,json::byte_limit()).is_ok){return .err(errors::absent(15,0));}
+    return switch(anchored::open_project(path,bytes::view_mut(data))){
+        case .ok(v):{.ok(v)}
+        case .err(e):{.err(errors::absent(switch(e){case .Input:{9}case .Limit:{10}case .Allocation:{15}},0))}
     };
-    let ref u8[] view=bytes::view(ref data);
-    let manifest::Project project=switch(manifest::parse(view[..anchored::manifest_bytes(ref root)])){
-        case .ok(v):{v}
+}
+
+fn Result<manifest::Project,errors::Error> parse_manifest(ref anchored::Root root,ref u8[] data){
+    return switch(manifest::parse(data[..anchored::manifest_bytes(root)])){
+        case .ok(v):{.ok(v)}
         case .err(e):{
             let u8 kind=switch(e.kind){
                 case .Allocation:{15}case .Json:{10}case .Limit:{10}case .Unknown:{10}
                 case .Duplicate:{10}case .Missing:{10}case .Value:{10}case .Bounds:{10}
             };
-            return .err(errors::make(kind,e.offset));
+            .err(errors::make(kind,e.offset))
         }
     };
-    if(manifest::requirements(ref project)!=0){return .err(errors::absent(11,0));}
-    let sources::Snapshot snapshot=switch(loader::load_from(ref project,ref mut root,sources::source_limit())){
-        case .ok(v):{v}
-        case .err(e):{return .err(errors::absent(switch(e){case .Limit:{4}case .Acquisition:{9}case .Binding:{3}case .Compile:{3}},0));}
-    };
-    return .ok(ProjectInput{.metadata=project,.snapshot=snapshot});
 }
 @effects(console)
 fn i32 execute_project(ref ProjectInput project,render::Format format,bool run,usize fuel){
