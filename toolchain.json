@@ -29,12 +29,12 @@
       "internal/cstdlib/stage0_linux_directory_paths.c"
     ],
     "localVersionTag": true,
-    "sourcePatchSha256": "57ad69258c4d682b449ac3b437ac2664ab32f47dfad603355a33618ae57ef4cc"
+    "sourcePatchSha256": "ee51dc597165cde6d3b360716f604b58a4bae28c21d1bf2d9c7f3017fa5b164b"
   },
   "platforms": {
     "windows/amd64": {
       "executable": "fairyc.exe",
-      "sha256": "2ef3100b7726d49c8eff4fb1b3f8420d2561ccb718bca5c0db21eb7150d11089",
+      "sha256": "13f32b5ffc77b38b34d91eacee465e95dbfe569d9eff3344351d3148fd1e87ab",
       "verification": "native-verified",
       "distribution": {
         "kind": "pinned-source-with-patch"

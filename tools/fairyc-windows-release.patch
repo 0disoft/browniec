@@ -1,8 +1,172 @@
+diff --git a/internal/cbackend/analysis.go b/internal/cbackend/analysis.go
+index ab44f1fc5b436e2988abd2798ec1677dab8dde2d..c76c23e197e10c34cf6806b15eb3682d966c95a0 100644
+--- a/internal/cbackend/analysis.go
++++ b/internal/cbackend/analysis.go
+@@ -17,7 +17,7 @@ func analyzeEmission(program mir.Program, entry string, profile Profile, storage
+ 	return analyzeEmissionContext(context.Background(), program, entry, profile, storageTransfers)
+ }
+ 
+-func analyzeEmissionContext(ctx context.Context, program mir.Program, entry string, profile Profile, storageTransfers bool) (*emissionAnalysis, error) {
++func analyzeEmissionContext(ctx context.Context, program mir.Program, entry string, profile Profile, storageTransfers bool, privateFunctions ...string) (*emissionAnalysis, error) {
+ 	if err := ctx.Err(); err != nil {
+ 		return nil, err
+ 	}
+@@ -70,7 +70,11 @@ func analyzeEmissionContext(ctx context.Context, program mir.Program, entry stri
+ 	if err != nil {
+ 		return nil, err
+ 	}
+-	reachable, reachableForeign, err := reachableFunctionIndices(program, functions, bySymbol, entryIndex)
++	privateRoots, err := privateApplicationRoots(functions, entry, privateFunctions)
++	if err != nil {
++		return nil, err
++	}
++	reachable, reachableForeign, err := reachableFunctionIndices(program, functions, bySymbol, entryIndex, privateRoots...)
+ 	if err != nil {
+ 		return nil, err
+ 	}
+diff --git a/internal/cbackend/analysis_reachability.go b/internal/cbackend/analysis_reachability.go
+index fc648d91b81d6e9dac2167b8d264d0617bc0df16..c9fbb662c8cc384566032412a4508772c3c9d20c 100644
+--- a/internal/cbackend/analysis_reachability.go
++++ b/internal/cbackend/analysis_reachability.go
+@@ -62,7 +62,7 @@ func indexFunctions(functions []mir.Function, entry string) (map[hir.SymbolID]in
+ // indices into the name-sorted function slice plus the foreign symbols
+ // referenced by reachable calls. Foreign declarations are filtered separately
+ // so dead declarations cannot leak prototypes, guards, or scalar features.
+-func reachableFunctionIndices(program mir.Program, functions []mir.Function, bySymbol map[hir.SymbolID]int, entryIndex int) (map[int]struct{}, map[hir.SymbolID]struct{}, error) {
++func reachableFunctionIndices(program mir.Program, functions []mir.Function, bySymbol map[hir.SymbolID]int, entryIndex int, privateRoots ...int) (map[int]struct{}, map[hir.SymbolID]struct{}, error) {
+ 	resourceTypes := make(map[hir.Type]mir.ResourceType, len(program.ResourceTypes))
+ 	for index := range program.ResourceTypes {
+ 		resourceTypes[program.ResourceTypes[index].Type] = program.ResourceTypes[index]
+@@ -82,6 +82,9 @@ func reachableFunctionIndices(program mir.Program, functions []mir.Function, byS
+ 		visited[index] = struct{}{}
+ 		pending = append(pending, index)
+ 	}
++	for _, root := range privateRoots {
++		enqueue(root)
++	}
+ 	for len(pending) != 0 {
+ 		index := pending[len(pending)-1]
+ 		pending = pending[:len(pending)-1]
+diff --git a/internal/cbackend/application_bindings.go b/internal/cbackend/application_bindings.go
+new file mode 100644
+index 0000000000000000000000000000000000000000..26012f766cfc18b7a27feea47c4b3be63d4eb56d
+--- /dev/null
++++ b/internal/cbackend/application_bindings.go
+@@ -0,0 +1,66 @@
++package cbackend
++
++import (
++	"fmt"
++	"strings"
++
++	"github.com/0disoft/fairyc/internal/hir"
++	"github.com/0disoft/fairyc/internal/mir"
++)
++
++func privateApplicationRoots(functions []mir.Function, entry string, names []string) ([]int, error) {
++	if len(names) == 0 {
++		return nil, nil
++	}
++	prefix, valid := strings.CutSuffix(entry, "main::main")
++	if !valid {
++		return nil, fmt.Errorf("private application bindings require a workspace main entry")
++	}
++	indices := make(map[string]int, len(names))
++	for _, name := range names {
++		indices[prefix+name] = -1
++	}
++	for i, fn := range functions {
++		if old, wanted := indices[fn.Name]; wanted {
++			if old >= 0 {
++				return nil, fmt.Errorf("ambiguous private application function %q", fn.Name)
++			}
++			indices[fn.Name] = i
++		}
++	}
++	roots := make([]int, 0, len(names))
++	for _, name := range names {
++		index := indices[prefix+name]
++		if index < 0 || functions[index].InlineBody != "" || functions[index].DropGlueFor != (hir.Type{}) || functions[index].ClosureTarget {
++			return nil, fmt.Errorf("missing or unsupported private application function %q", name)
++		}
++		roots = append(roots, index)
++	}
++	return roots, nil
++}
++
++// These aliases and layouts belong to the same build as the generated C functions.
++func (e *emitter) emitPrivateApplicationBindings(out *strings.Builder, entry string, names []string) {
++	prefix, _ := strings.CutSuffix(entry, "main::main")
++	requested := make(map[string]bool, len(names))
++	for _, name := range names {
++		requested[prefix+name] = true
++	}
++	out.WriteString("#ifdef FY_PROJECT_PRIVATE_BINDINGS\n")
++	for i, fn := range e.analysis.functions {
++		if requested[fn.Name] {
++			fmt.Fprintf(out, "#define fy_private_fn_%x fy_fn_%d\n", strings.TrimPrefix(fn.Name, prefix), i)
++		}
++	}
++	for i, record := range e.analysis.structTypes {
++		if name, ok := strings.CutPrefix(record.definition.Type.String(), prefix); ok && !record.definition.ReprC {
++			fmt.Fprintf(out, "#define fy_private_type_%x fy_struct_%d\n", name, i)
++		}
++	}
++	for i, resource := range e.analysis.resourceTypes {
++		if name, ok := strings.CutPrefix(resource.definition.Type.String(), prefix); ok {
++			fmt.Fprintf(out, "#define fy_private_type_%x fy_resource_%d\n", name, i)
++		}
++	}
++	out.WriteString("#endif\n")
++}
+diff --git a/internal/cbackend/partition.go b/internal/cbackend/partition.go
+index 2cf1ac65338632e27170fc2b588d4cd03245986b..e875c1107e4c0cba7ca466de710a76b880647914 100644
+--- a/internal/cbackend/partition.go
++++ b/internal/cbackend/partition.go
+@@ -28,11 +28,16 @@ func EmitBuildContext(ctx context.Context, program mir.Program, entry string, pr
+ 	return emitBuild(ctx, program, entry, profile, storageTransfers, partitionBytes)
+ }
+ 
+-func emitBuild(ctx context.Context, program mir.Program, entry string, profile Profile, storageTransfers bool, budget int) (BuildUnit, error) {
++// EmitWindowsApplicationBuild adds explicit roots for the application's private C inputs.
++func EmitWindowsApplicationBuild(ctx context.Context, program mir.Program, entry string, profile Profile, storageTransfers bool, partitionBytes int, names []string) (BuildUnit, error) {
++	return emitBuild(ctx, program, entry, profile, storageTransfers, partitionBytes, names...)
++}
++
++func emitBuild(ctx context.Context, program mir.Program, entry string, profile Profile, storageTransfers bool, budget int, privateFunctions ...string) (BuildUnit, error) {
+ 	if budget <= 0 || budget > 2<<20 {
+ 		return BuildUnit{}, fmt.Errorf("invalid C partition budget")
+ 	}
+-	plan, err := analyzeEmissionContext(ctx, program, entry, profile, storageTransfers)
++	plan, err := analyzeEmissionContext(ctx, program, entry, profile, storageTransfers, privateFunctions...)
+ 	if err != nil {
+ 		return BuildUnit{}, err
+ 	}
+@@ -56,7 +61,7 @@ func emitBuild(ctx context.Context, program mir.Program, entry string, profile P
+ 		}
+ 		total += len(body)
+ 	}
+-	if total <= budget {
++	if total <= budget && len(privateFunctions) == 0 {
+ 		e.partitioned = false
+ 		unit, err := e.emitUnitFromBodies(bodies)
+ 		return BuildUnit{Unit: unit}, err
+@@ -109,6 +114,9 @@ func emitBuild(ctx context.Context, program mir.Program, entry string, profile P
+ 	for _, body := range inlineBodies {
+ 		header.WriteString(body)
+ 	}
++	if len(privateFunctions) != 0 {
++		e.emitPrivateApplicationBindings(&header, entry, privateFunctions)
++	}
+ 	header.WriteString("#endif\n")
+ 	const include = "#include \"fy_bootstrap.h\"\n"
+ 	sources := make([]string, 0)
 diff --git a/internal/cdriver/native_msvc.go b/internal/cdriver/native_msvc.go
+index 729046ee91b5fe9fbc2cc75068fe3a952968933e..8c3e8a2bdf8cb0cb4ff9a85bdf6ce7fc505a4e9f 100644
 --- a/internal/cdriver/native_msvc.go
 +++ b/internal/cdriver/native_msvc.go
 @@ -31,11 +31,26 @@ func resolveWindowsNative(name string) (result NativeToolchain, err error) {
-
+ 
  func (toolchain windowsNativeToolchain) Build(options NativeBuildOptions) (result NativeArtifact, err error) {
  	defer func() { err = driverError(ErrorBuild, "Build", err) }()
 -	if options.Partitions != nil {
@@ -33,17 +197,18 @@ diff --git a/internal/cdriver/native_msvc.go b/internal/cdriver/native_msvc.go
  	} else {
  		artifact, err = BuildWindowsMSVCTargetCached(toolchain.toolchain, options.Profile, options.UnitSource, options.RuntimeSource)
 diff --git a/internal/cli/native_compile.go b/internal/cli/native_compile.go
+index 29b6cad47f7c5fe3325cdac818b409153103fbcc..c20974e39d03438e452a70203e3efcd7d88ca91f 100644
 --- a/internal/cli/native_compile.go
 +++ b/internal/cli/native_compile.go
 @@ -1,6 +1,7 @@
  package cli
-
+ 
  import (
 +	"context"
  	"errors"
  	"fmt"
  	"io"
-@@ -38,7 +39,15 @@ func prepareNativeProgram(program mir.Program, entry string, options workspaceTa
+@@ -38,7 +39,20 @@ func prepareNativeProgram(program mir.Program, entry string, options workspaceTa
  	if !found {
  		return nativeBuildPlan{}, invocationError(stderr, fmt.Sprintf("unsupported native target %q", options.targetID))
  	}
@@ -51,7 +216,12 @@ diff --git a/internal/cli/native_compile.go b/internal/cli/native_compile.go
 +	profile := cbackend.Profile{Target: options.targetID, Dialect: cbackend.DialectC11, PackageTrapSources: policy.packageTrapSources}
 +	var build cbackend.BuildUnit
 +	var err error
-+	if options.targetID == target.X8664WindowsMSVC && (options.windows != nil || options.profile == cdriver.OptimizedProfile && !policy.runTrapReceipt) {
++	if options.windows != nil && len(options.windows.PrivateFunctions) != 0 {
++		build, err = cbackend.EmitWindowsApplicationBuild(context.Background(), program, entry, profile, sdkStorage, 512<<10, options.windows.PrivateFunctions)
++		if err != nil {
++			return nativeBuildPlan{}, buildFailure(stderr, err)
++		}
++	} else if options.targetID == target.X8664WindowsMSVC && (options.windows != nil || options.profile == cdriver.OptimizedProfile && !policy.runTrapReceipt) {
 +		// MSVC applies the host deadline to each partition. Bound the optimizer input.
 +		build, err = cbackend.EmitBuildContext(context.Background(), program, entry, profile, sdkStorage, 512<<10)
 +	} else {
@@ -60,3 +230,59 @@ diff --git a/internal/cli/native_compile.go b/internal/cli/native_compile.go
  	if err != nil {
  		var capability cbackend.CapabilityError
  		if errors.As(err, &capability) {
+diff --git a/internal/windowsbuild/config.go b/internal/windowsbuild/config.go
+index 0024083661ac912bf03e5c58df40bdd310072473..c1c37b939f0cd5d503ea597a0c7122f5e8123697 100644
+--- a/internal/windowsbuild/config.go
++++ b/internal/windowsbuild/config.go
+@@ -22,11 +22,12 @@ const MaxConfigBytes = 65536
+ const MaxInputBytes = 4 << 20
+ 
+ type Config struct {
+-	Schema    string   `json:"schema"`
+-	Subsystem string   `json:"subsystem"`
+-	Libraries []string `json:"libraries,omitempty"`
+-	Sources   []string `json:"sources,omitempty"`
+-	Resources []string `json:"resources,omitempty"`
++	Schema           string   `json:"schema"`
++	Subsystem        string   `json:"subsystem"`
++	Libraries        []string `json:"libraries,omitempty"`
++	Sources          []string `json:"sources,omitempty"`
++	Resources        []string `json:"resources,omitempty"`
++	PrivateFunctions []string `json:"privateFunctions,omitempty"`
+ }
+ 
+ type Input struct {
+@@ -41,6 +42,7 @@ type Project struct {
+ }
+ 
+ var library = regexp.MustCompile(`^[a-z][a-z0-9_]{0,63}\.lib$`)
++var privateFunction = regexp.MustCompile(`^(?:[A-Za-z_][A-Za-z0-9_]*::)+[A-Za-z_][A-Za-z0-9_]*$`)
+ var segment = regexp.MustCompile(`^[A-Za-z0-9_][A-Za-z0-9_.-]*$`)
+ 
+ func ValidPath(name, extension string) bool {
+@@ -95,6 +97,8 @@ func Parse(data []byte) (Config, error) {
+ 			value = &c.Sources
+ 		case "resources":
+ 			value = &c.Resources
++		case "privateFunctions":
++			value = &c.PrivateFunctions
+ 		default:
+ 			return c, fmt.Errorf("unknown Windows build field %s", name)
+ 		}
+@@ -115,6 +119,16 @@ func (c Config) Validate() error {
+ 	if c.Schema != Schema || c.Subsystem != "console" && c.Subsystem != "windows" {
+ 		return fmt.Errorf("Windows build requires schema %s and subsystem console/windows", Schema)
+ 	}
++	if len(c.PrivateFunctions) > 64 || (len(c.PrivateFunctions) != 0 && len(c.Sources) == 0) {
++		return fmt.Errorf("private Windows functions require C sources and permit at most 64 entries")
++	}
++	seenFunctions := map[string]bool{}
++	for _, name := range c.PrivateFunctions {
++		if len(name) > 240 || !privateFunction.MatchString(name) || seenFunctions[name] {
++			return fmt.Errorf("invalid/duplicate private Windows function %q", name)
++		}
++		seenFunctions[name] = true
++	}
+ 	for _, group := range []struct {
+ 		values    []string
+ 		max       int

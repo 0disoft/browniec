@@ -19,9 +19,26 @@ sources and libraries with the generated objects. The default stack and SDK
 remain unchanged. Diagnostic tests and Linux retain their existing build routes.
 
 Current Windows compiler SHA-256:
-`2ef3100b7726d49c8eff4fb1b3f8420d2561ccb718bca5c0db21eb7150d11089`.
+`13f32b5ffc77b38b34d91eacee465e95dbfe569d9eff3344351d3148fd1e87ab`.
 Current patch SHA-256:
-`57ad69258c4d682b449ac3b437ac2664ab32f47dfad603355a33618ae57ef4cc`.
+`ee51dc597165cde6d3b360716f604b58a4bae28c21d1bf2d9c7f3017fa5b164b`.
+
+### Private Windows application bindings
+
+Applications with declared C sources can list up to 64 distinct root-package
+`module::function` names in the Windows build manifest's `privateFunctions`.
+The compiler retains those functions and their reachable dependencies,
+including when all callers are in C. Missing or unsupported names stop the build.
+The staged `fy_project.h` exposes a function alias for each requested name and
+aliases for emitted root-package aggregate types when the C input defines
+`FY_PROJECT_PRIVATE_BINDINGS`. Alias suffixes are hexadecimal UTF-8 spellings,
+giving stable source-level names across numeric generated-symbol changes.
+The declarations and layouts come from the same build. This is a build-local
+bridge for trusted native sources.
+
+`python -B tools/verify-windows-private-bindings.py` builds and runs a C-only
+call into a Fairy resource reader in both Windows profiles. It inserts another
+reachable function between builds and checks missing and duplicate names.
 
 With Git and Go 1.27.1 on PATH, bootstrap in the Brownie checkout and build:
 
