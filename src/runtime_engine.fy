@@ -49,6 +49,8 @@ pub struct Error { u32 status; diagnostics::Error diagnostic; }
 pub struct Event { u8 kind; i64 value; diagnostics::Error diagnostic; usize remaining; bool fuel_known; }
 // Event.kind 4 indicates a suspended host request. Request bytes are detached.
 pub struct HostRequest { usize run; usize request; usize import_id; u8[14] payload; }
+// Detached routing facts for typed adapters. Pair with an Engine-scoped payload borrow.
+pub struct HostRequestInfo { usize run; usize request; usize import_id; usize payload_bytes; host::Binding catalog; }
 struct HostTransition { Event event; host::ScalarEvent scalar; }
 pub struct Snapshot { usize programs; usize instances; usize pins; bool closed; }
 struct Meta {
@@ -411,26 +413,40 @@ pub fn Result<host::ScalarEvent,Error> observe_scalar_host(ref Engine e,usize in
         case .ok(v):{.ok(v)}case .err(_):{.err(error(7))}
     };
 }
-// The borrow is scoped to the immutable Engine view. Copy into adapter-owned
-// storage before stepping, replying, cancelling or destroying the Instance.
-pub fn Result<ref u8[],Error> host_request_payload(ref Engine e,usize instance){
+fn Result<ref host::Exchange,Error> request_exchange(ref Engine e,usize instance){
     let usize oi=host_output_index(e,instance)?;
     let ref Output owner=vec::at<Output>(ref e.outputs,oi);
     let ref host::Exchange exchange=vec::at<host::Exchange>(ref owner.host,0);
     if(host::deadline_reached(exchange,unsafe{monotonic_ticks_raw()})){return .err(error(11));}
+    return .ok(exchange);
+}
+
+pub fn Result<HostRequestInfo,Error> host_request_info(ref Engine e,usize instance){
+    let ref host::Exchange exchange=request_exchange(e,instance)?;
+    let host::Observation state=host::observe(exchange);
+    if(state.phase!=1){return .err(error(11));}
+    if(state.run!=instance){return .err(error(7));}
+    let ref u8[] payload=switch(host::request_bytes(exchange)){
+        case .ok(data):{data}case .err(_):{return .err(error(7));}
+    };
+    return .ok(HostRequestInfo{.run=state.run,.request=state.request,.import_id=state.import_id,
+        .payload_bytes=payload.len,.catalog=host::binding(exchange)});
+}
+
+// The borrow is scoped to the immutable Engine view. Copy into adapter-owned
+// storage before stepping, replying, cancelling or destroying the Instance.
+pub fn Result<ref u8[],Error> host_request_payload(ref Engine e,usize instance){
+    let ref host::Exchange exchange=request_exchange(e,instance)?;
     return switch(host::request_bytes(exchange)){
         case .ok(data):{.ok(data)}case .err(_):{.err(error(11))}
     };
 }
 pub fn Result<HostRequest,Error> scalar_host_request(ref Engine e,usize instance){
-    let usize oi=host_output_index(e,instance)?;
-    let ref Output owner=vec::at<Output>(ref e.outputs,oi);
-    let ref host::Exchange exchange=vec::at<host::Exchange>(ref owner.host,0);
+    let ref host::Exchange exchange=request_exchange(e,instance)?;
     let host::Observation state=host::observe(exchange);
     let ref u8[] data=switch(host::request_bytes(exchange)){
         case .ok(v):{v}case .err(_):{return .err(error(11));}
     };
-    if(host::deadline_reached(exchange,unsafe{monotonic_ticks_raw()})){return .err(error(11));}
     if(data.len!=14 || state.run!=instance){return .err(error(7));}
     var u8[14] payload=[0;14];var usize i=0;
     while(i<14){payload[i]=data[i];i+=1;}

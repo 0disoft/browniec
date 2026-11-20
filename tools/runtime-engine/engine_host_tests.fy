@@ -96,6 +96,12 @@ fn Result<usize,u8> admission(){
 fn engine::Event event(Result<engine::Event,engine::Error> result){
     return switch(result){case .ok(v):{v}case .err(_):{assert(false);event(result)}};
 }
+fn engine::HostRequestInfo request_info(ref engine::Engine owner,usize instance){
+    return switch(engine::host_request_info(owner,instance)){
+        case .ok(v):{v}case .err(_):{assert(false);engine::HostRequestInfo{
+            .run=0,.request=0,.import_id=0,.payload_bytes=0,.catalog=host::Binding{.words=[0;8]}}}
+    };
+}
 fn engine::HostRequest request(ref engine::Engine owner,usize instance){
     return switch(engine::scalar_host_request(owner,instance)){
         case .ok(value):{value}case .err(_):{assert(false);request(owner,instance)}
@@ -245,6 +251,12 @@ fn Result<usize,u8> helper_host_calls(){
     assert(event(engine::step_instance(ref mut owner,b,32)).kind==4);
     let engine::HostRequest ra=request(ref owner,a);
     let engine::HostRequest rb=request(ref owner,b);
+    let engine::HostRequestInfo info_a=request_info(ref owner,a);
+    let engine::HostRequestInfo info_b=request_info(ref owner,b);
+    assert(info_a.run==a && info_b.run==b && info_a.request==1 && info_b.request==1);
+    assert(info_a.import_id==1 && info_b.import_id==1 && info_a.payload_bytes==14 && info_b.payload_bytes==14);
+    assert(programs::same_digest(ref expected,ref info_a.catalog.words));
+    assert(programs::same_digest(ref expected,ref info_b.catalog.words));
     let ref u8[] wire=b"\x01\x00\x03\x00\x00\x00\x04\x00\x00\x00\x29\x00\x00\x00";
     assert(ra.import_id==1 && rb.import_id==1 && bytes::equal(ref ra.payload,wire) && bytes::equal(ref rb.payload,wire));
     assert(!engine::reply_scalar_host(ref mut owner,a,rb.run,rb.request,0,answer()).is_ok);
@@ -419,6 +431,8 @@ fn Result<usize,u8> deadline_order(){
 
     unsafe{bc_runtime_engine_test_set_clock(deadline)};
     assert(!engine::scalar_host_request(ref owner,expired.run).is_ok);
+    assert(!engine::host_request_info(ref owner,expired.run).is_ok);
+    assert(scalar(ref owner,expired.run).phase==1);
     assert(event(engine::step_instance(ref mut owner,expired.run,8)).kind==2);
     assert(event(engine::reply_scalar_host(ref mut owner,late.run,late.run,late.request,0,answer())).kind==2);
     assert(event(engine::cancel_ready(ref mut owner,tie.run)).kind==3);
@@ -515,7 +529,11 @@ fn Result<usize,u8> typed_source_round_trip(){
     let engine::Event suspended=event(engine::step_instance(ref mut owner,instance,16));
     assert(suspended.kind==4 && suspended.remaining==9999953);
     check_mixed(ref owner,instance);
-    assert(event(engine::reply_scalar_host(ref mut owner,instance,instance,1,0,answer())).kind==0);
+    let engine::HostRequestInfo info=request_info(ref owner,instance);
+    assert(info.run==instance && info.request==1 && info.import_id==0 && info.payload_bytes==39);
+    assert(programs::same_digest(ref expected,ref info.catalog.words));
+    assert(event(engine::reply_scalar_host(ref mut owner,instance,info.run,info.request,0,answer())).kind==0);
+    assert(!engine::host_request_info(ref owner,instance).is_ok);
     let engine::Event complete=event(engine::step_instance(ref mut owner,instance,16));
     assert(complete.kind==1 && complete.value==77 && complete.remaining==9999938);
     assert(id(engine::destroy_instance(ref mut owner,instance))==instance);
@@ -959,6 +977,7 @@ fn void receiving_invisible(ref engine::Engine owner,usize instance,usize fuel){
     let host::ScalarEvent waiting=scalar(owner,instance);
     assert(waiting.phase==5 && waiting.host.phase==4 && waiting.value==0);
     assert(waiting.host.calls==1 && waiting.host.request==1 && waiting.host.replies==0 && waiting.host.fuel==fuel);
+    assert(!engine::host_request_info(owner,instance).is_ok);
     assert(!engine::host_request_payload(owner,instance).is_ok);
 }
 fn Result<usize,u8> chunked_receive(){

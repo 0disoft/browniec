@@ -286,6 +286,22 @@ SHA-256 is `204e6adbdc4f073f9731fe4682e79e7ab92332900db8faede174c494c82cd51a`. T
 is `build/runtime-engine/20261118T105620621886Z/receipt.json`. This verifies the
 private Engine path. Public delivery remains open.
 
+### Typed routing metadata
+
+`host_request_info` returns the Engine-scoped run ID, request ID, import ID,
+exact payload length, and the retained catalog's SHA-256 words. An adapter
+can select a registration by catalog digest and import ID before decoding
+the TLV from `host_request_payload`. Metadata is detached. The payload borrow
+ends before any Engine mutation. Reading either field leaves Fuel and the
+exchange unchanged. Both reject after expiry or once reply receipt begins.
+The accessor does not advance expiry or claim the request for dispatch.
+
+Windows development and /O2 passed the owning Engine suite with zero live SDK
+allocations after teardown. The suite checks distinct run IDs with the same
+request ID, a 39-byte typed request, and rejection after expiry, complete reply,
+or partial receipt. The local receipt is
+`build/runtime-engine/20261120T145534752830Z/receipt.json`.
+
 ## Engine scalar pending memory
 
 Admission charges the SDK backing for a Vec of eight Exchange slots, the
