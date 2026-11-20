@@ -13,6 +13,14 @@ and rejects nonempty requirements before opening any source member.
 `check` compiles and verifies without guest execution. `run` uses the normal
 Fuel, exit codes and result formats. See the [CLI configuration](../cli/configuration.md#project-selection).
 
+Project binding and compilation use the exact anchored snapshot to report
+member identity and byte coordinates even when owning compilation consumes
+its input. Runtime errors use the Program's already-retained snapshot.
+The renderer checks the entire span and canonical member spelling before
+printing. The first diagnostic is bounded to one path (up to 240 bytes)
+and a fixed set of numeric fields, with one position scan over at most 4,096
+source bytes. See [project output](../cli/output-and-exit-codes.md#project-check-and-run).
+
 ## Private source loader
 
 `select(ref Project, root UTF-8 bytes, source_bytes)` borrows explicitly admitted

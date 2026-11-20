@@ -160,6 +160,17 @@ requirements are unavailable (4), and failure to open or read the manifest or
 its declared files is an input I/O error (7). Source compilation and runtime
 failures use their existing error classes.
 
+When a project source error has a validated span, text prints one line in the
+form `browniec: type at lib/helper.brc:2:31`. In JSON v2 the
+`source_byte` location includes the root-relative `path`, zero-based
+`source_index` in the manifest's source list, and the half-open byte range
+`[offset, end_offset)`. It also includes one-based `line` and `byte_column`.
+Only LF advances the line. Columns count original UTF-8 bytes, including CR
+before LF. JSON v1 keeps the same numeric `byte_offset` and field set.
+Manifest errors, absent locations and verifier instruction indices keep
+their existing forms. Only canonical source identities are rendered.
+No source excerpt is read from disk.
+
 ## IR inspection
 
 Inspection uses its own `browniec.ir/v1` schema with `command: "inspect"` and

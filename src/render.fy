@@ -1,6 +1,8 @@
 module render;
 
 import errors as errors;
+import project_names as names;
+import source_snapshot as sources;
 import fuel as meter;
 import std::bytes as bytes;
 import std::io as io;
@@ -48,7 +50,8 @@ fn ref str location_name(u8 location){
     if(location!=errors::absent_location()){return "source_byte";}
     return "none";
 }
-fn Result<usize,bytes::BufferError> encode_location(ref mut bytes::Buffer output,Format format,errors::Error error){
+fn Result<usize,bytes::BufferError> encode_location(ref mut bytes::Buffer output,Format format,errors::Error error,
+    ref u8[] path,sources::Span span,sources::Position position){
     if(!v2(format)){
         let usize key=bytes::append(output,b"\",\"byte_offset\":")?;
         return bytes::append_usize(output,error.offset);
@@ -58,11 +61,24 @@ fn Result<usize,bytes::BufferError> encode_location(ref mut bytes::Buffer output
     if(has_location(error.location)){
         let usize offset=bytes::append(output,b"\",\"offset\":")?;
         let usize value=bytes::append_usize(output,error.offset)?;
+        if(path.len!=0){
+            discard bytes::append(output,b",\"path\":\"")?;
+            discard bytes::append(output,path)?;
+            discard bytes::append(output,b"\",\"source_index\":")?;
+            discard bytes::append_usize(output,span.source)?;
+            discard bytes::append(output,b",\"end_offset\":")?;
+            discard bytes::append_usize(output,span.end)?;
+            discard bytes::append(output,b",\"line\":")?;
+            discard bytes::append_usize(output,position.line)?;
+            discard bytes::append(output,b",\"byte_column\":")?;
+            discard bytes::append_usize(output,position.byte_column)?;
+        }
         return bytes::append(output,b"}");
     }
     return bytes::append(output,b"\"}");
 }
-fn Result<bytes::Buffer, bytes::BufferError> encode(Format format,bool run,bool eval, bool failed, i64 value, errors::Error error, u8 arrays) {
+fn Result<bytes::Buffer, bytes::BufferError> encode(Format format,bool run,bool eval,bool failed,i64 value,
+    errors::Error error,u8 arrays,ref u8[] path,sources::Span span,sources::Position position){
     var bytes::Buffer output = bytes::with_capacity(512)?;
     let usize prefix=bytes::append(ref mut output,if(v2(format)){
         b"{\"schema\":\"browniec.result/v2\",\"profile\":"
@@ -90,7 +106,7 @@ fn Result<bytes::Buffer, bytes::BufferError> encode(Format format,bool run,bool 
         else { b",\"status\":\"checked\",\"return_i32\":null,\"error\":null" })?;
     if (failed) {
         let usize a = bytes::append(ref mut output, text::as_bytes(kind(error.kind)))?;
-        let usize location=encode_location(ref mut output,format,error)?;
+        let usize location=encode_location(ref mut output,format,error,path,span,position)?;
         let usize d = bytes::append(ref mut output, b"}")?;
     } else if (run) {
         let usize a = bytes::append_i64(ref mut output, value)?;
@@ -116,14 +132,8 @@ pub fn i32 eval_outcome(Format format,bool failed,i64 value,errors::Error error)
 fn i32 command_outcome(Format format,bool run,bool eval,bool failed,i64 value,errors::Error error,u8 arrays){
     let i32 code = if (failed) { exit_code(error.kind) } else { 0 };
     if (!text_mode(format)) {
-        let bytes::Buffer output = switch (encode(format,run,eval, failed, value, error, arrays)) {
-            case .ok(value): { value } case .err(_): { return 7; }
-        };
-        let ref u8[] view = bytes::view(ref output);
-        return switch (io::write_bytes(view)) {
-            case .ok(n): { if (n == view.len) { code } else { 7 } }
-            case .err(_): { 7 }
-        };
+        return json_outcome(format,run,eval,failed,value,error,arrays,b"",sources::no_source(),
+            sources::Position{.line=0,.byte_column=0});
     }
     if (failed) {
         if(!io::write_stderr("browniec: ").is_ok || !io::write_stderr(kind(error.kind)).is_ok){return 7;}
@@ -138,6 +148,59 @@ fn i32 command_outcome(Format format,bool run,bool eval,bool failed,i64 value,er
             !io::write_stderr("\n").is_ok) { return 7; }
     } else if (!io::write_stderr("checked\n").is_ok) { return 7; }
     return code;
+}
+
+@effects(console)
+fn i32 json_outcome(Format format,bool run,bool eval,bool failed,i64 value,errors::Error error,u8 arrays,
+    ref u8[] path,sources::Span span,sources::Position position){
+    let bytes::Buffer output=switch(encode(format,run,eval,failed,value,error,arrays,path,span,position)){
+        case .ok(v):{v}case .err(_):{return 7;}
+    };
+    let ref u8[] view=bytes::view(ref output);
+    return switch(io::write_bytes(view)){
+        case .ok(n):{if(n==view.len){if(failed){exit_code(error.kind)}else{0}}else{7}}
+        case .err(_):{7}
+    };
+}
+
+fn Result<bytes::Buffer,bytes::BufferError> project_message(ref u8[] path,errors::Error error,sources::Position position){
+    var bytes::Buffer output=bytes::with_capacity(512)?;
+    discard bytes::append(ref mut output,b"browniec: ")?;
+    discard bytes::append(ref mut output,text::as_bytes(kind(error.kind)))?;
+    discard bytes::append(ref mut output,b" at ")?;
+    discard bytes::append(ref mut output,path)?;
+    discard bytes::append(ref mut output,b":")?;
+    discard bytes::append_usize(ref mut output,position.line)?;
+    discard bytes::append(ref mut output,b":")?;
+    discard bytes::append_usize(ref mut output,position.byte_column)?;
+    discard bytes::append(ref mut output,b"\n")?;
+    return .ok(output);
+}
+
+@effects(console)
+pub fn i32 project_failure(Format format,bool run,errors::Error error,ref sources::Snapshot snapshot,
+    sources::Span span,u8 arrays){
+    if(error.location==errors::instruction_location()){return selected_outcome(format,run,true,0,error,arrays);}
+    let errors::Error absent=errors::absent(error.kind,0);
+    let sources::Position position=switch(sources::position(snapshot,span)){
+        case .ok(v):{v}case .err(_):{return selected_outcome(format,run,true,0,absent,arrays);}
+    };
+    let ref u8[] path=switch(sources::name(snapshot,span.source)){
+        case .ok(v):{v}case .err(_):{return selected_outcome(format,run,true,0,absent,arrays);}
+    };
+    // Canonical member spellings exclude delimiters, terminal controls and newlines.
+    if(!names::member_path(path)){return selected_outcome(format,run,true,0,absent,arrays);}
+    let errors::Error located=errors::make(error.kind,span.start);
+    if(v2(format)){return json_outcome(format,run,false,true,0,located,arrays,path,span,position);}
+    if(!text_mode(format)){return selected_outcome(format,run,true,0,located,arrays);}
+    let bytes::Buffer output=switch(project_message(path,located,position)){
+        case .ok(v):{v}case .err(_):{return 7;}
+    };
+    let ref u8[] view=bytes::view(ref output);
+    return switch(io::write_stderr_bytes(view)){
+        case .ok(n):{if(n==view.len){exit_code(error.kind)}else{7}}
+        case .err(_):{7}
+    };
 }
 
 // Append discoverable limits to the existing version object, then write once.

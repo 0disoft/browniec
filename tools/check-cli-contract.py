@@ -85,6 +85,20 @@ def check_output_table(exe, identity):
     print('PASS: documented CLI channels and schemas match native output')
 
 
+def check_project_location(exe, manifest, command, code, kind, index, name, source, offset, end):
+    args = [command, '--project', manifest]
+    line = source[:offset].count(b'\n') + 1
+    column = offset - source.rfind(b'\n', 0, offset)
+    expected = {
+        'kind': 'source_byte', 'offset': offset, 'end_offset': end,
+        'path': name, 'source_index': index, 'line': line, 'byte_column': column,
+    }
+    assert check_json(exe, args, code, version=2) == {'kind': kind, 'location': expected}
+    assert check_json(exe, args, code) == {'kind': kind, 'byte_offset': offset}
+    ran = invoke(exe, args, code)
+    assert not ran.stdout and ran.stderr == f'browniec: {kind} at {name}:{line}:{column}\n'.encode(), ran
+
+
 def check_project(exe, folder):
     help_text = invoke(exe, ['--help'], 0)
     assert b'check --project FILE' in help_text.stdout and b'run --project FILE' in help_text.stdout
@@ -118,6 +132,30 @@ def check_project(exe, folder):
     main.write_bytes(b'module app; pub fn i32 chosen(){return 1/0;}')
     assert check_json(exe, ['check', '--project', manifest], 0) is None
     assert check_json(exe, args, 5)['kind'] == 'zero_divisor'
+
+    helper_path = 'lib/helper-file.brc'
+    library = project / helper_path
+    library.parent.mkdir()
+    config['sources'][1]['path'] = helper_path
+    write()
+    library.write_bytes(helper.read_bytes())
+    main.write_bytes(b'@')
+    check_project_location(exe, manifest, 'check', 3, 'lexical', 0, main.name, b'@', 0, 1)
+
+    main.write_bytes(b'module app;import helper as h;pub fn i32 chosen(){return h::answer();}')
+    for command, code, kind, suffix, token in (
+        ('check', 3, 'type', b'true;}', b'return'),
+        ('run', 5, 'zero_divisor', b'1/0;}', b'/0'),
+    ):
+        source = 'module helper;\r\npub fn i32 answer(){/* 한 */ return '.encode() + suffix
+        library.write_bytes(source)
+        offset = source.index(token)
+        check_project_location(exe, manifest, command, code, kind, 1, helper_path, source, offset, offset + 1)
+
+    config['sources'][1]['path'] = 'lib/invalid\npath.brc'
+    write()
+    invalid = check_json(exe, args, 2, version=2)
+    assert invalid['kind'] == 'usage' and 'path' not in invalid['location'], invalid
 
     config['sources'][1]['path'] = 'absent.brc'
     config['requires'] = ['host.demo.read']

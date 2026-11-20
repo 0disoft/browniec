@@ -1,8 +1,8 @@
-- Latest delivery checkpoint (2026-11-20): [Windows project CLI](docs/engineering/project-source-loader.md#public-cli)
-  checks and runs explicit anchored manifests with an empty requirements list
-  and a public zero-argument i32 entry. Development and /O2 pass the CLI contract
-  and selected examples. The private Engine and anchored adapter pass both
-  profiles. Root locked check passes 380 sources / 4307 MIR functions.
+- Latest delivery checkpoint (2026-11-20): [Windows project diagnostics](docs/cli/output-and-exit-codes.md#project-check-and-run)
+  preserve canonical member paths, original byte spans and line/byte-column
+  coordinates in text and JSON v2. Development and /O2 pass the public CLI
+  contract. The internal /O2 test preserves instruction indices 0 and 1 and
+  the JSON v1 offset. Locked builds use 380 sources / 4310 MIR functions.
 
 # Brownie C agent guidance
 
