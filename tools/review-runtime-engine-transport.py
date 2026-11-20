@@ -53,7 +53,8 @@ for number,tail in re.findall(r'bc_runtime_engine_binding\(UINT32_C\((\d+)\)\);(
 # that jump within the witness definition before reading the typed callee.
 reply_body=re.search(r'^static void fy_fn_\d+\([^\n]*\) \{\n(?:(?!^}).)*bc_runtime_engine_binding\(UINT32_C\(40\)\);(?:(?!^}).)*^}',t,re.M|re.S).group()
 reply_target=re.search(r'bc_runtime_engine_binding\(UINT32_C\(40\)\);\s+goto (fy_b_\d+);',reply_body).group(1)
-c['bindings']['40']=re.search(r'^'+reply_target+r':\n[^\n]*\b(fy_fn_\d+)\(',reply_body,re.M).group(1)
+reply_block=re.search(r'^'+reply_target+r':\n((?:    [^\n]*\n)+)',reply_body,re.M).group(1)
+c['bindings']['40']=re.search(r'\b(fy_fn_\d+)\(',reply_block).group(1)
 definitions=list(re.finditer(r'^static [^\n]+\b(fy_fn_\d+)\([^\n]*\) \{',t,re.M))
 marked=[]
 for i,match in enumerate(definitions):
@@ -101,7 +102,8 @@ c['hostExchangeVectorType']=field_type(c['outputType'],3)
 c['hostExchangeType']=vector_element(c['hostExchangeVectorType'])
 c['hostRunConfigType']=arg(39,5)
 c['hostTransitionType']=arg(41,7)
-assert arg(41,0)==c['hostExchangeVectorType'] and arg(40,2)==c['outputVectorType']
+assert arg(41,0)==c['hostExchangeVectorType']
+assert arg(40,1)==c['programVectorType'] and arg(40,3)==arg(40,4)==c['outputVectorType']
 c['policyVectorType']=field_type(c['engineType'],8)
 c['policyType']=vector_element(c['policyVectorType'])
 assert arg(37,0)==c['policyVectorType']

@@ -92,6 +92,13 @@ def source_copy(path):
         source = source.replace(anchor, anchor + '\n        if(w.index==15 && unsafe{bc_runtime_engine_test_cleanup_fault()}!=0){'
                                 'planned.pool.slots[15].exclusive=true;}', 1)
         return path.name, source.encode('utf-8')
+    if path == ROOT / 'src/host_exchange.fy':
+        text = path.read_text(encoding='utf-8')
+        anchor = 'fn bool is_scalar(ref Exchange e){'
+        need(text.count(anchor) == 1, 'Scalar host fault anchor changed')
+        text = text.replace(anchor, 'unsafe extern C fn u32 bc_runtime_engine_test_host_fault();\n'
+                            + anchor + '\n    if(unsafe{bc_runtime_engine_test_host_fault()}!=0){return false;}\n', 1)
+        return path.name, text.encode('utf-8')
     if path == ROOT / 'src/retention_plan.fy':
         text=path.read_text(encoding='utf-8');anchor='    plan.admitted=true;'
         need(text.count(anchor)==1,'Retention admission probe anchor changed')
@@ -212,7 +219,9 @@ def main():
                        ('24', 2, 'outputVectorType'), ('25', 0, 'programType'),
                        ('28',0,'machineType'),('28',1,'coreType'),
                        ('29',0,'machineType'),('29',1,'coreType'),('26',10,'callMetadataType')]
-        projections.extend([('30',0,'outputType'),('38',2,'hostProgramVectorType'),('39',3,'outputVectorType'),('39',4,'policyVectorType'),('39',5,'hostRunConfigType'),('40',2,'outputVectorType'),('41',0,'hostExchangeVectorType'),('41',7,'hostTransitionType')])
+        projections.extend([('30',0,'outputType'),('38',2,'hostProgramVectorType'),('39',3,'outputVectorType'),('39',4,'policyVectorType'),('39',5,'hostRunConfigType'),
+                            ('40',1,'programVectorType'),('40',3,'outputVectorType'),('40',4,'outputVectorType'),
+                            ('41',0,'hostExchangeVectorType'),('41',7,'hostTransitionType')])
         projections.extend([('31',0,'pendingVectorType'),('31',1,'completionType'),('31',2,'publishedVectorType'),
                             ('31',3,'outputProgramType'),('31',4,'snapshotType'),('33',0,'pendingVectorType')])
         for binding, index, key in projections:

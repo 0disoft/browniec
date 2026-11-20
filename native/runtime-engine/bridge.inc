@@ -93,7 +93,7 @@ uint32_t bc_runtime_engine_prepare_host(void *raw,uintptr_t program,const void *
 uint32_t bc_runtime_engine_reply_host(void *raw,uintptr_t instance,uintptr_t run,uintptr_t request,
  uint8_t kind,const uint8_t *data,uintptr_t length,uintptr_t total,uintptr_t offset){
  bc_engine *e=raw;bc_engine_ticket ticket;uint32_t s=admission(e,&ticket);if(s)return s;
- s=B40(&e->f_0,&e->f_3,&e->f_6,&e->f_7,instance,run,request,kind,(fy_byte_slice){data,length},total,offset);return finish(e,ticket,s);
+ s=B40(&e->f_0,&e->f_1,&e->f_3,&e->f_6,&e->f_7,instance,run,request,kind,(fy_byte_slice){data,length},total,offset);return finish(e,ticket,s);
 }
 uint32_t bc_runtime_engine_drive_host(void *raw,uint32_t mode,uintptr_t quantum,uintptr_t run,uintptr_t request,
  uint8_t kind,const uint8_t *data,uintptr_t length,void *transition,uintptr_t offset){

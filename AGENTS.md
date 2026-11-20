@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-21): [Shared Windows adapter budget](docs/engineering/host-exchange.md#shared-process-adapter-budget)
-  bounds live leases, launch attempts and cumulative wire reservations.
-  Development and /O2 transport and Engine checks passed, as did the locked /O2 CLI round trip.
+- Latest runtime checkpoint (2026-11-21): [Host execution invariant containment](docs/engineering/runtime-engine-step.md#containment-after-a-host-execution-invariant-failure)
+  poisons the Engine on internal state faults in host step, cancellation, receipt and claim.
+  Windows development and /O2 Engine checks passed with zero live SDK allocations.
 
 # Brownie C agent guidance
 

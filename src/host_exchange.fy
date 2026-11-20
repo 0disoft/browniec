@@ -225,12 +225,13 @@ fn usize commit_request(ref mut Exchange e,usize import_id,bytes::Buffer prepare
 fn void set_dispatch_claim(ref mut Exchange e,u8 value){
     let ref mut u8[] h=unsafe { byte_slice::from_raw_parts_mut(e,e.header_data,80) };h[4]=value;
 }
-pub fn bool claim_scalar_dispatch(ref mut Exchange e,usize run,usize request,usize now){
-    if(!is_scalar(e) || deadline_reached(e,now) || header(e)[4]!=0){return false;}
+pub fn Result<bool,ScalarError> claim_scalar_dispatch(ref mut Exchange e,usize run,usize request,usize now){
+    if(!is_scalar(e)){return .err(.State);}
+    if(deadline_reached(e,now) || header(e)[4]!=0){return .ok(false);}
     let Observation s=state(e);
-    if(s.phase!=1 || s.run!=run || s.request!=request){return false;}
+    if(s.phase!=1 || s.run!=run || s.request!=request){return .ok(false);}
     set_dispatch_claim(e,1);
-    return true;
+    return .ok(true);
 }
 pub fn Result<ref u8[],Error> request_bytes(ref Exchange e){
     if(state(e).phase!=1){return .err(.State);}return .ok(bytes::view(ref e.backing));

@@ -1262,10 +1262,12 @@ fn u32 prepare_host_inner(ref mut Meta m,ref mut vec::Vec<Program> p,ref mut vec
 
 fn u32 drive_host_owner(ref mut vec::Vec<host::Exchange> owners,u32 mode,usize quantum,usize run,usize request,
     u8 kind,ref u8[] payload,ref mut HostTransition transition,usize offset){
-    if(vec::len<host::Exchange>(owners)!=1){return 7;}
+    if(vec::len<host::Exchange>(owners)!=1){return 14;}
     let ref mut host::Exchange exchange=vec::at_mut<host::Exchange>(owners,0);
     if(mode==3){
-        return if(host::claim_scalar_dispatch(exchange,run,request,unsafe{monotonic_ticks_raw()})){0}else{11};
+        return switch(host::claim_scalar_dispatch(exchange,run,request,unsafe{monotonic_ticks_raw()})){
+            case .ok(claimed):{if(claimed){0}else{11}}case .err(_):{14}
+        };
     }
     var usize remaining=quantum;
     while(remaining>0 || mode==2){
@@ -1275,7 +1277,7 @@ fn u32 drive_host_owner(ref mut vec::Vec<host::Exchange> owners,u32 mode,usize q
         }else{host::step_scalar_budget(exchange,now,mode==1,ref mut remaining)};
         let host::ScalarEvent observed=switch(action){
             case .ok(value):{value}case .err(reason):{return switch(reason){
-                case .Rejected:{1}case .Allocation:{6}case .Authority:{5}case .State:{7}case .Binding:{7}
+                case .Rejected:{1}case .Allocation:{6}case .Authority:{5}case .State:{14}case .Binding:{14}
             };}
         };
         let bool done=observed.phase==3;
@@ -1289,16 +1291,23 @@ fn u32 drive_host_owner(ref mut vec::Vec<host::Exchange> owners,u32 mode,usize q
     }
     return 0;
 }
-fn u32 drive_host(ref mut Meta m,ref mut vec::Vec<Instance> v,ref mut vec::Vec<Output> outputs,
+fn u32 contain_host_fault(ref mut Meta m,ref vec::Vec<Program> programs,ref mut vec::Vec<Instance> instances,
+    ref vec::Vec<Output> outputs){
+    poison_children(m,programs,instances,outputs);
+    return failed(m,14);
+}
+fn u32 drive_host(ref mut Meta m,ref vec::Vec<Program> p,ref mut vec::Vec<Instance> v,ref mut vec::Vec<Output> outputs,
     ref mut vec::Vec<Output> scratch,usize ii,u32 mode,usize quantum,usize run,usize request,u8 kind,ref u8[] payload,usize offset){
     let usize id=vec::at<Instance>(v,ii).id;
-    let usize oi=switch(output_index(outputs,id)){case .ok(i):{i}case .err(_):{return failed(m,7);}};
+    let usize oi=switch(output_index(outputs,id)){case .ok(i):{i}case .err(_):{return contain_host_fault(m,p,v,outputs);}};
     var HostTransition next=HostTransition{.scalar=host::empty_scalar_event(),.event=pending()};
     var u32 status=0;
     {let ref mut Output saved=vec::at_mut<Output>(outputs,oi);
      status=unsafe{drive_host_raw(saved as ptr mut void,mode,quantum,run,request,kind,
         payload as ptr u8,payload.len,ref mut next as ptr mut void,offset)};}
+    if(status==14){return contain_host_fault(m,p,v,outputs);}
     if(status!=0){return failed(m,status);}
+    if(mode==3){return success(m,request);}
     let ref mut Instance target=vec::at_mut<Instance>(v,ii);
     target.event=next.event;
     if(next.scalar.phase==3 || next.scalar.phase==4){
@@ -1312,11 +1321,11 @@ fn u32 drive_host(ref mut Meta m,ref mut vec::Vec<Instance> v,ref mut vec::Vec<O
     }
     m.event=next.event;return success(m,id);
 }
-fn u32 reply_host_inner(ref mut Meta m,ref mut vec::Vec<Instance> v,ref mut vec::Vec<Output> outputs,
+fn u32 reply_host_inner(ref mut Meta m,ref vec::Vec<Program> p,ref mut vec::Vec<Instance> v,ref mut vec::Vec<Output> outputs,
     ref mut vec::Vec<Output> scratch,usize instance,usize run,usize request,u8 kind,ref u8[] payload,usize total,usize offset){
     let usize ii=switch(instance_index(v,instance)){case .ok(i):{i}case .err(status):{return failed(m,status);}};
     if(vec::at<Instance>(v,ii).phase!=4){return failed(m,11);}
-    return drive_host(m,v,outputs,scratch,ii,2,total,run,request,kind,payload,offset);
+    return drive_host(m,p,v,outputs,scratch,ii,2,total,run,request,kind,payload,offset);
 }
 
 fn u32 output_instance_inner(ref mut Meta m,ref mut vec::Vec<Program> p,ref mut vec::Vec<Instance> v,
@@ -1636,7 +1645,7 @@ fn u32 step_instance_inner(ref mut Meta m,ref vec::Vec<Program> p,ref mut vec::V
     let usize ii=switch(instance_index(v,id)){case .ok(x):{x}case .err(s):{return failed(m,s);}};
     let Instance before=*vec::at<Instance>(v,ii);
     if(before.phase==2){return failed(m,11);}
-    if(before.phase==4){return drive_host(m,v,outputs,scratch,ii,0,quantum,0,0,0,b"",0);}
+    if(before.phase==4){return drive_host(m,p,v,outputs,scratch,ii,0,quantum,0,0,0,b"",0);}
     if(before.phase!=3){return failed(m,3);}
     let usize pi=switch(program_index(p,before.program,false)){case .ok(x):{x}case .err(s):{return failed(m,s);}};
     let ref Program code=vec::at<Program>(p,pi);
@@ -1704,7 +1713,7 @@ fn u32 observe_inner(ref mut Meta m,ref vec::Vec<Instance> v,usize id){
 fn u32 cancel_inner(ref mut Meta m,ref vec::Vec<Program> p,ref mut vec::Vec<Instance> v,ref vec::Vec<BoundInput> inputs,ref mut vec::Vec<Output> outputs,ref mut vec::Vec<Output> scratch,usize id){
     let usize ii=switch(instance_index(v,id)){case .ok(x):{x}case .err(s):{return failed(m,s);}};
     let Instance before=*vec::at<Instance>(v,ii);
-    if(before.phase==4){return drive_host(m,v,outputs,scratch,ii,1,1,0,0,0,b"",0);}
+    if(before.phase==4){return drive_host(m,p,v,outputs,scratch,ii,1,1,0,0,0,b"",0);}
     if(before.phase==3){
         let usize oi=switch(output_index(outputs,id)){case .ok(x):{x}case .err(_):{return failed(m,7);}};
         // Drain canonical private metadata and discard any staged prefix before
@@ -1735,15 +1744,11 @@ fn u32 close_inner(ref mut Meta m,ref vec::Vec<Program> p,ref vec::Vec<Instance>
     assert(control::release(ref mut m.control,bytes).is_ok);assert(control::close(ref mut m.control).is_ok);
     assert(live::close(ref mut m.heap).is_ok);assert(memory::close(ref mut m.programs).is_ok);m.closed=true;return success(m,0);
 }
-fn u32 claim_host_inner(ref mut Meta m,ref mut vec::Vec<Output> outputs,usize instance,usize request){
-    let usize oi=switch(output_index(outputs,instance)){
-        case .ok(v):{v}case .err(s):{return failed(m,s);}
-    };
-    let ref mut Output owner=vec::at_mut<Output>(outputs,oi);
-    var HostTransition unused=HostTransition{.event=pending(),.scalar=host::empty_scalar_event()};
-    let u32 status=unsafe{drive_host_raw(owner as ptr mut void,3,0,instance,request,0,b"" as ptr u8,0,
-        ref mut unused as ptr mut void,0)};
-    return if(status==0){success(m,request)}else{failed(m,status)};
+fn u32 claim_host_inner(ref mut Meta m,ref vec::Vec<Program> p,ref mut vec::Vec<Instance> v,
+    ref mut vec::Vec<Output> outputs,ref mut vec::Vec<Output> scratch,usize instance,usize request){
+    let usize ii=switch(instance_index(v,instance)){case .ok(i):{i}case .err(s):{return failed(m,s);}};
+    if(vec::at<Instance>(v,ii).phase!=4){return failed(m,11);}
+    return drive_host(m,p,v,outputs,scratch,ii,3,0,instance,request,0,b"",0);
 }
 
 fn u32 dispatch_inner(ref mut Meta m,ref mut vec::Vec<Program> p,ref mut vec::Vec<Program> scratch,
@@ -1759,7 +1764,7 @@ fn u32 dispatch_inner(ref mut Meta m,ref mut vec::Vec<Program> p,ref mut vec::Ve
     if(operation==8){return inspect_inner(m,p,v);}
     if(operation==9){return prepare_instance_inner(m,p,v,inputs,outputs,id);}
     if(operation==10){return step_instance_inner(m,p,v,inputs,outputs,output_scratch,id,argument);}
-    if(operation==11){return claim_host_inner(m,outputs,id,argument);}
+    if(operation==11){return claim_host_inner(m,p,v,outputs,output_scratch,id,argument);}
     return failed(m,1);
 }
 // After the last epoch, only bounded owner maintenance may run, under the
@@ -1891,7 +1896,7 @@ fn void retain_host_bindings(ref mut Meta m,ref mut vec::Vec<Program> p,
         }
         case .err(_):{}
     };
-    unsafe{binding_raw(40)};discard reply_host_inner(m,v,outputs,output_scratch,0,0,0,0,b"",0,0);
+    unsafe{binding_raw(40)};discard reply_host_inner(m,p,v,outputs,output_scratch,0,0,0,0,b"",0,0);
     var vec::Vec<host::Exchange> owners=vec::empty<host::Exchange>();
     var HostTransition next=HostTransition{.scalar=host::empty_scalar_event(),.event=pending()};
     unsafe{binding_raw(41)};discard drive_host_owner(ref mut owners,0,0,0,0,0,b"",ref mut next,0);

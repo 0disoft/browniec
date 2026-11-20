@@ -36,6 +36,7 @@ unsafe extern C fn usize probe_peak_bytes();
 unsafe extern C fn usize probe_attempts();
 unsafe extern C fn void probe_rebase();
 unsafe extern C fn void bc_runtime_engine_test_fail(i64 count);
+unsafe extern C fn void bc_runtime_engine_test_inject_host_fault();
 
 fn ref u8[] json(){return b"{\"schema\":\"brownie.catalog/1\",\"imports\":[{\"id\":0,\"module\":\"host::example\",\"symbol\":\"check\",\"parameters\":[\"i32\"],\"result\":\"Result<i32,u32>\",\"effect\":\"read\",\"capability\":\"host.example.check\",\"adapter_revision\":\"v1\"}]}";}
 fn ref u8[] policy_json_yes(){return b"{\"schema\":\"brownie.policy/0.3\",\"compile\":{\"source_bytes\":262144,\"modules\":32,\"depth\":128,\"tokens\":131072,\"functions\":4096,\"types\":4096,\"instructions\":262144,\"registers_per_function\":1024,\"working_bytes\":67108864,\"fuel\":10000000,\"deadline_ms\":2000,\"diagnostics\":32},\"engine\":{\"memory_bytes\":134217728,\"control_bytes\":1048576,\"program_bytes\":8388608,\"total_program_bytes\":67108864,\"instances_bytes\":67108864,\"max_programs\":64,\"max_instances\":64,\"max_compiles\":1},\"run\":{\"memory_bytes\":16777216,\"object_bytes\":4194304,\"call_frames\":128,\"input_bytes\":1048576,\"output_bytes\":1048576,\"host_request_bytes\":1048576,\"host_response_bytes\":1048576,\"host_calls\":256,\"owner_entries\":16384,\"descriptor_entries\":16384,\"fuel\":10000000,\"deadline_ms\":1000},\"worker\":{\"memory_bytes\":201326592,\"user_cpu_time_ms\":5000,\"max_processes\":1,\"transport_bytes\":4194304,\"startup_ms\":2000,\"io_idle_ms\":1000,\"shutdown_grace_ms\":250,\"session_ms\":10000},\"capabilities\":[\"host.example.check\"]}";}
@@ -1503,10 +1504,56 @@ fn Result<usize,u8> staged_output_terminal(){
     assert(engine::output_view(ref output).len==8194);
     return .ok(1);
 }
+fn Result<usize,u8> host_fault_quarantines_engine(u8 operation){
+    let policy::Policy ceiling=parsed_policy(true)?;
+    let runs::RunConfig run=config(ref ceiling,true)?;
+    var engine::Engine owner=configured(ceiling)?;
+    let catalog::Catalog imports=catalog_from(json())?;
+    let u32[8] binding=digest(ref imports)?;
+    let ir::Program code=candidate()?;
+    let usize p=id(engine::retain_scalar_host(ref mut owner,ref code,imports,ref binding,ref run));
+    let usize prior=waiting(ref mut owner,p,ref run).run;
+    let engine::Event cancelled=event(engine::cancel_ready(ref mut owner,prior));
+    let usize peer=waiting(ref mut owner,p,ref run).run;
+    let engine::HostRequest asked=waiting(ref mut owner,p,ref run);
+    let engine::HostRequestInfo info=request_info(ref owner,asked.run);
+    let engine::Event before=event(engine::observe(ref mut owner,asked.run));
+    let usize attempts=unsafe{probe_attempts()};
+    unsafe{bc_runtime_engine_test_inject_host_fault()};
+    if(operation==3){
+        rejected(engine::claim_host_request(ref mut owner,asked.run,ref info),14);
+    }else{
+        let Result<engine::Event,engine::Error> update=if(operation==0){engine::step_instance(ref mut owner,asked.run,8)}
+            else if(operation==1){engine::cancel_ready(ref mut owner,asked.run)}
+            else{engine::reply_scalar_host(ref mut owner,asked.run,asked.run,asked.request,0,answer())};
+        switch(update){case .ok(_):{assert(false);}case .err(e):{assert(e.status==14);}};
+    }
+    assert(unsafe{probe_attempts()}==attempts);
+    assert(event(engine::observe(ref mut owner,prior)).kind==3);
+    assert(event(engine::cancel_ready(ref mut owner,prior)).remaining==cancelled.remaining);
+    assert(scalar(ref owner,prior).host.cause==1);
+    let engine::Event terminal=event(engine::observe(ref mut owner,asked.run));
+    let engine::Event other=event(engine::observe(ref mut owner,peer));
+    assert(terminal.kind==2 && terminal.diagnostic.code.kind==errors::engine_poisoned_kind() &&
+        terminal.remaining==before.remaining && terminal.fuel_known);
+    assert(other.kind==2 && other.diagnostic.code.kind==errors::engine_poisoned_kind());
+    assert(event(engine::cancel_ready(ref mut owner,asked.run)).remaining==terminal.remaining);
+    rejected(engine::prepare_scalar_host(ref mut owner,p,ref run),14);
+    assert(id(engine::destroy_instance(ref mut owner,asked.run))==asked.run);
+    assert(id(engine::destroy_instance(ref mut owner,peer))==peer);
+    assert(id(engine::destroy_instance(ref mut owner,prior))==prior);
+    assert(id(engine::release_program(ref mut owner,p))==p);
+    assert(id(engine::destroy(ref mut owner))==0);
+    return .ok(1);
+}
 pub fn void run(){
     unsafe{bc_runtime_engine_test_set_clock(1000)};
     assert(admission().is_ok);
     assert(interleaved().is_ok);
+    assert(host_fault_quarantines_engine(0).is_ok);
+    assert(host_fault_quarantines_engine(1).is_ok);
+    assert(host_fault_quarantines_engine(2).is_ok);
+    assert(host_fault_quarantines_engine(3).is_ok);
     assert(source_round_trip().is_ok);
     assert(helper_host_calls().is_ok);
     assert(typed_source_round_trip().is_ok);

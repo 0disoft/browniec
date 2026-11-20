@@ -262,6 +262,28 @@ The host round-trip fixture isolates its ordinary compiler rejection so the
 source compiler result does not occupy the host compilation stack frame.
 Local Engine receipt: `build/runtime-engine/20261120T190344260709Z/receipt.json`.
 
+### Containment after a host execution invariant failure
+
+A live host Instance must have exactly one owning scalar exchange. If its
+owner is missing, has the wrong storage shape, or reports an internal state
+or binding failure, the Engine poisons all subsequent guest execution and
+host dispatch. Step, cancel, reply receipt and dispatch claim share this
+containment path. A rejected reply, duplicate claim or allocation failure
+continues to return its ordinary operation status.
+
+Already terminal Instances retain their events and output. A pending output
+Instance with a latched stop keeps that cause. Other live children receive
+an Engine-poisoned event with their last recorded Fuel. The quarantined
+owners and their accounting remain available to observation and destruction.
+
+The Windows Engine verifier injected an invalid scalar exchange classification
+once in each of the four entry paths. Development and /O2 both confirmed
+Engine poisoning, rejection of new instances, preservation of a prior
+cancellation and Fuel, zero SDK allocation attempts during the fault, and
+zero live SDK allocations at exit. The locked /O2 CLI passed a real adapter
+round trip. Local Engine receipt:
+`build/runtime-engine/20261120T213215101631Z/receipt.json`.
+
 ## Remaining accepted work
 
 Dispatch visits do not bound all bytes, metadata visits or native time. Output
