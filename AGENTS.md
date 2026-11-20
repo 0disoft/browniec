@@ -1,8 +1,8 @@
-- Latest delivery checkpoint (2026-11-20): [Windows project binary input](docs/engineering/project-source-loader.md#public-binary-input)
-  connects explicit disk files to the verified shared-byte entry. The public
-  CLI contract passes Windows development and /O2 for binary input through
-  1 MiB, over-limit rejection, Fuel, and compile/requirement denials before
-  input acquisition. Locked builds use 381 sources / 4316 MIR functions.
+- Latest delivery checkpoint (2026-11-20): [Sealed output JSON](docs/engineering/module-output-execution.md#cli-result-encoding)
+  renders successful VM publication as bounded Base64. Locked Windows development
+  and /O2 fixture builds each pass eight exact frames through 1 MiB, including
+  trap, quota and grant-denial cases with no output field. Public policy/run
+  and Engine delivery remain pending. Root check covers 383 sources / 4322 MIR.
 
 # Brownie C agent guidance
 

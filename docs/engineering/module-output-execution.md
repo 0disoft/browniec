@@ -67,6 +67,28 @@ Fuel-priced operation and requires the grant, including at zero byte limit.
 Published bytes remain independent across reuse of the retained Program and input
 Snapshots. Publication here is an owning in-memory result, not sink delivery.
 
+## CLI result encoding
+
+The internal CLI adapter borrows this exact successful publication and writes
+one JSON result. Both result schemas support the success-only `output_b64`
+field with standard padded Base64. Empty publication is an empty string.
+Trap, denial and quota results use the normal diagnostic renderer and omit the
+field. The ordinary public result shape stays unchanged. The configured CLI
+still needs to connect policy/run admission and Engine-owned execution to
+this renderer.
+
+The encoding makes one linear pass over at most 1,048,576 payload bytes.
+The maximum encoded field is 1,398,104 bytes. The renderer reserves the
+result buffer before encoding, writes Base64 into its final location and
+submits the complete JSON document to the sink once. The output sink can
+fail after accepting a prefix.
+
+Run `python -B tools/verify-cli-published-output.py` on Windows. It compiles
+the real output Program and renders exact results for empty, 1-, 2-, 3- and
+1,048,576-byte publications, plus quota, grant denial and discard after a
+successful emit followed by a division trap. It uses locked development and
+/O2 builds, comparing the JSON framing and payload to Python's Base64 encoder.
+
 ## Shared Fuel schedule
 
 All output prices come from [the shared schedule](../../src/fuel.fy):

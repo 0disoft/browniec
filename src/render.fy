@@ -1,6 +1,8 @@
 module render;
 
 import errors as errors;
+import cli_output_base64 as base64;
+import runtime_output as output_limits;
 import project_names as names;
 import source_snapshot as sources;
 import fuel as meter;
@@ -26,13 +28,15 @@ pub fn ref str kind(u8 code) {
     if (code == 14) { return "bounds"; }
     if (code == 15) { return "allocation"; }
     if (code == 18) { return "must_use_result"; }
+    if (code == 19) { return "output_denied"; }
+    if (code == 20) { return "output_limit"; }
     if (code == input_limit_kind()) { return "input_limit"; }
     return "unavailable";
 }
 pub fn i32 exit_code(u8 kind) {
     if ((kind >= 1 && kind <= 4) || kind == 18) { return 3; }
     if (kind == 5) { return 6; }
-    if ((kind >= 6 && kind <= 8) || (kind >= 12 && kind <= 15) || kind == input_limit_kind()) { return 5; }
+    if ((kind >= 6 && kind <= 8) || (kind >= 12 && kind <= 15) || kind == 20 || kind == input_limit_kind()) { return 5; }
     if (kind == 9) { return 7; }
     if (kind == 10) { return 2; }
     return 4;
@@ -81,8 +85,10 @@ fn Result<usize,bytes::BufferError> encode_location(ref mut bytes::Buffer output
     return bytes::append(output,b"\"}");
 }
 fn Result<bytes::Buffer, bytes::BufferError> encode(Format format,bool run,bool eval,bool failed,i64 value,
-    errors::Error error,u8 arrays,ref u8[] path,sources::Span span,sources::Position position){
-    var bytes::Buffer output = bytes::with_capacity(512)?;
+    errors::Error error,u8 arrays,ref u8[] path,sources::Span span,sources::Position position,
+    bool with_output,ref u8[] payload){
+    let usize encoded=base64::encoded_bytes(payload.len);
+    var bytes::Buffer output=bytes::with_capacity(512+encoded)?;
     let usize prefix=bytes::append(ref mut output,if(v2(format)){
         b"{\"schema\":\"browniec.result/v2\",\"profile\":"
     }else{b"{\"schema\":\"browniec.result/v1\",\"profile\":"})?;
@@ -114,6 +120,11 @@ fn Result<bytes::Buffer, bytes::BufferError> encode(Format format,bool run,bool 
     } else if (run) {
         let usize a = bytes::append_i64(ref mut output, value)?;
         let usize b = bytes::append(ref mut output, b",\"error\":null")?;
+        if(with_output){
+            discard bytes::append(ref mut output,b",\"output_b64\":\"")?;
+            discard base64::append(ref mut output,payload)?;
+            discard bytes::append_byte(ref mut output,34)?;
+        }
     }
     let usize end = bytes::append(ref mut output, b"}\n")?;
     return .ok(output);
@@ -156,14 +167,30 @@ fn i32 command_outcome(Format format,bool run,bool eval,bool failed,i64 value,er
 @effects(console)
 fn i32 json_outcome(Format format,bool run,bool eval,bool failed,i64 value,errors::Error error,u8 arrays,
     ref u8[] path,sources::Span span,sources::Position position){
-    let bytes::Buffer output=switch(encode(format,run,eval,failed,value,error,arrays,path,span,position)){
+    let bytes::Buffer output=switch(encode(format,run,eval,failed,value,error,arrays,path,span,position,false,b"")){
         case .ok(v):{v}case .err(_):{return 7;}
     };
-    let ref u8[] view=bytes::view(ref output);
+    return write_result(ref output,if(failed){exit_code(error.kind)}else{0});
+}
+
+@effects(console)
+fn i32 write_result(ref bytes::Buffer output,i32 code){
+    let ref u8[] view=bytes::view(output);
     return switch(io::write_bytes(view)){
-        case .ok(n):{if(n==view.len){if(failed){exit_code(error.kind)}else{0}}else{7}}
+        case .ok(n):{if(n==view.len){code}else{7}}
         case .err(_):{7}
     };
+}
+
+@effects(console)
+pub fn i32 published_output(Format format,i64 value,ref u8[] payload){
+    if(text_mode(format)){return selected_outcome(format,true,true,0,errors::absent(10,0),8);}
+    if(payload.len>output_limits::hard_limit()){return 7;}
+    let bytes::Buffer output=switch(encode(format,true,false,false,value,errors::absent(0,0),8,b"",
+        sources::no_source(),sources::Position{.line=0,.byte_column=0},true,payload)){
+        case .ok(v):{v}case .err(_):{return 7;}
+    };
+    return write_result(ref output,0);
 }
 
 fn Result<bytes::Buffer,bytes::BufferError> project_message(ref u8[] path,errors::Error error,sources::Position position){
