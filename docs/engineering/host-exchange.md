@@ -341,6 +341,27 @@ rejection without allocation, duplicate claims, cancellation and exact-deadline
 rejection. The local receipt covers 392 hashed inputs at
 `build/runtime-engine/20261120T153907045621Z/receipt.json`.
 
+### Detached request for adapter dispatch
+
+A trusted adapter can claim a detached request through the same catalog route.
+The Engine's active request must match the retained catalog digest and import
+ID. The adapter validates the wire against the route and checks both its
+caller-supplied limit and the 4096-byte adapter cap before copying. It claims
+the request only after the copy succeeds. If the claim fails, the copy is
+dropped. The snapshot is owned by the adapter, outside the Engine memory ledger.
+
+The adapter can keep that snapshot across Engine progress and cancellation.
+Its run and request IDs remain scoped to the original Engine. Reply delivery
+uses the Engine's existing typed reply entry point and checks the live request
+and deadline again. This API supplies request handoff for external adapters.
+The CLI still uses the synchronous in-memory adapter.
+
+The Windows development and /O2 Engine suites checked an exact 14-byte
+limit, a 13-byte rejection, allocation failure before claim, and duplicate
+dispatch rejection. The detached bytes remained readable after Instance
+cancellation. Engine exit had zero live SDK allocations in both profiles.
+Local receipt: `build/runtime-engine/20261120T191456012965Z/receipt.json`.
+
 ## Engine scalar pending memory
 
 Admission charges the SDK backing for a Vec of eight Exchange slots, the

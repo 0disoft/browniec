@@ -51,17 +51,46 @@ pub fn bool valid_pair(ref Route route,ref u8[] expected,u8 kind,ref u8[] respon
     return valid_request(ref signature,expected) && wire::decode_reply(kind,signature.result,response,byte_limit()).is_ok;
 }
 
+// Detached request for an adapter that completes outside the Engine borrow.
+pub resource Dispatch { engine::HostRequestInfo info; bytes::Buffer wire; cleanup { } }
+pub fn engine::HostRequestInfo dispatch_info(ref Dispatch request){return request.info;}
+pub fn ref u8[] dispatch_bytes(ref Dispatch request){return bytes::view(ref request.wire);}
+
+fn Result<engine::HostRequestInfo,Error> routed(ref engine::Engine owner,usize instance,ref Route route){
+    let engine::HostRequestInfo info=switch(engine::host_request_info(owner,instance)){
+        case .ok(v):{v}case .err(e):{return .err(engine_failure(e));}
+    };
+    let ref Signature signature=ref route.signature;
+    if(info.import_id!=signature.import_id || !programs::same_digest(ref info.catalog.words,ref signature.digest)){
+        return .err(unavailable());
+    }
+    return .ok(info);
+}
+
+pub fn Result<Dispatch,Error> claim_detached(ref mut engine::Engine owner,usize instance,ref Route route,usize limit){
+    let engine::HostRequestInfo info=routed(owner,instance,route)?;
+    if(info.payload_bytes>limit || info.payload_bytes>byte_limit()){return .err(invalid());}
+    let bytes::Buffer owned=snapshot_request(owner,instance,route)?;
+    switch(engine::claim_host_request(owner,instance,ref info)){
+        case .ok(_):{}case .err(e):{return .err(engine_failure(e));}
+    };
+    return .ok(Dispatch{.info=info,.wire=owned});
+}
+fn Result<bytes::Buffer,Error> snapshot_request(ref engine::Engine owner,usize instance,ref Route route){
+    let ref u8[] actual=switch(engine::host_request_payload(owner,instance)){
+        case .ok(v):{v}case .err(e):{return .err(engine_failure(e));}
+    };
+    if(!valid_request(ref route.signature,actual)){return .err(invalid());}
+    return switch(bytes::copy(actual)){
+        case .ok(v):{.ok(v)}case .err(_):{.err(Error{.status=6})}
+    };
+}
+
 // One synchronous, in-memory match. Only caller-owned bytes survive the
 // Engine borrow. Neither a miss nor an invalid response claims the request.
 pub fn Result<engine::Event,Error> dispatch(ref mut engine::Engine owner,usize instance,
     ref Route route,ref u8[] expected,u8 kind,ref u8[] response){
-    let engine::HostRequestInfo info=switch(engine::host_request_info(owner,instance)){
-        case .ok(v):{v}case .err(e):{return .err(engine_failure(e));}
-    };
-    let Signature signature=route.signature;
-    if(info.import_id!=signature.import_id || !programs::same_digest(ref info.catalog.words,ref signature.digest)){
-        return .err(unavailable());
-    }
+    let engine::HostRequestInfo info=routed(owner,instance,route)?;
     if(info.payload_bytes!=expected.len || !valid_pair(route,expected,kind,response)){return .err(invalid());}
     {
         let ref u8[] actual=switch(engine::host_request_payload(owner,instance)){

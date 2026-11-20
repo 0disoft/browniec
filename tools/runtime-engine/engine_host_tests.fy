@@ -1162,6 +1162,28 @@ fn memory_adapter::Route route(ref catalog::Catalog imports,usize import_id){
         case .ok(v):{v}case .err(_):{assert(false);route(imports,import_id)}
     };
 }
+fn void detached_cancellation(ref mut engine::Engine owner,usize instance,ref memory_adapter::Route check,ref u8[] expected){
+    let engine::HostRequestInfo before=request_info(owner,instance);
+    let usize fuel=scalar(owner,instance).host.fuel;
+    assert(!memory_adapter::claim_detached(owner,instance,check,expected.len-1).is_ok);
+    unsafe{bc_runtime_engine_test_fail(0)};
+    let bool allocated=memory_adapter::claim_detached(owner,instance,check,expected.len).is_ok;
+    unsafe{bc_runtime_engine_test_fail(-1)};
+    assert(!allocated && scalar(owner,instance).host.fuel==fuel);
+    switch(memory_adapter::claim_detached(owner,instance,check,expected.len)){
+        case .ok(request):{
+            let engine::HostRequestInfo info=memory_adapter::dispatch_info(ref request);
+            assert(info.run==before.run && info.request==before.request && info.payload_bytes==expected.len);
+            assert(bytes::equal(memory_adapter::dispatch_bytes(ref request),expected));
+            assert(!memory_adapter::dispatch(owner,instance,check,expected,0,answer()).is_ok);
+            assert(scalar(owner,instance).host.replies==0);
+            assert(event(engine::cancel_ready(owner,instance)).kind==3);
+            assert(!memory_adapter::claim_detached(owner,instance,check,expected.len).is_ok);
+            assert(bytes::equal(memory_adapter::dispatch_bytes(ref request),expected));
+        }
+        case .err(_):{assert(false);}
+    };
+}
 fn Result<usize,u8> memory_adapter_round_trip(){
     let ref u8[] source=b"module main; fn i32 main(){ return switch(host::example::check(41)){ case .ok(value): { value+35 } case .err(code): { host::example::next(code) } }; }";
     let ref u8[] argument=b"\x01\x00\x03\x00\x00\x00\x04\x00\x00\x00\x29\x00\x00\x00";
@@ -1189,12 +1211,7 @@ fn Result<usize,u8> memory_adapter_round_trip(){
     unsafe{probe_rebase()};
     assert(!memory_adapter::dispatch(ref mut owner,ok,ref check,argument,1,answer()).is_ok);
     assert(unsafe{probe_attempts()}==0);
-    let engine::HostRequestInfo pending=request_info(ref owner,claimed);
-    assert(id(engine::claim_host_request(ref mut owner,claimed,ref pending))==1);
-    assert(!memory_adapter::dispatch(ref mut owner,claimed,ref check,argument,0,answer()).is_ok);
-    assert(scalar(ref owner,claimed).host.replies==0);
-    assert(event(engine::cancel_ready(ref mut owner,claimed)).kind==3);
-    assert(!memory_adapter::dispatch(ref mut owner,claimed,ref check,argument,0,answer()).is_ok);
+    detached_cancellation(ref mut owner,claimed,ref check,argument);
 
     assert(dispatched(memory_adapter::dispatch(ref mut owner,ok,ref check,argument,0,answer())).kind==0);
     assert(!memory_adapter::dispatch(ref mut owner,ok,ref check,argument,0,answer()).is_ok);

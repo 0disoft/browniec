@@ -1,7 +1,7 @@
-- Latest runtime checkpoint (2026-11-21): [Cleanup invariant containment](docs/engineering/runtime-engine-step.md#containment-after-a-cleanup-invariant-failure)
-  poisons an Engine after private cleanup failure and preserves committed child
-  events and output. Windows development and /O2 passed both injection routes
-  and the owning Engine suite with zero live SDK allocations at exit.
+- Latest runtime checkpoint (2026-11-21): [Detached host dispatch](docs/engineering/host-exchange.md#detached-request-for-adapter-dispatch)
+  validates and copies a bounded request before claiming it. Windows development
+  and /O2 passed exact-limit, allocation-failure, duplicate dispatch, and
+  cancellation checks with zero live SDK allocations at Engine exit.
 
 # Brownie C agent guidance
 
