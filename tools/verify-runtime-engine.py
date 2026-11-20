@@ -169,6 +169,16 @@ def source_copy(path):
                                 '(if(unsafe{bc_runtime_engine_test_input_fault(4)}!=0){let usize zero=0;zero}else{program_variants(program)})'), 1)
             text = text.replace(early_slot, '|| unsafe{bc_runtime_engine_test_input_fault(5)}!=0 ' + early_slot, 1)
             text = text.replace(late_slot, 'if(unsafe{bc_runtime_engine_test_input_fault(6)}!=0 || ' + late_slot[3:], 1)
+            pins = 'return code.pins==pins;'
+            destroy_input = 'let Option<usize> bound=switch(input_index(inputs,id)){'
+            program_charge = 'var usize retained=m.programs.retained;'
+            need(text.count(pins) == text.count(destroy_input) == text.count(program_charge) == 1,
+                 'Teardown fault anchors changed')
+            text = text.replace(pins, 'return unsafe{bc_runtime_engine_test_input_fault(7)}==0 && code.pins==pins;', 1)
+            text = text.replace(destroy_input, 'let Result<usize,u32> located=if(unsafe{bc_runtime_engine_test_input_fault(8)}!=0)'
+                                '{.err(2)}else{input_index(inputs,id)};\n    let Option<usize> bound=switch(located){', 1)
+            text = text.replace(program_charge, 'var usize retained=if(unsafe{bc_runtime_engine_test_input_fault(9)}!=0)'
+                                '{let usize zero=0;zero}else{m.programs.retained};', 1)
         return path.name, text.encode('utf-8')
     if path == ROOT / 'src/retention_plan.fy':
         text=path.read_text(encoding='utf-8');anchor='    plan.admitted=true;'

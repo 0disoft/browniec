@@ -1398,6 +1398,9 @@ fn void restore_output(ref mut vec::Vec<Output> v,ref mut vec::Vec<Output> scrat
 }
 fn void remove_output(ref mut vec::Vec<Output> v,ref mut vec::Vec<Output> scratch,usize id){
     let usize i=switch(output_index(v,id)){case .ok(value):{value}case .err(_):{return;}};
+    remove_output_at(v,scratch,i);
+}
+fn void remove_output_at(ref mut vec::Vec<Output> v,ref mut vec::Vec<Output> scratch,usize i){
     output_to_scratch(v,scratch,i);{let Output disposed=pop_output(v);}restore_output(v,scratch);
 }
 struct OutputTake { usize instance; usize owner; live::Plan refund; }
@@ -1506,8 +1509,7 @@ fn u32 input_instance_inner(ref mut Meta m,ref mut vec::Vec<Program> p,ref mut v
 fn BoundInput pop_bound(ref mut vec::Vec<BoundInput> v){return switch(vec::pop<BoundInput>(v)){
     case .some(value):{value}case .none:{assert(false);pop_bound(v)}
 };}
-fn void remove_input(ref mut vec::Vec<BoundInput> v,ref mut vec::Vec<BoundInput> scratch,usize id){
-    let usize i=switch(input_index(v,id)){case .ok(value):{value}case .err(_):{return;}};
+fn void remove_input_at(ref mut vec::Vec<BoundInput> v,ref mut vec::Vec<BoundInput> scratch,usize i){
     assert(vec::len<BoundInput>(scratch)==0);
     while(vec::len<BoundInput>(v)>i+1){let BoundInput input=pop_bound(v);assert(vec::push<BoundInput>(scratch,input).is_ok);}
     {let BoundInput disposed=pop_bound(v);}
@@ -1521,9 +1523,49 @@ fn void remove(ref mut Meta m,ref mut vec::Vec<Program> v,ref mut vec::Vec<Progr
     {let Program disposed=pop(v);assert(memory::release(ref mut m.programs,disposed.bytes).is_ok);}
     while(vec::len<Program>(scratch)>0){let Program p=pop(scratch);push(v,p);}
 }
-fn u32 release_inner(ref mut Meta m,ref mut vec::Vec<Program> v,ref mut vec::Vec<Program> scratch,usize id){
-    let usize i=switch(program_index(v,id,true)){case .ok(x):{x}case .err(s):{return failed(m,s);}};
-    if(vec::at<Program>(v,i).pins==0){remove(m,v,scratch,i);}else{let ref mut Program p=vec::at_mut<Program>(v,i);p.released=true;}
+fn bool pins_match(ref Program code,ref vec::Vec<Instance> instances){
+    var usize pins=0;
+    var usize i=0;
+    while(i<vec::len<Instance>(instances)){
+        if(vec::at<Instance>(instances,i).program==code.id){pins+=1;}
+        i+=1;
+    }
+    return code.pins==pins;
+}
+fn bool program_reclaimable(ref Meta m,ref vec::Vec<Program> programs,ref vec::Vec<Program> scratch,usize index){
+    if(!payload_ledger_intact(m) || vec::len<Program>(scratch)!=0 ||
+        vec::capacity<Program>(scratch)<vec::len<Program>(programs)-index-1){return false;}
+    var usize retained=m.programs.retained;
+    var usize i=0;
+    while(i<vec::len<Program>(programs)){
+        let usize bytes=vec::at<Program>(programs,i).bytes;
+        if(bytes>retained){return false;}
+        retained-=bytes;
+        i+=1;
+    }
+    return retained==0;
+}
+fn bool instance_charges_match(ref Meta m,ref vec::Vec<Instance> instances){
+    if(!payload_ledger_intact(m)){return false;}
+    var usize retained=m.heap.current;
+    var usize i=0;
+    while(i<vec::len<Instance>(instances)){
+        let ref Instance child=vec::at<Instance>(instances,i);
+        if(child.input_bytes>retained || child.output_bytes>retained-child.input_bytes){return false;}
+        retained-=child.input_bytes+child.output_bytes;
+        i+=1;
+    }
+    return retained==0;
+}
+fn u32 release_inner(ref mut Meta m,ref mut vec::Vec<Program> p,ref mut vec::Vec<Program> scratch,
+    ref mut vec::Vec<Instance> v,ref vec::Vec<Output> outputs,usize id){
+    let usize i=switch(program_index(p,id,true)){case .ok(x):{x}case .err(s):{return failed(m,s);}};
+    let ref Program code=vec::at<Program>(p,i);
+    if(!pins_match(code,v)){return contain_execution_fault(m,p,v,outputs);}
+    if(code.pins==0){
+        if(!program_reclaimable(m,p,scratch,i)){return contain_execution_fault(m,p,v,outputs);}
+        remove(m,p,scratch,i);
+    }else{let ref mut Program target=vec::at_mut<Program>(p,i);target.released=true;}
     return success(m,id);
 }
 fn u32 destroy_instance_inner(ref mut Meta m,ref mut vec::Vec<Program> p,ref mut vec::Vec<Program> scratch,ref mut vec::Vec<Instance> v,
@@ -1531,15 +1573,51 @@ fn u32 destroy_instance_inner(ref mut Meta m,ref mut vec::Vec<Program> p,ref mut
     ref mut vec::Vec<Output> outputs,ref mut vec::Vec<Output> output_scratch,usize id){
     let usize ii=switch(instance_index(v,id)){case .ok(x):{x}case .err(s):{return failed(m,s);}};
     let Instance current=*vec::at<Instance>(v,ii);if(current.phase==1){return failed(m,3);}
-    let usize pi=switch(program_index(p,current.program,false)){case .ok(x):{x}case .err(s):{return failed(m,s);}};
-    let usize pins=vec::at<Program>(p,pi).pins;if(pins==0){return failed(m,7);}
-    let bool reclaim=pins==1 && vec::at<Program>(p,pi).released;
+    let usize pi=switch(program_index(p,current.program,false)){
+        case .ok(x):{x}case .err(_):{return contain_execution_fault(m,p,v,outputs);}
+    };
+    let ref Program program=vec::at<Program>(p,pi);
+    let usize pins=program.pins;
+    if(pins==0 || !pins_match(program,v) || !instance_charges_match(m,v)){
+        return contain_execution_fault(m,p,v,outputs);
+    }
+    let bool reclaim=pins==1 && program.released;
+    if(reclaim && !program_reclaimable(m,p,scratch,pi)){return contain_execution_fault(m,p,v,outputs);}
+    if(vec::len<BoundInput>(input_scratch)!=0 || vec::len<Output>(output_scratch)!=0){
+        return contain_execution_fault(m,p,v,outputs);
+    }
+    let Option<usize> bound=switch(input_index(inputs,id)){
+        case .ok(i):{
+            if(!current.input_bound || input_bytes::capacity(ref vec::at<BoundInput>(inputs,i).input)!=current.input_bytes ||
+                vec::capacity<BoundInput>(input_scratch)<vec::len<BoundInput>(inputs)-i-1){
+                return contain_execution_fault(m,p,v,outputs);
+            }
+            let Option<usize> found=.some(i);found
+        }
+        case .err(_):{
+            if(current.input_bound || current.input_bytes!=0){return contain_execution_fault(m,p,v,outputs);}
+            let Option<usize> missing=.none;missing
+        }
+    };
+    let Option<usize> output=switch(output_index(outputs,id)){
+        case .ok(i):{
+            if(!current.output_owned || vec::capacity<Output>(output_scratch)<vec::len<Output>(outputs)-i-1){
+                return contain_execution_fault(m,p,v,outputs);
+            }
+            let Option<usize> found=.some(i);found
+        }
+        case .err(_):{
+            if(current.output_owned || current.output_bytes!=0){return contain_execution_fault(m,p,v,outputs);}
+            let Option<usize> missing=.none;missing
+        }
+    };
     // Dropping destroys the sole unpublished owner directly. No live guest
     // metadata or external handles survive it, so semantic unwinding is unused.
     {let ref mut Program code=vec::at_mut<Program>(p,pi);code.pins=pins-1;}
     let Instance last=switch(vec::pop<Instance>(v)){case .some(x):{x}case .none:{assert(false);current}};
     if(ii<vec::len<Instance>(v)){let ref mut Instance target=vec::at_mut<Instance>(v,ii);*target=last;}
-    remove_output(outputs,output_scratch,id);remove_input(inputs,input_scratch,id);
+    switch(output){case .some(i):{remove_output_at(outputs,output_scratch,i);}case .none:{}};
+    switch(bound){case .some(i):{remove_input_at(inputs,input_scratch,i);}case .none:{}};
     release_payload(m,current.input_bytes+current.output_bytes);
     if(reclaim){remove(m,p,scratch,pi);}return success(m,id);
 }
@@ -1875,7 +1953,7 @@ fn u32 dispatch_inner(ref mut Meta m,ref mut vec::Vec<Program> p,ref mut vec::Ve
     ref mut vec::Vec<Instance> v,ref mut vec::Vec<BoundInput> inputs,ref mut vec::Vec<BoundInput> input_scratch,
     ref mut vec::Vec<Output> outputs,ref mut vec::Vec<Output> output_scratch,u32 operation,usize id,usize argument){
     if(operation==1){return instance_inner(m,p,v,id,argument);}
-    if(operation==2){return release_inner(m,p,scratch,id);}
+    if(operation==2){return release_inner(m,p,scratch,v,outputs,id);}
     if(operation==3){return destroy_instance_inner(m,p,scratch,v,inputs,input_scratch,outputs,output_scratch,id);}
     if(operation==4){return close_inner(m,p,v,inputs,outputs);}
     if(operation==5){return execute_inner(m,p,v,inputs,outputs,id);}

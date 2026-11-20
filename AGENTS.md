@@ -1,5 +1,5 @@
-- Latest runtime checkpoint (2026-11-21): [Input admission containment](docs/engineering/runtime-engine-input-memory.md#ownership-transaction)
-  checks retained Program shape, reserved slots and ledgers before transferring a Snapshot.
+- Latest runtime checkpoint (2026-11-21): [Teardown containment](docs/engineering/runtime-engine.md#teardown-containment)
+  checks Program pins, retained owners and ledger balances before reclaiming storage.
   Windows development and /O2 Engine checks passed with zero live SDK allocations.
 
 # Brownie C agent guidance

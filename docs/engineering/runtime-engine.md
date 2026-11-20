@@ -50,6 +50,28 @@ Private statuses also distinguish bad argument 1, missing/released/closed 2,
 busy 3, source diagnostic 4, Fuel limit 5, native allocation 6, integrity 7 and
 wrong thread/lifetime 10. These are private transport results, not new ABI values.
 
+## Teardown containment
+
+Program release checks its recorded pin count against the live Instances.
+Immediate reclamation and last-pin destruction also reconcile the Program
+ledger and check the reserved scratch slots. Instance destruction validates
+the combined payload ledger, input and output associations, and input capacity
+before changing any pin or moving an owner. The scans are bounded by the
+Engine's 64-Program and 64-Instance limits.
+
+An invariant failure returns status 14, preserves existing terminal events and
+quarantines further guest work. Teardown operations can still reclaim owners
+whose preconditions hold. The owning Engine scope can drop the remaining
+resources if a persistent invariant fault prevents explicit teardown.
+
+The native verifier injected a pin mismatch during release, a missing empty
+Snapshot during Instance destruction, and a Program charge mismatch during
+last-pin reclamation. All three returned 14 without allocating, altering
+pins or debiting current charges. A prior successful result remained stable.
+Teardown succeeded after each injection cleared. Development and /O2 both
+exited with zero live SDK allocations. Local receipt:
+`build/runtime-engine/20261120T230400658164Z/receipt.json`.
+
 ## Typed native boundary
 
 The pinned compiler cannot safely project a mutable nested resource field using
