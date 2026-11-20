@@ -6,6 +6,8 @@
 
 #include "host_adapter_process.h"
 
+#pragma comment(lib, "mincore.lib")
+
 typedef enum phase { SEND, READ_HEADER, WAIT_HEADER, READ_BODY, READ_EOF, WAIT_EXIT } phase;
 
 struct bc_adapter_process {
@@ -18,6 +20,12 @@ struct bc_adapter_process {
     int pending;
     uint8_t frame[BC_ADAPTER_HEADER_BYTES + BC_ADAPTER_BODY_LIMIT + 1];
 };
+
+static uint64_t now_ticks(void) {
+    ULONGLONG now;
+    QueryInterruptTimePrecise(&now);
+    return now;
+}
 
 static void close_handle(HANDLE *h) {
     if (*h && *h != INVALID_HANDLE_VALUE) CloseHandle(*h);
@@ -103,7 +111,7 @@ static int launch(bc_adapter_process *s, const wchar_t *path, HANDLE child[3]) {
         startup.StartupInfo.hStdOutput = child[1];
         startup.StartupInfo.hStdError = child[2];
         startup.lpAttributeList = attrs;
-        if (GetTickCount64() < s->deadline &&
+        if (now_ticks() < s->deadline &&
             CreateProcessW(path, NULL, NULL, NULL, TRUE, EXTENDED_STARTUPINFO_PRESENT |
                 CREATE_NO_WINDOW, NULL, NULL, &startup.StartupInfo, &pi)) {
             s->process = pi.hProcess;
@@ -129,7 +137,7 @@ static int valid_path(const wchar_t *path, size_t n) {
 bc_adapter_process *bc_adapter_process_start(const wchar_t *path, size_t path_len,
     const uint8_t *header, const uint8_t *body, size_t body_len, uint64_t deadline) {
     if (!valid_path(path, path_len) || !header || (body_len && !body) ||
-        body_len > BC_ADAPTER_BODY_LIMIT || GetTickCount64() >= deadline) return NULL;
+        body_len > BC_ADAPTER_BODY_LIMIT || now_ticks() >= deadline) return NULL;
     bc_adapter_process *s = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*s));
     if (!s) return NULL;
     wchar_t *application = HeapAlloc(GetProcessHeap(), 0, (path_len+1)*sizeof(*path));
@@ -226,7 +234,7 @@ static bc_adapter_state advance_io(bc_adapter_process *s) {
 
 bc_adapter_state bc_adapter_process_step(bc_adapter_process *s) {
     if (terminal(s)) return s->state;
-    if (GetTickCount64() >= s->deadline) return stop(s, BC_ADAPTER_DEADLINE);
+    if (now_ticks() >= s->deadline) return stop(s, BC_ADAPTER_DEADLINE);
     if (s->phase == WAIT_HEADER) return s->state;
     if (s->phase != WAIT_EXIT) return advance_io(s);
     DWORD waited = WaitForSingleObject(s->process, 0);
@@ -234,7 +242,7 @@ bc_adapter_state bc_adapter_process_step(bc_adapter_process *s) {
     DWORD exit_code;
     if (waited != WAIT_OBJECT_0 || !GetExitCodeProcess(s->process, &exit_code) || exit_code)
         return stop(s, BC_ADAPTER_FAILED);
-    return stop(s, GetTickCount64() < s->deadline ? BC_ADAPTER_READY : BC_ADAPTER_DEADLINE);
+    return stop(s, now_ticks() < s->deadline ? BC_ADAPTER_READY : BC_ADAPTER_DEADLINE);
 }
 
 const uint8_t *bc_adapter_process_frame(const bc_adapter_process *s, size_t *length) {
@@ -248,7 +256,7 @@ const uint8_t *bc_adapter_process_frame(const bc_adapter_process *s, size_t *len
 
 int bc_adapter_process_accept_body(bc_adapter_process *s, size_t length) {
     if (s->state != BC_ADAPTER_HEADER || length > BC_ADAPTER_BODY_LIMIT) return 0;
-    if (GetTickCount64() >= s->deadline) { stop(s, BC_ADAPTER_DEADLINE); return 0; }
+    if (now_ticks() >= s->deadline) { stop(s, BC_ADAPTER_DEADLINE); return 0; }
     s->target = BC_ADAPTER_HEADER_BYTES + length;
     s->state = BC_ADAPTER_PENDING;
     s->phase = length ? READ_BODY : READ_EOF;

@@ -22,7 +22,8 @@ typedef enum bc_adapter_state {
 
 /* A trusted host selects an absolute drive path. The Windows adapter runs
    with host authority. It inherits only the private pipes and a NUL stderr.
-   Deadline is absolute GetTickCount64 milliseconds. All calls are serialized.
+   Deadline is absolute QueryInterruptTimePrecise ticks (100 ns), as in the
+   Engine. All calls are serialized.
    Start copies the request before returning and never retries a launch. */
 bc_adapter_process *bc_adapter_process_start(const wchar_t *path, size_t path_len,
     const uint8_t *header, const uint8_t *body, size_t body_len, uint64_t deadline);

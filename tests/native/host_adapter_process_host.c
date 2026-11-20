@@ -72,6 +72,12 @@ static bc_adapter_process *start(const wchar_t *path, wchar_t mode, uint64_t dea
     return session;
 }
 
+static uint64_t deadline_after(DWORD milliseconds) {
+    ULONGLONG ticks;
+    QueryInterruptTimePrecise(&ticks);
+    return ticks + UINT64_C(10000)*milliseconds;
+}
+
 static bc_adapter_state wait_event(bc_adapter_process *session, uint64_t until) {
     bc_adapter_state state;
     while ((state = bc_adapter_process_step(session)) == BC_ADAPTER_PENDING) {
@@ -90,10 +96,12 @@ static void reap(bc_adapter_process *session) {
 }
 
 static void exchange(const wchar_t *path, wchar_t mode, bc_adapter_state expected) {
-    uint64_t deadline = GetTickCount64()+((mode == L'h' || mode == L'd') ? 1000 : 3000);
+    DWORD limit = (mode == L'h' || mode == L'd') ? 1000 : 3000;
+    uint64_t watchdog = GetTickCount64()+limit+3000;
+    uint64_t deadline = deadline_after(limit);
     bc_adapter_process *session = start(path, mode, deadline);
     check(session != NULL, "process launch");
-    check(wait_event(session, deadline+3000) == BC_ADAPTER_HEADER, "header phase");
+    check(wait_event(session, watchdog) == BC_ADAPTER_HEADER, "header phase");
     size_t length = 99;
     const uint8_t *frame = bc_adapter_process_frame(session, &length);
     check(frame && length == BC_ADAPTER_HEADER_BYTES && !memcmp(frame, "BCA1", 4),
@@ -111,7 +119,7 @@ static void exchange(const wchar_t *path, wchar_t mode, bc_adapter_state expecte
         }
         bc_adapter_process_cancel(session);
     }
-    check(wait_event(session, deadline+3000) == expected, "expected terminal transport state");
+    check(wait_event(session, watchdog) == expected, "expected terminal transport state");
     bc_adapter_process_cancel(session);
     check(bc_adapter_process_step(session) == expected, "first terminal state preserved");
     frame = bc_adapter_process_frame(session, &length);
@@ -133,13 +141,13 @@ int wmain(void) {
     check(path_len && path_len < _countof(path), "fixture module path");
     /* Windows initializes process-wide cryptography and launch handles on first use. */
     const wchar_t *missing = L"C:\\Windows\\browniec-fixture-not-present.exe";
-    check(!start(missing, L'g', GetTickCount64()+3000), "warm failed launch");
+    check(!start(missing, L'g', deadline_after(3000)), "warm failed launch");
     exchange(path, L'g', BC_ADAPTER_READY);
     DWORD baseline, after;
     check(GetProcessHandleCount(GetCurrentProcess(), &baseline), "baseline handles");
-    check(!start(path, L'g', GetTickCount64()), "expired startup");
-    check(!start(L"relative.exe", L'g', GetTickCount64()+3000), "relative path");
-    check(!start(missing, L'g', GetTickCount64()+3000), "launch failure unwinds");
+    check(!start(path, L'g', deadline_after(0)), "expired startup");
+    check(!start(L"relative.exe", L'g', deadline_after(3000)), "relative path");
+    check(!start(missing, L'g', deadline_after(3000)), "launch failure unwinds");
     exchange(path, L'g', BC_ADAPTER_READY);
     exchange(path, L'z', BC_ADAPTER_READY);
     exchange(path, L't', BC_ADAPTER_FAILED);

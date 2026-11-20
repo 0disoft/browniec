@@ -401,8 +401,9 @@ Local receipt: `build/runtime-engine/20261120T195900439402Z/receipt.json`.
 The private native transport launches a host-selected absolute executable with
 host authority. The child inherits two private local pipe ends and a NUL stderr.
 An explicit handle list and a one-process kill-on-close Job are applied at
-process creation. The caller provides a monotonic deadline and polls the
-transport serially.
+process creation. The caller polls serially and provides the absolute deadline
+in the Engine's clock domain, Windows `QueryInterruptTimePrecise` ticks of
+100 ns. The same deadline gates launch, body admission and reply publication.
 
 The transport sends one bounded request, closes stdin, and pauses after
 receiving the 64-byte reply header. The caller approves the body length before
@@ -421,7 +422,7 @@ with a partial body, deadline with a partial body, and deadline with a child
 that closed stdout but stayed alive). Three startup rejections also passed.
 Steady-state parent handle growth was zero after warming process-wide
 initialization. Local receipt:
-`build/host-adapter-process/20261120T201403627682Z/receipt.json`.
+`build/host-adapter-process/20261120T201701991921Z/receipt.json`.
 
 ## Engine scalar pending memory
 

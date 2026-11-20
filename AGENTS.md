@@ -1,7 +1,7 @@
 - Latest runtime checkpoint (2026-11-21): [Windows adapter process transport](docs/engineering/host-exchange.md#windows-adapter-process-transport)
-  verifies a real one-shot child, split receive, EOF and exit gating, and
-  deadline/cancellation reaping. Windows development and /O2 passed with
-  zero net handle growth after process-wide initialization.
+  uses the Engine's Windows interrupt-time clock for absolute deadlines.
+  The real child-process checks passed development and /O2 with zero net
+  handle growth after process-wide initialization.
 
 # Brownie C agent guidance
 
