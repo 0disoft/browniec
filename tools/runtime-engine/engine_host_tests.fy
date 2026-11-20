@@ -4,6 +4,7 @@ import compiler as compiler;
 import host_program as programs;
 import host_exchange as host;
 import host_wire as wire;
+import host_adapter_frame as frames;
 import host_memory_adapter as memory_adapter;
 import verifier as verifier;
 import errors as errors;
@@ -1162,6 +1163,41 @@ fn memory_adapter::Route route(ref catalog::Catalog imports,usize import_id){
         case .ok(v):{v}case .err(_):{assert(false);route(imports,import_id)}
     };
 }
+fn u8[76] reply_frame(engine::HostRequestInfo info){
+    let u8[64] head=frames::header(ref info,1,12);
+    var u8[76] frame=[0;76];
+    var usize i=0;
+    while(i<64){frame[i]=head[i];i+=1;}
+    let ref u8[] payload=answer();
+    while(i<76){frame[i]=payload[i-64];i+=1;}
+    return frame;
+}
+fn void framed_success(ref mut engine::Engine owner,usize instance,usize other,ref memory_adapter::Route check){
+    switch(memory_adapter::claim_detached(owner,instance,check,14)){
+        case .ok(request):{
+            let u8[64] head=memory_adapter::dispatch_header(ref request);
+            assert(bytes::equal(ref head[..8],b"BCA1\x00\x00\x00\x00"));
+            assert(head[28]==14 && head[29]==0);
+            let u8[76] crossed=reply_frame(request_info(owner,other));
+            assert(!memory_adapter::deliver_frame(owner,ref request,ref crossed[..],12).is_ok);
+            var u8[76] frame=reply_frame(memory_adapter::dispatch_info(ref request));
+            assert(!memory_adapter::deliver_frame(owner,ref request,ref frame[..],11).is_ok);
+            assert(!memory_adapter::deliver_frame(owner,ref request,ref frame[..75],12).is_ok);
+            let usize[8] offsets=[0,4,5,16,24,28,32,64];
+            var usize i=0;
+            while(i<offsets.len){
+                let usize at=offsets[i];
+                let u8 saved=frame[at];frame[at]=255;
+                assert(!memory_adapter::deliver_frame(owner,ref request,ref frame[..],12).is_ok);
+                frame[at]=saved;i+=1;
+            }
+            assert(scalar(owner,instance).host.replies==0 && scalar(owner,other).host.replies==0);
+            assert(dispatched(memory_adapter::deliver_frame(owner,ref request,ref frame[..],12)).kind==0);
+            assert(!memory_adapter::deliver_frame(owner,ref request,ref frame[..],12).is_ok);
+        }
+        case .err(_):{assert(false);}
+    };
+}
 fn void detached_cancellation(ref mut engine::Engine owner,usize instance,ref memory_adapter::Route check,ref u8[] expected){
     let engine::HostRequestInfo before=request_info(owner,instance);
     let usize fuel=scalar(owner,instance).host.fuel;
@@ -1178,6 +1214,8 @@ fn void detached_cancellation(ref mut engine::Engine owner,usize instance,ref me
             assert(!memory_adapter::dispatch(owner,instance,check,expected,0,answer()).is_ok);
             assert(scalar(owner,instance).host.replies==0);
             assert(event(engine::cancel_ready(owner,instance)).kind==3);
+            let u8[76] late=reply_frame(info);
+            assert(!memory_adapter::deliver_frame(owner,ref request,ref late[..],12).is_ok);
             assert(!memory_adapter::claim_detached(owner,instance,check,expected.len).is_ok);
             assert(bytes::equal(memory_adapter::dispatch_bytes(ref request),expected));
         }
@@ -1213,7 +1251,7 @@ fn Result<usize,u8> memory_adapter_round_trip(){
     assert(unsafe{probe_attempts()}==0);
     detached_cancellation(ref mut owner,claimed,ref check,argument);
 
-    assert(dispatched(memory_adapter::dispatch(ref mut owner,ok,ref check,argument,0,answer())).kind==0);
+    framed_success(ref mut owner,ok,err,ref check);
     assert(!memory_adapter::dispatch(ref mut owner,ok,ref check,argument,0,answer()).is_ok);
     let engine::Event done=event(engine::step_instance(ref mut owner,ok,16));
     assert(done.kind==1 && done.value==77);

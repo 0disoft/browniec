@@ -1,7 +1,6 @@
-- Latest runtime checkpoint (2026-11-21): [Detached host dispatch](docs/engineering/host-exchange.md#detached-request-for-adapter-dispatch)
-  validates and copies a bounded request before claiming it. Windows development
-  and /O2 passed exact-limit, allocation-failure, duplicate dispatch, and
-  cancellation checks with zero live SDK allocations at Engine exit.
+- Latest runtime checkpoint (2026-11-21): [Detached adapter frames](docs/engineering/host-exchange.md#detached-adapter-frames)
+  validate correlation, size, and typed payload before Engine receipt. Windows
+  development and /O2 passed with zero live SDK allocations at Engine exit.
 
 # Brownie C agent guidance
 

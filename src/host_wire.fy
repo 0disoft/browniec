@@ -22,7 +22,7 @@ fn usize read_u32(ref u8[] input) {
     return input[0] as usize + input[1] as usize*256 +
         input[2] as usize*65536 + input[3] as usize*16777216;
 }
-fn void write_le(usize value,ref mut u8[] output) {
+pub fn void write_le(usize value,ref mut u8[] output) {
     var usize remaining=value; var usize i=0;
     while(i<output.len){
         let i64 digit=switch(num::i64_from_usize(remaining%256)){

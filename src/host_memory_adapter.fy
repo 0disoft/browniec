@@ -1,6 +1,7 @@
 module host_memory_adapter;
 
 import host_catalog as catalog;
+import host_adapter_frame as frames;
 import host_program as programs;
 import host_wire as wire;
 import runtime_engine as engine;
@@ -52,9 +53,26 @@ pub fn bool valid_pair(ref Route route,ref u8[] expected,u8 kind,ref u8[] respon
 }
 
 // Detached request for an adapter that completes outside the Engine borrow.
-pub resource Dispatch { engine::HostRequestInfo info; bytes::Buffer wire; cleanup { } }
+pub resource Dispatch { engine::HostRequestInfo info; bytes::Buffer wire; u8 result; cleanup { } }
 pub fn engine::HostRequestInfo dispatch_info(ref Dispatch request){return request.info;}
 pub fn ref u8[] dispatch_bytes(ref Dispatch request){return bytes::view(ref request.wire);}
+pub fn u8[64] dispatch_header(ref Dispatch request){
+    return frames::header(ref request.info,0,request.info.payload_bytes);
+}
+
+// The transport keeps the Dispatch with its originating Engine session. A
+// frame supplies bytes and a reply tag, never the target Instance handle.
+pub fn Result<engine::Event,Error> deliver_frame(ref mut engine::Engine owner,
+    ref Dispatch request,ref u8[] frame,usize limit){
+    let usize bounded=if(limit<byte_limit()){limit}else{byte_limit()};
+    let u8 kind=switch(frames::reply_kind(ref request.info,request.result,frame,bounded)){
+        case .ok(v):{v}case .err(_):{return .err(invalid());}
+    };
+    return switch(engine::reply_scalar_host(owner,request.info.run,request.info.run,
+        request.info.request,kind,frame[frames::header_size()..])){
+        case .ok(v):{.ok(v)}case .err(e):{.err(engine_failure(e))}
+    };
+}
 
 fn Result<engine::HostRequestInfo,Error> routed(ref engine::Engine owner,usize instance,ref Route route){
     let engine::HostRequestInfo info=switch(engine::host_request_info(owner,instance)){
@@ -74,7 +92,7 @@ pub fn Result<Dispatch,Error> claim_detached(ref mut engine::Engine owner,usize 
     switch(engine::claim_host_request(owner,instance,ref info)){
         case .ok(_):{}case .err(e):{return .err(engine_failure(e));}
     };
-    return .ok(Dispatch{.info=info,.wire=owned});
+    return .ok(Dispatch{.info=info,.wire=owned,.result=route.signature.result});
 }
 fn Result<bytes::Buffer,Error> snapshot_request(ref engine::Engine owner,usize instance,ref Route route){
     let ref u8[] actual=switch(engine::host_request_payload(owner,instance)){

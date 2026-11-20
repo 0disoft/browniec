@@ -362,6 +362,31 @@ dispatch rejection. The detached bytes remained readable after Instance
 cancellation. Engine exit had zero live SDK allocations in both profiles.
 Local receipt: `build/runtime-engine/20261120T191456012965Z/receipt.json`.
 
+### Detached adapter frames
+
+A detached dispatch exposes the 64-byte `BCA1` header separately from its
+existing request bytes. The header contains the four magic bytes, a tag
+(0 request, 1 success, 2 guest error, 3 adapter failure), three zero bytes,
+the run and request IDs as 64-bit values, the import ID and payload length as
+32-bit values, and eight 32-bit catalog digest words. Numeric fields are
+little endian. The payload is the existing host TLV, or empty for adapter
+failure.
+
+Reply delivery accepts one complete frame from a channel scoped to the
+originating Engine session. It checks the caller's payload limit and the
+4096-byte adapter cap, then compares the header against the detached dispatch
+and validates the typed payload. The target Instance comes from the dispatch.
+Rejected frames leave Engine reply receipt untouched. Valid frames enter
+the existing bounded receipt and installation path, which still rejects
+late, duplicate or cancelled replies.
+
+Windows development and /O2 verified a 12-byte reply at the exact limit, an
+11-byte limit rejection, truncated and malformed headers or payload, crossed
+Instance frames, duplicate delivery, and a reply after cancellation. The
+originating Instance returned 77 and both profiles reported zero live SDK
+allocations after teardown. Local receipt:
+`build/runtime-engine/20261120T192750442616Z/receipt.json`.
+
 ## Engine scalar pending memory
 
 Admission charges the SDK backing for a Vec of eight Exchange slots, the
