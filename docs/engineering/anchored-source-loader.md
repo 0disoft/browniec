@@ -25,14 +25,16 @@ and source into fixed Fairy scratch arrays. The adapter calls the unchanged
 duplicate and quota admission owns the resulting immutable Fairy Snapshot.
 Failure publishes no partial Fairy Snapshot. Root handles, native Snapshot and
 bridge storage are released before return. The result owns its bytes after
-native owners and caller buffers are gone. Request/Native/Admission errors are
-intentionally coarse; no OS diagnostics or file identity is fabricated.
+native owners and caller buffers are gone. Invalid requests, native failures and
+Fairy admission failures have separate results. Native quota failures return
+Limit and collection expiry returns Deadline.
 
 The bridge accepts only scalar integers and live pointer/length pairs. It never
 reads or writes an emitted Fairy struct/resource/slice layout. Copy checks bounds
 before writing and returns SIZE_MAX on failure. Native callers serialize access
 and provide valid buffers; these are private trusted-pointer APIs. Collection is
-synchronous; this is not a deadline/work-quantum contract. Returned bytes are an
+synchronous. The deadline-aware entry points pass an absolute Windows interrupt
+time deadline to the collector. See [collection checkpoints](runtime-engine-compile-memory.md#configured-compile-deadlines). Returned bytes are an
 owned bounded copy, not a point-in-time filesystem snapshot, including against
 preexisting writable mappings. See [project source admission](project-source-loader.md)
 for the public CLI and private Engine gates.
@@ -45,7 +47,8 @@ collector. Checks cover a real Unicode root, exact ordered names, CRLF/UTF-8/NUL
 after ownership transfer, empty files, 16/17 members, exact/over 4096 bytes,
 invalid UTF-8 after a successful preceding file, identity-pool exhaustion,
 malformed packed spans, duplicates, traversal, missing files and a real outside
-hardlink alias. Explicit bridge/root/native-Snapshot allocation failures exercise
+hardlink alias. An already-expired collection returns Deadline and releases all
+owners. Explicit bridge/root/native-Snapshot allocation failures exercise
 each owning boundary; repeated failures assert stable handle counts and zero
 live bridge/collector allocations. C copy/state error tests require unchanged
 destinations. Test hooks exist only in separate test objects; the production

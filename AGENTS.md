@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-21): [Project collection deadlines](docs/engineering/runtime-engine-compile-memory.md#configured-compile-deadlines)
-  stop Windows source collection between member acquisitions and before snapshot publication.
-  Windows development and /O2 Engine checks passed with zero live SDK allocations.
+- Latest runtime checkpoint (2026-11-21): [Anchored loader deadline verification](docs/engineering/anchored-source-loader.md)
+  checks distinct Limit and Deadline results and owner cleanup in Windows
+  development and /O2.
 
 # Brownie C agent guidance
 

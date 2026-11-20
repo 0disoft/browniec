@@ -16,6 +16,7 @@ fn sources::Snapshot loaded(ref u8[] root,ref u8[] names,ref usize[] ends,usize 
 fn void rejected(Result<sources::Snapshot,loader::Error> result,u8 kind){
     switch(result){case .ok(_):{assert(false);}case .err(e):{switch(e){
         case .Request:{assert(kind==0);}case .Native:{assert(kind==1);}case .Admission:{assert(kind==2);}
+        case .Limit:{assert(kind==3);}case .Deadline:{assert(kind==4);}
     };}};
     unsafe {asl_test_clean()};
 }
@@ -41,7 +42,8 @@ fn void failures(ref u8[] root){
     rejected(loader::load(root,b"sub/a.fyinvalid.fy",ref partial,4096,4096),2);
     let usize[1] valid=[8];
     rejected(loader::load(root,b"sub/a.fy",ref valid,4096,7),2);
-    rejected(loader::load(root,b"sub/a.fy",ref valid,0,4096),1);
+    rejected(loader::load(root,b"sub/a.fy",ref valid,0,4096),3);
+    rejected(loader::load_until(root,b"sub/a.fy",ref valid,4096,4096,1),4);
     let usize[1] missing=[10];rejected(loader::load(root,b"missing.fy",ref missing,4096,4096),1);
     let usize[1] escape=[7];rejected(loader::load(root,b"../a.fy",ref escape,4096,4096),1);
     let usize[2] duplicate=[8,16];rejected(loader::load(root,b"sub/a.fysub/a.fy",ref duplicate,4096,4096),1);
@@ -56,7 +58,7 @@ fn void failures(ref u8[] root){
 fn void bounds(ref u8[] root){
     let usize[1] end=[8];let sources::Snapshot s=loaded(root,b"bound.fy",ref end,4096,8);
     assert(data(ref s,0).len==4096 && data(ref s,0)[0]==97 && data(ref s,0)[4095]==97);
-    rejected(loader::load(root,b"large.fy",ref end,4096,4096),1);
+    rejected(loader::load(root,b"large.fy",ref end,4096,4096),3);
     var u8[96] names=[0;96];var usize[16] ends=[0;16];var usize i=0;
     let ref u8[] packed=b"f00.fyf01.fyf02.fyf03.fyf04.fyf05.fyf06.fyf07.fyf08.fyf09.fyf10.fyf11.fyf12.fyf13.fyf14.fyf15.fy";
     while(i<96){names[i]=packed[i];i+=1;}i=0;while(i<16){ends[i]=(i+1)*6;i+=1;}
