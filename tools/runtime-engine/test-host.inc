@@ -245,6 +245,22 @@ void bc_runtime_engine_test_program_storage(const void *raw,uintptr_t bytes){
  const bc_engine *e=raw;size_t control=e->f_1.f_1+e->f_2.f_1+e->f_3.f_1+e->f_4.f_1+e->f_5.f_1+e->f_6.f_1+e->f_7.f_1;
  assert(bytes<=SIZE_MAX-control&&probe_live_bytes()==control+bytes);
 }
+static uintptr_t context_expiry;
+static size_t context_bytes;
+static int context_measuring;
+void bc_runtime_engine_test_expire_in_context(uintptr_t deadline){
+ assert(host_clock_fixed&&deadline>host_clock_ticks&&!context_measuring);
+ context_expiry=deadline;context_bytes=0;context_measuring=1;
+}
+void bc_runtime_engine_test_context_copy(uintptr_t bytes){
+ if(!context_measuring)return;
+ assert(bytes>0&&bytes<=64);
+ if(context_bytes==0)bc_runtime_engine_test_set_clock(context_expiry);
+ context_bytes+=bytes;
+}
+uintptr_t bc_runtime_engine_test_context_bytes(void){
+ assert(context_measuring);context_measuring=0;return context_bytes;
+}
 static uintptr_t output_proof_visits=0;
 static uintptr_t output_proof_expiry;
 static size_t output_proof_attempts;

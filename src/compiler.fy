@@ -3443,11 +3443,21 @@ pub fn Result<usize,source_errors::Error> lower_output_modules(ref module_entrie
     let bool retained=lower_modules_mode(selected,builder,code,true)?;
     return .ok(code.body.count);
 }
+pub fn Result<usize,source_errors::Error> lower_output_modules_until(ref module_entries::Entry selected,
+    ref mut static_images::Builder builder,ref mut reference_ir::Program code,usize deadline){
+    let source_context::Input input=collecting::collect_until(module_entries::index(selected),deadline)?;
+    let bool retained=lower_modules_collected(ref input,selected,builder,code,true)?;
+    return .ok(code.body.count);
+}
 fn Result<bool,source_errors::Error> lower_modules_mode(ref module_entries::Entry selected,
     ref mut static_images::Builder builder,ref mut reference_ir::Program code,bool output){
     let source_context::Input input=switch(collecting::collect(module_entries::index(selected))){
         case .ok(v):{v}case .err(e):{return .err(source_errors::Error{.code=errors::make(5,e.at.start),.at=e.at});}
     };
+    return lower_modules_collected(ref input,selected,builder,code,output);
+}
+fn Result<bool,source_errors::Error> lower_modules_collected(ref source_context::Input input,ref module_entries::Entry selected,
+    ref mut static_images::Builder builder,ref mut reference_ir::Program code,bool output){
     let ref u8[] data=ref input.data;let ref u8[] source=data[..input.used];
     let ref source_context::Table scope=ref input.context;
     let bool retained=switch(source_features::retained_scoped(source,scope)){
@@ -3511,12 +3521,22 @@ pub fn Result<usize,source_errors::Error> lower_input_output_modules(ref input_e
     ref mut static_images::Builder builder,ref mut reference_ir::Program code){
     return lower_input_modules_mode(selected,builder,code,true);
 }
+pub fn Result<usize,source_errors::Error> lower_input_output_modules_until(ref input_entries::InputEntry selected,
+    ref mut static_images::Builder builder,ref mut reference_ir::Program code,usize deadline){
+    let source_context::Input input=collecting::collect_until(input_entries::index(selected),deadline)?;
+    return lower_input_collected(ref input,selected,builder,code,true);
+}
 fn Result<usize,source_errors::Error> lower_input_modules_mode(ref input_entries::InputEntry selected,
     ref mut static_images::Builder builder,ref mut reference_ir::Program code,bool output){
     let ref module_index::Index index=input_entries::index(selected);
     let source_context::Input input=switch(collecting::collect(index)){
         case .ok(v):{v}case .err(e):{return .err(source_errors::Error{.code=errors::make(5,e.at.start),.at=e.at});}
     };
+    return lower_input_collected(ref input,selected,builder,code,output);
+}
+fn Result<usize,source_errors::Error> lower_input_collected(ref source_context::Input input,ref input_entries::InputEntry selected,
+    ref mut static_images::Builder builder,ref mut reference_ir::Program code,bool output){
+    let ref module_index::Index index=input_entries::index(selected);
     let ref u8[] data=ref input.data;let ref u8[] source=data[..input.used];let ref source_context::Table scope=ref input.context;
     let literal_collection::Index literals=switch(literal_collection::collect_scoped(builder,source,scope)){
         case .ok(v):{v}case .err(e):{return .err(input_module_error(index,public_error(switch(e.kind){

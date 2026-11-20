@@ -70,6 +70,15 @@ def source_copy(path):
                             'unsafe extern C fn void bc_runtime_engine_test_proof_visit();\n// Private complete canonical proof.', 1)
         text = text.replace(anchor, 'if(w.phase==0){if(w.output){unsafe{bc_runtime_engine_test_proof_visit();}}let bool input=w.input;', 1)
         return path.name, text.encode('utf-8')
+    if path == ROOT / 'src/source_context_work.fy':
+        text = path.read_text(encoding='utf-8')
+        declaration = 'pub fn Result<bool,modules::Error> advance('
+        anchor = '        var usize stop=w.cursor+64;if(stop>w.length){stop=w.length;}'
+        need(text.count(declaration) == text.count(anchor) == 1, 'Source context copy probe anchor changed')
+        text = text.replace(declaration, 'unsafe extern C fn void bc_runtime_engine_test_context_copy(usize bytes);\n'
+                            + declaration, 1)
+        text = text.replace(anchor, anchor + '\n        unsafe{bc_runtime_engine_test_context_copy(stop-w.cursor)};', 1)
+        return path.name, text.encode('utf-8')
     if path == ROOT / 'src/compiler.fy':
         text=path.read_text(encoding='utf-8')
         marker='fn Result<scratch_vec::Vec<expression_work::Bank>,errors::Error> expression_scratch'

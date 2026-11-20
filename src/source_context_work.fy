@@ -4,6 +4,9 @@ import module_index as modules;
 import source_snapshot as sources;
 import lexer as lexer;
 import metadata_budget as budget;
+import runtime_clock as clock;
+import source_error as diagnostics;
+import errors as errors;
 
 // Private lowering scratch. The owner pins one immutable Index until done.
 // Each fresh stage copies <=64 bytes, packs one import/symbol, or checks one
@@ -108,11 +111,32 @@ pub fn Result<context::Input,modules::Error> prepared(ref State w){
     if(!w.done){return .err(invalid(sources::no_source()));}return .ok(w.result);
 }
 
+fn Result<bool,modules::Error> next_batch(ref modules::Index index,ref mut State w,ref mut budget::State meter){
+    let usize allowance=switch(budget::reset(meter,0)){
+        case .ok(v):{v}case .err(_):{return .err(invalid(sources::no_source()));}
+    };
+    return advance(index,w,meter);
+}
+
 // Owning compiler compatibility adapter. No public Pending compile protocol.
 pub fn Result<context::Input,modules::Error> collect(ref modules::Index index){
     var State w=empty();var budget::State meter=budget::empty();
-    while(!w.done){let usize allowance=switch(budget::reset(ref mut meter,0)){
-        case .ok(v):{v}case .err(_):{return .err(invalid(sources::no_source()));}};
-        let bool done=advance(index,ref mut w,ref mut meter)?;}
+    while(!w.done){let bool done=next_batch(index,ref mut w,ref mut meter)?;}
     return prepared(ref w);
+}
+
+fn diagnostics::Error compile_error(modules::Error e){
+    return diagnostics::Error{.code=errors::make(5,e.at.start),.at=e.at};
+}
+
+// The Engine's already admitted deadline covers each source/context batch.
+pub fn Result<context::Input,diagnostics::Error> collect_until(ref modules::Index index,usize deadline){
+    var State w=empty();var budget::State meter=budget::empty();
+    while(!w.done){
+        if(clock::expired(deadline)){return .err(diagnostics::absent(errors::absent(errors::deadline_kind(),0)));}
+        switch(next_batch(index,ref mut w,ref mut meter)){
+            case .ok(_):{}case .err(e):{return .err(compile_error(e));}
+        };
+    }
+    return switch(prepared(ref w)){case .ok(v):{.ok(v)}case .err(e):{.err(compile_error(e))}};
 }

@@ -61,8 +61,10 @@ lexer state on failure, including qualified lookahead. Decoder checks preserve
 escape-before-encoding diagnostics and exact source offsets.
 
 Lexer and primitive-type compatibility adapters retain the historical raw path
-for sources larger than this private 4096-byte profile. Public compilation still
-uses its existing admission gates and remains synchronous. No public Pending
+for sources larger than this private 4096-byte profile. Configured Engine output
+and input-output compilation use the same source-context advances with their
+[absolute compile deadline](runtime-engine-compile-memory.md#configured-compile-deadlines).
+Public compilation still uses its existing admission gates and remains synchronous. No public Pending
 compile, cancellation protocol, time bound or peak-stack improvement follows.
 
 The [source-stage evidence](../evidence/runtime-compiler-source-windows-20261111.json)

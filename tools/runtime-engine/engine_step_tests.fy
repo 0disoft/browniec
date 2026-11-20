@@ -25,6 +25,8 @@ unsafe extern C fn usize probe_live_bytes();
 unsafe extern C fn usize probe_attempts();
 unsafe extern C fn void bc_runtime_engine_test_proof_begin();
 unsafe extern C fn void bc_runtime_engine_test_expire_in_proof(usize deadline);
+unsafe extern C fn void bc_runtime_engine_test_expire_in_context(usize deadline);
+unsafe extern C fn usize bc_runtime_engine_test_context_bytes();
 unsafe extern C fn usize bc_runtime_engine_test_proof_count();
 unsafe extern C fn void bc_runtime_engine_test_fail(i64 count);
 unsafe extern C fn void bc_runtime_engine_test_inject_cleanup_fault();
@@ -527,7 +529,7 @@ fn Result<usize,u8> project_output(){
     rejected_compile_deadline(engine::compile_project_output(ref mut e,ref unfinished,root,ref granted,65536));
     assert(unsafe{bc_runtime_engine_test_handle_count()}==handles);
     counts(ref mut e,0,0,0);same_heap(ref idle);
-    // A separate deadline expires after lowering and before literal storage.
+    // A separate deadline expires before the first source context batch.
     unsafe{bc_runtime_engine_test_clock_advance(8,40000100)};
     rejected_compile_deadline(engine::compile_project_output(ref mut e,ref manifest,root,ref granted,65536));
     assert(unsafe{bc_runtime_engine_test_handle_count()}==handles);
@@ -609,10 +611,33 @@ fn Result<usize,u8> compile_deadline(ref mut engine::Engine e,ref configs::RunCo
     unsafe{bc_runtime_engine_test_use_os_clock()};
     release(e,p);counts(e,0,0,0);same_heap(ref idle);return .ok(0);
 }
+fn Result<usize,u8> compile_context_deadline(ref mut engine::Engine e,ref configs::RunConfig run){
+    let ref u8[] ordinary=b"module app;pub fn i32 chosen(){                                return 42;}";
+    let ref u8[] input=b"module app;pub fn i32 chosen(ref u8[] data){                     return 42;}";
+    let Heap idle=heap();
+    var usize mode=0;
+    while(mode<2){
+        let usize start=100+mode*20000000;
+        unsafe{bc_runtime_engine_test_set_clock(start)};
+        unsafe{bc_runtime_engine_test_proof_begin()};
+        unsafe{bc_runtime_engine_test_expire_in_context(start+20000000)};
+        let Result<usize,engine::Error> result=if(mode==0){engine::compile_output(e,selected(ordinary)?,65536)}
+            else{engine::compile_granted_output(e,indexed(input)?,run,65536)};
+        rejected_compile_deadline(result);
+        assert(unsafe{bc_runtime_engine_test_context_bytes()}==64);
+        assert(unsafe{bc_runtime_engine_test_proof_count()}==0);
+        counts(e,0,0,0);same_heap(ref idle);
+        assert(retained(e).program_bytes==0);
+        mode+=1;
+    }
+    unsafe{bc_runtime_engine_test_use_os_clock()};
+    return .ok(0);
+}
 fn Result<usize,u8> configured_compile_deadline(){
     let policy::Policy ceiling=output_policy(true)?;
     let configs::RunConfig granted=run_config(ref ceiling,0)?;
     var engine::Engine e=configured_engine(ceiling)?;
+    let usize context_checked=compile_context_deadline(ref mut e,ref granted)?;
     let usize checked=compile_deadline(ref mut e,ref granted)?;
     close(ref mut e);return .ok(0);
 }

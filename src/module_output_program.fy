@@ -57,7 +57,7 @@ pub fn Result<Program,diagnostics::Error> compile_with_retention_until(entries::
         case .ok(v):{v}case .err(e):{return .err(literal(e));}
     };
     var candidates::Program code=candidates::Program{.body=ir::empty(),.parameters=[0;128],.results=[0;16],.origins=[0;16]};
-    let usize lowered=compiler::lower_output_modules(ref selected,ref mut builder,ref mut code)?;
+    let usize lowered=compiler::lower_output_modules_until(ref selected,ref mut builder,ref mut code,deadline)?;
     return finish_until(modules::snapshot(entries::index(ref selected)),ref builder,ref code,image_limit,false,plan,deadline);
 }
 pub fn Result<Program,diagnostics::Error> compile_input(input_entries::InputEntry selected,usize image_limit){
@@ -76,7 +76,7 @@ pub fn Result<Program,diagnostics::Error> compile_input_with_retention_until(inp
         case .ok(v):{v}case .err(e):{return .err(literal(e));}
     };
     var candidates::Program code=candidates::Program{.body=ir::empty(),.parameters=[0;128],.results=[0;16],.origins=[0;16]};
-    let usize lowered=compiler::lower_input_output_modules(ref selected,ref mut builder,ref mut code)?;
+    let usize lowered=compiler::lower_input_output_modules_until(ref selected,ref mut builder,ref mut code,deadline)?;
     return finish_until(modules::snapshot(input_entries::index(ref selected)),ref builder,ref code,image_limit,true,plan,deadline);
 }
 fn Result<images::Image,diagnostics::Error> freeze(ref images::Builder builder,usize image_limit,ref mut retention::Plan plan){

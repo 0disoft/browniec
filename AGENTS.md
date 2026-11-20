@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-21): [Output proof deadlines](docs/engineering/runtime-engine-compile-memory.md#configured-compile-deadlines)
-  stop output and input-output compilation between proof advances before Program
-  retention. Windows development and /O2 passed with zero live SDK allocations.
+- Latest runtime checkpoint (2026-11-21): [Source-context deadlines](docs/engineering/runtime-engine-compile-memory.md#configured-compile-deadlines)
+  stop output and input-output compilation between source-context advances.
+  Windows development and /O2 passed with zero live SDK allocations.
 
 # Brownie C agent guidance
 

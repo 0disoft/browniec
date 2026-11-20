@@ -116,12 +116,22 @@ Engine receipt: `build/runtime-engine/20261120T231632275851Z/receipt.json`.
 The native collector tested expired and future deadlines using the real OS
 clock in both profiles: `build/anchored-sources/20261120T231507642754Z/receipt.json`.
 
-Output and input-output compilation sample the same absolute deadline after
-source lowering and before freezing the literal image. The proof driver then
+Output and input-output compilation sample the same absolute deadline before
+each source-context advance. An advance copies up to 64 source bytes, packs
+one metadata row, checks one sealed name, or moves to the next phase. Expiry
+discards the incomplete context before signature or body lowering. The
+compiler samples again after lowering and before freezing the literal image. The proof driver then
 samples once before each bounded proof advance. Expiry ends the compile with
 the source-less deadline diagnostic and releases the image and any active
 reservation. Only a complete proof can enter Program retention. The final
 publication check still covers the synchronous work after proof.
+
+The Windows verifier advanced the clock to the exact deadline in the first
+source copy for both output entry modes. Each compile copied exactly 64 bytes
+and entered zero proof stages. The tracked Program ledger and SDK heap returned
+to baseline, and the next successful compile still received Program ID 1.
+Development and /O2 both passed with zero live SDK allocations on exit.
+Local receipt: `build/runtime-engine/20261120T234128105707Z/receipt.json`.
 
 The Windows verifier advanced the clock to the exact deadline inside the
 canonical proof for both profiles that admit output. Each compile stopped
