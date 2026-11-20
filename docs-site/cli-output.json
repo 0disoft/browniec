@@ -80,7 +80,7 @@
   },
   {
     "command": "run",
-    "arguments": "--project FILE [--input FILE] [--fuel N]",
+    "arguments": "--project FILE [--input FILE|--stdin] [--fuel N]",
     "formats": [
       {
         "option": "",

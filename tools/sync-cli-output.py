@@ -20,6 +20,7 @@ def table(rows, locale):
     lines = ['| ' + ' | '.join(HEADERS[locale]) + ' |', '| --- | --- | --- | --- |']
     for row in rows:
         command = ' '.join(part for part in ('browniec', row['command'], row['arguments']) if part)
+        command = command.replace('|', r'\|')
         for mode in row['formats']:
             option = mode['option']
             schema = mode['schema']

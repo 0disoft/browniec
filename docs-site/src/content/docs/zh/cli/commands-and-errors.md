@@ -21,9 +21,9 @@ description: 公开 browniec 命令、退出码以及常见错误的快速排查
 | `browniec check --project FILE` | — | `stderr` | — |
 | `browniec check --project FILE` | `--json` | `stdout` | `browniec.result/v1` |
 | `browniec check --project FILE` | `--json-v2` | `stdout` | `browniec.result/v2` |
-| `browniec run --project FILE [--input FILE] [--fuel N]` | — | `stderr` | — |
-| `browniec run --project FILE [--input FILE] [--fuel N]` | `--json` | `stdout` | `browniec.result/v1` |
-| `browniec run --project FILE [--input FILE] [--fuel N]` | `--json-v2` | `stdout` | `browniec.result/v2` |
+| `browniec run --project FILE [--input FILE\|--stdin] [--fuel N]` | — | `stderr` | — |
+| `browniec run --project FILE [--input FILE\|--stdin] [--fuel N]` | `--json` | `stdout` | `browniec.result/v1` |
+| `browniec run --project FILE [--input FILE\|--stdin] [--fuel N]` | `--json-v2` | `stdout` | `browniec.result/v2` |
 | `browniec eval-i32 SOURCE N [--fuel N]` | — | `stderr` | — |
 | `browniec eval-i32 SOURCE N [--fuel N]` | `--json` | `stdout` | `browniec.result/v1` |
 | `browniec eval-i32 SOURCE N [--fuel N]` | `--json-v2` | `stdout` | `browniec.result/v2` |

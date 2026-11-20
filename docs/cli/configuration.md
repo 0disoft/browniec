@@ -71,7 +71,7 @@ source map, entry and declared requirements.
 ## Project selection
 
 On Windows use `browniec check --project FILE [--json|--json-v2]` or
-`browniec run --project FILE [--input FILE] [--fuel N] [--json|--json-v2]`. The manifest
+`browniec run --project FILE [--input FILE|--stdin] [--fuel N] [--json|--json-v2]`. The manifest
 may be selected by an absolute drive path or a path relative to the working
 directory. Its parent is the project root. The manifest and declared sources
 are read under the same local NTFS anchor. The manifest limit is 65,536
@@ -82,14 +82,14 @@ The current run profile permits an empty requirements array. Any declared
 requirement is rejected before project members are opened. Project execution
 uses the ordinary Fuel option and result formats.
 
-Select `--input FILE` once on project run to use a public
-`i32(ref u8[])` entry. The input file is independently selected by local
-absolute drive path or a path relative to the process working directory.
-The compiler checks the project before the file opens. The reader accepts
-0 through 1,048,576 raw bytes, including NUL and invalid UTF-8, from a disk file.
-The VM borrows an immutable snapshot. Use `--fuel 16000000` when trying input
-programs because input metadata alone needs 32,768 Fuel. Without `--input`,
-the project entry takes zero arguments.
+Select one of `--input FILE` or `--stdin` on project run to use a public
+`i32(ref u8[])` entry. Select a local file by its absolute drive path or a path
+relative to the process working directory. On Windows, `--stdin` accepts a
+redirected disk file or synchronous byte pipe. Input is acquired after project
+compilation and can block until EOF. The reader accepts 0 through 1,048,576 raw
+bytes, including NUL and invalid UTF-8. The VM borrows an immutable snapshot.
+Use `--fuel 16000000` when trying input programs because input metadata alone
+needs 32,768 Fuel. With neither input option the project entry takes zero arguments.
 
 `inspect SOURCE --ir [--json]` uses the same explicit source selection and public
 admission as check. `--ir` is required once; Fuel and guest-input options do not

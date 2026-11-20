@@ -12,7 +12,7 @@ browniec --help
 browniec check SOURCE [--json]
 browniec run SOURCE [--fuel N] [--json]
 browniec check --project FILE [--json|--json-v2]
-browniec run --project FILE [--input FILE] [--fuel N] [--json|--json-v2]
+browniec run --project FILE [--input FILE|--stdin] [--fuel N] [--json|--json-v2]
 ```
 
 SOURCE is one local UTF-8 code file, at most 4096 bytes. The entry is zero-argument

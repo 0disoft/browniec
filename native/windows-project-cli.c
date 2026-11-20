@@ -22,6 +22,12 @@ void *bc_cli_read_input(const uint8_t *path,size_t length,size_t limit,uint32_t 
     return snapshot;
 }
 
+void *bc_cli_read_stdin(size_t limit,uint32_t *status){
+    bc_rir_snapshot *snapshot=NULL;
+    *status=(uint32_t)bc_rir_handle(GetStdHandle(STD_INPUT_HANDLE),limit,&snapshot,NULL);
+    return snapshot;
+}
+
 size_t bc_cli_input_length(void *snapshot){return bc_rir_length(snapshot);}
 const uint8_t *bc_cli_input_bytes(void *snapshot){return bc_rir_bytes(snapshot);}
 void bc_cli_input_close(void *snapshot){bc_rir_close(snapshot);}

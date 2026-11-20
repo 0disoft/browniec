@@ -11,15 +11,17 @@ from tempfile import TemporaryDirectory
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def invoke(exe, args, exit_code, *, cwd=None):
-    ran = subprocess.run([str(exe), *map(str, args)], cwd=cwd, capture_output=True, timeout=10)
+def invoke(exe, args, exit_code, *, cwd=None, input_bytes=None, stdin=None):
+    ran = subprocess.run([str(exe), *map(str, args)], cwd=cwd, input=input_bytes, stdin=stdin,
+                         capture_output=True, timeout=10)
     assert ran.returncode == exit_code, (args, exit_code, ran)
     return ran
 
 
-def check_json(exe, args, exit_code, *, version=1, value=None, profile='brownie.m1-scalar/1'):
+def check_json(exe, args, exit_code, *, version=1, value=None, profile='brownie.m1-scalar/1',
+               input_bytes=None, stdin=None):
     flag = '--json' if version == 1 else '--json-v2'
-    ran = invoke(exe, [*args, flag], exit_code)
+    ran = invoke(exe, [*args, flag], exit_code, input_bytes=input_bytes, stdin=stdin)
     assert not ran.stderr and len(ran.stdout.splitlines()) == 1, ran
     assert ran.stdout.endswith(b'\n'), ran
     result = json.loads(ran.stdout)
@@ -186,7 +188,7 @@ def check_project(exe, folder):
 
 
 def check_project_input(exe, folder):
-    assert b'--input FILE' in invoke(exe, ['--help'], 0).stdout
+    assert b'[--input FILE|--stdin]' in invoke(exe, ['--help'], 0).stdout
     manifest = folder / 'binary-project.json'
     source = folder / 'binary.brc'
     payload = folder / '입력.bin'
@@ -203,12 +205,18 @@ def check_project_input(exe, folder):
         b'if(data.len==1048576){return last+3;}return -1;}'
     )
     args = ['run', '--project', manifest, '--input', payload, '--fuel', 16000000]
+    stdin_args = ['run', '--project', manifest, '--stdin', '--fuel', 16000000]
     profile = 'brownie.m2-reference/1'
     for length, value in ((0, 0), (3, 256), (4097, 257), (1048576, 258)):
         binary = bytes(length-1) + bytes([255]) if length else b''
         payload.write_bytes(binary)
         for version in (1, 2):
             assert check_json(exe, args, 0, value=value, version=version, profile=profile) is None
+            assert check_json(exe, stdin_args, 0, value=value, version=version,
+                              profile=profile, input_bytes=binary) is None
+    with payload.open('rb') as redirected:
+        assert check_json(exe, stdin_args, 0, value=258, version=2,
+                          profile=profile, stdin=redirected) is None
     ran = invoke(exe, ['run', '--project', manifest.name, '--input', payload.name, '--fuel', 16000000],
                  0, cwd=folder)
     assert not ran.stdout and ran.stderr == b'return_i32=258\n', ran
@@ -216,6 +224,13 @@ def check_project_input(exe, folder):
     payload.write_bytes(bytes(1048577))
     assert check_json(exe, args, 5, version=2, profile=profile) == {
         'kind': 'input_limit', 'location': {'kind': 'none'},
+    }
+    assert check_json(exe, stdin_args, 5, version=2, profile=profile,
+                      input_bytes=bytes(1048577)) == {
+        'kind': 'input_limit', 'location': {'kind': 'none'},
+    }
+    assert check_json(exe, stdin_args, 7, version=2, profile=profile, stdin=subprocess.DEVNULL) == {
+        'kind': 'input_io', 'location': {'kind': 'none'},
     }
     payload.unlink()
     assert check_json(exe, args, 7, version=2, profile=profile) == {
@@ -228,6 +243,11 @@ def check_project_input(exe, folder):
         ['run', source, '--input', payload],
         ['run', '--project', manifest, '--input'],
         [*args, '--input', payload],
+        [*args, '--stdin'],
+        [*stdin_args, '--input', payload],
+        [*stdin_args, '--stdin'],
+        ['check', '--project', manifest, '--stdin'],
+        ['run', source, '--stdin'],
     ):
         invoke(exe, rejected, 2)
     invoke(exe, ['run', '--project', manifest], 3)
@@ -236,13 +256,18 @@ def check_project_input(exe, folder):
     source.write_bytes(b'module app;pub fn i32 chosen(ref u8[] data){return true;}')
     bad = check_json(exe, args, 3, version=2)
     assert bad['kind'] == 'type' and bad['location']['path'] == source.name, bad
+    stdin_bad = check_json(exe, stdin_args, 3, version=2, stdin=subprocess.DEVNULL)
+    assert stdin_bad == bad, stdin_bad
     config['requires'] = ['host.demo.read']
     manifest.write_text(json.dumps(config), encoding='utf-8')
     source.unlink()
     assert check_json(exe, args, 4, version=2) == {
         'kind': 'unavailable', 'location': {'kind': 'none'},
     }
-    print('PASS: project binary input, 0/3/4097/1048576-byte boundaries, Fuel and denials')
+    assert check_json(exe, stdin_args, 4, version=2, stdin=subprocess.DEVNULL) == {
+        'kind': 'unavailable', 'location': {'kind': 'none'},
+    }
+    print('PASS: project file/pipe input, disk stdin, 0/3/4097/1048576-byte boundaries, Fuel and denials')
 
 
 def inspect_json(exe, source, *options, exit_code=0, schema='browniec.limits/v1'):

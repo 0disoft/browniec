@@ -23,10 +23,11 @@ source bytes. See [project output](../cli/output-and-exit-codes.md#project-check
 
 ### Public binary input
 
-`run --project FILE --input FILE` selects the manifest's shared-byte entry.
-It binds and compiles against the same anchored sources before acquiring the
-input. The Windows reader accepts at most 1 MiB from the explicit disk path
-and transfers an exact copy to the existing immutable Fairy Snapshot. The
+`run --project FILE --input FILE` and `run --project FILE --stdin` select
+the manifest's shared-byte entry. They compile the same anchored sources
+before acquiring input. The Windows reader accepts at most 1 MiB from an
+explicit disk path or redirected stdin and copies it into the same immutable
+Fairy Snapshot. The
 compiled Program borrows that snapshot through the ordinary input VM, which
 enforces the existing input Fuel schedule. This path grants no guest file
 operations. See the [CLI configuration](../cli/configuration.md#project-selection).
