@@ -16,6 +16,7 @@ import std::bytes as bytes;
 import engine_lifecycle_tests as lifecycle;
 import runtime_policy as policy;
 import runtime_run_config as configs;
+import project_manifest as projects;
 
 // Engine.step fixtures only. The parent owns native transport and integration.
 unsafe extern C fn usize probe_live();
@@ -24,6 +25,7 @@ unsafe extern C fn usize probe_attempts();
 unsafe extern C fn void bc_runtime_engine_test_proof_begin();
 unsafe extern C fn usize bc_runtime_engine_test_proof_count();
 unsafe extern C fn void bc_runtime_engine_test_fail(i64 count);
+unsafe extern C fn usize bc_runtime_engine_test_project_path(ptr mut u8 out,usize capacity);
 struct Heap { usize blocks; usize bytes; }
 fn Heap heap(){return Heap{.blocks=unsafe{probe_live()},.bytes=unsafe{probe_live_bytes()}};}
 fn void same_heap(ref Heap h){assert(unsafe{probe_live()}==h.blocks && unsafe{probe_live_bytes()}==h.bytes);}
@@ -444,6 +446,66 @@ fn Result<usize,u8> configured_output(){
     return .ok(0);
 }
 
+fn Result<projects::Project,u8> project(ref u8[] source){
+    return switch(projects::parse(source)){case .ok(v):{.ok(v)}case .err(_):{.err(4)}};
+}
+fn Result<usize,u8> project_output(){
+    let ref u8[] declared=b"{\"schema\":\"brownie.project/0.3\",\"name\":\"fixture\",\"entry\":{\"module\":\"app\",\"function\":\"chosen\"},\"sources\":[{\"module\":\"app\",\"path\":\"output.brc\"}],\"requires\":[\"brownie.output.emit\"]}";
+    let ref u8[] undeclared=b"{\"schema\":\"brownie.project/0.3\",\"name\":\"fixture\",\"entry\":{\"module\":\"app\",\"function\":\"chosen\"},\"sources\":[{\"module\":\"app\",\"path\":\"output.brc\"}],\"requires\":[]}";
+    let ref u8[] quiet=b"{\"schema\":\"brownie.project/0.3\",\"name\":\"fixture\",\"entry\":{\"module\":\"app\",\"function\":\"chosen\"},\"sources\":[{\"module\":\"app\",\"path\":\"quiet.brc\"}],\"requires\":[\"brownie.output.emit\"]}";
+    let projects::Project manifest=project(declared)?;
+    let projects::Project missing=project(undeclared)?;
+    let projects::Project quiet_manifest=project(quiet)?;
+    let policy::Policy ceiling=output_policy(true)?;
+    let configs::RunConfig granted=run_config(ref ceiling,0)?;
+    let configs::RunConfig omitted=run_config(ref ceiling,1)?;
+    let configs::RunConfig wrong_entry=run_config(ref ceiling,2)?;
+    let configs::RunConfig narrow=run_config(ref ceiling,3)?;
+    {
+        var engine::Engine denied=configured_engine(output_policy(false)?)?;
+        rejected_id(engine::compile_project_output(ref mut denied,ref manifest,b"",ref granted,65536),5);
+        close(ref mut denied);
+    }
+    var engine::Engine e=configured_engine(ceiling)?;
+    let Heap idle=heap();
+    var u8[3072] path=[0;3072];
+    let usize length=unsafe{bc_runtime_engine_test_project_path(ref mut path[..] as ptr mut u8,3072)};
+    let ref u8[] root=ref path[..length];
+    rejected_id(engine::compile_project_output(ref mut e,ref manifest,b"",ref omitted,65536),5);
+    rejected_id(engine::compile_project_output(ref mut e,ref manifest,b"",ref wrong_entry,65536),5);
+    rejected_id(engine::compile_project_output(ref mut e,ref manifest,b"",ref granted,65536),1);
+    rejected_id(engine::compile_project_output(ref mut e,ref missing,root,ref omitted,65536),5);
+    counts(ref mut e,0,0,0);
+    same_heap(ref idle);
+    let usize q=id(engine::compile_project_output(ref mut e,ref quiet_manifest,root,ref granted,65536));
+    rejected_id(engine::prepare_granted_instance(ref mut e,q,ref omitted,captured(b"")?),5);
+    let usize quiet_run=id(engine::prepare_granted_instance(ref mut e,q,ref granted,captured(b"")?));
+    let engine::Event quiet_event=finish(ref mut e,quiet_run,2);
+    assert(quiet_event.kind==1 && quiet_event.value==0);
+    release(ref mut e,q);
+    destroy(ref mut e,quiet_run);
+    let usize p=id(engine::compile_project_output(ref mut e,ref manifest,root,ref granted,65536));
+    rejected_id(engine::prepare_granted_instance(ref mut e,p,ref omitted,captured(b"A")?),5);
+    let usize i=id(engine::prepare_granted_instance(ref mut e,p,ref granted,captured(b"A\x00")?));
+    let usize j=id(engine::prepare_granted_instance(ref mut e,p,ref narrow,captured(b"Z")?));
+    counts(ref mut e,1,2,2);
+    release(ref mut e,p);
+    let engine::Event first=finish(ref mut e,i,1);
+    let engine::Event second=finish(ref mut e,j,2);
+    assert(first.kind==1 && first.value==2 && second.kind==1 && second.value==1);
+    {
+        let engine::Output a=take(ref mut e,i)?;
+        let engine::Output b=take(ref mut e,j)?;
+        assert(bytes::equal(engine::output_view(ref a),b"A\x00"));
+        assert(bytes::equal(engine::output_view(ref b),b"Z"));
+    }
+    destroy(ref mut e,i);
+    destroy(ref mut e,j);
+    counts(ref mut e,0,0,0);
+    same_heap(ref idle);
+    close(ref mut e);
+    return .ok(0);
+}
 pub fn void run(){
     let Heap before=heap();
     assert(fixed_and_mixed_quanta().is_ok);same_heap(ref before);
@@ -453,4 +515,5 @@ pub fn void run(){
     assert(failures_and_exact_fuel().is_ok);same_heap(ref before);
     assert(empty_output_and_running_drop().is_ok);same_heap(ref before);
     assert(configured_output().is_ok);same_heap(ref before);
+    assert(project_output().is_ok);same_heap(ref before);
 }

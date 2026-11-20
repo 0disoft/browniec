@@ -57,7 +57,7 @@ struct Meta {
 // Exactly one executable vector has one element; the others are empty. Input code is
 // never relabelled as a zero-argument Program or an array/image input lease.
 struct EntryBinding {
-    u8[128] scope; u8[64] function; usize scope_len; usize function_len; bool emits;
+    u8[128] scope; u8[64] function; usize scope_len; usize function_len; bool emits; bool requires_output;
 }
 resource Program {
     usize id; usize pins; bool released; vec::Vec<programs::Program> code;
@@ -87,7 +87,7 @@ pub resource Engine {
 @link_name("bc_runtime_engine_execute_input") unsafe extern C fn u32 execute_input_raw(ptr mut void owner,usize instance,ptr void input);
 @link_name("bc_runtime_engine_instance_input") unsafe extern C fn u32 instance_input_raw(ptr mut void owner,usize program,ptr mut void input,usize budget);
 @link_name("bc_runtime_engine_call") unsafe extern C fn u32 call_raw(ptr mut void owner,u32 operation,usize id,usize argument);
-@link_name("bc_runtime_engine_compile_output") unsafe extern C fn u32 compile_output_raw(ptr mut void owner,ptr mut void incoming,usize limit,u32 input);
+@link_name("bc_runtime_engine_compile_output") unsafe extern C fn u32 compile_output_raw(ptr mut void owner,ptr mut void incoming,usize limit,u32 mode);
 @link_name("bc_runtime_engine_instance_output") unsafe extern C fn u32 instance_output_raw(ptr mut void owner,usize program,ptr mut void input,usize budget,usize limit,u32 allowed);
 @link_name("bc_runtime_engine_output_preflight") unsafe extern C fn u32 output_preflight_raw(ptr mut void owner,usize instance);
 @link_name("bc_runtime_engine_output_fact") unsafe extern C fn usize output_fact_raw(ptr void source,u32 fact);
@@ -231,12 +231,15 @@ pub fn Result<usize,Error> compile_project(ref mut Engine e,ref projects::Projec
 pub fn Result<usize,Error> compile_project_input(ref mut Engine e,ref projects::Project metadata,ref u8[] root,usize image_limit){
     let usize ready=unsafe{compile_preflight(e,1,null)}?;
     if(projects::requirements(metadata)!=0){return .err(error(5));}
-    let sources::Snapshot snapshot=load_project(e,metadata,root)?;
-    let input_entries::InputEntry selected=switch(project_binding::select_input(metadata,snapshot)){
-        case .ok(v):{v}
-        case .err(reason):{return .err(project_error(reason));}
-    };
+    let input_entries::InputEntry selected=project_input_entry(e,metadata,root)?;
     return compile_input(e,selected,image_limit);
+}
+fn Result<input_entries::InputEntry,Error> project_input_entry(ref Engine e,ref projects::Project metadata,ref u8[] root){
+    let sources::Snapshot snapshot=load_project(e,metadata,root)?;
+    return switch(project_binding::select_input(metadata,snapshot)){
+        case .ok(v):{.ok(v)}
+        case .err(reason):{.err(project_error(reason))}
+    };
 }
 pub fn Result<usize,Error> compile_input(ref mut Engine e,input_entries::InputEntry selected,usize image_limit){
     let usize admitted=unsafe{compile_preflight(e,1,ref selected as ptr void)}?;
@@ -255,11 +258,15 @@ pub fn Result<usize,Error> compile_output(ref mut Engine e,entries::Entry select
     let u32 s=unsafe{compile_output_raw(e as ptr mut void,ref mut incoming as ptr mut void,image_limit,0)};return result(e,s);
 }
 pub fn Result<usize,Error> compile_input_output(ref mut Engine e,input_entries::InputEntry selected,usize image_limit){
+    return retain_input_output(e,selected,image_limit,1);
+}
+// Output modes 2 and 3 carry a checked project declaration into publication.
+fn Result<usize,Error> retain_input_output(ref mut Engine e,input_entries::InputEntry selected,usize image_limit,u32 mode){
     let usize admitted=unsafe{compile_preflight(e,3,ref selected as ptr void)}?;
     var vec::Vec<input_entries::InputEntry> incoming=vec::empty<input_entries::InputEntry>();
     if(!vec::reserve<input_entries::InputEntry>(ref mut incoming,1).is_ok){return .err(error(6));}
     if(!vec::push<input_entries::InputEntry>(ref mut incoming,selected).is_ok){return .err(error(6));}
-    let u32 s=unsafe{compile_output_raw(e as ptr mut void,ref mut incoming as ptr mut void,image_limit,1)};return result(e,s);
+    let u32 s=unsafe{compile_output_raw(e as ptr mut void,ref mut incoming as ptr mut void,image_limit,mode)};return result(e,s);
 }
 pub fn Result<usize,Error> create_output_instance(ref mut Engine e,usize program,usize budget,usize limit,bool allowed){
     var vec::Vec<input_bytes::Snapshot> incoming=vec::empty<input_bytes::Snapshot>();
@@ -403,6 +410,24 @@ pub fn Result<HostRequest,Error> scalar_host_request(ref Engine e,usize instance
 }
 
 // Compile the configured entry once. The retained Program starts with no pins.
+pub fn Result<usize,Error> compile_project_output(ref mut Engine e,ref projects::Project metadata,
+    ref u8[] root,ref run_config::RunConfig run,usize image_limit){
+    let usize checked=check_run_policy(e,run)?;
+    let usize ready=unsafe{compile_preflight(e,3,null)}?;
+    let usize declared=projects::requirements(metadata);
+    if(declared>1 || declared!=run_config::requires_count(run) ||
+        !bytes::equal(projects::entry_module(metadata),run_config::module_name(run)) ||
+        !bytes::equal(projects::entry_function(metadata),run_config::function_name(run))){return .err(error(5));}
+    if(declared==1){
+        let ref u8[] name=switch(projects::requirement(metadata,0)){
+            case .ok(v):{v}case .err(_):{return .err(error(7));}
+        };
+        if(!bytes::equal(name,b"brownie.output.emit") || !run_config::declares(run,name)){return .err(error(5));}
+    }
+    let input_entries::InputEntry selected=project_input_entry(e,metadata,root)?;
+    return retain_input_output(e,selected,image_limit,if(declared==1){3}else{2});
+}
+
 pub fn Result<usize,Error> compile_granted_output(ref mut Engine e,modules::Index index,
     ref run_config::RunConfig run,usize image_limit){
     let usize checked=check_run_policy(e,run)?;
@@ -453,7 +478,7 @@ fn Result<bool,Error> program_authority(ref Engine e,usize id,ref run_config::Ru
         return .err(error(5));
     }
     let ref u8[] name=b"brownie.output.emit";
-    if(entry.emits && (!run_config::declares(run,name) || !run_config::grants(run,name))){
+    if((entry.emits || entry.requires_output) && (!run_config::declares(run,name) || !run_config::grants(run,name))){
         return .err(error(5));
     }
     return .ok(entry.emits);
@@ -827,9 +852,10 @@ fn u32 compile_output_inner(ref mut Meta m,ref mut vec::Vec<Program> v,ref mut v
     let Result<output_programs::Program,diagnostics::Error> built=bounded::compile_output(pop_entry(incoming),limit,ref mut plan,ref mut work);
     assert(memory::record_compile(ref mut m.programs,ref work).is_ok);
     assert(memory::record(ref mut m.programs,ref plan).is_ok);
-    return switch(built){case .ok(code):{publish_output_program(m,v,code,plan.bytes,empty_entry())}case .err(e):{compile_error(m,e)}};
+    return switch(built){case .ok(code):{publish_output_program(m,v,code,plan.bytes,empty_entry(),0)}case .err(e):{compile_error(m,e)}};
 }
-fn u32 compile_input_output_inner(ref mut Meta m,ref mut vec::Vec<Program> v,ref mut vec::Vec<input_entries::InputEntry> incoming,usize limit){
+fn u32 compile_input_output_inner(ref mut Meta m,ref mut vec::Vec<Program> v,ref mut vec::Vec<input_entries::InputEntry> incoming,usize limit,u32 mode){
+    if(mode>1 && !m.configured){return failed(m,5);}
     if(vec::len<Program>(v)>=m.limits.programs || m.next==0){return failed(m,8);}
     if(vec::len<input_entries::InputEntry>(incoming)!=1){return failed(m,1);}
     var retention::Plan plan=switch(retention_plan(m,2)){case .ok(p):{p}case .err(s):{return failed(m,s);}};
@@ -840,10 +866,10 @@ fn u32 compile_input_output_inner(ref mut Meta m,ref mut vec::Vec<Program> v,ref
     let Result<output_programs::Program,diagnostics::Error> built=bounded::compile_input_output(pop_input_entry(incoming),limit,ref mut plan,ref mut work);
     assert(memory::record_compile(ref mut m.programs,ref work).is_ok);
     assert(memory::record(ref mut m.programs,ref plan).is_ok);
-    return switch(built){case .ok(code):{publish_output_program(m,v,code,plan.bytes,entry)}case .err(e):{compile_error(m,e)}};
+    return switch(built){case .ok(code):{publish_output_program(m,v,code,plan.bytes,entry,mode)}case .err(e):{compile_error(m,e)}};
 }
 fn EntryBinding empty_entry(){
-    return EntryBinding{.scope=[0;128],.function=[0;64],.scope_len=0,.function_len=0,.emits=false};
+    return EntryBinding{.scope=[0;128],.function=[0;64],.scope_len=0,.function_len=0,.emits=false,.requires_output=false};
 }
 fn Result<EntryBinding,u32> bind_entry(bool configured,ref input_entries::InputEntry selected){
     if(!configured){return .ok(empty_entry());}
@@ -867,11 +893,13 @@ fn Result<EntryBinding,u32> bind_entry(bool configured,ref input_entries::InputE
     i=0;
     while(i<function.len){function_bytes[i]=function[i];i+=1;}
     return .ok(EntryBinding{.scope=scope_bytes,.function=function_bytes,
-        .scope_len=scope.len,.function_len=function.len,.emits=false});
+        .scope_len=scope.len,.function_len=function.len,.emits=false,.requires_output=false});
 }
-fn u32 publish_output_program(ref mut Meta m,ref mut vec::Vec<Program> v,output_programs::Program code,usize bytes,EntryBinding selected){
+fn u32 publish_output_program(ref mut Meta m,ref mut vec::Vec<Program> v,output_programs::Program code,usize bytes,EntryBinding selected,u32 mode){
     var EntryBinding entry=selected;
     if(entry.scope_len!=0){entry.emits=output_programs::requires_emit(ref code);}
+    if(mode==2 && entry.emits){return failed(m,5);}
+    entry.requires_output=mode==3;
     let usize scratch=output_programs::preparation(ref code).scratch;
     let usize id=m.next;var vec::Vec<output_programs::Program> retained=vec::empty<output_programs::Program>();
     if(!vec::reserve<output_programs::Program>(ref mut retained,1).is_ok){return failed(m,6);}
@@ -1498,7 +1526,7 @@ pub fn void retain_native_bindings(){
     var vec::Vec<input_entries::InputEntry> output_input_entry=vec::empty<input_entries::InputEntry>();
     var vec::Vec<BoundInput> output_input=vec::empty<BoundInput>();
     unsafe{binding_raw(13)};discard compile_output_inner(ref mut m,ref mut output_program,ref mut output_entry,0);
-    unsafe{binding_raw(14)};discard compile_input_output_inner(ref mut m,ref mut output_program,ref mut output_input_entry,0);
+    unsafe{binding_raw(14)};discard compile_input_output_inner(ref mut m,ref mut output_program,ref mut output_input_entry,0,1);
     unsafe{binding_raw(15)};discard output_instance_inner(ref mut m,ref mut output_program,ref mut output_instances,ref mut output_input,ref mut incoming_snapshot,0,0,0,0);
     var vec::Vec<Output> outgoing=vec::empty<Output>();
     unsafe{binding_raw(24)};discard output_preflight_width(ref mut m,ref output_instances,ref outputs,0,1);
