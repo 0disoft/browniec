@@ -468,9 +468,10 @@ pub fn Result<usize,Error> compile_scalar_host(ref mut Engine e,ref u8[] source,
     if(source.len>limits.source_bytes){return .err(error(8));}
     let usize deadline=deadline_after(limits.deadline_ms)?;
     var ir::Program code=ir::empty();
-    switch(compiler::lower_scalar_host_with_limit(source,ref imports,ref mut code,limits.tokens)){
+    switch(compiler::lower_scalar_host_until(source,ref imports,ref mut code,limits.tokens,deadline)){
         case .ok(_):{}
         case .err(problem):{
+            if(problem.kind==errors::deadline_kind()){return .err(compile_timeout());}
             let usize at=problem.offset;
             return .err(Error{.status=4,.diagnostic=diagnostics::Error{
                 .code=problem,.at=sources::Span{.source=0,.start=at,.end=if(at<source.len){at+1}else{at}}}});
@@ -518,7 +519,7 @@ fn Error host_binding_error(modules::Error e){
 fn Result<usize,Error> retain_project_host(ref mut Engine e,ref modules::Index index,usize selected,
     host_catalog::Catalog imports,ref u32[] digest,ref run_config::RunConfig run,policy_limits::CompileLimits limits,usize deadline){
     var ir::Program code=ir::empty();
-    switch(compiler::lower_project_host(index,selected,ref imports,ref mut code)){
+    switch(compiler::lower_project_host(index,selected,ref imports,ref mut code,deadline)){
         case .ok(_):{}case .err(e):{return .err(Error{.status=4,.diagnostic=e});}
     };
     return retain_limited_host(e,ref code,imports,digest,run,limits,deadline);

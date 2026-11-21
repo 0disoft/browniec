@@ -7,7 +7,9 @@ import ir as ir;
 import lexer as lexer;
 import module_index as modules;
 import source_snapshot as sources;
-import literal_source as literals;
+import literal_source_work as decoding;
+import metadata_budget as budget;
+import runtime_clock as clock;
 import locals as locals;
 import array_source as arrays;
 import host_wire as wire;
@@ -328,35 +330,81 @@ pub fn Result<Call,errors::Error> signature(ref ir::Program code,usize at){
     return .ok(Call{.id=id,.argc=argc,.result=result,.parameters=row+2});
 }
 
-pub fn Result<usize,errors::Error> finish(ref u8[] source,ref mut ir::Program code){
-    if(code.list_used!=scratch_bytes()){return .err(errors::make(3,0));}
-    var usize i=0;while(i<code.list_used){code.list_operands[i]=0;i+=1;}
-    code.list_used=0;
-    var usize pc=0;
-    while(pc<code.count){
-        if(code.code[pc*8]==119){
-            let usize at=code.offsets[pc];
-            let usize packed=pack_literal(source,code,pc,at)?;
-        }
-        pc+=1;
+pub fn Result<usize,errors::Error> finish_until(ref u8[] source,ref mut ir::Program code,usize deadline){
+    var Finish w=begin_finish();
+    var budget::State meter=budget::empty();
+    while(!w.done){
+        if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
+        let usize allowance=budget::reset(ref mut meter,0)?;
+        let bool done=advance_finish(source,code,ref mut w,ref mut meter)?;
     }
+    if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
     return .ok(code.count);
 }
 
-// Literal offsets are authored by the compiler. Build the backing only after
-// discarding binding scratch so it cannot reduce the admitted literal capacity.
-fn Result<usize,errors::Error> pack_literal(ref u8[] source,ref mut ir::Program code,usize pc,usize at){
-    let literals::Decoded decoded=literals::decode(source,at)?;
+// The owner pins the original source and lowered IR through all advances.
+// Only the unpublished candidate can contain partially packed literal bytes.
+pub struct Finish { decoding::State decoded; usize cursor; usize pc; u8 phase; bool done; }
+pub fn Finish begin_finish(){return Finish{.decoded=decoding::empty(0),.cursor=0,.pc=0,.phase=0,.done=false};}
+
+fn void start_literal(ref mut decoding::State w,usize at){
+    w.result.begin=at;w.result.end=at;w.result.length=0;w.result.text=false;
+    w.cursor=at;w.checked=0;w.visits=0;w.phase=0;w.done=false;
+}
+pub fn Result<bool,errors::Error> advance_finish(ref u8[] source,ref mut ir::Program code,
+    ref mut Finish w,ref mut budget::State meter){
+    if(w.done){return .ok(true);}
+    if(meter.last!=0){return .ok(false);}
+    if(w.phase==3){
+        let bool ready=decoding::advance(source,ref mut w.decoded,meter)?;
+        if(!ready){return .ok(false);}
+        let usize at=w.decoded.result.begin;
+        if(w.decoded.result.text){return .err(errors::make(3,at));}
+        if(w.decoded.result.length>4096-code.list_used){return .err(errors::make(4,at));}
+        w.cursor=0;w.phase=4;return .ok(false);
+    }
+    if(!budget::admit(meter,128,0)?){return .ok(false);}
+    if(w.phase==0){
+        if(code.list_used!=scratch_bytes() || code.count>256){return .err(errors::make(3,0));}
+        w.phase=1;return .ok(false);
+    }
+    if(w.phase==1){
+        let usize count=scratch_bytes()-w.cursor;
+        let usize end=w.cursor+if(count<64){count}else{64};
+        while(w.cursor<end){code.list_operands[w.cursor]=0;w.cursor+=1;}
+        if(end==scratch_bytes()){code.list_used=0;w.phase=2;}
+        return .ok(false);
+    }
+    if(w.phase==2){
+        let usize count=code.count-w.pc;
+        let usize end=w.pc+if(count<64){count}else{64};
+        while(w.pc<end){
+            if(code.code[w.pc*8]==119){
+                let usize at=code.offsets[w.pc];start_literal(ref mut w.decoded,at);w.phase=3;return .ok(false);
+            }
+            w.pc+=1;
+        }
+        w.done=w.pc==code.count;return .ok(w.done);
+    }
+    if(w.phase==4){copy_literal(code,w);return .ok(false);}
+    return .err(errors::make(5,0));
+}
+
+fn void copy_literal(ref mut ir::Program code,ref mut Finish w){
     let usize start=code.list_used;
-    let usize length=decoded.length;
-    if(decoded.text){return .err(errors::make(3,at));}
-    if(length>4096-start){return .err(errors::make(4,at));}
-    var usize i=0;
-    while(i<length){code.list_operands[start+i]=decoded.data[i];i+=1;}
-    code.code[pc*8+2]=small(start%256);code.code[pc*8+3]=small(start/256);
-    code.code[pc*8+4]=small(length%256);code.code[pc*8+5]=small(length/256);
+    let usize length=w.decoded.result.length;
+    let ref u8[] data=ref w.decoded.result.data;
+    let usize left=length-w.cursor;
+    let usize end=w.cursor+if(left<64){left}else{64};
+    var usize i=w.cursor;
+    while(i<end){code.list_operands[start+i]=data[i];i+=1;}
+    w.cursor=end;
+    if(end!=length){return;}
+    let usize at=w.pc*8;
+    code.code[at+2]=small(start%256);code.code[at+3]=small(start/256);
+    code.code[at+4]=small(length%256);code.code[at+5]=small(length/256);
     code.list_used=start+length;
-    return .ok(code.list_used);
+    w.pc+=1;w.phase=2;
 }
 
 pub fn Result<usize,errors::Error> byte_argument(ref u8[] source,ref mut lexer::State s,ref mut ir::Program code,ref locals::Table names){

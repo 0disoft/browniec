@@ -1,7 +1,6 @@
-- Latest runtime checkpoint (2026-11-21): [Engine-owned project output compile](docs/engineering/runtime-engine-compile-memory.md#engine-owned-project-output-compile)
-  resumes configured project output jobs after rooted or anchored acquisition.
-  Windows development and /O2 passed output authority checks, verified Program
-  reuse and teardown with zero live SDK allocations.
+- Latest runtime checkpoint (2026-11-21): [Host literal finalization](docs/engineering/runtime-engine-compile-memory.md#host-literal-finalization)
+  clears binding scratch, decodes literals, and copies payload in bounded
+  advances. Windows development and /O2 passed deadline, heap, and wire checks.
 
 # Brownie C agent guidance
 

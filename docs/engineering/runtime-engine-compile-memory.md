@@ -695,6 +695,26 @@ without publication, two independently bound Instances and zero live SDK
 allocations at teardown. The locked /O2 CLI quick start returned 77. Local
 receipt: `build/runtime-engine/20261121T084904682045Z/receipt.json`.
 
+## Host literal finalization
+
+Single-source and anchored project host lowering drain the same finalization
+cursor. It clears the 2,946-byte binding scratch in batches of at most 64
+bytes, scans at most 64 instruction headers per advance and uses the existing
+staged literal decoder. A literal's offset and length are installed only
+after its last payload chunk of at most 64 bytes has been copied. Configured
+compilation samples its deadline between advances. The caller owns the entire
+unpublished candidate until independent host admission and retention succeed.
+
+Windows development and /O2 verified 129 bytes transferred in three advances,
+an empty literal at the next offset, and deferral when a work batch has
+already been spent. The Engine dropped an expired candidate during a real
+1,202-byte literal and published no Program. The successful repeat sent the
+exact payload from two Instances and both native processes exited with zero
+live SDK allocations. Local receipt:
+`build/runtime-engine/20261121T090122400297Z/receipt.json`.
+The owning adapters still drain the cursor synchronously. Caller-visible host
+compile steps, earlier lowering stages and final admission remain open.
+
 ## Executed verification and remaining work
 
 [Windows evidence](../evidence/runtime-engine-compile-memory-windows-20261107.json)

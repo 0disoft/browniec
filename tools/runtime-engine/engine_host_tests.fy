@@ -1,5 +1,7 @@
 module engine_host_tests;
 import host_catalog as catalog;
+import host_source as host_source;
+import metadata_budget as budget;
 import compiler as compiler;
 import host_program as programs;
 import host_exchange as host;
@@ -26,6 +28,7 @@ import source_snapshot as sources;
 unsafe extern C fn usize bc_runtime_engine_monotonic_ticks();
 unsafe extern C fn void bc_runtime_engine_test_set_clock(usize ticks);
 unsafe extern C fn void bc_runtime_engine_test_use_os_clock();
+unsafe extern C fn void bc_runtime_engine_test_clock_advance(usize read,usize ticks);
 unsafe extern C fn void bc_runtime_engine_test_wait_for_clock(usize start,usize elapsed);
 unsafe extern C fn ptr mut void bc_runtime_engine_test_adapter_slot();
 unsafe extern C fn ptr mut void bc_runtime_engine_test_short_adapter_slot();
@@ -671,6 +674,38 @@ fn Result<usize,u8> variable_bytes(){
     assert(id(engine::destroy(ref mut owner))==0);
     return .ok(1);
 }
+fn Result<usize,u8> literal_finish_chunks(){
+    let catalog::Catalog imports=catalog_from(byte_catalog())?;
+    var ir::Program code=ir::empty();
+    assert(host_source::prepare(b"module main; fn i32 main(){return 0;}",ref mut code,ref imports,1024).is_ok);
+    assert(ir::raw(ref mut code,119,0,0,0,0).is_ok);
+    let u8[129] expected=[97;129];
+    var bytes::Buffer source=bytes::empty();
+    assert(bytes::append(ref mut source,b"b\"").is_ok);
+    assert(bytes::append(ref mut source,ref expected).is_ok);
+    assert(bytes::append(ref mut source,b"\"b\"\"").is_ok);
+    assert(ir::raw(ref mut code,119,1,0,0,132).is_ok);
+    var host_source::Finish w=host_source::begin_finish();
+    var budget::State meter=budget::empty();
+    var usize copies=0;
+    while(!w.done){
+        assert(budget::reset(ref mut meter,0).is_ok);
+        let bool copying=w.phase==4 && w.pc==0;
+        assert(host_source::advance_finish(bytes::view(ref source),ref mut code,ref mut w,ref mut meter).is_ok);
+        assert(meter.stages<128);
+        if(copying){
+            copies+=1;
+            if(copies<3){assert(code.list_used==0 && code.code[4]==0);}
+            let usize cursor=w.cursor;
+            let usize stages=meter.stages;
+            assert(host_source::advance_finish(bytes::view(ref source),ref mut code,ref mut w,ref mut meter).is_ok);
+            assert(w.cursor==cursor && meter.stages==stages);
+        }
+    }
+    assert(copies==3 && code.list_used==129 && code.code[4]==129 && code.code[10]==129 && code.code[12]==0);
+    assert(bytes::equal(ref code.list_operands[..129],ref expected));
+    return .ok(1);
+}
 fn Result<usize,u8> byte_source_round_trip(){
     let policy::Policy ceiling=parsed_policy(true)?;
     let runs::RunConfig run=switch(runs::parse(source_run_config(),ref ceiling)){case .ok(v):{v}case .err(_):{return .err(6);}};
@@ -692,6 +727,16 @@ fn Result<usize,u8> byte_source_round_trip(){
     assert(bytes::append(ref mut source,b"module main; fn i32 main() { let response = host::example::check(b\"").is_ok);
     assert(bytes::append(ref mut source,literal).is_ok);
     assert(bytes::append(ref mut source,b"\\x00\\xff\"); return host::example::next(ref response) + 35; }").is_ok);
+    let usize heap=unsafe{probe_live_bytes()};
+    let usize now=unsafe{bc_runtime_engine_monotonic_ticks()};
+    // Deadline, initialization, and 47 clear stages precede incremental decoding.
+    unsafe{bc_runtime_engine_test_clock_advance(55,now+20000000)};
+    switch(engine::compile_scalar_host(ref mut owner,bytes::view(ref source),catalog_from(byte_catalog())?,ref expected,ref run)){
+        case .ok(_):{assert(false);}
+        case .err(e):{assert(e.status==4 && e.diagnostic.code.kind==errors::deadline_kind() && e.diagnostic.at.source==sources::no_source().source);}
+    };
+    assert(counts(ref mut owner).programs==0 && unsafe{probe_live_bytes()}==heap);
+    unsafe{bc_runtime_engine_test_use_os_clock();bc_runtime_engine_test_set_clock(now);}
     let usize p=id(engine::compile_scalar_host(ref mut owner,bytes::view(ref source),imports,ref expected,ref run));
     let usize a=id(engine::prepare_scalar_host(ref mut owner,p,ref run));
     let usize b=id(engine::prepare_scalar_host(ref mut owner,p,ref run));
@@ -1630,6 +1675,7 @@ pub fn void run(){
     assert(pending_memory().is_ok);
     assert(multi_arguments().is_ok);
     assert(variable_bytes().is_ok);
+    assert(literal_finish_chunks().is_ok);
     assert(byte_source_round_trip().is_ok);
     assert(result_branch().is_ok);
     assert(result_source_round_trip().is_ok);

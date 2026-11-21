@@ -3264,6 +3264,10 @@ pub fn Result<usize,errors::Error> lower_scalar_host(ref u8[] source,ref host_ca
 }
 pub fn Result<usize,errors::Error> lower_scalar_host_with_limit(ref u8[] source,ref host_catalog::Catalog imports,
     ref mut ir::Program code,usize token_limit){
+    return lower_scalar_host_until(source,imports,code,token_limit,0);
+}
+pub fn Result<usize,errors::Error> lower_scalar_host_until(ref u8[] source,ref host_catalog::Catalog imports,
+    ref mut ir::Program code,usize token_limit,usize deadline){
     if(source.len>4096){return .err(errors::make(4,4096));}
     let ref str valid=switch(text::validate_utf8(source)){case .ok(v):{v}case .err(_):{return .err(errors::make(1,0));}};
     let usize start=host_source::prepare(source,code,imports,token_limit)?;
@@ -3271,12 +3275,12 @@ pub fn Result<usize,errors::Error> lower_scalar_host_with_limit(ref u8[] source,
     let literal_collection::Index literals=literal_collection::empty();
     var usize active=16;
     let usize count=lower_prepared(source,false,false,false,ref literals,ref mut signatures,code,ref mut active,start)?;
-    return host_source::finish(source,code);
+    return host_source::finish_until(source,code,deadline);
 }
 
 // The selected Index owns the original modules and scoped guest aliases.
 pub fn Result<usize,source_errors::Error> lower_project_host(ref module_index::Index index,usize selected,
-    ref host_catalog::Catalog imports,ref mut ir::Program code){
+    ref host_catalog::Catalog imports,ref mut ir::Program code,usize deadline){
     let ref source_snapshot::Snapshot snapshot=module_index::snapshot(index);
     var usize active=16;
     switch(host_source::prepare_project(index,code,imports,ref mut active)){
@@ -3286,10 +3290,10 @@ pub fn Result<usize,source_errors::Error> lower_project_host(ref module_index::I
         case .ok(v):{v}case .err(e):{return .err(source_errors::Error{.code=source_errors::binding(e),.at=e.at});}
     };
     let ref u8[] source=ref input.data[..input.used];
-    return lower_project_host_body(source,ref input.context,index,selected,code);
+    return lower_project_host_body(source,ref input.context,index,selected,code,deadline);
 }
 fn Result<usize,source_errors::Error> lower_project_host_body(ref u8[] source,ref source_context::Table scope,
-    ref module_index::Index index,usize selected,ref mut ir::Program code){
+    ref module_index::Index index,usize selected,ref mut ir::Program code,usize deadline){
     var functions::Table signatures=switch(signature_scan::scan_host_indexed(source,scope,index,selected)){
         case .ok(v):{v}case .err(e):{return .err(input_module_error(index,e,16));}
     };
@@ -3312,7 +3316,7 @@ fn Result<usize,source_errors::Error> lower_project_host_body(ref u8[] source,re
     switch(lower_prepared(source,false,false,false,ref literals,ref mut signatures,code,ref mut active,0)){
         case .ok(_):{}case .err(e):{return .err(input_module_error(index,e,active));}
     };
-    return switch(host_source::finish(source,code)){
+    return switch(host_source::finish_until(source,code,deadline)){
         case .ok(v):{.ok(v)}case .err(e):{.err(input_module_error(index,e,16))}
     };
 }
