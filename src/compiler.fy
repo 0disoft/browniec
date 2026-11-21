@@ -7,6 +7,7 @@ import host_source as host_source;
 import host_program as host_program;
 
 import errors as errors;
+import runtime_clock as clock;
 import lexer as lexer;
 import ir as ir;
 import locals as locals;
@@ -3025,27 +3026,27 @@ fn Result<bool,errors::Error> walk_body(ref u8[] source,ref mut lexer::State s,
         if(w.request!=0){let usize completed=complete_body_child(source,s,p,names,signatures,result_type,0,flow,ref mut w)?;}
     }return body_work::prepared(ref w);
 }
+fn Result<bool,errors::Error> walk_body_until(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref mut locals::Table names,ref functions::Table signatures,
+    u8 result_type,ref mut loops::State flow,usize deadline){
+    var body_work::State w=body_work::begin(0,false);var metadata_budget::State meter=metadata_budget::empty();
+    while(true){
+        if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
+        if(w.done){return body_work::prepared(ref w);}
+        if(w.request==0){
+            let usize allowance=metadata_budget::reset(ref mut meter,s.begin)?;
+            let bool advanced=body_work::advance(source,s,p,names,flow,ref mut w,ref mut meter)?;
+        }else{
+            let usize completed=complete_body_child(source,s,p,names,signatures,result_type,0,flow,ref mut w)?;
+        }
+    }
+    return .err(errors::make(5,0));
+}
 // Private raw body oracle for exact IR/error comparisons, with caller-prepared
 // signatures/catalogs. Both routes produce candidates, never executable authority.
 pub fn Result<usize, errors::Error> lower_body(ref u8[] source, ref functions::Table signatures, usize f, ref mut ir::Program p,bool staged) {
     var locals::Table table = locals::empty();
-    table.function = f;
-    let usize arity = signatures.arities[f];
-    if (p.registers + arity > 128) { return .err(errors::make(4, signatures.begins[f])); }
-    let usize start = p.count;
-    let usize registers_start = p.registers;
-    p.starts[f] = start;
-    p.register_starts[f] = registers_start;
-    p.arities[f] = arity;
-    var usize i = 0;
-    while (i < arity) {
-        let usize at = f * 8 + i;
-        let usize parameter = if(reference_calls::parameter(signatures,at)){reference_calls::bind(signatures,at,p,ref mut table)?}
-            else if(signatures.param_slices[at]){slice_calls::bind(signatures,at,p,ref mut table)?}
-            else if(signatures.param_records[at]!=0){record_calls::bind(signatures,at,p,ref mut table)?}
-            else{array_calls::bind(signatures,at,p,ref mut table)?};
-        i += 1;
-    }
+    let usize bound=bind_body(signatures,f,p,ref mut table)?;
     var lexer::State s=source_context::state(source,ref signatures.context,signatures.bodies[f])?;
     let usize first = lexer::next(source, ref mut s)?;
     var loops::State loop_state=loops::empty();
@@ -3057,8 +3058,45 @@ pub fn Result<usize, errors::Error> lower_body(ref u8[] source, ref functions::T
         terminal = control(source,ref mut s,p,ref mut table,signatures,result_context,0,0,ref mut loop_state)?;
     }
     }
+    return finish_body(signatures,f,p,ref table,ref s,terminal);
+}
+
+fn Result<usize,errors::Error> lower_body_until(ref u8[] source, ref functions::Table signatures, usize f, ref mut ir::Program p,usize deadline) {
+    var locals::Table table = locals::empty();
+    let usize bound=bind_body(signatures,f,p,ref mut table)?;
+    var lexer::State s=source_context::state(source,ref signatures.context,signatures.bodies[f])?;
+    let usize first = lexer::next(source, ref mut s)?;
+    var loops::State loop_state=loops::empty();
+    let u8 result_context=if(reference_calls::result(signatures,f)){12}else{record_results::context(p,f)};
+    let bool terminal=walk_body_until(source,ref mut s,p,ref mut table,signatures,result_context,ref mut loop_state,deadline)?;
+    return finish_body(signatures,f,p,ref table,ref s,terminal);
+}
+
+fn Result<usize,errors::Error> bind_body(ref functions::Table signatures,usize f,ref mut ir::Program p,ref mut locals::Table table){
+    table.function = f;
+    let usize arity = signatures.arities[f];
+    if (p.registers + arity > 128) { return .err(errors::make(4, signatures.begins[f])); }
+    let usize start = p.count;
+    let usize registers_start = p.registers;
+    p.starts[f] = start;
+    p.register_starts[f] = registers_start;
+    p.arities[f] = arity;
+    var usize i = 0;
+    while (i < arity) {
+        let usize at = f * 8 + i;
+        let usize parameter = if(reference_calls::parameter(signatures,at)){reference_calls::bind(signatures,at,p,table)?}
+            else if(signatures.param_slices[at]){slice_calls::bind(signatures,at,p,table)?}
+            else if(signatures.param_records[at]!=0){record_calls::bind(signatures,at,p,table)?}
+            else{array_calls::bind(signatures,at,p,table)?};
+        i += 1;
+    }
+    return .ok(f);
+}
+fn Result<usize,errors::Error> finish_body(ref functions::Table signatures,usize f,ref mut ir::Program p,
+    ref locals::Table table,ref lexer::State s,bool stopped){
+    var bool terminal=stopped;
     if(!terminal && signatures.return_types[f]==13){
-        let usize dropped=arrays::release_visible(ref table,p,s.begin)?;
+        let usize dropped=arrays::release_visible(table,p,s.begin)?;
         let usize returned=ir::raw(p,82,0,0,0,s.begin)?;terminal=true;
     }
     if (!terminal) { return .err(errors::make(2, s.begin)); }
@@ -3118,6 +3156,31 @@ fn Result<usize, errors::Error> lower_into(ref u8[] source,bool origin_analysis,
 }
 fn Result<usize,errors::Error> lower_prepared(ref u8[] source,bool origin_analysis,bool references,bool returns,
     ref literal_collection::Index literals,ref mut functions::Table signatures,ref mut ir::Program p,ref mut usize active,usize start){
+    let usize ready=prepare_lowering(source,origin_analysis,references,returns,literals,signatures,p,start)?;
+    var usize f=0;
+    while(f<signatures.count){
+        let usize scoped=locate_body(source,signatures,f,active)?;
+        let usize emitted=body(source,signatures,f,p)?;
+        f+=1;
+    }
+    return finish_lowering(p,signatures,returns,active);
+}
+fn Result<usize,errors::Error> lower_prepared_output_until(ref u8[] source,ref literal_collection::Index literals,
+    ref mut functions::Table signatures,ref mut ir::Program p,ref mut usize active,usize deadline){
+    if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
+    let usize ready=prepare_lowering(source,false,true,true,literals,signatures,p,0)?;
+    var usize f=0;
+    while(f<signatures.count){
+        if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
+        let usize scoped=locate_body(source,signatures,f,active)?;
+        let usize emitted=lower_body_until(source,signatures,f,p,deadline)?;
+        f+=1;
+    }
+    return finish_lowering(p,signatures,true,active);
+}
+
+fn Result<usize,errors::Error> prepare_lowering(ref u8[] source,bool origin_analysis,bool references,bool returns,
+    ref literal_collection::Index literals,ref mut functions::Table signatures,ref mut ir::Program p,usize start){
     signatures.literals=*literals;signatures.reference_calls=references;
     // Signature candidates do not prove a returned borrow's origin or lifetime.
     // Ordinary/public lowering rejects these declarations, even unreachable
@@ -3148,16 +3211,17 @@ fn Result<usize,errors::Error> lower_prepared(ref u8[] source,bool origin_analys
         }
     }
     let usize aggregates=prepare_aggregates_from(source,signatures,p,start)?;
-    var usize f = 0;
-    while (f < signatures.count) {
-        if(signatures.context.modules!=0){
-            *active=switch(source_context::location(source,ref signatures.context,signatures.begins[f])){
-                case .ok(v):{v.source}case .err(_):{return .err(errors::make(5,signatures.begins[f]));}
-            };
-        }
-        let usize emitted = body(source, signatures, f, p)?;
-        f += 1;
+    return .ok(aggregates);
+}
+fn Result<usize,errors::Error> locate_body(ref u8[] source,ref functions::Table signatures,usize f,ref mut usize active){
+    if(signatures.context.modules!=0){
+        *active=switch(source_context::location(source,ref signatures.context,signatures.begins[f])){
+            case .ok(v):{v.source}case .err(_):{return .err(errors::make(5,signatures.begins[f]));}
+        };
     }
+    return .ok(*active);
+}
+fn Result<usize,errors::Error> finish_lowering(ref mut ir::Program p,ref functions::Table signatures,bool returns,ref mut usize active){
     *active=16;
     if(signatures.output && returns){let usize prepared=output_returns::lower(p,signatures)?;}
     // Preserve the current source/IR restriction on entry calls in array programs.
@@ -3446,7 +3510,20 @@ pub fn Result<usize,source_errors::Error> lower_output_modules(ref module_entrie
 pub fn Result<usize,source_errors::Error> lower_output_modules_until(ref module_entries::Entry selected,
     ref mut static_images::Builder builder,ref mut reference_ir::Program code,usize deadline){
     let source_context::Input input=collecting::collect_until(module_entries::index(selected),deadline)?;
-    let bool retained=lower_modules_collected(ref input,selected,builder,code,true)?;
+    let ref u8[] source=ref input.data[..input.used];
+    let ref source_context::Table scope=ref input.context;
+    switch(source_features::retained_scoped(source,scope)){
+        case .ok(_):{}case .err(e):{return .err(module_error(selected,e,16));}
+    };
+    let literal_collection::Index literals=module_literals(builder,source,scope,module_entries::index(selected))?;
+    var functions::Table signatures=switch(functions::scan_scoped(source,scope,selected,true)){
+        case .ok(v):{v}case .err(e):{return .err(module_error(selected,e,16));}
+    };signatures.output=true;
+    var usize active=16;
+    switch(lower_prepared_output_until(source,ref literals,ref mut signatures,ref mut code.body,ref mut active,deadline)){
+        case .ok(_):{}case .err(e):{return .err(module_error(selected,e,active));}
+    };
+    let usize bound=module_reference_signature(source,scope,selected,code)?;
     return .ok(code.body.count);
 }
 fn Result<bool,source_errors::Error> lower_modules_mode(ref module_entries::Entry selected,
@@ -3480,11 +3557,7 @@ fn Result<usize,errors::Error> lower_module(ref u8[] source,ref source_context::
 }
 fn Result<usize,source_errors::Error> lower_module_references(ref u8[] source,ref source_context::Table scope,
     ref module_entries::Entry selected,ref mut static_images::Builder builder,ref mut reference_ir::Program code,bool output){
-    let literal_collection::Index literals=switch(literal_collection::collect_scoped(builder,source,scope)){
-        case .ok(v):{v}case .err(e):{return .err(module_error(selected,public_error(switch(e.kind){
-            case .Source:{image_source_error(e.source)}case .Image:{image_literal_error(e.image)}
-        }),16));}
-    };
+    let literal_collection::Index literals=module_literals(builder,source,scope,module_entries::index(selected))?;
     var usize active=16;
     var functions::Table signatures=switch(functions::scan_scoped(source,scope,selected,true)){
         case .ok(v):{v}case .err(e):{return .err(module_error(selected,e,16));}
@@ -3494,6 +3567,15 @@ fn Result<usize,source_errors::Error> lower_module_references(ref u8[] source,re
     };
     return module_reference_signature(source,scope,selected,code);
 }
+fn Result<literal_collection::Index,source_errors::Error> module_literals(ref mut static_images::Builder builder,
+    ref u8[] source,ref source_context::Table scope,ref module_index::Index index){
+    return switch(literal_collection::collect_scoped(builder,source,scope)){
+        case .ok(v):{.ok(v)}case .err(e):{return .err(input_module_error(index,public_error(switch(e.kind){
+            case .Source:{image_source_error(e.source)}case .Image:{image_literal_error(e.image)}
+        }),16));}
+    };
+}
+
 fn Result<usize,source_errors::Error> module_reference_signature(ref u8[] source,ref source_context::Table scope,
     ref module_entries::Entry selected,ref mut reference_ir::Program code){
     var functions::Table signatures=switch(functions::scan_scoped(source,scope,selected,true)){
@@ -3524,7 +3606,18 @@ pub fn Result<usize,source_errors::Error> lower_input_output_modules(ref input_e
 pub fn Result<usize,source_errors::Error> lower_input_output_modules_until(ref input_entries::InputEntry selected,
     ref mut static_images::Builder builder,ref mut reference_ir::Program code,usize deadline){
     let source_context::Input input=collecting::collect_until(input_entries::index(selected),deadline)?;
-    return lower_input_collected(ref input,selected,builder,code,true);
+    let ref module_index::Index index=input_entries::index(selected);
+    let ref u8[] source=ref input.data[..input.used];
+    let ref source_context::Table scope=ref input.context;
+    let literal_collection::Index literals=module_literals(builder,source,scope,index)?;
+    var functions::Table signatures=switch(functions::scan_input_scoped(source,scope,selected)){
+        case .ok(v):{v}case .err(e):{return .err(input_module_error(index,e,16));}
+    };signatures.output=true;
+    var usize active=16;
+    switch(lower_prepared_output_until(source,ref literals,ref mut signatures,ref mut code.body,ref mut active,deadline)){
+        case .ok(_):{}case .err(e):{return .err(input_module_error(index,e,active));}
+    };
+    return .ok(finish_input_lowering(ref signatures,code));
 }
 fn Result<usize,source_errors::Error> lower_input_modules_mode(ref input_entries::InputEntry selected,
     ref mut static_images::Builder builder,ref mut reference_ir::Program code,bool output){
@@ -3538,11 +3631,7 @@ fn Result<usize,source_errors::Error> lower_input_collected(ref source_context::
     ref mut static_images::Builder builder,ref mut reference_ir::Program code,bool output){
     let ref module_index::Index index=input_entries::index(selected);
     let ref u8[] data=ref input.data;let ref u8[] source=data[..input.used];let ref source_context::Table scope=ref input.context;
-    let literal_collection::Index literals=switch(literal_collection::collect_scoped(builder,source,scope)){
-        case .ok(v):{v}case .err(e):{return .err(input_module_error(index,public_error(switch(e.kind){
-            case .Source:{image_source_error(e.source)}case .Image:{image_literal_error(e.image)}
-        }),16));}
-    };
+    let literal_collection::Index literals=module_literals(builder,source,scope,index)?;
     var functions::Table signatures=switch(functions::scan_input_scoped(source,scope,selected)){
         case .ok(v):{v}case .err(e):{return .err(input_module_error(index,e,16));}
     };signatures.output=output;
@@ -3550,13 +3639,16 @@ fn Result<usize,source_errors::Error> lower_input_collected(ref source_context::
     switch(lower_prepared(source,false,true,true,ref literals,ref mut signatures,ref mut code.body,ref mut active,0)){
         case .ok(_):{}case .err(e):{return .err(input_module_error(index,e,active));}
     };
+    return .ok(finish_input_lowering(ref signatures,code));
+}
+fn usize finish_input_lowering(ref functions::Table signatures,ref mut reference_ir::Program code){
     code.origins=signatures.return_slice_inputs;var usize f=0;
     while(f<signatures.count){
         if(signatures.return_slice_elements[f]==10){code.results[f]=3;}
         var usize i=0;while(i<signatures.arities[f]){let usize at=f*8+i;
             if(signatures.param_slices[at] && signatures.param_slice_elements[at]==10){let usize formal=code.body.register_starts[f]+i;code.parameters[formal]=3;}i+=1;
         }f+=1;
-    }return .ok(code.body.count);
+    }return code.body.count;
 }
 fn source_errors::Error input_module_error(ref module_index::Index index,errors::Error e,usize active){
     return if(e.offset==0){source_errors::absent(e)}else{source_errors::map(module_index::snapshot(index),e,active)};

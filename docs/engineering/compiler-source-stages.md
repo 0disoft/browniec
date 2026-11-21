@@ -62,8 +62,10 @@ escape-before-encoding diagnostics and exact source offsets.
 
 Lexer and primitive-type compatibility adapters retain the historical raw path
 for sources larger than this private 4096-byte profile. Configured Engine output
-and input-output compilation use the same source-context advances with their
+and input-output compilation use the same source-context and body control
+advances with their
 [absolute compile deadline](runtime-engine-compile-memory.md#configured-compile-deadlines).
+The body driver checks again before dispatching each pending semantic child.
 Public compilation still uses its existing admission gates and remains synchronous. No public Pending
 compile, cancellation protocol, time bound or peak-stack improvement follows.
 

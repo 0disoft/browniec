@@ -261,6 +261,17 @@ void bc_runtime_engine_test_context_copy(uintptr_t bytes){
 uintptr_t bc_runtime_engine_test_context_bytes(void){
  assert(context_measuring);context_measuring=0;return context_bytes;
 }
+static uintptr_t body_expiry;
+static int body_requested;
+void bc_runtime_engine_test_expire_in_body(uintptr_t deadline){
+ assert(host_clock_fixed&&deadline>host_clock_ticks&&!body_expiry);
+ body_expiry=deadline;body_requested=0;
+}
+void bc_runtime_engine_test_body_request(uint8_t request){
+ if(body_expiry&&request){assert(!body_requested);body_requested=1;bc_runtime_engine_test_set_clock(body_expiry);}
+}
+void bc_runtime_engine_test_body_child(void){assert(!body_expiry);}
+void bc_runtime_engine_test_body_stopped(void){assert(body_expiry&&body_requested);body_expiry=0;}
 static uintptr_t output_proof_visits=0;
 static uintptr_t output_proof_expiry;
 static size_t output_proof_attempts;

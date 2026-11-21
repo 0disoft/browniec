@@ -120,8 +120,11 @@ Output and input-output compilation sample the same absolute deadline before
 each source-context advance. An advance copies up to 64 source bytes, packs
 one metadata row, checks one sealed name, or moves to the next phase. Expiry
 discards the incomplete context before signature or body lowering. The
-compiler samples again after lowering and before freezing the literal image. The proof driver then
-samples once before each bounded proof advance. Expiry ends the compile with
+compiler also checks before body preparation, before each function, and before
+each control advance or pending semantic child. A child already running returns
+to the next checkpoint before expiry is delivered. The compiler samples again
+after lowering and before freezing the literal image. The proof driver samples
+once before each bounded proof advance. Expiry ends the compile with
 the source-less deadline diagnostic and releases the image and any active
 reservation. Only a complete proof can enter Program retention. The final
 publication check still covers the synchronous work after proof.
@@ -140,6 +143,19 @@ heap at baseline, and preserved the next Program ID. One tick before expiry
 the same configured compiler admitted the Program. Development and /O2 both
 passed with zero live SDK allocations at exit. Local receipt:
 `build/runtime-engine/20261120T233149911244Z/receipt.json`.
+
+The Windows Engine verifier expired the compile while its first body request
+was pending in each output entry mode. The driver entered zero semantic
+children and zero proof stages. Program retention and the SDK heap returned to
+baseline, and the subsequent successful compile received Program ID 1. Windows
+development and /O2 passed with zero live SDK allocations at exit.
+Local receipt: `build/runtime-engine/20261120T235052748018Z/receipt.json`.
+
+The standalone body-lowering comparison passed 30 development groups. Its
+30-group release invocation hit the Fairy C 60-second MSVC command limit.
+A single /O2 image passed four selected comparison and default-stack depth
+groups. Local receipts: `build/body-lowering-deadline-regression/development/receipt.json` and
+`build/body-lowering-single-image/receipt.json`.
 
 Source lowering, work between checkpoints, and cleanup remain synchronous.
 Public Pending compilation, in-flight cancellation, and a latency bound for

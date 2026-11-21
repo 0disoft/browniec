@@ -89,6 +89,15 @@ def source_copy(path):
             pattern=r'(fn Result<scratch_vec::Vec<[^\n]+> '+name+r'\([^\n]+\)\{)'
             text,count=re.subn(pattern,r'\1\n    let AllocationProbe probe=allocation_probe();',text)
             need(count==1,'Compiler allocation scope changed: '+name)
+        declaration = 'fn Result<bool,errors::Error> walk_body_until('
+        advance = '            let bool advanced=body_work::advance(source,s,p,names,flow,ref mut w,ref mut meter)?;'
+        child = '            let usize completed=complete_body_child(source,s,p,names,signatures,result_type,0,flow,ref mut w)?;'
+        need(text.count(declaration) == text.count(advance) == text.count(child) == 1,
+             'Body deadline probe anchors changed')
+        text = text.replace(declaration, 'unsafe extern C fn void bc_runtime_engine_test_body_request(u8 request);\n'
+                            'unsafe extern C fn void bc_runtime_engine_test_body_child();\n' + declaration, 1)
+        text = text.replace(advance, advance + '\n            unsafe{bc_runtime_engine_test_body_request(w.request)};', 1)
+        text = text.replace(child, '            unsafe{bc_runtime_engine_test_body_child()};\n' + child, 1)
         return path.name,text.encode('utf-8')
     if path == ROOT / 'src/runtime_cleanup_work.fy':
         source = path.read_text(encoding='utf-8')
