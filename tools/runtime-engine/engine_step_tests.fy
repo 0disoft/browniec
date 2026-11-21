@@ -23,6 +23,8 @@ import literal_source as literal_source;
 import static_image as images;
 import source_context as context;
 import source_context_work as collecting;
+import source_features as features;
+import metadata_budget as budget;
 import struct_scan_work as record_scan;
 
 // Engine.step fixtures only. The parent owns native transport and integration.
@@ -658,6 +660,40 @@ fn Result<usize,u8> compile_context_deadline(ref mut engine::Engine e,ref config
     unsafe{bc_runtime_engine_test_use_os_clock()};
     return .ok(0);
 }
+fn Result<usize,u8> resumable_feature_classification(){
+    let ref u8[] comment=b"module app;/* a long comment mentions fn ref and a fake literal and spans multiple token batches. */pub fn i32 chosen(){return 42;}";
+    let ref u8[] literal=b"module app;pub fn i32 chosen(){let ref u8[] marker=b\"*\";return 42;}";
+    let ref u8[] returned=b"module app;fn ref u8[] marker(ref u8[] data){return data;}pub fn i32 chosen(){return 42;}";
+    var usize mode=0;
+    while(mode<3){
+        let ref u8[] source=if(mode==0){comment}else if(mode==1){literal}else{returned};
+        let entries::Entry entry=selected(source)?;
+        let context::Input input=switch(collecting::collect(entries::index(ref entry))){
+            case .ok(v):{v}case .err(_):{return .err(1);}
+        };
+        let ref u8[] data=ref input.data[..input.used];
+        let ref context::Table scope=ref input.context;
+        var features::State work=features::begin();var budget::State allowance=budget::empty();
+        while(!work.done){
+            assert(!features::prepared(ref work).is_ok);
+            assert(budget::reset(ref mut allowance,0).is_ok);
+            let usize prior=allowance.stages;
+            assert(features::advance(data,scope,ref mut work,ref mut allowance).is_ok);
+            assert(allowance.stages==prior+1);
+            if(!work.done){
+                let usize cursor=work.token.scan.inner;
+                let usize file=work.file;
+                assert(features::advance(data,scope,ref mut work,ref mut allowance).is_ok);
+                assert(!work.done && work.file==file && work.token.scan.inner==cursor && allowance.stages==prior+1);
+            }
+        }
+        switch(features::prepared(ref work)){case .ok(v):{assert(v==(mode!=0));}case .err(_):{return .err(2);}};
+        let usize count=allowance.stages;
+        assert(count>1 && features::advance(data,scope,ref mut work,ref mut allowance).is_ok && allowance.stages==count);
+        mode+=1;
+    }
+    return .ok(0);
+}
 fn Result<usize,u8> compile_feature_deadline(ref mut engine::Engine e){
     let ref u8[] source=b"module app;/* a long comment mentions fn ref and b\"ignored\" and stays in progress after one scanner batch. */pub fn i32 chosen(){return 42;}";
     let Heap idle=heap();
@@ -1029,6 +1065,7 @@ fn Result<usize,u8> configured_compile_deadline(){
     let configs::RunConfig granted=run_config(ref ceiling,0)?;
     var engine::Engine e=configured_engine(ceiling)?;
     let usize context_checked=compile_context_deadline(ref mut e,ref granted)?;
+    let usize resumable_features=resumable_feature_classification()?;
     let usize feature_checked=compile_feature_deadline(ref mut e)?;
     literal_transaction_deadline();
     let usize literal_checked=compile_literal_deadline(ref mut e,ref granted)?;

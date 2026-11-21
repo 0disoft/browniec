@@ -19,6 +19,7 @@ in separate advances; unused credit cannot accumulate into a later scan.
 | Kernel | Work in one stage |
 | --- | --- |
 | `source_context_work` | Copy at most 64 immutable source bytes, pack one import/symbol row, or validate one sealed name of at most 64 bytes. |
+| `source_features` | Advance one scoped lexer preparation or token stage, then classify the completed token and advance the file cursor if needed. |
 | `source_utf8_work` | Validate a scalar-aligned cut of at most 259 bytes. |
 | `literal_source_work` | Decode at most 16 scalar/escape transitions; raw and cooked UTF-8 checks use separate cuts. |
 | `literal_scan_work` | Scan a token without constructing the decoder's 4096-byte cooked bank. |
@@ -903,3 +904,26 @@ candidates, default-stack actual special CALL32/33, retained views and copy
 Result handling. Owners drain synchronously; common fixed metadata primitives,
 propagation, recursive CFG/join/snapshot release and later metadata retain their
 stated boundaries. The unchanged Engine inputs reuse prior passed evidence.
+
+## Resumable scoped syntax classification
+
+The ordinary and output-only module compilers drain the same classifier used
+by callers that advance one stage at a time. The cursor preserves scoped lexer
+preparation, the current token, the current file and whether the preceding
+token was `fn`. Finishing a file resets the preceding-token state. A spent
+allowance defers the next stage. The classification is available once the
+cursor reaches a retained-syntax marker or the final file ends. The Engine's
+synchronous adapter checks its deadline before each advance and before
+returning the result.
+
+Windows development and /O2 verified three source cases across separate
+advances. Comments containing false markers stayed on the ordinary route,
+and a byte literal and a returned-reference signature selected the retained
+route. The tests also verified a spent allowance, idempotent terminal
+advances, and deadline expiry during comment scanning in both existing
+owning compile routes. SDK allocations were zero at exit. Local receipt:
+`build/runtime-engine/20261121T030200402759Z/receipt.json`.
+
+This implements one resumable compiler stage. Engine-owned compile state,
+suspension between complete compiler phases, and in-flight cancellation
+remain open.
