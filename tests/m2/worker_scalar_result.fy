@@ -1,6 +1,8 @@
 module tests::m2::worker_scalar_result;
 
 import errors as errors;
+import source_snapshot as sources;
+import worker_project_wire as project;
 import worker_scalar_result as worker;
 import std::bytes as bytes;
 
@@ -49,4 +51,41 @@ fn void strict_scalar_result_contract(){
     assert(!accepts(b"{\"schema\":\"browniec.worker-result/v1\",\"status\":\"error\",\"kind\":2,\"location\":2,\"offset\":1}",check_case));
     let u8[257] oversized=[32;257];
     assert(!accepts(ref oversized,check_case));
+}
+
+@test
+fn void project_output_requires_an_authorized_successful_frame(){
+    let project::Outcome passed=project::Outcome{.value=worker::completed(77),.profile=8,.span=sources::no_source()};
+    let project::Outcome failed=project::Outcome{
+        .value=worker::failed(errors::absent(20,0)),.profile=8,.span=sources::no_source()};
+    let ref u8[] lengths=b"\x09\x00";
+    let bytes::Buffer frame=switch(project::encode_output(passed,b"\x00\xFF")){
+        case .ok(buffer):{buffer}case .err(_):{assert(false);bytes::empty()}
+    };
+    let ref u8[] payload=bytes::view(ref frame);
+    let project::ResultFrame parsed=switch(project::parse_frame(payload,true,lengths,true,2)){
+        case .ok(result):{result}
+        case .err(_):{assert(false);return;}
+    };
+    assert(parsed.has_output && parsed.outcome.value.value==77);
+    assert(bytes::equal(payload[parsed.output_start..payload.len],b"\x00\xFF"));
+    assert(!project::parse_frame(payload,true,lengths,true,1).is_ok);
+    assert(!project::parse_frame(payload,true,lengths,false,2).is_ok);
+    assert(!project::parse_frame(payload,false,lengths,true,2).is_ok);
+    assert(!project::parse_frame(payload[..4],true,lengths,true,2).is_ok);
+    assert(!project::encode_output(failed,b"x").is_ok);
+    let bytes::Buffer legacy=switch(project::encode_result(passed,true,false)){
+        case .ok(buffer):{buffer}case .err(_):{assert(false);bytes::empty()}
+    };
+    assert(project::parse_frame(bytes::view(ref legacy),true,lengths,false,0).is_ok);
+    assert(!project::parse_frame(bytes::view(ref legacy),true,lengths,true,2).is_ok);
+    let bytes::Buffer error_frame=switch(project::encode_result(failed,true,true)){
+        case .ok(buffer):{buffer}case .err(_):{assert(false);bytes::empty()}
+    };
+    assert(project::parse_frame(bytes::view(ref error_frame),true,lengths,true,2).is_ok);
+    assert(!project::parse_frame(bytes::view(ref error_frame),true,lengths,false,0).is_ok);
+    let bytes::Buffer empty=switch(project::encode_output(passed,b"")){
+        case .ok(buffer):{buffer}case .err(_):{assert(false);bytes::empty()}
+    };
+    assert(project::parse_frame(bytes::view(ref empty),true,lengths,true,0).is_ok);
 }

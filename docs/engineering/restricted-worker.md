@@ -478,6 +478,14 @@ an exact 8,193-byte round trip, rejection one byte below the output size,
 a trap after emit with no published bytes, and a zero-argument emit.
 Local receipt: `build/restricted-worker/20261121T174415853814Z/receipt.json`.
 
+The focused native codec tests passed in both Windows profiles. They reject
+unwrapped success on a granted run, an output envelope on check or without
+a grant, a truncated metadata envelope, and a payload over the requested
+limit. A granted run accepts an empty envelope at a zero-byte ceiling and
+preserves output-limit diagnostics without output. Local reports:
+`build/worker-output-frame-i0pip5nv/development.stdout` and
+`build/worker-output-frame-i0pip5nv/release.stdout`.
+
 ## Windows verification
 
 Run `python -B tools/verify-restricted-worker.py`. The development and optimized

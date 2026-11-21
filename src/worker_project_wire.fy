@@ -187,6 +187,7 @@ pub fn Result<ResultFrame,Error> parse_frame(ref u8[] wire,bool run,ref u8[] len
     if(wire.len==0 || output_limit>output::hard_limit()){return .err(.Shape);}
     if(wire[0]!=128){
         let Outcome result=parse_result(wire,run,lengths,allow_output)?;
+        if(run && allow_output && scalar::is_completed(result.value)){return .err(.Shape);}
         return .ok(ResultFrame{.outcome=result,.has_output=false,.output_start=wire.len});
     }
     if(!run || !allow_output || wire.len<3){return .err(.Shape);}
