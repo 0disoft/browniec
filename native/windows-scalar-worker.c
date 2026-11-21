@@ -1,9 +1,11 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include "native/restricted_worker_frame.h"
+#include "native/restricted_worker_payload.h"
 
 static HANDLE result_pipe;
 static bc_worker_frame result_frame;
+static size_t result_capacity;
 
 static bool confined(void) {
     BOOL assigned = FALSE;
@@ -49,8 +51,8 @@ static bool send(HANDLE output, const bc_worker_frame *frame) {
 }
 
 size_t bc_scalar_worker_start(uint8_t *request, size_t capacity) {
-    enum { metadata_bytes = 5, source_limit = 4096 };
-    if (result_pipe || !request || capacity != metadata_bytes + source_limit || !confined()) return 0;
+    const bool project = capacity == BC_PROJECT_START_MAX;
+    if (result_pipe || !request || (!project && capacity != BC_SCALAR_START_MAX) || !confined()) return 0;
     HANDLE input = GetStdHandle(STD_INPUT_HANDLE), output = GetStdHandle(STD_OUTPUT_HANDLE);
     ULONG input_pid = 0, output_pid = 0;
     if (input == output || !client_pipe(input, &input_pid) ||
@@ -64,16 +66,17 @@ size_t bc_scalar_worker_start(uint8_t *request, size_t capacity) {
     expected.kind = BC_WORKER_START;
     expected.sequence = 2;
     expected.length = (uint32_t)capacity;
-    if (!receive(input, &expected, &session) || session.length < metadata_bytes ||
+    if (!receive(input, &expected, &session) || session.length < (project ? 9u : 5u) ||
         !transfer(input, request, NULL, session.length)) return 0;
     session.kind = BC_WORKER_RESULT;
     result_frame = session;
     result_pipe = output;
+    result_capacity = project ? BC_PROJECT_RESULT_MAX : BC_SCALAR_RESULT_MAX;
     return session.length;
 }
 
 uint32_t bc_scalar_worker_finish(const uint8_t *result, size_t length) {
-    if (!result_pipe || !result || !length || length > 256) return 0;
+    if (!result_pipe || !result || !length || length > result_capacity) return 0;
     HANDLE output = result_pipe;
     result_pipe = NULL;
     result_frame.length = (uint32_t)length;

@@ -314,6 +314,39 @@ deletion while the image was pinned, verified profile-name reuse after
 cleanup and removed the partial image after a rejected empty input image.
 Local receipt: `build/restricted-worker/20261121T163857490321Z/receipt.json`.
 
+### Project source snapshots and entry selection
+
+The private `--internal-project-broker check|run MANIFEST` route uses the
+anchored collector to read the manifest and its declared source files. The
+parent rejects nonempty requirements before reading any source member. It
+passes only the selected bytes to the AppContainer, which reparses the
+manifest, rebuilds the snapshot, binds each module against its manifest row
+and compiles the manifest's named public entry. The worker opens no project
+files.
+
+Project START uses operation 2 (check) or 3 (run), four little-endian Fuel
+bytes, a little-endian 32-bit manifest length, the original manifest, and one
+little-endian 16-bit length per manifest source row followed by each member's
+bytes in that order. Limits are 65,536 manifest bytes, 16 source members and
+4,096 aggregate source bytes, for at most 69,673 request bytes. The worker
+checks that the declared member sizes cover exactly the bytes received.
+
+Project RESULT prefixes the existing scalar JSON payload with the profile,
+source index and little-endian span end. The broker validates the operation
+and original per-file boundaries before publication. The parent uses those
+same source bytes to render the JSON v2 diagnostic, including the path, line
+and byte column. Project setup and RESULT publication use the same managed
+stage, deadline and completion gate as the scalar route.
+
+Locked Windows development and /O2 each checked and ran the two-module hello
+example using a START body over 4 KiB, returning 42 on run. An error in
+`src/math.brc` retained the same byte range, path and line as the ordinary
+project check. Both profiles denied an ungranted requirement before reading
+a missing member, rejected direct worker entry outside AppContainer, and
+dropped two malformed member length tables without a RESULT. The managed
+staging directory was empty after each profile. Local receipt:
+`build/restricted-worker/20261121T164903771680Z/receipt.json`.
+
 ## Windows verification
 
 Run `python -B tools/verify-restricted-worker.py`. The development and optimized
@@ -338,5 +371,5 @@ limit, connecting PID, and inheritance flags. The child exchanged bytes over
 all three pipes and the repeat launch again had zero net handle growth.
 Local receipt: `build/restricted-worker/20261121T152431466055Z/receipt.json`.
 
-Broader source and policy admission, broker phases and aggregate budgets are
+Policy admission, broader broker phases and aggregate budgets are
 still required for the public restricted CLI.

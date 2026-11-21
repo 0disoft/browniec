@@ -781,6 +781,7 @@ static void verify_graceful_cancel(const wchar_t *path, const wchar_t *directory
 }
 
 static bool scalar_payload(const void *expectation, const uint8_t *body, size_t size) {
+    if (!expectation) return false;
     const char *expected_scalar_payload = expectation;
     const size_t expected = strlen(expected_scalar_payload);
     if (size < expected || memcmp(body, expected_scalar_payload, expected) || body[size - 1] != '}')
@@ -791,7 +792,7 @@ static bool scalar_payload(const void *expectation, const uint8_t *body, size_t 
     return size > expected + 1;
 }
 
-static void verify_scalar(const wchar_t *path, const wchar_t *directory,
+static void verify_guest_exchange(const wchar_t *path, const wchar_t *directory,
     const uint8_t *request, size_t request_length, const char *expected, bool accept) {
     bc_worker_broker broker = {0};
     uint8_t result[256];
@@ -800,9 +801,11 @@ static void verify_scalar(const wchar_t *path, const wchar_t *directory,
         1, sizeof(broker) + request_length + sizeof(result), commit_limit, wire
     };
     bc_worker_broker_budget budget = {.limit = charge};
-    wchar_t command[] = L"worker --internal-scalar-worker";
+    wchar_t scalar_command[] = L"worker --internal-scalar-worker";
+    wchar_t project_command[] = L"worker --internal-project-worker";
     const bc_worker_broker_run run = {
-        .budget = &budget, .application = path, .command_line = command, .directory = directory,
+        .budget = &budget, .application = path, .directory = directory,
+        .command_line = expected ? scalar_command : project_command,
         .profile = profile, .commit_bytes = commit_limit, .cpu_ms = 2000,
         .startup_ms = 4000, .io_idle_ms = 4000, .shutdown_grace_ms = 500,
         .deadline = clock_ticks() + 100000000ULL, .wire_limit = wire,
@@ -811,7 +814,7 @@ static void verify_scalar(const wchar_t *path, const wchar_t *directory,
     };
     DWORD status = bc_worker_broker_start(&broker, &run);
     SetLastError(status);
-    check(status == ERROR_SUCCESS, "launch real Brownie scalar worker");
+    check(status == ERROR_SUCCESS, "launch real Brownie worker");
     while (broker.gate.status == BC_WORKER_GATE_PENDING && broker.phase != BC_WORKER_BROKER_FINISH) {
         bc_worker_broker_step(&broker);
         if (broker.io.pipe || broker.phase == BC_WORKER_BROKER_WAIT_EXIT) Sleep(1);
@@ -825,7 +828,8 @@ static void verify_scalar(const wchar_t *path, const wchar_t *directory,
             !bc_worker_broker_take(&broker, &length), "publish validated Brownie scalar outcome once");
     } else {
         check(broker.gate.status == BC_WORKER_GATE_PROTOCOL && !bc_worker_broker_take(&broker, &length) &&
-            !length, "a complete result mismatching this session cannot publish");
+            !length, "a rejected exchange cannot publish");
+        if (!expected) check(!broker.rx.used, "malformed project START produced no result body");
     }
     const uint64_t limit = clock_ticks() + 50000000ULL;
     while (!bc_worker_broker_close(&broker)) {
@@ -841,20 +845,34 @@ static void verify_scalar_programs(const wchar_t *path, const wchar_t *directory
     uint8_t request[4101] = {0};
     const size_t source_bytes = fread(request + 5, 1, sizeof(request) - 5, source);
     check(source_bytes && feof(source) && !ferror(source) && !fclose(source), "snapshot answer fixture");
-    verify_scalar(path, directory, request, source_bytes + 5,
+    verify_guest_exchange(path, directory, request, source_bytes + 5,
         "{\"schema\":\"browniec.worker-result/v1\",\"status\":\"checked\"}", true);
     request[0] = 1;
     request[2] = 1;
-    verify_scalar(path, directory, request, source_bytes + 5,
+    verify_guest_exchange(path, directory, request, source_bytes + 5,
         "{\"schema\":\"browniec.worker-result/v1\",\"status\":\"completed\",\"return_i32\":77}", true);
-    verify_scalar(path, directory, request, source_bytes + 5,
+    verify_guest_exchange(path, directory, request, source_bytes + 5,
         "{\"schema\":\"browniec.worker-result/v1\",\"status\":\"checked\"}", false);
     request[2] = 0;
-    verify_scalar(path, directory, request, source_bytes + 5,
+    verify_guest_exchange(path, directory, request, source_bytes + 5,
         "{\"schema\":\"browniec.worker-result/v1\",\"status\":\"error\",\"kind\":8,\"location\":0,\"offset\":", true);
     const uint8_t lexical_error[] = {0, 0, 0, 0, 0, 255};
-    verify_scalar(path, directory, lexical_error, sizeof(lexical_error),
+    verify_guest_exchange(path, directory, lexical_error, sizeof(lexical_error),
         "{\"schema\":\"browniec.worker-result/v1\",\"status\":\"error\",\"kind\":1,\"location\":0,\"offset\":0}", true);
+}
+
+static void verify_project_rejections(const wchar_t *path, const wchar_t *directory) {
+    static const char project[] = "{\"schema\":\"brownie.project/0.3\",\"name\":\"app\","
+        "\"entry\":{\"module\":\"app\",\"function\":\"start\"},"
+        "\"sources\":[{\"module\":\"app\",\"path\":\"app.brc\"}],\"requires\":[]}";
+    enum { size = sizeof(project) - 1, member = 9 + size };
+    _Static_assert(size <= 255, "fixture manifest length fits one byte");
+    uint8_t request[member + 3] = {2, 0, 0, 0, 0, size};
+    memcpy(request + 9, project, size);
+    request[member] = 2;
+    verify_guest_exchange(path, directory, request, sizeof(request), NULL, false);
+    request[member] = 0;
+    verify_guest_exchange(path, directory, request, sizeof(request), NULL, false);
 }
 
 static void verify_parent_broker(const wchar_t *image, const wchar_t *directory,
@@ -1010,7 +1028,10 @@ int wmain(int argc, wchar_t **argv) {
     verify_broker(argv[1], directory, L"--child-stalled-result", BC_WORKER_GATE_EXPIRED);
     verify_graceful_cancel(argv[1], directory, false);
     verify_graceful_cancel(argv[1], directory, true);
-    if (argc == 3) verify_scalar_programs(argv[2], directory);
+    if (argc == 3) {
+        verify_scalar_programs(argv[2], directory);
+        verify_project_rejections(argv[2], directory);
+    }
     check(CloseHandle(decoy), "close decoy");
     decoy = NULL;
     long parent_cold_delta = 0;
@@ -1042,7 +1063,8 @@ int wmain(int argc, wchar_t **argv) {
            "\"boundedStream\":true,\"pipeEof\":true,\"publicationGate\":true,"
            "\"ioLease\":true,\"brokerSessions\":6,\"sharedBudget\":true,"
            "\"phaseDeadlines\":true,\"gracefulCancelCases\":2,\"handleDelta\":0,\"staging\":true,"
-           "\"scalarSessions\":%d,\"parentBrokerCases\":%d,\"parentColdHandleDelta\":%ld,\"coldHandleDelta\":%ld}\n",
-           argc == 3 ? 5 : 0, argc == 3 ? 4 : 0, parent_cold_delta, (long)final - (long)cold);
+           "\"scalarSessions\":%d,\"parentBrokerCases\":%d,\"projectWireRejections\":%d,"
+           "\"parentColdHandleDelta\":%ld,\"coldHandleDelta\":%ld}\n",
+           argc == 3 ? 5 : 0, argc == 3 ? 4 : 0, argc == 3 ? 2 : 0, parent_cold_delta, (long)final - (long)cold);
     return 0;
 }

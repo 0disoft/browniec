@@ -5,6 +5,7 @@
 #include "native/restricted_worker_frame.c"
 #include "native/restricted_worker_gate.c"
 #include "native/restricted_worker_io.c"
+#include "native/restricted_worker_payload.h"
 #include "native/restricted_worker_pipes.c"
 #include "native/restricted_worker_stage.c"
 #include "native/restricted_worker_stream.c"
@@ -22,6 +23,18 @@ static bool validate_scalar(const void *raw, const uint8_t *body, size_t length)
     const scalar_expectation *expected = raw;
     return fy_private_fn_776f726b65725f7363616c61725f62726f6b65723a3a76616c69646174655f726573756c74(
         body, length, expected->run, expected->source_bytes) != 0;
+}
+
+typedef struct project_expectation {
+    uint32_t run;
+    const uint8_t *lengths;
+    size_t count;
+} project_expectation;
+
+static bool validate_project(const void *raw, const uint8_t *body, size_t length) {
+    const project_expectation *expected = raw;
+    return fy_private_fn_776f726b65725f70726f6a6563745f62726f6b65723a3a76616c69646174655f726573756c74(
+        body, length, expected->run, expected->lengths, expected->count) != 0;
 }
 
 static PSID resolve_profile(const uint8_t *name, size_t length) {
@@ -49,28 +62,33 @@ static bool self_location(wchar_t *image, wchar_t *directory, DWORD capacity) {
     return true;
 }
 
-static uint32_t run_scalar_broker(PSID sid, const wchar_t *image, const wchar_t *directory,
-    const uint8_t *source, size_t source_length, uint32_t run, size_t fuel,
-    uint8_t *reply, size_t *reply_length) {
-    enum { source_cap = 4096, reply_cap = 256, metadata = 5, child_commit = 128 * 1024 * 1024 };
-    uint8_t request[source_cap + metadata] = {(uint8_t)run};
-    put_le(request + 1, 4, fuel);
-    memcpy(request + metadata, source, source_length);
-    const size_t request_length = metadata + source_length;
-    uint8_t result[reply_cap];
+typedef struct worker_exchange {
+    const uint8_t *request;
+    size_t request_length;
+    bc_worker_result_validator validate;
+    const void *expectation;
+    bool project;
+} worker_exchange;
+
+static uint32_t run_broker(PSID sid, const wchar_t *image, const wchar_t *directory,
+    const worker_exchange *exchange, uint8_t *reply, size_t *reply_length) {
+    enum { child_commit = 128 * 1024 * 1024 };
+    uint8_t result[BC_PROJECT_RESULT_MAX];
+    const size_t result_capacity = exchange->project ? BC_PROJECT_RESULT_MAX : BC_SCALAR_RESULT_MAX;
     bc_worker_broker broker = {0};
-    const size_t wire = 5 * BC_WORKER_FRAME_BYTES + request_length + sizeof(result) + 1;
-    bc_worker_broker_budget budget = {.limit = {1, sizeof(broker) + request_length + sizeof(result),
+    const size_t wire = 5 * BC_WORKER_FRAME_BYTES + exchange->request_length + result_capacity + 1;
+    bc_worker_broker_budget budget = {.limit = {1, sizeof(broker) + exchange->request_length + result_capacity,
         child_commit, wire}};
-    wchar_t command[] = L"browniec --internal-scalar-worker";
-    const scalar_expectation expected = {run, source_length};
+    wchar_t scalar_command[] = L"browniec --internal-scalar-worker";
+    wchar_t project_command[] = L"browniec --internal-project-worker";
     const bc_worker_broker_run config = {
-        .budget = &budget, .application = image, .command_line = command, .directory = directory,
+        .budget = &budget, .application = image, .directory = directory,
+        .command_line = exchange->project ? project_command : scalar_command,
         .profile = sid, .commit_bytes = child_commit, .cpu_ms = 2000,
         .startup_ms = 4000, .io_idle_ms = 4000, .shutdown_grace_ms = 500,
         .deadline = now_ticks() + 100000000, .wire_limit = wire,
-        .request = request, .request_length = request_length, .result = result,
-        .result_capacity = sizeof(result), .validate = validate_scalar, .expectation = &expected
+        .request = exchange->request, .request_length = exchange->request_length, .result = result,
+        .result_capacity = result_capacity, .validate = exchange->validate, .expectation = exchange->expectation
     };
     const DWORD started = bc_worker_broker_start(&broker, &config);
     size_t length = 0;
@@ -95,33 +113,52 @@ static uint32_t run_scalar_broker(PSID sid, const wchar_t *image, const wchar_t 
     return 1;
 }
 
-uint32_t bc_scalar_broker_invoke(const uint8_t *profile, size_t profile_length,
-    const uint8_t *source, size_t source_length, uint32_t run, size_t fuel,
-    uint8_t *reply, size_t *reply_length) {
-    if (!source || source_length > 4096 || run > 1 ||
-        (!run && fuel) || fuel > UINT32_MAX || !reply || !reply_length) return 0;
+static uint32_t invoke_broker(const uint8_t *profile, size_t profile_length,
+    const worker_exchange *exchange, uint8_t *reply, size_t *reply_length) {
     wchar_t image[4096], directory[4096];
     if (!self_location(image, directory, _countof(image)) || !bc_cli_enable_cancel()) return 0;
     if (profile) {
         PSID sid = resolve_profile(profile, profile_length);
         if (!sid) return 0;
-        const uint32_t status = run_scalar_broker(sid, image, directory,
-            source, source_length, run, fuel, reply, reply_length);
+        const uint32_t status = run_broker(sid, image, directory, exchange, reply, reply_length);
         FreeSid(sid);
         return status;
     }
     bc_worker_stage stage = {0};
     const DWORD setup = bc_worker_stage_open(&stage, image);
-    uint8_t pending_reply[256];
+    uint8_t pending_reply[BC_PROJECT_RESULT_MAX];
     size_t pending_length = 0;
     uint32_t status = 0;
     if (bc_cli_cancel_requested()) status = 3;
-    else if (!setup) status = run_scalar_broker(stage.profile, stage.image, stage.directory,
-        source, source_length, run, fuel, pending_reply, &pending_length);
+    else if (!setup) status = run_broker(stage.profile, stage.image, stage.directory,
+        exchange, pending_reply, &pending_length);
     const BOOL cleaned = bc_worker_stage_close(&stage);
     if (status != 1) return status;
     if (!cleaned) return 0;
     memcpy(reply, pending_reply, pending_length);
     *reply_length = pending_length;
     return 1;
+}
+
+uint32_t bc_scalar_broker_invoke(const uint8_t *profile, size_t profile_length,
+    const uint8_t *source, size_t source_length, uint32_t run, size_t fuel,
+    uint8_t *reply, size_t *reply_length) {
+    if (!source || source_length > BC_SCALAR_START_MAX - 5 || run > 1 ||
+        (!run && fuel) || fuel > UINT32_MAX || !reply || !reply_length) return 0;
+    uint8_t request[BC_SCALAR_START_MAX] = {(uint8_t)run};
+    put_le(request + 1, 4, fuel);
+    memcpy(request + 5, source, source_length);
+    const scalar_expectation expected = {run, source_length};
+    const worker_exchange exchange = {request, source_length + 5, validate_scalar, &expected, false};
+    return invoke_broker(profile, profile_length, &exchange, reply, reply_length);
+}
+
+uint32_t bc_project_broker_invoke(const uint8_t *request, size_t request_length, uint32_t run,
+    const uint8_t *lengths, size_t count, uint8_t *reply, size_t *reply_length) {
+    if (!request || request_length < 9 || request_length > BC_PROJECT_START_MAX ||
+        run > 1 || request[0] != 2 + run || !lengths || !count || count > 32 ||
+        count % 2 || !reply || !reply_length) return 0;
+    const project_expectation expected = {run, lengths, count};
+    const worker_exchange exchange = {request, request_length, validate_project, &expected, true};
+    return invoke_broker(NULL, 0, &exchange, reply, reply_length);
 }

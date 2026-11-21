@@ -24,6 +24,8 @@ import cli_configured_project as configured;
 import cli_host_command as hosts;
 import worker_scalar_command as worker;
 import worker_scalar_broker as broker;
+import worker_project_command as project_worker;
+import worker_project_broker as project_broker;
 
 @effects(console)
 fn i32 fail(render::Format format, bool run, u8 kind) {
@@ -43,6 +45,12 @@ fn i32 main() {
     }
     if((argc==4 || argc==5) && lexer::equal(command_view[..command_length],b"--internal-scalar-broker")){
         return broker::execute(argc==5);
+    }
+    if(argc==2 && lexer::equal(command_view[..command_length],b"--internal-project-worker")){
+        return project_worker::execute();
+    }
+    if(argc==4 && lexer::equal(command_view[..command_length],b"--internal-project-broker")){
+        return project_broker::execute();
     }
     if (lexer::equal(command_view[..command_length], b"--version")) {
         if (argc == 2) {

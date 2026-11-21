@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-22): [Managed Windows worker setup](docs/engineering/restricted-worker.md#managed-scalar-worker-setup)
-  provisions a private image and fresh AppContainer profile for each scalar invocation.
-  Development and /O2 verify result 77, cleanup and unavailable on setup failure.
+- Latest runtime checkpoint (2026-11-22): [Windows project worker](docs/engineering/restricted-worker.md#project-source-snapshots-and-entry-selection)
+  binds the named entry and compiles bounded project snapshots in the managed AppContainer.
+  Development and /O2 verify result 42, original diagnostics and malformed START rejection.
 
 # Brownie C agent guidance
 

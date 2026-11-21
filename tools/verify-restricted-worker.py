@@ -10,6 +10,45 @@ import shutil
 import subprocess
 
 ROOT = Path(__file__).resolve().parents[1]
+HELLO_PROJECT = ROOT / 'examples/projects/hello'
+
+
+def verify_managed_project(run, need, image, folder, env):
+    target = folder / 'hello'
+    shutil.copytree(HELLO_PROJECT, target)
+    project = target / 'project.json'
+    project_arg = project.relative_to(folder)
+    original = project.read_bytes()
+    # Exercise multiple stream windows using an otherwise unchanged manifest.
+    project.write_bytes(original + b' ' * 5200)
+    for op, status, value in [('check', 'checked', None), ('run', 'completed', 42)]:
+        result = json.loads(run([image, '--internal-project-broker', op, project_arg],
+                                cwd=folder, env=env, no_stderr=True))
+        need(result == dict(schema='browniec.result/v2', profile='brownie.m1-scalar/1',
+                            command=op, status=status, return_i32=value, error=None),
+             f'Unexpected isolated project outcome: {result}')
+
+    math = target / 'src/math.brc'
+    math.write_bytes(math.read_bytes().replace(b'return 42;', b'return missing;'))
+    fixture = [image, 'check', '--project', project_arg, '--json-v2']
+    expected = json.loads(run(fixture, cwd=folder, env=env, expected_exit=3, no_stderr=True))
+    observed = json.loads(run([image, '--internal-project-broker', 'check', project_arg],
+                              cwd=folder, env=env, expected_exit=3, no_stderr=True))
+    location = observed['error']['location']
+    need(observed == expected and location['source_index'] == 1 and location['path'] == 'src/math.brc',
+         f'Isolated project diagnostic did not preserve the second source: {observed}')
+
+    manifest = json.loads(original)
+    manifest['requires'] = ['quote.lookup']
+    project.write_text(json.dumps(manifest), encoding='utf-8')
+    math.unlink()
+    denied = json.loads(run([image, '--internal-project-broker', 'run', project_arg],
+                            cwd=folder, env=env, expected_exit=4, no_stderr=True))
+    need(denied['error']['kind'] == 'unavailable' and denied['return_i32'] is None,
+         f'An ungranted requirement reached project source acquisition or execution: {denied}')
+    run([image, '--internal-project-worker'], cwd=folder, env=env, expected_exit=4, silent=True)
+    need(not list(Path(env['TEMP']).iterdir()), 'project runs left staged resources')
+    return 5
 
 
 def main():
@@ -38,6 +77,8 @@ def main():
     c_sources = [path for path in paths if path.endswith('.c')]
     if scalar_images:
         paths.extend(['fairy.windows.json', 'fairy.toml', 'fairy.lock', 'examples/answer.brc'])
+        paths.extend(path.relative_to(ROOT).as_posix() for path in sorted(HELLO_PROJECT.rglob('*'))
+                     if path.is_file())
         paths.extend(path.relative_to(ROOT).as_posix()
                      for folder in ('src', 'native') for path in sorted((ROOT / folder).rglob('*'))
                      if path.is_file())
@@ -99,6 +140,7 @@ def main():
                            cwd=folder, env=failure_env, expected_exit=4, no_stderr=True)
                 helper.need(json.loads(data).get('error', {}).get('kind') == 'unavailable'
                             and not list(stage_temp.iterdir()), 'staging failure fell back or left files')
+                managed_project_cases = verify_managed_project(run, helper.need, scalar, folder, stage_env)
                 command.append(scalar)
             evidence = json.loads(run(command, cwd=folder, env=runtime_env))
             helper.need({key: value for key, value in evidence.items()
@@ -109,13 +151,15 @@ def main():
                              boundedStream=True, pipeEof=True, publicationGate=True,
                              ioLease=True, brokerSessions=6, sharedBudget=True,
                              phaseDeadlines=True, gracefulCancelCases=2, handleDelta=0, staging=True,
-                             scalarSessions=5 if scalar else 0, parentBrokerCases=4 if scalar else 0)
+                             scalarSessions=5 if scalar else 0, parentBrokerCases=4 if scalar else 0,
+                             projectWireRejections=2 if scalar else 0)
                         and type(evidence.get('coldHandleDelta')) is int
                         and evidence.get('parentColdHandleDelta') in ((0, 1) if scalar else (0,)),
                         f'Unexpected worker result: {evidence}')
             receipt['profiles'].append(dict(profile=profile, exe=helper.image(exe), result=evidence))
             if scalar:
                 receipt['profiles'][-1]['scalarWorker'] = helper.image(scalar)
+                receipt['profiles'][-1]['managedProjectCases'] = managed_project_cases
             print(f'PASS {profile}: {evidence}', flush=True)
         helper.need(all(helper.sha((ROOT / i['path']).read_bytes()) == i['sha256'] for i in receipt['inputs']),
                     'Inputs changed during verification')

@@ -66,9 +66,15 @@ fn Result<ProjectInput,errors::Error> acquire(ref u8[] path){
     let manifest::Project project=parse_manifest(ref root,bytes::view(ref data))?;
     if(manifest::requirements(ref project)!=0){return .err(errors::absent(11,0));}
     let sources::Snapshot snapshot=switch(loader::load_from(ref project,ref mut root,sources::source_limit())){
-        case .ok(v):{v}case .err(e):{return .err(errors::absent(switch(e){case .Limit:{4}case .Acquisition:{9}case .Binding:{3}case .Compile:{3}case .Deadline:{errors::deadline_kind()}},0));}
+        case .ok(v):{v}case .err(e):{return .err(errors::absent(acquisition_kind(e),0));}
     };
     return .ok(ProjectInput{.metadata=project,.snapshot=snapshot});
+}
+
+pub fn u8 acquisition_kind(loader::Error error){
+    return switch(error){
+        case .Limit:{4}case .Acquisition:{9}case .Binding:{3}case .Compile:{3}case .Deadline:{errors::deadline_kind()}
+    };
 }
 
 // Retain the anchor independently of the manifest buffer and decoded metadata.
