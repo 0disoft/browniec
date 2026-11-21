@@ -3518,9 +3518,17 @@ pub fn Result<usize,source_errors::Error> lower_output_modules_until(ref module_
 pub fn Result<bool,source_errors::Error> lower_modules_until(ref module_entries::Entry selected,
     ref mut static_images::Builder builder,ref mut reference_ir::Program code,bool output,usize deadline){
     let ref module_index::Index index=module_entries::index(selected);
-    let usize entry=module_entries::selected(selected);
     var module_source::State work=module_source::begin(true);
     let usize staged=module_source::finish_until(index,ref mut work,deadline)?;
+    return lower_modules_prepared_until(selected,ref work,builder,code,output,deadline);
+}
+// The owning source pass binds work to the Index of selected for its lifetime.
+pub fn Result<bool,source_errors::Error> lower_modules_prepared_until(ref module_entries::Entry selected,
+    ref module_source::State work,ref mut static_images::Builder builder,ref mut reference_ir::Program code,bool output,usize deadline){
+    if(!work.done || !work.syntax.done){return .err(source_errors::absent(errors::absent(5,0)));}
+    if(clock::expired(deadline)){return .err(source_errors::absent(errors::absent(errors::deadline_kind(),0)));}
+    let ref module_index::Index index=module_entries::index(selected);
+    let usize entry=module_entries::selected(selected);
     let ref source_context::Input input=ref work.context.result;
     let ref u8[] source=ref input.data[..input.used];
     let ref source_context::Table scope=ref input.context;

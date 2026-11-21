@@ -952,3 +952,16 @@ zero. Local receipt: `build/runtime-engine/20261121T031432631535Z/receipt.json`.
 The locked /O2 CLI returned 77 and passed its contract suite on rerun after
 one transient project check returned `input_io`. The focused project group
 also passed three times each on the new and prior release binaries.
+
+## Prepared source handoff
+
+Timed ordinary compilation now finishes context collection and syntax
+classification before entering IR lowering and independent Program admission.
+Lowering reads the completed cursor for the exact selected Entry and checks
+completion and the deadline on entry. The same lowering handoff serves timed
+output-only compilation. This exposes a boundary where an owning compile
+continuation can yield before lowering while retaining the prepared source.
+
+Windows development and /O2 Engine verification passed with zero live SDK
+allocations. The locked /O2 CLI build returned 77 in the quick start. Local
+receipt: `build/runtime-engine/20261121T032359273600Z/receipt.json`.

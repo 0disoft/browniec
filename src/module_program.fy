@@ -12,6 +12,7 @@ import static_call_ir as candidate;
 import static_image as images;
 import std::vec as vec;
 import retention_plan as retention;
+import module_source_work as module_source;
 
 // Only internally rebuilt source/context plus complete canonical admission can
 // create this resource. Compiler name tables are not retained at runtime.
@@ -26,15 +27,29 @@ pub fn Result<Program,diagnostics::Error> compile_with_retention(entries::Entry 
 }
 pub fn Result<Program,diagnostics::Error> compile_with_retention_until(entries::Entry selected,usize image_limit,
     ref mut retention::Plan plan,usize deadline){
+    // Finish indexed source preparation before entering lowering/admission.
+    if(deadline!=0){
+        var module_source::State source=module_source::begin(true);
+        let usize prepared=module_source::finish_until(entries::index(ref selected),ref mut source,deadline)?;
+        return compile_prepared_until(ref selected,ref source,image_limit,plan,deadline);
+    }
     var images::Builder builder=switch(images::builder(4096)){
         case .ok(v):{v}case .err(_):{return .err(diagnostics::absent(errors::make(5,0)));}
     };
     var candidate::Program code=candidate::Program{.body=ir::empty(),.parameters=[0;128],.results=[0;16],.origins=[0;16]};
-    let bool references=if(deadline==0){compiler::lower_modules(ref selected,ref mut builder,ref mut code)?}
-        else{compiler::lower_modules_until(ref selected,ref mut builder,ref mut code,false,deadline)?};
+    let bool references=compiler::lower_modules(ref selected,ref mut builder,ref mut code)?;
+    if(references){return finish_references(ref selected,ref builder,ref code,image_limit,plan,0);}
+    return finish_legacy(ref selected,ref code.body,plan,0);
+}
+// Called with completed source work built from this exact Entry.
+pub fn Result<Program,diagnostics::Error> compile_prepared_until(ref entries::Entry selected,
+    ref module_source::State source,usize image_limit,ref mut retention::Plan plan,usize deadline){
+    var images::Builder builder=images::full_builder();
+    var candidate::Program code=candidate::Program{.body=ir::empty(),.parameters=[0;128],.results=[0;16],.origins=[0;16]};
+    let bool references=compiler::lower_modules_prepared_until(selected,source,ref mut builder,ref mut code,false,deadline)?;
     if(clock::expired(deadline)){return .err(diagnostics::absent(errors::absent(errors::deadline_kind(),0)));}
-    if(references){return finish_references(ref selected,ref builder,ref code,image_limit,plan,deadline);}
-    return finish_legacy(ref selected,ref code.body,plan,deadline);
+    if(references){return finish_references(selected,ref builder,ref code,image_limit,plan,deadline);}
+    return finish_legacy(selected,ref code.body,plan,deadline);
 }
 fn diagnostics::Error error(ref entries::Entry selected,errors::Error e){
     return if(e.offset==0){diagnostics::absent(e)}else{diagnostics::map(modules::snapshot(entries::index(selected)),e,16)};

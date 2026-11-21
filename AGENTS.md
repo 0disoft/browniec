@@ -1,8 +1,7 @@
-- Latest runtime checkpoint (2026-11-21): [Resumable module source preparation](docs/engineering/compiler-source-stages.md#resumable-module-source-preparation)
-  preserves source collection and syntax classification in one cursor shared by
-  all four timed module profiles. Windows development and /O2 passed with zero
-  live SDK allocations. Locked /O2 CLI, quick-start result 77 and CLI contracts
-  passed.
+- Latest runtime checkpoint (2026-11-21): [Prepared source handoff](docs/engineering/compiler-source-stages.md#prepared-source-handoff)
+  lets timed ordinary compilation lower and admit a Program from the completed
+  source cursor. Windows development and /O2 passed with zero live SDK
+  allocations. Locked /O2 CLI and quick-start result 77 passed.
 
 # Brownie C agent guidance
 
