@@ -8,12 +8,12 @@ module abi_handles;
 // are accepted/dereferenced: object is a trusted coordinator's nonzero object ID.
 pub struct Identity { usize thread; usize lifetime; }
 // kind: 0 free/retired, 1 Engine, 2 Program, 3 Instance. generation 0 retires.
-// 48-byte slot on the pinned x64 transport; this is not a public C layout.
+// Private x64 slot. For a free row, object is the next one-based free slot.
 pub struct Slot {
     u32 generation; u32 kind; usize engine; usize thread; usize lifetime;
-    usize busy; usize object;
+    usize busy; usize object; usize children;
 }
-pub struct Table { Slot[64] slots; usize next_admission; }
+pub struct Table { Slot[64] slots; usize next_admission; usize next_unused; usize free_head; }
 // Copyable trusted receipt, never a C/guest capability. Matching epoch prevents
 // a saved receipt from ending a later call. All fields are revalidated on use.
 pub struct Admission { usize target; usize engine; usize epoch; u32 kind; usize object; }
@@ -28,8 +28,8 @@ pub fn u32 program_kind(){return 2;}
 pub fn u32 instance_kind(){return 3;}
 pub fn usize generation_max(){return 4294967295;}
 fn Slot vacant(u32 generation){return Slot{.generation=generation,.kind=0,
-    .engine=0,.thread=0,.lifetime=0,.busy=0,.object=0};}
-pub fn Table empty(){return Table{.slots=[vacant(1);64],.next_admission=1};}
+    .engine=0,.thread=0,.lifetime=0,.busy=0,.object=0,.children=0};}
+pub fn Table empty(){return Table{.slots=[vacant(1);64],.next_admission=1,.next_unused=0,.free_head=0};}
 fn bool identity_valid(Identity caller){return caller.thread!=0 && caller.lifetime!=0;}
 fn bool kind_valid(u32 kind){return kind>=1 && kind<=3;}
 // Index is one based in the wire token; no untrusted value indexes before bounds.
@@ -59,11 +59,14 @@ fn Result<usize,Error> owner(ref Table table,usize target,u32 kind,usize engine,
     if(row.thread!=e.thread || row.lifetime!=e.lifetime){return .err(.State);}
     return .ok(ei);
 }
-fn Result<usize,Error> free_slot(ref Table table){
-    var usize i=0;while(i<64){
-        if(table.slots[i].kind==0 && table.slots[i].generation!=0){return .ok(i);}
-        i+=1;
-    }return .err(.ResourceLimit);
+fn Result<usize,Error> free_slot(ref mut Table table){
+    let usize head=table.free_head;
+    let usize index=if(head==0){table.next_unused}else{head-1};
+    if(index>=capacity()){return .err(if(head==0){.ResourceLimit}else{.State});}
+    let Slot row=table.slots[index];
+    if(row.kind!=0 || row.generation==0){return .err(.State);}
+    if(head==0){table.next_unused+=1;}else{table.free_head=row.object;}
+    return .ok(index);
 }
 // Publish only after the coordinator finishes fallible native object creation.
 // Rejection changes no slot, generation, busy guard or admission counter.
@@ -72,7 +75,7 @@ pub fn Result<usize,Error> create_engine(ref mut Table table,Identity caller,usi
     let usize i=free_slot(table)?;let u32 generation=table.slots[i].generation;
     let usize handle=token(i,generation);
     table.slots[i]=Slot{.generation=generation,.kind=1,.engine=handle,
-        .thread=caller.thread,.lifetime=caller.lifetime,.busy=0,.object=object};
+        .thread=caller.thread,.lifetime=caller.lifetime,.busy=0,.object=object,.children=0};
     return .ok(handle);
 }
 // Explicit Engine association for APIs that take an Engine argument. Admission
@@ -119,7 +122,8 @@ pub fn Result<usize,Error> insert_child(ref mut Table table,Admission a,u32 kind
     }
     let usize i=free_slot(table)?;let u32 generation=table.slots[i].generation;
     table.slots[i]=Slot{.generation=generation,.kind=kind,.engine=a.engine,
-        .thread=caller.thread,.lifetime=caller.lifetime,.busy=0,.object=object};
+        .thread=caller.thread,.lifetime=caller.lifetime,.busy=0,.object=object,.children=0};
+    table.slots[ei].children+=1;
     return .ok(token(i,generation));
 }
 // Metadata invalidation only, not bc_*_destroy. Caller must first finish/check
@@ -128,12 +132,20 @@ pub fn Result<usize,Error> insert_child(ref mut Table table,Admission a,u32 kind
 // Engine removal refuses live children; no orphaning or implicit cascade.
 pub fn Result<usize,Error> remove(ref mut Table table,Admission a,Identity caller){
     let usize ei=active(table,a,caller)?;let usize i=slot_index(a.target)?;
-    if(a.kind==1){var usize child=0;while(child<64){let Slot row=table.slots[child];
-        if(row.kind!=0 && child!=i && row.engine==a.engine){return .err(.Busy);}
-        child+=1;
-    }}
+    let usize children=table.slots[ei].children;
+    if(a.kind==1){
+        if(children!=0){return .err(.Busy);}
+    }else{
+        if(children==0){return .err(.State);}
+        table.slots[ei].children=children-1;
+    }
     let u32 generation=table.slots[i].generation;
     let u32 next=if(generation==4294967295){0}else{generation+1};
     table.slots[ei].busy=0;table.slots[i]=vacant(next);
+    if(next!=0){
+        let usize previous=table.free_head;
+        table.slots[i].object=previous;
+        table.free_head=i+1;
+    }
     return .ok(a.object);
 }

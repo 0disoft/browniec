@@ -1,9 +1,9 @@
 {
   "schema": "browniec.abi-registry-transport/v1",
-  "compilerRevision": "eb274643bfcfe746617121ddc6f130b018978b53",
-  "compilerSha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
-  "transportSha256": "c424daab534cc50130704dc824970802915cded8265820403478b49a76e3a5bb",
-  "kernelSha256": "6e40e0e4aa73ef1f63147774da917ca7e58ab077f9de89b4dec2142c1ebc21d4",
+  "compilerRevision": "801c5d8caa64d19aab8925763d6bf07f65f26418",
+  "compilerSha256": "13f32b5ffc77b38b34d91eacee465e95dbfe569d9eff3344351d3148fd1e87ab",
+  "transportSha256": "e08554d63d567e9100bc47d51594e3babcab01f65e6284b972239d1eed599ccb",
+  "kernelSha256": "8a27896a2597323a53fda255bc1c521101d929e416e83d6e3d005f7c8c3a5fbb",
   "retentionSha256": "19e295a582ecaf048fe34c448247ab860c951a18b3d4ff157803160764ab1f54",
   "types": {
     "Admission": "fy_struct_0",
@@ -41,8 +41,8 @@
   "sizes": {
     "Admission": 40,
     "Identity": 16,
-    "Slot": 48,
-    "Table": 3080,
+    "Slot": 56,
+    "Table": 3608,
     "AdmissionResult": 56,
     "WordResult": 24
   },
@@ -50,5 +50,5 @@
     "ok": 0,
     "err": 1
   },
-  "note": "Reviewed complete 81874-byte generated transport, 23 functions. Private binding, not stable C ABI. Regenerate/review on ANY compiler/kernel/retention change."
+  "note": "Reviewed complete 93204-byte generated transport, 23 functions. Private binding, not stable C ABI. Regenerate/review on ANY compiler/kernel/retention change."
 }

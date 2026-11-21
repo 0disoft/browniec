@@ -25,7 +25,11 @@ Both zero fields, slots beyond 64, free slots and stale generations are rejected
 before object access. Kind is stored in the slot (1 Engine, 2 Program, 3 Instance).
 Release increments generation; releasing generation UINT32_MAX permanently
 retires the slot with generation zero. Free and retired slots retain their
-history. There is no clearing/compaction/reset API. All scans are bounded by 64.
+history. There is no clearing, compaction or reset API. A next-unused cursor
+and a linked list of reusable rows give constant-time allocation. Free rows
+store the next one-based free index in their object field. Each Engine row
+records its live child count, so removal checks one count. Retired rows never
+enter the free list.
 
 Each live child stores its exact Engine token, including generation. Resolution
 requires the expected kind, exact association, a live Engine and the Engine's

@@ -15,7 +15,6 @@ from runtime_engine_transport import bindings_header, project_layouts
 
 ROOT = Path(__file__).resolve().parents[1]
 TARGET = ['experimental', 'emit-workspace-c', '--target', 'x86_64-windows-msvc', '--locked']
-REGISTRY_TRANSPORT_SHA256 = '038d873532164e0aa70b5e23f5cf4f45556cece5d8fe5741a0c0ee396d167d0e'
 
 
 def load_tool(name):
@@ -77,7 +76,7 @@ def main():
     shutil.copyfile(ROOT / 'src/abi_handles.fy', registry / 'src/abi_handles.fy')
     shutil.copyfile(ROOT / 'tools/abi-registry/main.fy', registry / 'src/main.fy')
     emit(compiler, registry, out / 'abi_registry_generated.c')
-    if hashlib.sha256((out / 'abi_registry_generated.c').read_bytes()).hexdigest() != REGISTRY_TRANSPORT_SHA256:
+    if hashlib.sha256((out / 'abi_registry_generated.c').read_bytes()).hexdigest() != registry_tool.TRANSPORT:
         raise RuntimeError('Review the Fairy registry transport before using it in the preview')
 
     sdk = (ROOT / toolchain['source']['localRepository']).resolve()

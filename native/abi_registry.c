@@ -13,8 +13,8 @@
 #undef main
 
 _Static_assert(sizeof(uintptr_t) == 8, "x64 transport only");
-_Static_assert(sizeof(fy_struct_3) == 3080, "reviewed kernel table");
-_Static_assert(sizeof(fy_struct_2) == 48, "reviewed slot");
+_Static_assert(sizeof(fy_struct_3) == 3608, "reviewed kernel table");
+_Static_assert(sizeof(fy_struct_2) == 56, "reviewed slot");
 _Static_assert(sizeof(bc_abi_registry_admission) == 40, "internal admission");
 _Static_assert(offsetof(bc_abi_registry_admission, object) == 32, "object offset");
 _Static_assert(sizeof(fy_struct_3) <= 4096, "bounded one-page metadata");

@@ -13,7 +13,7 @@ does not include the helper changes or alter the existing Fairy kernel.
 
 ## Ownership and bounds
 
-`native/abi_registry.c` owns one static pointer to a 3,080-byte Fairy Table.
+`native/abi_registry.c` owns one static pointer to a 3,608-byte Fairy Table.
 The first create-Engine attempt allocates and commits 4,096 bytes with
 `VirtualAlloc`, initializes the Table through compiled `abi_handles::empty`,
 and publishes it under the identity helper's exclusive SRW guard. Even a
@@ -32,12 +32,20 @@ reset, native generation accessor/injector or state-mutation test hook.
 The 4,096 figure is committed metadata, not whole-process RAM or reserved virtual
 address space. Windows reservation granularity can reserve a larger region
 (normally 64 KiB), and OS helper/CRT/image/thread overhead is separate. Native
-slot size is 48 bytes; the generated transport asserts all relevant sizes and
+slot size is 56 bytes; the generated transport asserts all relevant sizes and
 offsets. Coordinator trap bookkeeping is bounded static data protected by the
 same guard; it adds no separate per-thread TLS allocation. There is no complete
 4 MiB process accounting ledger or 65,536-slot lazy page implementation here.
 The accepted production ceiling is unchanged; this is the existing 64-slot
 kernel connected to real serialized module ownership.
+
+The 2026-11-21 kernel update replaces the two linear slot scans with a
+next-unused cursor, a free list, and per-Engine child counts. Publishing or
+reusing a slot and checking whether an Engine has children both take constant
+work while holding the SRW guard. The larger table still fits the same
+4096-byte commitment. Windows /Od and /O2 passed capacity and generation
+reuse, busy and stale handles, eight-thread concurrency and thread lifetime
+checks. Local receipt: `build/abi-registry/20261121T133402282794Z/receipt.json`.
 
 Link exactly one registry object and one identity-helper object into the owning
 module. Every caller of this coordinator shares that state. Independent copies

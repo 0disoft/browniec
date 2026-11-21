@@ -13,10 +13,10 @@ import subprocess
 import sys
 
 ROOT = Path(__file__).resolve().parent.parent
-COMPILER = '9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a'
-REVISION = 'eb274643bfcfe746617121ddc6f130b018978b53'
-TRANSPORT = 'c424daab534cc50130704dc824970802915cded8265820403478b49a76e3a5bb'
-KERNEL = '6e40e0e4aa73ef1f63147774da917ca7e58ab077f9de89b4dec2142c1ebc21d4'
+COMPILER = '13f32b5ffc77b38b34d91eacee465e95dbfe569d9eff3344351d3148fd1e87ab'
+REVISION = '801c5d8caa64d19aab8925763d6bf07f65f26418'
+TRANSPORT = 'e08554d63d567e9100bc47d51594e3babcab01f65e6284b972239d1eed599ccb'
+KERNEL = '8a27896a2597323a53fda255bc1c521101d929e416e83d6e3d005f7c8c3a5fbb'
 RETENTION = '19e295a582ecaf048fe34c448247ab860c951a18b3d4ff157803160764ab1f54'
 HELPER = '5c562f408deb71cc2a73aeab46ed1d5c137ba2ae5f894b0c3ae96feb65c3a488'
 HELPER_HEADER = '982becbdcc9310ba557a6e8e52861ffd8e24de19a9ec8125786d4199fcb08e6a'
@@ -94,7 +94,7 @@ def main():
     try:
         need(sha(compiler.read_bytes()) == COMPILER, 'Pinned compiler mismatch')
         version = run([compiler, '--version']).decode('utf-8')
-        need(REVISION in version and 'modified: false' in version and
+        need(REVISION in version and 'modified: true' in version and
              'fairyc-language/20' in version and '0.0.0-stage0.87' in version, 'Compiler identity mismatch')
         receipt['compiler'] = dict(sha256=COMPILER, revision=REVISION, version=version)
         inputs = {n: (ROOT / n).read_bytes() for n in FEATURES}

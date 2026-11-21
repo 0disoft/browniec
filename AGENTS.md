@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-21): [Embedding control memory](docs/engineering/embed-preview.md#revision-2-control-memory)
-  charges native Engine, Program, Instance and capability JSON storage.
-  Windows /Od and /O2 verify exact admission and refunds.
+- Latest runtime checkpoint (2026-11-21): [Constant-time handle metadata](docs/engineering/abi-registry.md#ownership-and-bounds)
+  allocates from a free list and checks per-Engine child counts. Windows /Od
+  and /O2 verify the one-page coordinator before production paging.
 
 # Brownie C agent guidance
 

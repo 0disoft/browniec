@@ -10,10 +10,11 @@ fn h::Admission admitted(Result<h::Admission,h::Error> r){return switch(r){
 fn u32 error(Result<usize,h::Error> r){return switch(r){case .ok(_):{assert(false);0}case .err(e):{h::status(e)}};}
 fn u32 denied(Result<h::Admission,h::Error> r){return switch(r){case .ok(_):{assert(false);0}case .err(e):{h::status(e)}};}
 fn void unchanged(ref h::Table a,ref h::Table b){
-    assert(a.next_admission==b.next_admission);var usize i=0;
+    assert(a.next_admission==b.next_admission && a.next_unused==b.next_unused && a.free_head==b.free_head);
+    var usize i=0;
     while(i<h::capacity()){let h::Slot x=a.slots[i];let h::Slot y=b.slots[i];
         assert(x.generation==y.generation && x.kind==y.kind && x.engine==y.engine &&
-            x.thread==y.thread && x.lifetime==y.lifetime && x.busy==y.busy && x.object==y.object);i+=1;
+            x.thread==y.thread && x.lifetime==y.lifetime && x.busy==y.busy && x.object==y.object && x.children==y.children);i+=1;
     }
 }
 fn usize program(ref mut h::Table t,usize e,usize object){

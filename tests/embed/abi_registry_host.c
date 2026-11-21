@@ -52,7 +52,7 @@ static int basic(void) {
     uint64_t malformed[] = {0, 1, UINT64_C(4294967296), UINT64_C(4294967361), UINT64_MAX};
     size_t i; foreign_task t; HANDLE thread; DWORD code;
     CHECK(bc_abi_registry_inspect(&info) == 0);
-    CHECK(info.capacity == 64 && info.table_bytes == 3080 && info.committed_bytes == 0 && info.allocation_count == 0);
+    CHECK(info.capacity == 64 && info.table_bytes == 3608 && info.committed_bytes == 0 && info.allocation_count == 0);
     memset(&a, 0xA5, sizeof(a)); untouched = a;
     CHECK(bc_abi_registry_enter(0, 1, 0, &a) == 2 && memcmp(&a, &untouched, sizeof(a)) == 0);
     CHECK(released() == 0);
