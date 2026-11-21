@@ -279,10 +279,10 @@ def source_copy(path):
             text,count=re.subn(pattern,r'\1\n    let AllocationProbe probe=allocation_probe();',text)
             need(count==1,'Compiler allocation scope changed: '+name)
         declaration = 'fn Result<bool,errors::Error> walk_body_until('
-        advance = '            let bool advanced=body_work::advance(source,s,p,names,flow,ref mut w,ref mut meter)?;'
-        child = '            let usize completed=complete_body_child(source,s,p,names,signatures,result_type,0,flow,ref mut w)?;'
-        staged_advance = '    let bool advanced=body_work::advance(source,token,ref mut code.body,names,flow,cursor,meter)?;'
-        staged_child = '        let usize completed=complete_body_child(source,token,ref mut code.body,names,signatures,result,0,flow,cursor)?;'
+        advance = '            let bool advanced=body_work::advance_limited(source,s,p,names,flow,ref mut w,ref mut meter,signatures.semantic_depth)?;'
+        child = '            let usize completed=complete_body_child_metered(source,s,p,names,signatures,result_type,0,flow,ref mut w,deadline,ref mut fuel)?;'
+        staged_advance = '    let bool advanced=body_work::advance_limited(source,token,ref mut code.body,names,flow,cursor,meter,signatures.semantic_depth)?;'
+        staged_child = '        let usize completed=complete_body_child_metered(source,token,ref mut code.body,names,signatures,result,0,flow,cursor,deadline,fuel)?;'
         need(all(text.count(anchor) == 1 for anchor in (declaration, advance, child, staged_advance, staged_child)),
              'Body deadline probe anchors changed')
         text = text.replace(declaration, 'unsafe extern C fn void bc_runtime_engine_test_body_request(u8 request);\n'

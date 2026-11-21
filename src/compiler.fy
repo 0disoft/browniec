@@ -2952,16 +2952,18 @@ fn Result<bool, errors::Error> control_if(ref u8[] source, ref mut lexer::State 
 // statements remain explicit legacy children outside the stage allowance.
 fn Result<usize,errors::Error> statement_staged(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref mut locals::Table names,ref functions::Table signatures,
-    u8 terminator,u8 result_type,usize expr_depth,usize structure,ref mut loops::State flow){
+    u8 terminator,u8 result_type,usize expr_depth,usize structure,ref mut loops::State flow,usize deadline,ref mut usize fuel){
     var scratch_vec::Vec<expression_work::Bank> scratch=expression_scratch(s.begin)?;let ref mut expression_work::Bank bank=scratch_vec::at_mut<expression_work::Bank>(ref mut scratch,0);
-    return statement_in_bank(source,s,p,names,signatures,terminator,result_type,expr_depth,structure,flow,bank);
+    return statement_in_bank(source,s,p,names,signatures,terminator,result_type,expr_depth,structure,flow,bank,deadline,fuel);
 }
 fn Result<usize,errors::Error> statement_in_bank(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref mut locals::Table names,ref functions::Table signatures,
-    u8 terminator,u8 result_type,usize expr_depth,usize structure,ref mut loops::State flow,ref mut expression_work::Bank bank){
+    u8 terminator,u8 result_type,usize expr_depth,usize structure,ref mut loops::State flow,ref mut expression_work::Bank bank,usize deadline,ref mut usize fuel){
     var semantic_work::State w=semantic_work::begin(*s,1,0,terminator,expr_depth);
     var metadata_budget::State meter=metadata_budget::empty();
-    while(!w.done){let usize allowance=metadata_budget::reset(ref mut meter,s.begin)?;
+    while(!w.done){
+        discard metadata_budget::visit(fuel,deadline,0)?;
+        let usize allowance=metadata_budget::reset(ref mut meter,s.begin)?;
         let bool done=semantic_work::advance(source,s,p,names,signatures,bank,ref mut w,ref mut meter)?;
         if(w.request==1){let usize completed=complete_expression_operand(source,s,p,names,signatures,result_type,structure,flow,bank,ref mut w.expression)?;
             let usize continued=semantic_work::continue_operand(ref mut w)?;
@@ -2976,22 +2978,24 @@ fn Result<usize,errors::Error> statement_in_bank(ref u8[] source,ref mut lexer::
 // separately. Special result protocols keep their original explicit child.
 fn Result<bool,errors::Error> return_staged(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref mut locals::Table names,ref functions::Table signatures,
-    u8 result_type,usize depth,usize expr_depth,ref mut loops::State flow){
+    u8 result_type,usize depth,usize expr_depth,ref mut loops::State flow,usize deadline,ref mut usize fuel){
     let usize function=names.function;
     let u8 kind=if(signatures.return_types[function]==13){3}
         else if(reference_calls::result(signatures,function) || signatures.return_slice_elements[function]!=0 ||
             p.record_results[function]!=0 || p.array_results[function]!=0 || !types::scalar(result_type)){0}else{2};
     var scratch_vec::Vec<expression_work::Bank> scratch=expression_scratch(s.begin)?;let ref mut expression_work::Bank bank=scratch_vec::at_mut<expression_work::Bank>(ref mut scratch,0);
-    return return_in_bank(source,s,p,names,signatures,result_type,depth,expr_depth,flow,kind,bank);
+    return return_in_bank(source,s,p,names,signatures,result_type,depth,expr_depth,flow,kind,bank,deadline,fuel);
 }
 // Semantic state is needed after Bank initialization, not while Vec::push is
 // constructing its large success/error payloads.
 fn Result<bool,errors::Error> return_in_bank(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref mut locals::Table names,ref functions::Table signatures,
-    u8 result_type,usize depth,usize expr_depth,ref mut loops::State flow,u8 kind,ref mut expression_work::Bank bank){
+    u8 result_type,usize depth,usize expr_depth,ref mut loops::State flow,u8 kind,ref mut expression_work::Bank bank,usize deadline,ref mut usize fuel){
     var semantic_work::State w=semantic_work::begin(*s,kind,result_type,59,expr_depth);
     var metadata_budget::State meter=metadata_budget::empty();
-    while(!w.done){let usize allowance=metadata_budget::reset(ref mut meter,s.begin)?;
+    while(!w.done){
+        discard metadata_budget::visit(fuel,deadline,0)?;
+        let usize allowance=metadata_budget::reset(ref mut meter,s.begin)?;
         let bool done=semantic_work::advance(source,s,p,names,signatures,bank,ref mut w,ref mut meter)?;
         if(w.request==1){let usize completed=complete_expression_operand(source,s,p,names,signatures,result_type,depth,flow,bank,ref mut w.expression)?;
             let usize continued=semantic_work::continue_operand(ref mut w)?;
@@ -3007,21 +3011,28 @@ fn Result<bool,errors::Error> return_in_bank(ref u8[] source,ref mut lexer::Stat
 pub fn Result<usize,errors::Error> complete_body_child(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref mut locals::Table names,ref functions::Table signatures,
     u8 result_type,usize expr_depth,ref mut loops::State flow,ref mut body_work::State w){
+    var usize fuel=metadata_budget::unlimited();
+    return complete_body_child_metered(source,s,p,names,signatures,result_type,expr_depth,flow,w,0,ref mut fuel);
+}
+fn Result<usize,errors::Error> complete_body_child_metered(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref mut locals::Table names,ref functions::Table signatures,u8 result_type,usize expr_depth,
+    ref mut loops::State flow,ref mut body_work::State w,usize deadline,ref mut usize fuel){
     let u8 request=w.request;
     if(w.done || w.lexing || request==0){return .err(errors::make(5,s.begin));}
     let body_work::Frame f=body_work::current(w);var usize value=0;var bool stopped=false;
-    if(request==1){value=statement_staged(source,s,p,names,signatures,59,result_type,expr_depth,f.depth,flow)?;}
-    else if(request==2){stopped=return_staged(source,s,p,names,signatures,result_type,f.depth,expr_depth,flow)?;}
+    if(request==1){value=statement_staged(source,s,p,names,signatures,59,result_type,expr_depth,f.depth,flow,deadline,fuel)?;}
+    else if(request==2){stopped=return_staged(source,s,p,names,signatures,result_type,f.depth,expr_depth,flow,deadline,fuel)?;}
     else if(request==4 || request==5 || request==7 || request==10){
         value=expression_staged(source,s,p,names,signatures,1,expr_depth,if(request==10){0}else{2},
             if(request==7){0}else{result_type},f.depth,flow)?;
-    }else if(request==6){value=statement_staged(source,s,p,names,signatures,59,0,expr_depth,f.depth,flow)?;}
+    }else if(request==6){value=statement_staged(source,s,p,names,signatures,59,0,expr_depth,f.depth,flow,deadline,fuel)?;}
     else if(request==8){value=checked_post(source,s,p,names,signatures,expr_depth,f.depth,flow)?;}
     else if(request==9){
         var lexer::State post=source_context::state(source,ref signatures.context,f.c)?;
         let usize first=lexer::next(source,ref mut post)?;
         value=statement(source,ref mut post,p,names,signatures,41,0,expr_depth,f.depth,flow)?;
     }else{return .err(errors::make(5,s.begin));}
+    if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
     return body_work::resume(w,request,value,stopped);
 }
 fn Result<bool,errors::Error> walk_body(ref u8[] source,ref mut lexer::State s,
@@ -3037,6 +3048,7 @@ fn Result<bool,errors::Error> walk_body_until(ref u8[] source,ref mut lexer::Sta
     ref mut ir::Program p,ref mut locals::Table names,ref functions::Table signatures,
     u8 result_type,ref mut loops::State flow,usize deadline){
     var body_work::State w=body_work::begin(0,false);var metadata_budget::State meter=metadata_budget::empty();
+    var usize fuel=metadata_budget::unlimited();
     while(true){
         if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
         if(w.done){return body_work::prepared(ref w);}
@@ -3044,7 +3056,7 @@ fn Result<bool,errors::Error> walk_body_until(ref u8[] source,ref mut lexer::Sta
             let usize allowance=metadata_budget::reset(ref mut meter,s.begin)?;
             let bool advanced=body_work::advance_limited(source,s,p,names,flow,ref mut w,ref mut meter,signatures.semantic_depth)?;
         }else{
-            let usize completed=complete_body_child(source,s,p,names,signatures,result_type,0,flow,ref mut w)?;
+            let usize completed=complete_body_child_metered(source,s,p,names,signatures,result_type,0,flow,ref mut w,deadline,ref mut fuel)?;
         }
     }
     return .err(errors::make(5,0));
@@ -3644,7 +3656,8 @@ pub fn Result<bool,source_errors::Error> advance_module_bodies(ref module_index:
     let literal_collection::Index unused=literal_collection::empty();
     let ref literal_collection::Index literals=if(references){ref collection.result}else{ref unused};
     if(progress.phase==0){scan.result.output=output;}
-    return switch(advance_module_body(source,references,literals,ref mut scan.result,code,progress,token,names,flow,cursor,meter,deadline)){
+    var usize fuel=metadata_budget::unlimited();
+    return switch(advance_module_body(source,references,literals,ref mut scan.result,code,progress,token,names,flow,cursor,meter,deadline,ref mut fuel)){
         case .ok(v):{.ok(v)}case .err(e):{.err(input_module_error(index,e,progress.active))}
     };
 }
@@ -3654,7 +3667,7 @@ pub fn Result<bool,source_errors::Error> advance_module_bodies(ref module_index:
 fn Result<bool,errors::Error> advance_module_body(ref u8[] source,bool references,ref literal_collection::Index literals,
     ref mut functions::Table signatures,ref mut reference_ir::Program code,ref mut BodyProgress progress,
     ref mut lexer::State token,ref mut locals::Table names,ref mut loops::State flow,
-    ref mut body_work::State cursor,ref mut metadata_budget::State meter,usize deadline){
+    ref mut body_work::State cursor,ref mut metadata_budget::State meter,usize deadline,ref mut usize fuel){
     if(progress.phase==3){return .ok(true);}
     let usize f=progress.function;
     if(progress.phase==0){
@@ -3688,7 +3701,7 @@ fn Result<bool,errors::Error> advance_module_body(ref u8[] source,bool reference
     }
     if(cursor.request!=0){
         let u8 result=if(reference_calls::result(signatures,f)){12}else{record_results::context(ref code.body,f)};
-        let usize completed=complete_body_child(source,token,ref mut code.body,names,signatures,result,0,flow,cursor)?;
+        let usize completed=complete_body_child_metered(source,token,ref mut code.body,names,signatures,result,0,flow,cursor,deadline,fuel)?;
         return .ok(false);
     }
     let bool advanced=body_work::advance_limited(source,token,ref mut code.body,names,flow,cursor,meter,signatures.semantic_depth)?;
@@ -3838,7 +3851,7 @@ fn Result<usize,source_errors::Error> lower_reference_bodies_until(ref module_in
         };
         var metadata_budget::State meter=metadata_budget::empty();
         switch(advance_module_body(source,true,literals,signatures,code,ref mut progress,
-            ref mut token,ref mut names,ref mut flow,ref mut cursor,ref mut meter,deadline)){
+            ref mut token,ref mut names,ref mut flow,ref mut cursor,ref mut meter,deadline,fuel)){
             case .ok(done):{if(done){return .ok(code.body.count);}}
             case .err(e):{return .err(input_module_error(index,e,progress.active));}
         };

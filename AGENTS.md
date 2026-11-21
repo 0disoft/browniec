@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-22): [Literal image preparation Fuel](docs/engineering/restricted-worker.md#literal-image-preparation-fuel)
-  meters catalog checks, UTF-8 validation, and copying. Both Windows profiles
-  verify the exact and one-less compile Fuel limits with a split UTF-8 scalar.
+- Latest runtime checkpoint (2026-11-22): [Declaration and return child Fuel](docs/engineering/restricted-worker.md#declaration-and-return-child-fuel)
+  checks compile stops and debits each staged semantic advance. Both Windows
+  profiles verify the exact and one-less Fuel limits for a typed declaration.
 
 # Brownie C agent guidance
 

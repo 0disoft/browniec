@@ -132,8 +132,8 @@ def verify_configured_project(run, need, image, folder, env):
     need(fuel_error['location']['source_index'] == 1,
          f'Index Fuel reset between source members: {fuel_error}')
     # 863 prepaid batches after the 179-unit index, including independent proof,
-    # plus two 16-row passes over the empty literal catalog before proof.
-    proof_fuel = index_fuel + 863 * 4096 + 32
+    # plus 151 semantic transitions and two 16-row literal catalog passes.
+    proof_fuel = index_fuel + 863 * 4096 + 151 + 32
     policy['compile']['fuel'] = proof_fuel
     preparation_error = check(3, 'compile_limit', 'check')['error']
     need(preparation_error['location']['kind'] == 'none',
@@ -174,6 +174,12 @@ def verify_configured_project(run, need, image, folder, env):
 
     math_file = target / 'src/math.brc'
     original_source = math_file.read_bytes()
+    math_file.write_bytes(b'module util::math;pub fn i32 answer(){let i32 price=20+22;return price;}')
+    policy['compile'] = dict(compile_defaults, source_bytes=4096, fuel=3944712 + 208 - 1)
+    check(3, 'compile_limit')
+    policy['compile']['fuel'] += 1
+    check()
+    policy['compile'] = compile_defaults.copy()
     math_file.write_text(
         'module util::math;\nstruct One { i32 value; }\nstruct Two { i32 value; }\n'
         'pub fn i32 answer(){var i32 n=40; n+=2; return n;}\n', encoding='utf-8')
@@ -430,7 +436,7 @@ def verify_configured_project(run, need, image, folder, env):
                       b'";let ref u8[] body=text::bytes(msg);output::emit(ref body);return 77;}')
     # The prior compiler needed 4,780,555 units. Admission now charges two
     # 16-row catalog scans, one literal row and two visits to each text byte.
-    text_fuel = 4780555 + 32 + 1 + 2 * len(text)
+    text_fuel = 4780555 + 95 + 32 + 1 + 2 * len(text)
     policy['compile']['fuel'] = text_fuel - 1
     check(3, 'compile_limit')
     policy['compile']['fuel'] = text_fuel
@@ -456,7 +462,7 @@ def verify_configured_project(run, need, image, folder, env):
     config['entry']['function'] = manifest['entry']['function']
     config['grants'] = ['brownie.output.emit']
     check(4, 'unavailable')
-    return 88
+    return 90
 
 
 def verify_project_host(run, need, image, folder, env):

@@ -1020,6 +1020,25 @@ Windows development and /O2 each passed 88 configured, 32 catalog, five
 managed project and four compile-stop cases. All 456 input hashes matched.
 Local receipt: `build/restricted-worker/20261121T221556387417Z/receipt.json`.
 
+### Declaration and return child Fuel
+
+The configured scalar and shared-input compiler pass the same Fuel balance
+and deadline into the staged statement and return children. Each semantic
+advance spends one unit and checks for a stop before resuming the lexer,
+type annotation, expression, binding, or return cleanup. A stop is checked
+again before handing the child result back to its enclosing body.
+The private staged Engine also checks its deadline inside these children.
+Synchronous fallback operands and other child kinds still have their
+existing outer checkpoints.
+
+The two-module example spends 151 units on these advances and fits
+3,535,226 units in total. With a typed `let` and an arithmetic initializer,
+the corresponding fixture spends 208 units on semantic advances and
+returns 42 at 3,944,920. At 3,944,919 it fails compilation. Windows
+development and /O2 each passed 90 configured, 32 catalog, five managed
+project and four compile-stop cases. All 456 receipt input hashes matched.
+Local receipt: `build/restricted-worker/20261121T222511913063Z/receipt.json`.
+
 ## Windows verification
 
 Run `python -B tools/verify-restricted-worker.py`. The development and optimized
