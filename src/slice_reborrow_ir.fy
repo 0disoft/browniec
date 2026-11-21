@@ -1,6 +1,7 @@
 module slice_reborrow_ir;
 import ir as ir;
 import errors as errors;
+import runtime_clock as clock;
 import register_set as registers;
 import slice_verifier as slices;
 import std::num as num;
@@ -27,10 +28,14 @@ fn usize function(ref ir::Program p,usize site) {
     return if(root!=0){p.array_functions[root-1] as usize}else{(p.slice_functions[site] as usize)-1};
 }
 pub fn Result<Sites,errors::Error> metadata(ref ir::Program p) {
+    return metadata_until(p,0);
+}
+pub fn Result<Sites,errors::Error> metadata_until(ref ir::Program p,usize deadline) {
     var Sites sites=empty();var usize[16] begins=[256;16];var usize f=0;
     while(f<p.function_count) {
         var usize pc=p.starts[f];
         while(pc<p.ends[f]) {
+            if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
             if(p.code[pc*8]==61) {
                 let usize child=p.code[pc*8+1] as usize;let usize parent=p.code[pc*8+2] as usize;
                 if(!compatible(p,child,parent) || sites.parents[child]!=16 || function(p,child)!=f) { return .err(errors::make(5,pc)); }
@@ -42,6 +47,7 @@ pub fn Result<Sites,errors::Error> metadata(ref ir::Program p) {
     }
     var usize site=0;
     while(site<16) {
+        if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
         if(p.slice_roots[site]==0 && ir::exclusive(p,site) && p.slice_origins[site] as usize!=site+1 && sites.parents[site]==16) { return .err(errors::make(5,0)); }
         var usize cursor=site;var usize steps=0;
         while(sites.parents[cursor]!=16) {
@@ -59,6 +65,7 @@ pub fn Result<Sites,errors::Error> metadata(ref ir::Program p) {
         }
         site+=1;
     }
+    if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
     return .ok(sites);
 }
 

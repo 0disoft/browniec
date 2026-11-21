@@ -1,6 +1,7 @@
 module slice_parameters;
 import ir as ir;
 import errors as errors;
+import runtime_clock as clock;
 import types as types;
 
 // Exact scalar borrow signatures. No scalar value or owned-array shape is implied.
@@ -13,11 +14,11 @@ fn bool formal(ref ir::Program p, usize r, usize site, usize f) {
         p.types[r] == 0 && !p.slots[r] && p.array_parameters[r] == 0 && p.record_parameters[r] == 0;
 }
 
-pub fn Result<usize, errors::Error> metadata(ref ir::Program p) {return metadata_mode(p,false);}
+pub fn Result<usize, errors::Error> metadata(ref ir::Program p) {return metadata_until(p,false,0);}
 // The caller independently proves the one external parameter. This metadata
 // check excludes ordinary array-backed borrowing at the external entry.
-pub fn Result<usize,errors::Error> metadata_input(ref ir::Program p){return metadata_mode(p,true);}
-fn Result<usize,errors::Error> metadata_mode(ref ir::Program p,bool input) {
+pub fn Result<usize,errors::Error> metadata_input(ref ir::Program p){return metadata_until(p,true,0);}
+pub fn Result<usize,errors::Error> metadata_until(ref ir::Program p,bool input,usize deadline) {
     if (p.function_count == 0 || p.function_count > 16 || p.entry >= p.function_count ||
         p.registers > 128 || p.arrays.count > 16) { return .err(errors::make(5, 0)); }
     if(input){
@@ -26,6 +27,7 @@ fn Result<usize,errors::Error> metadata_mode(ref ir::Program p,bool input) {
     var usize end = 0;
     var usize f = 0;
     while (f < p.function_count) {
+        if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
         if (p.register_starts[f] != end || p.register_ends[f] < end || p.register_ends[f] > p.registers ||
             p.arities[f] > 8 || p.arities[f] > p.register_ends[f] - end) { return .err(errors::make(5, 0)); }
         end = p.register_ends[f]; f += 1;
@@ -33,6 +35,7 @@ fn Result<usize,errors::Error> metadata_mode(ref ir::Program p,bool input) {
     if (end != p.registers) { return .err(errors::make(5, 0)); }
     var usize site = 0;
     while (site < 16) {
+        if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
         let usize origin = p.slice_origins[site] as usize;
         let usize function = p.slice_functions[site] as usize;
         let usize root = p.slice_roots[site] as usize;
@@ -56,6 +59,7 @@ fn Result<usize,errors::Error> metadata_mode(ref ir::Program p,bool input) {
     let usize one = 1;
     var usize r = 0;
     while (r < 128) {
+        if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
         let usize encoded = p.slice_parameters[r] as usize;
         if (encoded != 0) {
             if (encoded > 16) { return .err(errors::make(5, 0)); }
@@ -68,10 +72,12 @@ fn Result<usize,errors::Error> metadata_mode(ref ir::Program p,bool input) {
     }
     site = 0;
     while (site < 16) {
+        if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
         let usize origin = p.slice_origins[site] as usize;
         if (origin != 0 && (seen & (one << (origin - 1))) == 0) { return .err(errors::make(5, 0)); }
         site += 1;
     }
+    if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
     return .ok(seen);
 }
 

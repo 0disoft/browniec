@@ -457,8 +457,8 @@ fn Result<reborrows::Sites,errors::Error> validate_values_mode(ref ir::Program p
     if (code_end != p.count || register_end != p.registers) { return .err(errors::absent(5,0)); }
     if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
     let usize copy_metadata=copying::metadata_until(p,deadline)?;
-    let usize borrowed_parameters = if(entry_kind!=0){slice_parameters::metadata_input(p)?}else{slice_parameters::metadata(p)?};
-    let reborrows::Sites loans = reborrows::metadata(p)?;
+    let usize borrowed_parameters = slice_parameters::metadata_until(p,entry_kind!=0,deadline)?;
+    let reborrows::Sites loans = reborrows::metadata_until(p,deadline)?;
     let usize parameters = array_parameters::metadata(p)?;
     let usize record_parameters = struct_parameters::metadata(p)?;
     let usize results = array_results::metadata(p)?;

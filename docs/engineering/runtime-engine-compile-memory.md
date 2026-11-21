@@ -158,8 +158,12 @@ sampling before each advance and before returning the prepared metadata.
 Timed ordinary array-list metadata checks before each span visit, every
 batch of at most 256 padding entries, and before returning the result.
 Copy metadata checks before each instruction and before returning, including
-unreachable instructions. Individual copy validation is synchronous. Other
-metadata calls return to their surrounding checkpoint. The staged input
+unreachable instructions. Individual copy validation is synchronous. Timed
+slice parameter metadata checks each function partition, site, formal
+register, and origin-coverage row. Reborrow metadata checks before each
+instruction and each parent-site validation. Both check again before returning
+their result. Other metadata calls return to their surrounding checkpoint.
+The staged input
 and output proof drivers
 sample once before each bounded proof advance. Input-only compilation uses its
 separate proof with the output gate closed and checks again before returning
@@ -323,6 +327,14 @@ cases stopped before the next verification phase or another SDK allocation.
 The ledger and heap returned to baseline without consuming a Program ID.
 Windows development and /O2 passed with zero live SDK allocations at exit.
 Local receipt: `build/runtime-engine/20261121T023418260264Z/receipt.json`.
+
+The Windows verifier advanced to the exact deadline during the slice formal
+register scan, reborrow instruction scan, or reborrow site traversal. All six
+cases, using mutable parent and child slices in both ordinary source profiles,
+stopped without an SDK allocation after expiry or a Program ID advance.
+The ledger and heap returned to baseline. Windows development and /O2 passed
+with zero live SDK allocations at exit. Local receipt:
+`build/runtime-engine/20261121T024344600629Z/receipt.json`.
 
 Source lowering, work between checkpoints, and cleanup remain synchronous.
 Public Pending compilation, in-flight cancellation, and a latency bound for

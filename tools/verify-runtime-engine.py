@@ -107,6 +107,24 @@ def source_copy(path):
         signature = 'pub fn Result<usize,errors::Error> metadata_until('
         declaration = 'unsafe extern C fn void bc_runtime_engine_test_ordinary_proof_pc(u8 phase);\n'
         return path.name, text.replace(signature, declaration + signature, 1).encode('utf-8')
+    if path.name in ('slice_parameters.fy', 'slice_reborrow_ir.fy') and path.parent == ROOT / 'src':
+        text = path.read_text(encoding='utf-8')
+        if path.name == 'slice_parameters.fy':
+            stages = [('        let usize encoded = p.slice_parameters[r] as usize;', 12)]
+        else:
+            stages = [('            if(p.code[pc*8]==61) {', 13),
+                      ('        var usize cursor=site;var usize steps=0;', 14)]
+        start = text.index(' metadata_until(ref ')
+        end = text.index('\n}', start)
+        head, body, tail = text[:start], text[start:end], text[end:]
+        declaration = 'unsafe extern C fn void bc_runtime_engine_test_ordinary_proof_pc(u8 phase);\n'
+        for anchor, phase in stages:
+            need(body.count(anchor) == 1, 'Timed slice metadata probe anchor changed')
+            indent = anchor[:len(anchor) - len(anchor.lstrip())]
+            call = f'{indent}if(deadline!=0){{unsafe{{bc_runtime_engine_test_ordinary_proof_pc({phase})}};}}\n'
+            body = body.replace(anchor, call + anchor, 1)
+        first_fn = head.index('\nfn ')
+        return path.name, (head[:first_fn] + '\n' + declaration + head[first_fn:] + body + tail).encode('utf-8')
     if path == ROOT / 'src/place_ir.fy':
         text = path.read_text(encoding='utf-8')
         return path.name, ordinary_proof_probe(text, '        if (!seen[pc]) { pc += 1; continue; }', 7)
