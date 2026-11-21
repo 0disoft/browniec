@@ -1,7 +1,7 @@
-- Latest runtime checkpoint (2026-11-21): [Engine-owned output-only proof](docs/engineering/runtime-engine-compile-memory.md#engine-owned-output-only-proof)
-  advances the canonical proof before retaining and publishing the Program.
-  Windows development and /O2 passed partial-proof cancellation, deadline,
-  exact SDK byte accounting, and execution returning 77 with two output bytes.
+- Latest runtime checkpoint (2026-11-21): [Engine-owned input-output compile](docs/engineering/runtime-engine-compile-memory.md#engine-owned-input-output-compile)
+  runs source, lowering, and output proof through the same private compile job.
+  Windows development and /O2 passed partial-proof expiry, exact SDK byte
+  accounting, and execution returning 77 and emitting the supplied input byte.
 
 # Brownie C agent guidance
 

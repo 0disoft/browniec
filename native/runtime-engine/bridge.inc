@@ -37,9 +37,9 @@ uint32_t bc_runtime_engine_begin_compile(void *raw,void *incoming,uintptr_t limi
  bc_engine *e=raw;bc_engine_ticket ticket;uint32_t s=admission(e,&ticket);if(s)return s;
  s=B44(&e->f_0,&e->f_9,&e->f_10,(bc_engine_input *)incoming,limit,deadline,output!=0);return finish(e,ticket,s);
 }
-uint32_t bc_runtime_engine_begin_compile_input(void *raw,void *incoming,uintptr_t limit,uintptr_t deadline){
+uint32_t bc_runtime_engine_begin_compile_input(void *raw,void *incoming,uintptr_t limit,uintptr_t deadline,uint32_t output){
  bc_engine *e=raw;bc_engine_ticket ticket;uint32_t s=admission(e,&ticket);if(s)return s;
- s=B54(&e->f_0,&e->f_9,&e->f_12,(bc_engine_input_entry *)incoming,limit,deadline);
+ s=B54(&e->f_0,&e->f_9,&e->f_12,(bc_engine_input_entry *)incoming,limit,deadline,output!=0);
  return finish(e,ticket,s);
 }
 uint32_t bc_runtime_engine_end_compile(void *raw,uintptr_t id,uint32_t detach){

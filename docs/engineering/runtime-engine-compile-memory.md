@@ -648,6 +648,20 @@ refunds against the SDK heap. Successful execution returned 77 and emitted
 `ok`. Both process exits were 0 with zero live SDK allocations. Local receipt:
 `build/runtime-engine/20261121T075807085872Z/receipt.json`.
 
+## Engine-owned input-output compile
+
+The private Engine accepts an InputEntry for resumable input-output compilation.
+The job enables both input-reference and output lowering and uses the output proof
+coordinator with input enabled. It transfers the verified image to retained
+output Program storage and binds configured entry metadata at publication.
+Final execution preparation and publication are synchronous steps.
+
+The Windows development and /O2 suite verified that partial proof leaves the
+Program ID at zero, expiry releases the exact charged bytes, and successful
+execution returns 77 and emits the supplied byte. Both native processes exited
+with zero live SDK allocations. The locked /O2 CLI quick start returned 77.
+Local receipt: `build/runtime-engine/20261121T081316707472Z/receipt.json`.
+
 ## Executed verification and remaining work
 
 [Windows evidence](../evidence/runtime-engine-compile-memory-windows-20261107.json)
