@@ -83,6 +83,11 @@ typedef __typeof__(((bc_engine *)0)->f_6) bc_engine_outputs;
 
 #define B53 fy_private_fn_6d6f64756c655f70726f6772616d3a3a736565645f70726f6f66 /* module_program::seed_proof */
 
+#define B54 fy_private_fn_72756e74696d655f656e67696e653a3a626567696e5f636f6d70696c655f696e7075745f696e6e6572 /* runtime_engine::begin_compile_input_inner */
+#define B55 fy_private_fn_72756e74696d655f656e67696e653a3a737465705f636f6d70696c655f696e7075745f696e6e6572 /* runtime_engine::step_compile_input_inner */
+#define B56 fy_private_fn_72756e74696d655f656e67696e653a3a656e645f636f6d70696c655f696e7075745f696e6e6572 /* runtime_engine::end_compile_input_inner */
+#define B57 fy_private_fn_72756e74696d655f656e67696e653a3a72657365745f636f6d70696c655f696e7075745f73746f72616765 /* runtime_engine::reset_compile_input_storage */
+
 #include "native/runtime-engine/bridge.inc"
 
 /* Existing Engine witnesses are retained only by the evidence harness. */

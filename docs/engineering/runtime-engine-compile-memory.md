@@ -537,6 +537,28 @@ and literal-bearing Programs returning 77. The Engine ended with zero live
 SDK allocations. The locked /O2 CLI quick start returned 77. Local receipt:
 `build/runtime-engine/20261121T055327896002Z/receipt.json`.
 
+## Engine-owned input source preparation
+
+The private Engine accepts an owning InputEntry into the single compile job.
+It steps the shared source-context cursor under the 4,096-unit allowance
+without ordinary syntax classification. The Prepared state pins the exact
+input Index so the next call can lower it without collecting source again.
+That call still drains literals, signatures, bodies, and proof before
+publishing an input Program. The owning InputEntry is cleared on failure,
+cancellation, and completion. A compiler deadline applies across both steps.
+
+The input slot reserves eight 128-byte records and adds a 48-byte Engine
+descriptor. This raises fixed control from 944 to 992 bytes for the owner
+and from 640 to 1,664 bytes for both entry vectors together. The compile-work
+vector remains 85,632 bytes. The adopted Index is tracked separately as
+compile-source bytes and is released before Program publication.
+
+Windows development and /O2 verified cancellation during preparation, stale
+job rejection, the exact source charge, Program reuse through an input Instance
+returning 77, and zero live SDK allocations on teardown. The locked /O2 CLI
+quick start and contract checks passed. Local receipt:
+`build/runtime-engine/20261121T062132846379Z/receipt.json`.
+
 ## Executed verification and remaining work
 
 [Windows evidence](../evidence/runtime-engine-compile-memory-windows-20261107.json)

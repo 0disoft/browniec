@@ -59,6 +59,10 @@
     "module_program::open_proof_inner",
     "module_program::finish_proof_inner",
     "module_program::seed_proof",
+    "runtime_engine::begin_compile_input_inner",
+    "runtime_engine::step_compile_input_inner",
+    "runtime_engine::end_compile_input_inner",
+    "runtime_engine::reset_compile_input_storage",
     "windows_engine_bindings::incoming"
   ]
 }

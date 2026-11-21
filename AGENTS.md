@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-21): [Engine canonical proof](docs/engineering/runtime-engine-compile-memory.md#engine-canonical-proof)
-  yields before publishing an ordinary Program. Windows development and /O2
-  verify cancellation, expiry, allocation rollback, and zero live SDK allocations.
+- Latest runtime checkpoint (2026-11-21): [Engine-owned input source preparation](docs/engineering/runtime-engine-compile-memory.md#engine-owned-input-source-preparation)
+  resumes across steps and refunds the adopted Index on cancellation and completion.
+  Windows development and /O2 passed with zero live SDK allocations.
 
 # Brownie C agent guidance
 

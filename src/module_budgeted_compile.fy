@@ -8,6 +8,7 @@ import module_input_program as inputs;
 import module_output_program as outputs;
 import source_error as diagnostics;
 import errors as errors;
+import module_source_work as source_work;
 
 // Temporary SDK heap, excluding inline native frames and caller-owned Entry.
 // Existing list cells: 4096 source bytes * 8 slots * sizeof(usize).
@@ -71,6 +72,15 @@ pub fn Result<inputs::Program,diagnostics::Error> compile_input_until(input_entr
     ref mut retention::Plan retained,ref mut memory::Plan plan,usize deadline){
     var retention::Plan local=begin(retained,plan)?;
     let Result<inputs::Program,diagnostics::Error> built=inputs::compile_with_retention_until(selected,image_limit,ref mut local,deadline);
+    return switch(built){
+        case .ok(p):{end(retained,ref local,plan,true);.ok(p)}
+        case .err(e):{end(retained,ref local,plan,false);.err(e)}
+    };
+}
+pub fn Result<inputs::Program,diagnostics::Error> compile_input_prepared_until(ref input_entries::InputEntry selected,
+    ref source_work::State source,usize image_limit,ref mut retention::Plan retained,ref mut memory::Plan plan,usize deadline){
+    var retention::Plan local=begin(retained,plan)?;
+    let Result<inputs::Program,diagnostics::Error> built=inputs::compile_prepared_until(selected,source,image_limit,ref mut local,deadline);
     return switch(built){
         case .ok(p):{end(retained,ref local,plan,true);.ok(p)}
         case .err(e):{end(retained,ref local,plan,false);.err(e)}

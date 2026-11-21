@@ -230,8 +230,9 @@ void bc_runtime_engine_test_control_no_allocations(void){assert(probe_attempts()
 void bc_runtime_engine_test_control_storage(const void *raw,uintptr_t expected,uint32_t kind){
  const bc_engine *e=raw;size_t sizes=e->f_1.f_1+e->f_2.f_1+e->f_3.f_1+e->f_4.f_1+e->f_5.f_1+e->f_6.f_1+e->f_7.f_1;
  size_t entry_bytes=e->f_10.f_1;assert(entry_bytes==8*sizeof(bc_ordinary_entry));
+ assert(e->f_12.f_1==8*sizeof(bc_input_entry));entry_bytes+=e->f_12.f_1;
  size_t work_bytes=e->f_9.f_1;assert(work_bytes==8*sizeof(bc_compile_work));sizes+=entry_bytes+work_bytes;
- assert(expected==sizeof(*e)+sizes&&probe_live()==9&&probe_live_bytes()==sizes&&probe_peak_bytes()==sizes&&probe_attempts()==9);
+ assert(expected==sizeof(*e)+sizes&&probe_live()==10&&probe_live_bytes()==sizes&&probe_peak_bytes()==sizes&&probe_attempts()==10);
  assert(e->f_1.f_4==sizeof(bc_engine_program)&&e->f_3.f_4==sizeof(bc_engine_instance));
  assert(e->f_4.f_4==sizeof(bc_engine_bound_input)&&e->f_6.f_4==sizeof(bc_engine_output));
  if(kind==1){small_heap_bytes=sizes;owner_bytes=sizeof(*e);compile_entry_bytes=entry_bytes;compile_work_bytes=work_bytes;}if(kind==2)assert(sizes==small_heap_bytes);
@@ -252,7 +253,7 @@ void bc_runtime_engine_test_program_probe(void){probe_rebase();probe_retention_b
 void bc_runtime_engine_test_program_no_retention_allocations(void){assert(probe_no_retention_allocations());}
 void bc_runtime_engine_test_program_storage(const void *raw,uintptr_t bytes){
  const bc_engine *e=raw;size_t control=e->f_1.f_1+e->f_2.f_1+e->f_3.f_1+e->f_4.f_1+e->f_5.f_1+e->f_6.f_1+e->f_7.f_1;
- control+=e->f_9.f_1+e->f_10.f_1;assert(bytes<=SIZE_MAX-control&&probe_live_bytes()==control+bytes);
+ control+=e->f_9.f_1+e->f_10.f_1+e->f_12.f_1;assert(bytes<=SIZE_MAX-control&&probe_live_bytes()==control+bytes);
 }
 static uintptr_t context_expiry;
 static size_t context_bytes;

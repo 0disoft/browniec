@@ -607,6 +607,34 @@ fn Result<usize,u8> pending_compile_candidate_cleanup(){
     }
     counts(ref mut e,0,0,0);close(ref mut e);return .ok(0);
 }
+fn Result<usize,u8> pending_input_compile_lifecycle(){
+    var engine::Engine e=created()?;
+    let Heap idle=heap();
+    let ref u8[] source=b"module app;pub fn i32 chosen(ref u8[] data){return data[0] as i32;}";
+    let usize cancelled=id(engine::begin_compile_input(ref mut e,selected_input(source)?,65536));
+    let engine::CompileStatus first=compile_status(engine::step_compile(ref mut e,cancelled))?;
+    assert(compile_state(first.state)==0 && first.batches==1 && first.program==0);
+    assert(unsafe{probe_live_bytes()}==idle.bytes+retained(ref e).compile_source_bytes);
+    rejected_id(engine::begin_compile_input(ref mut e,selected_input(source)?,65536),3);
+    rejected_id(engine::destroy(ref mut e),3);
+    let engine::CompileStatus stopped=compile_status(engine::cancel_compile(ref mut e,cancelled))?;
+    assert(compile_state(stopped.state)==4 && stopped.program==0 && stopped.batches==first.batches);
+    assert(engine::detach_compile(ref mut e,cancelled).is_ok);
+    same_heap(ref idle);assert(retained(ref e).compile_source_bytes==0);
+
+    let usize job=id(engine::begin_compile_input(ref mut e,selected_input(source)?,65536));
+    assert(job==cancelled+1 && !engine::step_compile(ref mut e,cancelled).is_ok);
+    let engine::CompileStatus prepared=prepare_compile(ref mut e,job)?;
+    counts(ref mut e,0,0,0);
+    let engine::CompileStatus done=compile_status(engine::step_compile(ref mut e,job))?;
+    assert(compile_state(done.state)==2 && done.batches==prepared.batches && done.program==1);
+    assert(engine::detach_compile(ref mut e,job).is_ok && retained(ref e).compile_source_bytes==0);
+    let usize i=id(engine::create_input_instance(ref mut e,done.program,captured(b"M")?,16000000));
+    let engine::Event result=event(engine::execute_once(ref mut e,i));
+    assert(result.kind==1 && result.value==77);
+    destroy(ref mut e,i);release(ref mut e,done.program);
+    same_heap(ref idle);close(ref mut e);return .ok(0);
+}
 fn Result<usize,u8> pending_compile_deadline(){
     let policy::Policy ceiling=output_policy(true)?;
     var engine::Engine e=configured_engine(ceiling)?;
@@ -1479,6 +1507,7 @@ pub fn void run(){
     assert(pending_compile_lifecycle().is_ok);same_heap(ref before);
     assert(pending_compile_candidate_cleanup().is_ok);same_heap(ref before);
     assert(pending_compile_deadline().is_ok);same_heap(ref before);
+    assert(pending_input_compile_lifecycle().is_ok);same_heap(ref before);
     assert(configured_deadline().is_ok);same_heap(ref before);
     assert(cleanup_fault_quarantines_engine(false).is_ok);same_heap(ref before);
     assert(cleanup_fault_quarantines_engine(true).is_ok);same_heap(ref before);
