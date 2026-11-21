@@ -280,8 +280,8 @@ def verify_configured_project(run, need, image, folder, env):
                           b'{let ref mut i32[] view=ref mut a;view[0+1]+=2+2;}'
                           b'var Pair p=Pair{.value=10};p.value+=1+1;((p).value)+=1+1;'
                           b'return a[1]+p.value;}')
-    # The eight assignment operands add 245 Pratt advances to the fixture.
-    place_fuel = 10232871 + 245
+    # Eight operands and both record targets add Pratt and path advances.
+    place_fuel = 10232871 + 245 + 167
     policy['compile'] = dict(compile_defaults, source_bytes=4096, fuel=place_fuel - 1)
     check(3, 'compile_limit')
     policy['compile']['fuel'] = place_fuel
@@ -307,8 +307,10 @@ def verify_configured_project(run, need, image, folder, env):
                           b'var Outer p=Outer{.child=Inner{.value=0},.extra=0};'
                           b'p=Outer{.child=(Inner{.value=12+5}),.extra=4+3};'
                           b'((p).child)=Inner{.value=p.child.value+18};'
+                          b'let Outer q=p;p.child=(q).child;'
                           b'return p.child.value+p.extra;}')
-    record_assignment_fuel = 8692579 + 576
+    # Grouped destination, plain destination and aggregate source paths.
+    record_assignment_fuel = 9688554 + 274
     policy['compile'] = dict(compile_defaults, source_bytes=4096, fuel=record_assignment_fuel - 1)
     check(3, 'compile_limit')
     policy['compile']['fuel'] = record_assignment_fuel

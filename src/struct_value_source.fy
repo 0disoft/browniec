@@ -144,11 +144,10 @@ pub fn Result<bool, errors::Error> assigned(ref u8[] source, ref lexer::State st
     return .ok(depth != 0 && lexer::assignment(look.kind));
 }
 pub fn Result<Leaf, errors::Error> writable(ref u8[] source, ref mut lexer::State s,
-    ref ir::Program p, usize id, usize at,ref context::Table scope) {
+    ref ir::Program p, usize id, usize at,ref context::Table scope,usize deadline,ref mut usize fuel) {
     if (id >= p.records.count || !p.records.mutable[id] || s.kind != 46) { return .err(errors::make(3, at)); }
-    let Leaf leaf = path(source, s, p, p.records.records[id] as usize, at,scope)?;
     // Keep the exact operator pending for scalar/aggregate assignment lowering.
-    return .ok(leaf);
+    return path_metered(source,s,p,p.records.records[id] as usize,at,scope,deadline,fuel);
 }
 
 // Constructor syntax and bare-name copies are separate initializer forms.
@@ -505,14 +504,28 @@ pub fn Result<usize,errors::Error> field(ref u8[] source,ref ir::Program p,usize
     return field_work::prepared(ref w);
 }
 pub fn Result<Leaf,errors::Error> path(ref u8[] source,ref mut lexer::State s,ref ir::Program p,usize root,usize at,ref context::Table scope){
-    var path_work::State w=path_work::begin_path(root,at);var budget::State meter=budget::empty();
-    while(!w.done){let usize allowance=budget::reset(ref mut meter,at)?;let bool done=path_work::advance(source,s,p,scope,ref mut w,ref mut meter)?;}
-    return path_work::prepared(ref w);
+    var usize fuel=budget::unlimited();
+    return path_metered(source,s,p,root,at,scope,0,ref mut fuel);
 }
-pub fn Result<Leaf,errors::Error> project(ref u8[] source,ref ir::Program p,Leaf parent,usize begin,usize end,ref context::Table scope){
-    var lexer::State s=lexer::empty();var path_work::State w=path_work::begin_project(parent,begin,end);var budget::State meter=budget::empty();
-    while(!w.done){let usize allowance=budget::reset(ref mut meter,begin)?;let bool done=path_work::advance(source,ref mut s,p,scope,ref mut w,ref mut meter)?;}
-    return path_work::prepared(ref w);
+pub fn Result<Leaf,errors::Error> path_metered(ref u8[] source,ref mut lexer::State s,ref ir::Program p,
+    usize root,usize at,ref context::Table scope,usize deadline,ref mut usize fuel){
+    var path_work::State w=path_work::begin_path(root,at);
+    return drive_path(source,s,p,scope,ref mut w,deadline,fuel);
+}
+pub fn Result<Leaf,errors::Error> project(ref u8[] source,ref ir::Program p,
+    Leaf parent,usize begin,usize end,ref context::Table scope,usize deadline,ref mut usize fuel){
+    var lexer::State s=lexer::empty();var path_work::State w=path_work::begin_project(parent,begin,end);
+    return drive_path(source,ref mut s,p,scope,ref mut w,deadline,fuel);
+}
+fn Result<Leaf,errors::Error> drive_path(ref u8[] source,ref mut lexer::State s,ref ir::Program p,
+    ref context::Table scope,ref mut path_work::State w,usize deadline,ref mut usize fuel){
+    var budget::State meter=budget::empty();
+    while(!w.done){
+        discard budget::visit(fuel,deadline,w.at)?;
+        let usize allowance=budget::reset(ref mut meter,w.at)?;
+        let bool done=path_work::advance(source,s,p,scope,w,ref mut meter)?;
+    }
+    return path_work::prepared(w);
 }
 
 pub fn Result<bool, errors::Error> constructor(ref u8[] source, ref mut lexer::State s, usize record,ref context::Table scope) {

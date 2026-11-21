@@ -1130,6 +1130,25 @@ Windows development and /O2 each passed 98 configured, 32 catalog, five
 managed project and four compile-stop cases. All 456 input hashes matched.
 Local receipt: `build/restricted-worker/20261121T231043943879Z/receipt.json`.
 
+### Record assignment path Fuel
+
+Plain and grouped record destinations and record-value projections in
+assignment RHSs debit one unit for each existing path continuation advance.
+Field-name scanning, token scanning and preceding subrecord leaf counts
+share the enclosing compile balance and deadline. The surrounding compile
+discards staged instructions on a stop. Scalar fallback reads and
+conditional record operands still keep their existing outer checkpoints.
+
+The scalar place fixture adds 167 advances for its plain and grouped record
+destinations and returns 42 at 10,233,283 compile Fuel. The extended
+constructor fixture also copies a subrecord through a grouped RHS path. Its
+three target and source paths add 274 units, for a total of 9,688,828, and
+the fixture returns 42. One less unit in either fixture reports
+compile_limit with no result or output.
+Windows development and /O2 each passed 98 configured, 32 catalog, five
+managed project and four compile-stop cases. All 456 input hashes matched.
+Local receipt: `build/restricted-worker/20261121T231847899946Z/receipt.json`.
+
 ## Windows verification
 
 Run `python -B tools/verify-restricted-worker.py`. The development and optimized

@@ -706,7 +706,7 @@ fn Result<record_expressions::Value,errors::Error> record_value_into(ref u8[] so
         record=p.records.records[id] as usize;let usize name=lexer::next(source,s)?;
     }
     var usize ordinal=0;var u8 tag=0;var usize left=groups;
-    while(true){if(tag==0 && s.kind==46){let record_values::Leaf leaf=record_values::path(source,s,p,record,at,ref signatures.context)?;
+    while(true){if(tag==0 && s.kind==46){let record_values::Leaf leaf=record_values::path_metered(source,s,p,record,at,ref signatures.context,deadline,fuel)?;
             ordinal+=leaf.ordinal;record=leaf.record;tag=leaf.tag;}
         if(left==0){break;}let usize close=lexer::punctuation(source,s,41)?;left-=1;
     }
@@ -2124,7 +2124,7 @@ fn Result<usize, errors::Error> record_write_statement(ref u8[] source, ref mut 
     if(s.kind==61){let usize equals=lexer::next(source,s)?;
         let record_values::Leaf root=record_values::Leaf{.ordinal=0,.tag=0,.record=record};
         let usize assigned=record_value_assignment(source,s,p,table,signatures,id,root,at,result_type,expr_depth,structure,loop_state,deadline,fuel)?;return .ok(index);}
-    let record_values::Leaf leaf=record_values::writable(source,s,p,id,at,ref signatures.context)?;
+    let record_values::Leaf leaf=record_values::writable(source,s,p,id,at,ref signatures.context,deadline,fuel)?;
     if(!lexer::assignment(s.kind)){return .err(errors::make(2,s.begin));}
     let usize operation_at=s.begin;let u8 operation=places::compound(s.kind);
     if(operation!=0 && !types::integer(leaf.tag)){return .err(errors::make(3,operation_at));}
@@ -2160,7 +2160,7 @@ fn Result<usize,errors::Error> grouped_assignment(ref u8[] source,ref mut lexer:
         let usize site=table.registers[index]-144;
         var record_values::Leaf leaf=record_values::Leaf{.ordinal=0,.tag=0,.record=p.records.records[site] as usize};
         var usize i=0;while(i<plan.count){if(plan.kinds[i]!=1){return .err(errors::make(3,plan.begins[i]));}
-            leaf=record_values::project(source,p,leaf,plan.begins[i],plan.ends[i],ref signatures.context)?;i+=1;}
+            leaf=record_values::project(source,p,leaf,plan.begins[i],plan.ends[i],ref signatures.context,deadline,fuel)?;i+=1;}
         if(leaf.tag==0){if(s.kind!=61){return .err(errors::make(3,s.begin));}
             let usize equals=lexer::next(source,s)?;
             let usize assigned=record_value_assignment(source,s,p,table,signatures,site,leaf,at,result_type,depth,structure,loop_state,deadline,fuel)?;return .ok(index);}

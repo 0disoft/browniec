@@ -1,6 +1,5 @@
-- Latest runtime checkpoint (2026-11-22): [Record constructor assignment Fuel](docs/engineering/restricted-worker.md#record-constructor-assignment-fuel)
-  meters initializer walks, scalar fields and final register preparation for
-  whole-record and subrecord constructor assignments.
+- Latest runtime checkpoint (2026-11-22): [Record assignment path Fuel](docs/engineering/restricted-worker.md#record-assignment-path-fuel)
+  meters plain and grouped record destinations and record-valued RHS paths.
 
 # Brownie C agent guidance
 
