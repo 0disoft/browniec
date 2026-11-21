@@ -427,6 +427,19 @@ pub fn Result<usize,Error> create_instance(ref mut Engine e,usize program,usize 
 pub fn Result<usize,Error> compile_output(ref mut Engine e,entries::Entry selected,usize image_limit){
     return retain_entry(e,selected,image_limit,2,0);
 }
+
+// The worker owns this snapshot and never reopens the project's members.
+pub fn Result<usize,Error> compile_project_snapshot_output(ref mut Engine e,ref projects::Project project,
+    sources::Snapshot snapshot,usize image_limit){
+    if(projects::requirements(project)!=0){return .err(error(5));}
+    if(sources::count(ref snapshot)>source_module_limit(e) ||
+       sources::snapshot_bytes(ref snapshot)>source_byte_limit(e)){return .err(error(8));}
+    let usize deadline=compile_deadline(e,0)?;
+    let entries::Entry selected=switch(project_binding::select(project,snapshot)){
+        case .ok(v):{v}case .err(e):{return .err(host_binding_error(e));}
+    };
+    return retain_entry(e,selected,image_limit,2,deadline);
+}
 pub fn Result<usize,Error> compile_input_output(ref mut Engine e,input_entries::InputEntry selected,usize image_limit){
     return retain_input_entry(e,selected,image_limit,1,0);
 }
@@ -949,16 +962,30 @@ pub fn Result<ScalarPreparation,Error> prepare_scalar_preview(ref mut Engine e,u
     let run_config::RunConfig run=parse_scalar_run(e,configuration)?;
     if(!bytes::equal(run_config::module_name(ref run),module_name) ||
         !bytes::equal(run_config::function_name(ref run),function_name)){return .err(error(5));}
+    return prepare_scalar_policy(e,program,input,profile,ref run,run_config::run_limits(ref run).fuel);
+}
+
+pub fn Result<usize,Error> prepare_project_snapshot_instance(ref mut Engine e,usize program,
+    ref run_config::RunConfig run,usize budget){
+    discard check_run_policy(e,run)?;
+    let PreviewEntry profile=preview_entry(e,program)?;
+    if(profile.emits || profile.accepts_input){return .err(error(5));}
+    let ScalarPreparation prepared=prepare_scalar_policy(e,program,b"",profile,run,budget)?;
+    return .ok(prepared.instance);
+}
+
+fn Result<ScalarPreparation,Error> prepare_scalar_policy(ref mut Engine e,usize program,ref u8[] input,
+    PreviewEntry profile,ref run_config::RunConfig run,usize budget){
     let usize capabilities=if(profile.emits){1}else{0};
-    if(run_config::requires_count(ref run)!=capabilities || run_config::grants_count(ref run)!=capabilities ||
-        (profile.emits && (!run_config::declares(ref run,b"brownie.output.emit") ||
-        !run_config::grants(ref run,b"brownie.output.emit")))){return .err(error(5));}
-    let policy_limits::RunLimits limits=run_config::run_limits(ref run);
+    if(run_config::requires_count(run)!=capabilities || run_config::grants_count(run)!=capabilities ||
+        (profile.emits && (!run_config::declares(run,b"brownie.output.emit") ||
+        !run_config::grants(run,b"brownie.output.emit")))){return .err(error(5));}
+    let policy_limits::RunLimits limits=run_config::run_limits(run);
     let usize output_limit=if(profile.emits){limits.output_bytes}else{0};
     let u32 authority=if(profile.emits){3}else{2};
     let pending_cursors::Limits selected=select_run_vm_limits(limits);
     let usize pending=required_pending_bytes_with_limits(e,program,output_limit,selected)?;
-    if(limits.fuel>e.meta.limits.fuel || input.len>limits.input_bytes ||
+    if(budget>limits.fuel || budget>e.meta.limits.fuel || input.len>limits.input_bytes ||
         pending>limits.memory_bytes || input.len>limits.memory_bytes-pending){return .err(error(8));}
     let usize deadline=deadline_after(limits.deadline_ms)?;
     var usize peak=pending;
@@ -973,15 +1000,15 @@ pub fn Result<ScalarPreparation,Error> prepare_scalar_preview(ref mut Engine e,u
         let usize capacity=input_bytes::capacity(ref snapshot);
         if(capacity>limits.memory_bytes-pending){return .err(error(8));}
         peak+=capacity;
-        bind_input_output(e,program,snapshot,limits.fuel,output_limit,authority,deadline)?
+        bind_input_output(e,program,snapshot,budget,output_limit,authority,deadline)?
     }else{
         var vec::Vec<input_bytes::Snapshot> incoming=vec::empty<input_bytes::Snapshot>();
         let u32 status=unsafe{instance_output_raw(e as ptr mut void,program,ref mut incoming as ptr mut void,
-            limits.fuel,output_limit,authority,deadline)};
+            budget,output_limit,authority,deadline)};
         result(e,status)?
     };
     let usize prepared=prepare_created_instance(e,id,selected)?;
-    return .ok(ScalarPreparation{.instance=prepared,.fuel=limits.fuel,.peak=peak,
+    return .ok(ScalarPreparation{.instance=prepared,.fuel=budget,.peak=peak,
         .start=deadline-limits.deadline_ms*10000});
 }
 

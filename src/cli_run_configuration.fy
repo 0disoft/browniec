@@ -47,7 +47,11 @@ fn errors::Error failure(json::Error error){
 @effects(filesystem)
 pub fn Result<policies::Policy,errors::Error> read_policy(usize argument){
     let files::File file=files::open(argument,json::byte_limit(),10)?;
-    return switch(policies::parse(files::view(ref file))){
+    return parse_policy(files::view(ref file));
+}
+
+pub fn Result<policies::Policy,errors::Error> parse_policy(ref u8[] data){
+    return switch(policies::parse(data)){
         case .ok(v):{.ok(v)}case .err(e):{.err(failure(e))}
     };
 }
@@ -55,7 +59,11 @@ pub fn Result<policies::Policy,errors::Error> read_policy(usize argument){
 @effects(filesystem)
 pub fn Result<runs::RunConfig,errors::Error> read_run(usize argument,ref policies::Policy policy){
     let files::File file=files::open(argument,json::byte_limit(),10)?;
-    return switch(runs::parse(files::view(ref file),policy)){
+    return parse_run(files::view(ref file),policy);
+}
+
+pub fn Result<runs::RunConfig,errors::Error> parse_run(ref u8[] data,ref policies::Policy policy){
+    return switch(runs::parse(data,policy)){
         case .ok(v):{.ok(v)}case .err(e):{.err(failure(e))}
     };
 }

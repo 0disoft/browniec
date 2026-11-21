@@ -10,41 +10,55 @@ import worker_scalar_result as scalar;
 import std::bytes as bytes;
 
 pub enum Error { Shape; Limit; Allocation; }
-pub struct Header { bool run; usize fuel; usize manifest_end; }
+pub struct Header { bool run; usize fuel; usize manifest_start; usize manifest_end; usize policy_end; usize run_end; }
 pub struct Outcome { scalar::Outcome value; u8 profile; sources::Span span; }
 
-pub fn usize request_limit(){return 9+65536+2*16+4096;}
+pub fn usize request_limit(){return 17+3*65536+2*16+4096;}
 pub fn usize result_limit(){return 4+scalar::byte_limit();}
 
 fn usize u16_at(ref u8[] data,usize at){return data[at] as usize+256*(data[at+1] as usize);}
 
 pub fn Result<Header,Error> header(ref u8[] wire){
-    if(wire.len<9 || wire.len>request_limit() || (wire[0]!=2 && wire[0]!=3)){return .err(.Shape);}
-    let bool run=wire[0]==3;
+    if(wire.len<9 || wire.len>request_limit() || wire[0]<2 || wire[0]>5){return .err(.Shape);}
+    let bool configured=wire[0]>=4;
+    let bool run=wire[0]==3 || wire[0]==5;
+    let usize start=if(configured){17}else{9};
+    if(wire.len<start){return .err(.Shape);}
     let usize fuel=le::read_u32(wire[1..5]);
     let usize length=le::read_u32(wire[5..9]);
-    if(length==0 || length>json::byte_limit() || length>wire.len-9 ||
+    if(length==0 || length>json::byte_limit() || length>wire.len-start ||
        fuel>meter::cli_limit() || (!run && fuel!=0)){return .err(.Shape);}
-    return .ok(Header{.run=run,.fuel=fuel,.manifest_end=9+length});
+    let usize manifest_end=start+length;
+    let usize policy=if(configured){le::read_u32(wire[9..13])}else{0};
+    let usize request=if(configured){le::read_u32(wire[13..17])}else{0};
+    if(configured && (policy==0 || policy>json::byte_limit() || request==0 || request>json::byte_limit() ||
+       policy+request>wire.len-manifest_end)){return .err(.Shape);}
+    return .ok(Header{.run=run,.fuel=fuel,.manifest_start=start,.manifest_end=manifest_end,
+        .policy_end=manifest_end+policy,.run_end=manifest_end+policy+request});
 }
 
 // The parent fixes the file order to the decoded manifest rows before copying.
 pub fn Result<bytes::Buffer,Error> pack(ref u8[] raw,ref manifest::Project project,
-    ref sources::Snapshot snapshot,bool run,usize fuel,ref mut u8[] lengths){
+    ref sources::Snapshot snapshot,bool run,usize fuel,ref u8[] policy,ref u8[] request,ref mut u8[] lengths){
     let usize count=manifest::count(project);
     if(count==0 || count>sources::file_limit() || count!=sources::count(snapshot) ||
        lengths.len!=2*count || raw.len==0 || raw.len>json::byte_limit() ||
-       fuel>meter::cli_limit() || (!run && fuel!=0) || manifest::requirements(project)!=0){
+       fuel>meter::cli_limit() || (!run && fuel!=0) || manifest::requirements(project)!=0 ||
+       (policy.len==0)!=(request.len==0) || policy.len>json::byte_limit() || request.len>json::byte_limit()){
         return .err(.Shape);
     }
-    var u8[9] prefix=[0;9];
-    prefix[0]=if(run){3}else{2};
+    var u8[17] prefix=[0;17];
+    let usize start=if(policy.len==0){9}else{17};
+    prefix[0]=if(policy.len==0){if(run){3}else{2}}else{if(run){5}else{4}};
     le::write_le(fuel,ref mut prefix[1..5]);
     le::write_le(raw.len,ref mut prefix[5..9]);
-    var bytes::Buffer wire=switch(bytes::with_capacity(9+raw.len+2*count+sources::snapshot_bytes(snapshot))){
+    le::write_le(policy.len,ref mut prefix[9..13]);
+    le::write_le(request.len,ref mut prefix[13..17]);
+    var bytes::Buffer wire=switch(bytes::with_capacity(start+raw.len+policy.len+request.len+2*count+sources::snapshot_bytes(snapshot))){
         case .ok(v):{v}case .err(_):{return .err(.Allocation);}
     };
-    if(!bytes::append(ref mut wire,ref prefix).is_ok || !bytes::append(ref mut wire,raw).is_ok){
+    if(!bytes::append(ref mut wire,ref prefix[..start]).is_ok || !bytes::append(ref mut wire,raw).is_ok ||
+       !bytes::append(ref mut wire,policy).is_ok || !bytes::append(ref mut wire,request).is_ok){
         return .err(.Allocation);
     }
     var usize i=0;

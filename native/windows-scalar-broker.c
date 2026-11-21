@@ -184,7 +184,7 @@ uint32_t bc_project_broker_invoke(const uint8_t *request, size_t request_length,
     const uint8_t *lengths, size_t count, const uint8_t *configuration, size_t config_size,
     uint8_t *reply, size_t *reply_length) {
     if (!request || request_length < 9 || request_length > BC_PROJECT_START_MAX ||
-        run > 1 || request[0] != 2 + run || !lengths || !count || count > 32 ||
+        run > 1 || request[0] != (config_size ? 4u : 2u) + run || !lengths || !count || count > 32 ||
         count % 2 || !reply || !reply_length) return 0;
     const project_expectation expected = {run, lengths, count};
     const worker_exchange exchange = {request, request_length, validate_project, &expected, true};

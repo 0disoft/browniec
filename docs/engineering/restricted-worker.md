@@ -363,8 +363,37 @@ policy's Job memory and user CPU ceilings, one-process limit, transport
 ceiling, startup and idle windows, shutdown grace and absolute session
 deadline into the existing broker. The deadline starts before managed
 staging. Job limits and result gating remain under the parent's control.
-Separate Engine compile and execution accounting and phase deadlines
-remain to be connected inside the worker.
+### Engine policy inside the worker
+
+Configured START uses operation 4 (check) or 5 (run). Two additional
+little-endian 32-bit lengths follow the original START prefix. The
+original manifest, policy and run bytes follow in that order, followed by
+the existing member length table and member bytes. Each document is
+bounded to 65,536 bytes, for a maximum START of 200,753 bytes. The parent
+sends the same policy and run snapshots that it admitted.
+
+The worker reparses the snapshots and checks the policy ceiling, entry,
+empty capability grants and effective Fuel. It creates a policy-owned
+Engine, compiles the selected entry with the bounded output-capable
+compiler and verifies that the retained Program requires neither input
+nor emit. The worker uses the configured Engine for compile working
+memory, Program and Instance memory, supported VM limits, Fuel and the
+separate compile and execution deadlines. It advances the Instance in
+quanta of at most 4,096 units and destroys it before releasing the Program
+and delivering a result. The configured path reports the reference
+profile used by this Engine.
+
+The compiler's remaining policy limits, including compile Fuel and complete
+token, depth and image ceilings, are tracked separately. Host requests,
+guest input and guest output still need worker transport integration.
+
+Locked Windows development and /O2 each passed eleven configured project
+cases. The two-module project returned 42. The new cases reject a compile
+working budget equal to the source bytes, a one-byte execution memory
+budget, and an execution deadline shorter than a long-running loop. The
+execution deadline case uses an independent ten-second broker session.
+When Fuel runs out during Engine preparation, the diagnostic has no source
+location. Local receipt: `build/restricted-worker/20261121T170631218424Z/receipt.json`.
 
 Locked Windows development and /O2 each passed eight configured project
 cases. The two-module project returned 42 at its exact source-byte limit;
@@ -399,5 +428,5 @@ limit, connecting PID, and inheritance flags. The child exchanged bytes over
 all three pipes and the repeat launch again had zero net handle growth.
 Local receipt: `build/restricted-worker/20261121T152431466055Z/receipt.json`.
 
-Engine policy enforcement, broader broker phases and aggregate budgets are
+Broader Engine policy enforcement, broker phases and aggregate budgets are
 still required for the public restricted CLI.

@@ -86,6 +86,29 @@ def verify_configured_project(run, need, image, folder, env):
     check(4, 'unavailable')
     config['limits']['fuel'] = policy['run']['fuel']
 
+    working = policy['compile']['working_bytes']
+    policy['compile']['working_bytes'] = policy['compile']['source_bytes']
+    check(3, 'compile_limit')
+    policy['compile']['working_bytes'] = working
+
+    runtime = config['limits'].copy()
+    config['limits'].update(memory_bytes=1, object_bytes=1, input_bytes=0, output_bytes=0,
+                            host_request_bytes=1, host_response_bytes=1)
+    check(5, 'memory_limit')
+    config['limits'] = runtime
+
+    math_file = target / 'src/math.brc'
+    original_source = math_file.read_bytes()
+    math_file.write_text('module util::math;\npub fn i32 answer(){var i32 n=0;'
+                         'while(n<2000000000){n+=1;}return n;}\n', encoding='utf-8')
+    initial_source_limit = policy['compile']['source_bytes']
+    policy['compile']['source_bytes'] = 4096
+    config['limits']['deadline_ms'] = 1
+    check(5, 'deadline')
+    config['limits']['deadline_ms'] = policy['run']['deadline_ms']
+    policy['compile']['source_bytes'] = initial_source_limit
+    math_file.write_bytes(original_source)
+
     baseline = policy['worker'].copy()
     policy['worker'].update(startup_ms=1, session_ms=1)
     policy['compile']['deadline_ms'] = policy['run']['deadline_ms'] = config['limits']['deadline_ms'] = 1
@@ -101,7 +124,7 @@ def verify_configured_project(run, need, image, folder, env):
     config['entry']['function'] = manifest['entry']['function']
     config['grants'] = ['brownie.output.emit']
     check(4, 'unavailable')
-    return 8
+    return 11
 
 
 def main():

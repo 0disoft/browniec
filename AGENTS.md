@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-22): [Windows project worker policy](docs/engineering/restricted-worker.md#project-policy-and-worker-limits)
-  binds the run entry and applies policy source ceilings, worker limits and run Fuel.
-  Development and /O2 each pass eight configured project cases.
+- Latest runtime checkpoint (2026-11-22): [Policy-owned Engine in the worker](docs/engineering/restricted-worker.md#engine-policy-inside-the-worker)
+  compiles and steps the configured project inside AppContainer.
+  Development and /O2 each pass eleven configured project cases.
 
 # Brownie C agent guidance
 
