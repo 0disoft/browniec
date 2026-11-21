@@ -1,5 +1,6 @@
 module slice_result_cursor;
 import errors as errors;
+import std::num as num;
 import output_copy_cursor as output_copy;
 import array_fill_cursor as fills;
 import call_copy_cursor as calls;
@@ -11,9 +12,35 @@ import return_metadata_execution as return_metadata;
 // The dispatcher owns these inline/native-stack values; no heap is allocated.
 // Register/static banks stay separately borrowed: the pinned compiler treats
 // simultaneous loans of sibling array fields as loans of the whole struct.
-pub struct Cursor { usize pc; bool active; output_copy::State output; fills::State array; calls::State call; returns::State returned; metadata_budget::State metadata; u8 call_metadata_phase; u8 frame_limit; return_metadata::State return_metadata; }
+pub struct Limits { u8 frames; u8 owners; u8 descriptors; }
+pub fn Limits default_limits(){return Limits{.frames=31,.owners=16,.descriptors=16};}
+
+fn u8 narrow(usize value,u8 ceiling){
+    if(value>=ceiling as usize){return ceiling;}
+    let i64 small=switch(num::i64_from_usize(value)){case .ok(v):{v}case .err(_):{assert(false);0}};
+    return switch(num::u8_from_i64(small)){case .ok(v):{v}case .err(_):{assert(false);0}};
+}
+pub fn Limits limits(usize frames,usize owners,usize descriptors){
+    return Limits{.frames=narrow(frames,31),.owners=narrow(owners,16),.descriptors=narrow(descriptors,16)};
+}
+// Operation 9 has one native word for its argument. Each narrowed count
+// fits five bits. Keep serialization here and execution on the typed value.
+pub fn usize encode_limits(Limits selected){
+    return (selected.frames as usize) | ((selected.owners as usize)<<5) | ((selected.descriptors as usize)<<10);
+}
+pub fn Result<Limits,errors::Error> decode_limits(usize word){
+    let usize frames=word&31;
+    let usize owners=(word>>5)&31;
+    let usize descriptors=(word>>10)&31;
+    if(word>>15!=0 || frames==0 || owners==0 || owners>16 || descriptors==0 || descriptors>16){
+        return .err(errors::make(5,0));
+    }
+    return .ok(limits(frames,owners,descriptors));
+}
+
+pub struct Cursor { usize pc; bool active; output_copy::State output; fills::State array; calls::State call; returns::State returned; metadata_budget::State metadata; u8 call_metadata_phase; Limits limits; return_metadata::State return_metadata; }
 pub fn Cursor empty(){
-    return Cursor{.pc=0,.active=false,.output=output_copy::empty(),.array=fills::empty(),.call=calls::empty(),.returned=returns::empty(),.metadata=metadata_budget::empty(),.call_metadata_phase=0,.frame_limit=31,.return_metadata=return_metadata::empty()};
+    return Cursor{.pc=0,.active=false,.output=output_copy::empty(),.array=fills::empty(),.call=calls::empty(),.returned=returns::empty(),.metadata=metadata_budget::empty(),.call_metadata_phase=0,.limits=default_limits(),.return_metadata=return_metadata::empty()};
 }
 pub struct Stats { usize calls; usize yields; usize dispatched; usize last; usize maximum; }
 pub fn Stats stats(){return Stats{.calls=0,.yields=0,.dispatched=0,.last=0,.maximum=0};}

@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-21): [Revision-2 host exchange](docs/engineering/embed-preview.md#revision-2-host-requests-and-replies)
-  accepts saved Buffer Result annotations. Windows /Od and /O2 pass the 8193-byte
-  reply, cancellation during installation, and the guest Result error arm.
+- Latest runtime checkpoint (2026-11-21): [Revision-2 slot quotas](docs/engineering/embed-preview.md#revision-2-scalar-stepping)
+  enforces configured owner and descriptor limits in the saved aggregate VM.
+  Windows /Od and /O2 verify one-slot traps and two-slot success.
 
 # Brownie C agent guidance
 

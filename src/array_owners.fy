@@ -41,6 +41,14 @@ pub fn Table empty(usize limit) {
         .mark = 0, .base = 0, .end = 0, .element = 0, .length = 0, .record = 0, .alignment = 0 }; 16],
         .order = [0; 16], .depth = 0, .arena = storage::empty(limit) };
 }
+// Generation zero is already excluded by every owner admission path.
+pub fn Table empty_with_slots(usize capacity,usize slots){
+    var Table table=empty(capacity);
+    var usize i=slots;
+    while(i<16){table.slots[i].generation=0;i+=1;}
+    return table;
+}
+
 fn Error storage_error(storage::Error error) {
     return switch (error) {
         case .Type: { .Type } case .Length: { .Length } case .Metadata: { .Metadata }

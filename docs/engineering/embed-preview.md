@@ -169,6 +169,22 @@ the Instance's limit before starting a CALL. A limit of one traps when
 `main` calls a helper, while a limit of two lets the same Program return 77.
 Both profiles verified this boundary and the source location of the trap.
 
+Configured Instances in the saved array/record VM honor `limits.owner_entries`
+for the shared array and record owner table and `limits.descriptor_entries` for
+the array-slice descriptor pool. Both effective limits are capped at the
+existing sixteen-slot table sizes. Admission disables slots beyond the limit
+with the same zero generation used for retired slots. The existing slot
+allocators detect exhaustion and report the array-limit trap at the operation
+that requires a slot. Each Instance keeps its own quota. These limits do not
+change the allocation size of the fixed tables.
+
+The C host verified separate owner and descriptor programs. Both require two
+slots. In each case, a one-slot Instance traps with code 13 and a source
+location. A second Instance made from the same Program with a two-slot limit
+returns 77 after the limited Instance is destroyed. Both profiles pass with
+default native stacks. Input-window and catalog-backed storage have their own
+representations and are outside these fixed-table checks.
+
 ## Revision-2 guest output
 
 `BC_DONE` exposes the sealed bytes in a read-only `payload` slice. The

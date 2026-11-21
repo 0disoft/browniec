@@ -18,6 +18,13 @@ fn Slot fresh() {
         .lease = owners::ReadLease { .root = none, .generation = 0 } };
 }
 pub fn Pool empty() { return Pool { .slots = [fresh(); 16] }; }
+pub fn Pool empty_with_slots(usize slots){
+    var Pool pool=empty();
+    var usize i=slots;
+    while(i<16){pool.slots[i].generation=0;i+=1;}
+    return pool;
+}
+
 fn bool same_root(owners::Token a, owners::Token b) {
     return a.slot == b.slot && a.generation == b.generation;
 }

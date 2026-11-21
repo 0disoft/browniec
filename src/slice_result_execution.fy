@@ -556,7 +556,7 @@ fn Result<Option<Outcome>,errors::Error> dispatch_staged(ref body_ir::Program bo
             if(*remaining==0){return .err(errors::make(8,offset));}
             if(room!=4096){return .ok(.none);};
             *remaining-=1;*visited+=1;
-            if(frame>=cursor.frame_limit as usize){return .err(errors::make(12,offset));}
+            if(frame>=cursor.limits.frames as usize){return .err(errors::make(12,offset));}
             let usize begun=call_steps::begin_staged(metadata,body,parameters,sites,cursor.pc,bindings,state,data.len,literals.len,
                 static_words[frame*16..frame*16+16],static_live[frame],windows,place_state,remaining,plans)?;
             let bool finished=call_steps::advance_staged(metadata,copy_plan,ref mut cursor.metadata,body,sites,bindings,state,data,

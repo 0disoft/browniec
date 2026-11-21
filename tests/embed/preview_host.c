@@ -169,6 +169,46 @@ static void revision_two_instances(bc_handle engine,bc_handle program){
     assert(bc_instance_destroy(second)==BC_OK);
 }
 
+static void revision_two_slot_limit(bc_handle engine,const uint8_t *text,size_t length,const char *field){
+    static const uint8_t root[]="main";
+    const bc_source source={{root,sizeof(root)-1},{text,length}};
+    uint8_t config[1024];
+    const bc_slice run={config,read_fixture("run.json",config,sizeof(config))};
+    char *count=strstr((char *)config,field);
+    assert(count);
+    count+=strlen(field);
+    assert(memcmp(count,"16384",5)==0);
+    bc_handle program=0,exact=0,short_one=0;
+    bc_diagnostic diag={.struct_size=sizeof(diag)};
+    uint32_t compiled=bc_compile(engine,&source,1,(bc_slice){0},&program,&diag);
+    if(compiled!=BC_OK){
+        fprintf(stderr,"slot fixture %s failed at %" PRIu32 "..%" PRIu32 " (status %" PRIu32 ")\n",
+            field,diag.byte_start,diag.byte_end,compiled);
+    }
+    assert(compiled==BC_OK);
+    memcpy(count,"    2",5);
+    assert(bc_instance_create(engine,program,(bc_slice){0},run,&exact,&diag)==BC_OK);
+    memcpy(count,"    1",5);
+    assert(bc_instance_create(engine,program,(bc_slice){0},run,&short_one,&diag)==BC_OK);
+    assert(bc_program_release(engine,program)==BC_OK);
+    const bc_event limited=finish_revision_two(short_one,1);
+    assert(limited.kind==BC_TRAP && limited.trap_code==13 && limited.diagnostic.source_index==0);
+    assert(bc_instance_destroy(short_one)==BC_OK);
+    const bc_event done=finish_revision_two(exact,64);
+    assert(done.kind==BC_DONE && done.return_i32==77);
+    assert(bc_instance_destroy(exact)==BC_OK);
+}
+
+static void revision_two_slot_limits(bc_handle engine){
+    static const uint8_t owners[]="module main; pub fn i32 main(){"
+        "let i32[1] first=[40;1];let i32[1] second=[37;1];return first[0]+second[0];}";
+    static const uint8_t descriptors[]="module main; pub fn i32 main(){"
+        "let i32[2] values=[40,37];let ref i32[] left=ref values[..1];"
+        "let ref i32[] right=ref values[1..];return left[0]+right[0];}";
+    revision_two_slot_limit(engine,owners,sizeof(owners)-1,"\"owner_entries\":");
+    revision_two_slot_limit(engine,descriptors,sizeof(descriptors)-1,"\"descriptor_entries\":");
+}
+
 static void revision_two_byte_inputs(bc_handle engine){
     static const uint8_t main[]="main";
     static const uint8_t text[]="module main; pub fn i32 main(ref u8[] data){"
@@ -425,6 +465,7 @@ static void revision_two_engines(void){
     expect_diagnostic(&diagnostic,BC_OK);
     revision_two_programs(handle,(bc_slice){policy,length});
     revision_two_byte_inputs(handle);
+    revision_two_slot_limits(handle);
     revision_two_output(handle);
     revision_two_source_limit(policy,length);
     memset(policy,0,sizeof(policy));
@@ -658,6 +699,7 @@ int main(void){
     puts("PASS: revision-2 Instance policy admission, two Program pins, and destruction");
     puts("PASS: revision-2 quanta 1/64, independent cancellation, deadline precedence, and terminal snapshots");
     puts("PASS: call frame limit 1 traps and limit 2 returns 77 from the same Program");
+    puts("PASS: owner and descriptor limits of 1 trap and limits of 2 return 77");
     puts("PASS: revision-2 byte input snapshots, empty input, exact byte quota, and peak accounting");
     puts("PASS: revision-2 output authority, binary completion views, cancellation, and trap rollback");
     puts("PASS: revision-2 host request correlation, independent replies, cancellation, and fatal reply");

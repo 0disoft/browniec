@@ -37,13 +37,13 @@ pub fn usize pending_core_stride(){return unsafe{pending_core_stride_raw()};}
 @link_name("bc_runtime_pending_machine_stride") unsafe extern C fn usize pending_machine_stride_raw();
 pub fn usize pending_machine_stride(){return unsafe{pending_machine_stride_raw()};}
 pub fn Result<machines::Machine,diagnostics::Error> prepare_pending_output(ref output_programs::Program p,ref input_bytes::Snapshot input,usize budget,usize limit,bool allowed){
-    return prepare_with_frame_limit(p,input,budget,limit,allowed,31);
+    return prepare_with_limits(p,input,budget,limit,allowed,pending_cursors::default_limits());
 }
-pub fn Result<machines::Machine,diagnostics::Error> prepare_with_frame_limit(ref output_programs::Program p,ref input_bytes::Snapshot input,usize budget,usize limit,bool allowed,usize frame_limit){
+pub fn Result<machines::Machine,diagnostics::Error> prepare_with_limits(ref output_programs::Program p,ref input_bytes::Snapshot input,usize budget,usize limit,bool allowed,pending_cursors::Limits limits){
     let bool accepts=output_programs::accepts_input(p);
     let ref output_programs::Preparation prepared=output_programs::preparation(p);
     var machines::Machine machine=switch(machines::open_prepared(ref output_programs::code(p).body,ref prepared.sites,
-        ref prepared.origins,budget,limit,allowed,accepts,input_bytes::view(input).len,ref prepared.list,ref prepared.place,prepared.work,frame_limit)){
+        ref prepared.origins,budget,limit,allowed,accepts,input_bytes::view(input).len,ref prepared.list,ref prepared.place,prepared.work,limits)){
         case .ok(v):{v}case .err(e):{return .err(diagnostics::absent(e));}
     };
     return .ok(machine);
@@ -174,7 +174,7 @@ fn u32 pending_core_setup_inner(ref output_programs::Program p,ref mut machines:
     if(!metadata_budget::reset(ref mut cursor.metadata,0).is_ok){return 5;}
     if(!metadata_budget::admit(ref mut cursor.metadata,4096,0).is_ok){return 5;}
     let ref output_programs::Preparation prepared=output_programs::preparation(p);
-    if(machines::initialize_staged(core,m.lifecycle.index,prepared.capacity,ref prepared.sites,ref prepared.origins)){m.lifecycle.phase=4;}
+    if(machines::initialize_staged(core,m.lifecycle.index,prepared.capacity,ref prepared.sites,ref prepared.origins,cursor.limits)){m.lifecycle.phase=4;}
     m.lifecycle.index+=1;assert(pending_cursors::finish(ref mut statistics,1,true).is_ok);
     m.cursor=cursor;m.stats=statistics;return 0;
 }
