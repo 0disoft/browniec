@@ -347,6 +347,34 @@ dropped two malformed member length tables without a RESULT. The managed
 staging directory was empty after each profile. Local receipt:
 `build/restricted-worker/20261121T164903771680Z/receipt.json`.
 
+### Project policy and worker limits
+
+The private project broker accepts an explicit `POLICY RUN` pair after
+`MANIFEST`. The parent parses the standard policy and run schemas and checks
+the run against the policy ceiling. The run's module and function must match
+the manifest. The no-host route requires empty manifest requirements, run
+requirements and run grants. It checks these alongside the module count
+before reading members.
+
+The parent narrows member count and total source bytes to the policy's
+compile limits and the native snapshot limits. START carries the requested
+run Fuel, bounded by the current VM ceiling. The parent projects the
+policy's Job memory and user CPU ceilings, one-process limit, transport
+ceiling, startup and idle windows, shutdown grace and absolute session
+deadline into the existing broker. The deadline starts before managed
+staging. Job limits and result gating remain under the parent's control.
+Separate Engine compile and execution accounting and phase deadlines
+remain to be connected inside the worker.
+
+Locked Windows development and /O2 each passed eight configured project
+cases. The two-module project returned 42 at its exact source-byte limit;
+one byte less and one module less were denied. Fuel exhaustion retained
+the source location. A run above the policy ceiling, a mismatched entry
+and a nonempty grant were denied. A one-millisecond session expired
+without publishing a guest result. The temp staging root was empty after
+every case. Local receipt:
+`build/restricted-worker/20261121T165734114642Z/receipt.json`.
+
 ## Windows verification
 
 Run `python -B tools/verify-restricted-worker.py`. The development and optimized
@@ -371,5 +399,5 @@ limit, connecting PID, and inheritance flags. The child exchanged bytes over
 all three pipes and the repeat launch again had zero net handle growth.
 Local receipt: `build/restricted-worker/20261121T152431466055Z/receipt.json`.
 
-Policy admission, broader broker phases and aggregate budgets are
+Engine policy enforcement, broader broker phases and aggregate budgets are
 still required for the public restricted CLI.

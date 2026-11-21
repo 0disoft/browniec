@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-22): [Windows project worker](docs/engineering/restricted-worker.md#project-source-snapshots-and-entry-selection)
-  binds the named entry and compiles bounded project snapshots in the managed AppContainer.
-  Development and /O2 verify result 42, original diagnostics and malformed START rejection.
+- Latest runtime checkpoint (2026-11-22): [Windows project worker policy](docs/engineering/restricted-worker.md#project-policy-and-worker-limits)
+  binds the run entry and applies policy source ceilings, worker limits and run Fuel.
+  Development and /O2 each pass eight configured project cases.
 
 # Brownie C agent guidance
 

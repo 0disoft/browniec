@@ -11,6 +11,7 @@ import subprocess
 
 ROOT = Path(__file__).resolve().parents[1]
 HELLO_PROJECT = ROOT / 'examples/projects/hello'
+POLICY_EXAMPLE = ROOT / 'examples/projects/configured-output/policy.json'
 
 
 def verify_managed_project(run, need, image, folder, env):
@@ -51,6 +52,58 @@ def verify_managed_project(run, need, image, folder, env):
     return 5
 
 
+def verify_configured_project(run, need, image, folder, env):
+    target = folder / 'configured'
+    shutil.copytree(HELLO_PROJECT, target)
+    project = target / 'project.json'
+    policy_file = target / 'policy.json'
+    run_file = target / 'run.json'
+    manifest = json.loads(project.read_bytes())
+    policy = json.loads(POLICY_EXAMPLE.read_bytes())
+    policy['compile']['source_bytes'] = sum((target / s['path']).stat().st_size for s in manifest['sources'])
+    policy['compile']['modules'] = len(manifest['sources'])
+    config = dict(schema='brownie.run/0.3', entry=manifest['entry'].copy(),
+                  requires=[], grants=[], limits=policy['run'].copy())
+
+    def check(expected_exit=0, kind=None):
+        policy_file.write_text(json.dumps(policy), encoding='utf-8')
+        run_file.write_text(json.dumps(config), encoding='utf-8')
+        data = json.loads(run([image, '--internal-project-broker', 'run', project, policy_file, run_file],
+                              cwd=folder, env=env, expected_exit=expected_exit, no_stderr=True))
+        need(data['schema'] == 'browniec.result/v2' and data['command'] == 'run' and
+             (data['error']['kind'] == kind and data['return_i32'] is None if kind else
+              data['status'] == 'completed' and data['return_i32'] == 42),
+             f'Unexpected configured project result: {data}')
+        need(not list(Path(env['TEMP']).iterdir()), 'configured project left staged resources')
+
+    check()
+    policy['compile']['source_bytes'] -= 1
+    check(3, 'compile_limit')
+    policy['compile']['source_bytes'] += 1
+    config['limits']['fuel'] = 1
+    check(5, 'fuel')
+    config['limits']['fuel'] = policy['run']['fuel'] + 1
+    check(4, 'unavailable')
+    config['limits']['fuel'] = policy['run']['fuel']
+
+    baseline = policy['worker'].copy()
+    policy['worker'].update(startup_ms=1, session_ms=1)
+    policy['compile']['deadline_ms'] = policy['run']['deadline_ms'] = config['limits']['deadline_ms'] = 1
+    check(5, 'deadline')
+    policy['worker'] = baseline
+
+    (target / 'src/math.brc').unlink()
+    policy['compile']['modules'] -= 1
+    check(3, 'compile_limit')
+    policy['compile']['modules'] += 1
+    config['entry']['function'] = 'other'
+    check(4, 'unavailable')
+    config['entry']['function'] = manifest['entry']['function']
+    config['grants'] = ['brownie.output.emit']
+    check(4, 'unavailable')
+    return 8
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--scalar-images', type=Path,
@@ -76,7 +129,8 @@ def main():
              'tools/verify-runtime-store-probe.py']
     c_sources = [path for path in paths if path.endswith('.c')]
     if scalar_images:
-        paths.extend(['fairy.windows.json', 'fairy.toml', 'fairy.lock', 'examples/answer.brc'])
+        paths.extend(['fairy.windows.json', 'fairy.toml', 'fairy.lock', 'examples/answer.brc',
+                      POLICY_EXAMPLE.relative_to(ROOT).as_posix()])
         paths.extend(path.relative_to(ROOT).as_posix() for path in sorted(HELLO_PROJECT.rglob('*'))
                      if path.is_file())
         paths.extend(path.relative_to(ROOT).as_posix()
@@ -141,6 +195,7 @@ def main():
                 helper.need(json.loads(data).get('error', {}).get('kind') == 'unavailable'
                             and not list(stage_temp.iterdir()), 'staging failure fell back or left files')
                 managed_project_cases = verify_managed_project(run, helper.need, scalar, folder, stage_env)
+                configured_project_cases = verify_configured_project(run, helper.need, scalar, folder, stage_env)
                 command.append(scalar)
             evidence = json.loads(run(command, cwd=folder, env=runtime_env))
             helper.need({key: value for key, value in evidence.items()
@@ -160,6 +215,7 @@ def main():
             if scalar:
                 receipt['profiles'][-1]['scalarWorker'] = helper.image(scalar)
                 receipt['profiles'][-1]['managedProjectCases'] = managed_project_cases
+                receipt['profiles'][-1]['configuredProjectCases'] = configured_project_cases
             print(f'PASS {profile}: {evidence}', flush=True)
         helper.need(all(helper.sha((ROOT / i['path']).read_bytes()) == i['sha256'] for i in receipt['inputs']),
                     'Inputs changed during verification')
