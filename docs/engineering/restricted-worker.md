@@ -397,8 +397,9 @@ outer braces. Comment and literal contents do not count. The first excess
 opener produces a source-local `compile_limit`. The existing parser still
 validates delimiter pairing and enforces its own grammar limits.
 
-[Scalar expression depth](#scalar-expression-depth) also applies during
-lowering. Other semantic depth checks and type accounting beyond declared
+[Scalar expression depth](#scalar-expression-depth) and
+[statement control depth](#statement-control-depth) also apply during
+lowering. Aggregate semantic depth and type accounting beyond declared
 records remain open.
 
 The nesting follow-up passed twenty configured project cases per Windows
@@ -723,6 +724,25 @@ cases plus nine native host transport cases. Local receipt: `build/restricted-wo
 The native test command cannot link the runtime clock companion. A focused
 Windows /O2 executable with the production clock shim runs the three
 existing unary regressions, including 32/33 boundaries and signed minima.
+
+### Statement control depth
+
+The indexed semantic depth limit also governs control frames and block
+entry in the raw and staged compilers. This includes the structural
+nesting of else-if clauses even when their blocks are lexical siblings.
+Unconfigured compilation uses the native depth ceiling of 32.
+
+The three-clause fixture returns 42 in the ordinary worker and 77 with
+sealed output in the catalog worker at depth three. At depth two, the
+ordinary check reports `compile_limit` at the third block opener in
+`src/math.brc`. The catalog run fails with the same error kind and no
+guest result or output. Windows development and /O2 each pass 46
+configured, 20 catalog and five managed project cases plus nine native
+host transport cases. Local receipt: `build/restricted-worker/20261121T194032051119Z/receipt.json`.
+
+An isolated Windows /O2 executable with the production clock shim
+passes five existing control regressions, including raw/staged IR
+parity, exact diagnostic offsets and the native 32/33 boundary.
 
 ## Windows verification
 

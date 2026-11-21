@@ -24,7 +24,7 @@ struct Table {
     usize count; usize import_count; usize symbol_count; usize functions; usize records;
 }
 // Large immutable binding data stays behind one private typed owner.
-resource Stored { sources::Snapshot sources; Table table; usize fuel; usize expression_depth; cleanup { } }
+resource Stored { sources::Snapshot sources; Table table; usize fuel; usize semantic_depth; cleanup { } }
 pub resource Index { vec::Vec<Stored> stored; cleanup { } }
 fn Error error(Failure kind,sources::Span at){return Error{.kind=kind,.at=at};}
 fn Error timed_out(){return error(.Deadline,sources::no_source());}
@@ -204,7 +204,7 @@ fn Result<Index,Error> build_mode(sources::Snapshot snapshot,bool host,usize tok
         case .ok(v):{v}case .err(_):{return .err(error(.Allocation,sources::no_source()));}
     };
     let usize count=switch(vec::push<Stored>(ref mut stored,Stored{.sources=snapshot,.table=t,.fuel=remaining,
-        .expression_depth=if(nesting_limit<32){nesting_limit}else{32}})){
+        .semantic_depth=if(nesting_limit<32){nesting_limit}else{32}})){
         case .ok(v):{v}case .err(_):{return .err(error(.Allocation,sources::no_source()));}
     };
     if(clock::expired(deadline)){return .err(timed_out());}
@@ -212,7 +212,7 @@ fn Result<Index,Error> build_mode(sources::Snapshot snapshot,bool host,usize tok
 }
 fn ref Stored stored(ref Index p){return vec::at<Stored>(ref p.stored,0);}
 pub fn usize compile_fuel(ref Index p){return stored(p).fuel;}
-pub fn usize expression_depth(ref Index p){return stored(p).expression_depth;}
+pub fn usize semantic_depth(ref Index p){return stored(p).semantic_depth;}
 pub fn ref sources::Snapshot snapshot(ref Index p){return ref stored(p).sources;}
 fn ref Table table(ref Index p){return ref stored(p).table;}
 pub fn usize count(ref Index p){return table(p).count;}

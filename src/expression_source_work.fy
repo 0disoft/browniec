@@ -210,7 +210,7 @@ pub fn Result<bool,errors::Error> advance(ref u8[] source,ref mut lexer::State s
     let usize i=w.used-1;let Frame f=current(w);let usize value=w.value;w.visits+=1;
     if(f.phase==0){
         // Keep the native primary preflight order at the default ceiling.
-        let usize limit=signatures.expression_depth;
+        let usize limit=signatures.semantic_depth;
         if(f.depth>limit && (f.minimum!=0 || limit<32)){return .err(errors::make(4,s.begin));}
         bank.probe=probes::begin(*s,f.expected,f.minimum==0);w.frames[i].phase=60;return .ok(false);}
     if(f.phase==1){w.frames[i].left=value;w.frames[i].phase=2;return .ok(false);}

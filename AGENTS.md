@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-22): [Scalar expression depth](docs/engineering/restricted-worker.md#scalar-expression-depth)
-  applies the indexed project policy during ordinary and catalog-backed lowering.
-  Both Windows worker profiles accept unary depth two and reject depth one.
+- Latest runtime checkpoint (2026-11-22): [Statement control depth](docs/engineering/restricted-worker.md#statement-control-depth)
+  applies the policy to raw and staged control lowering.
+  Both Windows worker profiles accept an else-if chain at depth three and reject it at two.
 
 # Brownie C agent guidance
 

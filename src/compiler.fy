@@ -143,14 +143,14 @@ fn u8 opcode(u8 kind) {
     return 6;
 }
 fn Result<usize, errors::Error> operand(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref locals::Table table, ref functions::Table signatures, usize depth, u8 expected, u8 result_type, usize structure, ref mut loops::State loop_state) {
-    if(depth>signatures.expression_depth){return .err(errors::make(4,s.begin));}
+    if(depth>signatures.semantic_depth){return .err(errors::make(4,s.begin));}
     let u8 control=arm_syntax::operand_kind(source,s);
     if(control!=0){return if_operand(source,s,p,table,signatures,depth,expected,result_type,structure,loop_state);}
     if(s.kind==2 || s.kind==5){return named_operand(source,s,p,table,signatures,depth,expected,result_type,structure,loop_state);}
     return compound_operand(source,s,p,table,signatures,depth,expected,result_type,structure,loop_state);
 }
 fn Result<usize, errors::Error> compound_operand(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref locals::Table table, ref functions::Table signatures, usize depth, u8 expected, u8 result_type, usize structure, ref mut loops::State loop_state) {
-    if(depth>signatures.expression_depth){return .err(errors::make(4,s.begin));}
+    if(depth>signatures.semantic_depth){return .err(errors::make(4,s.begin));}
     let ref literal_collection::Index literals=ref signatures.literals;
     let usize at = s.begin;
     if(s.kind==40 && arm_syntax::conditional_atom(source,s)?.valid){
@@ -1409,7 +1409,7 @@ fn Result<usize,errors::Error> converted(ref u8[] source,ref mut lexer::State s,
     return .ok(value);
 }
 fn Result<usize, errors::Error> expression(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref locals::Table table, ref functions::Table signatures, u8 minimum, usize depth, u8 expected, u8 result_type, usize structure, ref mut loops::State loop_state) {
-    if(depth>signatures.expression_depth){return .err(errors::make(4,s.begin));}
+    if(depth>signatures.semantic_depth){return .err(errors::make(4,s.begin));}
     var usize left = converted(source,s,p,table,signatures,depth,expected,result_type,structure,loop_state)?;
     while (precedence(s.kind) >= minimum) {
         let u8 kind = s.kind;
@@ -2333,7 +2333,7 @@ fn Result<bool,errors::Error> if_join(ref u8[] source,ref mut lexer::State s,
 fn Result<bool,errors::Error> conditional_arm(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref mut locals::Table table,ref functions::Table signatures,
     ref mut joins::Join join,usize depth,u8 result_type,usize structure,ref mut loops::State loop_state){
-    if(depth>32 || structure>32){return .err(errors::make(4,s.begin));}
+    if(depth>signatures.semantic_depth || structure>signatures.semantic_depth){return .err(errors::make(4,s.begin));}
     let usize brace=lexer::punctuation(source,s,123)?;let usize outer=table.count;
     while(true){let bool regular=word_is(source,s,b"_") || arm_syntax::regular(source,s)?;
         let bool conditional=word_is(source,s,b"if") && arm_syntax::conditional_value(source,s)?;
@@ -2403,7 +2403,7 @@ fn Result<bool,errors::Error> value_control_staged(ref u8[] source,ref mut lexer
     usize structure,usize depth,ref mut loops::State flow){
     var body_work::State w=body_work::statement(structure);var metadata_budget::State meter=metadata_budget::empty();
     while(!w.done){let usize allowance=metadata_budget::reset(ref mut meter,s.begin)?;
-        let bool done=body_work::advance(source,s,p,names,flow,ref mut w,ref mut meter)?;
+        let bool done=body_work::advance_limited(source,s,p,names,flow,ref mut w,ref mut meter,signatures.semantic_depth)?;
         if(w.request!=0){let usize completed=complete_body_child(source,s,p,names,signatures,result_type,depth,flow,ref mut w)?;}
     }return body_work::prepared(ref w);
 }
@@ -2540,7 +2540,7 @@ fn Result<usize, errors::Error> checked_post(ref u8[] source, ref mut lexer::Sta
 }
 
 fn Result<bool, errors::Error> block(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref mut locals::Table table, ref functions::Table signatures, u8 result_type, usize depth, usize expr_depth, ref mut loops::State loop_state) {
-    if (depth > 32) { return .err(errors::make(4, s.begin)); }
+    if(depth>signatures.semantic_depth){return .err(errors::make(4,s.begin));}
     let usize open = lexer::punctuation(source, s, 123)?;
     let usize outer = table.count;
     var bool terminal = false;
@@ -2555,7 +2555,7 @@ fn Result<bool, errors::Error> block(ref u8[] source, ref mut lexer::State s, re
 }
 // Keep unrelated statement scratch out of recursive dispatcher frames.
 fn Result<bool, errors::Error> control(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref mut locals::Table table, ref functions::Table signatures, u8 result_type, usize depth, usize expr_depth, ref mut loops::State loop_state) {
-    if (depth > 32) { return .err(errors::make(4, s.begin)); }
+    if(depth>signatures.semantic_depth){return .err(errors::make(4,s.begin));}
     if (word_is(source,s,b"break") || word_is(source,s,b"continue")) {
         return control_transfer(source,s,p,table,signatures,result_type,depth,expr_depth,loop_state);
     }
@@ -3025,7 +3025,7 @@ fn Result<bool,errors::Error> walk_body(ref u8[] source,ref mut lexer::State s,
     u8 result_type,ref mut loops::State flow){
     var body_work::State w=body_work::begin(0,false);var metadata_budget::State meter=metadata_budget::empty();
     while(!w.done){let usize allowance=metadata_budget::reset(ref mut meter,s.begin)?;
-        let bool done=body_work::advance(source,s,p,names,flow,ref mut w,ref mut meter)?;
+        let bool done=body_work::advance_limited(source,s,p,names,flow,ref mut w,ref mut meter,signatures.semantic_depth)?;
         if(w.request!=0){let usize completed=complete_body_child(source,s,p,names,signatures,result_type,0,flow,ref mut w)?;}
     }return body_work::prepared(ref w);
 }
@@ -3038,7 +3038,7 @@ fn Result<bool,errors::Error> walk_body_until(ref u8[] source,ref mut lexer::Sta
         if(w.done){return body_work::prepared(ref w);}
         if(w.request==0){
             let usize allowance=metadata_budget::reset(ref mut meter,s.begin)?;
-            let bool advanced=body_work::advance(source,s,p,names,flow,ref mut w,ref mut meter)?;
+            let bool advanced=body_work::advance_limited(source,s,p,names,flow,ref mut w,ref mut meter,signatures.semantic_depth)?;
         }else{
             let usize completed=complete_body_child(source,s,p,names,signatures,result_type,0,flow,ref mut w)?;
         }
@@ -3687,7 +3687,7 @@ fn Result<bool,errors::Error> advance_module_body(ref u8[] source,bool reference
         let usize completed=complete_body_child(source,token,ref mut code.body,names,signatures,result,0,flow,cursor)?;
         return .ok(false);
     }
-    let bool advanced=body_work::advance(source,token,ref mut code.body,names,flow,cursor,meter)?;
+    let bool advanced=body_work::advance_limited(source,token,ref mut code.body,names,flow,cursor,meter,signatures.semantic_depth)?;
     return .ok(false);
 }
 

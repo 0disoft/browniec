@@ -46,6 +46,10 @@ fn Result<usize,errors::Error> target(ref mut ir::Program p,usize pc,usize at){l
 fn Result<usize,errors::Error> resolve(ref mut loops::State flow,ref mut ir::Program p,bool leave,usize at){let usize end=p.count;return loops::resolve(flow,p,leave,end,at);}
 pub fn Result<bool,errors::Error> advance(ref u8[] source,ref mut lexer::State s,ref mut ir::Program p,
     ref mut locals::Table names,ref mut loops::State flow,ref mut State w,ref mut budget::State meter){
+    return advance_limited(source,s,p,names,flow,w,meter,32);
+}
+pub fn Result<bool,errors::Error> advance_limited(ref u8[] source,ref mut lexer::State s,ref mut ir::Program p,
+    ref mut locals::Table names,ref mut loops::State flow,ref mut State w,ref mut budget::State meter,usize depth_limit){
     if(w.done){return .ok(true);}if(meter.last!=0 || w.request!=0){return .ok(false);}
     if(w.lexing){switch(tokens::advance(source,ref mut w.token,meter)){
         case .err(e):{*s=tokens::observed(ref w.token);return .err(e);}
@@ -53,13 +57,13 @@ pub fn Result<bool,errors::Error> advance(ref u8[] source,ref mut lexer::State s
     if(!budget::admit(meter,4096,s.begin)?){return .ok(false);}
     let usize i=w.used-1;let Frame f=current(w);let usize value=w.value;let bool stopped=w.stopped;w.visits+=1;
     if(f.phase==0 || f.phase==2){
-        if(f.depth>32){return .err(errors::make(4,s.begin));}
+        if(f.depth>depth_limit){return .err(errors::make(4,s.begin));}
         if(s.kind==125){if(f.phase==0){finish(w,f.terminal);return .ok(w.done);}
             w.frames[i].a=names.count;w.frames[i].phase=if(f.terminal){5}else{4};return .ok(false);}
         if(s.kind==0 || f.terminal){return .err(errors::make(2,s.begin));}
         w.frames[i].phase=if(f.phase==0){7}else{3};return push(w,f.depth,10,s.begin);
     }
-    if(f.phase==1){if(f.depth>32){return .err(errors::make(4,s.begin));}
+    if(f.phase==1){if(f.depth>depth_limit){return .err(errors::make(4,s.begin));}
         w.frames[i].outer=names.count;return take(w,s,123,2);}
     if(f.phase==3 || f.phase==7){w.frames[i].terminal=stopped;w.frames[i].phase=if(f.phase==7){0}else{2};return .ok(false);}
     if(f.phase==4){if(f.a==f.outer){w.frames[i].phase=5;return .ok(false);}
@@ -67,7 +71,7 @@ pub fn Result<bool,errors::Error> advance(ref u8[] source,ref mut lexer::State s
     if(f.phase==5){names.count=f.outer;return take(w,s,0,6);}
     if(f.phase==6){finish(w,f.terminal);return .ok(w.done);}
     if(f.phase==10){
-        if(f.depth>32){return .err(errors::make(4,s.begin));}w.frames[i].at=s.begin;
+        if(f.depth>depth_limit){return .err(errors::make(4,s.begin));}w.frames[i].at=s.begin;
         if(word(source,s,b"break") || word(source,s,b"continue")){w.frames[i].flag=word(source,s,b"break");return take(w,s,0,80);}
         if(word(source,s,b"return")){return ask(w,2,11);}
         if(word(source,s,b"if")){return take(w,s,0,20);}
