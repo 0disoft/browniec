@@ -40,10 +40,17 @@ pub fn Result<bool,diagnostics::Error> advance(ref modules::Index index,ref mut 
     return .ok(ready);
 }
 pub fn Result<usize,diagnostics::Error> finish_until(ref modules::Index index,ref mut State work,usize deadline){
+    var usize fuel=budget::unlimited();
+    return finish_metered(index,work,deadline,ref mut fuel);
+}
+pub fn Result<usize,diagnostics::Error> finish_metered(ref modules::Index index,ref mut State work,
+    usize deadline,ref mut usize fuel){
     var budget::State meter=budget::empty();
     while(!work.done){
         if(clock::expired(deadline)){return .err(diagnostics::absent(errors::absent(errors::deadline_kind(),0)));}
-        assert(budget::reset(ref mut meter,0).is_ok);
+        switch(budget::reset_metered(ref mut meter,fuel,0)){
+            case .ok(_):{}case .err(e):{return .err(diagnostics::absent(e));}
+        };
         let bool ready=advance(index,work,ref mut meter)?;
     }
     if(clock::expired(deadline)){return .err(diagnostics::absent(errors::absent(errors::deadline_kind(),0)));}

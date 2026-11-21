@@ -1,6 +1,7 @@
 module module_index;
 import source_snapshot as sources;
 import lexer as lexer;
+import metadata_budget as budget;
 import locals as locals;
 import std::bytes as bytes;
 import std::vec as vec;
@@ -20,7 +21,7 @@ struct Table {
     usize count; usize import_count; usize symbol_count; usize functions; usize records;
 }
 // Large immutable binding data stays behind one private typed owner.
-resource Stored { sources::Snapshot sources; Table table; cleanup { } }
+resource Stored { sources::Snapshot sources; Table table; usize fuel; cleanup { } }
 pub resource Index { vec::Vec<Stored> stored; cleanup { } }
 fn Error error(Failure kind,sources::Span at){return Error{.kind=kind,.at=at};}
 fn Table empty(){
@@ -172,30 +173,31 @@ fn Result<usize,Error> prepare(ref sources::Snapshot snapshot,ref mut Table t,bo
         bound[i]=Import{.owner=candidate.owner,.target=target,.alias=candidate.alias,.path=candidate.path,.begin=candidate.begin,.end=candidate.end};i+=1;
     }
     t.imports=bound;
-    return .ok(t.count);
+    return .ok(if(budget==budget::unlimited()){budget}else{fuel.remaining});
 }
 pub fn Result<Index,Error> build(sources::Snapshot snapshot){
-    return build_mode(snapshot,false,1024,1024,18446744073709551615);
+    return build_mode(snapshot,false,1024,1024,budget::unlimited());
 }
 pub fn Result<Index,Error> build_host(sources::Snapshot snapshot,usize token_limit){
-    return build_metered(snapshot,true,token_limit,1024,18446744073709551615);
+    return build_metered(snapshot,true,token_limit,1024,budget::unlimited());
 }
 pub fn Result<Index,Error> build_metered(sources::Snapshot snapshot,bool host,
     usize token_limit,usize nesting_limit,usize fuel){
     return build_mode(snapshot,host,if(token_limit<1024){token_limit}else{1024},nesting_limit,fuel);
 }
 fn Result<Index,Error> build_mode(sources::Snapshot snapshot,bool host,usize token_limit,usize nesting_limit,usize fuel){
-    var Table t=empty();let usize ready=prepare(ref snapshot,ref mut t,host,token_limit,nesting_limit,fuel)?;
+    var Table t=empty();let usize remaining=prepare(ref snapshot,ref mut t,host,token_limit,nesting_limit,fuel)?;
     var vec::Vec<Stored> stored=vec::empty<Stored>();
     let usize capacity=switch(vec::reserve<Stored>(ref mut stored,1)){
         case .ok(v):{v}case .err(_):{return .err(error(.Allocation,sources::no_source()));}
     };
-    let usize count=switch(vec::push<Stored>(ref mut stored,Stored{.sources=snapshot,.table=t})){
+    let usize count=switch(vec::push<Stored>(ref mut stored,Stored{.sources=snapshot,.table=t,.fuel=remaining})){
         case .ok(v):{v}case .err(_):{return .err(error(.Allocation,sources::no_source()));}
     };
     return .ok(Index{.stored=stored});
 }
 fn ref Stored stored(ref Index p){return vec::at<Stored>(ref p.stored,0);}
+pub fn usize compile_fuel(ref Index p){return stored(p).fuel;}
 pub fn ref sources::Snapshot snapshot(ref Index p){return ref stored(p).sources;}
 fn ref Table table(ref Index p){return ref stored(p).table;}
 pub fn usize count(ref Index p){return table(p).count;}

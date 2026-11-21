@@ -7,6 +7,18 @@ import errors as errors;
 // instruction or CPU cycle). Nested scans/copies belong in the stage's bound.
 pub struct State { usize total; usize last; usize stages; }
 pub fn usize limit(){return 4096;}
+pub fn usize unlimited(){return 18446744073709551615;}
+pub fn Result<usize,errors::Error> prepay(ref mut usize fuel,usize offset){
+    if(*fuel==unlimited()){return .ok(limit());}
+    if(*fuel<limit()){return .err(errors::make(4,offset));}
+    let usize remaining=*fuel-limit();
+    *fuel=remaining;
+    return .ok(limit());
+}
+pub fn Result<usize,errors::Error> reset_metered(ref mut State state,ref mut usize fuel,usize offset){
+    discard reset(state,offset)?;
+    return prepay(fuel,offset);
+}
 pub fn State empty(){return State{.total=0,.last=0,.stages=0};}
 fn errors::Error invalid(usize offset){return errors::make(5,offset);}
 pub fn Result<usize,errors::Error> reset(ref mut State state,usize offset){

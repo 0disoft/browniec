@@ -138,13 +138,13 @@ pub fn Result<raw::Proof,errors::Error> inspect(ref programs::Program unit,ref i
 }
 
 // Sample before each bounded proof stage. Only a fully verified proof can escape.
-pub fn Result<raw::Proof,errors::Error> inspect_until(ref programs::Program unit,ref images::Image image,bool input,usize deadline){
+pub fn Result<raw::Proof,errors::Error> inspect_until(ref programs::Program unit,ref images::Image image,bool input,usize deadline,ref mut usize fuel){
     var State w=seed(input);
     var programs::Program normalized=programs::Program{.body=ir::empty(),
         .parameters=[0;128],.results=[0;16],.origins=[0;16]};var budget::State meter=budget::empty();
     while(!w.done){
         if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
-        let usize allowance=budget::reset(ref mut meter,0)?;
+        let usize allowance=budget::reset_metered(ref mut meter,fuel,0)?;
         let bool done=advance(unit,image,ref mut normalized,ref mut w,ref mut meter)?;
     }
     return prepared(ref w);

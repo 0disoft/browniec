@@ -108,11 +108,19 @@ def verify_configured_project(run, need, image, folder, env):
     # including each file's EOF. There are 44 non-EOF tokens in two files.
     index_fuel = policy['compile']['source_bytes'] + 44 + len(manifest['sources'])
     policy['compile']['fuel'] = index_fuel
-    check()
+    before_lowering = check(3, 'compile_limit', 'check')['error']
+    need(before_lowering['location']['kind'] == 'none',
+         f'Exact index Fuel should reach the lowering gate: {before_lowering}')
     policy['compile']['fuel'] = index_fuel - 1
     fuel_error = check(3, 'compile_limit', 'check')['error']
     need(fuel_error['location']['source_index'] == 1,
          f'Index Fuel reset between source members: {fuel_error}')
+    # 863 prepaid batches after the 179-unit index, including independent proof.
+    full_fuel = index_fuel + 863 * 4096
+    policy['compile']['fuel'] = full_fuel - 1
+    check(3, 'compile_limit')
+    policy['compile']['fuel'] = full_fuel
+    check()
     policy['compile']['fuel'] = compile_defaults['fuel']
 
     # The two original hello files have 27 and 17 lexer tokens, excluding EOF.
@@ -244,7 +252,7 @@ def verify_configured_project(run, need, image, folder, env):
     config['entry']['function'] = manifest['entry']['function']
     config['grants'] = ['brownie.output.emit']
     check(4, 'unavailable')
-    return 38
+    return 40
 
 
 def verify_project_host(run, need, image, folder, env):

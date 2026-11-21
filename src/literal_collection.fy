@@ -23,8 +23,8 @@ pub fn Result<Index,literals::Error> collect(ref mut images::Builder builder,ref
     let context::Table scope=context::empty();return collect_scoped(builder,source,ref scope);
 }
 fn Result<bool,literals::Error> next_batch(ref u8[] source,ref context::Table scope,ref images::Builder builder,
-    ref mut images::Builder candidate,ref mut staged::State w,ref mut budget::State meter){
-    switch(budget::reset(meter,0)){case .ok(_):{}case .err(e):{return .err(source_error(e.kind,e.offset));}};
+    ref mut images::Builder candidate,ref mut staged::State w,ref mut budget::State meter,ref mut usize fuel){
+    switch(budget::reset_metered(meter,fuel,0)){case .ok(_):{}case .err(e):{return .err(source_error(e.kind,e.offset));}};
     return staged::advance(source,scope,builder,candidate,w,meter);
 }
 
@@ -33,19 +33,25 @@ pub fn Result<Index,literals::Error> collect_scoped(ref mut images::Builder buil
     var images::Builder candidate=images::Builder{.data=[0;4096],.catalog=images::Catalog{
         .starts=[0;16],.ends=[0;16],.text=[false;16],.count=0,.used=0},.limit=0};
     var staged::State w=staged::empty();var budget::State meter=budget::empty();
-    while(!w.done){let bool done=next_batch(source,scope,builder,ref mut candidate,ref mut w,ref mut meter)?;}
+    var usize fuel=budget::unlimited();
+    while(!w.done){let bool done=next_batch(source,scope,builder,ref mut candidate,ref mut w,ref mut meter,ref mut fuel)?;}
     let Index index=staged::prepared(ref w)?;*builder=candidate;return .ok(index);
 }
 
 // The absolute Engine deadline also covers the final publication boundary.
 pub fn Result<Index,literals::Error> collect_scoped_until(ref mut images::Builder builder,ref u8[] source,
     ref context::Table scope,usize deadline){
+    var usize fuel=budget::unlimited();
+    return collect_scoped_metered(builder,source,scope,deadline,ref mut fuel);
+}
+pub fn Result<Index,literals::Error> collect_scoped_metered(ref mut images::Builder builder,ref u8[] source,
+    ref context::Table scope,usize deadline,ref mut usize fuel){
     var images::Builder candidate=images::Builder{.data=[0;4096],.catalog=images::Catalog{
         .starts=[0;16],.ends=[0;16],.text=[false;16],.count=0,.used=0},.limit=0};
     var staged::State w=staged::empty();var budget::State meter=budget::empty();
     while(!w.done){
         if(clock::expired(deadline)){return .err(deadline_error());}
-        let bool done=next_batch(source,scope,builder,ref mut candidate,ref mut w,ref mut meter)?;
+        let bool done=next_batch(source,scope,builder,ref mut candidate,ref mut w,ref mut meter,fuel)?;
     }
     if(clock::expired(deadline)){return .err(deadline_error());}
     let Index index=staged::prepared(ref w)?;*builder=candidate;return .ok(index);

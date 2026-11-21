@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-22): [Project index Fuel](docs/engineering/restricted-worker.md#project-index-fuel)
-  charges a shared compile balance for source bytes and lexer advances.
-  Development and /O2 pass the exact 179-unit and 178-unit rejection cases.
+- Latest runtime checkpoint (2026-11-22): [Project lowering and proof Fuel](docs/engineering/restricted-worker.md#project-lowering-and-proof-fuel)
+  carries the ordinary worker's unspent indexing balance through source lowering
+  and independent output proof. Development and /O2 pass the exact boundary.
 
 # Brownie C agent guidance
 

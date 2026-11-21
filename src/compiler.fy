@@ -3516,8 +3516,11 @@ pub fn Result<usize,source_errors::Error> lower_output_modules(ref module_entrie
     return .ok(code.body.count);
 }
 pub fn Result<usize,source_errors::Error> lower_output_modules_until(ref module_entries::Entry selected,
-    ref mut static_images::Builder builder,ref mut reference_ir::Program code,usize deadline){
-    let bool references=lower_modules_until(selected,builder,code,true,deadline)?;
+    ref mut static_images::Builder builder,ref mut reference_ir::Program code,usize deadline,ref mut usize fuel){
+    let ref module_index::Index index=module_entries::index(selected);
+    var module_source::State work=module_source::begin(true);
+    discard module_source::finish_metered(index,ref mut work,deadline,fuel)?;
+    discard lower_modules_prepared_metered(selected,ref work,builder,code,true,deadline,fuel)?;
     return .ok(code.body.count);
 }
 pub fn Result<bool,source_errors::Error> lower_modules_until(ref module_entries::Entry selected,
@@ -3530,6 +3533,12 @@ pub fn Result<bool,source_errors::Error> lower_modules_until(ref module_entries:
 // The owning source pass binds work to the Index of selected for its lifetime.
 pub fn Result<bool,source_errors::Error> lower_modules_prepared_until(ref module_entries::Entry selected,
     ref module_source::State work,ref mut static_images::Builder builder,ref mut reference_ir::Program code,bool output,usize deadline){
+    var usize fuel=metadata_budget::unlimited();
+    return lower_modules_prepared_metered(selected,work,builder,code,output,deadline,ref mut fuel);
+}
+fn Result<bool,source_errors::Error> lower_modules_prepared_metered(ref module_entries::Entry selected,
+    ref module_source::State work,ref mut static_images::Builder builder,ref mut reference_ir::Program code,
+    bool output,usize deadline,ref mut usize fuel){
     if(!work.done || !work.syntax.done){return .err(source_errors::absent(errors::absent(5,0)));}
     if(clock::expired(deadline)){return .err(source_errors::absent(errors::absent(errors::deadline_kind(),0)));}
     let ref module_index::Index index=module_entries::index(selected);
@@ -3537,9 +3546,9 @@ pub fn Result<bool,source_errors::Error> lower_modules_prepared_until(ref module
     let ref u8[] source=ref input.data[..input.used];
     let ref source_context::Table scope=ref input.context;
     let bool references=work.syntax.result || output;
-    let literal_collection::Index literals=if(references){module_literals_until(builder,source,scope,index,deadline)?}
+    let literal_collection::Index literals=if(references){module_literals_metered(builder,source,scope,index,deadline,fuel)?}
         else{literal_collection::empty()};
-    return lower_modules_literals_until(selected,work,ref literals,code,output,deadline);
+    return lower_modules_literals_until(selected,work,ref literals,code,output,deadline,fuel);
 }
 pub fn Result<bool,source_errors::Error> advance_module_literals(ref module_index::Index index,
     ref module_source::State work,ref mut static_images::Builder builder,ref mut literal_work::State literals,
@@ -3550,19 +3559,19 @@ pub fn Result<bool,source_errors::Error> advance_module_literals(ref module_inde
     };
 }
 fn Result<bool,source_errors::Error> lower_modules_literals_until(ref module_entries::Entry selected,
-    ref module_source::State work,ref literal_collection::Index literals,ref mut reference_ir::Program code,bool output,usize deadline){
+    ref module_source::State work,ref literal_collection::Index literals,ref mut reference_ir::Program code,bool output,usize deadline,ref mut usize fuel){
     let ref module_index::Index index=module_entries::index(selected);
     let usize entry=module_entries::selected(selected);
     let ref source_context::Input input=ref work.context.result;
     let ref u8[] source=ref input.data[..input.used];
     let ref source_context::Table scope=ref input.context;
     let bool references=work.syntax.result || output;
-    var functions::Table signatures=switch(signature_scan::scan_indexed_until(source,scope,index,entry,references,deadline)){
+    var functions::Table signatures=switch(signature_scan::scan_indexed_metered(source,scope,index,entry,references,false,deadline,fuel)){
         case .ok(v):{v}case .err(e):{return .err(module_error(selected,e,16));}
     };
     if(output){
         signatures.output=true;
-        let usize lowered=lower_reference_bodies_until(index,source,literals,ref mut signatures,code,deadline)?;
+        let usize lowered=lower_reference_bodies_until(index,source,literals,ref mut signatures,code,deadline,fuel)?;
         return .ok(true);
     }
     let bool lowered=lower_modules_signatures_until(selected,work,literals,ref mut signatures,code,false,deadline)?;
@@ -3702,9 +3711,9 @@ fn Result<literal_collection::Index,source_errors::Error> module_literals(ref mu
     ref u8[] source,ref source_context::Table scope,ref module_index::Index index){
     return module_literal_result(literal_collection::collect_scoped(builder,source,scope),index);
 }
-fn Result<literal_collection::Index,source_errors::Error> module_literals_until(ref mut static_images::Builder builder,
-    ref u8[] source,ref source_context::Table scope,ref module_index::Index index,usize deadline){
-    return module_literal_result(literal_collection::collect_scoped_until(builder,source,scope,deadline),index);
+fn Result<literal_collection::Index,source_errors::Error> module_literals_metered(ref mut static_images::Builder builder,
+    ref u8[] source,ref source_context::Table scope,ref module_index::Index index,usize deadline,ref mut usize fuel){
+    return module_literal_result(literal_collection::collect_scoped_metered(builder,source,scope,deadline,fuel),index);
 }
 fn Result<literal_collection::Index,source_errors::Error> module_literal_result(
     Result<literal_collection::Index,literal_source::Error> collected,ref module_index::Index index){
@@ -3760,36 +3769,44 @@ pub fn Result<usize,source_errors::Error> lower_input_output_modules(ref input_e
 }
 pub fn Result<usize,source_errors::Error> lower_input_modules_until(ref input_entries::InputEntry selected,
     ref mut static_images::Builder builder,ref mut reference_ir::Program code,bool output,usize deadline){
+    var usize fuel=metadata_budget::unlimited();
+    return lower_input_modules_metered(selected,builder,code,output,deadline,ref mut fuel);
+}
+pub fn Result<usize,source_errors::Error> lower_input_modules_metered(ref input_entries::InputEntry selected,
+    ref mut static_images::Builder builder,ref mut reference_ir::Program code,bool output,usize deadline,ref mut usize fuel){
     let ref module_index::Index index=input_entries::index(selected);
     var module_source::State work=module_source::begin(false);
-    let usize staged=module_source::finish_until(index,ref mut work,deadline)?;
-    return lower_input_modules_prepared_until(selected,ref work,builder,code,output,deadline);
+    discard module_source::finish_metered(index,ref mut work,deadline,fuel)?;
+    return lower_input_modules_prepared_metered(selected,ref work,builder,code,output,deadline,fuel);
 }
-pub fn Result<usize,source_errors::Error> lower_input_modules_prepared_until(ref input_entries::InputEntry selected,
+fn Result<usize,source_errors::Error> lower_input_modules_prepared_metered(ref input_entries::InputEntry selected,
     ref module_source::State work,ref mut static_images::Builder builder,ref mut reference_ir::Program code,
-    bool output,usize deadline){
+    bool output,usize deadline,ref mut usize fuel){
     if(!work.done || work.classify){return .err(source_errors::absent(errors::absent(5,0)));}
     if(clock::expired(deadline)){return .err(source_errors::absent(errors::absent(errors::deadline_kind(),0)));}
     let ref module_index::Index index=input_entries::index(selected);
     let ref source_context::Input input=ref work.context.result;
     let ref u8[] source=ref input.data[..input.used];
     let ref source_context::Table scope=ref input.context;
-    let literal_collection::Index literals=module_literals_until(builder,source,scope,index,deadline)?;
-    var functions::Table signatures=switch(signature_scan::scan_indexed_until(source,scope,index,input_entries::selected(selected),true,deadline)){
+    let literal_collection::Index literals=module_literals_metered(builder,source,scope,index,deadline,fuel)?;
+    var functions::Table signatures=switch(signature_scan::scan_indexed_metered(source,scope,index,input_entries::selected(selected),true,false,deadline,fuel)){
         case .ok(v):{v}case .err(e):{return .err(input_module_error(index,e,16));}
     };
     signatures.output=output;
-    return lower_reference_bodies_until(index,source,ref literals,ref mut signatures,code,deadline);
+    return lower_reference_bodies_until(index,source,ref literals,ref mut signatures,code,deadline,fuel);
 }
 // Input and output both require reference metadata. The synchronous adapters
 // drain the same body cursor as the private Engine and preserve the Index for spans.
 fn Result<usize,source_errors::Error> lower_reference_bodies_until(ref module_index::Index index,ref u8[] source,
-    ref literal_collection::Index literals,ref mut functions::Table signatures,ref mut reference_ir::Program code,usize deadline){
+    ref literal_collection::Index literals,ref mut functions::Table signatures,ref mut reference_ir::Program code,usize deadline,ref mut usize fuel){
     var BodyProgress progress=begin_module_bodies();
     var lexer::State token=lexer::empty();var locals::Table names=locals::empty();
     var loops::State flow=loops::empty();var body_work::State cursor=body_work::begin(0,false);
     while(true){
         if(clock::expired(deadline)){return .err(source_errors::absent(errors::absent(errors::deadline_kind(),0)));}
+        switch(metadata_budget::prepay(fuel,token.begin)){
+            case .ok(_):{}case .err(e):{return .err(input_module_error(index,e,progress.active));}
+        };
         var metadata_budget::State meter=metadata_budget::empty();
         switch(advance_module_body(source,true,literals,signatures,code,ref mut progress,
             ref mut token,ref mut names,ref mut flow,ref mut cursor,ref mut meter,deadline)){

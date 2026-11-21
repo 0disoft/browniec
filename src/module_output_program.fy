@@ -59,8 +59,10 @@ pub fn Result<Program,diagnostics::Error> compile_with_retention_until(entries::
         case .ok(v):{v}case .err(e):{return .err(literal(e));}
     };
     var candidates::Program code=candidates::Program{.body=ir::empty(),.parameters=[0;128],.results=[0;16],.origins=[0;16]};
-    let usize lowered=compiler::lower_output_modules_until(ref selected,ref mut builder,ref mut code,deadline)?;
-    return finish_until(modules::snapshot(entries::index(ref selected)),ref builder,ref code,image_limit,false,plan,deadline);
+    let ref modules::Index index=entries::index(ref selected);
+    var usize fuel=modules::compile_fuel(index);
+    let usize lowered=compiler::lower_output_modules_until(ref selected,ref mut builder,ref mut code,deadline,ref mut fuel)?;
+    return finish_until(modules::snapshot(index),ref builder,ref code,image_limit,false,plan,deadline,ref mut fuel);
 }
 pub fn Result<Program,diagnostics::Error> compile_input(input_entries::InputEntry selected,usize image_limit){
     var retention::Plan plan=retention::unlimited();return compile_input_with_retention(selected,image_limit,ref mut plan);
@@ -78,8 +80,10 @@ pub fn Result<Program,diagnostics::Error> compile_input_with_retention_until(inp
         case .ok(v):{v}case .err(e):{return .err(literal(e));}
     };
     var candidates::Program code=candidates::Program{.body=ir::empty(),.parameters=[0;128],.results=[0;16],.origins=[0;16]};
-    let usize lowered=compiler::lower_input_modules_until(ref selected,ref mut builder,ref mut code,true,deadline)?;
-    return finish_until(modules::snapshot(input_entries::index(ref selected)),ref builder,ref code,image_limit,true,plan,deadline);
+    let ref modules::Index index=input_entries::index(ref selected);
+    var usize fuel=modules::compile_fuel(index);
+    let usize lowered=compiler::lower_input_modules_metered(ref selected,ref mut builder,ref mut code,true,deadline,ref mut fuel)?;
+    return finish_until(modules::snapshot(index),ref builder,ref code,image_limit,true,plan,deadline,ref mut fuel);
 }
 @link_name("bc_runtime_engine_output_proof_storage")
 unsafe extern C fn usize proof_storage_raw(ptr void candidate);
@@ -192,10 +196,10 @@ fn Result<Program,diagnostics::Error> finish(ref sources::Snapshot sources,ref i
     return finish_verified(sources,code,image,input,ref proof,0);
 }
 fn Result<Program,diagnostics::Error> finish_until(ref sources::Snapshot sources,ref images::Builder builder,
-    ref candidates::Program code,usize image_limit,bool input,ref mut retention::Plan plan,usize deadline){
+    ref candidates::Program code,usize image_limit,bool input,ref mut retention::Plan plan,usize deadline,ref mut usize fuel){
     if(clock::expired(deadline)){return .err(absent(errors::absent(errors::deadline_kind(),0)));}
     let images::Image image=freeze(builder,image_limit,plan)?;
-    let output_proof::Proof proof=switch(proof_work::inspect_until(code,ref image,input,deadline)){
+    let output_proof::Proof proof=switch(proof_work::inspect_until(code,ref image,input,deadline,fuel)){
         case .ok(v):{v}case .err(e):{return .err(proof_error(sources,code,e));}
     };
     return finish_verified(sources,code,image,input,ref proof,deadline);

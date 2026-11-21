@@ -140,10 +140,16 @@ fn Result<raw::Table,errors::Error> scan_indexed_mode(ref u8[] source,ref contex
 // The Engine owns the absolute deadline. Partial tables remain private.
 pub fn Result<raw::Table,errors::Error> scan_indexed_until(ref u8[] source,ref context::Table scope,
     ref modules::Index index,usize selected,bool returns,usize deadline){
-    var State w=indexed(selected,returns);var budget::State meter=budget::empty();
+    var usize fuel=budget::unlimited();
+    return scan_indexed_metered(source,scope,index,selected,returns,false,deadline,ref mut fuel);
+}
+pub fn Result<raw::Table,errors::Error> scan_indexed_metered(ref u8[] source,ref context::Table scope,
+    ref modules::Index index,usize selected,bool returns,bool host,usize deadline,ref mut usize fuel){
+    var State w=indexed(selected,returns);
+    w.result.scalar_host_calls=host;var budget::State meter=budget::empty();
     while(!w.done){
         if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
-        let usize allowance=budget::reset(ref mut meter,0)?;
+        let usize allowance=budget::reset_metered(ref mut meter,fuel,0)?;
         let bool done=advance_indexed(source,scope,index,ref mut w,ref mut meter)?;
     }
     if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}

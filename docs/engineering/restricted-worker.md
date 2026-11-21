@@ -574,17 +574,36 @@ The configured worker starts indexing with the policy's compile Fuel.
 It prepays one unit for each byte of a member before scanning the member,
 then charges one unit before each lexer advance, including EOF. Members
 share one balance. A deficit returns a source-local compile limit before
-the next scan and prevents the Index from being retained. The ordinary
-and catalog-backed Engine paths share this budget. The later lowering and
-proof stages still need to consume the same compile balance.
+the next scan and prevents the Index from being retained. Both Engine paths apply this budget during indexing.
 
-Windows development and /O2 each accepted the two-file hello project at
-179 units (133 bytes plus 44 tokens and two EOF advances) and rejected
+The indexing checkpoint in Windows development and /O2 admitted the
+index of the two-file hello project at 179 units (133 bytes plus 44 tokens and two EOF advances) and rejected
 178 at the second file. Both rejected a one-unit compile budget on the
 catalog-backed path. The complete focused run passed 38 configured cases,
 12 catalog project cases, five managed project cases and nine native host
 transport cases per profile. Local receipt:
 `build/restricted-worker/20261121T182525039194Z/receipt.json`.
+
+## Project lowering and proof Fuel
+
+The output-capable worker passes the index's unspent compile Fuel to its
+source preparation, literal and signature passes, body lowering and
+independent output proof. Each dispatch prepays the existing 4,096-unit
+metadata batch allowance. Exhaustion returns `compile_limit` before the next
+dispatch. The same policy balance applies to zero-argument and shared-byte
+input entries.
+
+The two-file hello project needs 179 units for indexing and 863 prepaid
+batches for the following stages. Both Windows development and /O2 return
+42 at 3,535,027 and reject 3,535,026 without a guest result. A budget of
+179 finishes indexing and fails at the first source preparation dispatch.
+Both profiles pass 40 configured project cases, 12 catalog project cases,
+five managed project cases and nine native host transport cases. Local
+receipt: `build/restricted-worker/20261121T183550192986Z/receipt.json`.
+
+The charges cover the staged compiler dispatches and output proof. Work
+inside synchronous semantic children, final execution preparation and
+catalog-backed lowering and verification still need finer-grained metering.
 
 ## Windows verification
 
