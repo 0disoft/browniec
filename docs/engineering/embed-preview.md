@@ -33,13 +33,38 @@ Release the Program handle once no more Instances need to be created. Live
 Instances retain their pins and can continue. Destroy each Instance before
 destroying the Engine. The Engine rejects destruction while it has live public
 children. Handles are generation-checked integers in the shared 65,536-slot
-registry. The preview caps each Engine at eight Programs and sixteen Instances.
+process registry. The preview caps each Engine at eight Programs and sixteen Instances.
 The creating OS thread owns the Engine and its children for life. Separate
 owner threads can compile and step independent Engines concurrently. The
 registry guard protects handle and admission updates, and compilation and VM
 execution run outside the guard. Calls on a foreign Engine return
-`BC_WRONG_THREAD`. Retire all handles before unloading the DLL. Each handle
-and event output remains unchanged on API failure.
+`BC_WRONG_THREAD`. Each preview handle and event output remains unchanged on
+API failure.
+
+### Process ownership
+
+The first lifecycle call elects one preview DLL image as the process owner.
+Other copies with the same private dispatch protocol route their lifecycle
+calls to that image even if loaded from different paths. The owner interprets
+all native objects, owns their registry and thread identities, and stays loaded
+until process exit. A caller may release its DLL reference and later use the
+same live handle through another compatible copy on the creating thread.
+Destroy each object when it is no longer needed.
+
+The election uses a session-local mutex named for the process ID and creation
+time. Dispatch pointers are resolved from modules in the current process,
+with a module reference held during each lookup. A client caches the elected
+dispatch table after resolution. A discovered owner with an incompatible
+protocol causes `BC_ABI_MISMATCH`. Failure to resolve an owner returns a status
+before accessing any runtime state. Revision-2 creation calls clear the handle
+output on resolution failure. The ABI query remains local to each DLL. Call
+the preview outside `DllMain` and other loader callbacks.
+
+Windows x64 `/Od` and `/O2` test simultaneous first calls through two DLL
+copies, 75 live handles across two shared pages, cross-DLL creation through
+destruction, a client reload, stale-handle rejection, and incompatible-owner
+refusal. The standalone registry build provides the full-capacity evidence.
+Local receipt: `build/embed-preview-6cj2auor/receipt.json`.
 
 The native test host compiles one Program, overwrites its original source
 buffer, and advances two Instances with quanta 1 and 64 to the same result and
@@ -87,7 +112,7 @@ continues to consume its separate retained-code charge until its last pin
 is released.
 
 These charges track requested bytes. Windows heap metadata and the
-DLL-wide handle registry remain outside the Engine's ledger.
+process-wide handle registry remain outside the Engine's ledger.
 
 Windows /Od and /O2 measured an initial 210,672-byte control reservation for
 the policy fixture. Each default-entry Program wrapper consumes 80 bytes,

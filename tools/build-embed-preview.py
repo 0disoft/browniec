@@ -136,6 +136,15 @@ def main():
         host_run['requires'] = host_run['grants'] = host_policy['capabilities']
         write(folder/'run-host.json', json.dumps(host_run, separators=(',', ':')))
         subprocess.run([host], cwd=folder, check=True, timeout=30)
+        process_test = ROOT / 'tests/embed/preview_process_host.c'
+        shutil.copyfile(dll, folder / 'brownie-preview-copy.dll')
+        fixture = folder / 'incompatible-owner.dll'
+        native(*flags, '/W4', '/WX', '/DBC_INCOMPATIBLE_OWNER_FIXTURE', process_test,
+               '/LD', '/Fe' + str(fixture))
+        process_host = folder / 'preview-process-host.exe'
+        native(*flags, '/W4', '/WX', process_test, '/Fe' + str(process_host))
+        for args in ([], ['incompatible']):
+            subprocess.run([process_host, *args], cwd=folder, check=True, timeout=30)
         results[profile] = hashlib.sha256(dll.read_bytes()).hexdigest()
     write(out / 'receipt.json', json.dumps({'compilerSha256': digest, 'dllSha256': results}, indent=2) + '\n')
 

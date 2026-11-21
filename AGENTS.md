@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-21): [Lazy registry pages](docs/engineering/abi-registry.md#ownership-and-bounds)
-  support 65,536 slots in a single DLL namespace. Windows /Od and /O2 verify
-  full capacity, cross-page reuse, and the embedding DLL lifecycle.
+- Latest runtime checkpoint (2026-11-21): [Process ownership](docs/engineering/embed-preview.md#process-ownership)
+  routes compatible preview DLL copies to one pinned image. Windows /Od
+  and /O2 verify shared registry pages and stale handle rejection after reload.
 
 # Brownie C agent guidance
 

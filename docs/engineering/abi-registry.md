@@ -36,14 +36,12 @@ the first page transition from slot 73 to 74, and reused the straddling slot
 while rejecting its previous handle. Local receipt:
 `build/abi-registry/20261121T133914281197Z/receipt.json`.
 
-Link exactly one registry object and one identity-helper object into the owning
-module. Every caller of this coordinator shares that state. Independent copies
-in different DLLs do not become a single process registry; cross-module sharing
-must route calls to the same owner. Unload/reload stale-handle validation,
-thread-owner adoption, teardown recovery and abandoned-owner reclamation are
-unsupported. The host must end in-flight calls and retire its objects before
-unload. Tests with deliberately exited owners terminate their isolated process;
-they do not claim a safe recovery/destruction path.
+The standalone coordinator links one registry object and one identity-helper
+object into the owning module. The [embedding preview](embed-preview.md#process-ownership)
+routes compatible DLL copies to a pinned process owner. Its committed pages
+and generation tombstones survive client unload and reload. Thread-owner
+adoption, teardown recovery and abandoned-owner reclamation remain open.
+Tests with deliberately exited owners terminate their isolated process.
 
 ## Internal API
 
@@ -182,11 +180,11 @@ retained PE/object, native log/receipt and build-control hash.
 No root source/Git/lock/checkpoint was written. The patch contains only the new
 coordinator/header, builder, retention/binding/control files, C host and this doc.
 
-Not verified/implemented here: allocator/TLS failure injection, actual native
-object cleanup/pins, Engine poison, VM/public DLL execution, accepted-scale page
-allocation/accounting, multiple DLL copies as one process registry, Linux,
-clean-machine packaging or full E02/E01 availability. Existing CLI gates,
-opcodes, Fuel schedules and VM capacities are unchanged.
+The original 64-slot receipt leaves allocator/TLS failure injection,
+actual native object cleanup/pins, Engine poison, VM/public DLL execution,
+accepted-scale page allocation/accounting, cross-DLL routing, Linux,
+clean-machine packaging and full E02/E01 availability unverified.
+The ownership section above links the later preview and full-capacity evidence.
 
 Main integrated the coordinator in `8a4dae9`. All eleven isolated build inputs
 match checkout/Git raw bytes and the actual two-profile C-host receipt. See the

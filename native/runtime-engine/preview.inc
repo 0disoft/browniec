@@ -100,7 +100,7 @@ static uint32_t create_engine(uint32_t revision,bc_slice policy,bc_handle *out){
     return preview_status(status);
 }
 
-uint32_t BC_CALL bc_preview_engine_create(uint32_t revision,bc_handle *out){
+static uint32_t BC_CALL owner_bc_preview_engine_create(uint32_t revision,bc_handle *out){
     if(revision!=BC_PREVIEW_REVISION){return BC_ABI_MISMATCH;}
     if(!out){return BC_BAD_ARGUMENT;}
     return create_engine(revision,(bc_slice){0},out);
@@ -134,7 +134,7 @@ static uint32_t engine_diagnostic(bc_diagnostic *out,uint32_t status){
     return status;
 }
 
-uint32_t BC_CALL bc_engine_create(uint32_t revision,bc_slice policy,bc_handle *out,bc_diagnostic *diagnostic){
+static uint32_t BC_CALL owner_bc_engine_create(uint32_t revision,bc_slice policy,bc_handle *out,bc_diagnostic *diagnostic){
     if(out){*out=0;}
     if(revision!=BC_ABI_REVISION){return BC_ABI_MISMATCH;}
     if(!diagnostic||diagnostic->struct_size!=sizeof(*diagnostic)){return BC_BAD_ARGUMENT;}
@@ -336,24 +336,24 @@ static uint32_t compile_program(bc_handle engine,uint32_t revision,const bc_sour
     return compile_diagnostic(diagnostic,preview_status(status),sources,count,index,start,end);
 }
 
-uint32_t BC_CALL bc_preview_compile(bc_handle engine,bc_slice source,bc_handle *out){
+static uint32_t BC_CALL owner_bc_preview_compile(bc_handle engine,bc_slice source,bc_handle *out){
     const bc_source row={main_name,source};
     return compile_program(engine,BC_PREVIEW_REVISION,&row,1,(bc_slice){0},main_name,main_name,out,NULL);
 }
 
-uint32_t BC_CALL bc_compile(bc_handle engine,const bc_source *sources,uint32_t source_count,
-                            bc_slice catalog,bc_handle *out,bc_diagnostic *diagnostic){
-    return bc_preview_compile_entry(engine,sources,source_count,catalog,main_name,main_name,out,diagnostic);
-}
-
-uint32_t BC_CALL bc_preview_compile_entry(bc_handle engine,const bc_source *sources,uint32_t source_count,
+static uint32_t BC_CALL owner_bc_preview_compile_entry(bc_handle engine,const bc_source *sources,uint32_t source_count,
     bc_slice catalog,bc_slice module,bc_slice function,bc_handle *out,bc_diagnostic *diagnostic){
     if(out){*out=0;}
     if(!diagnostic||diagnostic->struct_size!=sizeof(*diagnostic)){return BC_BAD_ARGUMENT;}
     return compile_program(engine,BC_ABI_REVISION,sources,source_count,catalog,module,function,out,diagnostic);
 }
 
-uint32_t BC_CALL bc_program_entry_info(bc_handle engine,bc_handle program,bc_slice module,bc_slice function,
+static uint32_t BC_CALL owner_bc_compile(bc_handle engine,const bc_source *sources,uint32_t source_count,
+                            bc_slice catalog,bc_handle *out,bc_diagnostic *diagnostic){
+    return owner_bc_preview_compile_entry(engine,sources,source_count,catalog,main_name,main_name,out,diagnostic);
+}
+
+static uint32_t BC_CALL owner_bc_program_entry_info(bc_handle engine,bc_handle program,bc_slice module,bc_slice function,
                                        bc_entry_info *out,bc_diagnostic *diagnostic){
     if(!diagnostic||diagnostic->struct_size!=sizeof(*diagnostic)){return BC_BAD_ARGUMENT;}
     if(!out||out->struct_size!=sizeof(*out)){
@@ -438,13 +438,13 @@ static uint32_t create_instance(bc_handle engine,bc_handle program,uint32_t revi
     return preview_status(status);
 }
 
-uint32_t BC_CALL bc_preview_instance_create(bc_handle engine,bc_handle program,uint64_t fuel,bc_handle *out){
+static uint32_t BC_CALL owner_bc_preview_instance_create(bc_handle engine,bc_handle program,uint64_t fuel,bc_handle *out){
     if(!out){return BC_BAD_ARGUMENT;}
     if(fuel>BC_PREVIEW_MAX_FUEL){return BC_RESOURCE_LIMIT;}
     return create_instance(engine,program,BC_PREVIEW_REVISION,fuel,(bc_slice){0},(bc_slice){0},NULL,out);
 }
 
-uint32_t BC_CALL bc_preview_instance_create_cancellable(bc_handle engine,bc_handle program,
+static uint32_t BC_CALL owner_bc_preview_instance_create_cancellable(bc_handle engine,bc_handle program,
     bc_slice input,bc_slice config,void *cancel_event,bc_handle *out,bc_diagnostic *diagnostic){
     if(out){*out=0;}
     if(!diagnostic||diagnostic->struct_size!=sizeof(*diagnostic)){return BC_BAD_ARGUMENT;}
@@ -465,12 +465,12 @@ uint32_t BC_CALL bc_preview_instance_create_cancellable(bc_handle engine,bc_hand
     return status;
 }
 
-uint32_t BC_CALL bc_instance_create(bc_handle engine,bc_handle program,bc_slice input,bc_slice config,
+static uint32_t BC_CALL owner_bc_instance_create(bc_handle engine,bc_handle program,bc_slice input,bc_slice config,
                                     bc_handle *out,bc_diagnostic *diagnostic){
-    return bc_preview_instance_create_cancellable(engine,program,input,config,NULL,out,diagnostic);
+    return owner_bc_preview_instance_create_cancellable(engine,program,input,config,NULL,out,diagnostic);
 }
 
-uint32_t BC_CALL bc_preview_step(bc_handle instance,uint32_t quantum,bc_preview_event *out){
+static uint32_t BC_CALL owner_bc_preview_step(bc_handle instance,uint32_t quantum,bc_preview_event *out){
     if(!out||out->struct_size!=sizeof(*out)||!quantum||quantum>4096){return BC_BAD_ARGUMENT;}
     bc_abi_registry_admission admission;
     uint32_t status=bc_abi_registry_enter_instance(instance,&admission);
@@ -576,7 +576,7 @@ static bc_event revision_two_event(preview_run *run,preview_vm_event event){
     return result;
 }
 
-uint32_t BC_CALL bc_step(bc_handle instance,uint32_t quantum,bc_event *out){
+static uint32_t BC_CALL owner_bc_step(bc_handle instance,uint32_t quantum,bc_event *out){
     if(!out||out->struct_size!=sizeof(*out)||!quantum||quantum>4096){return BC_BAD_ARGUMENT;}
     bc_abi_registry_admission admission;
     uint32_t status=bc_abi_registry_enter_instance(instance,&admission);
@@ -594,7 +594,7 @@ uint32_t BC_CALL bc_step(bc_handle instance,uint32_t quantum,bc_event *out){
     return preview_status(status);
 }
 
-uint32_t BC_CALL bc_preview_copy_output(bc_handle instance,uint8_t *destination,
+static uint32_t BC_CALL owner_bc_preview_copy_output(bc_handle instance,uint8_t *destination,
                                         size_t capacity,size_t *out_size){
     if(!out_size||(!destination&&capacity)){return BC_BAD_ARGUMENT;}
     bc_abi_registry_admission admission;
@@ -645,7 +645,7 @@ static uint32_t receive_host_reply(preview_run *run,uint64_t request_id,uint32_t
     return BC_OK;
 }
 
-uint32_t BC_CALL bc_host_reply(bc_handle instance,uint64_t request_id,uint32_t kind,
+static uint32_t BC_CALL owner_bc_host_reply(bc_handle instance,uint64_t request_id,uint32_t kind,
                                bc_slice payload,bc_diagnostic *diagnostic){
     if(!diagnostic || diagnostic->struct_size!=sizeof(*diagnostic)){return BC_BAD_ARGUMENT;}
     bc_abi_registry_admission admission;
@@ -679,8 +679,8 @@ static uint32_t cancel_instance(bc_handle instance,uint32_t revision){
     return preview_status(status);
 }
 
-uint32_t BC_CALL bc_preview_cancel(bc_handle instance){return cancel_instance(instance,BC_PREVIEW_REVISION);}
-uint32_t BC_CALL bc_cancel(bc_handle instance){return cancel_instance(instance,BC_ABI_REVISION);}
+static uint32_t BC_CALL owner_bc_preview_cancel(bc_handle instance){return cancel_instance(instance,BC_PREVIEW_REVISION);}
+static uint32_t BC_CALL owner_bc_cancel(bc_handle instance){return cancel_instance(instance,BC_ABI_REVISION);}
 
 static uint32_t release_child(bc_handle child,bc_handle engine,uint32_t kind,uint32_t revision){
     bc_abi_registry_admission admission;
@@ -701,10 +701,10 @@ static uint32_t release_child(bc_handle child,bc_handle engine,uint32_t kind,uin
     return preview_status(status);
 }
 
-uint32_t BC_CALL bc_preview_instance_destroy(bc_handle instance){return release_child(instance,0,INSTANCE_HANDLE,BC_PREVIEW_REVISION);}
-uint32_t BC_CALL bc_instance_destroy(bc_handle instance){return release_child(instance,0,INSTANCE_HANDLE,BC_ABI_REVISION);}
-uint32_t BC_CALL bc_preview_program_release(bc_handle engine,bc_handle program){return release_child(program,engine,PROGRAM_HANDLE,BC_PREVIEW_REVISION);}
-uint32_t BC_CALL bc_program_release(bc_handle engine,bc_handle program){return release_child(program,engine,PROGRAM_HANDLE,BC_ABI_REVISION);}
+static uint32_t BC_CALL owner_bc_preview_instance_destroy(bc_handle instance){return release_child(instance,0,INSTANCE_HANDLE,BC_PREVIEW_REVISION);}
+static uint32_t BC_CALL owner_bc_instance_destroy(bc_handle instance){return release_child(instance,0,INSTANCE_HANDLE,BC_ABI_REVISION);}
+static uint32_t BC_CALL owner_bc_preview_program_release(bc_handle engine,bc_handle program){return release_child(program,engine,PROGRAM_HANDLE,BC_PREVIEW_REVISION);}
+static uint32_t BC_CALL owner_bc_program_release(bc_handle engine,bc_handle program){return release_child(program,engine,PROGRAM_HANDLE,BC_ABI_REVISION);}
 
 static uint32_t destroy_engine(bc_handle engine,uint32_t revision){
     bc_abi_registry_admission admission;
@@ -719,8 +719,10 @@ static uint32_t destroy_engine(bc_handle engine,uint32_t revision){
     return preview_status(status);
 }
 
-uint32_t BC_CALL bc_preview_engine_destroy(bc_handle engine){return destroy_engine(engine,BC_PREVIEW_REVISION);}
+static uint32_t BC_CALL owner_bc_preview_engine_destroy(bc_handle engine){return destroy_engine(engine,BC_PREVIEW_REVISION);}
 
-uint32_t BC_CALL bc_engine_destroy(bc_handle engine){
+static uint32_t BC_CALL owner_bc_engine_destroy(bc_handle engine){
     return destroy_engine(engine,BC_ABI_REVISION);
 }
+
+#include "preview_owner.inc"
