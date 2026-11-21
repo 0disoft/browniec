@@ -527,6 +527,74 @@ static void revision_two_host_exchange(void){
     assert(bc_engine_destroy(engine)==BC_OK);
 }
 
+static void revision_two_large_host_reply(void){
+    static const uint8_t main_name[]="main";
+    static const uint8_t text[]=
+        "module main; import host::example as api; pub fn i32 main(){"
+        "return switch(api::check(b\"x\")){case .err(_):{17}case .ok(data):{api::next(ref data)+35}};}";
+    static const uint8_t catalog[]="{\"schema\":\"brownie.catalog/1\",\"imports\":["
+        "{\"id\":0,\"module\":\"host::example\",\"symbol\":\"check\",\"parameters\":[\"ref u8[]\"],"
+        "\"result\":\"Result<brownie::bytes::Buffer,u32>\",\"effect\":\"read\","
+        "\"capability\":\"host.example.check\",\"adapter_revision\":\"v1\"},"
+        "{\"id\":1,\"module\":\"host::example\",\"symbol\":\"next\",\"parameters\":[\"ref u8[]\"],"
+        "\"result\":\"Result<i32,u32>\",\"effect\":\"read\","
+        "\"capability\":\"host.example.check\",\"adapter_revision\":\"v1\"}]}";
+    const uint8_t answer[]={3,0,0,0,4,0,0,0,42,0,0,0};
+    const uint8_t error[]={5,0,0,0,4,0,0,0,1,0,0,0};
+    enum {body_size=8193};
+    uint8_t payload[8+body_size]={7,0,0,0,1,32,0,0};
+    for(size_t i=0;i<body_size;++i){payload[8+i]=(uint8_t)(i%251);}
+    uint8_t policy_data[4096],run_data[1024];
+    const bc_slice policy={policy_data,read_fixture("policy-host.json",policy_data,sizeof(policy_data))};
+    const bc_slice config={run_data,read_fixture("run-host.json",run_data,sizeof(run_data))};
+    const bc_slice empty={0};
+    const bc_source source={{main_name,sizeof(main_name)-1},{text,sizeof(text)-1}};
+    bc_handle engine=0,program=0,done=0,cancelled=0,rejected=0;
+    bc_diagnostic diag={.struct_size=sizeof(diag)};
+    assert(bc_engine_create(BC_ABI_REVISION,policy,&engine,&diag)==BC_OK);
+    const uint32_t compiled=bc_compile(engine,&source,1,(bc_slice){catalog,sizeof(catalog)-1},&program,&diag);
+    if(compiled!=BC_OK){
+        fprintf(stderr,"Large reply fixture compile status %" PRIu32 " source %" PRIu32 " bytes %" PRIu32 "..%" PRIu32 ": %s\n",
+            compiled,diag.source_index,diag.byte_start,diag.byte_end,diag.message);
+    }
+    assert(compiled==BC_OK);
+    assert(bc_instance_create(engine,program,empty,config,&done,&diag)==BC_OK);
+    assert(bc_instance_create(engine,program,empty,config,&cancelled,&diag)==BC_OK);
+    assert(bc_instance_create(engine,program,empty,config,&rejected,&diag)==BC_OK);
+    assert(bc_program_release(engine,program)==BC_OK);
+    bc_event first=next_host_event(done,64),second=next_host_event(cancelled,64);
+    assert(first.kind==BC_HOST_REQUEST && second.kind==BC_HOST_REQUEST);
+    assert(bc_host_reply(done,first.request_id,BC_REPLY_OK,(bc_slice){payload,sizeof(payload)},&diag)==BC_OK);
+    assert(bc_host_reply(cancelled,second.request_id,BC_REPLY_OK,(bc_slice){payload,sizeof(payload)},&diag)==BC_OK);
+    memset(payload,0,sizeof(payload));
+
+    bc_event partial={.struct_size=sizeof(partial)};
+    assert(bc_step(cancelled,4096,&partial)==BC_OK && partial.kind==BC_YIELD);
+    assert(!partial.payload.data && !partial.payload.len && !partial.request_id);
+    assert(bc_cancel(cancelled)==BC_OK);
+    const bc_event stopped=next_host_event(cancelled,1);
+    assert(stopped.kind==BC_FAILED && stopped.diagnostic.code==33 && stopped.payload.len==0);
+
+    bc_event next={.struct_size=sizeof(next)};
+    for(unsigned i=0;i<128;++i){
+        assert(bc_step(done,4096,&next)==BC_OK);
+        if(next.kind!=BC_YIELD){break;}
+    }
+    assert(next.kind==BC_HOST_REQUEST && next.import_id==1 && next.request_id!=first.request_id);
+    assert(next.payload.len==body_size+10);
+    for(size_t i=0;i<body_size;++i){assert(next.payload.data[10+i]==(uint8_t)(i%251));}
+    assert(bc_host_reply(done,next.request_id,BC_REPLY_OK,(bc_slice){answer,sizeof(answer)},&diag)==BC_OK);
+    const bc_event finished=next_host_event(done,64);
+    assert(finished.kind==BC_DONE && finished.return_i32==77);
+    const bc_event failed_request=next_host_event(rejected,64);
+    assert(failed_request.kind==BC_HOST_REQUEST);
+    assert(bc_host_reply(rejected,failed_request.request_id,BC_REPLY_ERR,(bc_slice){error,sizeof(error)},&diag)==BC_OK);
+    const bc_event recovered=next_host_event(rejected,64);
+    assert(recovered.kind==BC_DONE && recovered.return_i32==17);
+    assert(bc_instance_destroy(done)==BC_OK && bc_instance_destroy(cancelled)==BC_OK);
+    assert(bc_instance_destroy(rejected)==BC_OK && bc_engine_destroy(engine)==BC_OK);
+}
+
 int main(void){
     uint8_t text[]="module main; fn i32 inc(i32 n){return n+1;} "
         "pub fn i32 main(){var i32 n=70;while(n<77){n=inc(n);}return n;}";
@@ -579,6 +647,7 @@ int main(void){
     independent_engine_threads();
     revision_two_engines();
     revision_two_host_exchange();
+    revision_two_large_host_reply();
     printf("PASS: quanta 1/64 return 77 and consume %" PRIu64 " fuel; cancellation and ownership verified\n",a.fuel_used);
     puts("PASS: four owner threads independently compiled, stepped, and destroyed their Engines without retries");
     puts("PASS: revision-2 query, Engine policy admission, diagnostic sizing, quotas and stale handles");
@@ -591,5 +660,6 @@ int main(void){
     puts("PASS: revision-2 byte input snapshots, empty input, exact byte quota, and peak accounting");
     puts("PASS: revision-2 output authority, binary completion views, cancellation, and trap rollback");
     puts("PASS: revision-2 host request correlation, independent replies, cancellation, and fatal reply");
+    puts("PASS: 8193-byte host reply snapshot, cancellation during installation, and guest Result error");
     return 0;
 }

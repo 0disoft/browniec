@@ -219,5 +219,12 @@ The Windows C host passed /Od and /O2 with default stacks. Two Instances pinned
 one Program and returned 77 and 78 at quanta 1 and 64 with equal Fuel and peak
 accounted bytes. Tests cover capability metadata, missing grants, cross-Instance
 and duplicate replies, malformed TLV, overwriting caller buffers, cancellation,
-fatal reply, and stale handles. Large typed payload receipt through the C ABI
-still needs a focused native test.
+fatal reply, and stale handles.
+
+Both profiles also received an 8193-byte Buffer reply in three receipt chunks.
+After the caller overwrote its reply buffer, the next guest host request
+contained every original byte. One Instance cancelled after a 4096-unit
+installation step without publishing a follow-up request or output. The
+explicit Result error arm returned 17. This fixture uses a direct switch on
+the host call. A saved Result with an explicit `brownie::bytes::Buffer` type
+annotation still fails to compile through the indexed preview path.
