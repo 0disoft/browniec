@@ -2,16 +2,17 @@
   "schema": "browniec.abi-registry-transport/v1",
   "compilerRevision": "801c5d8caa64d19aab8925763d6bf07f65f26418",
   "compilerSha256": "13f32b5ffc77b38b34d91eacee465e95dbfe569d9eff3344351d3148fd1e87ab",
-  "transportSha256": "e08554d63d567e9100bc47d51594e3babcab01f65e6284b972239d1eed599ccb",
-  "kernelSha256": "8a27896a2597323a53fda255bc1c521101d929e416e83d6e3d005f7c8c3a5fbb",
-  "retentionSha256": "19e295a582ecaf048fe34c448247ab860c951a18b3d4ff157803160764ab1f54",
+  "transportSha256": "baa2bc3fdf42d3be54665bb0b6febcab1436ebb33547946cd5f25407f1f068ef",
+  "kernelSha256": "26c5ae9a50d7b1fd39a4ebd36662e8201a64777f0e3f9328cffad5e674155755",
+  "retentionSha256": "27818d7103de2c3c7bd05c8a5396b4496d795466a3b1ca0cc8c8fcb71c12a799",
   "types": {
     "Admission": "fy_struct_0",
     "Identity": "fy_struct_1",
-    "Slot": "fy_struct_2",
-    "Table": "fy_struct_3",
+    "Slot": "fy_struct_3",
     "AdmissionResult": "fy_tagged_0",
-    "WordResult": "fy_tagged_1"
+    "WordResult": "fy_tagged_1",
+    "Index": "fy_struct_2",
+    "CommittedSlots": "fy_mut_struct_slice"
   },
   "functions": {
     "active": "fy_fn_0",
@@ -42,13 +43,14 @@
     "Admission": 40,
     "Identity": 16,
     "Slot": 56,
-    "Table": 3608,
     "AdmissionResult": 56,
-    "WordResult": 24
+    "WordResult": 24,
+    "Index": 32,
+    "CommittedSlots": 16
   },
   "resultTags": {
     "ok": 0,
     "err": 1
   },
-  "note": "Reviewed complete 93204-byte generated transport, 23 functions. Private binding, not stable C ABI. Regenerate/review on ANY compiler/kernel/retention change."
+  "note": "Reviewed complete 93655-byte generated transport, 23 functions. Private binding, not stable C ABI. Regenerate/review on ANY compiler/kernel/retention change."
 }

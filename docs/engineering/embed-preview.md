@@ -32,7 +32,7 @@ after creation appears in a terminal trap event.
 Release the Program handle once no more Instances need to be created. Live
 Instances retain their pins and can continue. Destroy each Instance before
 destroying the Engine. The Engine rejects destruction while it has live public
-children. Handles are generation-checked integers in the shared 64-slot
+children. Handles are generation-checked integers in the shared 65,536-slot
 registry. The preview caps each Engine at eight Programs and sixteen Instances.
 The creating OS thread owns the Engine and its children for life. Separate
 owner threads can compile and step independent Engines concurrently. The

@@ -49,10 +49,10 @@ static int basic(void) {
     struct { unsigned char before[16]; bc_abi_registry_admission a; unsigned char after[16]; } framed;
     unsigned char snapshot[sizeof(framed)];
     uint64_t e, p, instance, other, removed = UINT64_MAX, out = UINT64_MAX;
-    uint64_t malformed[] = {0, 1, UINT64_C(4294967296), UINT64_C(4294967361), UINT64_MAX};
+    uint64_t malformed[] = {0, 1, UINT64_C(4294967296), UINT64_C(4295032833), UINT64_MAX};
     size_t i; foreign_task t; HANDLE thread; DWORD code;
     CHECK(bc_abi_registry_inspect(&info) == 0);
-    CHECK(info.capacity == 64 && info.table_bytes == 3608 && info.committed_bytes == 0 && info.allocation_count == 0);
+    CHECK(info.capacity == 65536 && info.table_bytes == 3670048 && info.committed_bytes == 0 && info.allocation_count == 0);
     memset(&a, 0xA5, sizeof(a)); untouched = a;
     CHECK(bc_abi_registry_enter(0, 1, 0, &a) == 2 && memcmp(&a, &untouched, sizeof(a)) == 0);
     CHECK(released() == 0);
@@ -155,22 +155,51 @@ static int basic(void) {
     puts("PASS registry basic: real wrappers, staged outputs, OS ownership, busy, stale, rollback"); return 0;
 }
 static int capacity(void) {
-    uint64_t e, p[63], out = UINT64_MAX; size_t i;
-    bc_abi_registry_admission a; bc_abi_registry_info info;
+    static uint64_t programs[65535];
+    uint64_t e, out = UINT64_MAX;
+    bc_abi_registry_admission a, unused;
+    bc_abi_registry_info info;
+    CHECK(bc_abi_registry_create_engine(0, &out) == 1 && out == UINT64_MAX);
+    CHECK(bc_abi_registry_inspect(&info) == 0 && info.committed_bytes == 0);
     CHECK(bc_abi_registry_create_engine(1, &e) == 0);
     CHECK(bc_abi_registry_enter(e, 1, e, &a) == 0);
-    for (i = 0; i < 63; ++i) { CHECK(bc_abi_registry_insert(&a, 2, i + 2, &p[i]) == 0); }
-    CHECK(p[62] == UINT64_C(4294967360));
-    CHECK(bc_abi_registry_insert(&a, 2, 65, &out) == 8 && out == UINT64_MAX);
-    CHECK(bc_abi_registry_create_engine(65, &out) == 8 && out == UINT64_MAX);
+    /* 73 complete rows fit one page. Row 74 straddles the first boundary. */
+    for (size_t i = 0; i < 72; ++i) {
+        CHECK(bc_abi_registry_insert(&a, 2, i + 2, &programs[i]) == 0);
+    }
+    CHECK(bc_abi_registry_inspect(&info) == 0 && info.committed_bytes == 4096);
+    CHECK(bc_abi_registry_insert(&a, 3, 74, &out) == 1 && out == UINT64_MAX);
+    CHECK(bc_abi_registry_enter(UINT64_C(4294967370), 2, e, &unused) == 2);
+    CHECK(bc_abi_registry_inspect(&info) == 0 && info.allocation_count == 1);
+    CHECK(bc_abi_registry_insert(&a, 2, 74, &programs[72]) == 0);
+    CHECK(programs[72] == UINT64_C(4294967370));
+    CHECK(bc_abi_registry_inspect(&info) == 0 && info.committed_bytes == 8192);
+    for (size_t i = 73; i < 65535; ++i) {
+        CHECK(bc_abi_registry_insert(&a, 2, i + 2, &programs[i]) == 0);
+        CHECK(programs[i] == UINT64_C(4294967298) + i);
+    }
+    CHECK(programs[65534] == UINT64_C(4295032832));
+    CHECK(bc_abi_registry_insert(&a, 2, 65537, &out) == 8 && out == UINT64_MAX);
+    CHECK(bc_abi_registry_create_engine(65537, &out) == 8 && out == UINT64_MAX);
     CHECK(bc_abi_registry_remove(&a, &out) == 3 && out == UINT64_MAX);
     CHECK(released() == 0 && bc_abi_registry_leave(&a) == 0);
-    for (i = 0; i < 63; ++i) { CHECK(drop(p[i], 2, e, i + 2) == 0); }
+
+    CHECK(drop(programs[72], 2, e, 74) == 0);
+    CHECK(bc_abi_registry_enter(e, 1, e, &a) == 0);
+    CHECK(bc_abi_registry_insert(&a, 2, 65537, &out) == 0);
+    CHECK(out == programs[72] + UINT64_C(4294967296));
+    CHECK(bc_abi_registry_leave(&a) == 0);
+    CHECK(bc_abi_registry_enter(programs[72], 2, e, &unused) == 2);
+    CHECK(drop(out, 2, e, 65537) == 0);
+    for (size_t i = 0; i < 65535; ++i) {
+        if (i != 72) { CHECK(drop(programs[i], 2, e, i + 2) == 0); }
+    }
     CHECK(drop(e, 1, e, 1) == 0);
-    CHECK(bc_abi_registry_inspect(&info) == 0 && info.allocation_count == 1 && info.committed_bytes == 4096);
+    CHECK(bc_abi_registry_inspect(&info) == 0 && info.allocation_count == 896 && info.committed_bytes == 3670016);
     CHECK(bc_abi_registry_create_engine(100, &out) == 0 && out == e + UINT64_C(4294967296));
     CHECK(drop(out, 1, out, 100) == 0 && released() == 0);
-    puts("PASS registry capacity: 64 slots, failure rollback, retained allocation and generations"); return 0;
+    puts("PASS registry capacity: 65536 slots, 896 lazy pages, cross-page reuse and retained generations");
+    return 0;
 }
 typedef struct concurrent_task { HANDLE start; uint64_t first; unsigned index; int failed; } concurrent_task;
 static DWORD WINAPI concurrent_calls(LPVOID raw) {

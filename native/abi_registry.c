@@ -13,16 +13,21 @@
 #undef main
 
 _Static_assert(sizeof(uintptr_t) == 8, "x64 transport only");
-_Static_assert(sizeof(fy_struct_3) == 3608, "reviewed kernel table");
-_Static_assert(sizeof(fy_struct_2) == 56, "reviewed slot");
+_Static_assert(sizeof(fy_struct_2) == 32, "reviewed registry index");
+_Static_assert(sizeof(fy_struct_3) == 56, "reviewed slot");
 _Static_assert(sizeof(bc_abi_registry_admission) == 40, "internal admission");
 _Static_assert(offsetof(bc_abi_registry_admission, object) == 32, "object offset");
-_Static_assert(sizeof(fy_struct_3) <= 4096, "bounded one-page metadata");
+enum { SLOT_LIMIT = 65536, PAGE_BYTES = 4096, SLOT_BYTES = SLOT_LIMIT * sizeof(fy_struct_3),
+       REGISTRY_BUDGET = 4 * 1024 * 1024, NEEDS_PAGE = 13 };
+_Static_assert(SLOT_BYTES % PAGE_BYTES == 0, "page-exact slot reservation");
+_Static_assert(SLOT_BYTES + PAGE_BYTES <= REGISTRY_BUDGET, "room for index and lock bookkeeping");
 
 /* Accessed only while the single helper's guard is owned. Allocation and every
    generation tombstone persist for module lifetime, even with zero live handles.
    No production/test reset, generation injection or table accessor exists. */
-static fy_struct_3 *registry;
+static uint8_t *registry;
+static fy_struct_2 registry_index;
+static size_t committed_bytes;
 // This bounded trap context is also guard-protected; no extra per-thread TLS.
 static bc_abi_thread_identity held_identity;
 static int guard_held;
@@ -88,19 +93,41 @@ static uint32_t admission_status(fy_tagged_0 result) {
     if (result.tag != FY_RESULT_ERR) { registry_fail_fast(); }
     return fy_fn_19(result.p_1);
 }
+/* Expose only whole committed rows, including when one row crosses pages. */
+static fy_mut_struct_slice committed_slots(void) {
+    return (fy_mut_struct_slice){registry, committed_bytes / sizeof(fy_struct_3)};
+}
+
+static uint32_t commit_page(void) {
+    if (committed_bytes >= SLOT_BYTES) { registry_fail_fast(); }
+    uint8_t *base = registry;
+    if (base == NULL) {
+        base = VirtualAlloc(NULL, SLOT_BYTES, MEM_RESERVE, PAGE_READWRITE);
+        if (base == NULL) { return 6; }
+    }
+    if (VirtualAlloc(base + committed_bytes, PAGE_BYTES, MEM_COMMIT, PAGE_READWRITE) == NULL) {
+        if (registry == NULL && !VirtualFree(base, 0, MEM_RELEASE)) { registry_fail_fast(); }
+        return 6;
+    }
+    registry = base;
+    committed_bytes += PAGE_BYTES;
+    return 0;
+}
 uint32_t bc_abi_registry_create_engine(uint64_t object, uint64_t *out_handle) {
     bc_abi_thread_identity identity; fy_tagged_1 result;
     uint32_t status; uint64_t candidate;
     if (out_handle == NULL) { return 1; }
     status = begin(&identity); if (status != 0) { return status; }
-    if (registry == NULL) {
-        fy_struct_3 *allocated = VirtualAlloc(NULL, 4096, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
-        if (allocated == NULL) { return finish(identity, 6); }
-        *allocated = fy_fn_3(); /* one-time Fairy initialization */
-        registry = allocated;
-    }
-    result = fy_fn_2(registry, caller(identity), (uintptr_t)object);
+    if (registry == NULL) { registry_index = fy_fn_3(SLOT_LIMIT); }
+    result = fy_fn_2(committed_slots(), &registry_index, caller(identity), (uintptr_t)object);
     status = word_status(result);
+    if (status == NEEDS_PAGE) {
+        status = commit_page();
+        if (status != 0) { return finish(identity, status); }
+        result = fy_fn_2(committed_slots(), &registry_index, caller(identity), (uintptr_t)object);
+        status = word_status(result);
+        if (status != 0) { registry_fail_fast(); }
+    }
     candidate = status == 0 ? result.p_0 : 0;
     status = finish(identity, status);
     if (status == 0) { memcpy(out_handle, &candidate, sizeof(candidate)); }
@@ -113,7 +140,7 @@ uint32_t bc_abi_registry_enter(uint64_t target, uint32_t kind, uint64_t engine,
     if (out_admission == NULL) { return 1; }
     status = begin(&identity); if (status != 0) { return status; }
     if (registry == NULL) { return finish(identity, 2); }
-    result = fy_fn_5(registry, (uintptr_t)target, kind, (uintptr_t)engine, caller(identity));
+    result = fy_fn_5(committed_slots(), &registry_index, (uintptr_t)target, kind, (uintptr_t)engine, caller(identity));
     status = admission_status(result);
     if (status == 0) { candidate = pack(result.p_0); }
     status = finish(identity, status);
@@ -126,7 +153,7 @@ uint32_t bc_abi_registry_enter_instance(uint64_t instance, bc_abi_registry_admis
     if (out_admission == NULL) { return 1; }
     status = begin(&identity); if (status != 0) { return status; }
     if (registry == NULL) { return finish(identity, 2); }
-    result = fy_fn_6(registry, (uintptr_t)instance, caller(identity));
+    result = fy_fn_6(committed_slots(), &registry_index, (uintptr_t)instance, caller(identity));
     status = admission_status(result);
     if (status == 0) { candidate = pack(result.p_0); }
     status = finish(identity, status);
@@ -141,8 +168,16 @@ uint32_t bc_abi_registry_insert(const bc_abi_registry_admission *admission,
     memcpy(&a, admission, sizeof(a)); if (a.reserved != 0) { return 1; }
     status = begin(&identity); if (status != 0) { return status; }
     if (registry == NULL) { return finish(identity, 2); }
-    result = fy_fn_10(registry, unpack(a), kind, (uintptr_t)object, caller(identity));
-    status = word_status(result); candidate = status == 0 ? result.p_0 : 0;
+    result = fy_fn_10(committed_slots(), &registry_index, unpack(a), kind, (uintptr_t)object, caller(identity));
+    status = word_status(result);
+    if (status == NEEDS_PAGE) {
+        status = commit_page();
+        if (status != 0) { return finish(identity, status); }
+        result = fy_fn_10(committed_slots(), &registry_index, unpack(a), kind, (uintptr_t)object, caller(identity));
+        status = word_status(result);
+        if (status != 0) { registry_fail_fast(); }
+    }
+    candidate = status == 0 ? result.p_0 : 0;
     status = finish(identity, status);
     if (status == 0) { memcpy(out_handle, &candidate, sizeof(candidate)); }
     return status;
@@ -154,7 +189,7 @@ uint32_t bc_abi_registry_leave(const bc_abi_registry_admission *admission) {
     memcpy(&a, admission, sizeof(a)); if (a.reserved != 0) { return 1; }
     status = begin(&identity); if (status != 0) { return status; }
     if (registry == NULL) { return finish(identity, 2); }
-    result = fy_fn_13(registry, unpack(a), caller(identity));
+    result = fy_fn_13(committed_slots(), unpack(a), caller(identity));
     return finish(identity, word_status(result));
 }
 uint32_t bc_abi_registry_remove(const bc_abi_registry_admission *admission, uint64_t *out_object) {
@@ -164,7 +199,7 @@ uint32_t bc_abi_registry_remove(const bc_abi_registry_admission *admission, uint
     memcpy(&a, admission, sizeof(a)); if (a.reserved != 0) { return 1; }
     status = begin(&identity); if (status != 0) { return status; }
     if (registry == NULL) { return finish(identity, 2); }
-    result = fy_fn_17(registry, unpack(a), caller(identity));
+    result = fy_fn_17(committed_slots(), &registry_index, unpack(a), caller(identity));
     status = word_status(result); candidate = status == 0 ? result.p_0 : 0;
     status = finish(identity, status);
     if (status == 0) { memcpy(out_object, &candidate, sizeof(candidate)); }
@@ -174,9 +209,9 @@ uint32_t bc_abi_registry_inspect(bc_abi_registry_info *out_info) {
     bc_abi_thread_identity identity; bc_abi_registry_info candidate = {0}; uint32_t status;
     if (out_info == NULL) { return 1; }
     status = begin(&identity); if (status != 0) { return status; }
-    candidate.capacity = fy_fn_1(); candidate.table_bytes = sizeof(fy_struct_3);
-    candidate.committed_bytes = registry == NULL ? 0 : 4096;
-    candidate.allocation_count = registry == NULL ? 0 : 1;
+    candidate.capacity = fy_fn_1(); candidate.table_bytes = SLOT_BYTES + sizeof(registry_index);
+    candidate.committed_bytes = committed_bytes;
+    candidate.allocation_count = committed_bytes / PAGE_BYTES;
     status = finish(identity, 0);
     if (status == 0) { memcpy(out_info, &candidate, sizeof(candidate)); }
     return status;

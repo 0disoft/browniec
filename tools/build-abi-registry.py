@@ -15,9 +15,9 @@ import sys
 ROOT = Path(__file__).resolve().parent.parent
 COMPILER = '13f32b5ffc77b38b34d91eacee465e95dbfe569d9eff3344351d3148fd1e87ab'
 REVISION = '801c5d8caa64d19aab8925763d6bf07f65f26418'
-TRANSPORT = 'e08554d63d567e9100bc47d51594e3babcab01f65e6284b972239d1eed599ccb'
-KERNEL = '8a27896a2597323a53fda255bc1c521101d929e416e83d6e3d005f7c8c3a5fbb'
-RETENTION = '19e295a582ecaf048fe34c448247ab860c951a18b3d4ff157803160764ab1f54'
+TRANSPORT = 'baa2bc3fdf42d3be54665bb0b6febcab1436ebb33547946cd5f25407f1f068ef'
+KERNEL = '26c5ae9a50d7b1fd39a4ebd36662e8201a64777f0e3f9328cffad5e674155755'
+RETENTION = '27818d7103de2c3c7bd05c8a5396b4496d795466a3b1ca0cc8c8fcb71c12a799'
 HELPER = '5c562f408deb71cc2a73aeab46ed1d5c137ba2ae5f894b0c3ae96feb65c3a488'
 HELPER_HEADER = '982becbdcc9310ba557a6e8e52861ffd8e24de19a9ec8125786d4199fcb08e6a'
 FEATURES = ['src/abi_handles.fy', 'native/abi_registry.c', 'native/abi_registry.h',
@@ -77,7 +77,7 @@ def main():
     compiler = args.compiler.resolve()
     receipt = dict(schema='browniec.abi-registry/v1', status='incomplete',
                    capturedAt=datetime.now(timezone.utc).isoformat(), commands=[],
-                   scope='Internal 64-slot lazy module coordinator; not full E02/E01 or VM/native lifecycle')
+                   scope='Internal 65,536-slot lazy module coordinator; not full E02/E01 or VM/native lifecycle')
 
     def run(command, cwd=output, env=None):
         command = list(map(str, command))
@@ -199,7 +199,7 @@ def main():
              sha((output / 'abi_registry_generated.c').read_bytes()) == TRANSPORT, 'Frozen build identity changed')
         receipt.update(status='passed', profiles=results, runtimeEnvironment='cleared; empty tool PATH',
                        kernelRerun=False, publicExports=False,
-                       limitations=['64-slot module singleton, not accepted 65536-slot lazy paging',
+                       limitations=['module singleton; process-wide ownership across multiple DLL copies remains open',
                                     'no VM/native Engine lifecycle, Program pins, public E01 APIs or recovery',
                                     'generation exhaustion relies on matching prior kernel native evidence',
                                     'no allocator/TLS failure injection or process-wide coordination across DLL copies'])

@@ -14,15 +14,14 @@ no reference-model implementation or archive instructions were imported.
 
 ## Bounds and identity
 
-`src/abi_handles.fy` stores 64 slots in a caller-owned `Table`. This is a bounded
-prerequisite kernel, not a change to the accepted production ceiling of 65,536
-slots / 4 MiB including page/index/lock overhead. Fixed initialization of this
-small table does not implement the accepted lazy process table. Do not combine
-independent kernel tables as pages: their slot namespaces would collide.
+`src/abi_handles.fy` owns the index and accepts the coordinator's slice of
+committed slots. The Windows coordinator grows that slice toward 65,536
+slots under the 4 MiB registry budget. The synthetic kernel tests exercise
+the same code with a local 64-slot store and a 64-slot index limit.
 
 A handle uses an x64 `usize`: low32 is a one-based slot, high32 is generation.
-Both zero fields, slots beyond 64, free slots and stale generations are rejected
-before object access. Kind is stored in the slot (1 Engine, 2 Program, 3 Instance).
+Zero fields, uncommitted or out-of-range slots, free slots and stale
+generations are rejected before object access. Kind is stored in the slot (1 Engine, 2 Program, 3 Instance).
 Release increments generation; releasing generation UINT32_MAX permanently
 retires the slot with generation zero. Free and retired slots retain their
 history. There is no clearing, compaction or reset API. A next-unused cursor
@@ -40,8 +39,8 @@ allocate/free objects or implement Program pins and Instance state.
 
 ## Required native coordinator contract
 
-- Own one Table for the DLL lifetime. Do not copy, transplant, reset, serialize
-  or recreate live metadata or generation tombstones. `empty()` is first-use
+- Own one index and slot store for the DLL lifetime. Do not copy, transplant, reset, serialize
+  or recreate live metadata or generation tombstones. `empty(limit)` is first-use
   construction, not recovery. Unload/reload stale-handle checking is unsupported.
 - Compute `Identity` internally on every call, never from C/guest arguments.
   `thread` is the actual current OS thread ID; `lifetime` is a nonzero TLS ticket
@@ -49,7 +48,7 @@ allocate/free objects or implement Program pins and Instance state.
   OS ID reuse alone cannot recover ownership. Zero components are rejected.
   The kernel compares these values; it does not obtain or verify OS identity,
   observe thread exit, transfer ownership or adopt dead-owner objects.
-- Protect **all** Table reads and writes, including creation, admission,
+- Protect **all** index and slot reads and writes, including creation, admission,
   publication, leave and removal, with one process-wide OS lock. Hold it only
   for these bounded metadata operations; never run guest code, user callbacks,
   allocation of native objects or OS I/O under it. This slice has no lock and

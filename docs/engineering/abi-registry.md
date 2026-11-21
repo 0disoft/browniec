@@ -13,39 +13,28 @@ does not include the helper changes or alter the existing Fairy kernel.
 
 ## Ownership and bounds
 
-`native/abi_registry.c` owns one static pointer to a 3,608-byte Fairy Table.
-The first create-Engine attempt allocates and commits 4,096 bytes with
-`VirtualAlloc`, initializes the Table through compiled `abi_handles::empty`,
-and publishes it under the identity helper's exclusive SRW guard. Even a
-subsequent rejected object ID may leave this one-time metadata allocation in
-place; it does not publish a handle. Other operations before that first attempt
-return InvalidHandle without constructing a Table. Inspection does not allocate
-a Table, although it may initialize the OS helper's TLS identity machinery.
+`native/abi_registry.c` owns one 32-byte Fairy index and one lazily committed
+slot store. On the first valid publication it reserves 3,670,016 bytes of
+virtual address space and commits 4,096 bytes. It commits another page only
+when Fairy reports that a validated insertion needs a fresh slot outside the
+committed prefix. Slots may straddle two pages. The C bridge exposes only
+whole committed rows. A rejected request or failed page commitment leaves
+the handle output, slot allocation cursor and admission unchanged.
 
-Exactly 64 slots share one namespace. Initialization happens once; allocation,
-free-slot selection, generations, retirement, kind, exact Engine association,
-caller identity, busy epochs and child-blocked Engine removal are decided by
-compiled Fairy. C does not reproduce those algorithms. Releasing the final
-handle never frees/reinitializes the Table or discards tombstones. There is no
-reset, native generation accessor/injector or state-mutation test hook.
+Exactly 65,536 slots share one token namespace. The 56-byte slots cost at
+most 3,670,016 committed bytes across 896 pages. The 4 MiB registry ceiling
+leaves room for the index, SRW lock and static coordination fields. The
+committed slot bytes are distinct from process RAM and OS allocator overhead.
+Lookup of an uncommitted slot does not allocate. Releasing handles retains
+committed pages and their generation tombstones for the lifetime of the module.
 
-The 4,096 figure is committed metadata, not whole-process RAM or reserved virtual
-address space. Windows reservation granularity can reserve a larger region
-(normally 64 KiB), and OS helper/CRT/image/thread overhead is separate. Native
-slot size is 56 bytes; the generated transport asserts all relevant sizes and
-offsets. Coordinator trap bookkeeping is bounded static data protected by the
-same guard; it adds no separate per-thread TLS allocation. There is no complete
-4 MiB process accounting ledger or 65,536-slot lazy page implementation here.
-The accepted production ceiling is unchanged; this is the existing 64-slot
-kernel connected to real serialized module ownership.
-
-The 2026-11-21 kernel update replaces the two linear slot scans with a
-next-unused cursor, a free list, and per-Engine child counts. Publishing or
-reusing a slot and checking whether an Engine has children both take constant
-work while holding the SRW guard. The larger table still fits the same
-4096-byte commitment. Windows /Od and /O2 passed capacity and generation
-reuse, busy and stale handles, eight-thread concurrency and thread lifetime
-checks. Local receipt: `build/abi-registry/20261121T133402282794Z/receipt.json`.
+Compiled Fairy owns free-slot selection, generation retirement, kind, Engine
+association, caller identity, busy epochs and the live-child check.
+Allocation and Engine removal use constant work in the slot count.
+Windows /Od and /O2 filled all slots, rejected the next insertion, verified
+the first page transition from slot 73 to 74, and reused the straddling slot
+while rejecting its previous handle. Local receipt:
+`build/abi-registry/20261121T133914281197Z/receipt.json`.
 
 Link exactly one registry object and one identity-helper object into the owning
 module. Every caller of this coordinator shares that state. Independent copies
@@ -170,7 +159,7 @@ fresh-process scenarios each with a cleared environment and empty tool PATH:
   thread rejection, same-Engine reentry across unlocked work, independent Engine
   admission, stale/duplicate receipts, child-blocked removal, untouched failure
   outputs, reserved-field admission, success canaries and opaque object IDs.
-- Capacity: exactly 64 slots, rejected insertion/creation without output
+- Capacity at the original checkpoint: exactly 64 slots, rejected insertion/creation without output
   publication, rollback leave, complete release and generation reuse while the
   one metadata allocation remains.
 - Concurrent: eight actual threads race first creation and complete 128

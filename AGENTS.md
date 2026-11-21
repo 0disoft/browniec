@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-21): [Constant-time handle metadata](docs/engineering/abi-registry.md#ownership-and-bounds)
-  allocates from a free list and checks per-Engine child counts. Windows /Od
-  and /O2 verify the one-page coordinator before production paging.
+- Latest runtime checkpoint (2026-11-21): [Lazy registry pages](docs/engineering/abi-registry.md#ownership-and-bounds)
+  support 65,536 slots in a single DLL namespace. Windows /Od and /O2 verify
+  full capacity, cross-page reuse, and the embedding DLL lifecycle.
 
 # Brownie C agent guidance
 
