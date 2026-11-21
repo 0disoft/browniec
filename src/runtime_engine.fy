@@ -159,6 +159,13 @@ pub fn Result<control::Observation,Error> control_memory(ref Engine e){
     let u32 s=unsafe{control_access_raw(e as ptr void)};
     if(s!=0){return .err(error(s));}return .ok(control::observe(ref e.meta.control));
 }
+// The embedding adapter holds its authenticated owner admission across these calls.
+pub fn u32 reserve_embedding_control(ref mut Engine e,usize bytes){
+    return unsafe{call_raw(e as ptr mut void,12,0,bytes)};
+}
+pub fn u32 release_embedding_control(ref mut Engine e,usize bytes){
+    return unsafe{call_raw(e as ptr mut void,13,0,bytes)};
+}
 pub fn Result<Engine,Error> create(Limits limits){return create_with_control_budget(limits,4194304);}
 pub fn Result<memory::Observation,Error> program_memory(ref Engine e){
     let u32 s=unsafe{control_access_raw(e as ptr void)};
@@ -183,6 +190,9 @@ pub fn Result<Engine,Error> create_with_instance_memory(Limits limits,usize cont
 }
 
 pub fn Result<Engine,Error> create_with_policy(policy::Policy ceiling){
+    return create_with_policy_control(ceiling,0);
+}
+pub fn Result<Engine,Error> create_with_policy_control(policy::Policy ceiling,usize extra_control){
     let policy_limits::EngineLimits engine=policy::engine_limits(ref ceiling);
     let policy_limits::RunLimits run=policy::run_limits(ref ceiling);
     let policy_limits::CompileLimits compile=policy::compile_limits(ref ceiling);
@@ -195,8 +205,10 @@ pub fn Result<Engine,Error> create_with_policy(policy::Policy ceiling){
     if(slot==0 || slot>(18446744073709551615-base)/8 || strings>18446744073709551615-base-slot*8){
         return .err(error(8));
     }
-    let usize total=base+slot*8+strings;
-    if(total>engine.control_bytes || total>engine.memory_bytes){return .err(error(8));}
+    let usize core=base+slot*8+strings;
+    if(core>engine.control_bytes || extra_control>engine.control_bytes-core){return .err(error(8));}
+    let usize total=core+extra_control;
+    if(total>engine.memory_bytes){return .err(error(8));}
     var vec::Vec<policy::Policy> owned=vec::empty<policy::Policy>();
     if(!vec::reserve<policy::Policy>(ref mut owned,1).is_ok){return .err(error(6));}
     if(!vec::push<policy::Policy>(ref mut owned,ceiling).is_ok){return .err(error(6));}
@@ -2765,6 +2777,18 @@ fn u32 claim_host_inner(ref mut Meta m,ref vec::Vec<Program> p,ref mut vec::Vec<
     return drive_host(m,p,v,outputs,scratch,ii,3,0,instance,request,0,b"",0);
 }
 
+fn u32 reserve_control_inner(ref mut Meta m,usize bytes){
+    var control::Budget updated=m.control;
+    if(!control::reserve(ref mut updated,bytes).is_ok ||
+        !memory::reserve_control(ref mut m.programs,bytes).is_ok){return failed(m,8);}
+    m.control=updated;
+    return success(m,0);
+}
+fn u32 release_control_inner(ref mut Meta m,usize bytes){
+    assert(control::release(ref mut m.control,bytes).is_ok);
+    assert(memory::release_control(ref mut m.programs,bytes).is_ok);
+    return success(m,0);
+}
 fn u32 dispatch_inner(ref mut Meta m,ref mut vec::Vec<Program> p,ref mut vec::Vec<Program> scratch,
     ref mut vec::Vec<Instance> v,ref mut vec::Vec<BoundInput> inputs,ref mut vec::Vec<BoundInput> input_scratch,
     ref mut vec::Vec<Output> outputs,ref mut vec::Vec<Output> output_scratch,u32 operation,usize id,usize argument){
@@ -2779,6 +2803,8 @@ fn u32 dispatch_inner(ref mut Meta m,ref mut vec::Vec<Program> p,ref mut vec::Ve
     if(operation==9){return prepare_instance_inner(m,p,v,inputs,outputs,id,argument);}
     if(operation==10){return step_instance_inner(m,p,v,inputs,outputs,output_scratch,id,argument);}
     if(operation==11){return claim_host_inner(m,p,v,outputs,output_scratch,id,argument);}
+    if(operation==12){return reserve_control_inner(m,argument);}
+    if(operation==13){return release_control_inner(m,argument);}
     return failed(m,1);
 }
 // After the last epoch, only bounded owner maintenance may run, under the
@@ -2790,7 +2816,7 @@ fn u32 maintenance_inner(ref mut Meta m,ref mut vec::Vec<Program> p,ref mut vec:
     if(m.thread!=thread || m.lifetime!=lifetime || thread==0 || lifetime==0){return 10;}
     if(m.active!=0){return 3;}if(m.closed){return failed(m,2);}
     if(m.admission!=0 && !m.poisoned){return failed(m,7);}
-    if(operation!=2 && operation!=3 && operation!=4 && operation!=6 && operation!=7 && operation!=8){
+    if(operation!=2 && operation!=3 && operation!=4 && operation!=6 && operation!=7 && operation!=8 && operation!=13){
         let u32 unavailable=if(m.poisoned){14}else{8};return failed(m,unavailable);
     }
     return dispatch_inner(m,p,scratch,v,inputs,input_scratch,outputs,output_scratch,operation,id,argument);

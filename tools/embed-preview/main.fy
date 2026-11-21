@@ -33,7 +33,7 @@ fn Result<engine::Engine,engine::Error> create(){
     return engine::create(engine::Limits{.programs=8,.instances=16,.fuel=fuel::cli_limit()});
 }
 
-fn Result<engine::Engine,engine::Error> create_configured(ptr u8 data,usize length){
+fn Result<engine::Engine,engine::Error> create_configured(ptr u8 data,usize length,usize extra_control){
     let usize lifetime=length;
     let ref u8[] source=unsafe{byte_slice::from_raw_parts(ref lifetime,data,length)};
     let policies::Policy policy=switch(policies::parse(source)){
@@ -46,7 +46,7 @@ fn Result<engine::Engine,engine::Error> create_configured(ptr u8 data,usize leng
             }));
         }
     };
-    return engine::create_with_policy(policy);
+    return engine::create_with_policy_control(policy,extra_control);
 }
 
 fn Result<usize,engine::Error> add_source(ref mut sources::Builder builder,ptr void rows,usize row){
@@ -209,7 +209,7 @@ fn i32 main(){
     unsafe{bc_embed_binding(6)};discard engine::destroy_instance(ref mut owner,1);
     unsafe{bc_embed_binding(7)};discard engine::release_program(ref mut owner,1);
     unsafe{bc_embed_binding(8)};discard engine::destroy(ref mut owner);
-    unsafe{bc_embed_binding(9)};discard create_configured(source,1);
+    unsafe{bc_embed_binding(9)};discard create_configured(source,1,1);
     unsafe{bc_embed_binding(10)};discard abi::validate(2,32,true);
     unsafe{bc_embed_binding(11)};discard instance_configured(ref mut owner,1,source,1,source,1,true,source,1,source,1);
     unsafe{bc_embed_binding(12)};discard engine::observe(ref mut owner,1);
@@ -219,5 +219,7 @@ fn i32 main(){
     unsafe{bc_embed_binding(16)};discard host_capability(ref owner,1,1);
     unsafe{bc_embed_binding(17)};discard host_request(ref owner,1);
     unsafe{bc_embed_binding(18)};discard host_reply(ref mut owner,1,1,0,source,1,1,0);
+    unsafe{bc_embed_binding(19)};discard engine::reserve_embedding_control(ref mut owner,1);
+    unsafe{bc_embed_binding(20)};discard engine::release_embedding_control(ref mut owner,1);
     return 0;
 }

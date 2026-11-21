@@ -703,6 +703,84 @@ static void revision_two_programs(bc_handle engine,bc_slice policy){
     assert(bc_program_release(engine,program)==BC_INVALID_HANDLE);
 }
 
+static void set_control_budget(uint8_t *field,unsigned bytes){
+    char encoded[8];
+    assert(snprintf(encoded,sizeof(encoded),"%7u",bytes)==7);
+    memcpy(field,encoded,7);
+}
+
+static void revision_two_control_budget(bc_slice original){
+    uint8_t policy[2048],config[1024];
+    assert(original.len<sizeof(policy));
+    memcpy(policy,original.data,original.len);
+    policy[original.len]=0;
+    uint8_t *limit=(uint8_t *)strstr((const char *)policy,"\"control_bytes\": 1048576");
+    assert(limit);
+    limit+=sizeof("\"control_bytes\": ")-1;
+    const bc_slice authority={policy,original.len},empty={0};
+    const bc_slice run={config,read_fixture("run.json",config,sizeof(config))};
+    bc_diagnostic diagnostic={.struct_size=sizeof(diagnostic)};
+    bc_handle engine=0,program=0,first=0,second=0;
+    unsigned low=1,high=1048576;
+    while(low<high){
+        const unsigned trial=low+(high-low)/2;
+        set_control_budget(limit,trial);
+        const uint32_t status=bc_engine_create(2,authority,&engine,&diagnostic);
+        if(status==BC_OK){assert(bc_engine_destroy(engine)==BC_OK);high=trial;}
+        else{assert(status==BC_RESOURCE_LIMIT && !engine);low=trial+1;}
+    }
+    const unsigned baseline=low;
+    const unsigned program_bytes=80,instance_bytes=448,catalog_json_bytes=2;
+    static const uint8_t source[]="module main; pub fn i32 main(){return 77;}";
+    static const uint8_t invalid[]="module main; pub fn bool main(){return true;}";
+    static const uint8_t catalog[]="{\"schema\":\"brownie.catalog/1\",\"imports\":["
+        "{\"id\":0,\"module\":\"host::example\",\"symbol\":\"check\","
+        "\"parameters\":[\"i32\"],\"result\":\"Result<i32,u32>\",\"effect\":\"read\","
+        "\"capability\":\"host.example.check\",\"adapter_revision\":\"v1\"}]}";
+    const bc_slice catalog_json={catalog,sizeof(catalog)-1};
+    bc_source row={{(const uint8_t *)"main",4},{source,sizeof(source)-1}};
+
+    set_control_budget(limit,baseline+program_bytes-1);
+    assert(bc_engine_create(2,authority,&engine,&diagnostic)==BC_OK);
+    assert(bc_compile(engine,&row,1,empty,&program,&diagnostic)==BC_RESOURCE_LIMIT && !program);
+    assert(bc_engine_destroy(engine)==BC_OK);
+
+    set_control_budget(limit,baseline+program_bytes+catalog_json_bytes-1);
+    assert(bc_engine_create(2,authority,&engine,&diagnostic)==BC_OK);
+    assert(bc_compile(engine,&row,1,catalog_json,&program,&diagnostic)==BC_RESOURCE_LIMIT && !program);
+    assert(bc_compile(engine,&row,1,empty,&program,&diagnostic)==BC_OK);
+    assert(bc_program_release(engine,program)==BC_OK && bc_engine_destroy(engine)==BC_OK);
+
+    set_control_budget(limit,baseline+program_bytes+catalog_json_bytes);
+    assert(bc_engine_create(2,authority,&engine,&diagnostic)==BC_OK);
+    assert(bc_compile(engine,&row,1,catalog_json,&program,&diagnostic)==BC_OK);
+    assert(bc_program_release(engine,program)==BC_OK && bc_engine_destroy(engine)==BC_OK);
+
+    set_control_budget(limit,baseline+program_bytes+instance_bytes-1);
+    assert(bc_engine_create(2,authority,&engine,&diagnostic)==BC_OK);
+    assert(bc_compile(engine,&row,1,empty,&program,&diagnostic)==BC_OK);
+    assert(bc_instance_create(engine,program,empty,run,&first,&diagnostic)==BC_RESOURCE_LIMIT && !first);
+    assert(bc_program_release(engine,program)==BC_OK && bc_engine_destroy(engine)==BC_OK);
+
+    set_control_budget(limit,baseline+program_bytes+instance_bytes);
+    assert(bc_engine_create(2,authority,&engine,&diagnostic)==BC_OK);
+    row.source_utf8=(bc_slice){invalid,sizeof(invalid)-1};
+    assert(bc_compile(engine,&row,1,empty,&program,&diagnostic)==BC_COMPILE_ERROR && !program);
+    row.source_utf8=(bc_slice){source,sizeof(source)-1};
+    assert(bc_compile(engine,&row,1,empty,&program,&diagnostic)==BC_OK);
+    assert(bc_instance_create(engine,program,empty,(bc_slice){config,1},&first,&diagnostic)==BC_POLICY_ERROR && !first);
+    assert(bc_instance_create(engine,program,empty,run,&first,&diagnostic)==BC_OK);
+    assert(bc_instance_create(engine,program,empty,run,&second,&diagnostic)==BC_RESOURCE_LIMIT && !second);
+    assert(bc_instance_destroy(first)==BC_OK);
+    assert(bc_instance_create(engine,program,empty,run,&second,&diagnostic)==BC_OK);
+    assert(bc_program_release(engine,program)==BC_OK);
+    const bc_event done=finish_revision_two(second,64);
+    assert(done.kind==BC_DONE && done.return_i32==77);
+    assert(bc_instance_destroy(second)==BC_OK && bc_engine_destroy(engine)==BC_OK);
+    printf("PASS: control baseline %u, Program %u, Instance %u, catalog JSON %u bytes; exact admission and refunds\n",
+        baseline,program_bytes,instance_bytes,catalog_json_bytes);
+}
+
 static void revision_two_engines(void){
     bc_abi_info abi={0};
     assert(bc_get_abi_info_v2(1,sizeof(abi),&abi)==BC_ABI_MISMATCH && abi.struct_size==0);
@@ -749,6 +827,7 @@ static void revision_two_engines(void){
     assert(bc_engine_create(2,(bc_slice){policy,sizeof(policy)-1},&handle,&diagnostic)==BC_OK);
     assert(handle!=0);
     expect_diagnostic(&diagnostic,BC_OK);
+    revision_two_control_budget((bc_slice){policy,length});
     revision_two_programs(handle,(bc_slice){policy,length});
     revision_two_modules(handle,(bc_slice){policy,length});
     revision_two_named_entry(handle);

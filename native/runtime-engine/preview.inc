@@ -81,12 +81,13 @@ static void remove_preview(const bc_abi_registry_admission *admission){
 }
 
 static uint32_t create_engine(uint32_t revision,bc_slice policy,bc_handle *out){
+    const size_t extra_control=sizeof(preview_engine)-sizeof(bc_engine);
+    __typeof__(P1()) created=revision==BC_ABI_REVISION?P9(policy.data,policy.len,extra_control):P1();
+    if(created.tag!=FY_RESULT_OK){return preview_status(created.p_1.f_0);}
     preview_engine *owner=HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(*owner));
-    if(!owner){return BC_ALLOCATION_ERROR;}
-    __typeof__(P1()) created=revision==BC_ABI_REVISION?P9(policy.data,policy.len):P1();
-    if(created.tag!=FY_RESULT_OK){
-        HeapFree(GetProcessHeap(),0,owner);
-        return preview_status(created.p_1.f_0);
+    if(!owner){
+        if(P8(&created.p_0).tag!=FY_RESULT_OK){preview_invariant();}
+        return BC_ALLOCATION_ERROR;
     }
     owner->engine=created.p_0;
     owner->revision=revision;
@@ -171,6 +172,23 @@ static uint32_t compile_diagnostic(bc_diagnostic *out,uint32_t status,const bc_s
 
 /* Names from the validated catalog use only lower-case letters, digits and
    dots, so recording the required set does not need a JSON escape pass. */
+static void refund_control(preview_engine *owner,size_t bytes){
+    if(owner->revision==BC_ABI_REVISION && P20(&owner->engine,bytes)!=BC_OK){preview_invariant();}
+}
+
+static void free_control(preview_engine *owner,void *block,size_t bytes){
+    if(!HeapFree(GetProcessHeap(),0,block)){preview_invariant();}
+    refund_control(owner,bytes);
+}
+
+static void *allocate_control(preview_engine *owner,size_t bytes,DWORD flags,uint32_t *status){
+    *status=owner->revision==BC_ABI_REVISION?preview_status(P19(&owner->engine,bytes)):BC_OK;
+    if(*status!=BC_OK){return NULL;}
+    void *block=HeapAlloc(GetProcessHeap(),flags,bytes);
+    if(!block){refund_control(owner,bytes);*status=BC_ALLOCATION_ERROR;}
+    return block;
+}
+
 static uint32_t host_capabilities(preview_child *program,uint64_t required,bool emits){
     enum {max_imports=64, max_name=128};
     bc_slice names[max_imports+1];
@@ -193,8 +211,9 @@ static uint32_t host_capabilities(preview_child *program,uint64_t required,bool 
         if(j==count){names[count++]=emit;}
     }
     for(size_t i=0;i<count;++i){length+=names[i].len+2+(i!=0);}
-    uint8_t *json=HeapAlloc(GetProcessHeap(),0,length);
-    if(!json){return BC_ALLOCATION_ERROR;}
+    uint32_t status;
+    uint8_t *json=allocate_control(program->owner,length,0,&status);
+    if(!json){return status;}
     size_t at=0;
     json[at++]='[';
     for(size_t i=0;i<count;++i){
@@ -211,10 +230,12 @@ static uint32_t host_capabilities(preview_child *program,uint64_t required,bool 
 }
 
 static void free_program(preview_child *program){
-    if(program->program.catalog_backed && program->program.capabilities.data){
-        HeapFree(GetProcessHeap(),0,(void *)program->program.capabilities.data);
+    preview_engine *owner=program->owner;
+    const bc_slice capabilities=program->program.capabilities;
+    if(program->program.catalog_backed && capabilities.data){
+        free_control(owner,(void *)capabilities.data,capabilities.len);
     }
-    HeapFree(GetProcessHeap(),0,program);
+    free_control(owner,program,sizeof(*program)+program->program.module.len+program->program.function.len);
 }
 
 const uint8_t *bc_embed_source_data(const void *rows,uintptr_t index,uint32_t module_name){
@@ -262,10 +283,10 @@ static uint32_t compile_program(bc_handle engine,uint32_t revision,const bc_sour
         leave_preview(&admission);
         return compile_diagnostic(diagnostic,BC_INVALID_HANDLE,NULL,0,index,0,0);
     }
-    preview_child *program=HeapAlloc(GetProcessHeap(),0,sizeof(*program)+module.len+function.len);
+    preview_child *program=allocate_control(owner,sizeof(*program)+module.len+function.len,0,&status);
     if(!program){
         leave_preview(&admission);
-        return compile_diagnostic(diagnostic,BC_ALLOCATION_ERROR,NULL,0,index,0,0);
+        return compile_diagnostic(diagnostic,status,NULL,0,index,0,0);
     }
     *program=(preview_child){.owner=owner};
     uint8_t *names=(uint8_t *)(program+1);
@@ -382,8 +403,8 @@ static uint32_t create_instance(bc_handle engine,bc_handle program,uint32_t revi
     if(owner->revision!=revision){leave_preview(&admission);return BC_INVALID_HANDLE;}
     status=preparation_status(cancel_event);
     if(status!=BC_OK){leave_preview(&admission);return status;}
-    preview_run *instance=HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(*instance));
-    if(!instance){leave_preview(&admission);return BC_ALLOCATION_ERROR;}
+    preview_run *instance=allocate_control(owner,sizeof(*instance),HEAP_ZERO_MEMORY,&status);
+    if(!instance){leave_preview(&admission);return status;}
     uint8_t failure=0;
     if(revision==BC_ABI_REVISION){
         const bc_slice module=code->program.module,function=code->program.function;
@@ -412,7 +433,7 @@ static uint32_t create_instance(bc_handle engine,bc_handle program,uint32_t revi
     }
     // Setup Fuel exhaustion is a resource refusal before Instance publication.
     if(status==BC_COMPILE_ERROR && failure==8){status=BC_RESOURCE_LIMIT;}
-    if(status!=BC_OK){HeapFree(GetProcessHeap(),0,instance);}
+    if(status!=BC_OK){free_control(owner,instance,sizeof(*instance));}
     leave_preview(&admission);
     return preview_status(status);
 }
@@ -675,7 +696,7 @@ static uint32_t release_child(bc_handle child,bc_handle engine,uint32_t kind,uin
         remove_preview(&admission);
         --owner->children;
         if(kind==PROGRAM_HANDLE){free_program(object);}
-        else{HeapFree(GetProcessHeap(),0,object);}
+        else{free_control(owner,object,sizeof(preview_run));}
     }else{status=dropped.p_1.f_0;leave_preview(&admission);}
     return preview_status(status);
 }

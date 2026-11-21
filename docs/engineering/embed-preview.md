@@ -74,6 +74,28 @@ the diagnostic untouched. An invalid diagnostic size leaves its fields
 untouched. Destroy a revision-2 Engine on its creating thread with
 `bc_engine_destroy`. Scalar preview calls reject these Engine handles.
 
+## Revision-2 control memory
+
+The Engine charges the native wrapper's additional fields with its initial
+control reservation. It also reserves the requested bytes for each live
+Program wrapper and its entry names, each Instance wrapper, and any
+allocated capability JSON against both `engine.control_bytes` and
+`engine.memory_bytes`. Allocation and publication failures return the
+provisional charge. Program release and Instance destruction return the
+native charge when they free the wrapper. A Program pinned by an Instance
+continues to consume its separate retained-code charge until its last pin
+is released.
+
+These charges track requested bytes. Windows heap metadata and the
+DLL-wide handle registry remain outside the Engine's ledger.
+
+Windows /Od and /O2 measured an initial 210,672-byte control reservation for
+the policy fixture. Each default-entry Program wrapper consumes 80 bytes,
+each Instance wrapper 448 bytes, and the empty allocated capability JSON
+2 bytes. Both profiles verify exact admission, one-byte-short refusal, and
+reuse of the budget after failed preparation and destruction.
+Local receipt: `build/embed-preview-sizi64hq/receipt.json`.
+
 ## Revision-2 scalar Programs
 
 `bc_compile` accepts 1 to 16 `bc_source` rows and up to 4096 total source bytes,

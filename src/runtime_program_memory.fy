@@ -26,6 +26,20 @@ pub fn Observation observe(ref Budget b){
         .tracked_bytes=b.control+b.retained+b.external+b.compile_source,.tracked_peak=b.tracked_peak,.closed=b.closed,
         .working_limit=b.working_limit,.working_peak=b.working_peak,.external_bytes=b.external,.compile_source_bytes=b.compile_source};
 }
+pub fn Result<usize,Error> reserve_control(ref mut Budget b,usize bytes){
+    if(b.closed){return .err(.State);}
+    if(bytes>b.engine-b.control-b.retained-b.external-b.compile_source){return .err(.Quota);}
+    b.control+=bytes;
+    if(b.control>b.control_peak){b.control_peak=b.control;}
+    let usize total=b.control+b.retained+b.external+b.compile_source;
+    if(total>b.tracked_peak){b.tracked_peak=total;}
+    return .ok(b.control);
+}
+pub fn Result<usize,Error> release_control(ref mut Budget b,usize bytes){
+    if(b.closed || bytes>b.control){return .err(.State);}
+    b.control-=bytes;
+    return .ok(b.control);
+}
 pub fn Result<usize,Error> hold_compile_source(ref mut Budget b,usize bytes){
     if(b.closed || b.compile_source!=0 || bytes==0){return .err(.State);}
     if(bytes>b.working_limit || bytes>b.engine-b.control-b.retained-b.external){return .err(.Quota);}

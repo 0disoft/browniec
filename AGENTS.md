@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-21): [Named embedding entries](docs/engineering/embed-preview.md#revision-2-scalar-programs)
-  bind a selected public module and function through compile, query and run.
-  Windows /Od and /O2 verify byte-input and catalog-backed entries.
+- Latest runtime checkpoint (2026-11-21): [Embedding control memory](docs/engineering/embed-preview.md#revision-2-control-memory)
+  charges native Engine, Program, Instance and capability JSON storage.
+  Windows /Od and /O2 verify exact admission and refunds.
 
 # Brownie C agent guidance
 

@@ -35,7 +35,7 @@ def emit(compiler, project, destination):
 def preview_bindings(source):
     markers = re.findall(r'bc_embed_binding\(UINT32_C\((\d+)\)\);\s+'
                          r'goto (fy_b_\d+);\s*\2:\n(?:    [^\n]+\n)*?    [^\n]*\b(fy_fn_\d+)\(', source)
-    if [int(number) for number, _, _ in markers] != list(range(1, 19)):
+    if [int(number) for number, _, _ in markers] != list(range(1, 21)):
         raise RuntimeError('Unrecognized scalar preview transport')
     return ''.join(f'#define P{number} {symbol}\n' for number, _, symbol in markers)
 
