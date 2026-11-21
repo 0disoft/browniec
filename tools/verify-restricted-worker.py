@@ -562,6 +562,8 @@ def verify_project_host(run, need, image, folder, env):
     replies['replies'] = rows
     config['grants'] = ['brownie.output.emit']
     check(expected_exit=4, kind='unavailable')
+    config['grants'] = [cap]
+    check('check', expected_exit=4, kind='unavailable')
     config['grants'] = manifest['requires']
     config['limits']['host_calls'] = 1
     check(expected_exit=5, kind='allocation')
@@ -608,7 +610,7 @@ def verify_project_host(run, need, image, folder, env):
     check(expected_exit=3, kind='compile_limit', payload=payload)
     policy['compile']['depth'] = original_depth
     check(expected_exit=4, kind='unavailable')
-    return 29
+    return 30
 
 
 def main():

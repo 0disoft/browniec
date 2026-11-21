@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-22): [Output authority preparation Fuel](docs/engineering/restricted-worker.md#output-authority-preparation-fuel)
-  meters the selected entry's reachable instructions and retains the emit flag.
-  Windows development and /O2 verify the exact and one-less compile Fuel limits.
+- Latest runtime checkpoint (2026-11-22): [Catalog output authority retention](docs/engineering/restricted-worker.md#catalog-output-authority-retention)
+  stores the verified emit flag with the import mask. Windows development and
+  /O2 verify rejection when the output grant is missing and exact proof Fuel.
 
 # Brownie C agent guidance
 

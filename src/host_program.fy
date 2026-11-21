@@ -17,12 +17,13 @@ import source_snapshot as sources;
 // Private scalar host dialect. The ordinary verifier still rejects opcode 117.
 pub enum Error { Code; Catalog; Binding; Authority; Allocation; Fuel; Deadline; }
 struct Digest { u32[8] words; }
+struct Authority { usize required; bool emits; }
 pub struct SourceMap { usize[16] lengths; }
 pub resource Program {
     vec::Vec<ir::Program> code;
     catalog::Catalog catalog;
     Digest digest;
-    usize required;
+    Authority authority;
     bytes::Buffer module_name;
     bytes::Buffer function_name;
     SourceMap sources;
@@ -76,7 +77,7 @@ fn Result<usize,Error> prepay(ref mut usize fuel,usize deadline){
     if(!budget::prepay(fuel,0).is_ok){return .err(.Fuel);}
     return .ok(0);
 }
-fn Result<usize,Error> inspect(ref ir::Program code,ref catalog::Catalog imports,usize deadline,ref mut usize fuel){
+fn Result<Authority,Error> inspect(ref ir::Program code,ref catalog::Catalog imports,usize deadline,ref mut usize fuel){
     if(code.count==0 || code.count>256 || code.registers>128 ||
         code.function_count==0 || code.function_count>16 || code.entry>=code.function_count || code.arrays.count!=0 ||
         code.records.count!=0 || code.list_used>4096){return .err(.Code);}
@@ -105,7 +106,7 @@ fn Result<usize,Error> inspect(ref ir::Program code,ref catalog::Catalog imports
     }
     var ir::Program scalar=*code;
     let bool typed_code=typed(code);
-    var usize required=0;
+    var Authority authority=Authority{.required=0,.emits=false};
     var usize pc=0;
     let usize one=1;
     while(pc<code.count){
@@ -121,14 +122,15 @@ fn Result<usize,Error> inspect(ref ir::Program code,ref catalog::Catalog imports
             if(!scalar_signature(imports,id)){return .err(.Catalog);}
             scalar.code[at]=2;
             scalar.code[at+3]=code.code[at+2];
-            required|=one<<id;
+            authority.required|=one<<id;
         }else if(typed_request(op)){
             if(!typed_signature(code,imports,at)){return .err(.Catalog);}
-            required|=one<<(code.code[at+3] as usize);
+            authority.required|=one<<(code.code[at+3] as usize);
         }else if(op==9 && code.arities[code.entry]!=0 && (code.code[at+2] as usize)==code.entry){
             return .err(.Code);
         }else if(op==emit_opcode() || op==9 || op==17 || op==18 || op==119 || op==120 || op==copy_opcode() || op==project_opcode() || op==wrap_opcode()){
             if(!typed_code){return .err(.Code);}
+            authority.emits=authority.emits || op==emit_opcode();
         }else if(op==2){
             let usize dst=code.code[at+1] as usize;
             if(dst>=code.registers || code.types[dst]!=1){return .err(.Code);}
@@ -149,7 +151,7 @@ fn Result<usize,Error> inspect(ref ir::Program code,ref catalog::Catalog imports
             return .err(.Code);
         }
     };
-    return .ok(required);
+    return .ok(authority);
 }
 
 pub fn bool scalar_signature(ref catalog::Catalog imports,usize id){
@@ -201,13 +203,13 @@ pub fn Result<Program,Error> retain_metered(ref ir::Program code,catalog::Catalo
         case .ok(v):{v}case .err(_):{return .err(.Catalog);}
     };
     if(!same_digest(expected,ref digest)){return .err(.Binding);}
-    let usize required=inspect(code,ref imports,deadline,fuel)?;
+    let Authority authority=inspect(code,ref imports,deadline,fuel)?;
     discard prepay(fuel,deadline)?;
-    if(!runs::narrowed_to(run,ceiling) || !allowed_imports(ref imports,required,run) ||
-        (has_emit(code) && !allows_output(run))){
+    if(!runs::narrowed_to(run,ceiling) || !allowed_imports(ref imports,authority.required,run) ||
+        (authority.emits && !allows_output(run))){
         return .err(.Authority);
     }
-    return publish(code,imports,digest,required,runs::module_name(run),runs::function_name(run),map);
+    return publish(code,imports,digest,authority,runs::module_name(run),runs::function_name(run),map);
 }
 
 // Compilation binds the Engine ceiling and verified import set. Each Instance
@@ -215,11 +217,11 @@ pub fn Result<Program,Error> retain_metered(ref ir::Program code,catalog::Catalo
 pub fn Result<Program,Error> retain_for_entry(ref ir::Program code,catalog::Catalog imports,
     ref policy::Policy ceiling,ref u8[] module_name,ref u8[] function_name,SourceMap map){
     var usize fuel=budget::unlimited();
-    let usize required=inspect(code,ref imports,0,ref mut fuel)?;
+    let Authority authority=inspect(code,ref imports,0,ref mut fuel)?;
     let usize one=1;
     var usize id=0;
     while(id<catalog::count(ref imports)){
-        if((required&(one<<id))!=0){
+        if((authority.required&(one<<id))!=0){
             let ref u8[] cap=switch(catalog::capability(ref imports,id)){
                 case .ok(v):{v}case .err(_):{return .err(.Catalog);}
             };
@@ -227,15 +229,15 @@ pub fn Result<Program,Error> retain_for_entry(ref ir::Program code,catalog::Cata
         }
         id+=1;
     }
-    if(has_emit(code) && !policy::contains_capability(ceiling,b"brownie.output.emit")){return .err(.Authority);}
+    if(authority.emits && !policy::contains_capability(ceiling,b"brownie.output.emit")){return .err(.Authority);}
     let u32[8] digest=switch(catalog::digest(ref imports)){
         case .ok(v):{v}case .err(_):{return .err(.Catalog);}
     };
-    return publish(code,imports,digest,required,module_name,function_name,map);
+    return publish(code,imports,digest,authority,module_name,function_name,map);
 }
 
 fn Result<Program,Error> publish(ref ir::Program code,catalog::Catalog imports,u32[8] digest,
-    usize required,ref u8[] module_name,ref u8[] function_name,SourceMap map){
+    Authority authority,ref u8[] module_name,ref u8[] function_name,SourceMap map){
     let bytes::Buffer scope=switch(bytes::copy(module_name)){
         case .ok(v):{v}case .err(_):{return .err(.Allocation);}
     };
@@ -245,7 +247,7 @@ fn Result<Program,Error> publish(ref ir::Program code,catalog::Catalog imports,u
     var vec::Vec<ir::Program> retained=vec::empty<ir::Program>();
     if(!vec::reserve<ir::Program>(ref mut retained,1).is_ok){return .err(.Allocation);}
     if(!vec::push<ir::Program>(ref mut retained,*code).is_ok){return .err(.Allocation);}
-    return .ok(Program{.code=retained,.catalog=imports,.digest=Digest{.words=digest},.required=required,
+    return .ok(Program{.code=retained,.catalog=imports,.digest=Digest{.words=digest},.authority=authority,
         .module_name=scope,.function_name=name,.sources=map});
 }
 
@@ -289,14 +291,10 @@ pub fn usize heap_bytes(ref Program p,usize ir_stride){
 pub fn ref ir::Program code(ref Program p){return vec::at<ir::Program>(ref p.code,0);}
 pub fn ref catalog::Catalog imports(ref Program p){return ref p.catalog;}
 pub fn u32[8] binding(ref Program p){return p.digest.words;}
-pub fn usize requirements(ref Program p){return p.required;}
+pub fn usize requirements(ref Program p){return p.authority.required;}
 pub fn bool accepts_input(ref Program p){let ref ir::Program image=code(p);return image.arities[image.entry]==1;}
 
-fn bool has_emit(ref ir::Program code){
-    var usize pc=0;while(pc<code.count){if(code.code[pc*8]==emit_opcode()){return true;}pc+=1;}
-    return false;
-}
-pub fn bool emits(ref Program p){return has_emit(code(p));}
+pub fn bool emits(ref Program p){return p.authority.emits;}
 fn bool allows_output(ref runs::RunConfig run){
     let ref u8[] cap=b"brownie.output.emit";
     return runs::declares(run,cap) && runs::grants(run,cap);
@@ -304,6 +302,6 @@ fn bool allows_output(ref runs::RunConfig run){
 pub fn bool allows(ref Program p,ref policy::Policy ceiling,ref runs::RunConfig run){
     return bytes::equal(bytes::view(ref p.module_name),runs::module_name(run)) &&
         bytes::equal(bytes::view(ref p.function_name),runs::function_name(run)) &&
-        runs::narrowed_to(run,ceiling) && allowed_imports(imports(p),p.required,run) &&
+        runs::narrowed_to(run,ceiling) && allowed_imports(imports(p),p.authority.required,run) &&
         (!emits(p) || allows_output(run));
 }

@@ -944,6 +944,23 @@ catalog and five managed project cases, plus all three compile-stop cases.
 All 456 receipt input hashes matched.
 Local receipt: `build/restricted-worker/20261121T213249516074Z/receipt.json`.
 
+### Catalog output authority retention
+
+The catalog verifier records the presence of EMIT while checking each opcode
+under its existing compile Fuel charge. The immutable Program stores that flag
+with the required import mask. Compile authority, the worker's entry query,
+and each new Instance then read the same flag without rescanning the image.
+The catalog rule covers every verified instruction, including instructions
+outside the selected entry's reachable graph. Each Instance still checks its
+own grants.
+
+With the host import granted and the output grant absent, `check` returns
+`unavailable`. With both grants, the two-call project still fits 1,757,439
+compile Fuel and returns 77 with the sealed output. Windows development and
+/O2 each passed 84 configured, 30 catalog and five managed project cases.
+All 456 receipt input hashes matched.
+Local receipt: `build/restricted-worker/20261121T214058194194Z/receipt.json`.
+
 ## Windows verification
 
 Run `python -B tools/verify-restricted-worker.py`. The development and optimized
