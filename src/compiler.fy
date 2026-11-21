@@ -3048,6 +3048,13 @@ fn Result<bool,errors::Error> walk_body_until(ref u8[] source,ref mut lexer::Sta
 // Private raw body oracle for exact IR/error comparisons, with caller-prepared
 // signatures/catalogs. Both routes produce candidates, never executable authority.
 pub fn Result<usize, errors::Error> lower_body(ref u8[] source, ref functions::Table signatures, usize f, ref mut ir::Program p,bool staged) {
+    var usize fuel=metadata_budget::unlimited();
+    return lower_body_metered(source,signatures,f,p,staged,0,ref mut fuel);
+}
+fn Result<usize,errors::Error> lower_body_metered(ref u8[] source,ref functions::Table signatures,
+    usize f,ref mut ir::Program p,bool staged,usize deadline,ref mut usize fuel){
+    if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
+    discard metadata_budget::prepay(fuel,signatures.bodies[f])?;
     var locals::Table table = locals::empty();
     let usize bound=bind_body(signatures,f,p,ref mut table)?;
     var lexer::State s=source_context::state(source,ref signatures.context,signatures.bodies[f])?;
@@ -3058,6 +3065,8 @@ pub fn Result<usize, errors::Error> lower_body(ref u8[] source, ref functions::T
     if(staged && source.len<=4096){terminal=walk_body(source,ref mut s,p,ref mut table,signatures,result_context,ref mut loop_state)?;}
     else{while (s.kind != 125) {
         if (terminal || s.kind == 0) { return .err(errors::make(2, s.begin)); }
+        if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
+        discard metadata_budget::prepay(fuel,s.begin)?;
         terminal = control(source,ref mut s,p,ref mut table,signatures,result_context,0,0,ref mut loop_state)?;
     }
     }
@@ -3280,21 +3289,23 @@ pub fn Result<usize,errors::Error> lower_scalar_host_until(ref u8[] source,ref h
 
 // The selected Index owns the original modules and scoped guest aliases.
 pub fn Result<usize,source_errors::Error> lower_project_host(ref module_index::Index index,usize selected,
-    ref host_catalog::Catalog imports,ref mut ir::Program code,usize deadline){
+    ref host_catalog::Catalog imports,ref mut ir::Program code,usize deadline,ref mut usize fuel){
     let ref source_snapshot::Snapshot snapshot=module_index::snapshot(index);
     var usize active=16;
-    switch(host_source::prepare_project(index,code,imports,ref mut active)){
-        case .ok(_):{}case .err(e):{return .err(source_errors::map(snapshot,e,active));}
+    switch(host_source::prepare_project(index,code,imports,ref mut active,deadline,fuel)){
+        case .ok(_):{}case .err(e):{
+            return .err(if(e.location==errors::absent_location()){source_errors::absent(e)}else{source_errors::map(snapshot,e,active)});
+        }
     };
-    let source_context::Input input=switch(collecting::collect(index)){
-        case .ok(v):{v}case .err(e):{return .err(source_errors::Error{.code=source_errors::binding(e),.at=e.at});}
-    };
+    var module_source::State work=module_source::begin(false);
+    discard module_source::finish_metered(index,ref mut work,deadline,fuel)?;
+    let ref source_context::Input input=ref work.context.result;
     let ref u8[] source=ref input.data[..input.used];
-    return lower_project_host_body(source,ref input.context,index,selected,code,deadline);
+    return lower_project_host_body(source,ref input.context,index,selected,code,deadline,fuel);
 }
 fn Result<usize,source_errors::Error> lower_project_host_body(ref u8[] source,ref source_context::Table scope,
-    ref module_index::Index index,usize selected,ref mut ir::Program code,usize deadline){
-    var functions::Table signatures=switch(signature_scan::scan_host_indexed(source,scope,index,selected)){
+    ref module_index::Index index,usize selected,ref mut ir::Program code,usize deadline,ref mut usize fuel){
+    var functions::Table signatures=switch(signature_scan::scan_indexed_metered(source,scope,index,selected,false,true,deadline,fuel)){
         case .ok(v):{v}case .err(e):{return .err(input_module_error(index,e,16));}
     };
     signatures.output=true;
@@ -3313,12 +3324,26 @@ fn Result<usize,source_errors::Error> lower_project_host_body(ref u8[] source,re
     }
     let literal_collection::Index literals=literal_collection::empty();
     var usize active=16;
-    switch(lower_prepared(source,false,false,false,ref literals,ref mut signatures,code,ref mut active,0)){
+    switch(lower_host_project_bodies(source,ref literals,ref mut signatures,code,ref mut active,deadline,fuel)){
         case .ok(_):{}case .err(e):{return .err(input_module_error(index,e,active));}
     };
-    return switch(host_source::finish_until(source,code,deadline)){
+    return switch(host_source::finish_metered(source,code,deadline,fuel)){
         case .ok(v):{.ok(v)}case .err(e):{.err(input_module_error(index,e,16))}
     };
+}
+
+fn Result<usize,errors::Error> lower_host_project_bodies(ref u8[] source,ref literal_collection::Index literals,
+    ref mut functions::Table signatures,ref mut ir::Program code,ref mut usize active,usize deadline,ref mut usize fuel){
+    discard metadata_budget::prepay(fuel,0)?;
+    discard prepare_lowering(source,false,false,false,literals,signatures,code,0,deadline)?;
+    var usize f=0;
+    while(f<signatures.count){
+        discard locate_body(source,signatures,f,active)?;
+        discard lower_body_metered(source,signatures,f,code,false,deadline,fuel)?;
+        f+=1;
+    }
+    discard metadata_budget::prepay(fuel,0)?;
+    return finish_lowering(code,signatures,false,active);
 }
 
 // The analysis Program stays private and is never returned to an executor.

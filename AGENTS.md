@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-22): [Project lowering and proof Fuel](docs/engineering/restricted-worker.md#project-lowering-and-proof-fuel)
-  carries the ordinary worker's unspent indexing balance through source lowering
-  and independent output proof. Development and /O2 pass the exact boundary.
+- Latest runtime checkpoint (2026-11-22): [Catalog-backed lowering Fuel](docs/engineering/restricted-worker.md#catalog-backed-lowering-fuel)
+  carries the index balance through host binding and source lowering.
+  Development and /O2 pass the exact 1,642,751-unit boundary.
 
 # Brownie C agent guidance
 

@@ -189,7 +189,8 @@ pub fn Result<usize,errors::Error> prepare(ref u8[] source,ref mut ir::Program c
         aliases_used+=1;
     }
     let usize declarations=s.begin;
-    let usize count=collect_calls(source,ref mut s,code,imports,ref aliases[..aliases_used],0,0)?;
+    var usize fuel=budget::unlimited();
+    let usize count=collect_calls(source,ref mut s,code,imports,ref aliases[..aliases_used],0,0,0,ref mut fuel)?;
     // The lexer also counts its end-of-file marker. Policy counts source tokens.
     if(s.tokens-1>token_limit){return .err(errors::make(4,s.begin));}
     store_count(code,count);
@@ -202,9 +203,11 @@ fn void store_count(ref mut ir::Program code,usize count){
 }
 
 fn Result<usize,errors::Error> collect_calls(ref u8[] source,ref mut lexer::State s,ref mut ir::Program code,
-    ref catalog::Catalog imports,ref Alias[] aliases,usize base,usize initial){
+    ref catalog::Catalog imports,ref Alias[] aliases,usize base,usize initial,usize deadline,ref mut usize fuel){
     var usize count=initial;
     while(s.kind!=0){
+        if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
+        discard budget::prepay(fuel,s.begin)?;
         if(s.kind==2){
             let bool absolute=word(source,s,b"host");
             let usize mask=alias_mask(source,aliases,aliases.len,s.begin,s.end);
@@ -236,7 +239,7 @@ fn Result<usize,errors::Error> collect_calls(ref u8[] source,ref mut lexer::Stat
 fn errors::Error binding_error(modules::Error error){return errors::make(5,error.at.start);}
 
 fn Result<usize,errors::Error> module_calls(ref u8[] source,ref modules::Index index,usize file,usize base,
-    ref mut ir::Program code,ref catalog::Catalog imports,usize calls){
+    ref mut ir::Program code,ref catalog::Catalog imports,usize calls,usize deadline,ref mut usize fuel){
     var Alias[64] aliases=[Alias{.begin=0,.end=0,.imports=0};64];
     var usize used=0;
     var usize row=0;
@@ -257,7 +260,7 @@ fn Result<usize,errors::Error> module_calls(ref u8[] source,ref modules::Index i
     }
     var lexer::State s=lexer::empty();
     discard lexer::next(source,ref mut s)?;
-    return collect_calls(source,ref mut s,code,imports,ref aliases[..used],base,calls);
+    return collect_calls(source,ref mut s,code,imports,ref aliases[..used],base,calls,deadline,fuel);
 }
 
 fn usize scope_mask(ref catalog::Catalog imports,ref u8[] path){
@@ -273,7 +276,9 @@ fn usize scope_mask(ref catalog::Catalog imports,ref u8[] path){
 }
 
 pub fn Result<usize,errors::Error> prepare_project(ref modules::Index index,ref mut ir::Program code,
-    ref catalog::Catalog imports,ref mut usize active){
+    ref catalog::Catalog imports,ref mut usize active,usize deadline,ref mut usize fuel){
+    if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
+    discard budget::prepay(fuel,0)?;
     discard prepare_signatures(code,imports)?;
     let ref sources::Snapshot snapshot=modules::snapshot(index);
     var usize base=0;var usize file=0;var usize count=0;
@@ -285,8 +290,11 @@ pub fn Result<usize,errors::Error> prepare_project(ref modules::Index index,ref 
         let ref u8[] source=switch(sources::view(snapshot,all)){
             case .ok(v):{v}case .err(_):{return .err(errors::make(5,base));}
         };
-        count=switch(module_calls(source,index,file,base,code,imports,count)){
-            case .ok(v):{v}case .err(e):{return .err(errors::make(e.kind,base+e.offset));}
+        if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
+        discard budget::prepay(fuel,base)?;
+        count=switch(module_calls(source,index,file,base,code,imports,count,deadline,fuel)){
+            case .ok(v):{v}
+            case .err(e):{return .err(if(e.location==errors::absent_location()){e}else{errors::make(e.kind,base+e.offset)});}
         };
         base+=source.len;file+=1;
     }
@@ -331,11 +339,15 @@ pub fn Result<Call,errors::Error> signature(ref ir::Program code,usize at){
 }
 
 pub fn Result<usize,errors::Error> finish_until(ref u8[] source,ref mut ir::Program code,usize deadline){
+    var usize fuel=budget::unlimited();
+    return finish_metered(source,code,deadline,ref mut fuel);
+}
+pub fn Result<usize,errors::Error> finish_metered(ref u8[] source,ref mut ir::Program code,usize deadline,ref mut usize fuel){
     var Finish w=begin_finish();
     var budget::State meter=budget::empty();
     while(!w.done){
         if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
-        let usize allowance=budget::reset(ref mut meter,0)?;
+        let usize allowance=budget::reset_metered(ref mut meter,fuel,0)?;
         let bool done=advance_finish(source,code,ref mut w,ref mut meter)?;
     }
     if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}

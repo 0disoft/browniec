@@ -348,6 +348,12 @@ def verify_project_host(run, need, image, folder, env):
     original_compile_fuel = policy['compile']['fuel']
     policy['compile']['fuel'] = 1
     check('check', expected_exit=3, kind='compile_limit')
+    # The catalog fixture spends 255 index units and 401 lowering batches.
+    full_fuel = 255 + 401 * 4096
+    policy['compile']['fuel'] = full_fuel - 1
+    check(expected_exit=3, kind='compile_limit')
+    policy['compile']['fuel'] = full_fuel
+    check()
     policy['compile']['fuel'] = original_compile_fuel
     payload = target / 'input.bin'
     payload.write_bytes(b'before')
@@ -355,7 +361,7 @@ def verify_project_host(run, need, image, folder, env):
                        b'output::emit(ref data); let i32 a=api::check(41); return a+api::check(42);}')
     check(payload=payload)
     check(expected_exit=4, kind='unavailable')
-    return 12
+    return 14
 
 
 def main():

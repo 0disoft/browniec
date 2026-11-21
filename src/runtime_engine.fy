@@ -608,7 +608,8 @@ pub fn Result<usize,Error> compile_preview_host(ref mut Engine e,sources::Snapsh
         case .ok(v):{v}case .err(e):{return .err(host_binding_error(e));}
     };
     var ir::Program code=ir::empty();
-    discard lower_indexed_host(ref index,selected,ref imports,ref mut code,deadline)?;
+    var usize fuel=modules::compile_fuel(ref index);
+    discard lower_indexed_host(ref index,selected,ref imports,ref mut code,deadline,ref mut fuel)?;
     discard check_compile_image(ref code,limits)?;
     if(clock::expired(deadline)){return .err(compile_timeout());}
     let host_program::SourceMap map=host_program::source_set(modules::snapshot(ref index));
@@ -627,13 +628,14 @@ fn Error host_binding_error(modules::Error e){
 fn Result<usize,Error> retain_project_host(ref mut Engine e,ref modules::Index index,usize selected,
     host_catalog::Catalog imports,ref u32[] digest,ref run_config::RunConfig run,policy_limits::CompileLimits limits,usize deadline){
     var ir::Program code=ir::empty();
-    discard lower_indexed_host(index,selected,ref imports,ref mut code,deadline)?;
+    var usize fuel=modules::compile_fuel(index);
+    discard lower_indexed_host(index,selected,ref imports,ref mut code,deadline,ref mut fuel)?;
     let host_program::SourceMap map=host_program::source_set(modules::snapshot(index));
     return retain_limited_host(e,ref code,imports,digest,run,limits,deadline,map);
 }
 fn Result<usize,Error> lower_indexed_host(ref modules::Index index,usize selected,ref host_catalog::Catalog imports,
-    ref mut ir::Program code,usize deadline){
-    return switch(compiler::lower_project_host(index,selected,imports,code,deadline)){
+    ref mut ir::Program code,usize deadline,ref mut usize fuel){
+    return switch(compiler::lower_project_host(index,selected,imports,code,deadline,fuel)){
         case .ok(v):{.ok(v)}
         case .err(e):{.err(if(e.code.kind==errors::deadline_kind()){compile_timeout()}else{Error{.status=4,.diagnostic=e}})}
     };

@@ -602,8 +602,25 @@ five managed project cases and nine native host transport cases. Local
 receipt: `build/restricted-worker/20261121T183550192986Z/receipt.json`.
 
 The charges cover the staged compiler dispatches and output proof. Work
-inside synchronous semantic children, final execution preparation and
-catalog-backed lowering and verification still need finer-grained metering.
+inside synchronous semantic children and final execution preparation still
+needs finer-grained metering.
+
+### Catalog-backed lowering Fuel
+
+The catalog-backed worker uses the same unspent index balance during host
+binding, source collection, signature scanning, body lowering and candidate
+finalization. The budget prepays each existing dispatch or synchronous
+top-level lowering step. Host binding and raw body lowering also check the
+compile deadline at these boundaries.
+
+The two-call catalog fixture needs 255 indexing units and 401 prepaid
+4,096-unit batches. Both Windows development and /O2 return 77 and publish
+the expected bytes at 1,642,751 units. At 1,642,750, both return `compile_limit`
+without a guest result or output. Each profile passed 14 catalog project
+cases, 40 configured project cases, five managed project cases and nine
+native host transport cases. Local receipt: `build/restricted-worker/20261121T184432127814Z/receipt.json`.
+
+The independent catalog verifier still needs to consume the same balance.
 
 ## Windows verification
 
