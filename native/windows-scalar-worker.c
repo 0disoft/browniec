@@ -8,7 +8,10 @@ static HANDLE input_pipe, result_pipe;
 static bc_worker_frame result_frame;
 static size_t start_length, result_capacity;
 static uint64_t next_call;
-static bool start_read, host_cancelled;
+static bool start_read, host_cancelled, compile_cancelled;
+
+extern void bc_runtime_engine_compile_stop_begin(uint32_t (*probe)(void));
+extern uint32_t bc_runtime_engine_compile_stop_end(void);
 
 static bool confined(void) {
     BOOL assigned = FALSE;
@@ -53,6 +56,28 @@ static bool send(HANDLE output, const bc_worker_frame *frame) {
     return bc_worker_frame_encode(wire, frame) && transfer(output, NULL, wire, sizeof(wire));
 }
 
+/* The broker is the sole pipe writer. Never wait for an incomplete header. */
+static uint32_t poll_compile_stop(void) {
+    DWORD available = 0;
+    if (!PeekNamedPipe(input_pipe, NULL, 0, NULL, &available, NULL)) return 2;
+    if (available < BC_WORKER_FRAME_BYTES) return 0;
+    bc_worker_frame expected = result_frame, received;
+    expected.kind = BC_WORKER_CANCEL;
+    expected.sequence = 2 + next_call;
+    expected.length = 0;
+    return receive(input_pipe, &expected, &received) ? 1 : 2;
+}
+
+void bc_project_worker_compile_begin(void) {
+    bc_runtime_engine_compile_stop_begin(poll_compile_stop);
+}
+
+void bc_project_worker_compile_end(void) {
+    const uint32_t cause = bc_runtime_engine_compile_stop_end();
+    if (cause == 1) compile_cancelled = true;
+    if (cause == 2) result_pipe = NULL;
+}
+
 static size_t begin(bool project) {
     if (input_pipe || result_pipe || !confined()) return 0;
     HANDLE input = GetStdHandle(STD_INPUT_HANDLE), output = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -74,6 +99,7 @@ static size_t begin(bool project) {
     start_read = false;
     next_call = project ? 1 : 0;
     host_cancelled = false;
+    compile_cancelled = false;
     session.kind = BC_WORKER_RESULT;
     result_frame = session;
     result_pipe = output;
@@ -107,7 +133,7 @@ uint32_t bc_project_worker_read(uint8_t *request, size_t length) {
 
 uint32_t bc_project_worker_host(const uint8_t *request, size_t request_length,
     uint8_t *reply, size_t reply_capacity, size_t *reply_length) {
-    if (!start_read || !result_pipe || !next_call || host_cancelled ||
+    if (!start_read || !result_pipe || !next_call || host_cancelled || compile_cancelled ||
         !request || !request_length || request_length > BC_PROJECT_HOST_MAX ||
         !reply || !reply_capacity || reply_capacity > BC_PROJECT_HOST_MAX || !reply_length)
         return 0;
@@ -149,6 +175,7 @@ uint32_t bc_scalar_worker_finish(const uint8_t *result, size_t length) {
     if (!start_read || !result_pipe || !result || !length || length > result_capacity) return 0;
     HANDLE output = result_pipe;
     result_pipe = NULL;
+    if (compile_cancelled) return 1;
     result_frame.length = (uint32_t)length;
     return send(output, &result_frame) && transfer(output, NULL, result, result_frame.length);
 }

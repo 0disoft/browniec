@@ -13,6 +13,7 @@
 #include "../../native/restricted_worker_stage.h"
 #include "../../native/restricted_worker_stream.h"
 #include "../../native/windows-scalar-worker.h"
+#include "../../native/runtime-engine/clock.inc"
 
 enum { commit_limit = 128 * 1024 * 1024, cpu_limit = 500 };
 static const DWORD status_quota_exceeded = 0xc0000044;
@@ -1033,6 +1034,56 @@ static void verify_project_rejections(const wchar_t *path, const wchar_t *direct
     verify_guest_exchange(path, directory, request, sizeof(request), NULL, false);
 }
 
+static void verify_project_compile_stop(const wchar_t *path, const wchar_t *directory,
+    const char *fixture, bool valid_cancel) {
+    uint8_t queued[4096];
+    FILE *file = NULL;
+    check(!fopen_s(&file, fixture, "rb"), "open configured START fixture");
+    const size_t length = fread(queued + BC_WORKER_FRAME_BYTES, 1,
+        sizeof(queued) - 2 * BC_WORKER_FRAME_BYTES, file);
+    check(length && feof(file) && !ferror(file) && !fclose(file), "read complete START fixture");
+
+    bc_worker_pipes transport = {0};
+    bc_restricted_worker child = {0};
+    wchar_t command[] = L"worker --internal-project-worker";
+    check(bc_worker_pipes_open(&transport) == ERROR_SUCCESS &&
+        bc_restricted_worker_prepare(&child, path, command, directory, profile,
+            transport.child, commit_limit, 2000) == ERROR_SUCCESS, "prepare confined compile fixture");
+    bc_worker_pipes_close_child(&transport);
+    check(bc_restricted_worker_resume(&child) == ERROR_SUCCESS, "start confined compile fixture");
+    const HANDLE input = transport.broker[BC_WORKER_STDIN];
+    const HANDLE output = transport.broker[BC_WORKER_STDOUT];
+    bc_worker_frame frame = {.kind = BC_WORKER_HELLO, .sequence = 1};
+    memcpy(frame.nonce, transport.nonce, sizeof(frame.nonce));
+    uint8_t header[BC_WORKER_FRAME_BYTES];
+    DWORD count = 0;
+    check(bc_worker_frame_encode(header, &frame) &&
+        !transfer(input, NULL, header, sizeof(header), &count) && count == sizeof(header), "send HELLO");
+    frame.kind = BC_WORKER_READY;
+    bc_worker_frame ready;
+    check(!transfer(output, header, NULL, sizeof(header), &count) &&
+        bc_worker_frame_preflight(header, count, &frame, &ready), "receive READY");
+    frame.kind = BC_WORKER_START;
+    frame.sequence = 2;
+    frame.length = (uint32_t)length;
+    check(bc_worker_frame_encode(queued, &frame), "encode START");
+    frame.kind = BC_WORKER_CANCEL;
+    frame.sequence = 3;
+    frame.length = 0;
+    if (!valid_cancel) frame.nonce[0] ^= 1;
+    check(bc_worker_frame_encode(queued + BC_WORKER_FRAME_BYTES + length, &frame), "encode CANCEL");
+    const DWORD queued_length = (DWORD)length + 2 * BC_WORKER_FRAME_BYTES;
+    check(!transfer(input, NULL, queued, queued_length, &count) && count == queued_length, "queue START and CANCEL together");
+    check(transfer(output, header, NULL, sizeof(header), &count) == ERROR_BROKEN_PIPE,
+        "a stopped compile sends neither RESULT nor a HOST_REQUEST");
+    DWORD code = STILL_ACTIVE;
+    check(WaitForSingleObject(child.process, 5000) == WAIT_OBJECT_0 &&
+        GetExitCodeProcess(child.process, &code) && code == (valid_cancel ? 0u : 4u),
+        "a valid CANCEL exits cleanly and an invalid CANCEL fails closed");
+    check(bc_restricted_worker_stop(&child) && bc_restricted_worker_close(&child), "release compile fixture process");
+    bc_worker_pipes_close(&transport);
+}
+
 static void verify_parent_broker(const wchar_t *image, const wchar_t *directory,
     const wchar_t *name, const wchar_t *operation, const wchar_t *source,
     DWORD expected_exit, const char *expected_output) {
@@ -1207,6 +1258,9 @@ int wmain(int argc, wchar_t **argv) {
     if (argc == 3) {
         verify_scalar_programs(argv[2], directory);
         verify_project_rejections(argv[2], directory);
+        verify_project_compile_stop(argv[2], directory, "configured-compile.start", true);
+        verify_project_compile_stop(argv[2], directory, "catalog-compile.start", true);
+        verify_project_compile_stop(argv[2], directory, "configured-compile.start", false);
     }
     check(CloseHandle(decoy), "close decoy");
     decoy = NULL;
@@ -1240,7 +1294,9 @@ int wmain(int argc, wchar_t **argv) {
            "\"ioLease\":true,\"brokerSessions\":6,\"hostBrokerCases\":9,\"sharedBudget\":true,"
            "\"phaseDeadlines\":true,\"gracefulCancelCases\":2,\"handleDelta\":0,\"staging\":true,"
            "\"scalarSessions\":%d,\"parentBrokerCases\":%d,\"projectWireRejections\":%d,"
+           "\"projectCompileStopCases\":%d,"
            "\"parentColdHandleDelta\":%ld,\"coldHandleDelta\":%ld}\n",
-           argc == 3 ? 5 : 0, argc == 3 ? 4 : 0, argc == 3 ? 2 : 0, parent_cold_delta, (long)final - (long)cold);
+           argc == 3 ? 5 : 0, argc == 3 ? 4 : 0, argc == 3 ? 2 : 0, argc == 3 ? 3 : 0,
+           parent_cold_delta, (long)final - (long)cold);
     return 0;
 }

@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-22): [Host signature type quota](docs/engineering/restricted-worker.md#host-signature-type-quota)
-  counts the signatures of imports used by the verified image. Windows
-  development and /O2 verify exact and one-less limits with and without input.
+- Latest runtime checkpoint (2026-11-22): [Project compile cancellation](docs/engineering/restricted-worker.md#project-compile-cancellation)
+  observes broker CANCEL at compile checkpoints in both configured worker
+  routes. Windows development and /O2 verify clean EOF and nonce rejection.
 
 # Brownie C agent guidance
 

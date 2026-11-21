@@ -903,6 +903,30 @@ project cases plus nine native host transport cases. All 456 receipt input
 hashes matched.
 Local receipt: `build/restricted-worker/20261121T211242201356Z/receipt.json`.
 
+### Project compile cancellation
+
+Configured and catalog-backed project workers probe the private input pipe at
+existing compile deadline checkpoints. During that scope, a complete CANCEL
+must match the session nonce, sequence, zero correlation and empty body. An
+incomplete header does not block a checkpoint. The first observed stop is
+latched and the probe is removed before Instance preparation. A local compile
+deadline observed first keeps its existing diagnostic. A valid CANCEL unwinds
+the compile and closes the worker stream without a RESULT. A broken pipe or
+invalid frame fails the transport. The broker continues to own the terminal
+outcome and the worker reaping window.
+
+The native fixture queues START and CANCEL together in one pipe write before
+the first compiler probe. It checks EOF and a clean exit on the configured and
+catalog routes, plus EOF and exit 4 for a mismatched nonce. The checks observe
+the real confined worker's stream, including absence of both RESULT and
+HOST_REQUEST. Legacy policy-free compilation and gaps between existing
+checkpoints still rely on the broker's Job shutdown window.
+
+Windows development and /O2 each passed all three compile-stop cases, 83
+configured, 29 catalog and five managed project cases, and nine native host
+transport cases. All 456 input hashes matched, with zero net repeat handle
+change. Local receipt: `build/restricted-worker/20261121T212429068756Z/receipt.json`.
+
 ## Windows verification
 
 Run `python -B tools/verify-restricted-worker.py`. The development and optimized

@@ -21,6 +21,8 @@ import std::bytes as bytes;
 
 unsafe extern C fn usize bc_project_worker_begin();
 unsafe extern C fn u32 bc_project_worker_read(ptr mut u8 buffer,usize length);
+unsafe extern C fn void bc_project_worker_compile_begin();
+unsafe extern C fn void bc_project_worker_compile_end();
 unsafe extern C fn u32 bc_project_worker_host(ptr u8 request,usize request_length,
     ptr mut u8 reply,usize capacity,ptr mut usize reply_length);
 unsafe extern C fn u32 bc_scalar_worker_finish(ptr u8 result,usize length);
@@ -94,7 +96,10 @@ fn Result<bytes::Buffer,wire::Error> execute_host(ref mut engine::Engine owner,r
     let u32[8] digest=switch(catalog::digest(ref selected)){
         case .ok(v):{v}case .err(_):{return wire::encode_result(denied(),header.run,output);}
     };
-    let usize program=switch(engine::compile_project_snapshot_host(owner,project,snapshot,selected,ref digest,run)){
+    unsafe{bc_project_worker_compile_begin();}
+    let Result<usize,engine::Error> compiled=engine::compile_project_snapshot_host(owner,project,snapshot,selected,ref digest,run);
+    unsafe{bc_project_worker_compile_end();}
+    let usize program=switch(compiled){
         case .ok(v):{v}case .err(e):{return wire::encode_result(engine_failure(e,true),header.run,output);}
     };
     let Result<bytes::Buffer,wire::Error> encoded=switch(engine::preview_host_entry(owner,program)){
@@ -116,8 +121,11 @@ fn Result<bytes::Buffer,wire::Error> execute_host(ref mut engine::Engine owner,r
 
 fn Result<bytes::Buffer,wire::Error> execute_configured(ref mut engine::Engine owner,ref manifest::Project project,
     sources::Snapshot snapshot,wire::Header header,ref runs::RunConfig run,ref u8[] input,bool output){
-    let usize program=switch(engine::compile_project_snapshot_output(owner,project,snapshot,run,
-        images::metadata_charge()+images::byte_limit())){
+    unsafe{bc_project_worker_compile_begin();}
+    let Result<usize,engine::Error> compiled=engine::compile_project_snapshot_output(owner,project,snapshot,run,
+        images::metadata_charge()+images::byte_limit());
+    unsafe{bc_project_worker_compile_end();}
+    let usize program=switch(compiled){
         case .ok(v):{v}case .err(e):{return wire::encode_result(engine_failure(e,true),header.run,output);}
     };
     let engine::PreviewEntry profile=switch(engine::preview_entry(owner,program)){

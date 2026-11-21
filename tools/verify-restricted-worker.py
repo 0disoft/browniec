@@ -16,6 +16,17 @@ HELLO_PROJECT = ROOT / 'examples/projects/hello'
 POLICY_EXAMPLE = ROOT / 'examples/projects/configured-output/policy.json'
 
 
+def write_compile_fixture(path, target, manifest, policy, config, imports=b''):
+    files = [(target / entry['path']).read_bytes() for entry in manifest['sources']]
+    sections = [json.dumps(value).encode('utf-8') for value in (manifest, policy, config)]
+    prefix = bytes([8 if imports else 5]) + config['limits']['fuel'].to_bytes(4, 'little')
+    prefix += b''.join(len(section).to_bytes(4, 'little') for section in sections)
+    if imports:
+        prefix += bytes(4) + len(imports).to_bytes(4, 'little')
+    path.write_bytes(prefix + b''.join(sections) + imports +
+                     b''.join(len(file).to_bytes(2, 'little') for file in files) + b''.join(files))
+
+
 def verify_managed_project(run, need, image, folder, env):
     target = folder / 'hello'
     shutil.copytree(HELLO_PROJECT, target)
@@ -66,6 +77,7 @@ def verify_configured_project(run, need, image, folder, env):
     policy['compile']['modules'] = len(manifest['sources'])
     config = dict(schema='brownie.run/0.3', entry=manifest['entry'].copy(),
                   requires=[], grants=[], limits=policy['run'].copy())
+    write_compile_fixture(folder / 'configured-compile.start', target, manifest, policy, config)
 
     def check(expected_exit=0, kind=None, operation='run', payload=None, value=42, output=None):
         policy_file.write_text(json.dumps(policy), encoding='utf-8')
@@ -462,6 +474,8 @@ def verify_project_host(run, need, image, folder, env):
     source.write_bytes(b'module app; import host::example as api; pub fn i32 start(){'
                        b'output::emit(b"before"); let i32 a=api::check(41);'
                        b'return a+api::check(42);}')
+    write_compile_fixture(folder / 'catalog-compile.start', target, manifest, policy, config,
+                          catalog_file.read_bytes())
 
     def check(operation='run', expected_exit=0, kind=None, payload=None):
         for path, value in ((project, manifest), (policy_file, policy), (config_file, config),
@@ -615,6 +629,7 @@ def main():
              'native/restricted_worker_broker.c', 'native/restricted_worker_broker.h',
              'native/restricted_worker_stage.c', 'native/restricted_worker_stage.h',
              'native/windows-scalar-worker.c', 'native/windows-scalar-worker.h',
+             'native/runtime-engine/clock.inc',
              'native/restricted_worker_payload.h',
              'tests/native/restricted_worker_host.c', 'tools/verify-restricted-worker.py',
              'tools/verify-runtime-store-probe.py']
@@ -699,7 +714,8 @@ def main():
                              ioLease=True, brokerSessions=6, hostBrokerCases=9, sharedBudget=True,
                              phaseDeadlines=True, gracefulCancelCases=2, handleDelta=0, staging=True,
                              scalarSessions=5 if scalar else 0, parentBrokerCases=4 if scalar else 0,
-                             projectWireRejections=2 if scalar else 0)
+                             projectWireRejections=2 if scalar else 0,
+                             projectCompileStopCases=3 if scalar else 0)
                         and type(evidence.get('coldHandleDelta')) is int
                         and evidence.get('parentColdHandleDelta') in ((0, 1) if scalar else (0,)),
                         f'Unexpected worker result: {evidence}')
