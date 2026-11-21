@@ -52,6 +52,7 @@
     "runtime_engine::begin_compile_inner",
     "runtime_engine::end_compile_inner",
     "runtime_engine::reset_compile_work",
+    "runtime_engine::reset_compile_candidate",
     "windows_engine_bindings::incoming"
   ]
 }

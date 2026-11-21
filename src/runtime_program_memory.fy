@@ -40,6 +40,18 @@ pub fn Result<usize,Error> release_compile_source(ref mut Budget b,usize bytes){
     b.compile_source=0;
     return .ok(0);
 }
+// Lowering admits its full peak before allocating the candidate. The backing
+// stays charged after its scratch unwinds and until terminal cleanup.
+pub fn Result<usize,Error> hold_compile_candidate(ref mut Budget b,usize bytes){
+    if(b.closed || b.compile_source==0 || bytes==0){return .err(.State);}
+    if(bytes>b.working_limit-b.compile_source ||
+        bytes>b.engine-b.control-b.retained-b.external-b.compile_source){return .err(.Quota);}
+    b.compile_source+=bytes;
+    let usize total=b.control+b.retained+b.external+b.compile_source;
+    if(total>b.tracked_peak){b.tracked_peak=total;}
+    if(b.compile_source>b.working_peak){b.working_peak=b.compile_source;}
+    return .ok(b.compile_source);
+}
 // overhead is the still-live adopted Index + incoming Entry vector heap.
 // Prove admission on a copy: the real wrapper must reserve the phase-0 plan.
 pub fn Result<compile_memory::Plan,Error> prepare_compile(ref mut Budget b,usize overhead){

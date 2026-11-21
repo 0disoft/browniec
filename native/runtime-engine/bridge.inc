@@ -34,7 +34,7 @@ uint32_t bc_runtime_engine_compile(void *raw,void *incoming,uintptr_t limit,uint
 }
 uint32_t bc_runtime_engine_step_compile(void *raw,uintptr_t id){
  bc_engine *e=raw;bc_engine_ticket ticket;uint32_t s=admission(e,&ticket);if(s)return s;
- s=B42(&e->f_0,&e->f_1,&e->f_9,&e->f_10,id);return finish(e,ticket,s);
+ s=B42(&e->f_0,&e->f_1,&e->f_9,&e->f_10,&e->f_11,id);return finish(e,ticket,s);
 }
 uint32_t bc_runtime_engine_begin_compile(void *raw,void *incoming,uintptr_t limit,uintptr_t deadline){
  bc_engine *e=raw;bc_engine_ticket ticket;uint32_t s=admission(e,&ticket);if(s)return s;
@@ -43,8 +43,12 @@ uint32_t bc_runtime_engine_begin_compile(void *raw,void *incoming,uintptr_t limi
 uint32_t bc_runtime_engine_end_compile(void *raw,uintptr_t id,uint32_t detach){
  bc_engine *e=raw;bc_abi_thread_identity id_owner;uint32_t s=bc_abi_guard_enter(&id_owner);if(s)return s;
  s=B18(&e->f_0,id_owner.thread,id_owner.lifetime);
- if(!s)s=B45(&e->f_0,&e->f_9,&e->f_10,id,detach!=0);
+ if(!s)s=B45(&e->f_0,&e->f_9,&e->f_10,&e->f_11,id,detach!=0);
  uint32_t end=bc_abi_guard_leave(id_owner);return end?end:s;
+}
+uintptr_t bc_runtime_engine_compile_candidate_width(void){return sizeof(bc_compile_candidate);}
+void bc_runtime_engine_dispose_compile_candidate(void *raw){
+ bc_compile_candidates *candidate=raw;*candidate=B47(*candidate);
 }
 uint32_t bc_runtime_engine_compile_input(void *raw,void *incoming,uintptr_t limit,uintptr_t deadline){
  bc_engine *e=raw;bc_engine_ticket ticket;uint32_t s=admission(e,&ticket);if(s)return s;

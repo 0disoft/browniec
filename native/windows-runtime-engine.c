@@ -3,6 +3,8 @@
 #include "native/abi_thread_identity.c"
 
 typedef fy_private_type_72756e74696d655f656e67696e653a3a456e67696e65 bc_engine; /* runtime_engine::Engine */
+typedef fy_private_type_6d6f64756c655f70726f6772616d3a3a4c6f7765726564 bc_compile_candidate; /* module_program::Lowered */
+typedef __typeof__(((bc_engine *)0)->f_11) bc_compile_candidates;
 typedef fy_private_type_72756e74696d655f656e67696e653a3a436f6d70696c65576f726b bc_compile_work; /* runtime_engine::CompileWork */
 typedef fy_private_type_72756e74696d655f656e67696e653a3a50726f6772616d bc_engine_program; /* runtime_engine::Program */
 typedef fy_private_type_72756e74696d655f656e67696e653a3a426f756e64496e707574 bc_engine_bound_input; /* runtime_engine::BoundInput */
@@ -70,6 +72,7 @@ typedef __typeof__(((bc_engine *)0)->f_6) bc_engine_outputs;
 #define B44 fy_private_fn_72756e74696d655f656e67696e653a3a626567696e5f636f6d70696c655f696e6e6572 /* runtime_engine::begin_compile_inner */
 #define B45 fy_private_fn_72756e74696d655f656e67696e653a3a656e645f636f6d70696c655f696e6e6572 /* runtime_engine::end_compile_inner */
 #define B46 fy_private_fn_72756e74696d655f656e67696e653a3a72657365745f636f6d70696c655f776f726b /* runtime_engine::reset_compile_work */
+#define B47 fy_private_fn_72756e74696d655f656e67696e653a3a72657365745f636f6d70696c655f63616e646964617465 /* runtime_engine::reset_compile_candidate */
 
 #include "native/runtime-engine/bridge.inc"
 

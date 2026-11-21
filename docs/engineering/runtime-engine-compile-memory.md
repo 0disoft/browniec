@@ -405,6 +405,29 @@ Lowering and verification within the Prepared step still run synchronously.
 The remaining compile profiles, bounded steps through those phases and
 in-flight cancellation remain open.
 
+## Engine-owned lowering handoff
+
+An ordinary compile now returns Lowered after IR lowering. The Engine owns
+that candidate and its literal builder until a later step independently
+verifies and admits the Program. Source data and the candidate backing are
+both charged while Lowered is observable. Admission checks combined headroom
+with the candidate still live. Program IDs are assigned only after proof
+and publication. Cancellation, expiry, candidate allocation failure, and
+failed Program admission release the unpublished backing.
+
+The candidate vector allocates on the Prepared step and returns its backing
+on the terminal transition. Its descriptor adds 48 bytes to the inline
+Engine. Lowering and proof each still drain synchronously within a step.
+The remaining compile profiles and in-flight cancellation remain open.
+
+Windows development and /O2 verified that Lowered has no Program ID, its
+charge matches live SDK bytes, and successful admission produces an executable
+Program. The same checks covered cancellation and exact-deadline expiry from
+Lowered, allocation failure before lowering, and literal-image quota rejection
+during admission. Both profiles ended with zero live SDK allocations. Local
+receipt: `build/runtime-engine/20261121T041047288327Z/receipt.json`.
+The locked /O2 CLI build returned 77 in the quick start.
+
 ## Executed verification and remaining work
 
 [Windows evidence](../evidence/runtime-engine-compile-memory-windows-20261107.json)

@@ -19,6 +19,9 @@ import module_source_work as module_source;
 // Keep both code and original-source storage out of owning return slots.
 resource Stored { sources::Snapshot sources; programs::PublicProgram code; cleanup { } }
 pub resource Program { vec::Vec<Stored> stored; cleanup { } }
+// Unverified lowering output for the private Engine. Admission still proves
+// the complete candidate and associates it with the selected source.
+pub struct Lowered { candidate::Program code; images::Builder literals; bool references; }
 pub fn Result<Program,diagnostics::Error> compile(entries::Entry selected,usize image_limit){
     var retention::Plan plan=retention::unlimited();return compile_with_retention(selected,image_limit,ref mut plan);
 }
@@ -50,6 +53,29 @@ pub fn Result<Program,diagnostics::Error> compile_prepared_until(ref entries::En
     if(clock::expired(deadline)){return .err(diagnostics::absent(errors::absent(errors::deadline_kind(),0)));}
     if(references){return finish_references(selected,ref builder,ref code,image_limit,plan,deadline);}
     return finish_legacy(selected,ref code.body,plan,deadline);
+}
+pub fn Result<usize,diagnostics::Error> start_lowered(ref mut vec::Vec<Lowered> storage){
+    assert(vec::len<Lowered>(storage)==0);
+    let Lowered empty=Lowered{
+        .code=candidate::Program{.body=ir::empty(),.parameters=[0;128],.results=[0;16],.origins=[0;16]},
+        .literals=images::full_builder(),.references=false};
+    return switch(vec::push<Lowered>(storage,empty)){
+        case .ok(v):{.ok(v)}case .err(_):{.err(diagnostics::absent(errors::make(15,0)))}
+    };
+}
+pub fn Result<usize,diagnostics::Error> lower_prepared_until(ref entries::Entry selected,
+    ref module_source::State source,ref mut Lowered lowered,usize deadline){
+    var images::Builder literals=images::full_builder();
+    let bool references=compiler::lower_modules_prepared_until(selected,source,ref mut literals,ref mut lowered.code,false,deadline)?;
+    if(clock::expired(deadline)){return .err(diagnostics::absent(errors::absent(errors::deadline_kind(),0)));}
+    lowered.literals=literals;lowered.references=references;
+    return .ok(0);
+}
+pub fn Result<Program,diagnostics::Error> admit_lowered_until(ref entries::Entry selected,
+    ref Lowered lowered,usize image_limit,ref mut retention::Plan plan,usize deadline){
+    if(clock::expired(deadline)){return .err(diagnostics::absent(errors::absent(errors::deadline_kind(),0)));}
+    if(lowered.references){return finish_references(selected,ref lowered.literals,ref lowered.code,image_limit,plan,deadline);}
+    return finish_legacy(selected,ref lowered.code.body,plan,deadline);
 }
 fn diagnostics::Error error(ref entries::Entry selected,errors::Error e){
     return if(e.offset==0){diagnostics::absent(e)}else{diagnostics::map(modules::snapshot(entries::index(selected)),e,16)};

@@ -511,7 +511,8 @@ def main():
         projections.extend([('42',1,'programVectorType'),('42',2,'compileWorkVectorType'),('42',3,'incomingType'),
                             ('43',0,'incomingType'),('44',1,'compileWorkVectorType'),('44',2,'incomingType'),
                             ('44',3,'incomingType'),('45',1,'compileWorkVectorType'),('45',2,'incomingType'),
-                            ('46',0,'compileWorkVectorType')])
+                            ('46',0,'compileWorkVectorType'),('42',4,'compileCandidateVectorType'),
+                            ('45',3,'compileCandidateVectorType'),('47',0,'compileCandidateVectorType')])
         projections.extend([('31',0,'pendingVectorType'),('31',1,'completionType'),('31',2,'publishedVectorType'),
                             ('31',3,'outputProgramType'),('31',4,'snapshotType'),('33',0,'pendingVectorType')])
         for binding, index, key in projections:
@@ -538,6 +539,8 @@ def main():
             layout_types[key]=contract[key]
         layout_types['compileWorkType']=contract['compileWorkType']
         layout_types['compileWorkVectorType']=contract['compileWorkVectorType']
+        layout_types['compileCandidateType']=contract['compileCandidateType']
+        layout_types['compileCandidateVectorType']=contract['compileCandidateVectorType']
         need(set(layout_types) == set(contract['reviewedLayouts']), 'Reviewed layout set changed')
         cached_field=re.search(r'\b(fy_struct_\d+) f_4;',contract['reviewedLayouts']['output_stored'])
         need(cached_field is not None and cached_field.group(1)==contract['preparationType'],
@@ -613,6 +616,8 @@ def main():
             bindings += f'typedef {name} bc_{key}_entry;\n'
         bindings += f'typedef {contract["policyType"]} bc_engine_policy;\n'
         bindings += f'typedef {contract["compileWorkType"]} bc_compile_work;\n'
+        bindings += f'typedef {contract["compileCandidateType"]} bc_compile_candidate;\n'
+        bindings += f'typedef {contract["compileCandidateVectorType"]} bc_compile_candidates;\n'
         bindings += f'typedef {contract["hostProgramType"]} bc_host_program;\ntypedef {contract["hostIRType"]} bc_host_ir;\n'
         bindings += f'typedef {contract["hostExchangeType"]} bc_host_exchange;\n'
         bindings += '\n'.join(f'#define B{key} {value}' for key, value in contract['bindings'].items()) + '\n'

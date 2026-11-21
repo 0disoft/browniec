@@ -448,7 +448,17 @@ fn Result<engine::CompileStatus,u8> compile_status(Result<engine::CompileStatus,
     return switch(result){case .ok(v):{.ok(v)}case .err(_):{.err(1)}};
 }
 fn u8 compile_state(engine::CompileState state){
-    return switch(state){case .Preparing:{0}case .Prepared:{1}case .Completed:{2}case .Failed:{3}case .Cancelled:{4}};
+    return switch(state){case .Preparing:{0}case .Prepared:{1}case .Lowered:{5}case .Completed:{2}case .Failed:{3}case .Cancelled:{4}};
+}
+fn Result<engine::CompileStatus,u8> prepare_compile(ref mut engine::Engine e,usize job){
+    var engine::CompileStatus progress=compile_status(engine::observe_compile(e,job))?;
+    while(compile_state(progress.state)==0){
+        let usize prior=progress.batches;
+        progress=compile_status(engine::step_compile(e,job))?;
+        assert(progress.batches==prior+1 && progress.batches<256);
+    }
+    assert(compile_state(progress.state)==1 && progress.program==0 && progress.batches>1);
+    return .ok(progress);
 }
 fn Result<usize,u8> pending_compile_lifecycle(){
     var engine::Engine e=created()?;
@@ -472,14 +482,14 @@ fn Result<usize,u8> pending_compile_lifecycle(){
 
     let usize current=id(engine::begin_compile(ref mut e,selected(source)?,65536));assert(current==cancelled+1);
     assert(!engine::step_compile(ref mut e,cancelled).is_ok);
-    var engine::CompileStatus progress=compile_status(engine::observe_compile(ref e,current))?;
-    while(compile_state(progress.state)==0){
-        let usize prior=progress.batches;
-        progress=compile_status(engine::step_compile(ref mut e,current))?;
-        assert(progress.batches==prior+1 && progress.batches<256);
-    }
-    assert(compile_state(progress.state)==1 && progress.program==0 && progress.batches>1);
+    let engine::CompileStatus progress=prepare_compile(ref mut e,current)?;
     assert(!engine::detach_compile(ref mut e,current).is_ok);
+    counts(ref mut e,0,0,0);
+    let engine::CompileStatus lowered=compile_status(engine::step_compile(ref mut e,current))?;
+    assert(compile_state(lowered.state)==5 && lowered.program==0 && lowered.batches==progress.batches);
+    let memory::Observation candidate=retained(ref e);
+    assert(candidate.compile_source_bytes>held.compile_source_bytes);
+    assert(unsafe{probe_live_bytes()}==idle.bytes+candidate.compile_source_bytes);
     counts(ref mut e,0,0,0);
     let engine::CompileStatus completed=compile_status(engine::step_compile(ref mut e,current))?;
     assert(compile_state(completed.state)==2 && completed.program==1 && completed.batches==progress.batches);
@@ -491,6 +501,33 @@ fn Result<usize,u8> pending_compile_lifecycle(){
     destroy(ref mut e,i);release(ref mut e,completed.program);
     same_heap(ref idle);close(ref mut e);return .ok(0);
 }
+fn Result<usize,u8> pending_compile_candidate_cleanup(){
+    var engine::Engine e=created()?;
+    let Heap idle=heap();
+    let ref u8[] source=b"module app;pub fn i32 chosen(){let ref u8[] data=b\"M\";return data[0] as i32;}";
+    var usize mode=0;
+    while(mode<3){
+        let usize job=id(engine::begin_compile(ref mut e,selected(source)?,if(mode==2){0}else{65536}));
+        let engine::CompileStatus prepared=prepare_compile(ref mut e,job)?;
+        if(mode==0){
+            unsafe{bc_runtime_engine_test_fail(0)};
+            let engine::CompileStatus oom=compile_status(engine::step_compile(ref mut e,job))?;
+            unsafe{bc_runtime_engine_test_fail(-1)};
+            assert(compile_state(oom.state)==3 && oom.failure.status==6);
+        }else{
+            let engine::CompileStatus lowered=compile_status(engine::step_compile(ref mut e,job))?;
+            assert(compile_state(lowered.state)==5 && lowered.batches==prepared.batches);
+            let engine::CompileStatus stopped=if(mode==1){compile_status(engine::cancel_compile(ref mut e,job))?}
+                else{compile_status(engine::step_compile(ref mut e,job))?};
+            assert(compile_state(stopped.state)==if(mode==1){4}else{3});
+            assert(stopped.program==0);
+        }
+        same_heap(ref idle);assert(retained(ref e).compile_source_bytes==0);
+        assert(engine::detach_compile(ref mut e,job).is_ok);
+        mode+=1;
+    }
+    counts(ref mut e,0,0,0);close(ref mut e);return .ok(0);
+}
 fn Result<usize,u8> pending_compile_deadline(){
     let policy::Policy ceiling=output_policy(true)?;
     var engine::Engine e=configured_engine(ceiling)?;
@@ -501,12 +538,13 @@ fn Result<usize,u8> pending_compile_deadline(){
         let usize start=100+20000000*mode;
         unsafe{bc_runtime_engine_test_set_clock(start)};
         let usize job=id(engine::begin_compile(ref mut e,selected(source)?,65536));
-        let engine::CompileStatus first=compile_status(engine::step_compile(ref mut e,job))?;
-        assert(first.batches==1);
+        let engine::CompileStatus prepared=prepare_compile(ref mut e,job)?;
+        let engine::CompileStatus lowered=compile_status(engine::step_compile(ref mut e,job))?;
+        assert(compile_state(lowered.state)==5 && lowered.batches==prepared.batches);
         unsafe{bc_runtime_engine_test_set_clock(start+20000000)};
         let engine::CompileStatus expired=if(mode==0){compile_status(engine::step_compile(ref mut e,job))?}
             else{compile_status(engine::cancel_compile(ref mut e,job))?};
-        assert(compile_state(expired.state)==3 && expired.batches==1 && expired.program==0);
+        assert(compile_state(expired.state)==3 && expired.batches==lowered.batches && expired.program==0);
         assert(expired.failure.status==4 && expired.failure.diagnostic.code.kind==errors::deadline_kind());
         let engine::CompileStatus again=compile_status(engine::cancel_compile(ref mut e,job))?;
         assert(compile_state(again.state)==3 && again.failure.status==4);
@@ -1343,6 +1381,7 @@ pub fn void run(){
     assert(project_output().is_ok);same_heap(ref before);
     assert(configured_compile_deadline().is_ok);same_heap(ref before);
     assert(pending_compile_lifecycle().is_ok);same_heap(ref before);
+    assert(pending_compile_candidate_cleanup().is_ok);same_heap(ref before);
     assert(pending_compile_deadline().is_ok);same_heap(ref before);
     assert(configured_deadline().is_ok);same_heap(ref before);
     assert(cleanup_fault_quarantines_engine(false).is_ok);same_heap(ref before);
