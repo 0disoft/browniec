@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-21): [Catalog-backed trap locations](docs/engineering/embed-preview.md#catalog-backed-trap-locations)
-  preserve the original source row and byte range through a host reply and
-  Program release. Windows /Od and /O2 verify both source orders.
+- Latest runtime checkpoint (2026-11-21): [Revision-2 host replies](docs/engineering/embed-preview.md#revision-2-host-requests-and-replies)
+  report unhandled Result errors as stable host failures. Windows /Od and /O2
+  verify terminal events, Fuel and the explicit guest error arm.
 
 # Brownie C agent guidance
 

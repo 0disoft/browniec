@@ -367,7 +367,15 @@ the live request and samples the deadline between receipt chunks of at most
 step budgets. A malformed or mismatched reply leaves the request available
 for a valid response while the run is live. If the run has terminated,
 `bc_step` reports its terminal event. An accepted fatal reply returns `BC_OK`
-and produces a failed event on the next step.
+and produces a failed event on the next step. When the guest evaluates a host
+call as its success value and the host sends a Result error, installation
+terminates with BC_FAILED and diagnostic code 20. A guest Result error arm
+can handle the same reply and continue execution.
+
+The Windows /Od and /O2 C hosts verified this with the maximum u32 error.
+The failed Instance exposed no output and charged the 12-byte TLV once.
+Its terminal event was identical after a late cancel. The explicit guest
+error arm still returned 17. Local receipt: build/embed-preview-354b5coz/receipt.json.
 
 The Windows C host passed /Od and /O2 with default stacks. The entry calls a
 function in a second module, which sends the host request. Two Instances pinned

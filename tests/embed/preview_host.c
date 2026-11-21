@@ -925,7 +925,7 @@ static void revision_two_host_exchange(uint32_t rules_index){
     bc_source sources[2];
     sources[1-rules_index]=(bc_source){name,{source_text,sizeof(source_text)-1}};
     sources[rules_index]=(bc_source){{rules_name,sizeof(rules_name)-1},{rules_text,sizeof(rules_text)-1}};
-    bc_handle engine=0,program=0,one=0,many=0,cancelled=0,fatal=0,overflow=0;
+    bc_handle engine=0,program=0,one=0,many=0,cancelled=0,fatal=0,overflow=0,unhandled=0;
     bc_diagnostic diagnostic={.struct_size=sizeof(diagnostic)};
     assert(bc_engine_create(BC_ABI_REVISION,policy,&engine,&diagnostic)==BC_OK);
     const bc_slice catalog_json={catalog,sizeof(catalog)-1};
@@ -950,6 +950,7 @@ static void revision_two_host_exchange(uint32_t rules_index){
     assert(bc_instance_create(engine,program,empty,run,&cancelled,&diagnostic)==BC_OK);
     assert(bc_instance_create(engine,program,empty,run,&fatal,&diagnostic)==BC_OK);
     assert(bc_instance_create(engine,program,empty,run,&overflow,&diagnostic)==BC_OK);
+    assert(bc_instance_create(engine,program,empty,run,&unhandled,&diagnostic)==BC_OK);
     assert(bc_program_release(engine,program)==BC_OK);
 
     const bc_event a=next_host_event(one,1),b=next_host_event(many,64);
@@ -997,6 +998,19 @@ static void revision_two_host_exchange(uint32_t rules_index){
     assert(memcmp(&again,&trap,sizeof(trap))==0);
     assert(cancelled_event.diagnostic.source_index==UINT32_MAX);
     assert(fatal_event.diagnostic.source_index==UINT32_MAX);
+    const uint8_t reply_error[]={5,0,0,0,4,0,0,0,255,255,255,255};
+    const bc_event unhandled_request=next_host_event(unhandled,64);
+    assert(unhandled_request.kind==BC_HOST_REQUEST);
+    assert(bc_host_reply(unhandled,unhandled_request.request_id,BC_REPLY_ERR,
+        (bc_slice){reply_error,sizeof(reply_error)},&diagnostic)==BC_OK);
+    const bc_event failed=next_host_event(unhandled,1);
+    assert(failed.kind==BC_FAILED && failed.diagnostic.code==20 && failed.trap_code==0);
+    assert(failed.diagnostic.source_index==UINT32_MAX && !failed.payload.data && !failed.payload.len);
+    assert(failed.fuel_used==unhandled_request.fuel_used+sizeof(reply_error));
+    assert(bc_cancel(unhandled)==BC_OK);
+    const bc_event repeated=next_host_event(unhandled,64);
+    assert(memcmp(&failed,&repeated,sizeof(failed))==0);
+    assert(bc_instance_destroy(unhandled)==BC_OK);
     assert(bc_instance_destroy(overflow)==BC_OK);
     assert(bc_instance_destroy(one)==BC_OK && bc_instance_destroy(many)==BC_OK);
     assert(bc_instance_destroy(cancelled)==BC_OK && bc_instance_destroy(fatal)==BC_OK);
@@ -1188,6 +1202,7 @@ int main(void){
     revision_two_host_exchange(0);
     revision_two_host_exchange(1);
     puts("PASS: catalog-backed traps preserve original spans in both source orders");
+    puts("PASS: unhandled Result error produces a stable host failure and no guest output");
     revision_two_large_host_reply();
     printf("PASS: quanta 1/64 return 77 and consume %" PRIu64 " fuel; cancellation and ownership verified\n",a.fuel_used);
     puts("PASS: four owner threads independently compiled, stepped, and destroyed their Engines without retries");
