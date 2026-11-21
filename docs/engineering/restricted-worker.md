@@ -403,8 +403,8 @@ validates delimiter pairing and enforces its own grammar limits.
 lowering. The policy also covers [nominal record depth](#nominal-record-depth),
 [signature type depth](#signature-type-depth), and [local type depth](#local-type-depth).
 [Scalar and nominal type quota](#scalar-and-nominal-type-quota) also
-checks the image before publication, including [array types](#array-type-quota).
-View and implicit host type accounting remains open.
+checks the image before publication, including [array types](#array-type-quota)
+and [view types](#view-type-quota). Implicit host type accounting remains open.
 
 The nesting follow-up passed twenty configured project cases per Windows
 profile. A nested block and parenthesized value returned 42 at depth two,
@@ -833,8 +833,8 @@ the scalar placeholder in the underlying IR.
 For this subset the maximum is 52 identities, so policies at or above that
 bound skip the scan. Smaller policies visit at most 128 register tags, 16
 returns and 512 record fields, using a fixed 143-entry seen table and no
-heap allocation. The check does not add a compile Fuel debit. Type accounting
-for arrays, views and implicit host signature types remains open.
+heap allocation. The check does not add a compile Fuel debit. The array and view extensions
+below count additional image metadata. Implicit host signature types remain open.
 
 Both Windows profiles accept one type across the original two modules.
 Two records sharing an i32 field require three identities. An ordinary
@@ -862,6 +862,24 @@ profiles return 42 at the exact limits and reject one less with
 Each profile passed 75 configured, 26 catalog and five managed project cases
 plus nine native host transport cases. All 456 receipt input hashes matched.
 Local receipt: `build/restricted-worker/20261121T204937694281Z/receipt.json`.
+
+### View type quota
+
+Shared and exclusive slices have distinct type identities per scalar element.
+Input and literal byte views share the same `ref u8[]` identity and u8 leaf.
+Static text views use a separate `ref str` identity. The check reuses verified
+static kinds and resolves up to 16 slice sites using existing IR metadata.
+Repeated origins and allocation sites share identities without heap allocation.
+
+Both Windows profiles admit two static byte views at a quota of three, byte
+and text views at four, and shared and exclusive i32 slice views at five
+including the lowered usize bounds. All three fail one below the exact
+quota. An input view and a literal byte view together fit three identities,
+as does a catalog worker's shared-byte entry. At two, neither worker
+publishes a result or output. Each profile passed 83 configured, 27 catalog
+and five managed project cases plus nine native host transport cases.
+All 456 receipt input hashes matched.
+Local receipt: `build/restricted-worker/20261121T210210736772Z/receipt.json`.
 
 ## Windows verification
 

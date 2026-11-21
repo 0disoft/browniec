@@ -299,6 +299,21 @@ def verify_configured_project(run, need, image, folder, env):
     policy['compile'] = compile_defaults
     math_file.write_bytes(original_source)
 
+    view_types = (
+        (b'let ref u8[] a=b"42";let ref u8[] b=b"0";', 3),
+        (b'let ref u8[] a=b"42";let ref str b="0";', 4),
+        # The slice bounds also materialize usize registers.
+        (b'var i32[1] a=[42];{let ref i32[] s=ref a;}let ref mut i32[] m=ref mut a;', 5),
+    )
+    for declarations, required in view_types:
+        math_file.write_bytes(b'module util::math;pub fn i32 answer(){' + declarations + b'return 42;}')
+        policy['compile'] = dict(compile_defaults, source_bytes=4096, types=required)
+        check()
+        policy['compile']['types'] = required - 1
+        check(3, 'compile_limit', 'check')
+    policy['compile'] = compile_defaults
+    math_file.write_bytes(original_source)
+
     runtime = config['limits'].copy()
     config['limits'].update(memory_bytes=1, object_bytes=1, input_bytes=0, output_bytes=0,
                             host_request_bytes=1, host_response_bytes=1)
@@ -350,6 +365,14 @@ def verify_configured_project(run, need, image, folder, env):
     check(payload=payload, value=77)
     payload.write_bytes(b'')
     check(payload=payload, value=0)
+    entry.write_bytes(b'module app;pub fn i32 start(ref u8[] data){'
+                      b'let ref u8[] marker=b"42";return 42;}')
+    type_limit = policy['compile']['types']
+    policy['compile']['types'] = 3
+    check(payload=payload)
+    policy['compile']['types'] = 2
+    check(3, 'compile_limit', 'check')
+    policy['compile']['types'] = type_limit
     entry.write_bytes(original_entry)
     policy['compile']['source_bytes'] = source_limit
 
@@ -395,7 +418,7 @@ def verify_configured_project(run, need, image, folder, env):
     config['entry']['function'] = manifest['entry']['function']
     config['grants'] = ['brownie.output.emit']
     check(4, 'unavailable')
-    return 75
+    return 83
 
 
 def verify_project_host(run, need, image, folder, env):
@@ -546,12 +569,16 @@ def verify_project_host(run, need, image, folder, env):
     source.write_bytes(b'module app; import host::example as api; pub fn i32 start(ref u8[] data){'
                        b'output::emit(ref data); let i32 a=api::check(41); return a+api::check(42);}')
     policy['compile']['depth'] = 2
+    policy['compile']['types'] = 3
     check(payload=payload)
+    policy['compile']['types'] = 2
+    check(expected_exit=3, kind='compile_limit', payload=payload)
+    policy['compile']['types'] = 4096
     policy['compile']['depth'] = 1
     check(expected_exit=3, kind='compile_limit', payload=payload)
     policy['compile']['depth'] = original_depth
     check(expected_exit=4, kind='unavailable')
-    return 26
+    return 27
 
 
 def main():
