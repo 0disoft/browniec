@@ -70,9 +70,9 @@ pub fn Result<entries::Entry,modules::Error> select(ref project::Project map,sou
 }
 
 pub fn Result<entries::Entry,modules::Error> select_limited(ref project::Project map,sources::Snapshot snapshot,
-    usize tokens,usize functions,usize records){
+    usize tokens,usize functions,usize records,usize nesting_limit){
     var usize[16] order=[32;16];let usize mapped=file_map(map,ref snapshot,ref mut order)?;
-    let modules::Index index=modules::build_limited(snapshot,tokens)?;
+    let modules::Index index=modules::build_limited(snapshot,tokens,nesting_limit)?;
     if(modules::function_count(ref index)>functions || modules::record_count(ref index)>records){
         return .err(error(.Limit,sources::no_source()));
     }

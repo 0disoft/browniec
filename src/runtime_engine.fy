@@ -436,7 +436,7 @@ pub fn Result<usize,Error> compile_project_snapshot_output(ref mut Engine e,ref 
        sources::snapshot_bytes(ref snapshot)>source_byte_limit(e)){return .err(error(8));}
     let usize deadline=compile_deadline(e,0)?;
     let policy_limits::CompileLimits limits=configured_compile_limits(e)?;
-    let entries::Entry selected=switch(project_binding::select_limited(project,snapshot,limits.tokens,limits.functions,limits.types)){
+    let entries::Entry selected=switch(project_binding::select_limited(project,snapshot,limits.tokens,limits.functions,limits.types,limits.depth)){
         case .ok(v):{v}case .err(e):{return .err(host_binding_error(e));}
     };
     return retain_entry(e,selected,image_limit,2,deadline);

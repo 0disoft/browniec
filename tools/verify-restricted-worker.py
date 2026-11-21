@@ -75,6 +75,7 @@ def verify_configured_project(run, need, image, folder, env):
               data['status'] == 'completed' and data['return_i32'] == 42),
              f'Unexpected configured project result: {data}')
         need(not list(Path(env['TEMP']).iterdir()), 'configured project left staged resources')
+        return data
 
     check()
     policy['compile']['source_bytes'] -= 1
@@ -120,6 +121,20 @@ def verify_configured_project(run, need, image, folder, env):
     policy['compile'] = compile_defaults
     math_file.write_bytes(original_source)
 
+    nested_source = (b'module util::math;\npub fn i32 answer(){var i32 n=40;'
+                     b' /* [{( */ { n += (2); } { n += 0; } return n;}\n')
+    math_file.write_bytes(nested_source)
+    policy['compile'] = dict(compile_defaults, source_bytes=4096, depth=2)
+    check()
+    policy['compile']['depth'] = 1
+    location = check(3, 'compile_limit', 'check')['error']['location']
+    offset = nested_source.index(b'(2)')
+    need(location['source_index'] == 1 and location['path'] == 'src/math.brc' and
+         location['offset'] == offset and location['end_offset'] == offset + 1,
+         f'Unexpected nesting limit location: {location}')
+    policy['compile'] = compile_defaults
+    math_file.write_bytes(original_source)
+
     runtime = config['limits'].copy()
     config['limits'].update(memory_bytes=1, object_bytes=1, input_bytes=0, output_bytes=0,
                             host_request_bytes=1, host_response_bytes=1)
@@ -151,7 +166,7 @@ def verify_configured_project(run, need, image, folder, env):
     config['entry']['function'] = manifest['entry']['function']
     config['grants'] = ['brownie.output.emit']
     check(4, 'unavailable')
-    return 18
+    return 20
 
 
 def main():

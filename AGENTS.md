@@ -1,6 +1,6 @@
 - Latest runtime checkpoint (2026-11-22): [Compiler limits inside the worker](docs/engineering/restricted-worker.md#engine-policy-inside-the-worker)
-  checks lexical tokens and declarations during binding and image limits before publication.
-  Development and /O2 each pass eighteen configured project cases.
+  enforce policy delimiter nesting while indexing declaration bodies.
+  Development and /O2 each pass twenty configured project cases.
 
 # Brownie C agent guidance
 

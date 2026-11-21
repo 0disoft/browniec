@@ -390,9 +390,23 @@ image's instruction count, function count and registers per function
 using the same image check as the host compiler. The native token cap
 including EOF still applies to the ordinary module index.
 
-Compile Fuel, policy-controlled syntax depth, and type accounting beyond
-declared records remain open. Host requests, guest input and guest output
-still need worker transport integration.
+The configured worker also applies the policy depth ceiling to nested
+parentheses, brackets and braces inside declaration bodies. The module index
+counts lexer tokens during its existing scan, starting inside the declaration's
+outer braces. Comment and literal contents do not count. The first excess
+opener produces a source-local `compile_limit`. The existing parser still
+validates delimiter pairing and enforces its own grammar limits.
+
+Compile Fuel, semantic depth outside this delimiter check, and type accounting
+beyond declared records remain open. Host requests, guest input and guest
+output still need worker transport integration.
+
+The nesting follow-up passed twenty configured project cases per Windows
+profile. A nested block and parenthesized value returned 42 at depth two,
+with a sibling block and a delimiter-bearing comment in the same body. The
+depth-one check returned exit 3 with the half-open span of the excess opener
+in the second module. Local receipt:
+`build/restricted-worker/20261121T172355590261Z/receipt.json`.
 
 Locked Windows development and /O2 each passed eleven configured project
 cases. The two-module project returned 42. The new cases reject a compile
