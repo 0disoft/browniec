@@ -444,6 +444,89 @@ static void revision_two_engines(void){
     assert(bc_preview_engine_destroy(handle)==BC_OK);
 }
 
+static bc_event next_host_event(bc_handle instance,uint32_t quantum){
+    bc_event event={.struct_size=sizeof(event)};
+    for(unsigned n=0;n<32;++n){
+        assert(bc_step(instance,quantum,&event)==BC_OK);
+        if(event.kind!=BC_YIELD){return event;}
+    }
+    assert(0 && "host request or completion expected");
+    return event;
+}
+
+static void revision_two_host_exchange(void){
+    static const uint8_t main_name[]="main";
+    static const uint8_t source_text[]=
+        "module main; import host::example as api; "
+        "pub fn i32 main(){return api::check(41) + 35;}";
+    uint8_t catalog[]="{\"schema\":\"brownie.catalog/1\",\"imports\":["
+        "{\"id\":0,\"module\":\"host::example\",\"symbol\":\"check\","
+        "\"parameters\":[\"i32\"],\"result\":\"Result<i32,u32>\",\"effect\":\"read\","
+        "\"capability\":\"host.example.check\",\"adapter_revision\":\"v1\"}]}";
+    static const uint8_t request[]={1,0,3,0,0,0,4,0,0,0,41,0,0,0};
+    uint8_t answer[]={3,0,0,0,4,0,0,0,42,0,0,0};
+    static const char caps[]="[\"host.example.check\"]";
+    uint8_t policy_data[4096],run_data[1024],pure_data[1024];
+    const bc_slice policy={policy_data,read_fixture("policy-host.json",policy_data,sizeof(policy_data))};
+    const bc_slice run={run_data,read_fixture("run-host.json",run_data,sizeof(run_data))};
+    const bc_slice pure={pure_data,read_fixture("run.json",pure_data,sizeof(pure_data))};
+    const bc_slice empty={0};
+    const bc_slice name={main_name,sizeof(main_name)-1};
+    const bc_source source={name,{source_text,sizeof(source_text)-1}};
+    bc_handle engine=0,program=0,one=0,many=0,cancelled=0,fatal=0;
+    bc_diagnostic diagnostic={.struct_size=sizeof(diagnostic)};
+    assert(bc_engine_create(BC_ABI_REVISION,policy,&engine,&diagnostic)==BC_OK);
+    assert(bc_compile(engine,&source,1,(bc_slice){catalog,sizeof(catalog)-1},&program,&diagnostic)==BC_OK);
+    memset(catalog,0,sizeof(catalog));
+    bc_entry_info info={.struct_size=sizeof(info)};
+    assert(bc_program_entry_info(engine,program,name,name,&info,&diagnostic)==BC_OK);
+    assert(info.input_kind==BC_INPUT_NONE && info.required_capabilities_json.len==sizeof(caps)-1);
+    assert(memcmp(info.required_capabilities_json.data,caps,sizeof(caps)-1)==0);
+    assert(bc_instance_create(engine,program,empty,pure,&one,&diagnostic)==BC_POLICY_ERROR && one==0);
+    assert(bc_instance_create(engine,program,empty,run,&one,&diagnostic)==BC_OK);
+    assert(bc_instance_create(engine,program,empty,run,&many,&diagnostic)==BC_OK);
+    assert(bc_instance_create(engine,program,empty,run,&cancelled,&diagnostic)==BC_OK);
+    assert(bc_instance_create(engine,program,empty,run,&fatal,&diagnostic)==BC_OK);
+    assert(bc_program_release(engine,program)==BC_OK);
+
+    const bc_event a=next_host_event(one,1),b=next_host_event(many,64);
+    assert(a.kind==BC_HOST_REQUEST && b.kind==BC_HOST_REQUEST && a.import_id==0 && b.import_id==0);
+    assert(a.request_id && b.request_id && a.request_id!=b.request_id);
+    assert(a.payload.len==sizeof(request) && memcmp(a.payload.data,request,sizeof(request))==0);
+    assert(b.payload.len==sizeof(request) && memcmp(b.payload.data,request,sizeof(request))==0);
+    assert(bc_host_reply(one,b.request_id,BC_REPLY_OK,(bc_slice){answer,sizeof(answer)},&diagnostic)==BC_BAD_ARGUMENT);
+    assert(bc_host_reply(one,a.request_id,BC_REPLY_OK,(bc_slice){answer,1},&diagnostic)==BC_BAD_ARGUMENT);
+    const bc_event waiting=next_host_event(one,1);
+    assert(waiting.kind==BC_WAIT && waiting.request_id==a.request_id && waiting.fuel_used==a.fuel_used);
+    assert(!waiting.payload.data && !waiting.payload.len);
+    assert(bc_host_reply(one,a.request_id,BC_REPLY_OK,(bc_slice){answer,sizeof(answer)},&diagnostic)==BC_OK);
+    assert(bc_host_reply(one,a.request_id,BC_REPLY_OK,(bc_slice){answer,sizeof(answer)},&diagnostic)==BC_BAD_ARGUMENT);
+    answer[8]=43;
+    assert(bc_host_reply(many,b.request_id,BC_REPLY_OK,(bc_slice){answer,sizeof(answer)},&diagnostic)==BC_OK);
+    memset(answer,0,sizeof(answer));
+
+    const bc_event done_a=next_host_event(one,1),done_b=next_host_event(many,64);
+    assert(done_a.kind==BC_DONE && done_b.kind==BC_DONE);
+    assert(done_a.return_i32==77 && done_b.return_i32==78);
+    assert(done_a.fuel_used==done_b.fuel_used && done_a.peak_accounted_bytes==done_b.peak_accounted_bytes);
+    assert(done_a.peak_accounted_bytes>0 && done_a.payload.len==0 && done_b.payload.len==0);
+
+    const bc_event pending=next_host_event(cancelled,64);
+    assert(pending.kind==BC_HOST_REQUEST && bc_cancel(cancelled)==BC_OK);
+    assert(bc_host_reply(cancelled,pending.request_id,BC_REPLY_FATAL,empty,&diagnostic)==BC_RUN_TERMINATED);
+    const bc_event cancelled_event=next_host_event(cancelled,1);
+    assert(cancelled_event.kind==BC_FAILED && cancelled_event.diagnostic.code==33 && cancelled_event.payload.len==0);
+    const bc_event fatal_request=next_host_event(fatal,64);
+    assert(fatal_request.kind==BC_HOST_REQUEST);
+    assert(bc_host_reply(fatal,fatal_request.request_id,BC_REPLY_FATAL,empty,&diagnostic)==BC_OK);
+    const bc_event fatal_event=next_host_event(fatal,1);
+    assert(fatal_event.kind==BC_FAILED && fatal_event.diagnostic.code==20 && fatal_event.payload.len==0);
+    assert(bc_instance_destroy(one)==BC_OK && bc_instance_destroy(many)==BC_OK);
+    assert(bc_instance_destroy(cancelled)==BC_OK && bc_instance_destroy(fatal)==BC_OK);
+    assert(bc_host_reply(one,a.request_id,BC_REPLY_FATAL,empty,&diagnostic)==BC_INVALID_HANDLE);
+    assert(bc_engine_destroy(engine)==BC_OK);
+}
+
 int main(void){
     uint8_t text[]="module main; fn i32 inc(i32 n){return n+1;} "
         "pub fn i32 main(){var i32 n=70;while(n<77){n=inc(n);}return n;}";
@@ -495,6 +578,7 @@ int main(void){
     assert(bc_preview_engine_destroy(engine)==BC_INVALID_HANDLE);
     independent_engine_threads();
     revision_two_engines();
+    revision_two_host_exchange();
     printf("PASS: quanta 1/64 return 77 and consume %" PRIu64 " fuel; cancellation and ownership verified\n",a.fuel_used);
     puts("PASS: four owner threads independently compiled, stepped, and destroyed their Engines without retries");
     puts("PASS: revision-2 query, Engine policy admission, diagnostic sizing, quotas and stale handles");
@@ -506,5 +590,6 @@ int main(void){
     puts("PASS: call frame limit 1 traps and limit 2 returns 77 from the same Program");
     puts("PASS: revision-2 byte input snapshots, empty input, exact byte quota, and peak accounting");
     puts("PASS: revision-2 output authority, binary completion views, cancellation, and trap rollback");
+    puts("PASS: revision-2 host request correlation, independent replies, cancellation, and fatal reply");
     return 0;
 }

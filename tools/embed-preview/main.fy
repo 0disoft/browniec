@@ -11,6 +11,8 @@ import errors as errors;
 import static_image as images;
 import fuel as fuel;
 import runtime_policy as policies;
+import host_catalog as catalog;
+import host_exchange as host;
 
 unsafe extern C fn void bc_embed_binding(u32 id);
 unsafe extern C fn ptr u8 bc_embed_witness_source();
@@ -45,14 +47,17 @@ fn Result<engine::Engine,engine::Error> create_configured(ptr u8 data,usize leng
     return engine::create_with_policy(policy);
 }
 
-fn Result<modules::Index,engine::Error> source_index(ref u8[] source){
+fn Result<sources::Snapshot,engine::Error> source_snapshot(ref u8[] source){
     var sources::Builder builder=switch(sources::builder(sources::source_limit(),16)){
         case .ok(v):{v}case .err(_):{return .err(failed(7));}
     };
     if(!sources::add(ref mut builder,b"main.brc",source).is_ok){return .err(failed(4));}
-    let sources::Snapshot snapshot=switch(sources::freeze(ref builder)){
-        case .ok(v):{v}case .err(_):{return .err(failed(4));}
+    return switch(sources::freeze(ref builder)){
+        case .ok(v):{.ok(v)}case .err(_):{.err(failed(4))}
     };
+}
+fn Result<modules::Index,engine::Error> source_index(ref u8[] source){
+    let sources::Snapshot snapshot=source_snapshot(source)?;
     return switch(modules::build(snapshot)){
         case .ok(v):{.ok(v)}case .err(e):{.err(binding_failure(e))}
     };
@@ -108,11 +113,12 @@ fn Result<engine::Event,engine::Error> step(ref mut engine::Engine owner,usize r
 }
 
 fn Result<engine::ScalarPreparation,engine::Error> instance_configured(ref mut engine::Engine owner,usize program,
-    ptr u8 bytes,usize size,ptr u8 data,usize length){
+    ptr u8 bytes,usize size,ptr u8 data,usize length,bool catalog_backed){
     let usize lifetime=length;
     let ref u8[] configuration=unsafe{byte_slice::from_raw_parts(ref lifetime,data,length)};
     let usize input_lifetime=size;
     let ref u8[] input=if(size==0){b""}else{unsafe{byte_slice::from_raw_parts(ref input_lifetime,bytes,size)}};
+    if(catalog_backed){return engine::prepare_host_preview(owner,program,input,configuration);}
     return engine::prepare_scalar_preview(owner,program,input,configuration);
 }
 
@@ -120,6 +126,46 @@ struct OutputSlice { ptr u8 data; usize length; }
 fn Result<OutputSlice,engine::Error> output_slice(ref engine::Engine owner,usize instance){
     let ref u8[] data=engine::preview_output(owner,instance)?;
     return .ok(OutputSlice{.data=if(data.len==0){null}else{unsafe{data as ptr u8}},.length=data.len});
+}
+
+fn Result<usize,engine::Error> compile_host(ref mut engine::Engine owner,ptr u8 data,usize length,
+    ptr u8 catalog_data,usize catalog_size){
+    let usize source_lifetime=length;
+    let ref u8[] source=unsafe{byte_slice::from_raw_parts(ref source_lifetime,data,length)};
+    let usize catalog_lifetime=catalog_size;
+    let ref u8[] json=unsafe{byte_slice::from_raw_parts(ref catalog_lifetime,catalog_data,catalog_size)};
+    let catalog::Catalog imports=switch(catalog::parse(json)){
+        case .ok(v):{v}case .err(e):{
+            return .err(failed(switch(e.kind){
+                case .Allocation:{6}case .Limit:{8}
+                case .Json:{5}case .Unknown:{5}case .Duplicate:{5}case .Missing:{5}
+                case .Value:{5}case .Order:{5}case .Bounds:{5}
+            }));
+        }
+    };
+    let sources::Snapshot snapshot=source_snapshot(source)?;
+    return engine::compile_preview_host(owner,snapshot,imports);
+}
+
+fn Result<OutputSlice,engine::Error> host_capability(ref engine::Engine owner,usize program,usize index){
+    let ref u8[] name=engine::preview_host_capability(owner,program,index)?;
+    return .ok(OutputSlice{.data=unsafe{name as ptr u8},.length=name.len});
+}
+struct RequestView { usize request; usize import_id; ptr u8 data; usize length; }
+fn Result<RequestView,engine::Error> host_request(ref engine::Engine owner,usize instance){
+    let ref host::Exchange exchange=engine::preview_host_exchange(owner,instance)?;
+    let host::Observation state=host::observe(exchange);
+    let ref u8[] payload=switch(host::request_bytes(exchange)){
+        case .ok(v):{v}case .err(_):{return .err(failed(7));}
+    };
+    return .ok(RequestView{.request=state.request,.import_id=state.import_id,
+        .data=unsafe{payload as ptr u8},.length=payload.len});
+}
+fn Result<engine::Event,engine::Error> host_reply(ref mut engine::Engine owner,usize instance,usize request,
+    u8 kind,ptr u8 data,usize length,usize total,usize offset){
+    let usize lifetime=length;
+    let ref u8[] chunk=if(length==0){b""}else{unsafe{byte_slice::from_raw_parts(ref lifetime,data,length)}};
+    return engine::receive_host_reply(owner,instance,instance,request,kind,total,offset,chunk);
 }
 
 // Retain only the generated bindings. The DLL never invokes this root driver.
@@ -137,8 +183,13 @@ fn i32 main(){
     unsafe{bc_embed_binding(8)};discard engine::destroy(ref mut owner);
     unsafe{bc_embed_binding(9)};discard create_configured(source,1);
     unsafe{bc_embed_binding(10)};discard abi::validate(2,32,true);
-    unsafe{bc_embed_binding(11)};discard instance_configured(ref mut owner,1,source,1,source,1);
+    unsafe{bc_embed_binding(11)};discard instance_configured(ref mut owner,1,source,1,source,1,true);
     unsafe{bc_embed_binding(12)};discard engine::observe(ref mut owner,1);
     unsafe{bc_embed_binding(13)};discard output_slice(ref owner,1);
+    unsafe{bc_embed_binding(14)};discard compile_host(ref mut owner,source,1,source,1);
+    unsafe{bc_embed_binding(15)};discard engine::preview_host_entry(ref owner,1);
+    unsafe{bc_embed_binding(16)};discard host_capability(ref owner,1,1);
+    unsafe{bc_embed_binding(17)};discard host_request(ref owner,1);
+    unsafe{bc_embed_binding(18)};discard host_reply(ref mut owner,1,1,0,source,1,1,0);
     return 0;
 }

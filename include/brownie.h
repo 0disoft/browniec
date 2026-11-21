@@ -81,8 +81,9 @@ BC_API uint32_t BC_CALL bc_engine_create(uint32_t requested_revision,
     bc_slice policy_json, bc_handle *out_engine, bc_diagnostic *diagnostic);
 /* Scalar preview DLL: one source of 1..4096 UTF-8 bytes with module slice
    "main", a matching module declaration and public fn i32 main() or
-   public fn i32 main(ref u8[] data). The catalog must be empty.
-   Source storage can be reused after this call. */
+   public fn i32 main(ref u8[] data). An optional brownie.catalog/1 document
+   (up to 16384 bytes) binds verified host imports to the Engine policy.
+   Source and catalog storage can be reused when the call returns. */
 BC_API uint32_t BC_CALL bc_compile(bc_handle engine,
     const bc_source *sources, uint32_t source_count, bc_slice catalog_json,
     bc_handle *out_program, bc_diagnostic *diagnostic);
@@ -91,7 +92,7 @@ BC_API uint32_t BC_CALL bc_compile(bc_handle engine,
 BC_API uint32_t BC_CALL bc_program_entry_info(bc_handle engine, bc_handle program,
     bc_slice module, bc_slice function, bc_entry_info *out_info, bc_diagnostic *diagnostic);
 /* Scalar preview DLL: a brownie.run/0.3 configuration for main::main with
-   explicit requires and grants for a reachable output::emit.
+   explicit requires and grants for verified host imports and output::emit.
    BC_INPUT_NONE requires empty input.
    BC_INPUT_BYTES copies the slice during preparation, including empty input.
    The Engine checks its policy before preparing and pinning the Program. */
@@ -101,8 +102,14 @@ BC_API uint32_t BC_CALL bc_instance_create(bc_handle engine, bc_handle program,
    Terminal events and metrics are immutable snapshots. A valid-instance API
    checkpoint may select deadline/cancel/Engine poison before semantic validation.
    A malformed reply after that checkpoint leaves request and Fuel unchanged.
-   BC_DONE payload is read-only sealed output and expires at Instance destruction. */
+   BC_DONE payload is read-only sealed output and expires at Instance destruction.
+   BC_HOST_REQUEST carries an Instance-specific reply ID and read-only TLV
+   payload. Copy it before replying, cancelling, destroying or stepping the
+   same Instance again. A subsequent poll while waiting returns BC_WAIT. */
 BC_API uint32_t BC_CALL bc_step(bc_handle instance, uint32_t max_work_units, bc_event *out_event);
+/* Pass the exact request ID and one typed TLV (empty for BC_REPLY_FATAL).
+   Reply storage may be reused when this call returns. BC_RUN_TERMINATED means
+   the next step will report a terminal event. */
 BC_API uint32_t BC_CALL bc_host_reply(bc_handle instance, uint64_t request_id,
     uint32_t reply_kind, bc_slice typed_payload, bc_diagnostic *diagnostic);
 BC_API uint32_t BC_CALL bc_cancel(bc_handle instance);

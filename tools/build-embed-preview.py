@@ -35,7 +35,7 @@ def emit(compiler, project, destination):
 def preview_bindings(source):
     markers = re.findall(r'bc_embed_binding\(UINT32_C\((\d+)\)\);\s+'
                          r'goto (fy_b_\d+);\s*\2:\n(?:    [^\n]+\n)*?    [^\n]*\b(fy_fn_\d+)\(', source)
-    if [int(number) for number, _, _ in markers] != list(range(1, 14)):
+    if [int(number) for number, _, _ in markers] != list(range(1, 19)):
         raise RuntimeError('Unrecognized scalar preview transport')
     return ''.join(f'#define P{number} {symbol}\n' for number, _, symbol in markers)
 
@@ -64,11 +64,11 @@ def main():
     shutil.copyfile(ROOT / 'tools/embed-preview/main.fy', engine / 'src/main.fy')
     shutil.copyfile(ROOT / 'fairy.toml', engine / 'fairy.toml')
     source = emit(compiler, engine, out / 'generated.c')
-    project_layouts(source, contract, host_compile=False)
+    project_layouts(source, contract)
     write(out / 'bindings.h', bindings_header(contract) + preview_bindings(source))
     write(out / 'preview.c', '#define main bc_preview_unused_main\n#include "generated.c"\n#undef main\n'
           '#include "abi_thread_identity.h"\n#include "bindings.h"\n'
-          '#define BC_ENGINE_SCALAR_PREVIEW\n#include "bridge.inc"\n#include "preview.inc"\n')
+          '#include "bridge.inc"\n#include "preview.inc"\n')
 
     registry = out / 'registry'
     (registry / 'src').mkdir(parents=True)
@@ -130,6 +130,12 @@ def main():
         output_run['requires'] = output_run['grants'] = ['brownie.output.emit']
         output_run['limits']['output_bytes'] = 2
         write(folder/'run-output.json', json.dumps(output_run, separators=(',', ':')))
+        host_policy = json.loads((folder/'policy.json').read_bytes())
+        host_policy['capabilities'] = ['host.example.check']
+        write(folder/'policy-host.json', json.dumps(host_policy, separators=(',', ':')))
+        host_run = json.loads((folder/'run.json').read_bytes())
+        host_run['requires'] = host_run['grants'] = host_policy['capabilities']
+        write(folder/'run-host.json', json.dumps(host_run, separators=(',', ':')))
         subprocess.run([host], cwd=folder, check=True, timeout=30)
         results[profile] = hashlib.sha256(dll.read_bytes()).hexdigest()
     write(out / 'receipt.json', json.dumps({'compilerSha256': digest, 'dllSha256': results}, indent=2) + '\n')

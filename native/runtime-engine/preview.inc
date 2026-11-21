@@ -4,6 +4,7 @@
 #include "brownie_preview.h"
 #include "abi_bootstrap_layout.h"
 #include "abi_registry.h"
+#include <stdbool.h>
 #include <string.h>
 
 #pragma comment(linker, "/EXPORT:bc_engine_create")
@@ -13,6 +14,7 @@
 #pragma comment(linker, "/EXPORT:bc_instance_create")
 #pragma comment(linker, "/EXPORT:bc_instance_destroy")
 #pragma comment(linker, "/EXPORT:bc_step")
+#pragma comment(linker, "/EXPORT:bc_host_reply")
 #pragma comment(linker, "/EXPORT:bc_cancel")
 #pragma comment(linker, "/EXPORT:bc_program_release")
 
@@ -22,7 +24,9 @@ typedef struct preview_engine {
     uint32_t revision;
 } preview_engine;
 
+static const uint8_t emit_capability[]="brownie.output.emit";
 static const uint8_t emit_capabilities[]="[\"brownie.output.emit\"]";
+static const uint8_t no_capabilities[]="[]";
 
 typedef struct preview_child {
     preview_engine *owner;
@@ -31,8 +35,8 @@ typedef struct preview_child {
         uint64_t fuel;
         struct {
             uint32_t input_kind;
-            uint32_t capabilities_length;
-            uint8_t capabilities_json[sizeof(emit_capabilities)-1];
+            bool catalog_backed;
+            bc_slice capabilities;
         } program;
     };
 } preview_child;
@@ -41,6 +45,9 @@ typedef struct preview_run {
     preview_child child;
     uint64_t peak;
     uint64_t start;
+    bool catalog_backed;
+    uint64_t request_id;
+    uintptr_t engine_request;
     bc_event terminal;
 } preview_run;
 
@@ -144,7 +151,7 @@ static uint32_t compile_diagnostic(bc_diagnostic *out,uint32_t status,bc_slice s
     case BC_WRONG_THREAD: message="Engine belongs to another thread";break;
     case BC_BUSY: message="Engine is busy";break;
     case BC_COMPILE_ERROR: message="Source compilation failed";break;
-    case BC_POLICY_ERROR: message="Scalar compilation does not accept a host catalog or guest output";break;
+    case BC_POLICY_ERROR: message="Compilation authority or catalog rejected";break;
     case BC_RESOURCE_LIMIT: message="Compilation exceeds a resource limit";break;
     case BC_ALLOCATION_ERROR: message="Compilation allocation failed";break;
     default: message="Compilation failed";break;
@@ -159,7 +166,55 @@ static uint32_t compile_diagnostic(bc_diagnostic *out,uint32_t status,bc_slice s
     return status;
 }
 
-static uint32_t compile_program(bc_handle engine,uint32_t revision,bc_slice source,bc_handle *out,
+/* Names from the validated catalog use only lower-case letters, digits and
+   dots, so recording the required set does not need a JSON escape pass. */
+static uint32_t host_capabilities(preview_child *program,uint64_t required,bool emits){
+    enum {max_imports=64, max_name=128};
+    bc_slice names[max_imports+1];
+    size_t count=0,length=2;
+    for(unsigned i=0;i<max_imports;++i){
+        if(!(required & (UINT64_C(1)<<i))){continue;}
+        __typeof__(P16(&program->owner->engine,program->id,i)) name=
+            P16(&program->owner->engine,program->id,i);
+        if(name.tag!=FY_RESULT_OK || name.p_0.f_1>max_name){return BC_INTERNAL_ERROR;}
+        const bc_slice candidate={name.p_0.f_0,name.p_0.f_1};
+        size_t j=0;
+        while(j<count && (candidate.len!=names[j].len ||
+            memcmp(candidate.data,names[j].data,candidate.len)!=0)){++j;}
+        if(j==count){names[count++]=candidate;}
+    }
+    if(emits){
+        const bc_slice emit={emit_capability,sizeof(emit_capability)-1};
+        size_t j=0;
+        while(j<count && (names[j].len!=emit.len || memcmp(names[j].data,emit.data,emit.len)!=0)){++j;}
+        if(j==count){names[count++]=emit;}
+    }
+    for(size_t i=0;i<count;++i){length+=names[i].len+2+(i!=0);}
+    uint8_t *json=HeapAlloc(GetProcessHeap(),0,length);
+    if(!json){return BC_ALLOCATION_ERROR;}
+    size_t at=0;
+    json[at++]='[';
+    for(size_t i=0;i<count;++i){
+        if(i){json[at++]=',';}
+        json[at++]='"';
+        memcpy(json+at,names[i].data,names[i].len);
+        at+=names[i].len;
+        json[at++]='"';
+    }
+    json[at++]=']';
+    if(at!=length){preview_invariant();}
+    program->program.capabilities=(bc_slice){json,length};
+    return BC_OK;
+}
+
+static void free_program(preview_child *program){
+    if(program->program.catalog_backed && program->program.capabilities.data){
+        HeapFree(GetProcessHeap(),0,(void *)program->program.capabilities.data);
+    }
+    HeapFree(GetProcessHeap(),0,program);
+}
+
+static uint32_t compile_program(bc_handle engine,uint32_t revision,bc_slice source,bc_slice catalog,bc_handle *out,
                                  bc_diagnostic *diagnostic){
     size_t index=SIZE_MAX,start=0,end=0;
     if(!out||!source.data||!source.len){return compile_diagnostic(diagnostic,BC_BAD_ARGUMENT,source,index,0,0);}
@@ -177,32 +232,50 @@ static uint32_t compile_program(bc_handle engine,uint32_t revision,bc_slice sour
         leave_preview(&admission);
         return compile_diagnostic(diagnostic,BC_ALLOCATION_ERROR,source,index,0,0);
     }
-    __typeof__(P2(&owner->engine,source.data,source.len,0)) compiled=
-        P2(&owner->engine,source.data,source.len,revision==BC_ABI_REVISION);
-    if(compiled.tag==FY_RESULT_OK){
-        *program=(preview_child){.owner=owner,.id=compiled.p_0.f_0,
-            .program={.input_kind=compiled.p_0.f_1?BC_INPUT_BYTES:BC_INPUT_NONE,.capabilities_json={'[',']'},
-                      .capabilities_length=2}};
-        if(compiled.p_0.f_2){
-            program->program.capabilities_length=sizeof(emit_capabilities)-1;
-            memcpy(program->program.capabilities_json,emit_capabilities,sizeof(emit_capabilities)-1);
+    *program=(preview_child){.owner=owner};
+    if(catalog.len){
+        __typeof__(P14(&owner->engine,source.data,source.len,catalog.data,catalog.len)) compiled=
+            P14(&owner->engine,source.data,source.len,catalog.data,catalog.len);
+        if(compiled.tag==FY_RESULT_OK){
+            program->id=compiled.p_0;
+            program->program.catalog_backed=true;
+            __typeof__(P15(&owner->engine,program->id)) profile=P15(&owner->engine,program->id);
+            if(profile.tag!=FY_RESULT_OK){preview_invariant();}
+            program->program.input_kind=profile.p_0.f_0?BC_INPUT_BYTES:BC_INPUT_NONE;
+            status=host_capabilities(program,profile.p_0.f_2,profile.p_0.f_1!=0);
+        }else{
+            status=compiled.p_1.f_0;
+            index=compiled.p_1.f_1.f_1.f_0;
+            start=compiled.p_1.f_1.f_1.f_1;
+            end=compiled.p_1.f_1.f_1.f_2;
         }
-        status=bc_abi_registry_insert(&admission,PROGRAM_HANDLE,(uintptr_t)program,out);
-        if(status==BC_OK){++owner->children;}
-        else if(P7(&owner->engine,program->id).tag!=FY_RESULT_OK){preview_invariant();}
     }else{
-        status=compiled.p_1.f_0;
-        index=compiled.p_1.f_1.f_1.f_0;
-        start=compiled.p_1.f_1.f_1.f_1;
-        end=compiled.p_1.f_1.f_1.f_2;
+        __typeof__(P2(&owner->engine,source.data,source.len,0)) compiled=
+            P2(&owner->engine,source.data,source.len,revision==BC_ABI_REVISION);
+        if(compiled.tag==FY_RESULT_OK){
+            program->id=compiled.p_0.f_0;
+            program->program.input_kind=compiled.p_0.f_1?BC_INPUT_BYTES:BC_INPUT_NONE;
+            program->program.capabilities=compiled.p_0.f_2?(bc_slice){emit_capabilities,sizeof(emit_capabilities)-1}:
+                (bc_slice){no_capabilities,sizeof(no_capabilities)-1};
+        }else{
+            status=compiled.p_1.f_0;
+            index=compiled.p_1.f_1.f_1.f_0;
+            start=compiled.p_1.f_1.f_1.f_1;
+            end=compiled.p_1.f_1.f_1.f_2;
+        }
     }
-    if(status!=BC_OK){HeapFree(GetProcessHeap(),0,program);}
+    if(status==BC_OK){status=bc_abi_registry_insert(&admission,PROGRAM_HANDLE,(uintptr_t)program,out);}
+    if(status==BC_OK){++owner->children;}
+    else{
+        if(program->id && P7(&owner->engine,program->id).tag!=FY_RESULT_OK){preview_invariant();}
+        free_program(program);
+    }
     leave_preview(&admission);
     return compile_diagnostic(diagnostic,preview_status(status),source,index,start,end);
 }
 
 uint32_t BC_CALL bc_preview_compile(bc_handle engine,bc_slice source,bc_handle *out){
-    return compile_program(engine,BC_PREVIEW_REVISION,source,out,NULL);
+    return compile_program(engine,BC_PREVIEW_REVISION,source,(bc_slice){0},out,NULL);
 }
 
 static int is_main(bc_slice name){return name.data && name.len==4 && memcmp(name.data,"main",4)==0;}
@@ -217,8 +290,8 @@ uint32_t BC_CALL bc_compile(bc_handle engine,const bc_source *sources,uint32_t s
     if(!is_main(sources[0].module)){
         return compile_diagnostic(diagnostic,BC_BAD_ARGUMENT,(bc_slice){0},SIZE_MAX,0,0);
     }
-    if(catalog.len){return compile_diagnostic(diagnostic,BC_POLICY_ERROR,(bc_slice){0},SIZE_MAX,0,0);}
-    return compile_program(engine,BC_ABI_REVISION,sources[0].source_utf8,out,diagnostic);
+    if(catalog.len>16384){return compile_diagnostic(diagnostic,BC_RESOURCE_LIMIT,(bc_slice){0},SIZE_MAX,0,0);}
+    return compile_program(engine,BC_ABI_REVISION,sources[0].source_utf8,catalog,out,diagnostic);
 }
 
 uint32_t BC_CALL bc_program_entry_info(bc_handle engine,bc_handle program,bc_slice module,bc_slice function,
@@ -245,7 +318,7 @@ uint32_t BC_CALL bc_program_entry_info(bc_handle engine,bc_handle program,bc_sli
     }else{
         *out=(bc_entry_info){.struct_size=sizeof(*out),.abi_revision=BC_ABI_REVISION,
             .input_kind=code->program.input_kind,
-            .required_capabilities_json={code->program.capabilities_json,code->program.capabilities_length}};
+            .required_capabilities_json=code->program.capabilities};
     }
     leave_preview(&admission);
     *diagnostic=diagnostic_result(status,message);
@@ -264,10 +337,11 @@ static uint32_t create_instance(bc_handle engine,bc_handle program,uint32_t revi
     if(!instance){leave_preview(&admission);return BC_ALLOCATION_ERROR;}
     uint8_t failure=0;
     if(revision==BC_ABI_REVISION){
-        __typeof__(P11(&owner->engine,code->id,input.data,input.len,config.data,config.len)) prepared=
-            P11(&owner->engine,code->id,input.data,input.len,config.data,config.len);
+        __typeof__(P11(&owner->engine,code->id,input.data,input.len,config.data,config.len,false)) prepared=
+            P11(&owner->engine,code->id,input.data,input.len,config.data,config.len,code->program.catalog_backed);
         if(prepared.tag==FY_RESULT_OK){
             instance->child=(preview_child){.owner=owner,.id=prepared.p_0.f_0,.fuel=prepared.p_0.f_1};
+            instance->catalog_backed=code->program.catalog_backed;
             instance->peak=prepared.p_0.f_2;
             instance->start=prepared.p_0.f_3;
         }else{status=prepared.p_1.f_0;failure=prepared.p_1.f_1.f_0.f_0;}
@@ -343,6 +417,36 @@ uint32_t BC_CALL bc_preview_step(bc_handle instance,uint32_t quantum,bc_preview_
 
 typedef __typeof__(P4((bc_engine *)0,0,0).p_0) preview_vm_event;
 
+/* External tokens distinguish requests even when two Instances both await
+   their internal request number 1. Never recycle a token during DLL life. */
+static volatile LONG64 last_request_id;
+static uint64_t next_request_id(void){
+    LONG64 previous=InterlockedCompareExchange64(&last_request_id,0,0);
+    while(previous<INT64_MAX){
+        LONG64 found=InterlockedCompareExchange64(&last_request_id,previous+1,previous);
+        if(found==previous){return (uint64_t)(previous+1);}
+        previous=found;
+    }
+    preview_invariant();
+}
+
+static void publish_host_request(preview_run *run,bc_event *event){
+    if(run->request_id){
+        event->kind=BC_WAIT;
+        event->request_id=run->request_id;
+        return;
+    }
+    __typeof__(P17(&run->child.owner->engine,run->child.id)) request=
+        P17(&run->child.owner->engine,run->child.id);
+    if(request.tag!=FY_RESULT_OK || !request.p_0.f_0){preview_invariant();}
+    run->engine_request=request.p_0.f_0;
+    run->request_id=next_request_id();
+    event->kind=BC_HOST_REQUEST;
+    event->request_id=run->request_id;
+    event->import_id=(uint32_t)request.p_0.f_1;
+    event->payload=(bc_slice){request.p_0.f_2,request.p_0.f_3};
+}
+
 static bc_event revision_two_event(preview_run *run,preview_vm_event event){
     if(!event.f_4||event.f_3>run->child.fuel){preview_invariant();}
     bc_event result={.struct_size=sizeof(result),.fuel_used=run->child.fuel-event.f_3,
@@ -362,6 +466,7 @@ static bc_event revision_two_event(preview_run *run,preview_vm_event event){
     case 2:
         switch(code){
         case 15: result.kind=BC_FAILED;message="Execution allocation failed";break;
+        case 20: result.kind=BC_FAILED;message="Host exchange failed";break;
         case 30: result.kind=BC_FAILED;message="Execution deadline expired";break;
         case 32: result.kind=BC_FAILED;message="Execution memory limit exceeded";break;
         case 36: result.kind=BC_FAILED;message="Engine poisoned";break;
@@ -369,7 +474,11 @@ static bc_event revision_two_event(preview_run *run,preview_vm_event event){
         }
         break;
     case 3: result.kind=BC_FAILED;code=33;message="Execution cancelled";break;
-    case 4: result.kind=BC_YIELD;break;
+    case 0: result.kind=BC_YIELD;break;
+    case 4:
+        if(run->catalog_backed){publish_host_request(run,&result);}
+        else{result.kind=BC_YIELD;}
+        break;
     default: preview_invariant();
     }
     result.diagnostic=diagnostic_result(code,message);
@@ -378,7 +487,10 @@ static bc_event revision_two_event(preview_run *run,preview_vm_event event){
         result.diagnostic.byte_start=(uint32_t)event.f_2.f_1.f_1;
         result.diagnostic.byte_end=(uint32_t)event.f_2.f_1.f_2;
     }
-    if(result.kind!=BC_YIELD){run->terminal=result;}
+    if(result.kind==BC_DONE || result.kind==BC_TRAP || result.kind==BC_FAILED){
+        run->terminal=result;
+        run->request_id=0;
+    }
     return result;
 }
 
@@ -398,6 +510,50 @@ uint32_t BC_CALL bc_step(bc_handle instance,uint32_t quantum,bc_event *out){
     }
     leave_preview(&admission);
     return preview_status(status);
+}
+
+static uint32_t receive_host_reply(preview_run *run,uint64_t request_id,uint32_t kind,bc_slice payload){
+    if(run->terminal.kind){return BC_RUN_TERMINATED;}
+    if(!run->catalog_backed){return BC_BAD_ARGUMENT;}
+    const bool valid=run->request_id && request_id==run->request_id &&
+        kind<=BC_REPLY_FATAL && (payload.data || !payload.len);
+    /* An invalid reply still runs the Engine's deadline checkpoint. Zero
+       cannot match an internal request number. */
+    const uintptr_t request=valid?run->engine_request:0;
+    if(!valid){payload=(bc_slice){0};kind=BC_REPLY_FATAL;}
+    bc_engine *owner=&run->child.owner->engine;
+    size_t offset=0;
+    do{
+        const size_t remaining=payload.len-offset;
+        const size_t count=remaining>4096?4096:remaining;
+        const uint8_t *data=count?payload.data+offset:NULL;
+        __typeof__(P18(owner,run->child.id,request,(uint8_t)kind,data,count,payload.len,offset)) reply=
+            P18(owner,run->child.id,request,(uint8_t)kind,data,count,payload.len,offset);
+        if(reply.tag!=FY_RESULT_OK){return preview_status(reply.p_1.f_0);}
+        if(reply.p_0.f_0==2 || reply.p_0.f_0==3){
+            const bc_event terminal=revision_two_event(run,reply.p_0);
+            if(valid && kind==BC_REPLY_FATAL && terminal.diagnostic.code==20){return BC_OK;}
+            return BC_RUN_TERMINATED;
+        }
+        offset+=count;
+    }while(offset<payload.len);
+    run->request_id=0;
+    return BC_OK;
+}
+
+uint32_t BC_CALL bc_host_reply(bc_handle instance,uint64_t request_id,uint32_t kind,
+                               bc_slice payload,bc_diagnostic *diagnostic){
+    if(!diagnostic || diagnostic->struct_size!=sizeof(*diagnostic)){return BC_BAD_ARGUMENT;}
+    bc_abi_registry_admission admission;
+    uint32_t status=bc_abi_registry_enter_instance(instance,&admission);
+    if(status==BC_OK){
+        preview_run *run=(preview_run *)(uintptr_t)admission.object;
+        status=run->child.owner->revision==BC_ABI_REVISION?
+            receive_host_reply(run,request_id,kind,payload):BC_INVALID_HANDLE;
+        leave_preview(&admission);
+    }
+    *diagnostic=diagnostic_result(status,status==BC_OK?"":"Host reply rejected");
+    return status;
 }
 
 static uint32_t cancel_instance(bc_handle instance,uint32_t revision){
@@ -435,7 +591,8 @@ static uint32_t release_child(bc_handle child,bc_handle engine,uint32_t kind,uin
     if(dropped.tag==FY_RESULT_OK){
         remove_preview(&admission);
         --owner->children;
-        HeapFree(GetProcessHeap(),0,object);
+        if(kind==PROGRAM_HANDLE){free_program(object);}
+        else{HeapFree(GetProcessHeap(),0,object);}
     }else{status=dropped.p_1.f_0;leave_preview(&admission);}
     return preview_status(status);
 }

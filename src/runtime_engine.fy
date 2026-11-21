@@ -640,6 +640,30 @@ pub fn Result<PreviewEntry,Error> preview_entry(ref Engine e,usize id){
     return .ok(PreviewEntry{.accepts_input=output_programs::accepts_input(code),.emits=output_programs::requires_emit(code)});
 }
 
+fn Result<ref host_program::Program,Error> preview_host_program(ref Engine e,usize id){
+    let u32 access=unsafe{control_access_raw(e as ptr void)};
+    if(access!=0){return .err(error(access));}
+    let usize pi=switch(program_index(ref e.programs,id,true)){
+        case .ok(v):{v}case .err(s):{return .err(error(s));}
+    };
+    let ref Program retained=vec::at<Program>(ref e.programs,pi);
+    if(vec::len<host_program::Program>(ref retained.host)!=1){return .err(error(1));}
+    return .ok(vec::at<host_program::Program>(ref retained.host,0));
+}
+
+pub struct PreviewHostEntry { bool input; bool emits; usize requirements; }
+pub fn Result<PreviewHostEntry,Error> preview_host_entry(ref Engine e,usize id){
+    let ref host_program::Program p=preview_host_program(e,id)?;
+    return .ok(PreviewHostEntry{.input=host_program::accepts_input(p),.emits=host_program::emits(p),
+        .requirements=host_program::requirements(p)});
+}
+pub fn Result<ref u8[],Error> preview_host_capability(ref Engine e,usize id,usize index){
+    let ref host_program::Program p=preview_host_program(e,id)?;
+    return switch(host_catalog::capability(host_program::imports(p),index)){
+        case .ok(name):{.ok(name)}case .err(_):{.err(error(7))}
+    };
+}
+
 pub fn Result<usize,Error> prepare_scalar_host(ref mut Engine e,usize program,ref run_config::RunConfig run){
     return prepare_host(e,program,run,b"",0);
 }
@@ -699,6 +723,14 @@ fn Result<ref host::Exchange,Error> request_exchange(ref Engine e,usize instance
     let ref host::Exchange exchange=vec::at<host::Exchange>(ref owner.host,0);
     if(host::deadline_reached(exchange,clock::now())){return .err(error(11));}
     return .ok(exchange);
+}
+
+// The ABI calls this under the same owner admission as the step that reached
+// WaitingHost. That step already sampled the deadline.
+pub fn Result<ref host::Exchange,Error> preview_host_exchange(ref Engine e,usize instance){
+    let usize oi=host_output_index(e,instance)?;
+    let ref Output owner=vec::at<Output>(ref e.outputs,oi);
+    return .ok(vec::at<host::Exchange>(ref owner.host,0));
 }
 
 pub fn Result<HostRequestInfo,Error> host_request_info(ref Engine e,usize instance){
@@ -859,6 +891,28 @@ fn Result<run_config::RunConfig,Error> parse_scalar_run(ref Engine e,ref u8[] co
     return .ok(run);
 }
 
+pub fn Result<ScalarPreparation,Error> prepare_host_preview(ref mut Engine e,usize program,ref u8[] input,ref u8[] configuration){
+    let PreviewHostEntry entry=preview_host_entry(e,program)?;
+    if(!entry.input && input.len!=0){return .err(error(1));}
+    let run_config::RunConfig run=parse_scalar_run(e,configuration)?;
+    let policy_limits::RunLimits limits=run_config::run_limits(ref run);
+    let usize id=prepare_host(e,program,ref run,input,0)?;
+    return preview_host_prepared(e,id,limits);
+}
+fn Result<ScalarPreparation,Error> preview_host_prepared(ref Engine e,usize id,policy_limits::RunLimits limits){
+    let usize ii=switch(instance_index(ref e.instances,id)){
+        case .ok(v):{v}case .err(_):{assert(false);0}
+    };
+    let usize oi=switch(output_index(ref e.outputs,id)){
+        case .ok(v):{v}case .err(_):{assert(false);0}
+    };
+    let ref Output owner=vec::at<Output>(ref e.outputs,oi);
+    let ref host::Exchange exchange=vec::at<host::Exchange>(ref owner.host,0);
+    return .ok(ScalarPreparation{.instance=id,.fuel=limits.fuel,
+        .peak=vec::at<Instance>(ref e.instances,ii).output_bytes,
+        .start=host::deadline(exchange)-limits.deadline_ms*10000});
+}
+
 pub fn Result<ScalarPreparation,Error> prepare_scalar_preview(ref mut Engine e,usize program,ref u8[] input,ref u8[] configuration){
     let PreviewEntry profile=preview_entry(e,program)?;
     if(!profile.accepts_input && input.len!=0){return .err(error(1));}
@@ -994,13 +1048,15 @@ pub fn Result<ref u8[],Error> preview_output(ref Engine e,usize instance){
     };
     let ref Instance item=vec::at<Instance>(ref e.instances,ii);
     if(item.phase!=2 || item.event.kind!=1){return .err(error(11));}
+    if(item.host_terminal.phase==3 && !item.output_allowed){return .ok(b"");}
     let usize oi=switch(output_index(ref e.outputs,instance)){
         case .ok(v):{v}case .err(_):{return .err(error(7));}
     };
     let ref Output output=vec::at<Output>(ref e.outputs,oi);
-    if(!item.output_owned || output_programs::heap_bytes(ref output.run)!=item.output_bytes){
-        return .err(error(7));
-    }
+    if(!item.output_owned){return .err(error(7));}
+    if(item.host_terminal.phase==3){
+        if(!has_host_output(output) || item.output_bytes==0){return .err(error(7));}
+    }else if(output_programs::heap_bytes(ref output.run)!=item.output_bytes){return .err(error(7));}
     let ref u8[] data=output_view(output);
     return .ok(unsafe{byte_slice::from_raw_parts(e,data as ptr u8,data.len)});
 }
@@ -2046,7 +2102,7 @@ fn u32 drive_host_owner(ref mut vec::Vec<host::Exchange> owners,u32 mode,usize q
         let bool failed=observed.phase==4;
         let bool cancel=failed && observed.host.cause==1;
         let u8 event_kind=if(done){1}else if(cancel){3}else if(failed){2}else if(observed.phase==1){4}else{0};
-        let u8 diagnostic=if(observed.failure==2){6}else if(observed.failure==4){12}else if(observed.host.cause==7){20}else if(observed.host.cause==5){8}else if(observed.host.cause==4){15}else if(observed.host.cause==2){errors::deadline_kind()}else{0};
+        let u8 diagnostic=if(observed.failure==2){6}else if(observed.failure==4){12}else if(observed.host.cause==3 || observed.host.cause==7){20}else if(observed.host.cause==5){8}else if(observed.host.cause==4){15}else if(observed.host.cause==2){errors::deadline_kind()}else{0};
         *transition=HostTransition{.scalar=observed,.event=Event{.kind=event_kind,.value=observed.value,
             .diagnostic=diagnostics::absent(errors::make(diagnostic,0)),.remaining=observed.host.fuel,.fuel_known=true}};
         if(observed.phase!=0 || mode!=0){return 0;}

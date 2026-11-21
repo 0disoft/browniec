@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-21): [Catalog-backed embedding admission](docs/engineering/embed-preview.md#engine-admission-for-catalog-backed-embedding)
-  separates Engine-owned compilation from per-Instance grants. Windows /Od and
-  /O2 verify policy denial and a typed request/reply returning 77.
+- Latest runtime checkpoint (2026-11-21): [Revision-2 host exchange](docs/engineering/embed-preview.md#revision-2-host-requests-and-replies)
+  connects catalog-backed Programs to C requests and replies. Windows /Od and
+  /O2 verify independent replies, correlation, cancellation and fatal replies.
 
 # Brownie C agent guidance
 

@@ -78,8 +78,8 @@ untouched. Destroy a revision-2 Engine on its creating thread with
 
 `bc_compile` accepts one `bc_source` whose module slice is `main` and whose
 source declares `module main;` with a public `fn i32 main()` or
-`fn i32 main(ref u8[] data)`. Pass an empty
-catalog slice. The source is copied during the call and may be reused when
+`fn i32 main(ref u8[] data)`. For catalog-backed Programs, pass an explicit
+`brownie.catalog/1` document of at most 16,384 bytes. The source is copied during the call and may be reused when
 it returns. The existing Engine applies its configured compile deadline,
 working-memory limit and Program retention limits. The source ceiling is the
 smaller of 4096 bytes and the Engine's `compile.source_bytes` limit. Wiring
@@ -89,7 +89,7 @@ Initialize the diagnostic's exact `struct_size`. The call zeros the output
 handle on entry and publishes a Program only after compilation and handle
 registration succeed. Diagnostics report the API result code and preserve the
 original source span when available. An absent span uses `UINT32_MAX` and
-byte offsets `0/0`. A nonempty catalog returns `BC_POLICY_ERROR`.
+byte offsets `0/0`. Catalog syntax and policy failures return `BC_POLICY_ERROR`.
 
 `bc_program_release` accepts the originating revision-2 Engine and a live
 Program handle on its owner thread. Successful release invalidates the handle.
@@ -99,9 +99,8 @@ revision-2 Program handles use separate API entry points.
 `bc_program_entry_info` queries `main::main` on the same Engine and thread.
 Initialize both output structure sizes. The query returns ABI revision 2,
 the retained signature's input kind (`BC_INPUT_NONE` or `BC_INPUT_BYTES`),
-and a Program-owned JSON capability array. The array is
-`["brownie.output.emit"]` if the verified entry can reach an emit and
-`[]` otherwise.
+and a Program-owned JSON capability array. The array contains each distinct capability referenced by the verified image,
+including `brownie.output.emit` when applicable.
 The slice is read-only and expires at Program release. Failed queries leave
 entry info storage unchanged.
 
@@ -116,9 +115,10 @@ and rejection across threads, Engines, ABI revisions and stale handles.
 
 `bc_instance_create` accepts guest input and an explicit
 `brownie.run/0.3` configuration. The entry must be `main::main`. A Program
-with a reachable emit requires `brownie.output.emit` in both `requires` and
-`grants`, and the Engine policy must allow that capability. Otherwise both
-lists must be empty. The Engine validates the configuration against
+with host requests or a reachable emit requires those capabilities in both
+`requires` and `grants`, and the Engine policy must allow them. With an empty
+catalog, the lists contain just the emit capability when required, or are empty
+for a pure Program. The Engine validates the configuration against
 its own policy and reserves the prepared continuation under the requested
 memory and Fuel limits. It records the monotonic deadline before preparation.
 A zero-argument entry requires empty input. A shared-byte entry copies the
@@ -155,8 +155,8 @@ deadline expiry are failed events with diagnostic codes 33 and 30.
 
 `bc_cancel` uses the Engine's existing first-cause rule. Keep stepping if
 cleanup yields. The ABI retains each terminal event and its metrics for
-subsequent observation, including after a later cancel call. Host exchanges
-and the remaining general ABI resource accounting are future work.
+subsequent observation, including after a later cancel call. General ABI
+resource accounting remains open.
 
 The native C host passed both Windows `/Od` and `/O2` builds. Two Instances
 sharing a released Program handle returned 77 at quanta 1 and 64 and reported
@@ -196,4 +196,28 @@ alone provides no grant.
 The Windows Engine verifier passed development and /O2 with default stacks and
 zero live SDK allocations. It exercised policy denial, private entry rejection,
 missing run declaration rejection and a typed i32 reply that returned 77.
-The preview DLL still requires an empty catalog at its C entry point.
+
+## Revision-2 host requests and replies
+
+In the catalog-backed preview, `bc_step` returns `BC_HOST_REQUEST` once per
+request with the catalog import ID, a nonzero reply ID, and the read-only
+[typed TLV](host-wire.md) payload. Copy the payload before stepping, replying,
+cancelling, or destroying that Instance. Further steps while waiting return
+`BC_WAIT` with the same reply ID and an empty payload. Reply IDs are unique
+across the DLL's Engines and Instances during its lifetime.
+
+`bc_host_reply` accepts a full TLV success or Result error, or an empty fatal
+reply. The caller may reuse the buffer on return. The synchronous C call checks
+the live request and samples the deadline between receipt chunks of at most
+4096 bytes. The saved dispatcher installs the complete reply under subsequent
+step budgets. A malformed or mismatched reply leaves the request available
+for a valid response while the run is live. If the run has terminated,
+`bc_step` reports its terminal event. An accepted fatal reply returns `BC_OK`
+and produces a failed event on the next step.
+
+The Windows C host passed /Od and /O2 with default stacks. Two Instances pinned
+one Program and returned 77 and 78 at quanta 1 and 64 with equal Fuel and peak
+accounted bytes. Tests cover capability metadata, missing grants, cross-Instance
+and duplicate replies, malformed TLV, overwriting caller buffers, cancellation,
+fatal reply, and stale handles. Large typed payload receipt through the C ABI
+still needs a focused native test.
