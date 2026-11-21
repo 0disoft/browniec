@@ -35,7 +35,7 @@ import runtime_execution_memory as execution_heap;
 import metadata_budget as budget;
 
 pub struct Preparation { statics::Sites sites; u8[16] origins; lists::Requirement list; places::Requirement place; usize work; usize capacity; usize scratch; u8[16] parameters; call_captures::Plan calls; }
-resource Stored { sources::Snapshot sources; candidates::Program code; images::Image image; bool input; Preparation prepared; cleanup { } }
+resource Stored { sources::Snapshot sources; candidates::Program code; images::Image image; bool input; bool emits; Preparation prepared; cleanup { } }
 pub resource Program { vec::Vec<Stored> stored; cleanup { } }
 pub struct Completion { bool success; i64 value; usize remaining; diagnostics::Error diagnostic; usize output_bytes; usize emits; bool cancelled; }
 pub resource Execution { Completion completion; vec::Vec<output::Published> published; cleanup { } }
@@ -221,20 +221,23 @@ fn Result<Program,diagnostics::Error> finish_verified(ref sources::Snapshot sour
     };
     if(clock::expired(deadline)){return .err(absent(errors::absent(errors::deadline_kind(),0)));}
     let call_captures::Plan calls=switch(call_captures::prepare_metered(ref code.body,deadline,fuel)){case .ok(v):{v}case .err(e):{return .err(absent(e));}};
+    let bool emits=switch(output_ir::reachable_emit(ref code.body,deadline,fuel)){
+        case .ok(v):{v}case .err(e):{return .err(absent(e));}
+    };
     let Preparation prepared=Preparation{.sites=proof.ordinary.statics,.origins=proof.ordinary.recipes.site_origins,.list=list,.place=place,
         .work=work+code.body.arities[code.body.entry],.capacity=if(aggregates){65536}else{0},.scratch=scratch,.parameters=proof.parameters,.calls=calls};
     if(clock::expired(deadline)){return .err(absent(errors::absent(errors::deadline_kind(),0)));}
-    return retain(sources,code,image,input,ref prepared);
+    return retain(sources,code,image,input,emits,ref prepared);
 }
-fn Result<Program,diagnostics::Error> retain(ref sources::Snapshot sources,ref candidates::Program code,images::Image image,bool input,ref Preparation prepared){
+fn Result<Program,diagnostics::Error> retain(ref sources::Snapshot sources,ref candidates::Program code,images::Image image,bool input,bool emits,ref Preparation prepared){
     var vec::Vec<Stored> retained=vec::empty<Stored>();
     if(!vec::reserve<Stored>(ref mut retained,1).is_ok){return .err(absent(errors::make(15,0)));}
     let sources::Snapshot snapshot=sources::duplicate(sources);
-    if(!vec::push<Stored>(ref mut retained,Stored{.sources=snapshot,.code=*code,.image=image,.input=input,.prepared=*prepared}).is_ok){return .err(absent(errors::make(15,0)));}
+    if(!vec::push<Stored>(ref mut retained,Stored{.sources=snapshot,.code=*code,.image=image,.input=input,.emits=emits,.prepared=*prepared}).is_ok){return .err(absent(errors::make(15,0)));}
     return .ok(Program{.stored=retained});
 }
 fn ref Stored stored(ref Program p){return vec::at<Stored>(ref p.stored,0);}
-pub fn bool requires_emit(ref Program p){return output_ir::reachable_emit(ref stored(p).code.body);}
+pub fn bool requires_emit(ref Program p){return stored(p).emits;}
 pub fn bool accepts_input(ref Program p){return stored(p).input;}
 pub fn ref sources::Snapshot snapshot(ref Program p){return ref stored(p).sources;}
 pub fn ref candidates::Program code(ref Program p){return ref stored(p).code;}

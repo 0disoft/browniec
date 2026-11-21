@@ -927,6 +927,23 @@ configured, 29 catalog and five managed project cases, and nine native host
 transport cases. All 456 input hashes matched, with zero net repeat handle
 change. Local receipt: `build/restricted-worker/20261121T212429068756Z/receipt.json`.
 
+### Output authority preparation Fuel
+
+Once independent proof succeeds, the selected output Program walks the
+reachable instruction graph to determine whether its entry can emit. The
+worklist follows both conditional edges and called functions, visits an
+instruction at most once, and stops at the first emit. Each visit checks the
+compile deadline and spends one compile Fuel unit before reading the opcode.
+The verified Program retains the flag beside its input flag, so Engine
+authority binding and entry queries read the cached result in constant time.
+
+The two-member scalar project visits four instructions. Exactly four units
+after the capture plan allow the compile and run to return 42. Three units
+reject compilation. Windows development and /O2 each passed 84 configured, 29
+catalog and five managed project cases, plus all three compile-stop cases.
+All 456 receipt input hashes matched.
+Local receipt: `build/restricted-worker/20261121T213249516074Z/receipt.json`.
+
 ## Windows verification
 
 Run `python -B tools/verify-restricted-worker.py`. The development and optimized

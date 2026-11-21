@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-22): [Project compile cancellation](docs/engineering/restricted-worker.md#project-compile-cancellation)
-  observes broker CANCEL at compile checkpoints in both configured worker
-  routes. Windows development and /O2 verify clean EOF and nonce rejection.
+- Latest runtime checkpoint (2026-11-22): [Output authority preparation Fuel](docs/engineering/restricted-worker.md#output-authority-preparation-fuel)
+  meters the selected entry's reachable instructions and retains the emit flag.
+  Windows development and /O2 verify the exact and one-less compile Fuel limits.
 
 # Brownie C agent guidance
 

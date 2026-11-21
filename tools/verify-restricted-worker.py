@@ -133,11 +133,15 @@ def verify_configured_project(run, need, image, folder, env):
     preparation_error = check(3, 'compile_limit', 'check')['error']
     need(preparation_error['location']['kind'] == 'none',
          f'Exact proof Fuel should reach execution preparation: {preparation_error}')
-    # Four instructions, visited by two place scans and one capture plan scan.
+    # Four instructions, visited by two place scans, the capture plan scan,
+    # and the output-authority walk from the selected entry.
     scratch_fuel = proof_fuel + 2 * 4
     policy['compile']['fuel'] = scratch_fuel
     check(3, 'compile_limit', 'check')
-    full_fuel = scratch_fuel + 4
+    capture_fuel = scratch_fuel + 4
+    policy['compile']['fuel'] = capture_fuel
+    check(3, 'compile_limit', 'check')
+    full_fuel = capture_fuel + 4
     policy['compile']['fuel'] = full_fuel - 1
     check(3, 'compile_limit')
     policy['compile']['fuel'] = full_fuel
@@ -430,7 +434,7 @@ def verify_configured_project(run, need, image, folder, env):
     config['entry']['function'] = manifest['entry']['function']
     config['grants'] = ['brownie.output.emit']
     check(4, 'unavailable')
-    return 83
+    return 84
 
 
 def verify_project_host(run, need, image, folder, env):

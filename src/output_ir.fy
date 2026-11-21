@@ -2,6 +2,7 @@ module output_ir;
 import ir as ir;
 import static_ir as statics;
 import errors as errors;
+import metadata_budget as budget;
 
 // PRIVATE EMIT 116: dst=0,a=site,b=1 shared byte view / 2 live byte loan.
 // Bytes4..7 are zero. No register or loan is defined, consumed or closed.
@@ -40,17 +41,18 @@ pub fn Result<usize,errors::Error> inspect(ref ir::Program p,ref statics::Sites 
 // Walk only a verified output Program. Follow both outcomes of conditional
 // branches; constant folding is not part of authority analysis.
 struct Reachability { bool[256] seen; usize[256] work; usize count; }
-pub fn bool reachable_emit(ref ir::Program p){
+pub fn Result<bool,errors::Error> reachable_emit(ref ir::Program p,usize deadline,ref mut usize fuel){
     var Reachability search=Reachability{.seen=[false;256],.work=[0;256],.count=0};
     let usize entry=p.starts[p.entry];
     enqueue(ref mut search,entry);
     var usize cursor=0;
     while(cursor<search.count){
+        discard budget::visit(fuel,deadline,0)?;
         let usize pc=search.work[cursor];
         cursor+=1;
         let usize at=pc*8;
         let u8 op=p.code[at];
-        if(op==116){return true;}
+        if(op==116){return .ok(true);}
         if(op==8 || op==25 || op==39 || op==50 || op==65 || op==79 || op==82){continue;}
         let usize a=p.code[at+2] as usize;
         if(op==19 || op==22 || op==20 || op==21 || op==24){
@@ -63,7 +65,7 @@ pub fn bool reachable_emit(ref ir::Program p){
         }
         enqueue(ref mut search,pc+1);
     }
-    return false;
+    return .ok(false);
 }
 fn void enqueue(ref mut Reachability search,usize pc){
     if(search.seen[pc]){return;}
