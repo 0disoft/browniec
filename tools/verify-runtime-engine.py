@@ -1,6 +1,7 @@
 """Execute the private owning Engine/Program/Instance lifecycle on native Windows."""
 import argparse
 from compiler_scratch_layouts import reviewed_scratch
+from runtime_engine_transport import bindings_header
 from datetime import datetime, timezone
 import importlib.util
 import json
@@ -473,7 +474,8 @@ def main():
                       'native/anchored-source-loader/bridge.c', 'native/anchored-source-loader/bridge.h',
                       'native/host_adapter_process.c', 'native/host_adapter_process.h']
         extras = ['fairy.toml', 'toolchain.json', 'tools/verify-runtime-engine.py',
-                  'tools/verify-runtime-store-probe.py', 'tools/compiler_scratch_layouts.py', 'tools/runtime-engine/test-host.inc',
+                  'tools/verify-runtime-store-probe.py', 'tools/compiler_scratch_layouts.py',
+                  'tools/runtime_engine_transport.py', 'tools/runtime-engine/test-host.inc',
                   'native/runtime-engine/bridge.inc', 'native/runtime-engine/clock.inc', 'native/runtime-engine/transport.json',
                   'native/abi_thread_identity.c', 'native/abi_thread_identity.h',
                   'tools/runtime-engine/heap-observer.c', 'tools/runtime-engine/compile-test-host.inc',
@@ -606,34 +608,7 @@ def main():
                                generated.decode('utf-8'), re.M)
             need(actual is not None and actual.group() == contract['reviewedLayouts'][key],
                  f'Reviewed emitted layout differs: {key}')
-        bindings = f'typedef {contract["engineType"]} bc_engine;\ntypedef {contract["incomingType"]} bc_engine_input;\n'
-        bindings += f'typedef {contract["inputEntryType"]} bc_engine_input_entry;\ntypedef {contract["snapshotType"]} bc_engine_snapshot;\n'
-        bindings += f'typedef {contract["snapshotVectorType"]} bc_engine_snapshots;\n'
-        bindings += f'typedef {contract["outputVectorType"]} bc_engine_outputs;\n'
-        bindings+=f'typedef {contract["machineType"]} bc_pending_machine;\ntypedef {contract["coreType"]} bc_pending_core;\n'
-        bindings+=f'typedef {contract["preparationType"]} bc_output_preparation;\n'
-        bindings+=f'typedef {contract["arrayFillType"]} bc_array_fill_work;\ntypedef {contract["cursorType"]} bc_dispatch_cursor;\n'
-        bindings += f'typedef {contract["callCopyType"]} bc_call_copy_work;\n'
-        bindings += f'typedef {contract["returnWorkType"]} bc_return_work;\n'
-        bindings += f'typedef {contract["callMetadataType"]} bc_call_metadata_work;\ntypedef {contract["metadataBudgetType"]} bc_metadata_budget;\n'
-        bindings += f'typedef {contract["capturePlanType"]} bc_call_capture_plan;\n'
-        for key, alias in [('programType', 'bc_engine_program'), ('instanceType', 'bc_engine_instance'),
-                           ('boundInputType', 'bc_engine_bound_input'), ('outputType', 'bc_engine_output')]:
-            bindings += f'typedef {contract[key]} {alias};\n'
-        for variant, types in contract['programVariants'].items():
-            for role, name in types.items():
-                bindings += f'typedef {name} bc_{variant}_{role};\n'
-        for key, name in contract['entryTypes'].items():
-            bindings += f'typedef {name} bc_{key}_entry;\n'
-        bindings += f'typedef {contract["policyType"]} bc_engine_policy;\n'
-        bindings += f'typedef {contract["compileWorkType"]} bc_compile_work;\n'
-        bindings += f'typedef {contract["compileCandidateType"]} bc_compile_candidate;\n'
-        bindings += f'typedef {contract["compileProofType"]} bc_compile_proof;\n'
-        bindings += f'typedef {contract["compileOutputProofType"]} bc_compile_output_proof;\n'
-        bindings += f'typedef {contract["compileCandidateVectorType"]} bc_compile_candidates;\n'
-        bindings += f'typedef {contract["hostProgramType"]} bc_host_program;\ntypedef {contract["hostIRType"]} bc_host_ir;\n'
-        bindings += f'typedef {contract["hostExchangeType"]} bc_host_exchange;\n'
-        bindings += '\n'.join(f'#define B{key} {value}' for key, value in contract['bindings'].items()) + '\n'
+        bindings = bindings_header(contract)
         write(output / 'bindings.h', bindings)
         for name in ['abi_thread_identity.c', 'abi_thread_identity.h']:
             write(output / name, inputs['native/' + name])

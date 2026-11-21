@@ -576,6 +576,20 @@ pub fn Result<bool,Error> host_program_emits(ref Engine e,usize id){
     return .ok(host_program::emits(vec::at<host_program::Program>(ref retained.host,0)));
 }
 
+// Trusted embedding can reuse the output Machine for its resumable dispatcher.
+// Inspect the retained proof before offering that Program to a scalar caller.
+pub fn Result<bool,Error> scalar_preview_program(ref Engine e,usize id){
+    let u32 status=unsafe{control_access_raw(e as ptr void)};
+    if(status!=0){return .err(error(status));}
+    let usize pi=switch(program_index(ref e.programs,id,true)){
+        case .ok(v):{v}case .err(s):{return .err(error(s));}
+    };
+    let ref Program retained=vec::at<Program>(ref e.programs,pi);
+    if(vec::len<output_programs::Program>(ref retained.output)!=1){return .err(error(1));}
+    let ref output_programs::Program code=vec::at<output_programs::Program>(ref retained.output,0);
+    return .ok(!output_programs::accepts_input(code) && !output_programs::requires_emit(code));
+}
+
 pub fn Result<usize,Error> prepare_scalar_host(ref mut Engine e,usize program,ref run_config::RunConfig run){
     return prepare_host(e,program,run,b"",0);
 }

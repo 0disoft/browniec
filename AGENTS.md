@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-21): [Windows project stdin](docs/engineering/runtime-input-reader.md)
-  cancels and joins the pipe reader before discarding unpublished input.
-  Windows /Od and /O2 reader checks and the /O2 CLI contract passed.
+- Latest runtime checkpoint (2026-11-21): [Windows scalar embedding preview](docs/engineering/embed-preview.md)
+  runs a shared Program through independently stepped Instances. Windows /Od
+  and /O2 returned 77 with identical Fuel for both tested quanta and verified cancellation.
 
 # Brownie C agent guidance
 

@@ -2,9 +2,10 @@
 
 The first actual Brownie DLL surface now exports `bc_get_abi_info_v2`. Its
 revision/capacity/null admission and metadata values are compiled from Fairy C;
-the small native shim marshals pointers and the exact output layout. This is
-bootstrap only. Engine, Program, Instance, handles and embedding execution remain
-unimplemented, and the CLI's embedding availability stays false.
+the small native shim marshals pointers and the exact output layout.
+This artifact is the bootstrap query build. The separate [trusted scalar
+preview](embed-preview.md) connects Engine, Program, and Instance execution
+through its own ABI. The CLI's full embedding availability stays false.
 
 ## Build and inspect
 
