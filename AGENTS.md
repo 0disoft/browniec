@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-22): [Private Windows worker pipes](docs/engineering/restricted-worker.md#private-pipe-setup)
-  verify logon SID ACLs, broker PID binding and inherited pipe exchange in a
-  real AppContainer. Development and /O2 confirm repeat-launch cleanup.
+- Latest runtime checkpoint (2026-11-22): [Windows worker session headers](docs/engineering/restricted-worker.md#session-frame-headers)
+  verify nonce binding, sequence, correlation and length on an actual
+  AppContainer pipe exchange in development and /O2.
 
 # Brownie C agent guidance
 

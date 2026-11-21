@@ -91,6 +91,9 @@ DWORD bc_worker_pipes_open(bc_worker_pipes *pipes) {
     if (status) return status;
     SECURITY_ATTRIBUTES security = {sizeof(security), &descriptor, FALSE};
     bc_worker_pipes pending = {0};
+    const uint8_t empty_nonce[BC_WORKER_NONCE_BYTES] = {0};
+    if (BCryptGenRandom(NULL, pending.nonce, sizeof(pending.nonce), BCRYPT_USE_SYSTEM_PREFERRED_RNG) < 0 ||
+        !memcmp(pending.nonce, empty_nonce, sizeof(empty_nonce))) return ERROR_GEN_FAILURE;
     for (size_t i = 0; i < BC_WORKER_PIPE_COUNT; ++i) {
         status = open_pair(&security, i == BC_WORKER_STDIN, &pending.broker[i], &pending.child[i]);
         if (status) {
@@ -109,4 +112,5 @@ void bc_worker_pipes_close_child(bc_worker_pipes *pipes) {
 void bc_worker_pipes_close(bc_worker_pipes *pipes) {
     bc_worker_pipes_close_child(pipes);
     for (size_t i = 0; i < BC_WORKER_PIPE_COUNT; ++i) close_endpoint(&pipes->broker[i]);
+    memset(pipes->nonce, 0, sizeof(pipes->nonce));
 }

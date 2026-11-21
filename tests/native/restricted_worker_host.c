@@ -2,6 +2,7 @@
 #include <aclapi.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <userenv.h>
 #include <wchar.h>
 #include "../../native/restricted_worker.h"
@@ -68,6 +69,16 @@ static BOOL decoy_is_absent(HANDLE handle) {
     }
 }
 
+static BOOL child_read(HANDLE input, uint8_t *bytes, DWORD length) {
+    while (length) {
+        DWORD count = 0;
+        if (!ReadFile(input, bytes, length, &count, NULL) || !count) return FALSE;
+        bytes += count;
+        length -= count;
+    }
+    return TRUE;
+}
+
 static int child(wchar_t *number) {
     const HANDLE input = GetStdHandle(STD_INPUT_HANDLE);
     const HANDLE output = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -81,12 +92,30 @@ static int child(wchar_t *number) {
     if (GetEnvironmentVariableW(L"BC_WORKER_TEST_PARENT", environment, _countof(environment))) return 4;
     void *oversized = VirtualAlloc(NULL, commit_limit, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
     if (oversized) return 5;
-    unsigned char byte = 0;
+    uint8_t header[BC_WORKER_FRAME_BYTES];
+    bc_worker_frame expected = {.kind = BC_WORKER_HELLO, .sequence = 1};
+    bc_worker_frame received;
+    if (!child_read(input, header, sizeof(header)) ||
+        !bc_worker_frame_preflight(header, sizeof(header), &expected, &received)) return 6;
+    received.kind = BC_WORKER_READY;
     DWORD count = 0;
-    if (!ReadFile(input, &byte, 1, &count, NULL) || count != 1 || byte != 41) return 6;
+    if (!bc_worker_frame_encode(header, &received) ||
+        !WriteFile(output, header, sizeof(header), &count, NULL) || count != sizeof(header)) return 7;
+    expected = received;
+    expected.kind = BC_WORKER_START;
+    expected.sequence = 2;
+    expected.length = 1;
+    uint8_t byte = 0;
+    if (!child_read(input, header, sizeof(header)) ||
+        !bc_worker_frame_preflight(header, sizeof(header), &expected, &received) ||
+        !bc_worker_frame_complete(&received, 1) ||
+        !child_read(input, &byte, 1) || byte != 41) return 8;
     ++byte;
-    if (!WriteFile(output, &byte, 1, &count, NULL) || count != 1) return 7;
-    if (!WriteFile(error, &byte, 1, &count, NULL) || count != 1) return 8;
+    received.kind = BC_WORKER_RESULT;
+    if (!bc_worker_frame_encode(header, &received) ||
+        !WriteFile(output, header, sizeof(header), &count, NULL) || count != sizeof(header) ||
+        !WriteFile(output, &byte, 1, &count, NULL) || count != 1) return 9;
+    if (!WriteFile(error, &byte, 1, &count, NULL) || count != 1) return 10;
     // The Job's user CPU limit must stop this process without parent intervention.
     for (;;) YieldProcessor();
 }
@@ -133,23 +162,116 @@ static void verify_pipes(void) {
     }
 }
 
-static void exchange_byte(HANDLE pipe, unsigned char *byte, BOOL write) {
+static void exchange_bytes(HANDLE pipe, uint8_t *bytes, DWORD length, BOOL write) {
     OVERLAPPED io = {0};
     io.hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
     check(io.hEvent != NULL, "create test I/O event");
-    DWORD count = 0;
-    BOOL complete = write ? WriteFile(pipe, byte, 1, &count, &io) :
-        ReadFile(pipe, byte, 1, &count, &io);
-    if (!complete && GetLastError() == ERROR_IO_PENDING) {
-        if (WaitForSingleObject(io.hEvent, 5000) == WAIT_OBJECT_0) {
-            complete = GetOverlappedResult(pipe, &io, &count, FALSE);
-        } else {
-            CancelIoEx(pipe, &io);
-            GetOverlappedResult(pipe, &io, &count, TRUE);
+    while (length) {
+        DWORD count = 0;
+        BOOL complete = write ? WriteFile(pipe, bytes, length, &count, &io) :
+            ReadFile(pipe, bytes, length, &count, &io);
+        if (!complete && GetLastError() == ERROR_IO_PENDING) {
+            if (WaitForSingleObject(io.hEvent, 5000) == WAIT_OBJECT_0) {
+                complete = GetOverlappedResult(pipe, &io, &count, FALSE);
+            } else {
+                CancelIoEx(pipe, &io);
+                GetOverlappedResult(pipe, &io, &count, TRUE);
+            }
         }
+        check(complete && count && count <= length, "exchange bytes over the broker endpoint");
+        bytes += count;
+        length -= count;
     }
     check(CloseHandle(io.hEvent), "close test I/O event");
-    check(complete && count == 1, "exchange a byte over the broker endpoint");
+}
+
+static void verify_frames(void) {
+    const bc_worker_frame ready = {
+        .kind = BC_WORKER_READY, .sequence = 1,
+        .nonce = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}
+    };
+    const uint8_t ready_wire[BC_WORKER_FRAME_BYTES] = {
+        'B','C','W','K',1,0,2,0, 0,0,0,0,0,0,0,0,
+        1,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,
+        1,2,3,4,5,6,7,8, 9,10,11,12,13,14,15,16
+    };
+    uint8_t header[BC_WORKER_FRAME_BYTES + 1] = {0};
+    check(bc_worker_frame_encode(header, &ready) && !memcmp(header, ready_wire, sizeof(ready_wire)),
+        "exact little-endian wire layout");
+    bc_worker_frame decoded = {.sequence = 123};
+    for (size_t i = 0; i < BC_WORKER_FRAME_BYTES; ++i) {
+        check(!bc_worker_frame_preflight(header, i, &ready, &decoded), "reject truncated header");
+        header[i] ^= 1;
+        check(!bc_worker_frame_preflight(header, BC_WORKER_FRAME_BYTES, &ready, &decoded),
+            "reject mutated READY field");
+        header[i] ^= 1;
+    }
+    check(!bc_worker_frame_preflight(header, sizeof(header), &ready, &decoded) &&
+        decoded.sequence == 123, "reject excess header and retain caller state on failure");
+    check(bc_worker_frame_preflight(header, BC_WORKER_FRAME_BYTES, &ready, &decoded) &&
+        bc_worker_frame_complete(&decoded, 0), "accept exact READY frame");
+
+    bc_worker_frame expected = ready;
+    expected.kind = BC_WORKER_HOST_REPLY;
+    expected.sequence = 0x0102030405060708ULL;
+    expected.correlation = 0x0807060504030201ULL;
+    expected.length = BC_WORKER_FRAME_PAYLOAD_MAX;
+    check(bc_worker_frame_encode(header, &expected), "encode at wire maximum");
+    check(bc_worker_frame_preflight(header, BC_WORKER_FRAME_BYTES, &expected, &decoded) &&
+        bc_worker_frame_complete(&decoded, expected.length) &&
+        !bc_worker_frame_complete(&decoded, expected.length - 1) &&
+        !bc_worker_frame_complete(&decoded, expected.length + 1), "require exact bounded body size");
+    ++expected.sequence;
+    check(!bc_worker_frame_preflight(header, BC_WORKER_FRAME_BYTES, &expected, &decoded),
+        "reject duplicate frame when the receive sequence advances");
+    --expected.sequence;
+    ++expected.correlation;
+    check(!bc_worker_frame_preflight(header, BC_WORKER_FRAME_BYTES, &expected, &decoded),
+        "reject crossed request");
+    --expected.correlation;
+    --expected.length;
+    check(!bc_worker_frame_preflight(header, BC_WORKER_FRAME_BYTES, &expected, &decoded),
+        "reject wire length above session ceiling");
+    header[11] = 1;
+    expected.length = UINT32_MAX;
+    check(!bc_worker_frame_preflight(header, BC_WORKER_FRAME_BYTES, &expected, &decoded) &&
+        !bc_worker_frame_encode(header, &expected), "enforce absolute wire limit");
+    expected = ready;
+    memset(expected.nonce, 0, sizeof(expected.nonce));
+    check(bc_worker_frame_encode(header, &ready) &&
+        !bc_worker_frame_preflight(header, BC_WORKER_FRAME_BYTES, &expected, &decoded),
+        "READY requires the broker nonce");
+    expected = ready;
+    expected.kind = BC_WORKER_HELLO;
+    check(bc_worker_frame_encode(header, &expected), "encode initial HELLO");
+    memset(expected.nonce, 0, sizeof(expected.nonce));
+    check(bc_worker_frame_preflight(header, BC_WORKER_FRAME_BYTES, &expected, &decoded),
+        "only initial HELLO can establish a session");
+    memset(header + 32, 0, BC_WORKER_NONCE_BYTES);
+    check(!bc_worker_frame_preflight(header, BC_WORKER_FRAME_BYTES, &expected, &decoded),
+        "reject zero session nonce");
+}
+
+static void start_exchange(bc_worker_frame *frame) {
+    uint8_t header[BC_WORKER_FRAME_BYTES];
+    HANDLE input = pipes.broker[BC_WORKER_STDIN];
+    HANDLE output = pipes.broker[BC_WORKER_STDOUT];
+    *frame = (bc_worker_frame){.kind = BC_WORKER_HELLO, .sequence = 1};
+    memcpy(frame->nonce, pipes.nonce, sizeof(frame->nonce));
+    check(bc_worker_frame_encode(header, frame), "encode broker HELLO");
+    exchange_bytes(input, header, 7, TRUE);
+    exchange_bytes(input, header + 7, sizeof(header) - 7, TRUE);
+    frame->kind = BC_WORKER_READY;
+    exchange_bytes(output, header, sizeof(header), FALSE);
+    bc_worker_frame ready;
+    check(bc_worker_frame_preflight(header, sizeof(header), frame, &ready), "verify worker READY");
+    frame->kind = BC_WORKER_START;
+    frame->sequence = 2;
+    frame->length = 1;
+    check(bc_worker_frame_encode(header, frame), "encode broker START");
+    exchange_bytes(input, header, sizeof(header), TRUE);
+    uint8_t byte = 41;
+    exchange_bytes(input, &byte, 1, TRUE);
 }
 
 static void verify_job(void) {
@@ -179,6 +301,7 @@ static DWORD prepare(const wchar_t *path, const wchar_t *directory, HANDLE endpo
 int wmain(int argc, wchar_t **argv) {
     if (argc == 3 && !wcscmp(argv[1], L"--child")) return child(argv[2]);
     check(argc == 2 && atexit(cleanup) == 0, "parent fixture arguments");
+    verify_frames();
     DWORD cold = 0, baseline = 0, final = 0;
     check(SetEnvironmentVariableW(L"BC_WORKER_TEST_PARENT", L"sentinel"), "parent environment marker");
     check(swprintf_s(profile_name, _countof(profile_name), L"Rodisoft.BrownieC.Test.%lu.%llu",
@@ -229,8 +352,8 @@ int wmain(int argc, wchar_t **argv) {
     // Close the parent's copies of the worker endpoints so a failed child
     // yields EOF instead of leaving a read blocked.
     bc_worker_pipes_close_child(&pipes);
-    unsigned char byte = 41;
-    exchange_byte(pipes.broker[BC_WORKER_STDIN], &byte, TRUE);
+    bc_worker_frame expected;
+    start_exchange(&expected);
     check(WaitForSingleObject(worker.process, 10000) == WAIT_OBJECT_0, "Job CPU limit stopped the worker");
     DWORD exit_code = 0;
     check(GetExitCodeProcess(worker.process, &exit_code), "get worker exit code");
@@ -241,8 +364,14 @@ int wmain(int argc, wchar_t **argv) {
     check(GetProcessTimes(worker.process, &began, &ended, &kernel, &user), "query terminated worker CPU time");
     const ULONGLONG user_ticks = ((ULONGLONG)user.dwHighDateTime << 32) | user.dwLowDateTime;
     check(user_ticks >= cpu_limit * 10000ULL, "worker consumed its user CPU budget");
+    uint8_t header[BC_WORKER_FRAME_BYTES], byte = 0;
+    bc_worker_frame result;
+    expected.kind = BC_WORKER_RESULT;
+    exchange_bytes(pipes.broker[BC_WORKER_STDOUT], header, sizeof(header), FALSE);
+    check(bc_worker_frame_preflight(header, sizeof(header), &expected, &result) &&
+        bc_worker_frame_complete(&result, 1), "verify worker RESULT before reading the only body byte");
     for (size_t i = BC_WORKER_STDOUT; i < BC_WORKER_PIPE_COUNT; ++i) {
-        exchange_byte(pipes.broker[i], &byte, FALSE);
+        exchange_bytes(pipes.broker[i], &byte, 1, FALSE);
         check(byte == 42, "worker returned the fixture byte on the approved endpoints");
     }
     check(WaitForSingleObject(decoy, 0) == WAIT_TIMEOUT, "decoy was not inherited");
@@ -255,7 +384,8 @@ int wmain(int argc, wchar_t **argv) {
         fprintf(stderr, "handles cold %lu, warm %lu, final %lu\n", cold, baseline, final);
     check(final + 7 == baseline, "balanced launcher handles after warmup");
     printf("{\"appContainer\":true,\"capabilities\":0,\"inheritedPipes\":3,"
-           "\"commitDenied\":true,\"cpuTermination\":true,\"privatePipeAcl\":true,\"handleDelta\":0,"
+           "\"commitDenied\":true,\"cpuTermination\":true,\"privatePipeAcl\":true,"
+           "\"framedExchange\":true,\"headerMutationsRejected\":48,\"handleDelta\":0,"
            "\"coldHandleDelta\":%ld}\n", (long)final - (long)cold);
     return 0;
 }

@@ -32,6 +32,40 @@ already opened. No I/O is pending at publication. After suspended launch,
 the broker closes its copies of the child endpoints and retains its own
 endpoints until it has reaped any pending I/O.
 
+## Session frame headers
+
+Each pipe owner generates a separate 128-bit session nonce when it opens the
+endpoints. The broker sends it in an empty HELLO on the inherited stdin; the
+worker echoes it in an empty READY on stdout. Each direction starts at sequence
+1, then uses the next sequence for each accepted frame. Receivers also check
+the expected kind and correlation ID for the current phase.
+
+The [header codec](../../native/restricted_worker_frame.h) uses a fixed 48-byte
+header. All numbers are little endian.
+
+| Byte offset | Size | Field |
+| --- | ---: | --- |
+| 0 | 4 | Magic `BCWK` |
+| 4 | 2 | Protocol revision, currently 1 |
+| 6 | 2 | Message kind |
+| 8 | 4 | Payload length |
+| 12 | 4 | Reserved, must be zero |
+| 16 | 8 | Directional sequence |
+| 24 | 8 | Correlation ID |
+| 32 | 16 | Session nonce |
+
+Preflight checks the complete header and caller's per-message ceiling before
+any payload read. It also caps a single header and body at 4 MiB combined.
+The body must match the declared length. Session-wide budget accounting and
+byte-stream EOF and trailing-data checks belong to the transport and broker.
+
+The native fixture exercised HELLO, READY, START and RESULT on the inherited
+pipes in development and /O2, with a HELLO split into two writes. It checked all
+48 one-bit READY header mutations and all 48 truncated header lengths, plus
+duplicate sequences, crossed correlations and size boundaries. Both profiles
+retained zero net warm-launch handles. The RESULT stays fixture data.
+Local receipt: `build/restricted-worker/20261121T152949567319Z/receipt.json`.
+
 ## Windows verification
 
 Run `python -B tools/verify-restricted-worker.py`. The development and optimized
@@ -56,7 +90,7 @@ limit, connecting PID, and inheritance flags. The child exchanged bytes over
 all three pipes and the repeat launch again had zero net handle growth.
 Local receipt: `build/restricted-worker/20261121T152431466055Z/receipt.json`.
 
-The caller still needs trusted image and profile provisioning, session
-framing and correlation, the broker publication barrier, and I/O completion
-and budget integration. The launcher fixture executes native test code.
+The caller still needs trusted image and profile provisioning, bounded frame
+stream handling, strict payload parsing, the broker publication barrier, and
+I/O completion and budget integration. The launcher fixture executes native test code.
 The restricted CLI remains unavailable while those pieces are built and verified.

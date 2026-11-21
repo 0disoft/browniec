@@ -2,12 +2,14 @@
 #define BC_RESTRICTED_WORKER_PIPES_H
 
 #include <windows.h>
+#include "restricted_worker_frame.h"
 
 enum { BC_WORKER_STDIN, BC_WORKER_STDOUT, BC_WORKER_STDERR, BC_WORKER_PIPE_COUNT };
 
 typedef struct bc_worker_pipes {
     HANDLE broker[BC_WORKER_PIPE_COUNT];
     HANDLE child[BC_WORKER_PIPE_COUNT];
+    uint8_t nonce[BC_WORKER_NONCE_BYTES];
 } bc_worker_pipes;
 
 /* Open connected unidirectional byte pipes with a logon-scoped DACL. The
