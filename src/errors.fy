@@ -11,6 +11,7 @@ pub fn u8 cancelled_kind(){return 33;}
 pub fn u8 output_io_kind(){return 34;}
 pub fn u8 output_encoding_kind(){return 35;}
 pub fn u8 engine_poisoned_kind(){return 36;}
+pub fn u8 host_failure_kind(){return 37;}
 pub struct Error { u8 kind; u8 location; usize offset; }
 pub fn Error make(u8 kind, usize offset) {
     return Error{.kind=kind,.offset=offset,.location=0};

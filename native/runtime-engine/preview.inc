@@ -550,7 +550,9 @@ static bc_event revision_two_event(preview_run *run,preview_vm_event event){
     case 2:
         switch(code){
         case 15: result.kind=BC_FAILED;message="Execution allocation failed";break;
-        case 20: result.kind=BC_FAILED;message="Host exchange failed";break;
+        case 20: result.kind=BC_FAILED;message="Guest output limit exceeded";break;
+        // Preserve the existing public revision-2 diagnostic code for host failure.
+        case 37: result.kind=BC_FAILED;code=20;message="Host exchange failed";break;
         case 30: result.kind=BC_FAILED;message="Execution deadline expired";break;
         case 32: result.kind=BC_FAILED;message="Execution memory limit exceeded";break;
         case 36: result.kind=BC_FAILED;message="Engine poisoned";break;

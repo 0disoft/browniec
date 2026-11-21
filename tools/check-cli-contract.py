@@ -197,10 +197,13 @@ def check_host_run(exe, check_args, args):
         assert check_json(exe, args, 4, version=2)['kind'] == 'unavailable'
 
     original = source.read_bytes()
-    source.write_bytes(b'module main; fn i32 main(){return switch(host::example::check(41)){'
-                       b'case .ok(n): { n } case .err(_): { -7 } };}')
     response.write_text(json.dumps(table | {'replies': [
         row | {'kind': 1, 'reply_hex': '0500000004000000ffffffff'}]}), encoding='utf-8')
+    assert check_json(exe, args, 4, version=2) == {
+        'kind': 'unavailable', 'location': {'kind': 'none'},
+    }
+    source.write_bytes(b'module main; fn i32 main(){return switch(host::example::check(41)){'
+                       b'case .ok(n): { n } case .err(_): { -7 } };}')
     assert check_json(exe, args, 0, version=2, value=-7) is None
     source.write_bytes(original)
     response.write_text(serialized, encoding='utf-8')
@@ -296,6 +299,13 @@ def check_host_project(exe, check_args, run_args):
     assert check_json(exe, check_args, 3, version=2)['kind'] == 'type'
     helper.write_bytes(original)
 
+    overflowing = original.replace(b'return service::check(41);',
+                                   b'\n    return service::check(41) + 2147483647;\n')
+    offset = overflowing.index(b'+')
+    helper.write_bytes(overflowing)
+    check_located_result(exe, run_args, 5, 'overflow', 1, helper.name, overflowing, offset, offset + 1)
+    helper.write_bytes(original)
+
     manifest = json.loads(project.read_bytes())
     project.write_text(json.dumps(manifest | {'requires': []}), encoding='utf-8')
     helper.unlink()
@@ -303,7 +313,7 @@ def check_host_project(exe, check_args, run_args):
     project.write_text(json.dumps(manifest), encoding='utf-8')
     assert check_json(exe, check_args, 7, version=2)['kind'] == 'input_io'
     helper.write_bytes(original)
-    print('PASS: catalog-backed project calls, lexical scopes, source locations and authority-before-file-read')
+    print('PASS: catalog-backed project calls, compile and runtime locations, and authority-before-file-read')
 
 
 def check_host_project_input(exe, check_args, run_args):
@@ -687,7 +697,10 @@ def check_configured_output(exe, folder):
 
 
 def check_project_location(exe, manifest, command, code, kind, index, name, source, offset, end):
-    args = [command, '--project', manifest]
+    check_located_result(exe, [command, '--project', manifest], code, kind, index, name, source, offset, end)
+
+
+def check_located_result(exe, args, code, kind, index, name, source, offset, end):
     line = source[:offset].count(b'\n') + 1
     column = offset - source.rfind(b'\n', 0, offset)
     expected = {

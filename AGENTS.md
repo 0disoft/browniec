@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-21): [Revision-2 host replies](docs/engineering/embed-preview.md#revision-2-host-requests-and-replies)
-  report unhandled Result errors as stable host failures. Windows /Od and /O2
-  verify terminal events, Fuel and the explicit guest error arm.
+- Latest runtime checkpoint (2026-11-22): [Catalog-backed CLI diagnostics](docs/cli/output-and-exit-codes.md#single-source-host-run)
+  preserve the guest trap location across text and both JSON versions. Windows
+  development and /O2 verify the original member span and distinct host failures.
 
 # Brownie C agent guidance
 

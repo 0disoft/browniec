@@ -9,6 +9,7 @@ import cli_project as projects;
 import anchored_source_loader as anchored;
 import project_manifest as manifest;
 import source_snapshot as sources;
+import source_error as diagnostics;
 import std::bytes as bytes;
 import std::process as process;
 import cli_host_replies as replies;
@@ -64,7 +65,7 @@ pub fn i32 execute(render::Format format,configured::Selection settings,usize ca
         imports,ref digest,ref run)){
         case .ok(v):{v}case .err(e):{return failure(format,running,engine_error(e,true));}
     };
-    return complete_command(format,running,ref mut owner,program,ref run,responses,executable,selection,settings);
+    return complete_command(format,running,ref mut owner,program,ref run,responses,executable,selection,settings,.none,0);
 }
 
 @effects(console,filesystem)
@@ -86,17 +87,22 @@ fn i32 execute_project(render::Format format,bool running,ref mut engine::Engine
         case .ok(v):{v}
         case .err(e):{return project_failure(format,running,ref project,ref root,e);}
     };
-    return complete_command(format,running,owner,program,run,responses,executable,selection,settings);
+    return complete_command(format,running,owner,program,run,responses,executable,selection,settings,.some(ref root),manifest::count(ref project));
 }
 
 @effects(console)
 fn i32 project_failure(render::Format format,bool running,ref manifest::Project project,ref anchored::Root root,
     engine::Error failure_info){
     let errors::Error problem=if(failure_info.status==1){errors::absent(9,0)}else{engine_error(failure_info,true)};
-    let sources::Span at=failure_info.diagnostic.at;
-    if(at.source>=manifest::count(project) || problem.location!=0){return failure(format,running,problem);}
+    return located_failure(format,running,root,manifest::count(project),problem,failure_info.diagnostic.at);
+}
+
+@effects(console)
+fn i32 located_failure(render::Format format,bool running,ref anchored::Root root,usize count,
+    errors::Error problem,sources::Span at){
+    if(at.source>=count || problem.location!=0){return failure(format,running,problem);}
     let sources::Snapshot snapshot=switch(anchored::copy_collected(
-        root,manifest::count(project),sources::source_limit(),sources::name_limit())){
+        root,count,sources::source_limit(),sources::name_limit())){
         case .ok(v):{v}case .err(_):{return failure(format,running,problem);}
     };
     return render::project_failure(format,running,problem,ref snapshot,at,0);
@@ -105,16 +111,17 @@ fn i32 project_failure(render::Format format,bool running,ref manifest::Project 
 @effects(console,filesystem)
 fn i32 complete_command(render::Format format,bool running,ref mut engine::Engine owner,usize program,
     ref runs::RunConfig run,Option<replies::Replies> responses,Option<adapters::Route> executable,
-    binary::Selection selection,configured::Selection settings){
+    binary::Selection selection,configured::Selection settings,Option<ref anchored::Root> root,usize source_count){
     var i64 value=0;
+    var sources::Span at=sources::no_source();
     var errors::Error problem=errors::absent(0,0);
     let Result<Option<engine::Output>,errors::Error> execution=switch(responses){
         case .some(table):{switch(executable){
-            case .none:{run_selected(owner,program,run,.some(ref table),.none,selection,settings,format,ref mut value)}
+            case .none:{run_selected(owner,program,run,.some(ref table),.none,selection,settings,format,ref mut value,ref mut at)}
             case .some(_):{.err(errors::absent(10,0))}
         }}
         case .none:{switch(executable){
-            case .some(route):{run_selected(owner,program,run,.none,.some(ref route),selection,settings,format,ref mut value)}
+            case .some(route):{run_selected(owner,program,run,.none,.some(ref route),selection,settings,format,ref mut value,ref mut at)}
             case .none:{.ok(.none)}
         }}
     };
@@ -124,7 +131,12 @@ fn i32 complete_command(render::Format format,bool running,ref mut engine::Engin
     if(!engine::release_program(owner,program).is_ok || !engine::destroy(owner).is_ok){
         return failure(format,running,errors::absent(5,0));
     }
-    if(problem.kind!=0){return failure(format,running,problem);}
+    if(problem.kind!=0){
+        return switch(root){
+            case .some(project_root):{located_failure(format,running,project_root,source_count,problem,at)}
+            case .none:{failure(format,running,problem)}
+        };
+    }
     return switch(publish){
         case .some(output):{configured::publish(format,value,ref output,settings,0)}
         case .none:{render::selected_outcome(format,running,false,value,errors::absent(0,0),0)}
@@ -135,7 +147,7 @@ fn i32 complete_command(render::Format format,bool running,ref mut engine::Engin
 fn Result<Option<engine::Output>,errors::Error> run_selected(ref mut engine::Engine owner,usize program,
     ref runs::RunConfig run,Option<ref replies::Replies> responses,Option<ref adapters::Route> executable,
     binary::Selection selection,
-    configured::Selection settings,render::Format format,ref mut i64 value){
+    configured::Selection settings,render::Format format,ref mut i64 value,ref mut sources::Span at){
     let bool emits=switch(engine::host_program_emits(owner,program)){
         case .ok(v):{v}case .err(e):{return .err(engine_error(e,false));}
     };
@@ -148,7 +160,7 @@ fn Result<Option<engine::Output>,errors::Error> run_selected(ref mut engine::Eng
         case .ok(v):{*value=v;switch(detach_output(owner,instance,emits)){
             case .ok(output):{output}case .err(e):{problem=e;.none}
         }}
-        case .err(e):{problem=e;.none}
+        case .err(e):{problem=e.code;*at=e.at;.none}
     };
     if(!engine::destroy_instance(owner,instance).is_ok){return .err(errors::absent(5,0));}
     if(problem.kind!=0){return .err(problem);}
@@ -180,19 +192,19 @@ fn Result<usize,errors::Error> prepare_guest(ref mut engine::Engine owner,usize 
     };
 }
 
-fn Result<i64,errors::Error> complete(ref mut engine::Engine owner,usize instance,
+fn Result<i64,diagnostics::Error> complete(ref mut engine::Engine owner,usize instance,
     Option<ref replies::Replies> responses,Option<ref adapters::Route> executable){
     while(true){
         let engine::Event event=switch(next(owner,instance,responses,executable)){
-            case .ok(v):{v}case .err(e):{return .err(e);}
+            case .ok(v):{v}case .err(e):{return .err(diagnostics::absent(e));}
         };
         if(event.kind==0){continue;}
         if(event.kind==1){return .ok(event.value);}
-        if(event.kind==3){return .err(errors::absent(errors::cancelled_kind(),0));}
-        if(event.diagnostic.code.kind!=0){return .err(event.diagnostic.code);}
-        return .err(errors::absent(11,0));
+        if(event.kind==3){return .err(diagnostics::absent(errors::absent(errors::cancelled_kind(),0)));}
+        if(event.diagnostic.code.kind!=0){return .err(event.diagnostic);}
+        return .err(diagnostics::absent(errors::absent(11,0)));
     }
-    return .err(errors::absent(5,0));
+    return .err(diagnostics::absent(errors::absent(5,0)));
 }
 
 fn Result<engine::Event,errors::Error> next(ref mut engine::Engine owner,usize instance,

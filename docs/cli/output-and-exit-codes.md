@@ -163,12 +163,16 @@ The [configured host run](configuration.md#single-source-host-execution)
 publishes the ordinary signed i32 run result. An invalid reply file reports
 `usage` (2). A missing exact match or a fatal reply reports `unavailable` (4).
 A guest-handled `u32` error reply follows the guest's Result branch and can
-complete with exit 0. Fuel exhaustion, run deadline and cancellation report
+complete with exit 0. If the guest uses the success value directly, an error reply
+reports `unavailable` (4) with no source location. Fuel exhaustion, run deadline and cancellation report
 `fuel`, `deadline` and `cancelled` (5).
 
 The [catalog-backed project mode](configuration.md#project-host-execution) uses the same
-host result and exit classes. Compile diagnostics include the original project
-member path and span in JSON v2.
+host result and exit classes. Compile diagnostics and located runtime traps use
+the original project member path and byte column in text. JSON v2 also includes
+the source index and half-open byte range. JSON v1 retains the member-relative
+`byte_offset` field. The CLI resolves the location from the acquired source
+snapshot using the same renderer as configured project execution.
 
 ## Project check and run
 
