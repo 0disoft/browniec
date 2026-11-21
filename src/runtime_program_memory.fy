@@ -97,10 +97,11 @@ pub fn Result<usize,Error> commit_external(ref mut Budget b,usize bytes){
     b.external=bytes;let usize total=b.control+b.retained+b.compile_source+bytes;
     if(total>b.tracked_peak){b.tracked_peak=total;}return .ok(bytes);
 }
-fn usize available(ref Budget b){
-    let usize aggregate=b.programs-b.retained;let usize combined=b.engine-b.control-b.retained-b.external-b.compile_source;
+fn usize available_after_transfer(ref Budget b,usize transfer){
+    let usize aggregate=b.programs-b.retained;let usize combined=b.engine-b.control-b.retained-b.external-(b.compile_source-transfer);
     return if(b.program<aggregate){if(b.program<combined){b.program}else{combined}}else{if(aggregate<combined){aggregate}else{combined}};
 }
+fn usize available(ref Budget b){return available_after_transfer(b,0);}
 pub fn Result<usize,Error> fixed(u32 kind){
     if(kind>2){return .err(.Invalid);}
     let usize stored=unsafe{layout_raw(2*kind)};let usize handle=unsafe{layout_raw(2*kind+1)};
@@ -110,15 +111,21 @@ pub fn Result<usize,Error> fixed(u32 kind){
     return .ok(8*stored+8*handle);
 }
 pub fn Result<plans::Plan,Error> prepare(ref Budget b,u32 kind){
-    if(b.closed){return .err(.State);}if(kind>2){return .err(.Invalid);}
+    return prepare_transfer(b,kind,0);
+}
+pub fn Result<plans::Plan,Error> prepare_transfer(ref Budget b,u32 kind,usize transfer){
+    if(b.closed || transfer>b.compile_source){return .err(.State);}if(kind>2){return .err(.Invalid);}
     let usize bytes=fixed(kind)?;
-    return switch(plans::create(bytes,available(b))){case .ok(v):{.ok(v)}case .err(_):{.err(.Quota)}};
+    return switch(plans::create(bytes,available_after_transfer(b,transfer))){case .ok(v):{.ok(v)}case .err(_):{.err(.Quota)}};
 }
 pub fn Result<usize,Error> record(ref mut Budget b,ref plans::Plan plan){
-    if(b.closed){return .err(.State);}if(!plan.admitted){return .ok(0);}
-    if(plan.bytes>available(b)){return .err(.State);}
+    return record_transfer(b,plan,0);
+}
+pub fn Result<usize,Error> record_transfer(ref mut Budget b,ref plans::Plan plan,usize transfer){
+    if(b.closed || transfer>b.compile_source){return .err(.State);}if(!plan.admitted){return .ok(0);}
+    if(plan.bytes>available_after_transfer(b,transfer)){return .err(.State);}
     let usize planned=b.retained+plan.bytes;if(planned>b.peak){b.peak=planned;}
-    let usize tracked=b.control+planned+b.external+b.compile_source;if(tracked>b.tracked_peak){b.tracked_peak=tracked;}return .ok(plan.bytes);
+    let usize tracked=b.control+planned+b.external+(b.compile_source-transfer);if(tracked>b.tracked_peak){b.tracked_peak=tracked;}return .ok(plan.bytes);
 }
 pub fn Result<usize,Error> publish(ref mut Budget b,usize bytes){
     if(b.closed || bytes>available(b)){return .err(.State);}

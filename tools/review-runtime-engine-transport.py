@@ -96,6 +96,12 @@ c['compileWorkType']=vector_element(c['compileWorkVectorType'])
 assert arg(42,2)==arg(44,1)==arg(45,1)==arg(46,0)==c['compileWorkVectorType']
 c['compileCandidateVectorType']=field_type(c['engineType'],11)
 c['compileCandidateType']=vector_element(c['compileCandidateVectorType'])
+c['compileProofVectorType']=field_type(c['compileCandidateType'],9)
+c['compileProofType']=arg(50,2)
+assert arg(53,0)==c['compileProofVectorType']
+c['compileProofImageType']=field_type(c['compileCandidateType'],10)
+assert arg(50,2)==arg(52,2)==c['compileProofType']
+assert arg(50,1)==arg(51,2)==arg(52,1)==c['compileProofImageType']
 assert arg(42,4)==arg(45,3)==arg(47,0)==c['compileCandidateVectorType']
 assert arg(42,3)==arg(43,0)==arg(44,2)==arg(44,3)==arg(45,2)==field_type(c['engineType'],10)==c['incomingType']
 c['hostProgramVectorType']=field_type(c['programType'],9)
@@ -164,12 +170,12 @@ types['policyType']=c['policyType']
 types['capturePlanType']=c['capturePlanType']
 for key in ['hostProgramVectorType','hostProgramType','hostIRType','hostExchangeVectorType','hostExchangeType','hostRunConfigType','hostTransitionType']:types[key]=c[key]
 c['reviewedLayouts']={k:re.search(r'^typedef struct \{\n[^}]*\} '+re.escape(v)+';$',t,re.M).group() for k,v in types.items()}
-assert len(c['bindings'])==49 and len(c['reviewedLayouts'])==52
+assert len(c['bindings'])==53 and len(c['reviewedLayouts'])==52
 for key in ['lifecycleType','setupWorkType','preparationWorkType','cleanupWorkType','runtimeMetadataType','cleanupRuntimeType','inputWindowsType','storageBufferType']:
  c['reviewedLayouts'][key]=re.search(r'^typedef struct \{\n[^}]*\} '+re.escape(c[key])+';$',t,re.M).group()
-for key in ['compileWorkType','compileWorkVectorType','compileCandidateType','compileCandidateVectorType']:
+for key in ['compileWorkType','compileWorkVectorType','compileCandidateType','compileCandidateVectorType','compileProofType','compileProofVectorType','compileProofImageType']:
  c['reviewedLayouts'][key]=re.search(r'^typedef struct \{\n[^}]*\} '+re.escape(c[key])+';$',t,re.M).group()
-assert len(c['reviewedLayouts'])==64
+assert len(c['reviewedLayouts'])==67
 c['transportSha256']=hashlib.sha256(generated).hexdigest()
 c['compilerScratch']=reviewed_scratch(t)
 c['sourceInputs']=[dict(path=p.relative_to(root).as_posix(),sha256=hashlib.sha256(p.read_bytes()).hexdigest()) for p in sources]

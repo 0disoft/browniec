@@ -514,6 +514,29 @@ existing Engine suite passed in development and /O2 with zero live SDK
 allocations. Local receipt:
 `build/runtime-engine/20261121T052244123543Z/receipt.json`.
 
+## Engine canonical proof
+
+The private ordinary compile job now enters Proving after lowering. It retains
+the exact candidate IR and frozen literal image and advances the canonical
+proof under the 4,096-unit metadata allowance. Each step contributes at most
+one proof batch. A Program ID is issued only after proof completion and
+publication. Scalar admission still runs the legacy verifier when opening
+the proof. Image construction and final Program retention remain synchronous.
+
+The proof cursor has one SDK-owned heap slot allocated at proof open.
+Embedding it in the lowering candidate overflowed the default 1 MiB stack
+during candidate construction in the Windows development build. The Engine
+preflights the proof slot, image descriptor backing and literal payload before
+allocation. Cancellation, expiry, and allocation failure drop unpublished
+owners and refund the working charge. On success the literal payload moves
+to the retained Program and is counted once across the transfer.
+
+Windows development and /O2 validated proof progression, cancellation and exact
+deadline while Proving, failure at both proof owner allocations, and ordinary
+and literal-bearing Programs returning 77. The Engine ended with zero live
+SDK allocations. The locked /O2 CLI quick start returned 77. Local receipt:
+`build/runtime-engine/20261121T055327896002Z/receipt.json`.
+
 ## Executed verification and remaining work
 
 [Windows evidence](../evidence/runtime-engine-compile-memory-windows-20261107.json)

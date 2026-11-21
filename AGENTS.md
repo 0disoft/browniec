@@ -1,7 +1,6 @@
-- Latest runtime checkpoint (2026-11-21): [Resumable ordinary canonical proof](docs/engineering/runtime-engine-compile-memory.md#resumable-ordinary-canonical-proof)
-  matches the synchronous reference proof on the ordinary ABI fixture and
-  rejects EMIT. Windows development and /O2 passed with zero live SDK allocations.
-  Engine Program admission still uses the synchronous proof.
+- Latest runtime checkpoint (2026-11-21): [Engine canonical proof](docs/engineering/runtime-engine-compile-memory.md#engine-canonical-proof)
+  yields before publishing an ordinary Program. Windows development and /O2
+  verify cancellation, expiry, allocation rollback, and zero live SDK allocations.
 
 # Brownie C agent guidance
 

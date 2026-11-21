@@ -448,7 +448,7 @@ fn Result<engine::CompileStatus,u8> compile_status(Result<engine::CompileStatus,
     return switch(result){case .ok(v):{.ok(v)}case .err(_):{.err(1)}};
 }
 fn u8 compile_state(engine::CompileState state){
-    return switch(state){case .Preparing:{0}case .Prepared:{1}case .Lowering:{6}case .Lowered:{5}case .Completed:{2}case .Failed:{3}case .Cancelled:{4}};
+    return switch(state){case .Preparing:{0}case .Prepared:{1}case .Lowering:{6}case .Lowered:{5}case .Proving:{7}case .Completed:{2}case .Failed:{3}case .Cancelled:{4}};
 }
 fn Result<engine::CompileStatus,u8> prepare_compile(ref mut engine::Engine e,usize job){
     var engine::CompileStatus progress=compile_status(engine::observe_compile(e,job))?;
@@ -484,6 +484,26 @@ fn Result<engine::CompileStatus,u8> lower_compile(ref mut engine::Engine e,usize
     assert(compile_state(progress.state)==5 && progress.batches>before+1);
     return .ok(progress);
 }
+// The number of admitted proof batches must advance before the Program ID appears.
+fn Result<engine::CompileStatus,u8> start_proof(ref mut engine::Engine e,usize job,engine::CompileStatus lowered){
+    let engine::CompileStatus proving=compile_status(engine::step_compile(e,job))?;
+    assert(compile_state(proving.state)==7 && proving.program==0 && proving.batches==lowered.batches);
+    return .ok(proving);
+}
+fn Result<engine::CompileStatus,u8> complete_proof(ref mut engine::Engine e,usize job,engine::CompileStatus proving){
+    let usize before=proving.batches;
+    var engine::CompileStatus progress=proving;
+    var usize steps=0;
+    while(compile_state(progress.state)==7){
+        let usize prior=progress.batches;
+        progress=compile_status(engine::step_compile(e,job))?;
+        steps+=1;
+        assert(steps<8192 && progress.batches>=prior && progress.batches<=prior+1);
+        if(compile_state(progress.state)==7){assert(progress.program==0);}
+    }
+    assert(compile_state(progress.state)==2 && progress.program==1 && progress.batches>before+1);
+    return .ok(progress);
+}
 fn Result<usize,u8> pending_compile_lifecycle(){
     var engine::Engine e=created()?;
     let Heap idle=heap();
@@ -517,8 +537,11 @@ fn Result<usize,u8> pending_compile_lifecycle(){
     assert(candidate.compile_source_bytes>held.compile_source_bytes);
     assert(unsafe{probe_live_bytes()}==idle.bytes+candidate.compile_source_bytes);
     counts(ref mut e,0,0,0);
-    let engine::CompileStatus completed=compile_status(engine::step_compile(ref mut e,current))?;
-    assert(compile_state(completed.state)==2 && completed.program==1 && completed.batches==lowered.batches);
+    let engine::CompileStatus proving=start_proof(ref mut e,current,lowered)?;
+    let memory::Observation proof_charge=retained(ref e);
+    assert(proof_charge.compile_source_bytes>candidate.compile_source_bytes);
+    assert(unsafe{probe_live_bytes()}==idle.bytes+proof_charge.compile_source_bytes);
+    let engine::CompileStatus completed=complete_proof(ref mut e,current,proving)?;
     assert(retained(ref e).compile_source_bytes==0);
     assert(engine::detach_compile(ref mut e,current).is_ok);
     let usize i=id(engine::create_instance(ref mut e,completed.program,256));
@@ -532,7 +555,7 @@ fn Result<usize,u8> pending_compile_candidate_cleanup(){
     let Heap idle=heap();
     let ref u8[] source=b"module app;pub fn i32 chosen(){let ref u8[] data=b\"M\";return data[0] as i32;}";
     var usize mode=0;
-    while(mode<4){
+    while(mode<7){
         let usize job=id(engine::begin_compile(ref mut e,selected(source)?,if(mode==2){0}else{65536}));
         let engine::CompileStatus prepared=prepare_compile(ref mut e,job)?;
         if(mode==0){
@@ -554,14 +577,27 @@ fn Result<usize,u8> pending_compile_candidate_cleanup(){
             }else{
                 let engine::CompileStatus lowered=lower_compile(ref mut e,job,progress)?;
                 assert(lowered.batches>progress.batches);
-                let engine::CompileStatus admitted=compile_status(engine::step_compile(ref mut e,job))?;
-                if(mode==2){assert(compile_state(admitted.state)==3 && admitted.program==0);}
-                else{
-                    assert(compile_state(admitted.state)==2 && admitted.program==1);
+                if(mode==2){
+                    let engine::CompileStatus rejected=compile_status(engine::step_compile(ref mut e,job))?;
+                    assert(compile_state(rejected.state)==3 && rejected.program==0);
+                }else if(mode==3){
+                    let engine::CompileStatus proving=start_proof(ref mut e,job,lowered)?;
+                    let engine::CompileStatus admitted=complete_proof(ref mut e,job,proving)?;
                     let usize i=id(engine::create_instance(ref mut e,admitted.program,16000000));
                     let engine::Event result=event(engine::execute_once(ref mut e,i));
                     assert(result.kind==1 && result.value==77);
                     destroy(ref mut e,i);release(ref mut e,admitted.program);
+                }else if(mode==4){
+                    let engine::CompileStatus proving=start_proof(ref mut e,job,lowered)?;
+                    let engine::CompileStatus partial=compile_status(engine::step_compile(ref mut e,job))?;
+                    assert(compile_state(partial.state)==7 && partial.batches==proving.batches+1);
+                    let engine::CompileStatus stopped=compile_status(engine::cancel_compile(ref mut e,job))?;
+                    assert(compile_state(stopped.state)==4 && stopped.program==0 && stopped.batches==partial.batches);
+                }else{
+                    unsafe{bc_runtime_engine_test_fail(if(mode==5){1}else{2})};
+                    let engine::CompileStatus failed=compile_status(engine::step_compile(ref mut e,job))?;
+                    unsafe{bc_runtime_engine_test_fail(-1)};
+                    assert(compile_state(failed.state)==3 && failed.failure.status==6 && failed.program==0);
                 }
             }
         }
@@ -585,7 +621,12 @@ fn Result<usize,u8> pending_compile_deadline(){
         let engine::CompileStatus signature=compile_status(engine::step_compile(ref mut e,job))?;
         assert(compile_state(signature.state)==1 && signature.batches==prepared.batches+1);
         var engine::CompileStatus before_expiry=signature;
-        if(mode==1){before_expiry=lower_compile(ref mut e,job,signature)?;}
+        if(mode==1){
+            let engine::CompileStatus lowered=lower_compile(ref mut e,job,signature)?;
+            let engine::CompileStatus proving=start_proof(ref mut e,job,lowered)?;
+            before_expiry=compile_status(engine::step_compile(ref mut e,job))?;
+            assert(compile_state(before_expiry.state)==7 && before_expiry.batches==proving.batches+1);
+        }
         if(mode==2){
             before_expiry=begin_lowering(ref mut e,job,signature)?;
             let usize before=before_expiry.batches;

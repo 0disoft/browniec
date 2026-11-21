@@ -46,9 +46,10 @@ uint32_t bc_runtime_engine_end_compile(void *raw,uintptr_t id,uint32_t detach){
  if(!s)s=B45(&e->f_0,&e->f_9,&e->f_10,&e->f_11,id,detach!=0);
  uint32_t end=bc_abi_guard_leave(id_owner);return end?end:s;
 }
-uint32_t bc_runtime_engine_advance_compile_literals(void *meta,const void *selected,void *raw,void *lowered,void *meter){
+uint32_t bc_runtime_engine_advance_compile_literals(void *meta,const void *selected,void *raw,void *candidate,void *meter,uint32_t collecting){
  bc_compile_work *job=raw;
- return B48(meta,selected,&job->f_9,&job->f_10,lowered,meter);
+ bc_compile_candidate *work=candidate;
+ return B48(meta,selected,&job->f_9,&job->f_10,&work->f_1,&work->f_3,meter,collecting!=0);
 }
 uint32_t bc_runtime_engine_advance_compile_body(void *meta,const void *selected,const void *raw,void *candidate,void *meter,uintptr_t deadline){
  const bc_compile_work *job=raw;
@@ -56,25 +57,50 @@ uint32_t bc_runtime_engine_advance_compile_body(void *meta,const void *selected,
  return B49(meta,selected,&job->f_9,&job->f_10,&work->f_3,&work->f_0,&work->f_4,&work->f_5,
      &work->f_6,&work->f_7,&work->f_8,meter,deadline);
 }
-/* The SDK Vec owns the exact-size first block from this point onward.
-   Fairy still initializes the element through its checked push operation. */
+/* Reserve a single SDK-owned slot before Fairy initializes its value. */
 struct fy_std_system_heap_block_v0 {
  void *data;
  size_t size, alignment;
 };
 extern uint32_t fy_std_system_heap_allocate_v0(size_t,size_t,struct fy_std_system_heap_block_v0 *);
+static uint32_t reserve_compile_slot(void **data,uintptr_t *bytes,uintptr_t *alignment,size_t size,size_t align){
+ struct fy_std_system_heap_block_v0 block={0};
+ const uint32_t status=fy_std_system_heap_allocate_v0(size,align,&block);
+ if(status)return status;
+ *data=block.data;
+ *bytes=block.size;
+ *alignment=block.alignment;
+ return 0;
+}
+uintptr_t bc_runtime_engine_compile_proof_storage(const void *raw){
+ const bc_compile_candidate *work=raw;
+ if(!work || work->f_10.f_4>(UINTPTR_MAX-sizeof(bc_compile_proof))/8)return 0;
+ return sizeof(bc_compile_proof)+work->f_10.f_4*8;
+}
+uint32_t bc_runtime_engine_advance_compile_proof(void *raw,const void *selected,void *meter,void *failure){
+ bc_compile_candidate *work=raw;
+ return B50(&work->f_0,&work->f_10,work->f_9.f_0,selected,meter,failure);
+}
+uint32_t bc_runtime_engine_begin_compile_proof(void *raw,const void *selected,uintptr_t image_limit,uintptr_t deadline,void *failure){
+ bc_compile_candidate *work=raw;
+ uint32_t status=B51(&work->f_0,&work->f_1,&work->f_10,work->f_2,selected,image_limit,deadline,failure);
+ if(status)return status;
+ if(work->f_9.f_0 || work->f_9.f_1 || work->f_9.f_2 || work->f_9.f_3 ||
+     work->f_9.f_4!=sizeof(bc_compile_proof) || work->f_9.f_5!=_Alignof(bc_compile_proof))return 2;
+ status=reserve_compile_slot(&work->f_9.f_0,&work->f_9.f_1,&work->f_9.f_2,
+     sizeof(bc_compile_proof),_Alignof(bc_compile_proof));
+ return status || !B53(&work->f_9) ? 2 : 0;
+}
+uint32_t bc_runtime_engine_reserve_proved_program(void *raw,const void *selected,void *outgoing,void *failure){
+ bc_compile_candidate *work=raw;
+ return B52(&work->f_0,&work->f_10,work->f_9.f_0,work->f_2,selected,outgoing,failure);
+}
 uint32_t bc_runtime_engine_reserve_compile_candidate(void *raw){
  bc_compile_candidates *storage=raw;
  const size_t size=sizeof(bc_compile_candidate),align=_Alignof(bc_compile_candidate);
  if(storage->f_0 || storage->f_1 || storage->f_2 || storage->f_3 ||
      storage->f_4!=size || storage->f_5!=align)return 4;
- struct fy_std_system_heap_block_v0 block={0};
- const uint32_t status=fy_std_system_heap_allocate_v0(size,align,&block);
- if(status)return status;
- storage->f_0=block.data;
- storage->f_1=block.size;
- storage->f_2=block.alignment;
- return 0;
+ return reserve_compile_slot(&storage->f_0,&storage->f_1,&storage->f_2,size,align);
 }
 uintptr_t bc_runtime_engine_compile_candidate_width(void){return sizeof(bc_compile_candidate);}
 void bc_runtime_engine_dispose_compile_candidate(void *raw){

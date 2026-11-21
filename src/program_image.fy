@@ -17,6 +17,9 @@ import array_source as arrays;
 import array_vm as backing;
 import array_slices as slices;
 import std::bytes as bytes;
+import std::vec as vec;
+import output_canonical_proof_work as proof_work;
+import metadata_budget as budget;
 
 pub enum Failure { Code; Literal; }
 pub struct Error { Failure kind; errors::Error code; images::Error literal; }
@@ -124,6 +127,32 @@ pub fn Result<execution::Scalar,errors::Error> run_reference_returns_scalar(ref 
 // One retained IR and one optional-empty image owner across both public paths.
 // Fields stay private: body borrows cannot change the admitted code/image/mode.
 pub resource PublicProgram { ReferenceReturnProgram program; bool reference; cleanup { } }
+// The candidate owns the exact immutable IR and image until the proof seals.
+pub fn Result<usize,Error> begin_pending(ref mut vec::Vec<images::Image> storage,
+    ref calls::Program code,images::Image image,bool reference,usize deadline){
+    if(vec::len<images::Image>(storage)!=0){return .err(code_error(errors::absent(5,0)));}
+    if(!reference){
+        switch(call_verifier::verify_until(ref code.body,deadline)){case .ok(_):{}case .err(e):{return .err(code_error(e));}};
+    }
+    if(!vec::push<images::Image>(storage,image).is_ok){return .err(image_error(.Allocation));}
+    assert(vec::capacity<images::Image>(storage)==8);
+    return .ok(0);
+}
+pub fn Result<bool,Error> advance_pending(ref calls::Program code,ref vec::Vec<images::Image> storage,
+    ref mut proof_work::State proof,ref mut budget::State meter){
+    if(vec::len<images::Image>(storage)!=1){return .err(code_error(errors::absent(5,0)));}
+    return switch(proof_work::advance(code,vec::at<images::Image>(storage,0),proof,meter)){
+        case .ok(done):{.ok(done)}case .err(e):{.err(code_error(e))}
+    };
+}
+pub fn Result<PublicProgram,Error> seal_pending(ref calls::Program code,ref mut vec::Vec<images::Image> storage,
+    ref proof_work::State proof,bool reference){
+    if(!proof.done){return .err(code_error(errors::absent(5,0)));}
+    return switch(vec::pop<images::Image>(storage)){
+        case .some(image):{.ok(PublicProgram{.program=ReferenceReturnProgram{.code=*code,.image=image},.reference=reference})}
+        case .none:{.err(code_error(errors::absent(5,0)))}
+    };
+}
 pub fn Result<PublicProgram,Error> retain_public_legacy(ref ordinary::Program code){
     return retain_public_legacy_until(code,0);
 }

@@ -55,6 +55,10 @@
     "runtime_engine::reset_compile_candidate",
     "runtime_engine::advance_compile_literals_inner",
     "runtime_engine::advance_compile_body_inner",
+    "module_program::advance_proof_inner",
+    "module_program::open_proof_inner",
+    "module_program::finish_proof_inner",
+    "module_program::seed_proof",
     "windows_engine_bindings::incoming"
   ]
 }

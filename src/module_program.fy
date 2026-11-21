@@ -18,6 +18,8 @@ import lexer as lexer;
 import locals as locals;
 import loops as loops;
 import body_source_work as body_work;
+import metadata_budget as budget;
+import output_canonical_proof_work as proof_work;
 
 // Only internally rebuilt source/context plus complete canonical admission can
 // create this resource. Compiler name tables are not retained at runtime.
@@ -26,9 +28,10 @@ resource Stored { sources::Snapshot sources; programs::PublicProgram code; clean
 pub resource Program { vec::Vec<Stored> stored; cleanup { } }
 // Unverified lowering output for the private Engine. Admission still proves
 // the complete candidate and associates it with the selected source.
-pub struct Lowered {
+pub resource Lowered {
     candidate::Program code; images::Builder literals; bool references; signature_scan::State signatures;
     compiler::BodyProgress progress; lexer::State token; locals::Table names; loops::State flow; body_work::State cursor;
+    vec::Vec<proof_work::State> proof; vec::Vec<images::Image> image; cleanup { }
 }
 pub fn Result<Program,diagnostics::Error> compile(entries::Entry selected,usize image_limit){
     var retention::Plan plan=retention::unlimited();return compile_with_retention(selected,image_limit,ref mut plan);
@@ -72,16 +75,100 @@ pub fn Result<usize,diagnostics::Error> start_lowered(ref mut vec::Vec<Lowered> 
         .code=candidate::Program{.body=ir::empty(),.parameters=[0;128],.results=[0;16],.origins=[0;16]},
         .literals=images::full_builder(),.references=references,.signatures=signature_scan::indexed(entry,references),
         .progress=compiler::begin_module_bodies(),.token=lexer::empty(),.names=locals::empty(),
-        .flow=loops::empty(),.cursor=body_work::begin(0,false)};
+        .flow=loops::empty(),.cursor=body_work::begin(0,false),.proof=vec::empty<proof_work::State>(),.image=vec::empty<images::Image>()};
     return switch(vec::push<Lowered>(storage,empty)){
         case .ok(v):{.ok(v)}case .err(_):{.err(diagnostics::absent(errors::make(15,0)))}
     };
 }
-pub fn Result<Program,diagnostics::Error> admit_lowered_until(ref entries::Entry selected,
-    ref Lowered lowered,usize image_limit,ref mut retention::Plan plan,usize deadline){
-    if(clock::expired(deadline)){return .err(diagnostics::absent(errors::absent(errors::deadline_kind(),0)));}
-    if(lowered.references){return finish_references(selected,ref lowered.literals,ref lowered.code,image_limit,plan,deadline);}
-    return finish_legacy(selected,ref lowered.code.body,plan,deadline);
+pub fn bool signatures_done(ref Lowered lowered){return lowered.signatures.done;}
+@link_name("bc_runtime_engine_compile_proof_storage")
+unsafe extern C fn usize proof_storage_raw(ptr void candidate);
+pub fn usize proof_storage_bytes(ref Lowered lowered){return unsafe{proof_storage_raw(lowered as ptr void)};}
+pub fn Result<usize,diagnostics::Error> proof_payload(ref Lowered lowered){
+    if(!lowered.references){return .ok(0);}
+    return switch(images::planned_payload(ref lowered.literals)){
+        case .ok(v):{.ok(v)}case .err(_):{.err(diagnostics::absent(errors::absent(5,0)))}
+    };
+}
+fn Result<usize,programs::Error> open_proof(ref candidate::Program code,ref images::Builder builder,
+    ref mut vec::Vec<images::Image> storage,bool references,usize image_limit,usize deadline){
+    let usize limit=if(references){image_limit}else{images::metadata_charge()};
+    let images::Image image=switch(images::freeze(builder,limit)){
+        case .ok(v):{v}case .err(e):{return .err(programs::Error{.kind=.Literal,.code=errors::make(0,0),.literal=e});}
+    };
+    return programs::begin_pending(storage,code,image,references,deadline);
+}
+@link_name("bc_runtime_engine_begin_compile_proof")
+unsafe extern C fn u32 open_proof_raw(ptr mut void candidate,ptr void selected,usize image_limit,usize deadline,ptr mut void failure);
+fn bool seed_proof(ref mut vec::Vec<proof_work::State> proof){
+    if(vec::len<proof_work::State>(proof)!=0 || vec::capacity<proof_work::State>(proof)!=1){return false;}
+    return vec::push<proof_work::State>(proof,proof_work::empty_ordinary()).is_ok;
+}
+fn u32 open_proof_inner(ref candidate::Program code,ref images::Builder builder,ref mut vec::Vec<images::Image> storage,
+    bool references,ref entries::Entry selected,usize image_limit,usize deadline,ref mut diagnostics::Error failure){
+    return switch(open_proof(code,builder,storage,references,image_limit,deadline)){
+        case .ok(_):{0}case .err(e):{*failure=admission_error(selected,e,ref code.body);1}
+    };
+}
+fn diagnostics::Error missing_proof(){return diagnostics::absent(errors::absent(5,0));}
+pub fn Result<usize,diagnostics::Error> begin_proof(ref entries::Entry selected,ref mut Lowered lowered,
+    usize image_limit,usize deadline){
+    var diagnostics::Error failure=missing_proof();
+    let u32 status=unsafe{open_proof_raw(lowered as ptr mut void,selected as ptr void,
+        image_limit,deadline,ref mut failure as ptr mut void)};
+    return if(status==0){.ok(0)}else{.err(if(status==2){diagnostics::absent(errors::make(15,0))}else{failure})};
+}
+@link_name("bc_runtime_engine_advance_compile_proof")
+unsafe extern C fn u32 advance_proof_raw(ptr mut void candidate,ptr void selected,ptr mut void meter,ptr mut void failure);
+fn u32 advance_proof_inner(ref candidate::Program code,ref vec::Vec<images::Image> storage,
+    ref mut proof_work::State proof,ref entries::Entry selected,ref mut budget::State meter,ref mut diagnostics::Error failure){
+    return switch(programs::advance_pending(code,storage,proof,meter)){
+        case .ok(done):{if(done){1}else{0}}case .err(e):{*failure=admission_error(selected,e,ref code.body);2}
+    };
+}
+pub fn Result<bool,diagnostics::Error> advance_proof(ref entries::Entry selected,ref mut Lowered lowered,ref mut budget::State meter){
+    var diagnostics::Error failure=missing_proof();
+    let u32 status=unsafe{advance_proof_raw(lowered as ptr mut void,selected as ptr void,
+        meter as ptr mut void,ref mut failure as ptr mut void)};
+    return if(status<=1){.ok(status==1)}else{.err(failure)};
+}
+@link_name("bc_runtime_engine_reserve_proved_program")
+unsafe extern C fn u32 reserve_proved_raw(ptr mut void candidate,ptr void selected,ptr mut void outgoing,ptr mut void failure);
+fn u32 finish_proof_inner(ref candidate::Program code,ref mut vec::Vec<images::Image> storage,
+    ref proof_work::State proof,bool references,ref entries::Entry selected,ref mut vec::Vec<Program> outgoing,
+    ref mut diagnostics::Error failure){
+    let programs::PublicProgram sealed=switch(programs::seal_pending(code,storage,proof,references)){
+        case .ok(v):{v}case .err(e):{*failure=admission_error(selected,e,ref code.body);return 1;}
+    };
+    let Program retained=switch(retain(selected,sealed)){
+        case .ok(v):{v}case .err(e):{*failure=e;return 1;}
+    };
+    if(!vec::push<Program>(outgoing,retained).is_ok){*failure=diagnostics::absent(errors::make(15,0));return 1;}
+    return 0;
+}
+pub fn Result<usize,diagnostics::Error> finish_proof(ref entries::Entry selected,ref mut Lowered lowered,
+    ref mut vec::Vec<Program> outgoing){
+    var diagnostics::Error failure=diagnostics::absent(errors::absent(5,0));
+    let u32 status=unsafe{reserve_proved_raw(lowered as ptr mut void,selected as ptr void,
+        outgoing as ptr mut void,ref mut failure as ptr mut void)};
+    return if(status==0){.ok(0)}else{.err(failure)};
+}
+@link_name("bc_runtime_engine_binding") unsafe extern C fn void binding_raw(u32 number);
+pub fn void retain_proof_binding(ref entries::Entry selected){
+    let candidate::Program code=candidate::Program{.body=ir::empty(),.parameters=[0;128],.results=[0;16],.origins=[0;16]};
+    let images::Builder builder=images::full_builder();var proof_work::State proof=proof_work::empty_ordinary();
+    var vec::Vec<images::Image> storage=vec::empty<images::Image>();
+    var vec::Vec<Program> outgoing=vec::empty<Program>();
+    var budget::State meter=budget::empty();
+    var diagnostics::Error diagnostic=diagnostics::absent(errors::absent(5,0));
+    unsafe{binding_raw(50)};discard advance_proof_inner(ref code,ref storage,ref mut proof,selected,ref mut meter,ref mut diagnostic);
+    unsafe{binding_raw(51)};discard open_proof_inner(ref code,ref builder,ref mut storage,true,selected,0,0,ref mut diagnostic);
+    retain_seed_binding();
+    unsafe{binding_raw(52)};discard finish_proof_inner(ref code,ref mut storage,ref proof,true,selected,ref mut outgoing,ref mut diagnostic);
+}
+fn void retain_seed_binding(){
+    var vec::Vec<proof_work::State> storage=vec::empty<proof_work::State>();
+    unsafe{binding_raw(53)};discard seed_proof(ref mut storage);
 }
 fn diagnostics::Error error(ref entries::Entry selected,errors::Error e){
     return if(e.offset==0){diagnostics::absent(e)}else{diagnostics::map(modules::snapshot(entries::index(selected)),e,16)};
