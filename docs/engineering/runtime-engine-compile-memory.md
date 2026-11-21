@@ -153,8 +153,10 @@ reservation. After a complete output proof, the compiler checks the same
 deadline before list, place, CALL cost, execution heap and capture planning,
 and again before allocating the retained Program. Both place-requirement
 scans sample before each instruction and before returning a plan, including
-the scans inside execution heap accounting in all four compile modes. The
-final Engine publication check precedes registration.
+the scans inside execution heap accounting in all four compile modes.
+Array-list scratch planning checks before scanning, before each instruction,
+and before returning a complete plan. The final Engine publication check
+precedes registration.
 
 The Windows verifier advanced the clock to the exact deadline in the first
 source copy for both output entry modes. Each compile copied exactly 64 bytes
@@ -261,6 +263,14 @@ The SDK heap and Program charge returned to baseline, and the next successful
 compile used Program ID 1. Windows development and /O2 passed with zero live
 SDK allocations at exit. Local receipt:
 `build/runtime-engine/20261121T013738359375Z/receipt.json`.
+
+The Windows verifier advanced to the exact deadline during array-list scratch
+planning in ordinary, input-only, output-only, and input-output compilation.
+The six cases include both planning passes in each output-capable mode. No
+later instruction or SDK allocation was attempted, and the heap and Program
+charge returned to baseline without consuming a Program ID. Both Windows
+profiles passed with zero live SDK allocations at exit. Local receipt:
+`build/runtime-engine/20261121T014545022819Z/receipt.json`.
 
 Source lowering, work between checkpoints, and cleanup remain synchronous.
 Public Pending compilation, in-flight cancellation, and a latency bound for

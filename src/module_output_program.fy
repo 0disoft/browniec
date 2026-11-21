@@ -110,7 +110,7 @@ fn Result<Program,diagnostics::Error> finish_until(ref sources::Snapshot sources
 fn Result<Program,diagnostics::Error> finish_verified(ref sources::Snapshot sources,ref candidates::Program code,
     images::Image image,bool input,ref output_proof::Proof proof,usize deadline){
     if(clock::expired(deadline)){return .err(absent(errors::absent(errors::deadline_kind(),0)));}
-    let lists::Requirement list=switch(lists::requirement(ref code.body)){case .ok(v):{v}case .err(e):{return .err(absent(e));}};
+    let lists::Requirement list=switch(lists::requirement_until(ref code.body,deadline)){case .ok(v):{v}case .err(e):{return .err(absent(e));}};
     if(clock::expired(deadline)){return .err(absent(errors::absent(errors::deadline_kind(),0)));}
     let places::Requirement place=switch(places::requirement_until(ref code.body,deadline)){case .ok(v):{v}case .err(e):{return .err(absent(e));}};
     if(clock::expired(deadline)){return .err(absent(errors::absent(errors::deadline_kind(),0)));}

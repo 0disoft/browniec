@@ -5,6 +5,7 @@ import array_vm as arrays;
 import array_layout as layouts;
 import array_owners as owners;
 import errors as errors;
+import runtime_clock as clock;
 import fuel as meter;
 import std::vec as vec;
 import std::bytes as bytes;
@@ -13,16 +14,27 @@ import std::bytes as bytes;
 // copyable owner/token plans. Loop/CALL executions reuse initialized storage.
 pub struct Requirement { usize length; usize bytes; usize cost; }
 pub fn Result<Requirement,errors::Error> requirement(ref ir::Program p){
+    return requirement_until(p,0);
+}
+pub fn Result<Requirement,errors::Error> requirement_until(ref ir::Program p,usize deadline){
     if(p.count>256 || p.list_used>4096){return .err(errors::make(5,0));}
+    if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
     if(p.list_used==0){return .ok(Requirement{.length=0,.bytes=0,.cost=0});}
     var usize length=0;var usize size=0;var usize pc=0;
-    while(pc<p.count){if(lists::operation(p,pc)){let usize id=lists::destination(p,pc);
-        if(id>=16 || id>=p.arrays.count){return .err(errors::make(5,pc));}
-        let layouts::Array layout=switch(layouts::scalar(p.arrays.elements[id],p.arrays.lengths[id])){
-            case .ok(v):{v}case .err(_):{return .err(errors::make(5,pc));}
-        };
-        if(layout.length>length){length=layout.length;}if(layout.bytes>size){size=layout.bytes;}
-    }pc+=1;}
+    while(pc<p.count){
+        if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
+        if(lists::operation(p,pc)){
+            let usize id=lists::destination(p,pc);
+            if(id>=16 || id>=p.arrays.count){return .err(errors::make(5,pc));}
+            let layouts::Array layout=switch(layouts::scalar(p.arrays.elements[id],p.arrays.lengths[id])){
+                case .ok(v):{v}case .err(_):{return .err(errors::make(5,pc));}
+            };
+            if(layout.length>length){length=layout.length;}
+            if(layout.bytes>size){size=layout.bytes;}
+        }
+        pc+=1;
+    }
+    if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
     if(length==0){return .err(errors::make(5,0));}
     // At most 256 instruction visits, cell initialization and prepaid vector
     // destruction, plus byte zeroing. No setup charge for existing programs.

@@ -89,14 +89,15 @@ def source_copy(path):
             body += f'    unsafe{{bc_runtime_engine_test_output_prepare_step({stage})}};\n' + check + rest
         probe = 'unsafe extern C fn void bc_runtime_engine_test_output_prepare_step(u8 stage);\n'
         return path.name, (head + probe + declaration + body).encode('utf-8')
-    if path in (ROOT / 'src/aggregate_place_vm.fy', ROOT / 'src/record_place_vm.fy'):
+    if path.name in ('aggregate_place_vm.fy', 'record_place_vm.fy', 'array_list_vm.fy') and path.parent == ROOT / 'src':
+        plan_kind = 1 if path.name == 'array_list_vm.fy' else 0
         text = path.read_text(encoding='utf-8')
         signature = 'pub fn Result<Requirement,errors::Error> requirement_until('
         anchor = '        if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}'
-        need(text.count(signature) == text.count(anchor) == 1, 'Place planning deadline probe anchors changed')
-        declaration = 'unsafe extern C fn void bc_runtime_engine_test_place_visit(usize pc);\n'
+        need(text.count(signature) == text.count(anchor) == 1, 'Execution planning deadline probe anchors changed')
+        declaration = 'unsafe extern C fn void bc_runtime_engine_test_plan_visit(usize pc,u8 kind);\n'
         text = text.replace(signature, declaration + signature, 1)
-        text = text.replace(anchor, anchor + '\n        unsafe{bc_runtime_engine_test_place_visit(pc)};', 1)
+        text = text.replace(anchor, anchor + f'\n        unsafe{{bc_runtime_engine_test_plan_visit(pc,{plan_kind})}};', 1)
         return path.name, text.encode('utf-8')
     if path == ROOT / 'src/output_canonical_proof_work.fy':
         text = path.read_text(encoding='utf-8')

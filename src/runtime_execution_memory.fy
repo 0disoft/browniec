@@ -42,7 +42,7 @@ pub fn Result<Plan,errors::Error> prepare_until(ref ir::Program body,bool input,
     if(output_limit>1048576 || (!output && output_limit!=0) || body.count>256 ||
         body.arrays.count>16 || body.records.count>16 || body.list_used>4096){return .err(invalid());}
     // Keep original requirement errors, including their instruction offsets.
-    let lists::Requirement list=lists::requirement(body)?;
+    let lists::Requirement list=lists::requirement_until(body,deadline)?;
     let places::Requirement place=places::requirement_until(body,deadline)?;
     if(list.length>4096 || list.bytes>32768 || (list.length==0)!=(list.bytes==0)){
         return .err(invalid());

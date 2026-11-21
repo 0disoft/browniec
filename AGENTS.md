@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-21): [Execution place planning deadlines](docs/engineering/runtime-engine-compile-memory.md#configured-compile-deadlines)
-  check every instruction in both place-requirement scans across all four
-  Engine compile modes. Windows development and /O2 passed with zero live SDK
+- Latest runtime checkpoint (2026-11-21): [Array-list planning deadlines](docs/engineering/runtime-engine-compile-memory.md#configured-compile-deadlines)
+  check each instruction in array-list scratch planning across all four Engine
+  compile modes. Windows development and /O2 passed with zero live SDK
   allocations. The locked /O2 CLI build and quick-start result 77 also passed.
 
 # Brownie C agent guidance
