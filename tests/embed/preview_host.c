@@ -591,6 +591,40 @@ static void revision_two_modules(bc_handle engine,bc_slice policy){
     puts("PASS: two module sources, second-source diagnostics, policy count, and total byte limit");
 }
 
+static void revision_two_module_trap(bc_handle engine){
+    static const uint8_t root[]="module main; import rates as fees; "
+        "pub fn i32 main(){return fees::amount(0);}";
+    static const uint8_t helper[]="module rates; pub fn i32 amount(i32 divisor){return 77 / divisor;}";
+    const bc_source entry={{(const uint8_t *)"main",4},{root,sizeof(root)-1}};
+    const bc_source callee={{(const uint8_t *)"rates",5},{helper,sizeof(helper)-1}};
+    const uint32_t slash=(uint32_t)(strchr((const char *)helper,'/')-(const char *)helper);
+    uint8_t config[1024];
+    const bc_slice run={config,read_fixture("run.json",config,sizeof(config))},empty={0};
+    for(uint32_t index=0;index<2;++index){
+        bc_source sources[2];
+        sources[index]=callee;
+        sources[1-index]=entry;
+        bc_handle program=0,instance=0;
+        bc_diagnostic diagnostic={.struct_size=sizeof(diagnostic)};
+        assert(bc_compile(engine,sources,2,empty,&program,&diagnostic)==BC_OK);
+        assert(bc_instance_create(engine,program,empty,run,&instance,&diagnostic)==BC_OK);
+        assert(bc_program_release(engine,program)==BC_OK);
+        const bc_event trap=finish_revision_two(instance,64);
+        if(trap.diagnostic.source_index!=index || trap.diagnostic.byte_start!=slash){
+            fprintf(stderr,"module trap: source=%" PRIu32 " start=%" PRIu32 " end=%" PRIu32
+                " expected source=%" PRIu32 " start=%" PRIu32 "\n",trap.diagnostic.source_index,
+                trap.diagnostic.byte_start,trap.diagnostic.byte_end,index,slash);
+        }
+        assert(trap.kind==BC_TRAP && trap.trap_code==7 && trap.diagnostic.code==7);
+        assert(trap.diagnostic.source_index==index && trap.diagnostic.byte_start==slash);
+        assert(trap.diagnostic.byte_end==slash+1);
+        const bc_event again=finish_revision_two(instance,1);
+        assert(memcmp(&again,&trap,sizeof(trap))==0);
+        assert(bc_instance_destroy(instance)==BC_OK);
+    }
+    puts("PASS: traps preserve the callee's source index and byte span in both source orders");
+}
+
 static void revision_two_named_entry(bc_handle engine){
     uint8_t module[]="pricing::quote",function[]="amount";
     static const uint8_t text[]="module pricing::quote; fn i32 hidden(){return 42;}"
@@ -830,6 +864,7 @@ static void revision_two_engines(void){
     revision_two_control_budget((bc_slice){policy,length});
     revision_two_programs(handle,(bc_slice){policy,length});
     revision_two_modules(handle,(bc_slice){policy,length});
+    revision_two_module_trap(handle);
     revision_two_named_entry(handle);
     revision_two_byte_inputs(handle);
     revision_two_shared_descriptors(handle);

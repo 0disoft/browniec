@@ -57,6 +57,8 @@ typedef struct preview_run {
 /* The registry owns a busy admission for one Engine while its VM runs.
    The embedding build waits only to acquire the shared metadata guard. */
 enum {ENGINE_HANDLE=1, PROGRAM_HANDLE=2, INSTANCE_HANDLE=3};
+/* source_snapshot.fy uses the file limit as its no-source sentinel. */
+enum {PREVIEW_SOURCE_LIMIT=16};
 
 void bc_embed_binding(uint32_t id){(void)id;}
 void bc_runtime_engine_binding(uint32_t id){(void)id;}
@@ -254,7 +256,7 @@ static bool same_name(bc_slice actual,bc_slice expected){
 
 static uint32_t validate_compile_sources(const bc_source *sources,size_t count,bc_slice catalog){
     if(!sources||!count||(!catalog.data&&catalog.len)){return BC_BAD_ARGUMENT;}
-    if(count>16||catalog.len>16384){return BC_RESOURCE_LIMIT;}
+    if(count>PREVIEW_SOURCE_LIMIT||catalog.len>16384){return BC_RESOURCE_LIMIT;}
     size_t bytes=0;
     for(size_t i=0;i<count;++i){
         const bc_source source=sources[i];
@@ -564,8 +566,8 @@ static bc_event revision_two_event(preview_run *run,preview_vm_event event){
     default: preview_invariant();
     }
     result.diagnostic=diagnostic_result(code,message);
-    if(code && event.f_2.f_1.f_0==0){
-        result.diagnostic.source_index=0;
+    if(code && event.f_2.f_1.f_0<PREVIEW_SOURCE_LIMIT){
+        result.diagnostic.source_index=(uint32_t)event.f_2.f_1.f_0;
         result.diagnostic.byte_start=(uint32_t)event.f_2.f_1.f_1;
         result.diagnostic.byte_end=(uint32_t)event.f_2.f_1.f_2;
     }

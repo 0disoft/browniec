@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-21): [Process ownership](docs/engineering/embed-preview.md#process-ownership)
-  routes compatible preview DLL copies to one pinned image. Windows /Od
-  and /O2 verify shared registry pages and stale handle rejection after reload.
+- Latest runtime checkpoint (2026-11-21): [Revision-2 stepping](docs/engineering/embed-preview.md#revision-2-scalar-stepping)
+  preserves the original source row and byte span of traps in imported
+  functions. Windows /Od and /O2 verify both orders of the source rows.
 
 # Brownie C agent guidance
 

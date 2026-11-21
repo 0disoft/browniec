@@ -230,6 +230,11 @@ Fuel use, the peak accounted bytes of the prepared continuation and its
 input, and elapsed microseconds from run admission. The Engine
 reports yield, return, guest trap, and execution failure. Cancellation and
 deadline expiry are failed events with diagnostic codes 33 and 30.
+When a trap has a source span, its diagnostic identifies the input source row
+and reports byte offsets relative to that row. This includes a trap in an
+imported function, regardless of the order of the source rows passed to
+`bc_compile`. A diagnostic without a source span uses `UINT32_MAX` and
+zero byte offsets.
 
 `bc_cancel` uses the Engine's existing first-cause rule. Keep stepping if
 cleanup yields. The ABI retains each terminal event and its metrics for
@@ -241,6 +246,10 @@ sharing a released Program handle returned 77 at quanta 1 and 64 and reported
 the same cumulative Fuel and peak accounted bytes. Additional Instances verified
 independent cancellation and that an already expired deadline wins over cancel.
 Repeated successful and cancelled terminal events matched byte for byte.
+An imported divide-by-zero trap reported byte range `[55, 56)` in both
+source orders, with source index 0 or 1 matching its input row. Repeated
+terminal events preserved the diagnostic and metrics. Local receipt:
+`build/embed-preview-_sldwa4t/receipt.json`.
 
 `limits.call_frames` includes the entry frame. The saved dispatcher checks
 the Instance's limit before starting a CALL. A limit of one traps when
