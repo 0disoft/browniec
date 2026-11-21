@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-22): [Configured type quota Fuel](docs/engineering/restricted-worker.md#configured-type-quota-fuel)
-  prepays restrictive type scans before retaining scalar and shared-byte
-  Programs. Windows development and /O2 verify exact and one-less Fuel.
+- Latest runtime checkpoint (2026-11-22): [Project compile cancellation](docs/engineering/restricted-worker.md#project-compile-cancellation)
+  also covers managed projects without a local compile deadline. Both Windows
+  profiles verify that a cancelled compile closes its stream without a RESULT.
 
 # Brownie C agent guidance
 

@@ -1,7 +1,6 @@
 module worker_project_command;
 
 import errors as errors;
-import module_entry as entries;
 import module_program as programs;
 import project_manifest as manifest;
 import project_sources as binding;
@@ -233,11 +232,13 @@ fn wire::Outcome engine_failure(engine::Error error,bool compiling){
 }
 
 fn wire::Outcome compute(ref manifest::Project project,sources::Snapshot snapshot,wire::Header header){
-    let entries::Entry entry=switch(binding::select(project,snapshot)){
-        case .ok(v):{v}
-        case .err(e):{return failed(diagnostics::Error{.code=diagnostics::binding(e),.at=e.at},0);}
+    unsafe{bc_project_worker_compile_begin();}
+    let Result<programs::Program,diagnostics::Error> compiled=switch(binding::select(project,snapshot)){
+        case .ok(entry):{programs::compile(entry,images::metadata_charge()+images::byte_limit())}
+        case .err(e):{.err(diagnostics::Error{.code=diagnostics::binding(e),.at=e.at})}
     };
-    let programs::Program program=switch(programs::compile(entry,images::metadata_charge()+images::byte_limit())){
+    unsafe{bc_project_worker_compile_end();}
+    let programs::Program program=switch(compiled){
         case .ok(v):{v}case .err(e):{return failed(e,0);}
     };
     let u8 profile=programs::profile(ref program);

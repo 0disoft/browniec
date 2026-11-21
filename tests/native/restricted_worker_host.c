@@ -1258,6 +1258,7 @@ int wmain(int argc, wchar_t **argv) {
     if (argc == 3) {
         verify_scalar_programs(argv[2], directory);
         verify_project_rejections(argv[2], directory);
+        verify_project_compile_stop(argv[2], directory, "managed-compile.start", true);
         verify_project_compile_stop(argv[2], directory, "configured-compile.start", true);
         verify_project_compile_stop(argv[2], directory, "catalog-compile.start", true);
         verify_project_compile_stop(argv[2], directory, "configured-compile.start", false);
@@ -1296,7 +1297,7 @@ int wmain(int argc, wchar_t **argv) {
            "\"scalarSessions\":%d,\"parentBrokerCases\":%d,\"projectWireRejections\":%d,"
            "\"projectCompileStopCases\":%d,"
            "\"parentColdHandleDelta\":%ld,\"coldHandleDelta\":%ld}\n",
-           argc == 3 ? 5 : 0, argc == 3 ? 4 : 0, argc == 3 ? 2 : 0, argc == 3 ? 3 : 0,
+           argc == 3 ? 5 : 0, argc == 3 ? 4 : 0, argc == 3 ? 2 : 0, argc == 3 ? 4 : 0,
            parent_cold_delta, (long)final - (long)cold);
     return 0;
 }

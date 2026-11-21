@@ -919,13 +919,21 @@ The native fixture queues START and CANCEL together in one pipe write before
 the first compiler probe. It checks EOF and a clean exit on the configured and
 catalog routes, plus EOF and exit 4 for a mismatched nonce. The checks observe
 the real confined worker's stream, including absence of both RESULT and
-HOST_REQUEST. Legacy policy-free compilation and gaps between existing
-checkpoints still rely on the broker's Job shutdown window.
+HOST_REQUEST. Gaps between existing checkpoints still rely on the
+broker's Job shutdown window.
 
 Windows development and /O2 each passed all three compile-stop cases, 83
 configured, 29 catalog and five managed project cases, and nine native host
 transport cases. All 456 input hashes matched, with zero net repeat handle
 change. Local receipt: `build/restricted-worker/20261121T212429068756Z/receipt.json`.
+
+The policy-free managed project route also opens the same probe before
+snapshot binding and closes it before VM execution. Its existing compiler
+checkpoints can observe CANCEL even with no local deadline configured.
+Windows development and /O2 passed four compile-stop cases each, including
+the queued CANCEL on this managed route. Both also passed 86 configured, 32
+catalog and five managed project cases, with all 456 input hashes matching.
+Local receipt: `build/restricted-worker/20261121T220501954469Z/receipt.json`.
 
 ### Output authority preparation Fuel
 

@@ -16,10 +16,13 @@ HELLO_PROJECT = ROOT / 'examples/projects/hello'
 POLICY_EXAMPLE = ROOT / 'examples/projects/configured-output/policy.json'
 
 
-def write_compile_fixture(path, target, manifest, policy, config, imports=b''):
+def write_compile_fixture(path, target, manifest, policy=None, config=None, imports=b''):
     files = [(target / entry['path']).read_bytes() for entry in manifest['sources']]
-    sections = [json.dumps(value).encode('utf-8') for value in (manifest, policy, config)]
-    prefix = bytes([8 if imports else 5]) + config['limits']['fuel'].to_bytes(4, 'little')
+    documents = (manifest,) if config is None else (manifest, policy, config)
+    sections = [json.dumps(value).encode('utf-8') for value in documents]
+    mode = 3 if config is None else 8 if imports else 5
+    fuel = 256 if config is None else config['limits']['fuel']
+    prefix = bytes([mode]) + fuel.to_bytes(4, 'little')
     prefix += b''.join(len(section).to_bytes(4, 'little') for section in sections)
     if imports:
         prefix += bytes(4) + len(imports).to_bytes(4, 'little')
@@ -33,6 +36,7 @@ def verify_managed_project(run, need, image, folder, env):
     project = target / 'project.json'
     project_arg = project.relative_to(folder)
     original = project.read_bytes()
+    write_compile_fixture(folder / 'managed-compile.start', target, json.loads(original))
     # Exercise multiple stream windows using an otherwise unchanged manifest.
     project.write_bytes(original + b' ' * 5200)
     for op, status, value in [('check', 'checked', None), ('run', 'completed', 42)]:
@@ -733,7 +737,7 @@ def main():
                              phaseDeadlines=True, gracefulCancelCases=2, handleDelta=0, staging=True,
                              scalarSessions=5 if scalar else 0, parentBrokerCases=4 if scalar else 0,
                              projectWireRejections=2 if scalar else 0,
-                             projectCompileStopCases=3 if scalar else 0)
+                             projectCompileStopCases=4 if scalar else 0)
                         and type(evidence.get('coldHandleDelta')) is int
                         and evidence.get('parentColdHandleDelta') in ((0, 1) if scalar else (0,)),
                         f'Unexpected worker result: {evidence}')
