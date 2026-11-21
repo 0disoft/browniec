@@ -1,6 +1,7 @@
-- Latest runtime checkpoint (2026-11-21): [Engine-owned input source preparation](docs/engineering/runtime-engine-compile-memory.md#engine-owned-input-source-preparation)
-  resumes across steps and refunds the adopted Index on cancellation and completion.
-  Windows development and /O2 passed with zero live SDK allocations.
+- Latest runtime checkpoint (2026-11-21): [Resumable input-only lowering](docs/engineering/runtime-engine-compile-memory.md#resumable-input-only-lowering)
+  yields between literal, signature, and body batches. Windows development and
+  /O2 verified candidate refunds on cancellation and expiry, with zero live SDK
+  allocations after teardown.
 
 # Brownie C agent guidance
 

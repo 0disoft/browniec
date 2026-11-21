@@ -31,8 +31,8 @@ ordinary Engine compile job. It checks expiry before every advance and
 maps failures through the selected input Index. Completion closes the cursor
 so a repeated advance cannot run finalization twice. Input-only compile still
 drains the cursor within one call. The [Engine-owned input source cursor](runtime-engine-compile-memory.md#engine-owned-input-source-preparation)
-now hands prepared source to this path. Input lowering, proof and publication
-still drain within a single Engine step.
+now hands prepared source to the [resumable lowering stages](runtime-engine-compile-memory.md#resumable-input-only-lowering).
+Input proof and publication still drain within a single Engine step.
 
 The Windows Engine harness exercised the exact deadline between a control
 advance and its pending semantic child in development and /O2. Both ended

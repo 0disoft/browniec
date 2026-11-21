@@ -3537,12 +3537,12 @@ pub fn Result<bool,source_errors::Error> lower_modules_prepared_until(ref module
         else{literal_collection::empty()};
     return lower_modules_literals_until(selected,work,ref literals,code,output,deadline);
 }
-pub fn Result<bool,source_errors::Error> advance_module_literals(ref module_entries::Entry selected,
+pub fn Result<bool,source_errors::Error> advance_module_literals(ref module_index::Index index,
     ref module_source::State work,ref mut static_images::Builder builder,ref mut literal_work::State literals,
     ref mut metadata_budget::State meter){
     let ref source_context::Input input=ref work.context.result;
     return switch(literal_work::advance_fresh(ref input.data[..input.used],ref input.context,builder,literals,meter)){
-        case .ok(v):{.ok(v)}case .err(e):{.err(module_literal_failure(e,module_entries::index(selected)))}
+        case .ok(v):{.ok(v)}case .err(e):{.err(module_literal_failure(e,index))}
     };
 }
 fn Result<bool,source_errors::Error> lower_modules_literals_until(ref module_entries::Entry selected,
@@ -3560,12 +3560,12 @@ fn Result<bool,source_errors::Error> lower_modules_literals_until(ref module_ent
     if(lowered){let usize bound=module_reference_signature_until(source,scope,selected,code,deadline)?;}
     return .ok(lowered);
 }
-pub fn Result<bool,source_errors::Error> advance_module_signatures(ref module_entries::Entry selected,
+pub fn Result<bool,source_errors::Error> advance_module_signatures(ref module_index::Index index,
     ref module_source::State work,ref mut signature_scan::State signatures,ref mut metadata_budget::State meter){
     let ref source_context::Input input=ref work.context.result;
     return switch(signature_scan::advance_indexed(ref input.data[..input.used],ref input.context,
-        module_entries::index(selected),signatures,meter)){
-        case .ok(v):{.ok(v)}case .err(e):{.err(module_error(selected,e,16))}
+        index,signatures,meter)){
+        case .ok(v):{.ok(v)}case .err(e):{.err(input_module_error(index,e,16))}
     };
 }
 fn Result<bool,source_errors::Error> lower_modules_signatures_until(ref module_entries::Entry selected,
@@ -3584,21 +3584,20 @@ fn Result<bool,source_errors::Error> lower_modules_signatures_until(ref module_e
 pub struct BodyProgress { usize function; usize active; u8 phase; }
 pub fn BodyProgress begin_module_bodies(){return BodyProgress{.function=0,.active=16,.phase=0};}
 
-pub fn Result<bool,source_errors::Error> advance_module_bodies(ref module_entries::Entry selected,
-    ref module_source::State work,ref literal_work::State collection,ref mut signature_scan::State scan,
+pub fn Result<bool,source_errors::Error> advance_module_bodies(ref module_index::Index index,
+    ref module_source::State work,bool references,ref literal_work::State collection,ref mut signature_scan::State scan,
     ref mut reference_ir::Program code,ref mut BodyProgress progress,
     ref mut lexer::State token,ref mut locals::Table names,ref mut loops::State flow,
     ref mut body_work::State cursor,ref mut metadata_budget::State meter,usize deadline){
-    if(!work.done || !scan.done || (work.syntax.result && !collection.done)){
+    if(!work.done || !scan.done || (references && !collection.done)){
         return .err(source_errors::absent(errors::absent(5,0)));
     }
     let ref source_context::Input input=ref work.context.result;
     let ref u8[] source=ref input.data[..input.used];
-    let bool references=work.syntax.result;
     let literal_collection::Index unused=literal_collection::empty();
     let ref literal_collection::Index literals=if(references){ref collection.result}else{ref unused};
     return switch(advance_module_body(source,references,literals,ref mut scan.result,code,progress,token,names,flow,cursor,meter,deadline)){
-        case .ok(v):{.ok(v)}case .err(e):{.err(module_error(selected,e,progress.active))}
+        case .ok(v):{.ok(v)}case .err(e):{.err(input_module_error(index,e,progress.active))}
     };
 }
 

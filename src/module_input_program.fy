@@ -5,7 +5,7 @@ import source_snapshot as sources;
 import compiler as compiler;
 import source_error as diagnostics;
 import errors as errors;
-import module_source_work as source_work;
+import module_program as ordinary;
 import runtime_clock as clock;
 import ir as ir;
 import static_call_ir as candidates;
@@ -44,12 +44,9 @@ pub fn Result<Program,diagnostics::Error> compile_with_retention_until(entries::
         else{compiler::lower_input_modules_until(ref selected,ref mut builder,ref mut code,false,deadline)?};
     return finish(ref selected,ref builder,ref code,image_limit,plan,deadline);
 }
-pub fn Result<Program,diagnostics::Error> compile_prepared_until(ref entries::InputEntry selected,
-    ref source_work::State source,usize image_limit,ref mut retention::Plan plan,usize deadline){
-    var images::Builder builder=images::full_builder();
-    var candidates::Program code=candidates::Program{.body=ir::empty(),.parameters=[0;128],.results=[0;16],.origins=[0;16]};
-    let usize lowered=compiler::lower_input_modules_prepared_until(selected,source,ref mut builder,ref mut code,false,deadline)?;
-    return finish(selected,ref builder,ref code,image_limit,plan,deadline);
+pub fn Result<Program,diagnostics::Error> admit_lowered_until(ref entries::InputEntry selected,
+    ref ordinary::Lowered lowered,usize image_limit,ref mut retention::Plan plan,usize deadline){
+    return finish(selected,ordinary::candidate_literals(lowered),ordinary::candidate_code(lowered),image_limit,plan,deadline);
 }
 fn diagnostics::Error literal(images::Error e){
     return diagnostics::absent(compiler::public_error(program_images::Error{.kind=.Literal,.code=errors::make(0,0),.literal=e}));

@@ -559,6 +559,27 @@ returning 77, and zero live SDK allocations on teardown. The locked /O2 CLI
 quick start and contract checks passed. Local receipt:
 `build/runtime-engine/20261121T062132846379Z/receipt.json`.
 
+## Resumable input-only lowering
+
+The owning input job now advances the ordinary compile candidate through
+literal collection, indexed signatures, and body lowering. It selects
+reference-aware lowering for the input ABI and keeps the exact InputEntry
+and its Index for diagnostic mapping. Caller returns expose Prepared,
+Lowering, and Lowered with no Program ID. After Lowered, one call runs
+independent input proof and Program publication.
+
+The Engine charges the same single candidate slot used by ordinary compile
+before allocation. Candidate and source storage are released together after
+cancellation, failure, or admission. The retained image is built from the
+candidate's literal builder, and the retained Program uses the candidate IR
+directly after verification.
+
+Windows development and /O2 verified cancellation during literal collection,
+expiry while Lowering, and an input Program that combines a literal byte with
+guest input to return 77. Both profiles ended with zero live SDK allocations.
+The locked /O2 CLI quick start also returned 77. Local receipt:
+`build/runtime-engine/20261121T063323552300Z/receipt.json`.
+
 ## Executed verification and remaining work
 
 [Windows evidence](../evidence/runtime-engine-compile-memory-windows-20261107.json)

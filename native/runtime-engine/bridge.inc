@@ -34,7 +34,7 @@ uint32_t bc_runtime_engine_compile(void *raw,void *incoming,uintptr_t limit,uint
 }
 uint32_t bc_runtime_engine_step_compile(void *raw,uintptr_t id){
  bc_engine *e=raw;bc_engine_ticket ticket;uint32_t s=admission(e,&ticket);if(s)return s;
- s=e->f_12.f_3 ? B55(&e->f_0,&e->f_1,&e->f_9,&e->f_12,id)
+ s=e->f_12.f_3 ? B55(&e->f_0,&e->f_1,&e->f_9,&e->f_12,&e->f_11,id)
                  : B42(&e->f_0,&e->f_1,&e->f_9,&e->f_10,&e->f_11,id);
  return finish(e,ticket,s);
 }
@@ -50,7 +50,7 @@ uint32_t bc_runtime_engine_begin_compile_input(void *raw,void *incoming,uintptr_
 uint32_t bc_runtime_engine_end_compile(void *raw,uintptr_t id,uint32_t detach){
  bc_engine *e=raw;bc_abi_thread_identity id_owner;uint32_t s=bc_abi_guard_enter(&id_owner);if(s)return s;
  s=B18(&e->f_0,id_owner.thread,id_owner.lifetime);
- if(!s)s=e->f_12.f_3 ? B56(&e->f_0,&e->f_9,&e->f_12,id,detach!=0)
+ if(!s)s=e->f_12.f_3 ? B56(&e->f_0,&e->f_9,&e->f_12,&e->f_11,id,detach!=0)
                      : B45(&e->f_0,&e->f_9,&e->f_10,&e->f_11,id,detach!=0);
  uint32_t end=bc_abi_guard_leave(id_owner);return end?end:s;
 }
@@ -62,7 +62,7 @@ uint32_t bc_runtime_engine_advance_compile_literals(void *meta,const void *selec
 uint32_t bc_runtime_engine_advance_compile_body(void *meta,const void *selected,const void *raw,void *candidate,void *meter,uintptr_t deadline){
  const bc_compile_work *job=raw;
  bc_compile_candidate *work=candidate;
- return B49(meta,selected,&job->f_9,&job->f_10,&work->f_3,&work->f_0,&work->f_4,&work->f_5,
+ return B49(meta,selected,&job->f_9,work->f_2,&job->f_10,&work->f_3,&work->f_0,&work->f_4,&work->f_5,
      &work->f_6,&work->f_7,&work->f_8,meter,deadline);
 }
 /* Reserve a single SDK-owned slot before Fairy initializes its value. */
