@@ -1,7 +1,8 @@
-- Latest runtime checkpoint (2026-11-21): [Engine-owned lowering handoff](docs/engineering/runtime-engine-compile-memory.md#engine-owned-lowering-handoff)
-  preserves charged IR between lowering and independent Program admission.
+- Latest runtime checkpoint (2026-11-21): [Resumable ordinary literal collection](docs/engineering/runtime-engine-compile-memory.md#resumable-ordinary-literal-collection)
+  advances private literal collection through discrete Engine calls and retains
+  its charged candidate through lowering and admission.
   Windows development and /O2 passed with zero live SDK allocations.
-  Locked /O2 CLI and quick-start result 77 passed.
+  Locked /O2 CLI, quick-start result 77, and CLI contract passed.
 
 # Brownie C agent guidance
 

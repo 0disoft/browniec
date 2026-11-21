@@ -164,7 +164,7 @@ types['policyType']=c['policyType']
 types['capturePlanType']=c['capturePlanType']
 for key in ['hostProgramVectorType','hostProgramType','hostIRType','hostExchangeVectorType','hostExchangeType','hostRunConfigType','hostTransitionType']:types[key]=c[key]
 c['reviewedLayouts']={k:re.search(r'^typedef struct \{\n[^}]*\} '+re.escape(v)+';$',t,re.M).group() for k,v in types.items()}
-assert len(c['bindings'])==47 and len(c['reviewedLayouts'])==52
+assert len(c['bindings'])==48 and len(c['reviewedLayouts'])==52
 for key in ['lifecycleType','setupWorkType','preparationWorkType','cleanupWorkType','runtimeMetadataType','cleanupRuntimeType','inputWindowsType','storageBufferType']:
  c['reviewedLayouts'][key]=re.search(r'^typedef struct \{\n[^}]*\} '+re.escape(c[key])+';$',t,re.M).group()
 for key in ['compileWorkType','compileWorkVectorType','compileCandidateType','compileCandidateVectorType']:

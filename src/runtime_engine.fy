@@ -43,6 +43,7 @@ import host_exchange as host;
 import host_program as host_program;
 import ir as ir;
 import module_source_work as source_work;
+import literal_collection_work as literal_work;
 
 // Internal owning lifecycle, not public C handles/bc_step. IDs are scoped to
 // this exact Engine; the outer ABI registry must authenticate their association.
@@ -56,7 +57,7 @@ pub struct CompileStatus { usize id; CompileState state; usize program; Error fa
 struct CompileWork {
     usize id; u8 state; usize program; Error failure; usize batches;
     usize next; usize deadline; usize image_limit;
-    usize source_bytes; source_work::State source;
+    usize source_bytes; source_work::State source; literal_work::State literals;
 }
 // Request bytes are detached from the exchange.
 pub struct HostRequest { usize run; usize request; usize import_id; u8[14] payload; }
@@ -103,6 +104,8 @@ pub resource Engine {
 @link_name("bc_runtime_engine_step_compile") unsafe extern C fn u32 step_compile_raw(ptr mut void owner,usize id);
 @link_name("bc_runtime_engine_begin_compile") unsafe extern C fn u32 begin_compile_raw(ptr mut void owner,ptr mut void incoming,usize image_limit,usize deadline);
 @link_name("bc_runtime_engine_end_compile") unsafe extern C fn u32 end_compile_raw(ptr mut void owner,usize id,u32 detach);
+@link_name("bc_runtime_engine_advance_compile_literals") unsafe extern C fn u32 advance_compile_literals_raw(ptr mut void meta,
+    ptr void selected,ptr mut void job,ptr mut void lowered,ptr mut void meter);
 @link_name("bc_runtime_engine_compile_candidate_width") unsafe extern C fn usize compile_candidate_width_raw();
 @link_name("bc_runtime_engine_dispose_compile_candidate") unsafe extern C fn void dispose_compile_candidate_raw(ptr mut void candidate);
 @link_name("bc_runtime_engine_compile_input") unsafe extern C fn u32 compile_input_raw(ptr mut void owner,ptr mut void incoming,usize limit,usize deadline);
@@ -225,7 +228,7 @@ pub fn Result<usize,Error> compile(ref mut Engine e,entries::Entry selected,usiz
 }
 fn CompileWork empty_compile(usize next){
     return CompileWork{.id=0,.state=0,.program=0,.failure=error(0),.batches=0,
-        .next=next,.deadline=0,.image_limit=0,.source_bytes=0,.source=source_work::begin(true)};
+        .next=next,.deadline=0,.image_limit=0,.source_bytes=0,.source=source_work::begin(true),.literals=literal_work::empty()};
 }
 fn bool compile_live(CompileState state){
     return switch(state){case .Preparing:{true}case .Prepared:{true}case .Lowered:{true}case .Completed:{false}case .Failed:{false}case .Cancelled:{false}};
@@ -1199,18 +1202,43 @@ fn u32 stop_compile(ref mut Meta m,ref mut CompileWork job,ref mut vec::Vec<entr
     job.failure=failure;
     return 0;
 }
-fn u32 lower_pending_compile(ref mut Meta m,ref mut CompileWork job,ref mut vec::Vec<entries::Entry> selected,
-    ref mut vec::Vec<programs::Lowered> candidate){
+fn u32 allocate_compile_candidate(ref mut Meta m,ref mut CompileWork job,ref mut vec::Vec<programs::Lowered> candidate){
     let usize width=unsafe{compile_candidate_width_raw()};
-    if(width==0 || width>18446744073709551615/8){return stop_compile(m,job,selected,candidate,error(7));}
+    if(width==0 || width>18446744073709551615/8){return 7;}
     let usize bytes=width*8;
-    if(!memory::prepare_compile(ref mut m.programs,bytes).is_ok){return stop_compile(m,job,selected,candidate,error(8));}
-    if(!programs::start_lowered(candidate).is_ok){return stop_compile(m,job,selected,candidate,error(6));}
+    if(!memory::prepare_compile(ref mut m.programs,bytes).is_ok){return 8;}
+    if(!programs::start_lowered(candidate).is_ok){return 6;}
     assert(vec::capacity<programs::Lowered>(candidate)==8);
     assert(memory::hold_compile_candidate(ref mut m.programs,bytes).is_ok);
     job.source_bytes+=bytes;
+    return 0;
+}
+fn u32 advance_compile_literals_inner(ref mut Meta m,ref entries::Entry selected,ref source_work::State source,
+    ref mut literal_work::State literals,ref mut programs::Lowered lowered,ref mut metadata_budget::State meter){
+    return switch(compiler::advance_module_literals(selected,source,ref mut lowered.literals,literals,meter)){
+        case .ok(_):{0}case .err(e):{compile_error(m,e)}
+    };
+}
+fn u32 lower_pending_compile(ref mut Meta m,ref mut CompileWork job,ref mut vec::Vec<entries::Entry> selected,
+    ref mut vec::Vec<programs::Lowered> candidate){
+    if(vec::len<programs::Lowered>(candidate)==0){
+        let u32 status=allocate_compile_candidate(m,job,candidate);
+        if(status!=0){return stop_compile(m,job,selected,candidate,error(status));}
+    }
+    if(job.source.syntax.result && !job.literals.done){
+        var metadata_budget::State meter=metadata_budget::empty();
+        let ref mut programs::Lowered lowered=vec::at_mut<programs::Lowered>(candidate,0);
+        let ref entries::Entry entry=vec::at<entries::Entry>(selected,0);
+        let u32 status=unsafe{advance_compile_literals_raw(m as ptr mut void,entry as ptr void,
+            job as ptr mut void,lowered as ptr mut void,ref mut meter as ptr mut void)};
+        job.batches+=meter.stages;
+        if(status!=0){let Error cause=m.error;return stop_compile(m,job,selected,candidate,cause);}
+        if(clock::expired(job.deadline)){return stop_compile(m,job,selected,candidate,compile_timeout());}
+        return 0;
+    }
     let Result<usize,diagnostics::Error> result=programs::lower_prepared_until(
-        vec::at<entries::Entry>(selected,0),ref job.source,vec::at_mut<programs::Lowered>(candidate,0),job.deadline);
+        vec::at<entries::Entry>(selected,0),ref job.source,ref job.literals,
+        vec::at_mut<programs::Lowered>(candidate,0),job.deadline);
     return switch(result){
         case .ok(_):{job.state=2;0}
         case .err(e):{
@@ -2204,10 +2232,11 @@ fn Result<modules::Index,u8> layout_index(ref u8[] source){
 }
 // Keep layout witnesses in separate calls: their large compiler temporaries
 // must not overlap the native initialization witness on the default stack.
-fn void retain_output_bindings(ref input_bytes::Snapshot snapshot){
+fn void retain_output_bindings(ref mut Meta m,ref input_bytes::Snapshot snapshot){
     let modules::Index index=switch(layout_index(b"module layout;pub fn i32 main(){return 0;}")){case .ok(v):{v}case .err(_):{assert(false);return;}};
     let entries::Entry entry=switch(entries::select_i32(index,b"layout",b"main")){case .ok(v):{v}case .err(_):{assert(false);return;}};
     unsafe{binding_raw(19)};discard entry_heap(ref entry);
+    retain_compile_literal_binding(m,ref entry);
     let output_programs::Program kept=switch(output_programs::compile(entry,65536)){case .ok(v):{v}case .err(_):{assert(false);return;}};
     pending_vm::retain_bindings(ref kept,snapshot);
     var vec::Vec<machines::Machine> saved=vec::empty<machines::Machine>();
@@ -2222,6 +2251,15 @@ fn void retain_input_binding(){
     let modules::Index index=switch(layout_index(b"module layout;pub fn i32 main(ref u8[] data){return 0;}")){case .ok(v):{v}case .err(_):{assert(false);return;}};
     let input_entries::InputEntry entry=switch(input_entries::select_i32_input(index,b"layout",b"main")){case .ok(v):{v}case .err(_):{assert(false);return;}};
     unsafe{binding_raw(20)};discard input_entry_heap(ref entry);
+}
+fn void retain_compile_literal_binding(ref mut Meta m,ref entries::Entry entry){
+    let source_work::State source=source_work::begin(true);
+    var literal_work::State literals=literal_work::empty();
+    var vec::Vec<programs::Lowered> candidate=vec::empty<programs::Lowered>();
+    if(!programs::start_lowered(ref mut candidate).is_ok){assert(false);return;}
+    let ref mut programs::Lowered lowered=vec::at_mut<programs::Lowered>(ref mut candidate,0);
+    var metadata_budget::State meter=metadata_budget::empty();
+    unsafe{binding_raw(48)};discard advance_compile_literals_inner(m,entry,ref source,ref mut literals,lowered,ref mut meter);
 }
 pub fn void retain_native_bindings(){
     let control::Budget storage=switch(control::create(1,0)){case .ok(v):{v}case .err(_):{assert(false);return;}};
@@ -2281,7 +2319,7 @@ pub fn void retain_native_bindings(){
     unsafe{binding_raw(38)};discard publish_host_inner(ref mut m,ref mut output_program,ref mut host_incoming,0,0,0);
     var vec::Vec<Output> host_outputs=vec::empty<Output>();
     retain_host_bindings(ref mut m,ref mut output_program,ref mut output_instances,ref mut host_outputs,ref mut output_scratch);
-    retain_output_bindings(ref snapshot);retain_input_binding();
+    retain_output_bindings(ref mut m,ref snapshot);retain_input_binding();
     var vec::Vec<CompileWork> compile_work=vec::empty<CompileWork>();
     var vec::Vec<programs::Lowered> compile_candidate=vec::empty<programs::Lowered>();
     unsafe{binding_raw(42)};discard step_compile_inner(ref mut m,ref mut output_program,ref mut compile_work,ref mut input,ref mut compile_candidate,0);

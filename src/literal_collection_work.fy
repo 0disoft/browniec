@@ -34,6 +34,30 @@ fn void reset_decoded(ref mut State w){let usize begin=w.token.begin;
 pub fn Result<raw::Index,literals::Error> prepared(ref State w){if(!w.done){return .err(source(5,0));}return .ok(w.result);}
 pub fn Result<bool,literals::Error> advance(ref u8[] input,ref context::Table scope,ref images::Builder original,
     ref mut images::Builder candidate,ref mut State w,ref mut budget::State meter){
+    if(w.phase<3 || w.phase>5){return advance_scan(input,scope,candidate,w,meter);}
+    if(meter.last!=0){return .ok(false);}
+    let bool admitted=switch(budget::admit(meter,4096,0)){case .ok(v):{v}case .err(e):{return .err(source_error(e));}};
+    if(!admitted){return .ok(false);}
+    if(w.phase==3){candidate.limit=original.limit;candidate.catalog.count=original.catalog.count;candidate.catalog.used=original.catalog.used;
+        w.row=0;w.phase=4;return .ok(false);}
+    if(w.phase==4){if(w.row==16){w.cursor=0;w.phase=5;return .ok(false);}
+        let usize row=w.row;candidate.catalog.starts[row]=original.catalog.starts[row];candidate.catalog.ends[row]=original.catalog.ends[row];
+        candidate.catalog.text[row]=original.catalog.text[row];w.row+=1;return .ok(false);}
+    if(w.phase==5){let usize stop=w.cursor+64;
+        while(w.cursor<stop){let usize at=w.cursor;candidate.data[at]=original.data[at];w.cursor+=1;w.visits+=1;}
+        if(w.cursor==4096){w.phase=6;}return .ok(false);}
+    return .err(source(5,0));
+}
+
+// The Engine owns a new, empty builder. It needs no copy from a published builder.
+pub fn Result<bool,literals::Error> advance_fresh(ref u8[] input,ref context::Table scope,
+    ref mut images::Builder candidate,ref mut State w,ref mut budget::State meter){
+    let bool done=advance_scan(input,scope,candidate,w,meter)?;
+    if(w.phase==3){w.phase=6;}
+    return .ok(done);
+}
+fn Result<bool,literals::Error> advance_scan(ref u8[] input,ref context::Table scope,
+    ref mut images::Builder candidate,ref mut State w,ref mut budget::State meter){
     if(w.done){return .ok(true);}if(meter.last!=0){return .ok(false);}
     if(w.phase==0 && scope.modules!=0){let bool done=switch(checking::advance(input,scope,ref mut w.check,meter)){
             case .ok(v):{v}case .err(e):{return .err(source_error(e));}};
@@ -60,14 +84,6 @@ pub fn Result<bool,literals::Error> advance(ref u8[] input,ref context::Table sc
     if(!admitted){return .ok(false);}
     if(w.phase==0){w.phase=1;return .ok(false);}
     if(w.phase==1){if(input.len>4096){return .err(source(4,4096));}w.phase=2;return .ok(false);}
-    if(w.phase==3){candidate.limit=original.limit;candidate.catalog.count=original.catalog.count;candidate.catalog.used=original.catalog.used;
-        w.row=0;w.phase=4;return .ok(false);}
-    if(w.phase==4){if(w.row==16){w.cursor=0;w.phase=5;return .ok(false);}
-        let usize row=w.row;candidate.catalog.starts[row]=original.catalog.starts[row];candidate.catalog.ends[row]=original.catalog.ends[row];
-        candidate.catalog.text[row]=original.catalog.text[row];w.row+=1;return .ok(false);}
-    if(w.phase==5){let usize stop=w.cursor+64;
-        while(w.cursor<stop){let usize at=w.cursor;candidate.data[at]=original.data[at];w.cursor+=1;w.visits+=1;}
-        if(w.cursor==4096){w.phase=6;}return .ok(false);}
     if(w.phase==6){let usize count=if(scope.modules==0){1}else{scope.modules};
         if(w.file==count){w.result.enabled=true;w.done=true;return .ok(true);}
         w.end=if(scope.modules==0){input.len}else{scope.ends[w.file] as usize};w.state=states::begin(w.base);w.phase=7;return .ok(false);}

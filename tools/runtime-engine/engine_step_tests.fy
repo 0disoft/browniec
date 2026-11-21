@@ -506,7 +506,7 @@ fn Result<usize,u8> pending_compile_candidate_cleanup(){
     let Heap idle=heap();
     let ref u8[] source=b"module app;pub fn i32 chosen(){let ref u8[] data=b\"M\";return data[0] as i32;}";
     var usize mode=0;
-    while(mode<3){
+    while(mode<4){
         let usize job=id(engine::begin_compile(ref mut e,selected(source)?,if(mode==2){0}else{65536}));
         let engine::CompileStatus prepared=prepare_compile(ref mut e,job)?;
         if(mode==0){
@@ -515,12 +515,34 @@ fn Result<usize,u8> pending_compile_candidate_cleanup(){
             unsafe{bc_runtime_engine_test_fail(-1)};
             assert(compile_state(oom.state)==3 && oom.failure.status==6);
         }else{
-            let engine::CompileStatus lowered=compile_status(engine::step_compile(ref mut e,job))?;
-            assert(compile_state(lowered.state)==5 && lowered.batches==prepared.batches);
-            let engine::CompileStatus stopped=if(mode==1){compile_status(engine::cancel_compile(ref mut e,job))?}
-                else{compile_status(engine::step_compile(ref mut e,job))?};
-            assert(compile_state(stopped.state)==if(mode==1){4}else{3});
-            assert(stopped.program==0);
+            let memory::Observation source_charge=retained(ref e);
+            var engine::CompileStatus progress=compile_status(engine::step_compile(ref mut e,job))?;
+            assert(compile_state(progress.state)==1 && progress.batches==prepared.batches+1);
+            let memory::Observation candidate_charge=retained(ref e);
+            assert(candidate_charge.compile_source_bytes>source_charge.compile_source_bytes);
+            assert(unsafe{probe_live_bytes()}==idle.bytes+candidate_charge.compile_source_bytes);
+            counts(ref mut e,0,0,0);
+            if(mode==1){
+                let engine::CompileStatus stopped=compile_status(engine::cancel_compile(ref mut e,job))?;
+                assert(compile_state(stopped.state)==4 && stopped.batches==progress.batches && stopped.program==0);
+            }else{
+                while(compile_state(progress.state)==1){
+                    let usize prior=progress.batches;
+                    progress=compile_status(engine::step_compile(ref mut e,job))?;
+                    assert(progress.batches<2048);
+                    assert(progress.batches==if(compile_state(progress.state)==1){prior+1}else{prior});
+                }
+                assert(compile_state(progress.state)==5 && progress.batches>prepared.batches+1 && progress.program==0);
+                let engine::CompileStatus admitted=compile_status(engine::step_compile(ref mut e,job))?;
+                if(mode==2){assert(compile_state(admitted.state)==3 && admitted.program==0);}
+                else{
+                    assert(compile_state(admitted.state)==2 && admitted.program==1);
+                    let usize i=id(engine::create_instance(ref mut e,admitted.program,16000000));
+                    let engine::Event result=event(engine::execute_once(ref mut e,i));
+                    assert(result.kind==1 && result.value==77);
+                    destroy(ref mut e,i);release(ref mut e,admitted.program);
+                }
+            }
         }
         same_heap(ref idle);assert(retained(ref e).compile_source_bytes==0);
         assert(engine::detach_compile(ref mut e,job).is_ok);

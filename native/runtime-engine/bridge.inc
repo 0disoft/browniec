@@ -46,6 +46,10 @@ uint32_t bc_runtime_engine_end_compile(void *raw,uintptr_t id,uint32_t detach){
  if(!s)s=B45(&e->f_0,&e->f_9,&e->f_10,&e->f_11,id,detach!=0);
  uint32_t end=bc_abi_guard_leave(id_owner);return end?end:s;
 }
+uint32_t bc_runtime_engine_advance_compile_literals(void *meta,const void *selected,void *raw,void *lowered,void *meter){
+ bc_compile_work *job=raw;
+ return B48(meta,selected,&job->f_9,&job->f_10,lowered,meter);
+}
 uintptr_t bc_runtime_engine_compile_candidate_width(void){return sizeof(bc_compile_candidate);}
 void bc_runtime_engine_dispose_compile_candidate(void *raw){
  bc_compile_candidates *candidate=raw;*candidate=B47(*candidate);

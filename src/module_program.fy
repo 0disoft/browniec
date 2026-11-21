@@ -13,6 +13,8 @@ import static_image as images;
 import std::vec as vec;
 import retention_plan as retention;
 import module_source_work as module_source;
+import literal_collection_work as literal_work;
+import literal_collection as literals;
 
 // Only internally rebuilt source/context plus complete canonical admission can
 // create this resource. Compiler name tables are not retained at runtime.
@@ -64,11 +66,11 @@ pub fn Result<usize,diagnostics::Error> start_lowered(ref mut vec::Vec<Lowered> 
     };
 }
 pub fn Result<usize,diagnostics::Error> lower_prepared_until(ref entries::Entry selected,
-    ref module_source::State source,ref mut Lowered lowered,usize deadline){
-    var images::Builder literals=images::full_builder();
-    let bool references=compiler::lower_modules_prepared_until(selected,source,ref mut literals,ref mut lowered.code,false,deadline)?;
+    ref module_source::State source,ref literal_work::State collection,ref mut Lowered lowered,usize deadline){
+    let literals::Index index=if(source.syntax.result){collection.result}else{literals::empty()};
+    let bool references=compiler::lower_modules_literals_until(selected,source,ref index,ref mut lowered.code,false,deadline)?;
     if(clock::expired(deadline)){return .err(diagnostics::absent(errors::absent(errors::deadline_kind(),0)));}
-    lowered.literals=literals;lowered.references=references;
+    lowered.references=references;
     return .ok(0);
 }
 pub fn Result<Program,diagnostics::Error> admit_lowered_until(ref entries::Entry selected,

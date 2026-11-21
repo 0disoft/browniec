@@ -428,6 +428,29 @@ during admission. Both profiles ended with zero live SDK allocations. Local
 receipt: `build/runtime-engine/20261121T041047288327Z/receipt.json`.
 The locked /O2 CLI build returned 77 in the quick start.
 
+## Resumable ordinary literal collection
+
+The Engine advances one literal collection batch per step while the ordinary
+compile reports Prepared. The existing 4,096-unit metadata allowance applies
+to each advance. The source and builder stay pinned across calls. A fresh,
+private builder needs no copy from an existing image. The next stage consumes
+the completed literal index and its matching builder.
+
+The fixed compile-work vector adds 43,328 bytes (42,304 to 85,632 bytes).
+The candidate backing is allocated and charged once. Cancellation during the
+literal pass returns its full charge and the source charge. Program publication
+still follows independent admission. Indexed signatures, body lowering,
+reference-signature binding, and proof still drain within their respective
+steps.
+
+Windows development and /O2 verified the incremental batch counts, cancellation
+during collection, candidate OOM, image quota failure, and execution returning
+77 after successful admission. Both profiles ended with zero live SDK
+allocations. Local receipt:
+`build/runtime-engine/20261121T043355613653Z/receipt.json`.
+The locked /O2 CLI returned 77 and passed its contract suite, including the
+Windows process adapter.
+
 ## Executed verification and remaining work
 
 [Windows evidence](../evidence/runtime-engine-compile-memory-windows-20261107.json)
