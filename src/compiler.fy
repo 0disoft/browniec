@@ -3608,6 +3608,7 @@ fn Result<bool,errors::Error> advance_module_body(ref u8[] source,bool reference
     ref mut functions::Table signatures,ref mut reference_ir::Program code,ref mut BodyProgress progress,
     ref mut lexer::State token,ref mut locals::Table names,ref mut loops::State flow,
     ref mut body_work::State cursor,ref mut metadata_budget::State meter,usize deadline){
+    if(progress.phase==3){return .ok(true);}
     let usize f=progress.function;
     if(progress.phase==0){
         let usize ready=prepare_lowering(source,false,references,references,literals,signatures,ref mut code.body,0,deadline)?;
@@ -3617,6 +3618,7 @@ fn Result<bool,errors::Error> advance_module_body(ref u8[] source,bool reference
     if(f==signatures.count){
         let usize done=finish_lowering(ref mut code.body,signatures,references,ref mut progress.active)?;
         if(references){let usize bound=finish_reference_lowering(signatures,code);}
+        progress.phase=3;
         return .ok(true);
     }
     if(progress.phase==1){
@@ -3758,12 +3760,32 @@ pub fn Result<usize,source_errors::Error> lower_input_modules_until(ref input_en
     let literal_collection::Index literals=module_literals_until(builder,source,scope,index,deadline)?;
     var functions::Table signatures=switch(signature_scan::scan_indexed_until(source,scope,index,input_entries::selected(selected),true,deadline)){
         case .ok(v):{v}case .err(e):{return .err(input_module_error(index,e,16));}
-    };signatures.output=output;
+    };
+    if(!output){return lower_input_bodies_until(index,source,ref literals,ref mut signatures,code,deadline);}
+    signatures.output=true;
     var usize active=16;
     switch(lower_prepared_until(source,true,ref literals,ref mut signatures,ref mut code.body,ref mut active,deadline)){
         case .ok(_):{}case .err(e):{return .err(input_module_error(index,e,active));}
     };
     return .ok(finish_reference_lowering(ref signatures,code));
+}
+// The input ABI always needs reference metadata. This drain uses the same
+// body cursor as the private Engine and preserves the selected Index for spans.
+fn Result<usize,source_errors::Error> lower_input_bodies_until(ref module_index::Index index,ref u8[] source,
+    ref literal_collection::Index literals,ref mut functions::Table signatures,ref mut reference_ir::Program code,usize deadline){
+    var BodyProgress progress=begin_module_bodies();
+    var lexer::State token=lexer::empty();var locals::Table names=locals::empty();
+    var loops::State flow=loops::empty();var body_work::State cursor=body_work::begin(0,false);
+    while(true){
+        if(clock::expired(deadline)){return .err(source_errors::absent(errors::absent(errors::deadline_kind(),0)));}
+        var metadata_budget::State meter=metadata_budget::empty();
+        switch(advance_module_body(source,true,literals,signatures,code,ref mut progress,
+            ref mut token,ref mut names,ref mut flow,ref mut cursor,ref mut meter,deadline)){
+            case .ok(done):{if(done){return .ok(code.body.count);}}
+            case .err(e):{return .err(input_module_error(index,e,progress.active));}
+        };
+    }
+    return .err(source_errors::absent(errors::absent(5,0)));
 }
 fn Result<usize,source_errors::Error> lower_input_modules_mode(ref input_entries::InputEntry selected,
     ref mut static_images::Builder builder,ref mut reference_ir::Program code,bool output){
