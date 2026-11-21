@@ -11,7 +11,7 @@ import retention_plan as retained;
 fn budget::Budget seed(usize engine,usize control,usize working){
     return budget::Budget{.engine=engine,.program=engine,.programs=engine,
         .control=control,.control_peak=control,.retained=0,.peak=0,.closed=false,
-        .working_limit=working,.working_peak=0,.tracked_peak=control,.external=0};
+        .working_limit=working,.working_peak=0,.tracked_peak=control,.external=0,.compile_source=0};
 }
 fn u8 error_code(budget::Error e){
     return switch(e){case .Invalid:{1}case .Quota:{2}case .State:{3}};
@@ -30,13 +30,13 @@ fn void same(ref budget::Budget b,ref budget::Budget before){
     assert(b.control==before.control && b.control_peak==before.control_peak);
     assert(b.retained==before.retained && b.peak==before.peak && b.closed==before.closed);
     assert(b.working_limit==before.working_limit && b.working_peak==before.working_peak);
-    assert(b.tracked_peak==before.tracked_peak && b.external==before.external);
+    assert(b.tracked_peak==before.tracked_peak && b.external==before.external && b.compile_source==before.compile_source);
 }
 fn budget::Budget snapshot(ref budget::Budget b){
     return budget::Budget{.engine=b.engine,.program=b.program,.programs=b.programs,
         .control=b.control,.control_peak=b.control_peak,.retained=b.retained,.peak=b.peak,
         .closed=b.closed,.working_limit=b.working_limit,.working_peak=b.working_peak,
-        .tracked_peak=b.tracked_peak,.external=b.external};
+        .tracked_peak=b.tracked_peak,.external=b.external,.compile_source=b.compile_source};
 }
 fn void denied_prepare(ref mut budget::Budget b,usize overhead,u8 expected){
     let budget::Budget before=snapshot(b);
@@ -55,8 +55,8 @@ fn void observed(ref budget::Budget b,usize control,usize programs,usize program
     let budget::Observation o=budget::observe(b);
     assert(o.engine_limit==b.engine && o.program_limit==b.program && o.programs_limit==b.programs);
     assert(o.control_bytes==control && o.program_bytes==programs && o.program_peak==program_peak);
-    assert(o.tracked_bytes==control+programs+b.external && o.tracked_peak==tracked_peak);
-    assert(o.external_bytes==b.external);
+    assert(o.tracked_bytes==control+programs+b.external+b.compile_source && o.tracked_peak==tracked_peak);
+    assert(o.external_bytes==b.external && o.compile_source_bytes==b.compile_source);
     assert(o.working_limit==b.working_limit && o.working_peak==working_peak && o.closed==closed);
 }
 
@@ -406,4 +406,44 @@ fn void external_owner_blocks_close_and_refunds_and_moves_preserve_all_peaks(){
     rejected(budget::prepare_external(ref mut moved,18446744073709551615),3);
     rejected(budget::commit_external(ref mut moved,18446744073709551615),3);
     same(ref moved,ref closed);
+}
+
+@test
+fn void compile_source_shares_limits_and_refunds_only_its_own_charge(){
+    let usize work=compiler::working_bound();
+    var budget::Budget b=seed(work+28,7,work+15);
+    value(budget::publish(ref mut b,2),2);
+    value(budget::commit_external(ref mut b,4),4);
+    let budget::Budget before=snapshot(ref b);
+    rejected(budget::hold_compile_source(ref mut b,work+16),2);same(ref b,ref before);
+    value(budget::hold_compile_source(ref mut b,15),15);
+    observed(ref b,7,2,2,28,15,false);
+    let budget::Budget held=snapshot(ref b);
+    rejected(budget::hold_compile_source(ref mut b,1),3);same(ref b,ref held);
+    rejected(budget::release_compile_source(ref mut b,14),3);same(ref b,ref held);
+    denied_prepare(ref mut b,1,2);
+    switch(budget::prepare_compile(ref mut b,0)){
+        case .ok(plan):{assert(plan.baseline==28 && plan.working_limit==work);}
+        case .err(_):{assert(false);return;}
+    };
+    value(budget::prepare_external(ref mut b,work+4),work+28);
+    rejected(budget::prepare_external(ref mut b,work+5),2);
+    rejected(budget::publish(ref mut b,work+1),3);
+    value(budget::publish(ref mut b,work),work+2);
+    rejected(budget::close(ref mut b),3);
+    value(budget::release_compile_source(ref mut b,15),0);
+    observed(ref b,7,work+2,work+2,work+28,work+15,false);
+    assert(b.external==4);
+    rejected(budget::release_compile_source(ref mut b,15),3);
+    value(budget::release(ref mut b,work+2),0);
+    value(budget::commit_external(ref mut b,0),0);
+    value(budget::close(ref mut b),0);
+
+    var budget::Budget exact=seed(26,7,15);
+    value(budget::commit_external(ref mut exact,4),4);
+    value(budget::hold_compile_source(ref mut exact,15),15);
+    var budget::Budget short=seed(25,7,15);
+    value(budget::commit_external(ref mut short,4),4);
+    let budget::Budget snapshot_short=snapshot(ref short);
+    rejected(budget::hold_compile_source(ref mut short,15),2);same(ref short,ref snapshot_short);
 }

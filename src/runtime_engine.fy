@@ -993,6 +993,7 @@ fn bool payload_ledger_intact(ref Meta m){
         m.programs.control<=m.programs.engine &&
         m.programs.retained<=m.programs.engine-m.programs.control &&
         m.programs.external<=m.programs.engine-m.programs.control-m.programs.retained &&
+        m.programs.compile_source<=m.programs.engine-m.programs.control-m.programs.retained-m.programs.external &&
         live::prepare(ref m.heap,0,0,0).is_ok;
 }
 fn Result<live::Plan,u32> prepare_payload(ref mut Meta m,usize old,usize next,usize transient){
@@ -1100,8 +1101,13 @@ fn u32 compile_inner(ref mut Meta m,ref mut vec::Vec<Program> v,ref mut vec::Vec
     if(vec::len<Program>(v)>=m.limits.programs || m.next==0){return failed(m,8);}
     if(vec::len<entries::Entry>(incoming)!=1){return failed(m,1);}
     var retention::Plan plan=switch(retention_plan(m,0)){case .ok(p):{p}case .err(s):{return failed(m,s);}};
-    var compilation::Plan work=switch(compile_work(m,unsafe{compile_fact_raw(incoming as ptr void,0,2)},entry_heap(vec::at<entries::Entry>(incoming,0)))){case .ok(p):{p}case .err(status):{return failed(m,status);}};
+    let usize incoming_bytes=unsafe{compile_fact_raw(incoming as ptr void,0,2)};
+    let usize index_bytes=entry_heap(vec::at<entries::Entry>(incoming,0));
+    var compilation::Plan work=switch(compile_work(m,incoming_bytes,index_bytes)){case .ok(p):{p}case .err(status):{return failed(m,status);}};
+    let usize source_bytes=incoming_bytes+index_bytes;
+    assert(memory::hold_compile_source(ref mut m.programs,source_bytes).is_ok);
     let Result<programs::Program,diagnostics::Error> built=bounded::compile_until(pop_entry(incoming),image_limit,ref mut plan,ref mut work,deadline);
+    assert(memory::release_compile_source(ref mut m.programs,source_bytes).is_ok);
     assert(memory::record_compile(ref mut m.programs,ref work).is_ok);
     assert(memory::record(ref mut m.programs,ref plan).is_ok);
     return switch(built){case .ok(code):{publish_program(m,v,code,plan.bytes,deadline)}case .err(e):{compile_error(m,e)}};

@@ -354,6 +354,25 @@ one tick before the deadline succeeds. Rejections retain no Program or SDK
 allocation and leave the next Program ID available. Local receipt:
 `build/runtime-engine/20261120T113808949152Z/receipt.json`.
 
+## Compile source charges
+
+Ordinary Engine compilation now holds a separate charge for the selected
+Index and its incoming vector while the synchronous compiler owns the
+selection. Source ownership counts against the working and combined limits.
+It also reduces the combined headroom for retained Programs and Instance
+payloads. The ordinary compile refunds the source charge when the compiler
+returns, before publication. Working and combined peaks remain historical.
+The Windows x64 inline Engine layout grows from 792 to 800 bytes.
+
+Windows development and /O2 verified exact admission, one-byte-short
+rejection, refusal of mismatched and duplicate refunds, and preservation of
+other owners' charges. The native tests ended with zero live SDK allocations.
+The locked /O2 CLI returned 77. Local receipt:
+`build/runtime-engine/20261121T033444048057Z/receipt.json`.
+
+This ledger supports the pending compile owner. Retention of compile state
+across Engine calls and cancellation of that owner remain open.
+
 ## Executed verification and remaining work
 
 [Windows evidence](../evidence/runtime-engine-compile-memory-windows-20261107.json)

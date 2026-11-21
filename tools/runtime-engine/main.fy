@@ -276,6 +276,7 @@ fn i32 main(){
     compile_contracts::external_current_is_in_compile_phase_zero_baseline_and_combined_admission();
     compile_contracts::external_current_limits_retained_publication_and_survives_program_release();
     compile_contracts::external_owner_blocks_close_and_refunds_and_moves_preserve_all_peaks();
+    compile_contracts::compile_source_shares_limits_and_refunds_only_its_own_charge();
     live_contracts::limits_caps_and_detached_flat_observation();
     live_contracts::per_instance_exact_and_one_less_include_transient();
     live_contracts::aggregate_exact_and_one_less_preserve_peer_charges();

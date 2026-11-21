@@ -1,7 +1,7 @@
-- Latest runtime checkpoint (2026-11-21): [Prepared source handoff](docs/engineering/compiler-source-stages.md#prepared-source-handoff)
-  lets timed ordinary compilation lower and admit a Program from the completed
-  source cursor. Windows development and /O2 passed with zero live SDK
-  allocations. Locked /O2 CLI and quick-start result 77 passed.
+- Latest runtime checkpoint (2026-11-21): [Compile source charges](docs/engineering/runtime-engine-compile-memory.md#compile-source-charges)
+  account for the ordinary compile's adopted Index and incoming vector under
+  the shared heap ceiling. Windows development and /O2 passed with zero live
+  SDK allocations. Locked /O2 CLI and quick-start result 77 passed.
 
 # Brownie C agent guidance
 

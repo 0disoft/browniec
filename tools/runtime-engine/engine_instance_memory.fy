@@ -54,7 +54,7 @@ fn memory::Observation programs(ref engine::Engine e){return switch(engine::prog
     case .ok(v):{v}case .err(_):{assert(false);memory::Observation{
         .engine_limit=0,.program_limit=0,.programs_limit=0,.control_bytes=0,
         .program_bytes=0,.program_peak=0,.tracked_bytes=0,.tracked_peak=0,
-        .closed=false,.working_limit=0,.working_peak=0,.external_bytes=0}}
+        .closed=false,.working_limit=0,.working_peak=0,.external_bytes=0,.compile_source_bytes=0}}
 };}
 fn void ledger(ref engine::Engine e,usize current,usize peak,bool closed){
     let live::Observation l=instance(e);let memory::Observation p=programs(e);

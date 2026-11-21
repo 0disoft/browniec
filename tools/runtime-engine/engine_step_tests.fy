@@ -103,7 +103,7 @@ fn live::Observation instance(ref engine::Engine e){return switch(engine::instan
 fn memory::Observation retained(ref engine::Engine e){return switch(engine::program_memory(e)){
     case .ok(v):{v}case .err(_):{assert(false);memory::Observation{
         .engine_limit=0,.program_limit=0,.programs_limit=0,.control_bytes=0,.program_bytes=0,
-        .program_peak=0,.tracked_bytes=0,.tracked_peak=0,.closed=false,.working_limit=0,.working_peak=0,.external_bytes=0}}
+        .program_peak=0,.tracked_bytes=0,.tracked_peak=0,.closed=false,.working_limit=0,.working_peak=0,.external_bytes=0,.compile_source_bytes=0}}
 };}
 fn void ledger(ref engine::Engine e,usize current){
     let live::Observation l=instance(e);let memory::Observation m=retained(e);
