@@ -1166,6 +1166,24 @@ Windows development and /O2 each passed 100 configured, 32 catalog, five
 managed project and four compile-stop cases. All 456 input hashes matched.
 Local receipt: `build/restricted-worker/20261121T232653115707Z/receipt.json`.
 
+### Aggregate call argument preparation Fuel
+
+Captured calls in array and record assignments pass their compile deadline
+and balance into argument preparation. Record constructors and nested
+aggregate-returning calls use the same balance. Array literal classification,
+repeat lowering, range endpoint continuations and scalar Pratt advances spend
+one unit per advance. List operands also prepay validation and copying into
+the dense IR pool at two units per cell. Static reference expressions and
+owner capture helpers retain their outer checkpoints.
+
+The fixture passes a record constructor, a list, a repeat and a slice with
+two computed endpoints into an array-returning assignment call. The added
+preparation costs 344 units. It returns 42 at 11,138,372 compile Fuel and
+reports compile_limit without publishing a result or output at 11,138,371.
+Windows development and /O2 each passed 102 configured, 32 catalog, five
+managed project and four compile-stop cases. All 456 input hashes matched.
+Local receipt: `build/restricted-worker/20261121T233514619868Z/receipt.json`.
+
 ## Windows verification
 
 Run `python -B tools/verify-restricted-worker.py`. The development and optimized

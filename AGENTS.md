@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-22): [Aggregate assignment call Fuel](docs/engineering/restricted-worker.md#aggregate-assignment-call-fuel)
-  meters captured call stages and scalar arguments in array and record
-  assignments.
+- Latest runtime checkpoint (2026-11-22): [Aggregate call argument preparation Fuel](docs/engineering/restricted-worker.md#aggregate-call-argument-preparation-fuel)
+  extends the assignment call balance to record constructors, array literals
+  and computed slice endpoints.
 
 # Brownie C agent guidance
 

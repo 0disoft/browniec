@@ -334,6 +334,21 @@ def verify_configured_project(run, need, image, folder, env):
     policy['compile'] = compile_defaults
     math_file.write_bytes(original_source)
 
+    math_file.write_bytes(b'module util::math;struct Box{i32 value;}'
+                          b'fn i32[1] gather(Box box,i32[1] a,i32[2] b,ref i32[] view){'
+                          b'return [box.value+a[0]+b[1]+view[0]];}'
+                          b'pub fn i32 answer(){var out=[0];let input=[13,0];'
+                          b'out=gather(Box{.value=4+6},[3+5],[7+4;2],ref input[0+0..1+0]);'
+                          b'return out[0];}')
+    # Constructor, array literal and slice endpoint preparation use the caller's balance.
+    aggregate_actual_fuel = 11138028 + 344
+    policy['compile'] = dict(compile_defaults, source_bytes=4096, fuel=aggregate_actual_fuel - 1)
+    check(3, 'compile_limit')
+    policy['compile']['fuel'] = aggregate_actual_fuel
+    check()
+    policy['compile'] = compile_defaults
+    math_file.write_bytes(original_source)
+
     aggregate_projections = (
         (b'module util::math;pub fn i32 answer(){let i32[1] a=[42];'
          b'let usize n= ~ ~ (a).len;if(n==1){return 42;}return 0;}', b'(a).len'),
