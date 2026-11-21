@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-22): [Project compile cancellation](docs/engineering/restricted-worker.md#project-compile-cancellation)
-  also covers managed projects without a local compile deadline. Both Windows
-  profiles verify that a cancelled compile closes its stream without a RESULT.
+- Latest runtime checkpoint (2026-11-22): [Literal image preparation Fuel](docs/engineering/restricted-worker.md#literal-image-preparation-fuel)
+  meters catalog checks, UTF-8 validation, and copying. Both Windows profiles
+  verify the exact and one-less compile Fuel limits with a split UTF-8 scalar.
 
 # Brownie C agent guidance
 

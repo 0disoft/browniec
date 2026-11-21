@@ -48,12 +48,10 @@ pub fn Result<bool,images::Error> advance_catalog(ref images::Catalog c,ref u8[]
     if(w.literal==w.count){w.done=true;return .ok(true);}
     let usize literal=w.literal;
     if(!c.text[literal]){w.literal+=1;w.cursor=0;return .ok(false);}
-    let usize length=c.ends[literal]-c.starts[literal];
-    var usize end=w.cursor+256;if(end>length){end=length;}
-    var usize extra=0;
-    while(end<length && extra<3 && (data[c.starts[literal]+end]&192)==128){end+=1;extra+=1;}
-    if(!utf8::validate_utf8(data[c.starts[literal]+w.cursor..c.starts[literal]+end]).is_ok){return .err(.Utf8);}
+    let ref u8[] text=data[c.starts[literal]..c.ends[literal]];
+    let usize end=images::text_chunk_end(text,w.cursor);
+    if(!utf8::validate_utf8(text[w.cursor..end]).is_ok){return .err(.Utf8);}
     w.cursor=end;
-    if(end==length){w.literal+=1;w.cursor=0;}
+    if(end==text.len){w.literal+=1;w.cursor=0;}
     return .ok(false);
 }

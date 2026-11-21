@@ -131,8 +131,9 @@ def verify_configured_project(run, need, image, folder, env):
     fuel_error = check(3, 'compile_limit', 'check')['error']
     need(fuel_error['location']['source_index'] == 1,
          f'Index Fuel reset between source members: {fuel_error}')
-    # 863 prepaid batches after the 179-unit index, including independent proof.
-    proof_fuel = index_fuel + 863 * 4096
+    # 863 prepaid batches after the 179-unit index, including independent proof,
+    # plus two 16-row passes over the empty literal catalog before proof.
+    proof_fuel = index_fuel + 863 * 4096 + 32
     policy['compile']['fuel'] = proof_fuel
     preparation_error = check(3, 'compile_limit', 'check')['error']
     need(preparation_error['location']['kind'] == 'none',
@@ -424,6 +425,17 @@ def verify_configured_project(run, need, image, folder, env):
     check(5, 'zero_divisor', payload=payload)
     entry.write_bytes(b'module app; pub fn i32 start(){output::emit(ref b"Hi");return 77;}')
     check(value=77, output=b'Hi')
+    text = b'A' * 255 + bytes.fromhex('f0908080') + b'Z'
+    entry.write_bytes(b'module app;pub fn i32 start(){let ref str msg="' + text +
+                      b'";let ref u8[] body=text::bytes(msg);output::emit(ref body);return 77;}')
+    # The prior compiler needed 4,780,555 units. Admission now charges two
+    # 16-row catalog scans, one literal row and two visits to each text byte.
+    text_fuel = 4780555 + 32 + 1 + 2 * len(text)
+    policy['compile']['fuel'] = text_fuel - 1
+    check(3, 'compile_limit')
+    policy['compile']['fuel'] = text_fuel
+    check(value=77, output=text)
+    policy['compile']['fuel'] = compile_defaults['fuel']
     entry.write_bytes(original_entry)
     policy['compile']['source_bytes'] = source_limit
     manifest['requires'] = config['requires'] = config['grants'] = []
@@ -444,7 +456,7 @@ def verify_configured_project(run, need, image, folder, env):
     config['entry']['function'] = manifest['entry']['function']
     config['grants'] = ['brownie.output.emit']
     check(4, 'unavailable')
-    return 86
+    return 88
 
 
 def verify_project_host(run, need, image, folder, env):

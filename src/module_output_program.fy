@@ -178,12 +178,10 @@ fn void retain_proof_finish_binding(ref sources::Snapshot snapshot,ref mut vec::
     var diagnostics::Error failure=absent(errors::absent(5,0));
     unsafe{binding_raw(62)};discard finish_proof_inner(ref code,storage,work,snapshot,0,ref mut outgoing,ref mut failure);
 }
-fn Result<images::Image,diagnostics::Error> freeze(ref images::Builder builder,usize image_limit,ref mut retention::Plan plan){
+fn Result<usize,diagnostics::Error> admit_image(ref images::Builder builder,ref mut retention::Plan plan){
     let usize payload=switch(images::planned_payload(builder)){case .ok(v):{v}case .err(_):{return .err(absent(errors::make(5,0)));}};
     if(!retention::admit(plan,payload).is_ok){return .err(absent(errors::make(retention::quota_kind(),0)));}
-    return switch(images::freeze(builder,image_limit)){
-        case .ok(v):{.ok(v)}case .err(e):{.err(literal(e))}
-    };
+    return .ok(payload);
 }
 fn diagnostics::Error proof_error(ref sources::Snapshot sources,ref candidates::Program code,errors::Error e){
     if(e.offset==0 || e.offset>=code.body.count){return absent(e);}
@@ -191,7 +189,10 @@ fn diagnostics::Error proof_error(ref sources::Snapshot sources,ref candidates::
 }
 fn Result<Program,diagnostics::Error> finish(ref sources::Snapshot sources,ref images::Builder builder,
     ref candidates::Program code,usize image_limit,bool input,ref mut retention::Plan plan){
-    let images::Image image=freeze(builder,image_limit,plan)?;
+    discard admit_image(builder,plan)?;
+    let images::Image image=switch(images::freeze(builder,image_limit)){
+        case .ok(v):{v}case .err(e):{return .err(literal(e));}
+    };
     let output_proof::Proof proof=switch(proof_work::inspect(code,ref image,input)){
         case .ok(v):{v}case .err(e):{return .err(proof_error(sources,code,e));}
     };
@@ -201,7 +202,13 @@ fn Result<Program,diagnostics::Error> finish(ref sources::Snapshot sources,ref i
 fn Result<Program,diagnostics::Error> finish_until(ref sources::Snapshot sources,ref images::Builder builder,
     ref candidates::Program code,usize image_limit,bool input,ref mut retention::Plan plan,usize deadline,ref mut usize fuel,usize type_limit){
     if(clock::expired(deadline)){return .err(absent(errors::absent(errors::deadline_kind(),0)));}
-    let images::Image image=freeze(builder,image_limit,plan)?;
+    switch(budget::charge(fuel,images::literal_limit(),0)){
+        case .ok(_):{}case .err(e):{return .err(absent(e));}
+    };
+    discard admit_image(builder,plan)?;
+    let images::Image image=switch(images::freeze_metered(builder,image_limit,deadline,fuel)){
+        case .ok(v):{v}case .err(e):{return .err(absent(e));}
+    };
     let output_proof::Proof proof=switch(proof_work::inspect_until(code,ref image,input,deadline,fuel)){
         case .ok(v):{v}case .err(e):{return .err(proof_error(sources,code,e));}
     };

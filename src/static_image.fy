@@ -1,10 +1,14 @@
 module static_image;
 import std::bytes as bytes;
 import std::text as utf8;
+import errors as errors;
+import metadata_budget as budget;
+import runtime_clock as clock;
 
 // Compiler scratch and a move-only, immutable native literal image. No guest
 // pointer, Instance owner, mutable slice, unchecked text cast or runtime GC.
 pub enum Error { State; Limit; Quota; Literals; Utf8; Kind; Bounds; Allocation; Provider; }
+enum StorageError { Allocation; Provider; }
 pub struct Catalog { usize[16] starts; usize[16] ends; bool[16] text; usize count; usize used; }
 pub struct Builder { u8[4096] data; Catalog catalog; usize limit; }
 pub resource Image { bytes::Buffer data; Catalog catalog; cleanup { } }
@@ -73,11 +77,61 @@ pub fn Result<Image,Error> freeze(ref Builder b,usize program_limit){
     let usize valid=scratch(b)?;let ref u8[] data=ref b.data;
     let usize count=contents(ref b.catalog,data[..b.catalog.used])?;
     if(program_limit<metadata_charge() || b.catalog.used>program_limit-metadata_charge()){return .err(.Quota);}
+    return switch(retain(b)){
+        case .ok(v):{.ok(v)}
+        case .err(e):{.err(switch(e){case .Allocation:{.Allocation}case .Provider:{.Provider}})}
+    };
+}
+fn Result<Image,StorageError> retain(ref Builder b){
+    let ref u8[] data=ref b.data;
     let bytes::Buffer payload=switch(bytes::copy(data[..b.catalog.used])){
         case .ok(value):{value}case .err(_):{return .err(.Allocation);}
     };
     if(bytes::len(ref payload)!=b.catalog.used || bytes::capacity(ref payload)!=b.catalog.used){return .err(.Provider);}
     return .ok(Image{.data=payload,.catalog=b.catalog});
+}
+
+// Include at most three continuation bytes after a 256-byte cut. The
+// validator still proves the entire window, including the extended suffix.
+pub fn usize text_chunk_end(ref u8[] data,usize cursor){
+    var usize end=cursor+256;if(end>data.len){end=data.len;}
+    var usize extra=0;
+    while(end<data.len && extra<3 && (data[end]&192)==128){end+=1;extra+=1;}
+    return end;
+}
+fn Result<usize,errors::Error> charge_freeze(ref mut usize fuel,usize deadline,usize count){
+    if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
+    return budget::charge(fuel,count,0);
+}
+pub fn Result<Image,errors::Error> freeze_metered(ref Builder b,usize program_limit,usize deadline,ref mut usize fuel){
+    discard charge_freeze(fuel,deadline,literal_limit())?;
+    let usize count=switch(scratch(b)){
+        case .ok(v):{v}case .err(_):{return .err(errors::make(5,0));}
+    };
+    let ref u8[] data=ref b.data;
+    var usize i=0;
+    while(i<count){
+        discard charge_freeze(fuel,deadline,1)?;
+        if(b.catalog.text[i]){
+            let ref u8[] literal=data[b.catalog.starts[i]..b.catalog.ends[i]];
+            var usize cursor=0;
+            while(cursor<literal.len){
+                let usize end=text_chunk_end(literal,cursor);
+                discard charge_freeze(fuel,deadline,end-cursor)?;
+                if(!utf8::validate_utf8(literal[cursor..end]).is_ok){return .err(errors::make(1,0));}
+                cursor=end;
+            }
+        }
+        i+=1;
+    }
+    if(program_limit<metadata_charge() || b.catalog.used>program_limit-metadata_charge()){return .err(errors::make(4,0));}
+    discard charge_freeze(fuel,deadline,b.catalog.used)?;
+    let Image image=switch(retain(b)){
+        case .ok(v):{v}
+        case .err(e):{return .err(errors::make(switch(e){case .Allocation:{15}case .Provider:{5}},0));}
+    };
+    if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
+    return .ok(image);
 }
 // Independent whole-image admission, including actual UTF-8 bytes. The later
 // Program verifier must call this before accepting static literal definitions.

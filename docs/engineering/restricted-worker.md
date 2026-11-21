@@ -1002,6 +1002,24 @@ Both Windows profiles passed 86 configured, 32 catalog and five managed
 project cases. All 456 input hashes matched.
 Local receipt: `build/restricted-worker/20261121T215712277486Z/receipt.json`.
 
+### Literal image preparation Fuel
+
+Configured project compilation prepays the two 16-row catalog checks
+before independent image proof. Freezing the literal image also charges one
+unit per literal row, one per validated UTF-8 byte, and one per copied byte.
+Each UTF-8 window contains at most 259 bytes, extending a 256-byte cut to
+include the rest of a scalar. The copy uses one exact allocation for up to
+4,096 bytes. Fuel admission precedes the copy, and compile stop checks
+surround the copy and separate the validation windows.
+
+A 260-byte text literal crosses the first cut with a four-byte scalar
+beginning at byte 255. The image admission needs 553 additional units.
+At 4,781,108 units the fixture returns 77 and emits all 260 original bytes.
+At 4,781,107 it returns `compile_limit` with no guest result or output.
+Windows development and /O2 each passed 88 configured, 32 catalog, five
+managed project and four compile-stop cases. All 456 input hashes matched.
+Local receipt: `build/restricted-worker/20261121T221556387417Z/receipt.json`.
+
 ## Windows verification
 
 Run `python -B tools/verify-restricted-worker.py`. The development and optimized
