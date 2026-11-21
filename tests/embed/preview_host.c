@@ -516,6 +516,68 @@ static void revision_two_source_limit(uint8_t *policy,size_t length){
     assert(bc_engine_destroy(engine)==BC_OK);
 }
 
+static void revision_two_modules(bc_handle engine,bc_slice policy){
+    static const uint8_t main[]="main";
+    static const uint8_t rates[]="pricing::rates";
+    static const uint8_t root[]="module main; import pricing::rates as fees; "
+        "pub fn i32 main(){return fees::amount();}";
+    static const uint8_t helper[]="module pricing::rates; pub fn i32 amount(){return 77;}";
+    static const uint8_t malformed[]="module pricing::rates; pub fn i32 amount(){return missing;}";
+    const bc_slice empty={0},rate_name={rates,sizeof(rates)-1};
+    bc_source sources[]={
+        {{main,sizeof(main)-1},{root,sizeof(root)-1}},
+        {rate_name,{malformed,sizeof(malformed)-1}},
+    };
+    bc_handle program=UINT64_MAX,instance=0;
+    bc_diagnostic diagnostic={.struct_size=sizeof(diagnostic)};
+    assert(bc_compile(engine,sources,2,empty,&program,&diagnostic)==BC_COMPILE_ERROR);
+    assert(program==0 && diagnostic.source_index==1);
+    assert(diagnostic.byte_start==sizeof(malformed)-sizeof("missing;}"));
+    assert(diagnostic.byte_end==diagnostic.byte_start+1);
+
+    sources[1].source_utf8=(bc_slice){helper,sizeof(helper)-1};
+    sources[1].module=(bc_slice){(const uint8_t *)"other",5};
+    assert(bc_compile(engine,sources,2,empty,&program,&diagnostic)==BC_COMPILE_ERROR);
+    assert(program==0 && diagnostic.source_index==1);
+    assert(diagnostic.byte_start==7 && diagnostic.byte_end==7+sizeof(rates)-1);
+    sources[1].module=sources[0].module;
+    assert(bc_compile(engine,sources,2,empty,&program,&diagnostic)==BC_COMPILE_ERROR);
+    assert(program==0 && diagnostic.source_index==1);
+    sources[1].module=rate_name;
+
+    uint8_t short_policy[2048];
+    assert(policy.len<sizeof(short_policy));
+    memcpy(short_policy,policy.data,policy.len);
+    short_policy[policy.len]=0;
+    char *modules=strstr((char *)short_policy,"\"modules\": 32");
+    assert(modules);
+    memcpy(modules+sizeof("\"modules\": ")-1," 1",2);
+    bc_handle limited=0;
+    assert(bc_engine_create(2,(bc_slice){short_policy,policy.len},&limited,&diagnostic)==BC_OK);
+    assert(bc_compile(limited,sources,2,empty,&program,&diagnostic)==BC_RESOURCE_LIMIT);
+    assert(program==0 && diagnostic.source_index==UINT32_MAX);
+    assert(bc_engine_destroy(limited)==BC_OK);
+
+    uint8_t padded[4097-(sizeof(root)-1)];
+    memset(padded,' ',sizeof(padded));
+    memcpy(padded,helper,sizeof(helper)-1);
+    sources[1].source_utf8=(bc_slice){padded,sizeof(padded)};
+    assert(bc_compile(engine,sources,2,empty,&program,&diagnostic)==BC_RESOURCE_LIMIT);
+    assert(program==0 && diagnostic.source_index==UINT32_MAX);
+    --sources[1].source_utf8.len;
+    assert(bc_compile(engine,sources,2,empty,&program,&diagnostic)==BC_OK && program);
+    expect_diagnostic(&diagnostic,BC_OK);
+    memset(padded,0,sizeof(padded));
+    uint8_t config[1024];
+    const bc_slice run={config,read_fixture("run.json",config,sizeof(config))};
+    assert(bc_instance_create(engine,program,empty,run,&instance,&diagnostic)==BC_OK);
+    assert(bc_program_release(engine,program)==BC_OK);
+    const bc_event result=finish_revision_two(instance,64);
+    assert(result.kind==BC_DONE && result.return_i32==77);
+    assert(bc_instance_destroy(instance)==BC_OK);
+    puts("PASS: two module sources, second-source diagnostics, policy count, and total byte limit");
+}
+
 static void revision_two_programs(bc_handle engine,bc_slice policy){
     static const uint8_t module[]="main";
     static const uint8_t invalid[]="module main; pub fn bool main(){return true;}";
@@ -529,7 +591,7 @@ static void revision_two_programs(bc_handle engine,bc_slice policy){
     diagnostic.struct_size=sizeof(diagnostic);
     assert(bc_compile(engine,NULL,1,empty,&program,&diagnostic)==BC_BAD_ARGUMENT && program==0);
     assert(bc_compile(engine,&source,0,empty,&program,&diagnostic)==BC_BAD_ARGUMENT && program==0);
-    assert(bc_compile(engine,&source,2,empty,&program,&diagnostic)==BC_BAD_ARGUMENT && program==0);
+    assert(bc_compile(engine,&source,17,empty,&program,&diagnostic)==BC_RESOURCE_LIMIT && program==0);
     assert(bc_compile(engine,&source,1,(bc_slice){NULL,1},&program,&diagnostic)==BC_BAD_ARGUMENT);
     assert(bc_compile(engine,&source,1,(bc_slice){module,1},&program,&diagnostic)==BC_POLICY_ERROR);
     expect_diagnostic(&diagnostic,BC_POLICY_ERROR);
@@ -641,6 +703,7 @@ static void revision_two_engines(void){
     assert(handle!=0);
     expect_diagnostic(&diagnostic,BC_OK);
     revision_two_programs(handle,(bc_slice){policy,length});
+    revision_two_modules(handle,(bc_slice){policy,length});
     revision_two_byte_inputs(handle);
     revision_two_shared_descriptors(handle);
     revision_two_slot_limits(handle);

@@ -1,7 +1,6 @@
-- Latest runtime checkpoint (2026-11-21): [Cancellable Instance preparation](docs/engineering/embed-preview.md#revision-2-scalar-instance-preparation)
-  accepts a Windows event and rolls back an unpublished Instance at the native
-  publication boundary. Windows /Od and /O2 verify cancellation during input
-  copying and a successful retry.
+- Latest runtime checkpoint (2026-11-21): [Multi-module embedding](docs/engineering/embed-preview.md#revision-2-scalar-programs)
+  admits revision-2 source sets without a catalog. Windows /Od and /O2 verify
+  second-source diagnostics, policy limits and execution after Program release.
 
 # Brownie C agent guidance
 

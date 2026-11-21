@@ -76,14 +76,15 @@ untouched. Destroy a revision-2 Engine on its creating thread with
 
 ## Revision-2 scalar Programs
 
-`bc_compile` accepts one `bc_source` whose module slice is `main` and whose
-source declares `module main;` with a public `fn i32 main()` or
-`fn i32 main(ref u8[] data)`. For catalog-backed Programs, pass an explicit
-`brownie.catalog/1` document of at most 16,384 bytes. The source is copied during the call and may be reused when
-it returns. The existing Engine applies its configured compile deadline,
-working-memory limit and Program retention limits. The source ceiling is the
-smaller of 4096 bytes and the Engine's `compile.source_bytes` limit. Wiring
-the remaining compile policy fields into source admission is still pending.
+`bc_compile` accepts 1 to 16 `bc_source` rows and up to 4096 total source bytes,
+subject to the Engine's `compile.modules` and `compile.source_bytes` limits.
+Each canonical module name must match its source declaration. Imports resolve
+within the supplied set. The entry remains public `main::main` with signature
+`fn i32 main()` or `fn i32 main(ref u8[] data)`. Catalog-backed compilation
+accepts one `main` module and up to 16,384 bytes of `brownie.catalog/1` JSON.
+The caller can reuse the source and catalog storage when compilation returns.
+The Engine applies its configured deadline, working-memory limit and Program
+retention limits.
 
 Initialize the diagnostic's exact `struct_size`. The call zeros the output
 handle on entry and publishes a Program only after compilation and handle
@@ -108,6 +109,11 @@ The native C host passed both Windows `/Od` and `/O2` builds. It verifies
 4096-byte admission and 4097-byte rejection, exact source diagnostics,
 cross-Engine and cross-revision rejection, and stale Program handles.
 An Engine configured for 42 source bytes accepts exactly 42 and rejects 43.
+The two-module fixture returns 77 after source storage is overwritten and the
+Program handle is released. Both profiles verify original byte ranges in the
+second source, duplicate and mismatched names, a policy limit of one module,
+and the shared 4096-byte source ceiling. Local receipt:
+`build/embed-preview-ow92mzge/receipt.json`.
 Both builds also verify the entry info fields, failure output preservation,
 and rejection across threads, Engines, ABI revisions and stale handles.
 

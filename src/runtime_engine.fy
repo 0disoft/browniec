@@ -334,6 +334,12 @@ pub fn usize source_byte_limit(ref Engine e){
     let policy_limits::CompileLimits bounds=policy::compile_limits(vec::at<policy::Policy>(ref e.policy,0));
     return if(bounds.source_bytes<ceiling){bounds.source_bytes}else{ceiling};
 }
+pub fn usize source_module_limit(ref Engine e){
+    let usize ceiling=sources::file_limit();
+    if(!e.meta.configured){return ceiling;}
+    let usize limit=policy::compile_limits(vec::at<policy::Policy>(ref e.policy,0)).modules;
+    return if(limit<ceiling){limit}else{ceiling};
+}
 fn Result<sources::Snapshot,Error> load_project(ref Engine e,ref projects::Project metadata,ref u8[] root,usize deadline){
     let usize limit=source_byte_limit(e);
     return project_snapshot(project_loader::load_until(metadata,root,limit,deadline));

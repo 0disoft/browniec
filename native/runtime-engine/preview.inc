@@ -140,7 +140,7 @@ uint32_t BC_CALL bc_engine_create(uint32_t revision,bc_slice policy,bc_handle *o
     return engine_diagnostic(diagnostic,create_engine(revision,policy,out));
 }
 
-static uint32_t compile_diagnostic(bc_diagnostic *out,uint32_t status,bc_slice source,
+static uint32_t compile_diagnostic(bc_diagnostic *out,uint32_t status,const bc_source *sources,size_t count,
                                    size_t index,size_t start,size_t end){
     if(!out){return status;}
     const char *message;
@@ -157,8 +157,8 @@ static uint32_t compile_diagnostic(bc_diagnostic *out,uint32_t status,bc_slice s
     default: message="Compilation failed";break;
     }
     bc_diagnostic result=diagnostic_result(status,message);
-    if(status!=BC_OK && index==0 && start<=end && end<=source.len){
-        result.source_index=0;
+    if(status!=BC_OK && index<count && start<=end && end<=sources[index].source_utf8.len){
+        result.source_index=(uint32_t)index;
         result.byte_start=(uint32_t)start;
         result.byte_end=(uint32_t)end;
     }
@@ -214,26 +214,55 @@ static void free_program(preview_child *program){
     HeapFree(GetProcessHeap(),0,program);
 }
 
-static uint32_t compile_program(bc_handle engine,uint32_t revision,bc_slice source,bc_slice catalog,bc_handle *out,
-                                 bc_diagnostic *diagnostic){
+const uint8_t *bc_embed_source_data(const void *rows,uintptr_t index,uint32_t module_name){
+    const bc_source *source=(const bc_source *)rows+index;
+    return module_name?source->module.data:source->source_utf8.data;
+}
+
+uintptr_t bc_embed_source_size(const void *rows,uintptr_t index,uint32_t module_name){
+    const bc_source *source=(const bc_source *)rows+index;
+    return module_name?source->module.len:source->source_utf8.len;
+}
+
+static bool is_main(bc_slice name){return name.data && name.len==4 && memcmp(name.data,"main",4)==0;}
+
+static uint32_t validate_compile_sources(const bc_source *sources,size_t count,bc_slice catalog){
+    if(!sources||!count||(!catalog.data&&catalog.len)){return BC_BAD_ARGUMENT;}
+    if(count>16||catalog.len>16384){return BC_RESOURCE_LIMIT;}
+    if(catalog.len && (count!=1||!is_main(sources[0].module))){return BC_BAD_ARGUMENT;}
+    size_t bytes=0;
+    for(size_t i=0;i<count;++i){
+        const bc_source source=sources[i];
+        if(!source.module.data||!source.module.len||!source.source_utf8.data||!source.source_utf8.len){
+            return BC_BAD_ARGUMENT;
+        }
+        if(source.module.len>128||source.source_utf8.len>4096-bytes){return BC_RESOURCE_LIMIT;}
+        bytes+=source.source_utf8.len;
+    }
+    return BC_OK;
+}
+
+static uint32_t compile_program(bc_handle engine,uint32_t revision,const bc_source *sources,size_t count,
+                                 bc_slice catalog,bc_handle *out,bc_diagnostic *diagnostic){
     size_t index=SIZE_MAX,start=0,end=0;
-    if(!out||!source.data||!source.len){return compile_diagnostic(diagnostic,BC_BAD_ARGUMENT,source,index,0,0);}
-    if(source.len>4096){return compile_diagnostic(diagnostic,BC_RESOURCE_LIMIT,source,index,0,0);}
+    uint32_t status=out?validate_compile_sources(sources,count,catalog):BC_BAD_ARGUMENT;
+    if(status!=BC_OK){return compile_diagnostic(diagnostic,status,NULL,0,index,0,0);}
     bc_abi_registry_admission admission;
-    uint32_t status=bc_abi_registry_enter(engine,ENGINE_HANDLE,engine,&admission);
-    if(status!=BC_OK){return compile_diagnostic(diagnostic,status,source,index,0,0);}
+    status=bc_abi_registry_enter(engine,ENGINE_HANDLE,engine,&admission);
+    if(status!=BC_OK){return compile_diagnostic(diagnostic,status,NULL,0,index,0,0);}
     preview_engine *owner=(preview_engine *)(uintptr_t)admission.object;
     if(owner->revision!=revision){
         leave_preview(&admission);
-        return compile_diagnostic(diagnostic,BC_INVALID_HANDLE,source,index,0,0);
+        return compile_diagnostic(diagnostic,BC_INVALID_HANDLE,NULL,0,index,0,0);
     }
     preview_child *program=HeapAlloc(GetProcessHeap(),0,sizeof(*program));
     if(!program){
         leave_preview(&admission);
-        return compile_diagnostic(diagnostic,BC_ALLOCATION_ERROR,source,index,0,0);
+        return compile_diagnostic(diagnostic,BC_ALLOCATION_ERROR,NULL,0,index,0,0);
     }
     *program=(preview_child){.owner=owner};
     if(catalog.len){
+        const bc_slice source=sources[0].source_utf8;
         __typeof__(P14(&owner->engine,source.data,source.len,catalog.data,catalog.len)) compiled=
             P14(&owner->engine,source.data,source.len,catalog.data,catalog.len);
         if(compiled.tag==FY_RESULT_OK){
@@ -250,8 +279,8 @@ static uint32_t compile_program(bc_handle engine,uint32_t revision,bc_slice sour
             end=compiled.p_1.f_1.f_1.f_2;
         }
     }else{
-        __typeof__(P2(&owner->engine,source.data,source.len,0)) compiled=
-            P2(&owner->engine,source.data,source.len,revision==BC_ABI_REVISION);
+        __typeof__(P2(&owner->engine,sources,count,false)) compiled=
+            P2(&owner->engine,sources,count,revision==BC_ABI_REVISION);
         if(compiled.tag==FY_RESULT_OK){
             program->id=compiled.p_0.f_0;
             program->program.input_kind=compiled.p_0.f_1?BC_INPUT_BYTES:BC_INPUT_NONE;
@@ -271,27 +300,19 @@ static uint32_t compile_program(bc_handle engine,uint32_t revision,bc_slice sour
         free_program(program);
     }
     leave_preview(&admission);
-    return compile_diagnostic(diagnostic,preview_status(status),source,index,start,end);
+    return compile_diagnostic(diagnostic,preview_status(status),sources,count,index,start,end);
 }
 
 uint32_t BC_CALL bc_preview_compile(bc_handle engine,bc_slice source,bc_handle *out){
-    return compile_program(engine,BC_PREVIEW_REVISION,source,(bc_slice){0},out,NULL);
+    const bc_source row={{(const uint8_t *)"main",4},source};
+    return compile_program(engine,BC_PREVIEW_REVISION,&row,1,(bc_slice){0},out,NULL);
 }
-
-static int is_main(bc_slice name){return name.data && name.len==4 && memcmp(name.data,"main",4)==0;}
 
 uint32_t BC_CALL bc_compile(bc_handle engine,const bc_source *sources,uint32_t source_count,
                             bc_slice catalog,bc_handle *out,bc_diagnostic *diagnostic){
     if(out){*out=0;}
     if(!diagnostic||diagnostic->struct_size!=sizeof(*diagnostic)){return BC_BAD_ARGUMENT;}
-    if(!out||!sources||source_count!=1||(!catalog.data&&catalog.len)){
-        return compile_diagnostic(diagnostic,BC_BAD_ARGUMENT,(bc_slice){0},SIZE_MAX,0,0);
-    }
-    if(!is_main(sources[0].module)){
-        return compile_diagnostic(diagnostic,BC_BAD_ARGUMENT,(bc_slice){0},SIZE_MAX,0,0);
-    }
-    if(catalog.len>16384){return compile_diagnostic(diagnostic,BC_RESOURCE_LIMIT,(bc_slice){0},SIZE_MAX,0,0);}
-    return compile_program(engine,BC_ABI_REVISION,sources[0].source_utf8,catalog,out,diagnostic);
+    return compile_program(engine,BC_ABI_REVISION,sources,source_count,catalog,out,diagnostic);
 }
 
 uint32_t BC_CALL bc_program_entry_info(bc_handle engine,bc_handle program,bc_slice module,bc_slice function,
