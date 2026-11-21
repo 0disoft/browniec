@@ -1,7 +1,6 @@
-- Latest runtime checkpoint (2026-11-21): [Host output seal](docs/engineering/host-exchange.md#termination-with-staged-guest-output)
-  transfers the staged output and releases the execution image, catalog and
-  exchange slots. Windows /Od and /O2 verify exact retained bytes and no
-  allocation during seal.
+- Latest runtime checkpoint (2026-11-21): [Catalog-backed trap locations](docs/engineering/embed-preview.md#catalog-backed-trap-locations)
+  preserve the original source row and byte range through a host reply and
+  Program release. Windows /Od and /O2 verify both source orders.
 
 # Brownie C agent guidance
 

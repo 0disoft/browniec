@@ -592,6 +592,7 @@ pub fn Result<ScalarEvent,ScalarError> observe_scalar(ref Exchange e){
     if(!is_scalar(e)){return .err(.State);}
     return .ok(scalar_event(e));
 }
+pub fn usize current_instruction(ref Exchange e){return header(e)[80] as usize;}
 fn ScalarEvent scalar_event(ref Exchange e){
     let ref u8[] data=header(e);
     let Observation host=state(e);

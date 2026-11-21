@@ -9,10 +9,12 @@ import std::vec as vec;
 import verifier as verifier;
 import types as types;
 import host_wire as wire;
+import source_snapshot as sources;
 
 // Private scalar host dialect. The ordinary verifier still rejects opcode 117.
 pub enum Error { Code; Catalog; Binding; Authority; Allocation; }
 struct Digest { u32[8] words; }
+pub struct SourceMap { usize[16] lengths; }
 pub resource Program {
     vec::Vec<ir::Program> code;
     catalog::Catalog catalog;
@@ -20,6 +22,7 @@ pub resource Program {
     usize required;
     bytes::Buffer module_name;
     bytes::Buffer function_name;
+    SourceMap sources;
     cleanup { }
 }
 
@@ -170,7 +173,7 @@ fn bool allowed_imports(ref catalog::Catalog imports,usize required,ref runs::Ru
 }
 
 pub fn Result<Program,Error> retain(ref ir::Program code,catalog::Catalog imports,
-    ref u32[] expected,ref policy::Policy ceiling,ref runs::RunConfig run){
+    ref u32[] expected,ref policy::Policy ceiling,ref runs::RunConfig run,SourceMap map){
     let u32[8] digest=switch(catalog::digest(ref imports)){
         case .ok(v):{v}case .err(_):{return .err(.Catalog);}
     };
@@ -180,13 +183,13 @@ pub fn Result<Program,Error> retain(ref ir::Program code,catalog::Catalog import
         (has_emit(code) && !allows_output(run))){
         return .err(.Authority);
     }
-    return publish(code,imports,digest,required,runs::module_name(run),runs::function_name(run));
+    return publish(code,imports,digest,required,runs::module_name(run),runs::function_name(run),map);
 }
 
 // Compilation binds the Engine ceiling and verified import set. Each Instance
 // must independently declare and receive the required capabilities at admission.
 pub fn Result<Program,Error> retain_for_entry(ref ir::Program code,catalog::Catalog imports,
-    ref policy::Policy ceiling,ref u8[] module_name,ref u8[] function_name){
+    ref policy::Policy ceiling,ref u8[] module_name,ref u8[] function_name,SourceMap map){
     let usize required=inspect(code,ref imports)?;
     let usize one=1;
     var usize id=0;
@@ -203,11 +206,11 @@ pub fn Result<Program,Error> retain_for_entry(ref ir::Program code,catalog::Cata
     let u32[8] digest=switch(catalog::digest(ref imports)){
         case .ok(v):{v}case .err(_):{return .err(.Catalog);}
     };
-    return publish(code,imports,digest,required,module_name,function_name);
+    return publish(code,imports,digest,required,module_name,function_name,map);
 }
 
 fn Result<Program,Error> publish(ref ir::Program code,catalog::Catalog imports,u32[8] digest,
-    usize required,ref u8[] module_name,ref u8[] function_name){
+    usize required,ref u8[] module_name,ref u8[] function_name,SourceMap map){
     let bytes::Buffer scope=switch(bytes::copy(module_name)){
         case .ok(v):{v}case .err(_):{return .err(.Allocation);}
     };
@@ -218,7 +221,40 @@ fn Result<Program,Error> publish(ref ir::Program code,catalog::Catalog imports,u
     if(!vec::reserve<ir::Program>(ref mut retained,1).is_ok){return .err(.Allocation);}
     if(!vec::push<ir::Program>(ref mut retained,*code).is_ok){return .err(.Allocation);}
     return .ok(Program{.code=retained,.catalog=imports,.digest=Digest{.words=digest},.required=required,
-        .module_name=scope,.function_name=name});
+        .module_name=scope,.function_name=name,.sources=map});
+}
+
+// The compiler assigns instruction offsets in concatenated source order.
+pub fn SourceMap unknown_sources(){return SourceMap{.lengths=[0;16]};}
+pub fn SourceMap single_source(usize length){
+    var SourceMap result=SourceMap{.lengths=[0;16]};
+    result.lengths[0]=length;
+    return result;
+}
+pub fn SourceMap source_set(ref sources::Snapshot snapshot){
+    var SourceMap result=SourceMap{.lengths=[0;16]};
+    var usize i=0;
+    while(i<sources::count(snapshot)){
+        let sources::Span source=switch(sources::whole(snapshot,i)){
+            case .ok(value):{value}case .err(_):{assert(false);sources::no_source()}
+        };
+        result.lengths[i]=source.end;
+        i+=1;
+    }
+    return result;
+}
+pub fn sources::Span instruction_span(ref Program p,usize pc){
+    let ref ir::Program image=code(p);
+    if(pc>=image.count){return sources::no_source();}
+    var usize start=image.offsets[pc];
+    var usize i=0;
+    while(i<sources::file_limit()){
+        let usize length=p.sources.lengths[i];
+        if(start<length){return sources::Span{.source=i,.start=start,.end=start+1};}
+        start-=length;
+        i+=1;
+    }
+    return sources::no_source();
 }
 
 pub fn usize heap_bytes(ref Program p,usize ir_stride){

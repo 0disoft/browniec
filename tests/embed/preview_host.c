@@ -899,15 +899,15 @@ static bc_event next_host_event(bc_handle instance,uint32_t quantum){
     return event;
 }
 
-static void revision_two_host_exchange(void){
+static void revision_two_host_exchange(uint32_t rules_index){
     static const uint8_t quote_module[]="pricing::quote",quote_function[]="quote";
     static const uint8_t rules_name[]="pricing::rules";
     uint8_t source_text[]=
         "module pricing::quote; import pricing::rules as rules; "
-        "pub fn i32 quote(){return rules::check(41) + 35;}";
+        "pub fn i32 quote(){return rules::check(41);}";
     uint8_t rules_text[]=
         "module pricing::rules; import host::example as api; "
-        "pub fn i32 check(i32 order){return api::check(order);}";
+        "pub fn i32 check(i32 order){return api::check(order) + 35;}";
     uint8_t catalog[]="{\"schema\":\"brownie.catalog/1\",\"imports\":["
         "{\"id\":0,\"module\":\"host::example\",\"symbol\":\"check\","
         "\"parameters\":[\"i32\"],\"result\":\"Result<i32,u32>\",\"effect\":\"read\","
@@ -921,19 +921,19 @@ static void revision_two_host_exchange(void){
     const bc_slice pure=named_run("run.json",pure_data,sizeof(pure_data),"pricing::quote","quote");
     const bc_slice empty={0};
     const bc_slice name={quote_module,sizeof(quote_module)-1},function={quote_function,sizeof(quote_function)-1};
-    bc_source sources[]={
-        {name,{source_text,sizeof(source_text)-1}},
-        {{rules_name,sizeof(rules_name)-1},{rules_text,sizeof(rules_text)-1}},
-    };
-    bc_handle engine=0,program=0,one=0,many=0,cancelled=0,fatal=0;
+    const uint32_t plus=(uint32_t)(strchr((const char *)rules_text,'+')-(const char *)rules_text);
+    bc_source sources[2];
+    sources[1-rules_index]=(bc_source){name,{source_text,sizeof(source_text)-1}};
+    sources[rules_index]=(bc_source){{rules_name,sizeof(rules_name)-1},{rules_text,sizeof(rules_text)-1}};
+    bc_handle engine=0,program=0,one=0,many=0,cancelled=0,fatal=0,overflow=0;
     bc_diagnostic diagnostic={.struct_size=sizeof(diagnostic)};
     assert(bc_engine_create(BC_ABI_REVISION,policy,&engine,&diagnostic)==BC_OK);
     const bc_slice catalog_json={catalog,sizeof(catalog)-1};
-    sources[1].module=(bc_slice){(const uint8_t *)"other",5};
+    sources[rules_index].module=(bc_slice){(const uint8_t *)"other",5};
     assert(bc_preview_compile_entry(engine,sources,2,catalog_json,name,function,&program,&diagnostic)==BC_COMPILE_ERROR);
-    assert(!program && diagnostic.source_index==1);
+    assert(!program && diagnostic.source_index==rules_index);
     assert(diagnostic.byte_start==7 && diagnostic.byte_end==7+sizeof(rules_name)-1);
-    sources[1].module=(bc_slice){rules_name,sizeof(rules_name)-1};
+    sources[rules_index].module=(bc_slice){rules_name,sizeof(rules_name)-1};
     assert(bc_preview_compile_entry(engine,sources,2,catalog_json,name,function,&program,&diagnostic)==BC_OK);
     memset(source_text,0,sizeof(source_text));
     memset(rules_text,0,sizeof(rules_text));
@@ -949,6 +949,7 @@ static void revision_two_host_exchange(void){
     assert(bc_instance_create(engine,program,empty,run,&many,&diagnostic)==BC_OK);
     assert(bc_instance_create(engine,program,empty,run,&cancelled,&diagnostic)==BC_OK);
     assert(bc_instance_create(engine,program,empty,run,&fatal,&diagnostic)==BC_OK);
+    assert(bc_instance_create(engine,program,empty,run,&overflow,&diagnostic)==BC_OK);
     assert(bc_program_release(engine,program)==BC_OK);
 
     const bc_event a=next_host_event(one,1),b=next_host_event(many,64);
@@ -983,6 +984,20 @@ static void revision_two_host_exchange(void){
     assert(bc_host_reply(fatal,fatal_request.request_id,BC_REPLY_FATAL,empty,&diagnostic)==BC_OK);
     const bc_event fatal_event=next_host_event(fatal,1);
     assert(fatal_event.kind==BC_FAILED && fatal_event.diagnostic.code==20 && fatal_event.payload.len==0);
+    const uint8_t largest_i32[]={3,0,0,0,4,0,0,0,255,255,255,127};
+    const bc_event overflow_request=next_host_event(overflow,64);
+    assert(overflow_request.kind==BC_HOST_REQUEST);
+    assert(bc_host_reply(overflow,overflow_request.request_id,BC_REPLY_OK,
+        (bc_slice){largest_i32,sizeof(largest_i32)},&diagnostic)==BC_OK);
+    const bc_event trap=next_host_event(overflow,64);
+    assert(trap.kind==BC_TRAP && trap.trap_code==6 && trap.diagnostic.code==6);
+    assert(trap.diagnostic.source_index==rules_index);
+    assert(trap.diagnostic.byte_start==plus && trap.diagnostic.byte_end==plus+1);
+    const bc_event again=next_host_event(overflow,1);
+    assert(memcmp(&again,&trap,sizeof(trap))==0);
+    assert(cancelled_event.diagnostic.source_index==UINT32_MAX);
+    assert(fatal_event.diagnostic.source_index==UINT32_MAX);
+    assert(bc_instance_destroy(overflow)==BC_OK);
     assert(bc_instance_destroy(one)==BC_OK && bc_instance_destroy(many)==BC_OK);
     assert(bc_instance_destroy(cancelled)==BC_OK && bc_instance_destroy(fatal)==BC_OK);
     assert(bc_host_reply(one,a.request_id,BC_REPLY_FATAL,empty,&diagnostic)==BC_INVALID_HANDLE);
@@ -1170,7 +1185,9 @@ int main(void){
     assert(bc_preview_engine_destroy(engine)==BC_INVALID_HANDLE);
     independent_engine_threads();
     revision_two_engines();
-    revision_two_host_exchange();
+    revision_two_host_exchange(0);
+    revision_two_host_exchange(1);
+    puts("PASS: catalog-backed traps preserve original spans in both source orders");
     revision_two_large_host_reply();
     printf("PASS: quanta 1/64 return 77 and consume %" PRIu64 " fuel; cancellation and ownership verified\n",a.fuel_used);
     puts("PASS: four owner threads independently compiled, stepped, and destroyed their Engines without retries");

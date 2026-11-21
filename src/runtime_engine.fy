@@ -75,7 +75,7 @@ pub struct HostRequestInfo {
     usize run; usize request; usize import_id; usize payload_bytes; host::Binding catalog;
     usize deadline; usize reply_limit;
 }
-struct HostTransition { Event event; host::ScalarEvent scalar; }
+struct HostTransition { Event event; host::ScalarEvent scalar; usize trap_pc; }
 pub struct Snapshot { usize programs; usize instances; usize pins; bool closed; }
 struct Meta {
     Limits limits; usize thread; usize lifetime; usize active; usize admission;
@@ -498,7 +498,7 @@ pub fn Result<usize,Error> compile_scalar_host(ref mut Engine e,ref u8[] source,
                 .code=problem,.at=sources::Span{.source=0,.start=at,.end=if(at<source.len){at+1}else{at}}}});
         }
     };
-    return retain_limited_host(e,ref code,imports,digest,run,limits,deadline);
+    return retain_limited_host(e,ref code,imports,digest,run,limits,deadline,host_program::single_source(source.len));
 }
 
 fn bool project_host_authority(ref projects::Project project,ref run_config::RunConfig run){
@@ -559,13 +559,14 @@ pub fn Result<usize,Error> compile_preview_host(ref mut Engine e,sources::Snapsh
     discard lower_indexed_host(ref index,selected,ref imports,ref mut code,deadline)?;
     discard check_host_image(ref code,limits)?;
     if(clock::expired(deadline)){return .err(compile_timeout());}
-    let host_program::Program verified=verify_preview_host(e,ref code,imports,module_name,function_name)?;
+    let host_program::SourceMap map=host_program::source_set(modules::snapshot(ref index));
+    let host_program::Program verified=verify_preview_host(e,ref code,imports,module_name,function_name,map)?;
     return publish_verified_host(e,verified,deadline);
 }
 fn Result<host_program::Program,Error> verify_preview_host(ref Engine e,ref ir::Program code,host_catalog::Catalog imports,
-    ref u8[] module_name,ref u8[] function_name){
+    ref u8[] module_name,ref u8[] function_name,host_program::SourceMap map){
     let Result<host_program::Program,host_program::Error> checked=host_program::retain_for_entry(code,imports,
-        vec::at<policy::Policy>(ref e.policy,0),module_name,function_name);
+        vec::at<policy::Policy>(ref e.policy,0),module_name,function_name,map);
     return host_verification(checked);
 }
 fn Error host_binding_error(modules::Error e){
@@ -575,7 +576,8 @@ fn Result<usize,Error> retain_project_host(ref mut Engine e,ref modules::Index i
     host_catalog::Catalog imports,ref u32[] digest,ref run_config::RunConfig run,policy_limits::CompileLimits limits,usize deadline){
     var ir::Program code=ir::empty();
     discard lower_indexed_host(index,selected,ref imports,ref mut code,deadline)?;
-    return retain_limited_host(e,ref code,imports,digest,run,limits,deadline);
+    let host_program::SourceMap map=host_program::source_set(modules::snapshot(index));
+    return retain_limited_host(e,ref code,imports,digest,run,limits,deadline,map);
 }
 fn Result<usize,Error> lower_indexed_host(ref modules::Index index,usize selected,ref host_catalog::Catalog imports,
     ref mut ir::Program code,usize deadline){
@@ -585,9 +587,9 @@ fn Result<usize,Error> lower_indexed_host(ref modules::Index index,usize selecte
     };
 }
 fn Result<usize,Error> retain_limited_host(ref mut Engine e,ref ir::Program code,host_catalog::Catalog imports,
-    ref u32[] digest,ref run_config::RunConfig run,policy_limits::CompileLimits limits,usize deadline){
+    ref u32[] digest,ref run_config::RunConfig run,policy_limits::CompileLimits limits,usize deadline,host_program::SourceMap map){
     discard check_host_image(code,limits)?;
-    return retain_verified_host(e,code,imports,digest,run,deadline);
+    return retain_verified_host(e,code,imports,digest,run,deadline,map);
 }
 fn Result<usize,Error> check_host_image(ref ir::Program code,policy_limits::CompileLimits limits){
     if(code.count>limits.instructions || code.function_count>limits.functions){return .err(error(8));}
@@ -604,12 +606,12 @@ pub fn Result<usize,Error> retain_scalar_host(ref mut Engine e,ref ir::Program c
     ref u32[] digest,ref run_config::RunConfig run){
     let usize checked=check_run_policy(e,run)?;
     let usize deadline=compile_deadline(e,0)?;
-    return retain_verified_host(e,code,imports,digest,run,deadline);
+    return retain_verified_host(e,code,imports,digest,run,deadline,host_program::unknown_sources());
 }
 fn Result<usize,Error> retain_verified_host(ref mut Engine e,ref ir::Program code,host_catalog::Catalog imports,
-    ref u32[] digest,ref run_config::RunConfig run,usize deadline){
+    ref u32[] digest,ref run_config::RunConfig run,usize deadline,host_program::SourceMap map){
     if(clock::expired(deadline)){return .err(compile_timeout());}
-    let host_program::Program verified=verify_scalar_host(e,code,imports,digest,run)?;
+    let host_program::Program verified=verify_scalar_host(e,code,imports,digest,run,map)?;
     return publish_verified_host(e,verified,deadline);
 }
 fn Result<usize,Error> publish_verified_host(ref mut Engine e,host_program::Program verified,usize deadline){
@@ -620,12 +622,12 @@ fn Result<usize,Error> publish_verified_host(ref mut Engine e,host_program::Prog
 }
 
 fn Result<host_program::Program,Error> verify_scalar_host(ref Engine e,ref ir::Program code,host_catalog::Catalog imports,
-    ref u32[] digest,ref run_config::RunConfig run){
+    ref u32[] digest,ref run_config::RunConfig run,host_program::SourceMap map){
     let usize checked=check_run_policy(e,run)?;
     if(e.meta.poisoned){return .err(error(14));}
     if(e.meta.admission==0 || e.meta.next==0 || vec::len<Program>(ref e.programs)>=e.meta.limits.programs){return .err(error(8));}
     let Result<host_program::Program,host_program::Error> proof=host_program::retain(code,imports,digest,
-        vec::at<policy::Policy>(ref e.policy,0),run);
+        vec::at<policy::Policy>(ref e.policy,0),run,map);
     return host_verification(proof);
 }
 fn Result<host_program::Program,Error> host_verification(Result<host_program::Program,host_program::Error> checked){
@@ -2134,7 +2136,10 @@ fn u32 drive_host_owner(ref mut vec::Vec<host::Exchange> owners,u32 mode,usize q
         let bool cancel=failed && observed.host.cause==1;
         let u8 event_kind=if(done){1}else if(cancel){3}else if(failed){2}else if(observed.phase==1){4}else{0};
         let u8 diagnostic=if(observed.failure==2){6}else if(observed.failure==4){12}else if(observed.host.cause==3 || observed.host.cause==7){20}else if(observed.host.cause==5){8}else if(observed.host.cause==8){13}else if(observed.host.cause==4){15}else if(observed.host.cause==2){errors::deadline_kind()}else{0};
-        *transition=HostTransition{.scalar=observed,.event=Event{.kind=event_kind,.value=observed.value,
+        let bool guest_trap=diagnostic==6 || diagnostic==8 || diagnostic==12 || diagnostic==13;
+        *transition=HostTransition{.scalar=observed,
+            .trap_pc=if(guest_trap){host::current_instruction(exchange)}else{256},
+            .event=Event{.kind=event_kind,.value=observed.value,
             .diagnostic=diagnostics::absent(errors::make(diagnostic,0)),.remaining=observed.host.fuel,.fuel_known=true}};
         if(observed.phase!=0 || mode!=0){return 0;}
     }
@@ -2177,7 +2182,7 @@ fn u32 drive_host(ref mut Meta m,ref vec::Vec<Program> p,ref mut vec::Vec<Instan
     ref mut vec::Vec<Output> scratch,usize ii,u32 mode,usize quantum,usize run,usize request,u8 kind,ref u8[] payload,usize offset){
     let usize id=vec::at<Instance>(v,ii).id;
     let usize oi=switch(output_index(outputs,id)){case .ok(i):{i}case .err(_):{return contain_execution_fault(m,p,v,outputs);}};
-    var HostTransition next=HostTransition{.scalar=host::empty_scalar_event(),.event=pending()};
+    var HostTransition next=HostTransition{.scalar=host::empty_scalar_event(),.event=pending(),.trap_pc=256};
     var u32 status=0;
     {let ref mut Output saved=vec::at_mut<Output>(outputs,oi);
      status=unsafe{drive_host_raw(saved as ptr mut void,mode,quantum,run,request,kind,
@@ -2194,6 +2199,17 @@ fn u32 drive_host(ref mut Meta m,ref vec::Vec<Program> p,ref mut vec::Vec<Instan
         output_programs::heap_bytes(ref saved.run)
     }else{0};
     if(retained>before.output_bytes){return contain_execution_fault(m,p,v,outputs);}
+    if(next.trap_pc<256){
+        let usize pi=switch(program_index(p,before.program,false)){
+            case .ok(i):{i}case .err(_):{return contain_execution_fault(m,p,v,outputs);}
+        };
+        let ref Program program=vec::at<Program>(p,pi);
+        if(vec::len<host_program::Program>(ref program.host)!=1){return contain_execution_fault(m,p,v,outputs);}
+        let sources::Span span=host_program::instruction_span(vec::at<host_program::Program>(ref program.host,0),next.trap_pc);
+        if(span.source<sources::file_limit()){
+            next.event.diagnostic=diagnostics::Error{.code=errors::make(next.event.diagnostic.code.kind,span.start),.at=span};
+        }
+    }
     let ref mut Instance target=vec::at_mut<Instance>(v,ii);
     target.event=next.event;
     if(next.scalar.phase==3 || next.scalar.phase==4){
@@ -3011,7 +3027,7 @@ fn void retain_host_bindings(ref mut Meta m,ref mut vec::Vec<Program> p,
     };
     unsafe{binding_raw(40)};discard reply_host_inner(m,p,v,outputs,output_scratch,0,0,0,0,b"",0,0);
     var vec::Vec<host::Exchange> owners=vec::empty<host::Exchange>();
-    var HostTransition next=HostTransition{.scalar=host::empty_scalar_event(),.event=pending()};
+    var HostTransition next=HostTransition{.scalar=host::empty_scalar_event(),.event=pending(),.trap_pc=256};
     unsafe{binding_raw(41)};discard drive_host_owner(ref mut owners,0,0,0,0,0,b"",ref mut next,0);
     var output_programs::Completion completed=output_programs::pending_completion(0);
     var vec::Vec<pending_output::Published> published=vec::empty<pending_output::Published>();

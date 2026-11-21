@@ -336,6 +336,23 @@ missing run declaration rejection and a typed i32 reply that returned 77.
 
 ## Revision-2 host requests and replies
 
+### Catalog-backed trap locations
+
+Catalog-backed Programs retain the source lengths in caller order and reuse
+the verified instruction offsets. On a guest trap, the Engine resolves the
+faulting instruction before it releases execution storage. The terminal
+event keeps the source row and half-open byte range even after Program
+release. Cancellation and fatal host replies carry no guest source location.
+The Windows x64 map occupies 128 bytes per retained Program slot, with no
+separate allocation and at most 16 source lengths inspected per trap.
+
+The native C host passed /Od and /O2. In both source orders, replying with
+i32 maximum triggered an overflow at the imported function's addition
+operator. The C host cleared the original source buffers before stepping,
+released the Program before the reply, and observed an identical terminal
+event on the next step. Local receipt: `build/embed-preview-08jv26bx/receipt.json`.
+
+
 In the catalog-backed preview, `bc_step` returns `BC_HOST_REQUEST` once per
 request with the catalog import ID, a nonzero reply ID, and the read-only
 [typed TLV](host-wire.md) payload. Copy the payload before stepping, replying,
