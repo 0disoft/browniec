@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-22): [Catalog output authority retention](docs/engineering/restricted-worker.md#catalog-output-authority-retention)
-  stores the verified emit flag with the import mask. Windows development and
-  /O2 verify rejection when the output grant is missing and exact proof Fuel.
+- Latest runtime checkpoint (2026-11-22): [Catalog type quota Fuel](docs/engineering/restricted-worker.md#catalog-type-quota-fuel)
+  prepays the bounded type scan for a restrictive quota. Windows development
+  and /O2 verify exact and one-less compile Fuel before publication.
 
 # Brownie C agent guidance
 

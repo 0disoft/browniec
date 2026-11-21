@@ -595,6 +595,12 @@ def verify_project_host(run, need, image, folder, env):
     policy['compile']['fuel'] = full_fuel
     check('check')
     check()
+    policy['compile']['types'] = 3
+    policy['compile']['fuel'] = full_fuel + 4095
+    check(expected_exit=3, kind='compile_limit')
+    policy['compile']['fuel'] = full_fuel + 4096
+    check()
+    policy['compile']['types'] = 4096
     policy['compile']['fuel'] = original_compile_fuel
     payload = target / 'input.bin'
     payload.write_bytes(b'before')
@@ -610,7 +616,7 @@ def verify_project_host(run, need, image, folder, env):
     check(expected_exit=3, kind='compile_limit', payload=payload)
     policy['compile']['depth'] = original_depth
     check(expected_exit=4, kind='unavailable')
-    return 30
+    return 32
 
 
 def main():

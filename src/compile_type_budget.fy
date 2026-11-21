@@ -6,6 +6,9 @@ import types as types;
 import host_catalog as catalog;
 import host_program as host;
 import host_wire as wire;
+import metadata_budget as budget;
+import runtime_clock as clock;
+import errors as errors;
 
 struct Count { bool[143] seen; usize used; usize views; }
 
@@ -81,21 +84,27 @@ pub fn bool fits(ref ir::Program code,ref u8[] reference_returns,ref u8[] static
     var Count count=Count{.seen=[false;143],.used=code.records.layouts.count,.views=0};
     return image_types(ref mut count,code,reference_returns,static_kinds) && count.used<=limit;
 }
-pub fn bool fits_host(ref host::Program program,usize limit){
+pub fn Result<bool,errors::Error> fits_host(ref host::Program program,usize limit,usize deadline,ref mut usize fuel){
     let ref ir::Program code=host::code(program);
-    if(limit>=upper_bound(code)){return true;}
+    if(limit>=upper_bound(code)){return .ok(true);}
+    if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
+    // Host proof excludes arrays and records. At most 128 registers, 16
+    // returns, 17 view sites and 64 rows with one result and 32 parameters
+    // each enter this bounded scan.
+    discard budget::prepay(fuel,0)?;
     var Count count=Count{.seen=[false;143],.used=code.records.layouts.count,.views=0};
     let ref u8[] input=if(host::accepts_input(program)){b"\x03"}else{b""};
-    if(!image_types(ref mut count,code,b"",input)){return false;}
+    if(!image_types(ref mut count,code,b"",input)){return .ok(false);}
     let ref catalog::Catalog imports=host::imports(program);
     let usize used=host::requirements(program);
     let usize one=1;
     var usize id=0;
     while(id<catalog::count(imports)){
-        if((used&(one<<id))!=0 && !host_signature(ref mut count,imports,id)){return false;}
+        if((used&(one<<id))!=0 && !host_signature(ref mut count,imports,id)){return .ok(false);}
         id+=1;
     }
-    return count.used<=limit;
+    if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
+    return .ok(count.used<=limit);
 }
 fn bool host_signature(ref mut Count count,ref catalog::Catalog imports,usize id){
     let u8 result=switch(catalog::result_tag(imports,id)){

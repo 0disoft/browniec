@@ -616,7 +616,7 @@ pub fn Result<usize,Error> compile_preview_host(ref mut Engine e,sources::Snapsh
     if(clock::expired(deadline)){return .err(compile_timeout());}
     let host_program::SourceMap map=host_program::source_set(modules::snapshot(ref index));
     let host_program::Program verified=verify_preview_host(e,ref code,imports,module_name,function_name,map)?;
-    if(!compile_types::fits_host(ref verified,limits.types)){return .err(error(8));}
+    discard admit_host_types(ref verified,limits.types,deadline,ref mut fuel)?;
     return publish_verified_host(e,verified,deadline);
 }
 fn Result<host_program::Program,Error> verify_preview_host(ref Engine e,ref ir::Program code,host_catalog::Catalog imports,
@@ -680,8 +680,15 @@ fn Result<usize,Error> retain_verified_host(ref mut Engine e,ref ir::Program cod
     ref u32[] digest,ref run_config::RunConfig run,usize deadline,host_program::SourceMap map,ref mut usize fuel,usize type_limit){
     if(clock::expired(deadline)){return .err(compile_timeout());}
     let host_program::Program verified=verify_scalar_host(e,code,imports,digest,run,map,deadline,fuel)?;
-    if(!compile_types::fits_host(ref verified,type_limit)){return .err(error(8));}
+    discard admit_host_types(ref verified,type_limit,deadline,fuel)?;
     return publish_verified_host(e,verified,deadline);
+}
+fn Result<usize,Error> admit_host_types(ref host_program::Program verified,usize limit,usize deadline,ref mut usize fuel){
+    return switch(compile_types::fits_host(verified,limit,deadline,fuel)){
+        case .ok(fits):{if(fits){.ok(0)}else{.err(error(8))}}
+        case .err(e):{.err(if(e.kind==errors::deadline_kind()){compile_timeout()}
+            else{Error{.status=4,.diagnostic=diagnostics::absent(e)}})}
+    };
 }
 fn Result<usize,Error> publish_verified_host(ref mut Engine e,host_program::Program verified,usize deadline){
     var vec::Vec<host_program::Program> incoming=vec::empty<host_program::Program>();

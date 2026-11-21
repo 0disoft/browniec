@@ -961,6 +961,23 @@ compile Fuel and returns 77 with the sealed output. Windows development and
 All 456 receipt input hashes matched.
 Local receipt: `build/restricted-worker/20261121T214058194194Z/receipt.json`.
 
+### Catalog type quota Fuel
+
+After proof, the catalog compiler prepays one 4,096-unit batch when the
+configured type limit requires an explicit count. The scan visits at most 128
+registers, 16 return types, 17 view positions, 64 import rows and 2,112 entries
+in their signatures. Catalog proof excludes array and record layouts. The
+compiler checks its deadline before and after the scan, then publishes the
+Program only if the count fits. A limit at or above the conservative type
+ceiling bypasses the scan and spends zero Fuel at this stage.
+
+With a three-type quota, the two-call project fits 1,761,535 compile Fuel
+and returns 77 with sealed output. At 1,761,534, compilation fails before
+guest execution or output publication. Windows development and /O2 each
+passed 84 configured, 32 catalog and five managed project cases. All 456
+receipt input hashes matched.
+Local receipt: `build/restricted-worker/20261121T214911975597Z/receipt.json`.
+
 ## Windows verification
 
 Run `python -B tools/verify-restricted-worker.py`. The development and optimized
