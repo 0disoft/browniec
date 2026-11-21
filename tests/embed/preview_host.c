@@ -899,6 +899,53 @@ static bc_event next_host_event(bc_handle instance,uint32_t quantum){
     return event;
 }
 
+typedef struct foreign_request {
+    bc_handle instance;
+    uint64_t request_id;
+    bc_slice reply;
+} foreign_request;
+
+static DWORD WINAPI foreign_host_actions(void *arg){
+    const foreign_request *pending=arg;
+    bc_event event;
+    memset(&event,0xa5,sizeof(event));
+    event.struct_size=sizeof(event);
+    bc_event untouched;
+    memcpy(&untouched,&event,sizeof(event));
+    assert(bc_step(pending->instance,64,&event)==BC_WRONG_THREAD);
+    assert(memcmp(&event,&untouched,sizeof(event))==0);
+    bc_diagnostic diagnostic={.struct_size=sizeof(diagnostic)};
+    assert(bc_host_reply(pending->instance,pending->request_id,BC_REPLY_OK,
+        pending->reply,&diagnostic)==BC_WRONG_THREAD);
+    expect_diagnostic(&diagnostic,BC_WRONG_THREAD);
+    assert(bc_cancel(pending->instance)==BC_WRONG_THREAD);
+    assert(bc_instance_destroy(pending->instance)==BC_WRONG_THREAD);
+    return 0;
+}
+
+static void reject_invalid_host_actions(bc_handle instance,uint64_t request_id,bc_slice valid){
+    foreign_request pending={instance,request_id,valid};
+    HANDLE thread=CreateThread(NULL,0,foreign_host_actions,&pending,0,NULL);
+    assert(thread && WaitForSingleObject(thread,5000)==WAIT_OBJECT_0);
+    DWORD status=1;
+    assert(GetExitCodeThread(thread,&status) && status==0 && CloseHandle(thread));
+
+    bc_diagnostic diagnostic;
+    memset(&diagnostic,0xa5,sizeof(diagnostic));
+    diagnostic.struct_size=sizeof(diagnostic)-1;
+    bc_diagnostic untouched;
+    memcpy(&untouched,&diagnostic,sizeof(diagnostic));
+    assert(bc_host_reply(instance,request_id,BC_REPLY_OK,valid,&diagnostic)==BC_BAD_ARGUMENT);
+    assert(memcmp(&diagnostic,&untouched,sizeof(diagnostic))==0);
+
+    diagnostic.struct_size=sizeof(diagnostic);
+    assert(bc_host_reply(instance,request_id,UINT32_MAX,valid,&diagnostic)==BC_BAD_ARGUMENT);
+    expect_diagnostic(&diagnostic,BC_BAD_ARGUMENT);
+    assert(bc_host_reply(instance,request_id,BC_REPLY_OK,(bc_slice){NULL,valid.len},
+        &diagnostic)==BC_BAD_ARGUMENT);
+    expect_diagnostic(&diagnostic,BC_BAD_ARGUMENT);
+}
+
 static void revision_two_host_exchange(uint32_t rules_index){
     static const uint8_t quote_module[]="pricing::quote",quote_function[]="quote";
     static const uint8_t rules_name[]="pricing::rules";
@@ -960,6 +1007,7 @@ static void revision_two_host_exchange(uint32_t rules_index){
     assert(b.payload.len==sizeof(request) && memcmp(b.payload.data,request,sizeof(request))==0);
     assert(bc_host_reply(one,b.request_id,BC_REPLY_OK,(bc_slice){answer,sizeof(answer)},&diagnostic)==BC_BAD_ARGUMENT);
     assert(bc_host_reply(one,a.request_id,BC_REPLY_OK,(bc_slice){answer,1},&diagnostic)==BC_BAD_ARGUMENT);
+    reject_invalid_host_actions(one,a.request_id,(bc_slice){answer,sizeof(answer)});
     const bc_event waiting=next_host_event(one,1);
     assert(waiting.kind==BC_WAIT && waiting.request_id==a.request_id && waiting.fuel_used==a.fuel_used);
     assert(!waiting.payload.data && !waiting.payload.len);
@@ -1203,6 +1251,7 @@ int main(void){
     revision_two_host_exchange(1);
     puts("PASS: catalog-backed traps preserve original spans in both source orders");
     puts("PASS: unhandled Result error produces a stable host failure and no guest output");
+    puts("PASS: malformed and foreign-thread host calls leave the original request and Fuel intact");
     revision_two_large_host_reply();
     printf("PASS: quanta 1/64 return 77 and consume %" PRIu64 " fuel; cancellation and ownership verified\n",a.fuel_used);
     puts("PASS: four owner threads independently compiled, stepped, and destroyed their Engines without retries");
