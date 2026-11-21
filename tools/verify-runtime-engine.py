@@ -474,7 +474,7 @@ def main():
                       'native/host_adapter_process.c', 'native/host_adapter_process.h']
         extras = ['fairy.toml', 'toolchain.json', 'tools/verify-runtime-engine.py',
                   'tools/verify-runtime-store-probe.py', 'tools/compiler_scratch_layouts.py', 'tools/runtime-engine/test-host.inc',
-                  'native/runtime-engine/bridge.inc', 'native/runtime-engine/transport.json',
+                  'native/runtime-engine/bridge.inc', 'native/runtime-engine/clock.inc', 'native/runtime-engine/transport.json',
                   'native/abi_thread_identity.c', 'native/abi_thread_identity.h',
                   'tools/runtime-engine/heap-observer.c', 'tools/runtime-engine/compile-test-host.inc',
                   'tools/runtime-engine/adapter-fixture.c'] + os_sources
@@ -638,6 +638,7 @@ def main():
             write(output / name, inputs[name])
         write(output / 'adapter-fixture.c', inputs['tools/runtime-engine/adapter-fixture.c'])
         write(output / 'bridge.inc', inputs['native/runtime-engine/bridge.inc'])
+        write(output / 'clock.inc', inputs['native/runtime-engine/clock.inc'])
         write(output / 'test-host.inc', inputs['tools/runtime-engine/test-host.inc'])
         write(output / 'compile-test-host.inc', inputs['tools/runtime-engine/compile-test-host.inc'])
         write(output / 'transport.c', '#define main generated_main\n#include "generated.c"\n#undef main\n' +

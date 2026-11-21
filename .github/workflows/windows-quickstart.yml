@@ -20,6 +20,7 @@ on:
       - 'fairy.windows.json'
       - 'native/windows-runtime-engine.c'
       - 'native/runtime-engine/bridge.inc'
+      - 'native/runtime-engine/clock.inc'
       - 'native/abi_thread_identity.c'
       - 'native/abi_thread_identity.h'
       - 'native/host_adapter_process.c'
@@ -40,6 +41,7 @@ on:
       - 'tools/sync-cli-output.py'
       - 'tools/check-cli-contract.py'
       - 'tools/check-cli-examples.py'
+      - 'tools/check-verifier-locations.py'
       - 'tools/runtime-engine/adapter-fixture.c'
       - 'tools/setup-toolchain.py'
       - 'tools/fairyc-windows-release.patch'
@@ -165,47 +167,4 @@ jobs:
 
       - name: Check internal verifier diagnostic output
         if: steps.changes.outputs.scope != 'examples-only'
-        shell: pwsh
-        run: |
-          $compiler = (Resolve-Path ./build/toolchain/fairyc.exe).Path
-          $project = Join-Path $env:RUNNER_TEMP "browniec-cli-locations-$([guid]::NewGuid())"
-          $testDir = Join-Path $project 'tests/m2'
-          New-Item -ItemType Directory -Path $testDir | Out-Null
-          # Fairy C analyzes discovered test files before applying an exact selector.
-          Copy-Item -LiteralPath fairy.toml, fairy.lock -Destination $project
-          Copy-Item -LiteralPath src -Destination $project -Recurse
-          Copy-Item -LiteralPath tests/m2/cli_locations.fy -Destination $testDir
-
-          $identity = 'tests::m2::cli_locations::renders_verifier_instruction_index'
-          Push-Location $project
-          try {
-            $output = & $compiler test --native --release --locked --capture-output --json --exact $identity
-            $exitCode = $LASTEXITCODE
-          } finally {
-            Pop-Location
-          }
-          $output | Write-Output
-          if ($exitCode -ne 0) { throw "Verifier test exited with code $exitCode." }
-          $report = ($output -join [Environment]::NewLine) | ConvertFrom-Json
-          if ($report.status -cne 'ok' -or $report.engine -cne 'native' -or
-              $report.profile -cne 'release' -or $report.lock -cne 'verified' -or
-              $report.count -ne 1 -or $report.passed -ne 1 -or $report.failed -ne 0 -or
-              @($report.tests).Count -ne 1 -or $report.tests[0].identity -cne $identity -or
-              $report.tests[0].outcome -cne 'passed') {
-            throw 'Expected exactly one passing native release verifier test.'
-          }
-          $test = $report.tests[0]
-          $stdout = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($test.stdoutBase64))
-          $stderr = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($test.stderrBase64))
-          $indices = 0, 1
-          $expectedJson = foreach ($index in $indices) {
-            '{"schema":"browniec.result/v1","profile":"brownie.m1-scalar/1","command":"check","status":"error","return_i32":null,"error":{"kind":"verification","byte_offset":INDEX}}'.Replace('INDEX', "$index")
-            '{"schema":"browniec.result/v2","profile":"brownie.m1-scalar/1","command":"check","status":"error","return_i32":null,"error":{"kind":"verification","location":{"kind":"instruction_index","offset":INDEX}}}'.Replace('INDEX', "$index")
-          }
-          $expectedText = foreach ($index in $indices) { "browniec: verification at instruction $index" }
-          Write-Output "Captured stdout:`n$stdout"
-          Write-Output "Captured stderr:`n$stderr"
-          if ($stdout -cne (($expectedJson -join [char]10) + [char]10) -or
-              $stderr -cne (($expectedText -join [char]10) + [char]10)) {
-            throw 'Expected verifier diagnostic text and both JSON formats for instruction indices 0 and 1.'
-          }
+        run: python -B tools/check-verifier-locations.py

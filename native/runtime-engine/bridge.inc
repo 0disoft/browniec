@@ -1,14 +1,5 @@
-#include <windows.h>
-#pragma comment(lib, "mincore.lib")
+#include "clock.inc"
 
-#ifndef BC_ENGINE_INTERRUPT_TIME
-#define BC_ENGINE_INTERRUPT_TIME QueryInterruptTimePrecise
-#endif
-uintptr_t bc_runtime_engine_monotonic_ticks(void){
- ULONGLONG now;
- BC_ENGINE_INTERRUPT_TIME(&now);
- return (uintptr_t)now;
-}
 typedef struct bc_engine_ticket { bc_abi_thread_identity owner; uintptr_t epoch; } bc_engine_ticket;
 uint32_t bc_runtime_engine_bind(void *raw){
  bc_engine *e=raw;bc_abi_thread_identity id;uint32_t s=bc_abi_guard_enter(&id);if(s)return s;
