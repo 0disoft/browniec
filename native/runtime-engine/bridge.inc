@@ -37,9 +37,9 @@ uint32_t bc_runtime_engine_begin_compile(void *raw,void *incoming,uintptr_t limi
  bc_engine *e=raw;bc_engine_ticket ticket;uint32_t s=admission(e,&ticket);if(s)return s;
  s=B44(&e->f_0,&e->f_9,&e->f_10,(bc_engine_input *)incoming,limit,deadline,output!=0);return finish(e,ticket,s);
 }
-uint32_t bc_runtime_engine_begin_compile_input(void *raw,void *incoming,uintptr_t limit,uintptr_t deadline,uint32_t output){
+uint32_t bc_runtime_engine_begin_compile_input(void *raw,void *incoming,uintptr_t limit,uintptr_t deadline,uint32_t mode){
  bc_engine *e=raw;bc_engine_ticket ticket;uint32_t s=admission(e,&ticket);if(s)return s;
- s=B54(&e->f_0,&e->f_9,&e->f_12,(bc_engine_input_entry *)incoming,limit,deadline,output!=0);
+ s=B54(&e->f_0,&e->f_9,&e->f_12,(bc_engine_input_entry *)incoming,limit,deadline,mode);
  return finish(e,ticket,s);
 }
 uint32_t bc_runtime_engine_end_compile(void *raw,uintptr_t id,uint32_t detach){
@@ -57,7 +57,7 @@ uint32_t bc_runtime_engine_advance_compile_literals(void *meta,const void *selec
 uint32_t bc_runtime_engine_advance_compile_body(void *meta,const void *selected,const void *raw,void *candidate,void *meter,uintptr_t deadline){
  const bc_compile_work *job=raw;
  bc_compile_candidate *work=candidate;
- return B49(meta,selected,&job->f_9,work->f_2,job->f_12,&job->f_10,&work->f_3,&work->f_0,&work->f_4,&work->f_5,
+ return B49(meta,selected,&job->f_9,work->f_2,job->f_12!=0,&job->f_10,&work->f_3,&work->f_0,&work->f_4,&work->f_5,
      &work->f_6,&work->f_7,&work->f_8,meter,deadline);
 }
 /* Reserve a single SDK-owned slot before Fairy initializes its value. */
@@ -115,7 +115,12 @@ uint32_t bc_runtime_engine_begin_output_proof(void *raw,uintptr_t image_limit,ui
  if(status)return status;
  status=reserve_compile_slot(&work->f_11.f_0,&work->f_11.f_1,&work->f_11.f_2,
      sizeof(bc_compile_output_proof),_Alignof(bc_compile_output_proof));
- return status || !B60(&work->f_11,input!=0) ? 2 : 0;
+ if(status)return 2;
+ bc_compile_output_proof *proof=work->f_11.f_0;
+ memset(proof,0,sizeof(*proof));
+ B60(&proof->f_0,&proof->f_1,input!=0);
+ work->f_11.f_3=1;
+ return 0;
 }
 uint32_t bc_runtime_engine_step_output_proof(void *raw,const void *snapshot,void *meter,void *failure){
  bc_compile_candidate *work=raw;

@@ -678,6 +678,23 @@ result at 77, while a fresh compilation returned 42. Input Instances returned
 live SDK allocations. Local receipt:
 `build/runtime-engine/20261121T082229339823Z/receipt.json`.
 
+## Engine-owned project output compile
+
+Configured rooted and anchored projects now reuse the private input-output job.
+The Engine keeps the checked manifest output mode through publication. It
+rejects reachable emit without a matching declaration and preserves an explicit
+declaration even when the selected entry does not emit. A busy job is rejected
+before consuming an anchor. File acquisition and entry selection are synchronous.
+
+The development suite reproduced Windows exit `0xC00000FD` at output proof
+initialization. Initializing the proof and normalized scratch fields directly
+in the reserved heap slot removes the whole-value stack construction and Vec
+push. The original regression now passes with the default stacks in development
+and /O2. Both profiles also verify authority before acquisition, rejected emit
+without publication, two independently bound Instances and zero live SDK
+allocations at teardown. The locked /O2 CLI quick start returned 77. Local
+receipt: `build/runtime-engine/20261121T084904682045Z/receipt.json`.
+
 ## Executed verification and remaining work
 
 [Windows evidence](../evidence/runtime-engine-compile-memory-windows-20261107.json)

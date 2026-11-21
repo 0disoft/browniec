@@ -102,7 +102,8 @@ assert arg(53,0)==c['compileProofVectorType']
 c['compileProofImageType']=field_type(c['compileCandidateType'],10)
 c['compileOutputProofVectorType']=field_type(c['compileCandidateType'],11)
 c['compileOutputProofType']=vector_element(c['compileOutputProofVectorType'])
-assert arg(60,0)==c['compileOutputProofVectorType']
+assert arg(60,0)==arg(61,2)
+assert arg(60,1)==arg(61,3)
 assert arg(62,2)==c['compileOutputProofType']
 assert arg(61,2)==field_type(c['compileOutputProofType'],0)
 assert arg(61,3)==field_type(c['compileOutputProofType'],1)

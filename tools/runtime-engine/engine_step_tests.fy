@@ -492,6 +492,11 @@ fn Result<engine::CompileStatus,u8> start_proof(ref mut engine::Engine e,usize j
     return .ok(proving);
 }
 fn Result<engine::CompileStatus,u8> complete_proof(ref mut engine::Engine e,usize job,engine::CompileStatus proving){
+    let engine::CompileStatus progress=drain_proof(e,job,proving)?;
+    assert(compile_state(progress.state)==2 && progress.program==1);
+    return .ok(progress);
+}
+fn Result<engine::CompileStatus,u8> drain_proof(ref mut engine::Engine e,usize job,engine::CompileStatus proving){
     let usize before=proving.batches;
     var engine::CompileStatus progress=proving;
     var usize steps=0;
@@ -502,7 +507,7 @@ fn Result<engine::CompileStatus,u8> complete_proof(ref mut engine::Engine e,usiz
         assert(steps<8192 && progress.batches>=prior && progress.batches<=prior+1);
         if(compile_state(progress.state)==7){assert(progress.program==0);}
     }
-    assert(compile_state(progress.state)==2 && progress.program==1 && progress.batches>before+1);
+    assert(progress.batches>before+1);
     return .ok(progress);
 }
 fn Result<usize,u8> pending_compile_lifecycle(){
@@ -848,11 +853,23 @@ fn Result<usize,u8> anchored_output(ref mut engine::Engine e,ref u8[] root,
         case .ok(v):{v}case .err(_):{return .err(4);}
     };
     let projects::Project manifest=project(ref data[..anchored::manifest_bytes(ref anchor)])?;
-    rejected_id(engine::compile_anchored_project_output(e,ref manifest,ref mut anchor,omitted,65536),5);
-    rejected_id(engine::compile_anchored_project_output(e,ref manifest,ref mut anchor,wrong_entry,65536),5);
-    let usize program=id(engine::compile_anchored_project_output(e,ref manifest,ref mut anchor,granted,65536));
-    rejected_id(engine::compile_anchored_project_output(e,ref manifest,ref mut anchor,granted,65536),1);
-    return .ok(program);
+    rejected_id(engine::begin_compile_anchored_project_output(e,ref manifest,ref mut anchor,omitted,65536),5);
+    rejected_id(engine::begin_compile_anchored_project_output(e,ref manifest,ref mut anchor,wrong_entry,65536),5);
+    let usize job=id(engine::begin_compile_anchored_project_output(e,ref manifest,ref mut anchor,granted,65536));
+    rejected_id(engine::begin_compile_anchored_project_output(e,ref manifest,ref mut anchor,granted,65536),3);
+    let engine::CompileStatus admitted=finish_project_proof(e,job)?;
+    assert(compile_state(admitted.state)==2 && admitted.program==3);
+    rejected_id(engine::begin_compile_anchored_project_output(e,ref manifest,ref mut anchor,granted,65536),1);
+    return .ok(admitted.program);
+}
+fn Result<engine::CompileStatus,u8> finish_project_proof(ref mut engine::Engine e,usize job){
+    let engine::CompileStatus ready=prepare_compile(e,job)?;
+    let engine::CompileStatus lowered=lower_compile(e,job,ready)?;
+    let engine::CompileStatus proving=start_proof(e,job,lowered)?;
+    counts(e,0,0,0);
+    let engine::CompileStatus done=drain_proof(e,job,proving)?;
+    assert(engine::detach_compile(e,job).is_ok && retained(e).compile_source_bytes==0);
+    return .ok(done);
 }
 fn Result<usize,u8> project_output(){
     let ref u8[] declared=b"{\"schema\":\"brownie.project/0.3\",\"name\":\"fixture\",\"entry\":{\"module\":\"app\",\"function\":\"chosen\"},\"sources\":[{\"module\":\"app\",\"path\":\"output.brc\"}],\"requires\":[\"brownie.output.emit\"]}";
@@ -897,8 +914,14 @@ fn Result<usize,u8> project_output(){
     assert(unsafe{bc_runtime_engine_test_handle_count()}==handles);
     unsafe{bc_runtime_engine_test_use_os_clock()};
     counts(ref mut e,0,0,0);same_heap(ref idle);
-    let usize q=id(engine::compile_project_output(ref mut e,ref quiet_manifest,root,ref granted,65536));
-    assert(q==1);
+    let usize undeclared_job=id(engine::begin_compile_project_output(ref mut e,ref missing,root,ref omitted,65536));
+    let engine::CompileStatus refused=finish_project_proof(ref mut e,undeclared_job)?;
+    assert(compile_state(refused.state)==3 && refused.program==0 && refused.failure.status==5);
+    same_heap(ref idle);
+    let usize quiet_job=id(engine::begin_compile_project_output(ref mut e,ref quiet_manifest,root,ref granted,65536));
+    let engine::CompileStatus quiet_done=finish_project_proof(ref mut e,quiet_job)?;
+    let usize q=quiet_done.program;
+    assert(compile_state(quiet_done.state)==2 && q==1);
     rejected_id(engine::prepare_granted_instance(ref mut e,q,ref omitted,captured(b"")?),5);
     let usize quiet_run=id(engine::prepare_granted_instance(ref mut e,q,ref granted,captured(b"")?));
     let engine::Event quiet_event=finish(ref mut e,quiet_run,2);

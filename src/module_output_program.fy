@@ -145,14 +145,19 @@ fn u32 finish_proof_inner(ref candidates::Program code,ref mut vec::Vec<images::
 pub fn void retain_proof_bindings(ref sources::Snapshot snapshot){
     let images::Builder builder=images::full_builder();
     var vec::Vec<images::Image> storage=vec::empty<images::Image>();
-    var vec::Vec<proof_work::Pending> work=vec::empty<proof_work::Pending>();
+    let vec::Vec<proof_work::Pending> work=vec::empty<proof_work::Pending>();
     var diagnostics::Error failure=absent(errors::absent(5,0));
     unsafe{binding_raw(59)};discard open_proof_inner(ref builder,ref mut storage,0,ref mut failure);
-    unsafe{binding_raw(60)};discard proof_work::seed_pending(ref mut work,false);
     var proof_work::State state=proof_work::empty(false);
     var candidates::Program normalized=candidates::Program{.body=ir::empty(),.parameters=[0;128],.results=[0;16],.origins=[0;16]};
+    if(vec::len<proof_work::Pending>(ref work)==1){
+        retain_proof_seed_binding(ref mut state,ref mut normalized);
+        retain_proof_finish_binding(snapshot,ref mut storage,vec::at<proof_work::Pending>(ref work,0));
+    }
     retain_proof_advance_binding(snapshot,ref storage,ref mut state,ref mut normalized);
-    if(vec::len<proof_work::Pending>(ref work)==1){retain_proof_finish_binding(snapshot,ref mut storage,vec::at<proof_work::Pending>(ref work,0));}
+}
+fn void retain_proof_seed_binding(ref mut proof_work::State state,ref mut candidates::Program normalized){
+    unsafe{binding_raw(60)};proof_work::seed_pending(state,normalized,false);
 }
 fn void retain_proof_advance_binding(ref sources::Snapshot snapshot,ref vec::Vec<images::Image> storage,
     ref mut proof_work::State state,ref mut candidates::Program normalized){
