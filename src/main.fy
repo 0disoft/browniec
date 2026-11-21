@@ -41,8 +41,8 @@ fn i32 main() {
     if(argc==2 && lexer::equal(command_view[..command_length],b"--internal-scalar-worker")){
         return worker::execute();
     }
-    if(argc==5 && lexer::equal(command_view[..command_length],b"--internal-scalar-broker")){
-        return broker::execute();
+    if((argc==4 || argc==5) && lexer::equal(command_view[..command_length],b"--internal-scalar-broker")){
+        return broker::execute(argc==5);
     }
     if (lexer::equal(command_view[..command_length], b"--version")) {
         if (argc == 2) {

@@ -6,6 +6,7 @@
 #include "native/restricted_worker_gate.c"
 #include "native/restricted_worker_io.c"
 #include "native/restricted_worker_pipes.c"
+#include "native/restricted_worker_stage.c"
 #include "native/restricted_worker_stream.c"
 #include <userenv.h>
 
@@ -48,17 +49,10 @@ static bool self_location(wchar_t *image, wchar_t *directory, DWORD capacity) {
     return true;
 }
 
-uint32_t bc_scalar_broker_invoke(const uint8_t *profile, size_t profile_length,
+static uint32_t run_scalar_broker(PSID sid, const wchar_t *image, const wchar_t *directory,
     const uint8_t *source, size_t source_length, uint32_t run, size_t fuel,
     uint8_t *reply, size_t *reply_length) {
     enum { source_cap = 4096, reply_cap = 256, metadata = 5, child_commit = 128 * 1024 * 1024 };
-    if (!source || source_length > source_cap || run > 1 ||
-        (!run && fuel) || fuel > UINT32_MAX || !reply || !reply_length) return 0;
-    wchar_t image[4096], directory[4096];
-    if (!self_location(image, directory, _countof(image)) || !bc_cli_enable_cancel()) return 0;
-    PSID sid = resolve_profile(profile, profile_length);
-    if (!sid) return 0;
-
     uint8_t request[source_cap + metadata] = {(uint8_t)run};
     put_le(request + 1, 4, fuel);
     memcpy(request + metadata, source, source_length);
@@ -79,7 +73,6 @@ uint32_t bc_scalar_broker_invoke(const uint8_t *profile, size_t profile_length,
         .result_capacity = sizeof(result), .validate = validate_scalar, .expectation = &expected
     };
     const DWORD started = bc_worker_broker_start(&broker, &config);
-    FreeSid(sid);
     size_t length = 0;
     const uint8_t *payload = NULL;
     if (!started) {
@@ -99,5 +92,36 @@ uint32_t bc_scalar_broker_invoke(const uint8_t *profile, size_t profile_length,
     if (!payload) return 0;
     memcpy(reply, payload, length);
     *reply_length = length;
+    return 1;
+}
+
+uint32_t bc_scalar_broker_invoke(const uint8_t *profile, size_t profile_length,
+    const uint8_t *source, size_t source_length, uint32_t run, size_t fuel,
+    uint8_t *reply, size_t *reply_length) {
+    if (!source || source_length > 4096 || run > 1 ||
+        (!run && fuel) || fuel > UINT32_MAX || !reply || !reply_length) return 0;
+    wchar_t image[4096], directory[4096];
+    if (!self_location(image, directory, _countof(image)) || !bc_cli_enable_cancel()) return 0;
+    if (profile) {
+        PSID sid = resolve_profile(profile, profile_length);
+        if (!sid) return 0;
+        const uint32_t status = run_scalar_broker(sid, image, directory,
+            source, source_length, run, fuel, reply, reply_length);
+        FreeSid(sid);
+        return status;
+    }
+    bc_worker_stage stage = {0};
+    const DWORD setup = bc_worker_stage_open(&stage, image);
+    uint8_t pending_reply[256];
+    size_t pending_length = 0;
+    uint32_t status = 0;
+    if (bc_cli_cancel_requested()) status = 3;
+    else if (!setup) status = run_scalar_broker(stage.profile, stage.image, stage.directory,
+        source, source_length, run, fuel, pending_reply, &pending_length);
+    const BOOL cleaned = bc_worker_stage_close(&stage);
+    if (status != 1) return status;
+    if (!cleaned) return 0;
+    memcpy(reply, pending_reply, pending_length);
+    *reply_length = pending_length;
     return 1;
 }

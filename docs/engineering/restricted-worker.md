@@ -289,6 +289,31 @@ result. The first ordinary parent launch added one handle to each fixture
 process; the remaining success and failure launches showed zero handle
 growth. Local receipt: `build/restricted-worker/20261121T162302104825Z/receipt.json`.
 
+### Managed scalar worker setup
+
+The private `--internal-scalar-broker check|run SOURCE` route provisions a
+fresh zero-capability AppContainer profile with a 128-bit random name. It
+stages a copy of the running CLI in a new directory under the Windows temp
+root. The [stage owner](../../native/restricted_worker_stage.c) caps the copy
+at 64 MiB and uses a 16 KiB transfer window. The directory and image use
+protected DACLs for the current user, SYSTEM and the specific worker SID.
+The worker gets read and execute rights. The original image's ACL is untouched.
+
+The broker uses the staged directory as the worker's working directory and
+keeps the image pinned through process reaping. It attempts deletion of the
+image, directory and profile after reaping, including on setup or execution
+failure. A successful worker result is delivered only after cleanup succeeds.
+Abrupt termination of the parent can leave its uniquely named stage and
+profile behind. The public restricted option is still gated on the broader
+authority and broker integration.
+
+Locked Windows development and /O2 each returned 77 with exit 0 and empty
+stderr using a fresh staging root. Both returned unavailable with exit 4 when
+the root was absent. Native checks inspected the protected image DACL, rejected
+deletion while the image was pinned, verified profile-name reuse after
+cleanup and removed the partial image after a rejected empty input image.
+Local receipt: `build/restricted-worker/20261121T163857490321Z/receipt.json`.
+
 ## Windows verification
 
 Run `python -B tools/verify-restricted-worker.py`. The development and optimized
@@ -313,6 +338,5 @@ limit, connecting PID, and inheritance flags. The child exchanged bytes over
 all three pipes and the repeat launch again had zero net handle growth.
 Local receipt: `build/restricted-worker/20261121T152431466055Z/receipt.json`.
 
-The caller still needs production image and profile provisioning, broader
-broker phases and aggregate budgets.
-The restricted CLI remains unavailable while those pieces are built and verified.
+Broader source and policy admission, broker phases and aggregate budgets are
+still required for the public restricted CLI.

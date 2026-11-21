@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-22): [Windows broker deadlines](docs/engineering/restricted-worker.md#phase-deadlines)
-  settle parent cancellation against one monotonic sample before teardown.
-  Development and /O2 verify both outcomes with actual pending pipe reads.
+- Latest runtime checkpoint (2026-11-22): [Managed Windows worker setup](docs/engineering/restricted-worker.md#managed-scalar-worker-setup)
+  provisions a private image and fresh AppContainer profile for each scalar invocation.
+  Development and /O2 verify result 77, cleanup and unavailable on setup failure.
 
 # Brownie C agent guidance
 

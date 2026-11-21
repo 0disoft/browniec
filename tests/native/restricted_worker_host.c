@@ -10,6 +10,7 @@
 #include "../../native/restricted_worker_gate.h"
 #include "../../native/restricted_worker_io.h"
 #include "../../native/restricted_worker_pipes.h"
+#include "../../native/restricted_worker_stage.h"
 #include "../../native/restricted_worker_stream.h"
 
 enum { commit_limit = 128 * 1024 * 1024, cpu_limit = 500 };
@@ -61,6 +62,39 @@ static void permit_execute(wchar_t *path) {
         NULL, NULL, updated, NULL) == ERROR_SUCCESS, "set executable-only fixture grant");
     LocalFree(updated);
     LocalFree(descriptor);
+}
+
+static void verify_stage(const wchar_t *application) {
+    bc_worker_stage stage = {0};
+    check(bc_worker_stage_open(&stage, application) == ERROR_SUCCESS, "provision worker image and profile");
+    PACL acl = NULL;
+    PSECURITY_DESCRIPTOR descriptor = NULL;
+    check(GetSecurityInfo(stage.pinned_image, SE_FILE_OBJECT, DACL_SECURITY_INFORMATION,
+        NULL, NULL, &acl, NULL, &descriptor) == ERROR_SUCCESS && acl && acl->AceCount == 3,
+        "read exactly three staged image ACEs");
+    SECURITY_DESCRIPTOR_CONTROL control;
+    DWORD revision = 0;
+    void *entry = NULL;
+    check(GetSecurityDescriptorControl(descriptor, &control, &revision) &&
+        (control & SE_DACL_PROTECTED) && GetAce(acl, 2, &entry), "protect the staged image ACL");
+    const ACCESS_ALLOWED_ACE *grant = entry;
+    check(grant->Header.AceType == ACCESS_ALLOWED_ACE_TYPE && !grant->Header.AceFlags &&
+        grant->Mask == (FILE_GENERIC_READ | FILE_GENERIC_EXECUTE) &&
+        EqualSid(stage.profile, (PSID)&grant->SidStart), "grant only read and execute to the worker SID");
+    LocalFree(descriptor);
+    check(!DeleteFileW(stage.image) && GetLastError() == ERROR_SHARING_VIOLATION, "pin staged image until teardown");
+    check(bc_worker_stage_close(&stage) && GetFileAttributesW(stage.directory) == INVALID_FILE_ATTRIBUTES,
+        "remove worker image and stage");
+    PSID reclaimed = NULL;
+    check(SUCCEEDED(CreateAppContainerProfile(stage.name, stage.name, stage.name, NULL, 0, &reclaimed)),
+        "release the profile name");
+    FreeSid(reclaimed);
+    check(SUCCEEDED(DeleteAppContainerProfile(stage.name)), "delete the profile reuse probe");
+
+    check(bc_worker_stage_open(&stage, L"empty-image.exe") == ERROR_FILE_TOO_LARGE &&
+        stage.owns_image && stage.profile, "reject an empty image after acquiring stage resources");
+    check(bc_worker_stage_close(&stage) && GetFileAttributesW(stage.directory) == INVALID_FILE_ATTRIBUTES,
+        "remove partially prepared image and stage");
 }
 
 static BOOL decoy_is_absent(HANDLE handle) {
@@ -1001,12 +1035,13 @@ int wmain(int argc, wchar_t **argv) {
     if ((long)final + 7 != (long)baseline + parent_cold_delta)
         fprintf(stderr, "handles cold %lu, warm %lu, final %lu\n", cold, baseline, final);
     check((long)final + 7 == (long)baseline + parent_cold_delta, "balanced launcher handles after warmup");
+    verify_stage(argv[0]);
     printf("{\"appContainer\":true,\"capabilities\":0,\"inheritedPipes\":3,"
            "\"commitDenied\":true,\"cpuTermination\":true,\"privatePipeAcl\":true,"
            "\"framedExchange\":true,\"headerMutationsRejected\":48,"
            "\"boundedStream\":true,\"pipeEof\":true,\"publicationGate\":true,"
            "\"ioLease\":true,\"brokerSessions\":6,\"sharedBudget\":true,"
-           "\"phaseDeadlines\":true,\"gracefulCancelCases\":2,\"handleDelta\":0,"
+           "\"phaseDeadlines\":true,\"gracefulCancelCases\":2,\"handleDelta\":0,\"staging\":true,"
            "\"scalarSessions\":%d,\"parentBrokerCases\":%d,\"parentColdHandleDelta\":%ld,\"coldHandleDelta\":%ld}\n",
            argc == 3 ? 5 : 0, argc == 3 ? 4 : 0, parent_cold_delta, (long)final - (long)cold);
     return 0;

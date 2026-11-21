@@ -32,6 +32,7 @@ def main():
              'native/restricted_worker_gate.c', 'native/restricted_worker_gate.h',
              'native/restricted_worker_io.c', 'native/restricted_worker_io.h',
              'native/restricted_worker_broker.c', 'native/restricted_worker_broker.h',
+             'native/restricted_worker_stage.c', 'native/restricted_worker_stage.h',
              'tests/native/restricted_worker_host.c', 'tools/verify-restricted-worker.py',
              'tools/verify-runtime-store-probe.py']
     c_sources = [path for path in paths if path.endswith('.c')]
@@ -45,7 +46,7 @@ def main():
                    inputs=[dict(path=p, sha256=helper.sha((ROOT / p).read_bytes())) for p in paths],
                    profiles=[], commands=[])
 
-    def run(args, cwd=out, env=None, timeout=30, expected_exit=0, silent=False):
+    def run(args, cwd=out, env=None, timeout=30, expected_exit=0, silent=False, no_stderr=False):
         command = list(map(str, args))
         result = subprocess.run(command, cwd=cwd, env=env, capture_output=True, timeout=timeout)
         index = len(receipt['commands'])
@@ -53,7 +54,8 @@ def main():
         helper.write(out / stdout, result.stdout)
         helper.write(out / stderr, result.stderr)
         receipt['commands'].append(dict(argv=command, exit=result.returncode, stdout=stdout, stderr=stderr))
-        helper.need(result.returncode == expected_exit and (not silent or not (result.stdout or result.stderr)),
+        helper.need(result.returncode == expected_exit and (not no_stderr or not result.stderr)
+                    and (not silent or not (result.stdout or result.stderr)),
                     f'{command}: {result.returncode}: {result.stdout!r} {result.stderr!r}')
         return result.stdout
 
@@ -70,6 +72,7 @@ def main():
                 cwd=folder, env=env)
             shutil.copyfile(exe, child)
             (folder / 'parent-data.txt').write_bytes(b'fixture data\n')
+            (folder / 'empty-image.exe').touch()
             runtime_env = {k: v for k, v in os.environ.items()
                            if k.upper() in {'SYSTEMROOT', 'WINDIR', 'LOCALAPPDATA', 'USERPROFILE', 'TEMP', 'TMP'}}
             command = [exe, child]
@@ -81,6 +84,21 @@ def main():
                 (folder / 'bad-source.brc').write_bytes(b'\xff')
                 run([scalar, '--internal-scalar-worker'], cwd=folder, env=runtime_env,
                     expected_exit=4, silent=True)
+                stage_temp = folder / 'stage temp'
+                stage_temp.mkdir()
+                stage_env = dict(runtime_env, TEMP=str(stage_temp), TMP=str(stage_temp))
+                data = run([scalar, '--internal-scalar-broker', 'run', 'answer.brc'],
+                           cwd=folder, env=stage_env, no_stderr=True)
+                helper.need(json.loads(data) == dict(schema='browniec.result/v1', profile='brownie.m1-scalar/1',
+                            command='run', status='completed', return_i32=77, error=None),
+                            f'Unexpected managed broker result: {data!r}')
+                helper.need(not list(stage_temp.iterdir()), 'managed launch left a staged file or directory')
+                invalid_temp = stage_temp / 'missing'
+                failure_env = dict(runtime_env, TEMP=str(invalid_temp), TMP=str(invalid_temp))
+                data = run([scalar, '--internal-scalar-broker', 'run', 'answer.brc'],
+                           cwd=folder, env=failure_env, expected_exit=4, no_stderr=True)
+                helper.need(json.loads(data).get('error', {}).get('kind') == 'unavailable'
+                            and not list(stage_temp.iterdir()), 'staging failure fell back or left files')
                 command.append(scalar)
             evidence = json.loads(run(command, cwd=folder, env=runtime_env))
             helper.need({key: value for key, value in evidence.items()
@@ -90,7 +108,7 @@ def main():
                              framedExchange=True, headerMutationsRejected=48,
                              boundedStream=True, pipeEof=True, publicationGate=True,
                              ioLease=True, brokerSessions=6, sharedBudget=True,
-                             phaseDeadlines=True, gracefulCancelCases=2, handleDelta=0,
+                             phaseDeadlines=True, gracefulCancelCases=2, handleDelta=0, staging=True,
                              scalarSessions=5 if scalar else 0, parentBrokerCases=4 if scalar else 0)
                         and type(evidence.get('coldHandleDelta')) is int
                         and evidence.get('parentColdHandleDelta') in ((0, 1) if scalar else (0,)),
