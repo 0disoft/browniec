@@ -518,7 +518,8 @@ fn Result<usize,u8> deadline_order(){
     stopped(ref mut owner,late,2,deadline,9999984,0);
     stopped(ref mut owner,tie,1,deadline,9999984,0);
     stopped(ref mut owner,staged,2,deadline,9999972,12);
-    ledger(ref owner,0,8*63776);
+    // Each of the eight reserved Exchange slots adds one eight-byte quota counter.
+    ledger(ref owner,0,8*(63776+8*8));
 
     unsafe{bc_runtime_engine_test_set_clock(18446744073709551615)};
     unsafe{probe_rebase()};

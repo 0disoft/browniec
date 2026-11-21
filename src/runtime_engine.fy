@@ -2116,7 +2116,7 @@ fn u32 drive_host_owner(ref mut vec::Vec<host::Exchange> owners,u32 mode,usize q
         let bool failed=observed.phase==4;
         let bool cancel=failed && observed.host.cause==1;
         let u8 event_kind=if(done){1}else if(cancel){3}else if(failed){2}else if(observed.phase==1){4}else{0};
-        let u8 diagnostic=if(observed.failure==2){6}else if(observed.failure==4){12}else if(observed.host.cause==3 || observed.host.cause==7){20}else if(observed.host.cause==5){8}else if(observed.host.cause==4){15}else if(observed.host.cause==2){errors::deadline_kind()}else{0};
+        let u8 diagnostic=if(observed.failure==2){6}else if(observed.failure==4){12}else if(observed.host.cause==3 || observed.host.cause==7){20}else if(observed.host.cause==5){8}else if(observed.host.cause==8){13}else if(observed.host.cause==4){15}else if(observed.host.cause==2){errors::deadline_kind()}else{0};
         *transition=HostTransition{.scalar=observed,.event=Event{.kind=event_kind,.value=observed.value,
             .diagnostic=diagnostics::absent(errors::make(diagnostic,0)),.remaining=observed.host.fuel,.fuel_known=true}};
         if(observed.phase!=0 || mode!=0){return 0;}

@@ -2,6 +2,7 @@
 #include <windows.h>
 #include <assert.h>
 #include <inttypes.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 #include "brownie_preview.h"
@@ -651,6 +652,63 @@ static void revision_two_host_exchange(void){
     assert(bc_engine_destroy(engine)==BC_OK);
 }
 
+static void revision_two_host_owner_limit(bc_handle engine,bc_slice catalog){
+    static const uint8_t main_name[]="main";
+    static const uint8_t text[]="module main; import host::example as api; pub fn i32 main(){"
+        "let i32 first=switch(api::check(b\"x\")){case .ok(_):{35}case .err(_):{10}};"
+        "let i32 second=switch(api::check(b\"y\")){case .ok(_):{42}case .err(_):{0}};"
+        "return first+second;}";
+    const uint8_t empty_buffer[]={7,0,0,0,0,0,0,0};
+    const uint8_t one_byte[]={7,0,0,0,1,0,0,0,42};
+    const uint8_t error[]={5,0,0,0,4,0,0,0,1,0,0,0};
+    uint8_t run_data[1024];
+    const bc_slice run={run_data,read_fixture("run-host.json",run_data,sizeof(run_data))};
+    const bc_slice empty={0};
+    char *owners=strstr((char *)run_data,"\"owner_entries\":16384");
+    char *response=strstr((char *)run_data,"\"host_response_bytes\":1048576");
+    assert(owners && response);
+    owners+=sizeof("\"owner_entries\":")-1;
+    memcpy(response+sizeof("\"host_response_bytes\":")-1,"     16",7);
+
+    const bc_source source={{main_name,sizeof(main_name)-1},{text,sizeof(text)-1}};
+    bc_handle program=0;
+    bc_diagnostic diag={.struct_size=sizeof(diag)};
+    uint32_t compiled=bc_compile(engine,&source,1,catalog,&program,&diag);
+    if(compiled!=BC_OK){
+        fprintf(stderr,"Owner quota fixture failed at %" PRIu32 "..%" PRIu32 " (status %" PRIu32 ")\n",
+            diag.byte_start,diag.byte_end,compiled);
+    }
+    assert(compiled==BC_OK);
+
+    uint64_t limited_peak=0;
+    for(unsigned scenario=0;scenario<3;++scenario){
+        const bool first_error=scenario==2;
+        memcpy(owners,scenario==1?"    2":"    1",5);
+        bc_handle instance=0;
+        assert(bc_instance_create(engine,program,empty,run,&instance,&diag)==BC_OK);
+        const bc_event first=next_host_event(instance,1);
+        assert(first.kind==BC_HOST_REQUEST && first.import_id==0);
+        const bc_slice initial=first_error?(bc_slice){error,sizeof(error)}:
+            (bc_slice){empty_buffer,sizeof(empty_buffer)};
+        assert(bc_host_reply(instance,first.request_id,first_error?BC_REPLY_ERR:BC_REPLY_OK,initial,&diag)==BC_OK);
+        const bc_event second=next_host_event(instance,64);
+        assert(second.kind==BC_HOST_REQUEST && second.import_id==0 && second.request_id!=first.request_id);
+        assert(bc_host_reply(instance,second.request_id,BC_REPLY_OK,(bc_slice){one_byte,sizeof(one_byte)},&diag)==BC_OK);
+        const bc_event terminal=next_host_event(instance,1);
+        if(scenario==0){
+            assert(terminal.kind==BC_TRAP && terminal.trap_code==13 && terminal.diagnostic.code==13);
+            assert(terminal.payload.data==NULL && terminal.payload.len==0);
+            limited_peak=terminal.peak_accounted_bytes;
+        }else{
+            assert(terminal.kind==BC_DONE && terminal.return_i32==(first_error?52:77));
+            assert(terminal.peak_accounted_bytes==limited_peak+(first_error?0:8));
+        }
+        assert(bc_instance_destroy(instance)==BC_OK);
+    }
+    assert(bc_program_release(engine,program)==BC_OK);
+    puts("PASS: Buffer owner quota includes empty success, skips Result error, and reduces arena reservation");
+}
+
 static void revision_two_large_host_reply(void){
     static const uint8_t main_name[]="main";
     static const uint8_t text[]=
@@ -717,7 +775,9 @@ static void revision_two_large_host_reply(void){
     const bc_event recovered=next_host_event(rejected,64);
     assert(recovered.kind==BC_DONE && recovered.return_i32==17);
     assert(bc_instance_destroy(done)==BC_OK && bc_instance_destroy(cancelled)==BC_OK);
-    assert(bc_instance_destroy(rejected)==BC_OK && bc_engine_destroy(engine)==BC_OK);
+    assert(bc_instance_destroy(rejected)==BC_OK);
+    revision_two_host_owner_limit(engine,(bc_slice){catalog,sizeof(catalog)-1});
+    assert(bc_engine_destroy(engine)==BC_OK);
 }
 
 int main(void){

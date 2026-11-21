@@ -15,7 +15,7 @@ import std::num as num;
 
 // Private native coordinator and scalar VM driver. No public ABI.
 // Phase: 0 Ready, 1 Waiting, 2 Install, 3 Terminal, 4 Receiving.
-// Cause: 0 None, 1 Cancelled, 2 Deadline, 3 HostFailure, 4 Quota, 5 Fuel, 6 Identity, 7 OutputLimit.
+// Cause: 0 None, 1 Cancelled, 2 Deadline, 3 HostFailure, 4 Quota, 5 Fuel, 6 Identity, 7 OutputLimit, 8 OwnerLimit.
 pub enum Error { State; Identity; Catalog; Denied; Malformed; Allocation; Terminated; }
 pub struct Limits {
     usize request_bytes; usize reply_bytes; usize requests_total; usize replies_total;
@@ -33,7 +33,7 @@ pub resource Exchange {
     bytes::Buffer backing;
     bytes::Buffer header; ptr mut u8 header_data;
     catalog::Catalog catalog; Binding digest; Grants grants; Limits limits;
-    usize deadline;
+    usize deadline; usize reply_owners_left;
     cleanup { }
 }
 pub resource Output {
@@ -116,7 +116,7 @@ fn Result<Exchange,Error> create_sized(catalog::Catalog c,ref bool[] allowed,Lim
     };
     let ptr mut u8 address=unsafe { bytes::view_mut(ref mut header) as ptr mut u8 };
     var Exchange e=Exchange{.catalog=c,.digest=Binding{.words=digest},.grants=grants,.limits=limits,
-        .deadline=deadline,.backing=bytes::empty(),.header=header,.header_data=address};
+        .deadline=deadline,.reply_owners_left=0,.backing=bytes::empty(),.header=header,.header_data=address};
     save(ref mut e,Observation{.phase=0,.cause=0,.run=run,.request=0,.import_id=0,
         .calls=0,.requests=0,.replies=0,.adapter=0,.fuel=fuel,.terminal_at=0,.external_effects_unknown=false});
     return .ok(e);
@@ -491,7 +491,8 @@ fn bool has_byte_arguments(ref catalog::Catalog c,usize id){
     return false;
 }
 fn usize arena_end(ref ir::Program code,EnvelopeBounds envelope,policy_limits::RunLimits limits){
-    let usize replies=envelope.byte_reply*limits.host_calls;
+    let usize owners=if(limits.owner_entries<limits.host_calls){limits.owner_entries}else{limits.host_calls};
+    let usize replies=envelope.byte_reply*owners;
     let usize arena=if(replies<limits.object_bytes){replies}else{limits.object_bytes};
     return blob_base()+code.list_used+arena;
 }
@@ -539,6 +540,7 @@ pub fn Result<Exchange,ScalarError> create_scalar_input(ref programs::Program p,
         case .ok(v):{v}case .err(_):{return .err(.Allocation);}
     };
     load_image(ref mut e,code,end,limits.call_frames);
+    e.reply_owners_left=limits.owner_entries;
     if(programs::accepts_input(p)){
         let ref mut u8[] image=scalar_header(ref mut e);
         var usize i=0;
@@ -699,6 +701,7 @@ fn Result<ScalarEvent,ScalarError> install_bytes(ref mut Exchange e,usize dst,us
     let usize copied=read(current,4200);
     let usize end=read(current,4208);
     if(start>end || copied>field.length){return .err(.State);}
+    if(e.reply_owners_left==0){discard stop(e,8,now);return .ok(scalar_event(e));}
     if(field.length>end-start){discard stop(e,4,now);return .ok(scalar_event(e));}
     let usize left=field.length-copied;
     let usize count=if(left<*work){left}else{*work};
@@ -729,6 +732,9 @@ fn Result<ScalarEvent,ScalarError> install_bytes(ref mut Exchange e,usize dst,us
         let bytes::Buffer empty=replace_buffer(e,backing);
         return .ok(scalar_event(e));
     }
+    // Committed ranges remain in the invocation arena until teardown.
+    // Even a zero-length Buffer consumes one owner. Installation debits it once.
+    e.reply_owners_left-=1;
     var Observation s=state(e);s.phase=0;save(e,s);
     return .ok(scalar_event(e));
 }

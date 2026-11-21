@@ -693,6 +693,25 @@ and the stopped Instances return their reservations. Both profiles exit
 with zero live SDK allocations. Root fairyc check --locked verifies
 376 sources and 4,194 MIR functions. Receipt is in build/runtime-engine/20261118T164215423735Z/receipt.json.
 
+### Reply owner quota
+
+The catalog-backed VM charges one `limits.owner_entries` entry when a
+successful Buffer reply finishes installation, including an empty Buffer.
+The arena retains those owners until the invocation ends. Scalar successes
+and Result errors do not consume a Buffer owner. The VM checks for an
+available entry before copying and traps with code 13 on exhaustion. An
+interrupted copy publishes neither the owner nor its guest value.
+
+The arena reserves at most the largest admitted Buffer reply body multiplied
+by the smaller of `host_calls` and `owner_entries`, subject to the existing
+`object_bytes` ceiling. Wire receipt allowance is accounted separately.
+
+The Windows embedding host checks two successful Buffer replies, first empty
+and then one byte. One owner traps at the second installation. Two owners
+return 77. With one owner, a Result error followed by the same one-byte
+success returns 52. With a 16-byte response envelope, the two-owner run
+accounts for eight more arena bytes than the one-owner runs.
+
 ## Guest Result branches
 
 Private opcode 121 binds a typed host call to two successors. A success

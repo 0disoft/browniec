@@ -1,7 +1,7 @@
-- Latest runtime checkpoint (2026-11-21): [Revision-2 shared descriptor quotas](docs/engineering/embed-preview.md#revision-2-scalar-stepping)
-  count live input views and array slice tickets against one Instance limit.
-  Windows /Od and /O2 verify three distinct quota traps and reuse across return
-  at four entries. Both Engine verifier profiles end with zero live SDK allocations.
+- Latest runtime checkpoint (2026-11-21): [Host reply owner quotas](docs/engineering/host-exchange.md#reply-owner-quota)
+  count completed Buffer replies against each Instance's owner limit and size the
+  reply arena accordingly. Windows /Od and /O2 verify empty and nonempty success,
+  Result error, quota failure, and zero live SDK allocations in Engine tests.
 
 # Brownie C agent guidance
 
