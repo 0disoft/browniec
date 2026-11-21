@@ -253,6 +253,26 @@ def verify_configured_project(run, need, image, folder, env):
     policy['compile'] = compile_defaults
     math_file.write_bytes(original_source)
 
+    compound_locals = (
+        (b'let Option<i32> choice=.none;return 42;', b'Option'),
+        (b'let Result<i32,bool> result=.ok(42);return 42;', b'Result'),
+        (b'let i32[1] items=[42];return items[0];', b'i32[1]'),
+        (b'let ref u8[] marker=b"42";return 42;', b'ref u8[]'),
+    )
+    for body, start in compound_locals:
+        typed_source = b'module util::math;pub fn i32 answer(){' + body + b'}'
+        math_file.write_bytes(typed_source)
+        policy['compile'] = dict(compile_defaults, source_bytes=4096, depth=2)
+        check()
+        policy['compile']['depth'] = 1
+        location = check(3, 'compile_limit', 'check')['error']['location']
+        offset = typed_source.index(start)
+        need(location['source_index'] == 1 and location['offset'] == offset and
+             location['end_offset'] == offset + 1,
+             f'Unexpected local annotation depth location: {location}')
+    policy['compile'] = compile_defaults
+    math_file.write_bytes(original_source)
+
     runtime = config['limits'].copy()
     config['limits'].update(memory_bytes=1, object_bytes=1, input_bytes=0, output_bytes=0,
                             host_request_bytes=1, host_response_bytes=1)
@@ -349,7 +369,7 @@ def verify_configured_project(run, need, image, folder, env):
     config['entry']['function'] = manifest['entry']['function']
     config['grants'] = ['brownie.output.emit']
     check(4, 'unavailable')
-    return 59
+    return 67
 
 
 def verify_project_host(run, need, image, folder, env):
@@ -443,6 +463,15 @@ def verify_project_host(run, need, image, folder, env):
     policy['compile']['depth'] = 1
     check(expected_exit=3, kind='compile_limit')
     math.write_bytes(original_math)
+    source.write_bytes(original_source.replace(
+        b'let i32 a=api::check(41);',
+        b'let Result<i32,u32> reply=api::check(41);'
+        b'let i32 a=switch(reply){case .ok(value):{value}case .err(_):{0}};'))
+    policy['compile']['depth'] = 2
+    check()
+    policy['compile']['depth'] = 1
+    check(expected_exit=3, kind='compile_limit')
+    source.write_bytes(original_source)
     policy['compile']['depth'] = original_depth
     replies['replies'] = rows[:1]
     check(expected_exit=4, kind='unavailable')
@@ -491,7 +520,7 @@ def verify_project_host(run, need, image, folder, env):
     check(expected_exit=3, kind='compile_limit', payload=payload)
     policy['compile']['depth'] = original_depth
     check(expected_exit=4, kind='unavailable')
-    return 23
+    return 25
 
 
 def main():

@@ -399,9 +399,10 @@ validates delimiter pairing and enforces its own grammar limits.
 
 [Scalar expression depth](#scalar-expression-depth),
 [statement control depth](#statement-control-depth), and
-[aggregate expression depth](#aggregate-expression-depth) also apply
-during lowering. Type syntax depth and accounting beyond declared records
-remain open.
+[aggregate expression depth](#aggregate-expression-depth) apply during
+lowering. The policy also covers [nominal record depth](#nominal-record-depth),
+[signature type depth](#signature-type-depth), and [local type depth](#local-type-depth).
+Type accounting beyond declared records remains open.
 
 The nesting follow-up passed twenty configured project cases per Windows
 profile. A nested block and parenthesized value returned 42 at depth two,
@@ -800,6 +801,23 @@ ordinary check pointing to `ref` in the entry source. Each profile passed
 59 configured, 23 catalog and five managed project cases plus nine native
 host transport cases. All 455 receipt input hashes matched.
 Local receipt: `build/restricted-worker/20261121T201938837937Z/receipt.json`.
+
+### Local type depth
+
+The staged and synchronous lowering paths apply `compile.depth` to explicitly
+typed locals before evaluating their initializers. Option, Result, scalar
+arrays and reference views require depth two. A denial points to the first
+byte of the annotation. Nominal record names use the existing layout check,
+and inferred locals have no type syntax to check.
+
+The preceding /O2 image ran all four ordinary local fixtures at depth one
+and returned 42. Both rebuilt Windows profiles accept the ordinary Option,
+Result, scalar array and static byte reference fixtures at two and reject
+them at one. A catalog-backed local Result likewise returns 77 and seals
+its output at two, and fails without either at one. Each profile passed
+67 configured, 25 catalog and five managed project cases plus nine native
+host transport cases. All 455 receipt input hashes matched.
+Local receipt: `build/restricted-worker/20261121T202938733353Z/receipt.json`.
 
 ## Windows verification
 

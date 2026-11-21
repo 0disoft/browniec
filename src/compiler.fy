@@ -2025,9 +2025,11 @@ fn Result<usize, errors::Error> declaration(ref u8[] source, ref mut lexer::Stat
     if (word_is(source, s, b"let") || word_is(source, s, b"var")) {
         let bool mutable = word_is(source, s, b"var");
         let usize keyword = lexer::next(source, s)?;
+        let usize type_at=s.begin;
         if(signatures.scalar_host_calls && word_is(source,s,b"Result")){
             if(mutable || terminator!=59 || result_type==0){return .err(errors::make(3,s.begin));}
             let u8 tag=host_source::annotation(source,s)?;
+            if(signatures.semantic_depth<2){return .err(errors::make(4,type_at));}
             let inference::Header binding=inference::header(source,s,table)?;
             let usize at=s.begin;
             let usize before=p.registers;
@@ -2042,6 +2044,7 @@ fn Result<usize, errors::Error> declaration(ref u8[] source, ref mut lexer::Stat
             return inferred_declaration(source,s,p,table,signatures,mutable,terminator,result_type,expr_depth,structure,loop_state);
         }
         if (word_is(source,s,b"ref")) {
+            if(signatures.semantic_depth<2){return .err(errors::make(4,type_at));}
             if(signatures.literals.enabled && (static_source::candidate(source,s,table)? || reference_calls::declaration(source,s,table,signatures)?)){
                 return static_declaration(source,s,p,table,signatures,mutable,terminator,result_type,expr_depth,structure,loop_state);
             }
@@ -2052,6 +2055,7 @@ fn Result<usize, errors::Error> declaration(ref u8[] source, ref mut lexer::Stat
         }
         let declaration_headers::Prepared header=declaration_headers::prepare(source,s,table,1,mutable,terminator,result_type)?;
         let u8 tag=header.tag;let usize length=header.length;let usize begin=header.begin;let usize end=header.end;
+        if(signatures.semantic_depth<2 && (types::tagged(tag) || length!=0)){return .err(errors::make(4,type_at));}
         if(length!=0){
             let inference::Header binding=inference::Header{.begin=begin,.end=end};
             return array_initializer(source,s,p,table,signatures,binding,tag,length,mutable,terminator,result_type,expr_depth,structure,loop_state);

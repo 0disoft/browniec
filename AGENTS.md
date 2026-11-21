@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-22): [Signature type depth](docs/engineering/restricted-worker.md#signature-type-depth)
-  applies the policy to compound parameter and return annotations. Windows
-  development and /O2 admit the tested annotations at depth two and reject them at one.
+- Latest runtime checkpoint (2026-11-22): [Local type depth](docs/engineering/restricted-worker.md#local-type-depth)
+  applies the policy before lowering an explicitly typed local initializer.
+  Windows development and /O2 verify depth two and depth one in both worker routes.
 
 # Brownie C agent guidance
 

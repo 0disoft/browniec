@@ -5,6 +5,7 @@ import lexer_work as tokens;
 import type_parse_work as annotations;
 import expression_source_work as expressions;
 import ir as ir;
+import types as types;
 import locals as locals;
 import array_source as arrays;
 import errors as errors;
@@ -71,8 +72,11 @@ pub fn Result<bool,errors::Error> advance(ref u8[] source,ref mut lexer::State s
         if(word(source,s,b"let") || word(source,s,b"var")){w.mutable=word(source,s,b"var");return take(w,s,0,10);}
         return legacy(w,s);
     }
-    if(phase==10){if(!typed(source,s)){return legacy(w,s);}w.annotation=annotations::begin(*s);w.typing=true;w.phase=11;return .ok(false);}
-    if(phase==11){if(s.kind==91){return legacy(w,s);}w.request=3;w.phase=13;return .ok(false);}
+    if(phase==10){if(!typed(source,s)){return legacy(w,s);}
+        w.begin=s.begin;w.annotation=annotations::begin(*s);w.typing=true;w.phase=11;return .ok(false);}
+    if(phase==11){if(s.kind==91){return legacy(w,s);}
+        if(signatures.semantic_depth<2 && types::tagged(w.tag)){return .err(errors::make(4,w.begin));}
+        w.request=3;w.phase=13;return .ok(false);}
     if(phase==13){evaluate(w,14);return .ok(false);}
     if(phase==14){if(p.types[value]!=w.tag){return .err(errors::make(3,w.begin));}let u8 terminator=w.terminator;return take(w,s,terminator,15);}
     if(phase==15){if(w.mutable){w.target=ir::slot(p,w.tag,w.begin)?;}else{w.target=value;}w.phase=16;return .ok(false);}
