@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-22): [Serialized Windows broker](docs/engineering/restricted-worker.md#serialized-broker-session)
-  owns the worker and I/O through reaping. Development and /O2 verify clean
-  delivery, phase and trailing-byte rejection, cancellation and expiry.
+- Latest runtime checkpoint (2026-11-22): [Shared Windows broker admission](docs/engineering/restricted-worker.md#shared-admission-budget)
+  reserves session, parent, child commit and wire capacity through reaping.
+  Development and /O2 verify concurrent admission, rollback and refunds.
 
 # Brownie C agent guidance
 

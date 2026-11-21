@@ -17,15 +17,51 @@ static bc_worker_frame header(const bc_worker_broker *b, bc_worker_frame_kind ki
     return frame;
 }
 
+static bool fits(size_t reserved, size_t limit, size_t required) {
+    return reserved <= limit && required <= limit - reserved;
+}
+
+static bool reserve(bc_worker_broker_budget *budget, bc_worker_broker_amounts charge) {
+    bc_worker_broker_amounts *used = &budget->reserved;
+    const bc_worker_broker_amounts limit = budget->limit;
+    if (!fits(used->sessions, limit.sessions, charge.sessions) ||
+        !fits(used->parent_bytes, limit.parent_bytes, charge.parent_bytes) ||
+        !fits(used->child_commit_bytes, limit.child_commit_bytes, charge.child_commit_bytes) ||
+        !fits(used->wire_bytes, limit.wire_bytes, charge.wire_bytes)) return false;
+    used->sessions += charge.sessions;
+    used->parent_bytes += charge.parent_bytes;
+    used->child_commit_bytes += charge.child_commit_bytes;
+    used->wire_bytes += charge.wire_bytes;
+    return true;
+}
+
+static void refund(bc_worker_broker *b) {
+    bc_worker_broker_amounts *used = &b->budget->reserved;
+    used->sessions -= b->charge.sessions;
+    used->parent_bytes -= b->charge.parent_bytes;
+    used->child_commit_bytes -= b->charge.child_commit_bytes;
+    used->wire_bytes -= b->charge.wire_bytes;
+}
+
 DWORD bc_worker_broker_start(bc_worker_broker *b, const bc_worker_broker_run *run) {
     if (b->phase != BC_WORKER_BROKER_IDLE) return ERROR_BUSY;
-    if ((run->request_length && !run->request) || !run->result || !run->result_capacity ||
+    if (!run->budget || !run->commit_bytes || (run->request_length && !run->request) ||
+        !run->result || !run->result_capacity ||
         !run->validate || run->request_length > BC_WORKER_FRAME_PAYLOAD_MAX ||
         run->result_capacity > BC_WORKER_FRAME_PAYLOAD_MAX) return ERROR_INVALID_PARAMETER;
     const size_t wire = 4 * BC_WORKER_FRAME_BYTES + run->request_length + run->result_capacity + 1;
     if (wire > run->wire_limit) return ERROR_NOT_ENOUGH_QUOTA;
     if (now_ticks() >= run->deadline) return ERROR_TIMEOUT;
+    const bc_worker_broker_amounts charge = {
+        .sessions = 1,
+        .parent_bytes = sizeof(*b) + run->request_length + run->result_capacity,
+        .child_commit_bytes = run->commit_bytes,
+        .wire_bytes = wire
+    };
+    if (!reserve(run->budget, charge)) return ERROR_NOT_ENOUGH_QUOTA;
 
+    b->budget = run->budget;
+    b->charge = charge;
     bc_worker_gate_begin(&b->gate, run->deadline);
     b->phase = BC_WORKER_BROKER_SEND_HELLO;
     b->request = run->request;
@@ -44,7 +80,10 @@ DWORD bc_worker_broker_start(bc_worker_broker *b, const bc_worker_broker_run *ru
     bc_worker_pipes_close_child(&b->pipes);
     if (!status) status = now_ticks() < run->deadline ?
         bc_restricted_worker_resume(&b->worker) : ERROR_TIMEOUT;
-    if (status) bc_worker_gate_io_error(&b->gate, now_ticks());
+    if (status) {
+        bc_worker_gate_io_error(&b->gate, now_ticks());
+        bc_worker_broker_close(b);
+    }
     return status;
 }
 
@@ -166,6 +205,7 @@ bool bc_worker_broker_close(bc_worker_broker *b) {
     if (b->io.pipe && bc_worker_io_poll(&b->io, &count) == ERROR_IO_PENDING) return false;
     if (!bc_restricted_worker_close(&b->worker) || bc_worker_io_close(&b->io)) return false;
     bc_worker_pipes_close(&b->pipes);
+    refund(b);
     *b = (bc_worker_broker){0};
     return true;
 }

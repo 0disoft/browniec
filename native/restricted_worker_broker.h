@@ -18,6 +18,20 @@ typedef enum bc_worker_broker_phase {
     BC_WORKER_BROKER_REAPING
 } bc_worker_broker_phase;
 
+typedef struct bc_worker_broker_amounts {
+    size_t sessions;
+    size_t parent_bytes;
+    size_t child_commit_bytes;
+    size_t wire_bytes;
+} bc_worker_broker_amounts;
+
+/* Initialize the limits and zero the reservations. The owner serializes
+   all sessions using this budget and keeps it alive through their close. */
+typedef struct bc_worker_broker_budget {
+    bc_worker_broker_amounts limit;
+    bc_worker_broker_amounts reserved;
+} bc_worker_broker_budget;
+
 typedef struct bc_worker_broker {
     bc_restricted_worker worker;
     bc_worker_pipes pipes;
@@ -25,6 +39,8 @@ typedef struct bc_worker_broker {
     bc_worker_gate gate;
     bc_worker_rx rx;
     bc_worker_tx tx;
+    bc_worker_broker_budget *budget;
+    bc_worker_broker_amounts charge;
     const uint8_t *request;
     uint8_t *result;
     bc_worker_result_validator validate;
@@ -34,6 +50,7 @@ typedef struct bc_worker_broker {
 } bc_worker_broker;
 
 typedef struct bc_worker_broker_run {
+    bc_worker_broker_budget *budget;
     const wchar_t *application;
     wchar_t *command_line;
     const wchar_t *directory;
@@ -51,7 +68,9 @@ typedef struct bc_worker_broker_run {
 
 /* One request/RESULT session. Serialize calls and start from a zeroed owner
    at a stable address. Request and result spans must be disjoint and remain
-   valid through close. The deadline uses QueryInterruptTimePrecise ticks.
+   valid through close. Admission reserves a session, its control and span
+   bytes, Job commit ceiling and wire envelope against the shared budget.
+   The deadline uses QueryInterruptTimePrecise ticks.
    Call close even on start failure, until it reports the owner released. */
 DWORD bc_worker_broker_start(bc_worker_broker *broker, const bc_worker_broker_run *run);
 

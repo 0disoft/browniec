@@ -514,6 +514,56 @@ static void verify_clean_publication(const wchar_t *path, const wchar_t *directo
     bc_worker_pipes_close(&pipes);
 }
 
+static bool same_charge(bc_worker_broker_amounts a, bc_worker_broker_amounts b) {
+    return a.sessions == b.sessions && a.parent_bytes == b.parent_bytes &&
+        a.child_commit_bytes == b.child_commit_bytes && a.wire_bytes == b.wire_bytes;
+}
+
+static void verify_shared_budget(bc_worker_broker_budget *budget, const bc_worker_broker_run *run,
+    bc_worker_broker_amounts one) {
+    bc_worker_broker second = {0};
+    bc_worker_broker_run other = *run;
+    wchar_t command[256];
+    check(swprintf_s(command, _countof(command), L"worker --child-stalled %llx",
+        (unsigned long long)(ULONG_PTR)decoy) > 0, "format concurrent broker fixture command");
+    other.command_line = command;
+    const uint8_t request = 41;
+    uint8_t result = 0;
+    other.request = &request;
+    other.result = &result;
+    const bc_worker_broker_amounts both = {
+        2, 2 * one.parent_bytes, 2 * one.child_commit_bytes, 2 * one.wire_bytes
+    };
+    const bc_worker_broker_amounts limits[] = {
+        {1, both.parent_bytes, both.child_commit_bytes, both.wire_bytes},
+        {2, both.parent_bytes - 1, both.child_commit_bytes, both.wire_bytes},
+        {2, both.parent_bytes, both.child_commit_bytes - 1, both.wire_bytes},
+        {2, both.parent_bytes, both.child_commit_bytes, both.wire_bytes - 1}
+    };
+    for (size_t i = 0; i < _countof(limits); ++i) {
+        budget->limit = limits[i];
+        check(bc_worker_broker_start(&second, &other) == ERROR_NOT_ENOUGH_QUOTA &&
+            !second.worker.process && !second.io.event && same_charge(budget->reserved, one),
+            "reject another session before opening handles for each short aggregate limit");
+    }
+    budget->limit = both;
+    const wchar_t *application = other.application;
+    other.application = L"relative.exe";
+    check(bc_worker_broker_start(&second, &other) == ERROR_INVALID_PARAMETER &&
+        second.phase == BC_WORKER_BROKER_IDLE && same_charge(budget->reserved, one),
+        "failed startup releases only its reservation");
+    other.application = application;
+    check(bc_worker_broker_start(&second, &other) == ERROR_SUCCESS &&
+        same_charge(budget->reserved, both), "admit a second worker at all exact aggregate limits");
+    const uint64_t deadline = clock_ticks() + 50000000ULL;
+    while (!bc_worker_broker_close(&second)) {
+        check(clock_ticks() < deadline && same_charge(budget->reserved, both),
+            "second worker keeps its charge through reaping");
+        Sleep(1);
+    }
+    check(same_charge(budget->reserved, one), "first worker's reservation survives second teardown");
+}
+
 static void verify_broker(const wchar_t *path, const wchar_t *directory,
     const wchar_t *mode, bc_worker_gate_status expected) {
     bc_worker_broker broker = {0};
@@ -523,7 +573,10 @@ static void verify_broker(const wchar_t *path, const wchar_t *directory,
     const uint8_t request = 41;
     uint8_t result = 0;
     const size_t wire = 4 * BC_WORKER_FRAME_BYTES + 3;
+    const bc_worker_broker_amounts charge = {1, sizeof(broker) + 2, commit_limit, wire};
+    bc_worker_broker_budget budget = {.limit = charge};
     bc_worker_broker_run run = {
+        .budget = &budget,
         .application = path, .command_line = command, .directory = directory,
         .profile = profile, .commit_bytes = commit_limit, .cpu_ms = cpu_limit,
         .deadline = clock_ticks() + 100000000ULL, .wire_limit = wire - 1,
@@ -535,7 +588,8 @@ static void verify_broker(const wchar_t *path, const wchar_t *directory,
     run.wire_limit = wire;
     const DWORD status = bc_worker_broker_start(&broker, &run);
     SetLastError(status);
-    check(status == ERROR_SUCCESS, "start worker through the broker at exact wire capacity");
+    check(status == ERROR_SUCCESS && same_charge(budget.reserved, charge),
+        "start worker through the broker at exact wire and aggregate capacity");
 
     while (broker.gate.status == BC_WORKER_GATE_PENDING && broker.phase != BC_WORKER_BROKER_FINISH) {
         size_t untouched = 123;
@@ -565,16 +619,19 @@ static void verify_broker(const wchar_t *path, const wchar_t *directory,
         check(pending && broker.phase == BC_WORKER_BROKER_READ_READY &&
             terminal == (expected == BC_WORKER_GATE_CANCELLED ? BC_WORKER_GATE_PENDING : expected),
             "stop begins with a live outstanding read");
+        if (expected == BC_WORKER_GATE_CANCELLED) verify_shared_budget(&budget, &run, charge);
     } else {
         check(terminal == expected, "broker recorded the expected outcome");
     }
     const uint64_t reaping_limit = clock_ticks() + 50000000ULL;
     while (!bc_worker_broker_close(&broker)) {
         check(clock_ticks() < reaping_limit && broker.phase == BC_WORKER_BROKER_REAPING &&
-            broker.gate.status == expected, "reaping retains the first cause and owner");
+            broker.gate.status == expected && same_charge(budget.reserved, charge),
+            "reaping retains the first cause and reservation");
         Sleep(1);
     }
-    check(!broker.worker.process && !broker.io.event && !broker.pipes.broker[BC_WORKER_STDOUT],
+    check(!broker.worker.process && !broker.io.event && !broker.pipes.broker[BC_WORKER_STDOUT] &&
+        same_charge(budget.reserved, (bc_worker_broker_amounts){0}),
         "broker releases resources only after reaping");
 }
 
@@ -693,7 +750,7 @@ int wmain(int argc, wchar_t **argv) {
            "\"commitDenied\":true,\"cpuTermination\":true,\"privatePipeAcl\":true,"
            "\"framedExchange\":true,\"headerMutationsRejected\":48,"
            "\"boundedStream\":true,\"pipeEof\":true,\"publicationGate\":true,"
-           "\"ioLease\":true,\"brokerSessions\":5,\"handleDelta\":0,"
+           "\"ioLease\":true,\"brokerSessions\":5,\"sharedBudget\":true,\"handleDelta\":0,"
            "\"coldHandleDelta\":%ld}\n", (long)final - (long)cold);
     return 0;
 }

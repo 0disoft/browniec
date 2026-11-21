@@ -140,6 +140,23 @@ payload schemas, host exchange, graceful cancellation and aggregate budgets
 remain integration work.
 Local receipt: `build/restricted-worker/20261121T154216262890Z/receipt.json`.
 
+### Shared admission budget
+
+Sessions under one serialized owner reserve one slot, the broker's control
+size plus both borrowed spans, the child Job's commit ceiling, and the wire
+envelope before opening handles. Each dimension checks available capacity
+before any counter is changed. Reaping still occupies all four reservations.
+Closing after both process exit and I/O collection returns the exact charges.
+These are admission reservations; process and kernel overhead are outside
+the measured parent charge.
+
+Windows development and /O2 ran two overlapping AppContainer sessions with
+one read pending. The second session was rejected at each exhausted slot or
+one-byte-short aggregate limit, admitted when all four limits fit, and reaped
+without returning the first session's charge. Startup rollback restored the
+same counters, all reservations returned to zero, and warm handle delta was
+zero. Local receipt: `build/restricted-worker/20261121T154433211461Z/receipt.json`.
+
 ## Windows verification
 
 Run `python -B tools/verify-restricted-worker.py`. The development and optimized
