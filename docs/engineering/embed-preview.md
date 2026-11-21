@@ -225,6 +225,8 @@ Both profiles also received an 8193-byte Buffer reply in three receipt chunks.
 After the caller overwrote its reply buffer, the next guest host request
 contained every original byte. One Instance cancelled after a 4096-unit
 installation step without publishing a follow-up request or output. The
-explicit Result error arm returned 17. This fixture uses a direct switch on
-the host call. A saved Result with an explicit `brownie::bytes::Buffer` type
-annotation still fails to compile through the indexed preview path.
+explicit Result error arm returned 17. The fixture saves the host reply in a
+`Result<brownie::bytes::Buffer,u32>` local, with a comment between components
+of the qualified name. The indexed lexer preserves its source span and the
+host annotation parser accepts the same qualified Buffer type as the
+single-source route.

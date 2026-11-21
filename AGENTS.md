@@ -1,6 +1,6 @@
 - Latest runtime checkpoint (2026-11-21): [Revision-2 host exchange](docs/engineering/embed-preview.md#revision-2-host-requests-and-replies)
-  verifies typed replies in Windows /Od and /O2, including an 8193-byte body,
-  cancellation during installation, and the guest Result error arm.
+  accepts saved Buffer Result annotations. Windows /Od and /O2 pass the 8193-byte
+  reply, cancellation during installation, and the guest Result error arm.
 
 # Brownie C agent guidance
 

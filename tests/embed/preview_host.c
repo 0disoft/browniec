@@ -531,7 +531,8 @@ static void revision_two_large_host_reply(void){
     static const uint8_t main_name[]="main";
     static const uint8_t text[]=
         "module main; import host::example as api; pub fn i32 main(){"
-        "return switch(api::check(b\"x\")){case .err(_):{17}case .ok(data):{api::next(ref data)+35}};}";
+        "let Result<brownie /* owner */ ::bytes::Buffer,u32> reply=api::check(b\"x\");"
+        "return switch(reply){case .err(_):{17}case .ok(data):{api::next(ref data)+35}};}";
     static const uint8_t catalog[]="{\"schema\":\"brownie.catalog/1\",\"imports\":["
         "{\"id\":0,\"module\":\"host::example\",\"symbol\":\"check\",\"parameters\":[\"ref u8[]\"],"
         "\"result\":\"Result<brownie::bytes::Buffer,u32>\",\"effect\":\"read\","

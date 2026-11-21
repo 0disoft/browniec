@@ -464,17 +464,37 @@ pub fn Result<usize,errors::Error> emit(ref mut ir::Program code,ref Invocation 
     return request(code,call,programs::typed_request_opcode());
 }
 
+fn Result<u8,errors::Error> buffer_type(ref u8[] source,ref mut lexer::State s){
+    discard lexer::word(source,s,b"brownie")?;
+    discard lexer::punctuation(source,s,58)?;
+    discard lexer::punctuation(source,s,58)?;
+    discard lexer::word(source,s,b"bytes")?;
+    discard lexer::punctuation(source,s,58)?;
+    discard lexer::punctuation(source,s,58)?;
+    discard lexer::word(source,s,b"Buffer")?;
+    return .ok(14);
+}
+
+fn Result<u8,errors::Error> host_success_type(ref u8[] source,ref mut lexer::State s){
+    if(s.kind==5){
+        // The indexed lexer folds a qualified name into one token. Parse the
+        // original span without changing the scoped cursor or token counts.
+        let ref u8[] spelling=source[s.begin..s.end];
+        var lexer::State raw=lexer::empty();
+        discard lexer::next(spelling,ref mut raw)?;
+        let Result<u8,errors::Error> parsed=buffer_type(spelling,ref mut raw);
+        if(!parsed.is_ok || raw.kind!=0){return .err(errors::make(3,s.begin));}
+        discard lexer::next(source,s)?;
+        return .ok(14);
+    }
+    if(word(source,s,b"brownie")){return buffer_type(source,s);}
+    return types::parse_raw(source,s);
+}
+
 pub fn Result<u8,errors::Error> annotation(ref u8[] source,ref mut lexer::State s){
     let usize head=lexer::word(source,s,b"Result")?;
     let usize open=lexer::punctuation(source,s,60)?;
-    let u8 success=if(s.kind==2 && lexer::equal(source[s.begin..s.end],b"brownie")){
-        let usize root=lexer::next(source,s)?;
-        let usize a=lexer::punctuation(source,s,58)?;let usize b=lexer::punctuation(source,s,58)?;
-        let usize module_name=lexer::word(source,s,b"bytes")?;
-        let usize c=lexer::punctuation(source,s,58)?;let usize d=lexer::punctuation(source,s,58)?;
-        let usize buffer=lexer::word(source,s,b"Buffer")?;
-        14
-    }else{types::parse_raw(source,s)?};
+    let u8 success=host_success_type(source,s)?;
     if(!types::host_success(success)){return .err(errors::make(3,head));}
     let usize separator=lexer::punctuation(source,s,44)?;
     let usize error=lexer::word(source,s,b"u32")?;
