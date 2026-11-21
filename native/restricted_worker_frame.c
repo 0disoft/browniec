@@ -23,6 +23,7 @@ static bool valid(const bc_worker_frame *frame) {
         !memcmp(frame->nonce, empty_nonce, sizeof(empty_nonce))) return false;
     if (frame->kind == BC_WORKER_HELLO || frame->kind == BC_WORKER_READY)
         return frame->sequence == 1 && !frame->correlation && !frame->length;
+    if (frame->kind == BC_WORKER_CANCEL && frame->length) return false;
     return frame->sequence > 1;
 }
 

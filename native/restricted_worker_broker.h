@@ -15,6 +15,11 @@ typedef enum bc_worker_broker_phase {
     BC_WORKER_BROKER_READ_EOF,
     BC_WORKER_BROKER_WAIT_EXIT,
     BC_WORKER_BROKER_FINISH,
+    BC_WORKER_BROKER_CANCEL_START,
+    BC_WORKER_BROKER_SEND_CANCEL,
+    BC_WORKER_BROKER_DRAIN_RESULT,
+    BC_WORKER_BROKER_DRAIN_EOF,
+    BC_WORKER_BROKER_DRAIN_EXIT,
     BC_WORKER_BROKER_REAPING
 } bc_worker_broker_phase;
 
@@ -36,6 +41,7 @@ typedef struct bc_worker_broker {
     bc_restricted_worker worker;
     bc_worker_pipes pipes;
     bc_worker_io io;
+    bc_worker_io cancel_io;
     bc_worker_gate gate;
     bc_worker_rx rx;
     bc_worker_tx tx;
@@ -45,7 +51,7 @@ typedef struct bc_worker_broker {
     uint8_t *result;
     bc_worker_result_validator validate;
     size_t request_length, result_capacity;
-    uint64_t phase_deadline, idle_ticks;
+    uint64_t phase_deadline, idle_ticks, grace_ticks, shutdown_deadline;
     uint8_t trailing;
     bc_worker_broker_phase phase;
 } bc_worker_broker;
@@ -58,7 +64,7 @@ typedef struct bc_worker_broker_run {
     PSID profile;
     SIZE_T commit_bytes;
     DWORD cpu_ms;
-    DWORD startup_ms, io_idle_ms;
+    DWORD startup_ms, io_idle_ms, shutdown_grace_ms;
     uint64_t deadline;
     size_t wire_limit;
     const uint8_t *request;
@@ -82,8 +88,9 @@ DWORD bc_worker_broker_start(bc_worker_broker *broker, const bc_worker_broker_ru
 bc_worker_gate_status bc_worker_broker_step(bc_worker_broker *broker);
 const uint8_t *bc_worker_broker_take(bc_worker_broker *broker, size_t *length);
 
-/* Begin cancellation on an unfinished session. The first call stops the Job
-   and requests I/O cancellation. A false return retains the owner. */
+/* Freeze the terminal outcome, then advance graceful shutdown or reaping.
+   Partially sent START finishes before CANCEL. After the grace deadline the
+   Job is stopped. A false return retains buffers and both I/O leases. */
 bool bc_worker_broker_close(bc_worker_broker *broker);
 
 #endif

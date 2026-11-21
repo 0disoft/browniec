@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-22): [Windows broker phase deadlines](docs/engineering/restricted-worker.md#phase-deadlines)
-  enforce distinct startup and idle windows under the session deadline.
-  Development and /O2 verify expiry with actual outstanding reads.
+- Latest runtime checkpoint (2026-11-22): [Windows broker cancellation](docs/engineering/restricted-worker.md#graceful-cancellation)
+  preserves START/CANCEL framing and drains late RESULT without publication.
+  Development and /O2 verify cooperative and forced AppContainer shutdown.
 
 # Brownie C agent guidance
 

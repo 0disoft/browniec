@@ -118,26 +118,24 @@ count. Local receipt: `build/restricted-worker/20261121T153823462884Z/receipt.js
 ## Serialized broker session
 
 The [Windows broker](../../native/restricted_worker_broker.h) owns the verified
-worker, private endpoints and one overlapped I/O lease. It sends HELLO, accepts
+worker, private endpoints and overlapped I/O leases. It sends HELLO, accepts
 READY, sends START, accepts a complete RESULT, probes stdout for EOF and
 observes process exit. Each step submits or collects at most one operation
 or polls the process. The gate releases a validated result only after these
 steps and while the session deadline remains live.
 
-Admission reserves four 48-byte headers, the START bytes, the caller's
+Admission reserves five 48-byte headers, the START bytes, the caller's
 RESULT ceiling and a one-byte trailing probe before opening handles. The
 borrowed request and result storage stays reserved through teardown. Close
-on an unfinished session records cancellation or expiry, requests I/O
-cancellation, stops the Job and retains the owner through both completion
-collection and process exit.
+on an unfinished session records cancellation or expiry and retains the owner
+through both completion collection and process exit.
 
-Windows development and /O2 verify five AppContainer sessions. Clean completion
+The initial Windows development and /O2 runs verified five AppContainer sessions. Clean completion
 delivers once. An early RESULT and a trailing stdout byte fail the protocol.
-Cancellation and expiry reap an outstanding read. A 195-byte wire limit
-admits the one-byte request and reply fixture; 194 bytes rejects before launch.
-Warm handle delta is zero. The fixture validates one-byte results. Production
-payload schemas, host exchange, graceful cancellation and aggregate budgets
-remain integration work.
+Cancellation and expiry reap an outstanding read. The initial wire limit was
+195 bytes for a one-byte request and reply. Reserving CANCEL raised that
+limit to 243 bytes. Warm handle delta is zero. The fixture validates one-byte
+results. Production payload schemas and host exchange remain integration work.
 Local receipt: `build/restricted-worker/20261121T154216262890Z/receipt.json`.
 
 ### Shared admission budget
@@ -172,6 +170,30 @@ READY and idle after START. Both cases hold an outstanding read when the
 phase expires, while the overall session deadline is still live. Reaping
 returns the reservation with zero net warm handles in each profile.
 Local receipt: `build/restricted-worker/20261121T154634779864Z/receipt.json`.
+
+### Graceful cancellation
+
+Cancellation freezes the result gate immediately. If START is in flight,
+the broker finishes that frame before sending an empty CANCEL with the next
+TX sequence. The cancellation write uses a separate overlapped lease so the
+broker can retain an already pending stdout read. With START sent, the broker
+drains at most one correctly framed RESULT and probes for EOF without calling
+the result validator or delivering output. A second frame, malformed framing
+or non-boundary EOF ends the drain. Before START, the broker can stop directly.
+
+The grace window starts when the owner requests shutdown and applies only to
+cleanup. When it expires, the broker terminates the Job with `ERROR_TIMEOUT`
+and reaps the process and both I/O leases. The cancellation or expiry already
+recorded by the gate remains the session outcome.
+
+Windows development and /O2 ran two additional real AppContainer cases. A
+4,097-byte START survived cancellation after the header. The worker verified
+the complete payload and separate CANCEL, sent a late RESULT and exited
+normally. The broker drained the byte without calling the validator or
+publishing. A second worker received CANCEL, stayed blocked, and was forcibly
+terminated after a 300 ms grace window. Both cases refunded their exact
+reservations and the full fixture reported zero net warm handles.
+Local receipt: `build/restricted-worker/20261121T155129609214Z/receipt.json`.
 
 ## Windows verification
 
