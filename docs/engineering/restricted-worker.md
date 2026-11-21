@@ -403,8 +403,8 @@ validates delimiter pairing and enforces its own grammar limits.
 lowering. The policy also covers [nominal record depth](#nominal-record-depth),
 [signature type depth](#signature-type-depth), and [local type depth](#local-type-depth).
 [Scalar and nominal type quota](#scalar-and-nominal-type-quota) also
-checks the image before publication. Aggregate shapes and view identities
-still need type accounting.
+checks the image before publication, including [array types](#array-type-quota).
+View and implicit host type accounting remains open.
 
 The nesting follow-up passed twenty configured project cases per Windows
 profile. A nested block and parenthesized value returned 42 at depth two,
@@ -845,6 +845,23 @@ branch predicate and rejects at three without a result or sealed output.
 Each profile passed 71 configured, 26 catalog and five managed project
 cases plus nine native host transport cases. All 456 receipt input hashes
 matched. Local receipt: `build/restricted-worker/20261121T204100875891Z/receipt.json`.
+
+### Array type quota
+
+Each distinct array element tag and length contributes one identity. Array
+bindings with different mutability, function owners or allocation sites
+share an identity when their element and length match. The scalar element
+joins the same deduplicated tag set as scalar registers and record fields.
+With 16 possible array sites the scan makes at most 120 pair comparisons
+and allocates no heap storage.
+
+The two same-shaped arrays and i32 require two identities. A different length,
+a bool array and its bool element raise the total to five. Both Windows worker
+profiles return 42 at the exact limits and reject one less with
+`compile_limit`. The previous /O2 image returned 42 at both lower limits.
+Each profile passed 75 configured, 26 catalog and five managed project cases
+plus nine native host transport cases. All 456 receipt input hashes matched.
+Local receipt: `build/restricted-worker/20261121T204937694281Z/receipt.json`.
 
 ## Windows verification
 

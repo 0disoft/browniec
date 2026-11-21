@@ -1,5 +1,6 @@
 module compile_type_budget;
 import ir as ir;
+import array_meta as arrays;
 import struct_layout as records;
 import types as types;
 
@@ -24,11 +25,26 @@ fn void value(ref mut Count count,u8 tag){
     }
 }
 
+fn void array_types(ref mut Count count,ref arrays::Catalog catalog){
+    var usize i=0;
+    while(i<catalog.count){
+        let u8 element=catalog.elements[i];
+        let usize length=catalog.lengths[i];
+        add(count,element);
+        var usize prior=0;
+        while(prior<i && (catalog.elements[prior]!=element || catalog.lengths[prior]!=length)){
+            prior+=1;
+        }
+        if(prior==i){count.used+=1;}
+        i+=1;
+    }
+}
+
 // One namespace for scalar and wrapper tags. Nominal declarations have
 // separate identities even when every scalar field has the same type.
 pub fn bool fits(ref ir::Program code,ref u8[] reference_returns,usize limit){
-    // At most 32 records, 12 ordinary tags, seven host Result tags and Buffer.
-    if(limit>=52){return true;}
+    // The scalar, wrapper and nominal bound is 52, plus the occupied array sites.
+    if(limit>=52+code.arrays.count){return true;}
     let ref records::Catalog layouts=ref code.records.layouts;
     var Count count=Count{.seen=[false;143],.used=layouts.count};
     var usize r=0;
@@ -48,5 +64,6 @@ pub fn bool fits(ref ir::Program code,ref u8[] reference_returns,usize limit){
         }
         r+=1;
     }
+    array_types(ref mut count,ref code.arrays);
     return count.used<=limit;
 }

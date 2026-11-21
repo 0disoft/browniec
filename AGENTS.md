@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-22): [Scalar and nominal type quota](docs/engineering/restricted-worker.md#scalar-and-nominal-type-quota)
-  counts distinct scalar, wrapper and nominal record identities. Windows
-  development and /O2 verify exact and one-less type limits in both worker routes.
+- Latest runtime checkpoint (2026-11-22): [Array type quota](docs/engineering/restricted-worker.md#array-type-quota)
+  counts array element and length pairs. Windows development and /O2 verify
+  exact and one-less limits with repeated and distinct shapes.
 
 # Brownie C agent guidance
 

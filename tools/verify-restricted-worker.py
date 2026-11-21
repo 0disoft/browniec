@@ -173,6 +173,19 @@ def verify_configured_project(run, need, image, folder, env):
     policy['compile'] = compile_defaults
     math_file.write_bytes(original_source)
 
+    repeated_array = (b'module util::math;pub fn i32 answer(){'
+                      b'let a=[42];var i32[1] b=[2];')
+    arrays = ((repeated_array, 2),
+              (repeated_array + b'let i32[2] c=[1,2];let bool[1] d=[false];', 5))
+    for declarations, required in arrays:
+        math_file.write_bytes(declarations + b'return 42;}')
+        policy['compile'] = dict(compile_defaults, source_bytes=4096, types=required)
+        check()
+        policy['compile']['types'] = required - 1
+        check(3, 'compile_limit', 'check')
+    policy['compile'] = compile_defaults
+    math_file.write_bytes(original_source)
+
     nested_source = (b'module util::math;\npub fn i32 answer(){var i32 n=40;'
                      b' /* [{( */ { n += (2); } { n += 0; } return n;}\n')
     math_file.write_bytes(nested_source)
@@ -382,7 +395,7 @@ def verify_configured_project(run, need, image, folder, env):
     config['entry']['function'] = manifest['entry']['function']
     config['grants'] = ['brownie.output.emit']
     check(4, 'unavailable')
-    return 71
+    return 75
 
 
 def verify_project_host(run, need, image, folder, env):
