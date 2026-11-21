@@ -139,7 +139,12 @@ pub fn Result<bool,errors::Error> advance(ref mut cursor::State work,ref ir::Pro
     let usize child=future_frame(p,work.pc,bindings,call)?;
     // Input windows are metadata. Before final publication, prove every future
     // grant/site fits the same immutable input and has a unique formal site.
-    if(inputs::enabled(windows) && c.generic){let usize checked=references::validate_input_arguments(p,sites,work.target,child,ref c.captured,windows,work.offset)?;}
+    let usize windows_added=if(inputs::enabled(windows) && c.generic){
+        references::validate_input_arguments(p,sites,work.target,child,ref c.captured,windows,work.offset)?
+    }else{0};
+    if(inputs::configured_quota(windows)){
+        let usize checked=inputs::check_descriptors(windows,slices::live_count(ref next_pool),windows_added,work.offset)?;
+    }
     let usize last=work.last;var Option<owners::Copies> result=.none;
     if(!work.charged){
         result=switch(copies::validate(work,ref mut state.runtime.owners,ref p.records.layouts,
@@ -272,7 +277,12 @@ fn Result<bool,errors::Error> advance_staged_inner(ref mut staged_call::State wo
         var cursor::State next=switch(copy_plans::capture(copy_plan,ref c.prepared.arguments[..c.prepared.count])){
             case .ok(v):{v}case .err(e):{return .err(arrays::failure(e,offset));}
         };
-        if(inputs::enabled(windows) && c.generic){let usize checked=references::validate_input_arguments(p,sites,saved.target,child,ref c.captured,windows,offset)?;}
+        let usize windows_added=if(inputs::enabled(windows) && c.generic){
+            references::validate_input_arguments(p,sites,saved.target,child,ref c.captured,windows,offset)?
+        }else{0};
+        if(inputs::configured_quota(windows)){
+            let usize checked=inputs::check_descriptors(windows,slices::live_count(ref planned.pool),windows_added,offset)?;
+        }
         next.pending=true;next.charged=false;next.pc=saved.pc;next.frame=saved.frame;next.offset=offset;next.target=saved.target;
         next.fuel_before=saved.fuel_before;next.captured=saved.captured;next.remaining=call.remaining;
         next.total=saved.total;next.last=saved.last;work.copy=next;work.child=child;work.phase=4;return .ok(false);

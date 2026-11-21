@@ -205,7 +205,7 @@ fn Result<Machine,errors::Error> reserve_prepared(ref lists::Requirement list,re
     let usize begun=setup::begin(ref mut flow.setup,setup::Plan{.core=stride,.payload=capacity,.list_length=list.length,
         .scratch=list.bytes,.places=count,.prefix=prefix,.marker=marker,.kind=kind})?;
     var bytes::Buffer core=reserve_bytes(stride)?;var bytes::Buffer payload=reserve_bytes(capacity)?;
-    var input_reference_views::State windows=if(input){input_reference_views::reserve(input_length)?}else{input_reference_views::disabled()};
+    var input_reference_views::State windows=if(input){input_reference_views::reserve_with_limit(input_length,limits.descriptors)?}else{input_reference_views::disabled()};
     var vec::Vec<i64> values=vec::empty<i64>();
     if(list.length!=0 && !vec::reserve<i64>(ref mut values,list.length).is_ok){return .err(errors::make(15,0));}
     var bytes::Buffer scratch=reserve_bytes(list.bytes)?;var vec::Vec<usize> places=vec::empty<usize>();
@@ -226,7 +226,7 @@ fn Result<bytes::Buffer,errors::Error> reserve_bytes(usize count){
 pub fn bool initialize_staged(ref mut Core core,usize index,usize capacity,ref static_ir::Sites sites,ref u8[] origins,slice_result_cursor::Limits limits){
     assert(index<49 && origins.len==16);
     if(index<31){authority::reset_cleanup_entry(ref mut core.runtime.runtime.authority,index);return false;}
-    if(index==31){core.runtime.runtime.pool=slices::empty_with_slots(limits.descriptors as usize);
+    if(index==31){core.runtime.runtime.pool=slices::empty_with_slots(if(limits.descriptors>16){16}else{limits.descriptors});
         core.runtime.runtime.owners=owners::empty_with_slots(capacity,limits.owners as usize);
         core.sites=*sites;var usize i=0;while(i<16){core.origins[i]=origins[i];i+=1;}return false;}
     slice_result_frames::initialize_chunk(ref mut core.bindings,index-32);return index==48;

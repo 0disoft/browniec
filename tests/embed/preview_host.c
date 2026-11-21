@@ -284,6 +284,53 @@ static void revision_two_byte_inputs(bc_handle engine){
     assert(bc_instance_destroy(absent)==BC_OK);
 }
 
+static void revision_two_shared_descriptors(bc_handle engine){
+    static const uint8_t root[]="main";
+    static const uint8_t text[]="module main;"
+        "fn ref u8[] tail(ref u8[] data){return data[1..];}"
+        "pub fn i32 main(ref u8[] data){"
+        "let i32[1] values=[35;1];let ref i32[] saved=ref values[..];"
+        "var i32 n=0;var i32 value=0;while(n<3){"
+        "let ref u8[] part=tail(ref data);value=part[0] as i32;n+=1;}"
+        "return saved[0]+value;}";
+    static const uint8_t bytes[]={0,42};
+    const bc_source source={{root,sizeof(root)-1},{text,sizeof(text)-1}};
+    const bc_slice input={bytes,sizeof(bytes)},empty={0};
+    uint8_t config[1024];
+    const bc_slice run={config,read_fixture("run.json",config,sizeof(config))};
+    char *limit=strstr((char *)config,"\"descriptor_entries\":16384");
+    assert(limit);
+    limit+=sizeof("\"descriptor_entries\":")-1;
+    bc_handle program=0;
+    bc_diagnostic diag={.struct_size=sizeof(diag)};
+    uint32_t compiled=bc_compile(engine,&source,1,empty,&program,&diag);
+    if(compiled!=BC_OK){
+        fprintf(stderr,"shared descriptor fixture failed at %" PRIu32 "..%" PRIu32 " (status %" PRIu32 ")\n",
+            diag.byte_start,diag.byte_end,compiled);
+    }
+    assert(compiled==BC_OK);
+
+    uint32_t offsets[3]={0};
+    for(unsigned entries=1;entries<=4;++entries){
+        bc_handle instance=0;
+        memcpy(limit,"    ",4);
+        limit[4]=(char)('0'+entries);
+        assert(bc_instance_create(engine,program,input,run,&instance,&diag)==BC_OK);
+        const bc_event result=finish_revision_two(instance,entries==4?64:1);
+        if(entries<4){
+            assert(result.kind==BC_TRAP && result.trap_code==13 && result.diagnostic.source_index==0);
+            offsets[entries-1]=result.diagnostic.byte_start;
+        }else{
+            assert(result.kind==BC_DONE && result.return_i32==77);
+        }
+        assert(bc_instance_destroy(instance)==BC_OK);
+    }
+    // Array opening, CALL entry and the new input range fail at distinct sites.
+    assert(offsets[2]<offsets[0] && offsets[0]<offsets[1]);
+    assert(bc_program_release(engine,program)==BC_OK);
+    puts("PASS: array, CALL and input range share limits; repeated return reuses four descriptors");
+}
+
 static void revision_two_output(bc_handle pure_engine){
     static const uint8_t main[]="main";
     static const uint8_t text[]="module main;pub fn i32 main(ref u8[] data){"
@@ -499,6 +546,7 @@ static void revision_two_engines(void){
     expect_diagnostic(&diagnostic,BC_OK);
     revision_two_programs(handle,(bc_slice){policy,length});
     revision_two_byte_inputs(handle);
+    revision_two_shared_descriptors(handle);
     revision_two_slot_limits(handle);
     revision_two_object_bytes(handle);
     revision_two_output(handle);

@@ -749,7 +749,7 @@ fn Result<Option<Outcome>,errors::Error> dispatch(ref body_ir::Program body,ref 
             }
             let references::Step next=references::step_input(body,sites,cursor.pc,f,
                 static_words[frame*16..frame*16+16],static_live[frame],bindings,
-                registers[base..base+128],literals.len,*remaining,windows)?;
+                registers[base..base+128],literals.len,*remaining,windows,ref state.runtime.pool)?;
             static_live[frame]=next.live;*remaining=next.remaining;cursor.pc+=1;continue;
         }
         if(statics::operation(op)){
@@ -788,7 +788,7 @@ fn Result<Option<Outcome>,errors::Error> dispatch(ref body_ir::Program body,ref 
         }
         if(op>=41 && op<=49){*remaining=records::step(body,cursor.pc,bindings,state,registers[base..base+128],data,*remaining)?;cursor.pc+=1;continue;}
         if((op>=33 && op<=40) || (op>=51 && op<=53)){*remaining=owned::step(body,cursor.pc,bindings,state,registers[base..base+128],data,*remaining)?;cursor.pc+=1;continue;}
-        if(op>=54 && op<=62){*remaining=loans::step(body,cursor.pc,bindings,state,registers[base..base+128],data,*remaining)?;cursor.pc+=1;continue;}
+        if(op>=54 && op<=62){*remaining=loans::step_with_input(body,cursor.pc,bindings,state,registers[base..base+128],data,*remaining,windows)?;cursor.pc+=1;continue;}
         if(op==8 || op==9 || op==25 || op>=33){return .err(errors::make(5,offset));}
         if(op==19 || op==20 || op==21 || op==22){
             if(op==19 || op==22){cursor.pc=a;}else if((registers[base+a]==0)==(op==20)){cursor.pc=b;}else{cursor.pc+=1;}continue;
@@ -830,11 +830,10 @@ fn Result<Option<Outcome>,errors::Error> dispatch_return(ref body_ir::Program bo
                 *remaining=result.remaining;
             }else{let runtime::Resumed resumed=owned::leave(body,cursor.pc,8,bindings,state,data,staged.remaining)?;
                 *remaining=resumed.remaining;
-                if(staged.input){let usize published=input_views::put(windows,parent,staged.destination,staged.span,offset)?;}
                 static_words[parent*16+staged.destination]=staged.word;let usize one=1;static_live[parent]|=one<<staged.destination;
-                *remaining=resumed.remaining;
             }
             let usize cleared=input_views::clear_frame(windows,frame,offset)?;
+            if(staged.input){let usize published=input_views::put(windows,parent,staged.destination,staged.span,offset)?;}
             static_live[frame]=0;i=0;while(i<16){static_words[frame*16+i]=0;i+=1;}return_work::record(ref mut cursor.returned,return_bytes,instruction,frame,op);cursor.pc=next;return .ok(.none);
         }
         let transfer::Returned staged=transfer::returned(body,sites,literal_length,cursor.pc,f,

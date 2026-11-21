@@ -170,20 +170,27 @@ the Instance's limit before starting a CALL. A limit of one traps when
 Both profiles verified this boundary and the source location of the trap.
 
 Configured Instances in the saved array/record VM honor `limits.owner_entries`
-for the shared array and record owner table and `limits.descriptor_entries` for
-the array-slice descriptor pool. Both effective limits are capped at the
-existing sixteen-slot table sizes. Admission disables slots beyond the limit
-with the same zero generation used for retired slots. The existing slot
-allocators detect exhaustion and report the array-limit trap at the operation
-that requires a slot. Each Instance keeps its own quota. These limits do not
-change the allocation size of the fixed tables.
+for the shared array and record owner table. `limits.descriptor_entries` bounds
+the combined number of live input views and array slice tickets. The fixed
+owner and array ticket tables each have sixteen slots. Admission disables
+slots beyond each configured ceiling with the zero generation used for
+retired slots. Input views can occupy up to sixteen sites in each of 31
+frames, so the combined limit is capped at 512. The fixed storage and input
+grant metadata are charged to memory at preparation.
 
-The C host verified separate owner and descriptor programs. Both require two
-slots. In each case, a one-slot Instance traps with code 13 and a source
-location. A second Instance made from the same Program with a two-slot limit
-returns 77 after the limited Instance is destroyed. Both profiles pass with
-default native stacks. Input-window and catalog-backed storage have their own
-representations and are outside these fixed-table checks.
+The dispatcher checks the combined number of live descriptors before opening
+an array slice, creating an input view, or publishing a child frame. A formal
+grant stores the provenance of its matching input view. Closing a site or
+retiring its frame returns its descriptor entry. An input return retires the
+child's entries before installing the result in the parent. Exhaustion traps
+with code 13 at the operation requesting an entry. Each Instance keeps its own
+quota. Catalog-backed execution has a separate representation.
+
+The C host tests the existing one-slot traps and two-slot successes for arrays
+and owners. It also runs one Program holding an array ticket and an input view
+across three calls that return an input range. Ceilings of one, two, and three
+trap at array opening, CALL entry, and creation of the input range respectively.
+Four entries let all three calls finish and return 77.
 
 The saved array/record VM reserves a shared payload arena of
 `min(limits.object_bytes, 65536)` bytes for Programs with aggregate layouts.

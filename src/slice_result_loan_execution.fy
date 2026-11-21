@@ -3,6 +3,7 @@ import slice_result_runtime as runtime;
 import slice_result_frames as frames;
 import slice_authority as authority;
 import array_slices as slices;
+import input_reference_views as inputs;
 import array_owners as owners;
 import array_vm as arrays;
 import ir as ir;
@@ -16,6 +17,12 @@ import array_layout as layouts;
 pub fn Result<usize,errors::Error> step(ref ir::Program p,usize pc,
     ref mut frames::Frames bindings,ref mut runtime::State state,
     ref mut i64[] registers,ref mut u8[] data,usize fuel){
+    let inputs::State disabled=inputs::disabled();
+    return step_with_input(p,pc,bindings,state,registers,data,fuel,ref disabled);
+}
+pub fn Result<usize,errors::Error> step_with_input(ref ir::Program p,usize pc,
+    ref mut frames::Frames bindings,ref mut runtime::State state,
+    ref mut i64[] registers,ref mut u8[] data,usize fuel,ref inputs::State windows){
     let usize at=pc*8;let usize offset=p.offsets[pc];let u8 op=p.code[at];
     let usize dst=p.code[at+1] as usize;let usize a=p.code[at+2] as usize;let usize b=p.code[at+3] as usize;
     let usize base=bindings.frame*16;
@@ -91,6 +98,9 @@ pub fn Result<usize,errors::Error> step(ref ir::Program p,usize pc,
                 case .ok(v):{v}case .err(e):{return .err(arrays::failure(e,offset));}
             };
         }else{return .err(errors::make(5,offset));}
+        if((op==54 || op==59) && inputs::configured_quota(windows)){
+            let usize checked=inputs::check_descriptors(windows,slices::live_count(ref pool),0,offset)?;
+        }
         // No fallible operation follows metadata publication. Avoid another
         // large aggregate Runtime value while nested return cleanup is live.
         state.runtime.authority=stack;state.runtime.pool=pool;state.runtime.owners=table;

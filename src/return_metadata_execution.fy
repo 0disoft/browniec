@@ -198,11 +198,13 @@ fn Result<usize,errors::Error> finish(ref mut State s,ref metadata::State work,r
         let runtime::Resumed resumed=runtime::Resumed{.tickets=work.returned.resumed,.remaining=work.returned.remaining};
         let usize next=owned::finish_leave(p,bindings,ref prepared,resumed)?;s.next=next;
         if(s.op==79 && s.mode!=2){
-            if(s.mode==4){let usize installed=inputs::put(windows,parent,s.dst,s.span,offset)?;}
             current[parent*16+s.dst]=s.word;let usize one=1;live[parent]|=one<<s.dst;
         }
     }
+    // The result replaces an active child site, so clear the child before
+    // publishing its caller view. The final live descriptor count cannot grow.
     let usize cleared=inputs::clear_frame(windows,frame,offset)?;
+    if(s.mode==4){let usize installed=inputs::put(windows,parent,s.dst,s.span,offset)?;}
     if(s.op==79){live[frame]=0;var usize i=0;while(i<16){current[frame*16+i]=0;i+=1;}
         if(s.mode==2){current[parent*16+s.dst]=s.word;let usize one=1;live[parent]|=one<<s.dst;}
     }

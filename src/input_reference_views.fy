@@ -7,8 +7,8 @@ import metadata_budget as budget;
 
 // Metadata only. Frame zero is reserved, including its 16 sites and 8 grants.
 struct Cell { usize start; usize length; bool active; }
-pub resource State { bytes::Buffer cells; ptr mut u8 data; usize length; cleanup { } }
-pub fn State disabled(){return State{.cells=bytes::empty(),.data=null,.length=0};}
+pub resource State { bytes::Buffer cells; ptr mut u8 data; usize length; usize descriptor_limit; usize live_sites; cleanup { } }
+pub fn State disabled(){return State{.cells=bytes::empty(),.data=null,.length=0,.descriptor_limit=512,.live_sites=0};}
 pub fn bool enabled(ref State state){return bytes::view(ref state.cells).len==18432;}
 // Bounds-only preflight for unpublished child-frame grants; no cell access.
 pub fn bool accepts(ref State state,views::Span span){
@@ -21,13 +21,16 @@ fn errors::Error invalid(usize offset){return errors::make(5,offset);}
 // Private setup alternative. The backing is reserved once before any resumes;
 // no cell is exposed through the public API until all 768 are initialized.
 pub fn Result<State,errors::Error> reserve(usize length){
-    if(length>1048576){return .err(invalid(0));}
+    return reserve_with_limit(length,512);
+}
+pub fn Result<State,errors::Error> reserve_with_limit(usize length,usize limit){
+    if(length>1048576 || limit==0 || limit>512){return .err(invalid(0));}
     // Vec<Cell>::reserve(768) formerly rounded to 1024 cells (24576 bytes).
     var bytes::Buffer cells=switch(bytes::with_capacity(24576)){
         case .ok(v):{v}case .err(_):{return .err(errors::make(15,0));}};
     let ptr mut u8 data=unsafe {bytes::view_mut(ref mut cells) as ptr mut u8};
     if(data==null){return .err(invalid(0));}
-    return .ok(State{.cells=cells,.data=data,.length=length});
+    return .ok(State{.cells=cells,.data=data,.length=length,.descriptor_limit=limit,.live_sites=0});
 }
 // Public Buffer ABI, with the same first-field ownership seam as runtime_output.
 @link_name("fy_std_buffer_append_v0") unsafe extern C fn u32 append_cells_raw(ptr mut void buffer,ptr u8 data,usize length);
@@ -60,7 +63,14 @@ pub fn Result<State,errors::Error> open(usize length){
     if(!bytes::resize_zeroed(ref mut cells,18432).is_ok){return .err(errors::make(15,0));}
     let ptr mut u8 data=unsafe {bytes::view_mut(ref mut cells) as ptr mut u8};
     assert(data!=null);
-    return .ok(State{.cells=cells,.data=data,.length=length});
+    return .ok(State{.cells=cells,.data=data,.length=length,.descriptor_limit=512,.live_sites=0});
+}
+// Formal grants are provenance for the matching sites. Only live sites and
+// array tickets consume descriptor entries; grants retain their memory charge.
+pub fn bool configured_quota(ref State state){return state.descriptor_limit<512;}
+pub fn Result<usize,errors::Error> check_descriptors(ref State state,usize tickets,usize added,usize offset){
+    if(state.live_sites+tickets+added>state.descriptor_limit){return .err(errors::make(13,offset));}
+    return .ok(0);
 }
 fn Result<usize,errors::Error> index(usize frame,usize slot,bool formal,usize offset){
     let usize width=if(formal){8}else{16};
@@ -104,7 +114,9 @@ fn Result<usize,errors::Error> publish(ref mut State state,usize at,views::Span 
     save(state,at,Cell{.start=span.start,.length=span.length,.active=true});return .ok(0);
 }
 pub fn Result<usize,errors::Error> put(ref mut State state,usize frame,usize site,views::Span span,usize offset){
-    let usize at=index(frame,site,false,offset)?;return publish(state,at,span,offset);
+    let usize at=index(frame,site,false,offset)?;
+    let usize installed=publish(state,at,span,offset)?;state.live_sites+=1;
+    return .ok(installed);
 }
 pub fn Result<usize,errors::Error> put_grant(ref mut State state,usize frame,usize argument,views::Span span,usize offset){
     let usize at=index(frame,argument,true,offset)?;return publish(state,at,span,offset);
@@ -113,12 +125,19 @@ pub fn Result<usize,errors::Error> close(ref mut State state,usize frame,usize s
     let usize at=index(frame,site,false,offset)?;
     if(!enabled(state)){return .err(invalid(offset));}
     if(!read(state,at,offset).is_ok){return .err(invalid(offset));}
-    save(state,at,Cell{.start=0,.length=0,.active=false});return .ok(0);
+    assert(state.live_sites!=0);
+    save(state,at,Cell{.start=0,.length=0,.active=false});state.live_sites-=1;
+    return .ok(0);
+}
+fn bool occupied(ref State state,usize at){
+    let ref u8[] cells=bytes::view(ref state.cells);
+    return cells[at*24+16]!=0;
 }
 pub fn Result<usize,errors::Error> clear_frame(ref mut State state,usize frame,usize offset){
     let usize base=index(frame,0,false,offset)?;
     if(!enabled(state)){return .ok(0);}
     var usize i=0;while(i<16){
+        if(occupied(state,base+i)){assert(state.live_sites!=0);state.live_sites-=1;}
         save(state,base+i,Cell{.start=0,.length=0,.active=false});i+=1;
     }
     i=0;while(i<8){

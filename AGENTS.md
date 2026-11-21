@@ -1,7 +1,7 @@
-- Latest runtime checkpoint (2026-11-21): [Revision-2 aggregate quotas](docs/engineering/embed-preview.md#revision-2-scalar-stepping)
-  apply the configured object-byte ceiling to the saved array/record arena,
-  memory admission and setup Fuel. Windows /Od and /O2 verify 8-byte success,
-  7-byte trap, exact accounting and zero live SDK allocations in Engine tests.
+- Latest runtime checkpoint (2026-11-21): [Revision-2 shared descriptor quotas](docs/engineering/embed-preview.md#revision-2-scalar-stepping)
+  count live input views and array slice tickets against one Instance limit.
+  Windows /Od and /O2 verify three distinct quota traps and reuse across return
+  at four entries. Both Engine verifier profiles end with zero live SDK allocations.
 
 # Brownie C agent guidance
 

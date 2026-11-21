@@ -12,8 +12,8 @@ import return_metadata_execution as return_metadata;
 // The dispatcher owns these inline/native-stack values; no heap is allocated.
 // Register/static banks stay separately borrowed: the pinned compiler treats
 // simultaneous loans of sibling array fields as loans of the whole struct.
-pub struct Limits { u8 frames; u8 owners; u8 descriptors; usize object_bytes; }
-pub fn Limits default_limits(){return Limits{.frames=31,.owners=16,.descriptors=16,.object_bytes=65536};}
+pub struct Limits { u8 frames; u8 owners; usize descriptors; usize object_bytes; }
+pub fn Limits default_limits(){return Limits{.frames=31,.owners=16,.descriptors=512,.object_bytes=65536};}
 
 fn u8 narrow(usize value,u8 ceiling){
     if(value>=ceiling as usize){return ceiling;}
@@ -21,23 +21,23 @@ fn u8 narrow(usize value,u8 ceiling){
     return switch(num::u8_from_i64(small)){case .ok(v):{v}case .err(_):{assert(false);0}};
 }
 pub fn Limits limits(usize frames,usize owners,usize descriptors,usize object_bytes){
-    return Limits{.frames=narrow(frames,31),.owners=narrow(owners,16),.descriptors=narrow(descriptors,16),
+    return Limits{.frames=narrow(frames,31),.owners=narrow(owners,16),.descriptors=if(descriptors>512){512}else{descriptors},
         .object_bytes=if(object_bytes>65536){65536}else{object_bytes}};
 }
 pub fn usize aggregate_capacity(Limits selected,usize capacity){
     return if(capacity>selected.object_bytes){selected.object_bytes}else{capacity};
 }
-// Operation 9 packs three five-bit counts followed by the effective byte
-// ceiling. The backing limit of 65536 needs seventeen bits.
+// Operation 9 packs five-bit frame and owner counts, a ten-bit descriptor
+// count and a seventeen-bit backing byte ceiling.
 pub fn usize encode_limits(Limits selected){
-    return (selected.frames as usize) | ((selected.owners as usize)<<5) | ((selected.descriptors as usize)<<10) | (selected.object_bytes<<15);
+    return (selected.frames as usize) | ((selected.owners as usize)<<5) | (selected.descriptors<<10) | (selected.object_bytes<<20);
 }
 pub fn Result<Limits,errors::Error> decode_limits(usize word){
     let usize frames=word&31;
     let usize owners=(word>>5)&31;
-    let usize descriptors=(word>>10)&31;
-    let usize object_bytes=word>>15;
-    if(frames==0 || owners==0 || owners>16 || descriptors==0 || descriptors>16 ||
+    let usize descriptors=(word>>10)&1023;
+    let usize object_bytes=word>>20;
+    if(frames==0 || owners==0 || owners>16 || descriptors==0 || descriptors>512 ||
         object_bytes==0 || object_bytes>65536){return .err(errors::make(5,0));}
     return .ok(limits(frames,owners,descriptors,object_bytes));
 }

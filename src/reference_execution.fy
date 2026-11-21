@@ -170,17 +170,17 @@ pub fn Result<usize,errors::Error> validate_input_arguments(ref ir::Program p,re
     usize target,usize frame,ref Arguments staged,ref input_views::State input,usize offset){
     if(!input_views::enabled(input) || frame==0 || frame>=32 || target>=p.function_count ||
         p.arities[target]>8 || staged.input_mask>=256){return .err(invalid(offset));}
-    var usize used=0;var usize i=0;let usize one=1;
+    var usize used=0;var usize count=0;var usize i=0;let usize one=1;
     while(i<p.arities[target]){if((staged.input_mask&(one<<i))!=0){
         let usize formal=p.register_starts[target]+i;let usize site=sites.formal_sites[formal] as usize;
         if(sites.parameters[formal]!=3 || site==0 || site>16 || staged.words[site-1]!=input_views::marker() ||
             (used&(one<<(site-1)))!=0){return .err(invalid(offset));}
         let views::Span span=staged.input_windows[i];
         if(!input_views::accepts(input,span)){return .err(invalid(offset));}
-        used|=one<<(site-1);
+        used|=one<<(site-1);count+=1;
     }i+=1;}
     if((staged.input_mask>>p.arities[target])!=0){return .err(invalid(offset));}
-    return .ok(frame);
+    return .ok(count);
 }
 // Publish only after native CALL enter. All windows were checked while staging;
 // this fixed-capacity operation cannot allocate or acquire a payload owner.
@@ -218,7 +218,7 @@ pub fn Result<usize,errors::Error> parameter_input(ref ir::Program p,ref statics
 }
 pub fn Result<Step,errors::Error> step_input(ref ir::Program p,ref statics::Sites sites,
     usize pc,usize f,ref mut u32[] current,usize live,ref frames::Frames bindings,
-    ref i64[] registers,usize payload,usize remaining,ref mut input_views::State input){
+    ref i64[] registers,usize payload,usize remaining,ref mut input_views::State input,ref slices::Pool pool){
     if(pc>=p.count || pc>=256 || current.len!=16){return .err(invalid(0));}
     let usize at=pc*8;let u8 op=p.code[at];let usize dst=p.code[at+1] as usize;
     let usize from=if(op==70){dst}else{p.code[at+2] as usize};
@@ -236,6 +236,9 @@ pub fn Result<Step,errors::Error> step_input(ref ir::Program p,ref statics::Site
     if(op==76){let usize lo=p.code[at+3] as usize;let usize hi=p.code[at+4] as usize;
         if(lo>=registers.len || hi>=registers.len){return .err(invalid(offset));}
         span=input_views::crop(ref span,cells::unpack(registers[lo],offset)?,cells::unpack(registers[hi],offset)?,offset)?;
+    }
+    if(input_views::configured_quota(input)){
+        let usize checked=input_views::check_descriptors(input,slices::live_count(pool),1,offset)?;
     }
     let usize bound=input_views::put(input,bindings.frame,dst,span,offset)?;current[dst]=input_views::marker();
     return .ok(Step{.live=live|(one<<dst),.remaining=remaining-price});

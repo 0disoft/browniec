@@ -77,6 +77,11 @@ fn Result<usize, owners::Error> resolve(ref Pool pool, Ticket ticket, ref owners
     let usize count = validate(pool, table, capacity)?;
     return .ok(index);
 }
+pub fn usize live_count(ref Pool pool){
+    var usize live=0;var usize i=0;
+    while(i<16){if(pool.slots[i].live){live+=1;}i+=1;}
+    return live;
+}
 fn Result<usize, owners::Error> free_slot(ref Pool pool) {
     var usize i = 0;
     while (i < 16) {
