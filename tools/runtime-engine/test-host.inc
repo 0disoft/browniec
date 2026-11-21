@@ -370,6 +370,27 @@ void bc_runtime_engine_test_input_proof_step(void){
  assert(!output_proof_expired);
  if(output_proof_expiry)bc_runtime_engine_test_proof_visit();
 }
+static uintptr_t output_prepare_expiry;
+static uint8_t output_prepare_target,output_prepare_steps;
+static size_t output_prepare_attempts;
+void bc_runtime_engine_test_expire_in_output_prepare(uintptr_t deadline,uint8_t stage){
+ assert(host_clock_fixed&&deadline>host_clock_ticks&&!output_prepare_expiry&&stage>=1&&stage<=6);
+ output_prepare_expiry=deadline;output_prepare_target=stage;output_prepare_steps=0;
+}
+void bc_runtime_engine_test_output_prepare_step(uint8_t stage){
+ if(!output_prepare_expiry)return;
+ assert(output_prepare_steps<output_prepare_target&&stage==output_prepare_steps+1);
+ output_prepare_steps=stage;
+ if(stage==output_prepare_target){
+  bc_runtime_engine_test_set_clock(output_prepare_expiry);
+  output_prepare_attempts=probe_attempts();
+ }
+}
+void bc_runtime_engine_test_output_prepare_stopped(void){
+ assert(output_prepare_expiry&&output_prepare_steps==output_prepare_target);
+ assert(probe_attempts()==output_prepare_attempts);
+ output_prepare_expiry=0;
+}
 static uint8_t ordinary_proof_target;
 void bc_runtime_engine_test_expire_in_ordinary_proof(uintptr_t deadline,uint8_t phase){
  assert(!ordinary_proof_target&&phase>=1&&phase<=3);

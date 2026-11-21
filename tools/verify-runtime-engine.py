@@ -76,6 +76,19 @@ def source_copy(path):
         return path.name, ordinary_proof_probe(path.read_text(encoding='utf-8'), '        if(!seen[pc])', 2)
     if path == ROOT / 'src/reference_lifetimes.fy':
         return path.name, ordinary_proof_probe(path.read_text(encoding='utf-8'), '            if(!seen[pc])', 3)
+    if path == ROOT / 'src/module_output_program.fy':
+        text = path.read_text(encoding='utf-8')
+        declaration = 'fn Result<Program,diagnostics::Error> finish_verified('
+        need(text.count(declaration) == 1, 'Output preparation deadline probe declaration changed')
+        head, body = text.split(declaration)
+        check = '    if(clock::expired(deadline)){return .err(absent(errors::absent(errors::deadline_kind(),0)));}'
+        need(body.count(check) == 6, 'Output preparation deadline probe anchors changed')
+        parts = body.split(check)
+        body = parts[0]
+        for stage, rest in enumerate(parts[1:], 1):
+            body += f'    unsafe{{bc_runtime_engine_test_output_prepare_step({stage})}};\n' + check + rest
+        probe = 'unsafe extern C fn void bc_runtime_engine_test_output_prepare_step(u8 stage);\n'
+        return path.name, (head + probe + declaration + body).encode('utf-8')
     if path == ROOT / 'src/output_canonical_proof_work.fy':
         text = path.read_text(encoding='utf-8')
         anchor = 'if(w.phase==0){let bool input=w.input;'

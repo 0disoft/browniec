@@ -96,7 +96,7 @@ fn Result<Program,diagnostics::Error> finish(ref sources::Snapshot sources,ref i
     let output_proof::Proof proof=switch(proof_work::inspect(code,ref image,input)){
         case .ok(v):{v}case .err(e):{return .err(proof_error(sources,code,e));}
     };
-    return finish_verified(sources,code,image,input,ref proof);
+    return finish_verified(sources,code,image,input,ref proof,0);
 }
 fn Result<Program,diagnostics::Error> finish_until(ref sources::Snapshot sources,ref images::Builder builder,
     ref candidates::Program code,usize image_limit,bool input,ref mut retention::Plan plan,usize deadline){
@@ -105,17 +105,23 @@ fn Result<Program,diagnostics::Error> finish_until(ref sources::Snapshot sources
     let output_proof::Proof proof=switch(proof_work::inspect_until(code,ref image,input,deadline)){
         case .ok(v):{v}case .err(e):{return .err(proof_error(sources,code,e));}
     };
-    return finish_verified(sources,code,image,input,ref proof);
+    return finish_verified(sources,code,image,input,ref proof,deadline);
 }
 fn Result<Program,diagnostics::Error> finish_verified(ref sources::Snapshot sources,ref candidates::Program code,
-    images::Image image,bool input,ref output_proof::Proof proof){
+    images::Image image,bool input,ref output_proof::Proof proof,usize deadline){
+    if(clock::expired(deadline)){return .err(absent(errors::absent(errors::deadline_kind(),0)));}
     let lists::Requirement list=switch(lists::requirement(ref code.body)){case .ok(v):{v}case .err(e):{return .err(absent(e));}};
+    if(clock::expired(deadline)){return .err(absent(errors::absent(errors::deadline_kind(),0)));}
     let places::Requirement place=switch(places::requirement(ref code.body)){case .ok(v):{v}case .err(e):{return .err(absent(e));}};
+    if(clock::expired(deadline)){return .err(absent(errors::absent(errors::deadline_kind(),0)));}
     let usize work=switch(owned_calls::cost(ref code.body,code.body.entry,0)){case .ok(v):{v}case .err(e):{return .err(absent(e));}};
+    if(clock::expired(deadline)){return .err(absent(errors::absent(errors::deadline_kind(),0)));}
     let execution_heap::Plan heap=switch(execution_heap::prepare(ref code.body,input,true,0)){case .ok(v):{v}case .err(e):{return .err(absent(e));}};
+    if(clock::expired(deadline)){return .err(absent(errors::absent(errors::deadline_kind(),0)));}
     let call_captures::Plan calls=switch(call_captures::prepare(ref code.body)){case .ok(v):{v}case .err(e):{return .err(absent(e));}};
     let Preparation prepared=Preparation{.sites=proof.ordinary.statics,.origins=proof.ordinary.recipes.site_origins,.list=list,.place=place,
         .work=work+code.body.arities[code.body.entry],.capacity=if(code.body.arrays.count!=0 || code.body.records.count!=0){65536}else{0},.scratch=heap.scratch,.parameters=proof.parameters,.calls=calls};
+    if(clock::expired(deadline)){return .err(absent(errors::absent(errors::deadline_kind(),0)));}
     return retain(sources,code,image,input,ref prepared);
 }
 fn Result<Program,diagnostics::Error> retain(ref sources::Snapshot sources,ref candidates::Program code,images::Image image,bool input,ref Preparation prepared){

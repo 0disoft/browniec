@@ -1,7 +1,7 @@
-- Latest runtime checkpoint (2026-11-21): [Ordinary module verification deadlines](docs/engineering/runtime-engine-compile-memory.md#configured-compile-deadlines)
-  carry the Engine deadline into legacy and reference proof phases and
-  instruction scans. Windows development and /O2 passed with zero live SDK
-  allocations.
+- Latest runtime checkpoint (2026-11-21): [Output preparation deadlines](docs/engineering/runtime-engine-compile-memory.md#configured-compile-deadlines)
+  check the Engine deadline between post-proof execution planning stages and
+  before retaining a Program. Windows development and /O2 passed with zero
+  live SDK allocations.
 
 # Brownie C agent guidance
 

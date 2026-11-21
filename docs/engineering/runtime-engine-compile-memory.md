@@ -149,8 +149,10 @@ sample once before each bounded proof advance. Input-only compilation uses its
 separate proof with the output gate closed and checks again before returning
 the completed proof. Expiry ends the compile with
 the source-less deadline diagnostic and releases the image and any active
-reservation. Only a complete proof can enter Program retention. The final
-publication check still covers the synchronous work after proof.
+reservation. After a complete output proof, the compiler checks the same
+deadline before list, place, CALL cost, execution heap and capture planning,
+and again before allocating the retained Program. The final Engine
+publication check precedes registration.
 
 The Windows verifier advanced the clock to the exact deadline in the first
 source copy for both output entry modes. Each compile copied exactly 64 bytes
@@ -242,6 +244,13 @@ cases stopped before a second proof instruction or retention allocation,
 restored the SDK heap and Program charge, and preserved the next Program ID.
 Both Windows profiles passed with zero live SDK allocations at exit. Local
 receipt: `build/runtime-engine/20261121T011508635459Z/receipt.json`.
+
+The Windows verifier expired each of six post-proof checkpoints in both
+output-capable compile modes. Each rejection skipped the next preparation
+stage and made zero further SDK allocation attempts. The SDK heap and Program
+charge returned to baseline, and the next successful compile used Program ID 1.
+Windows development and /O2 passed with zero live SDK allocations at exit.
+Local receipt: `build/runtime-engine/20261121T012309774139Z/receipt.json`.
 
 Source lowering, work between checkpoints, and cleanup remain synchronous.
 Public Pending compilation, in-flight cancellation, and a latency bound for
