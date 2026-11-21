@@ -1,5 +1,6 @@
-- Latest runtime checkpoint (2026-11-22): [Record assignment path Fuel](docs/engineering/restricted-worker.md#record-assignment-path-fuel)
-  meters plain and grouped record destinations and record-valued RHS paths.
+- Latest runtime checkpoint (2026-11-22): [Aggregate assignment call Fuel](docs/engineering/restricted-worker.md#aggregate-assignment-call-fuel)
+  meters captured call stages and scalar arguments in array and record
+  assignments.
 
 # Brownie C agent guidance
 

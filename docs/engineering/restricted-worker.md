@@ -1149,6 +1149,23 @@ Windows development and /O2 each passed 98 configured, 32 catalog, five
 managed project and four compile-stop cases. All 456 input hashes matched.
 Local receipt: `build/restricted-worker/20261121T231847899946Z/receipt.json`.
 
+### Aggregate assignment call Fuel
+
+Calls returning arrays or records into assignment expressions use the
+enclosing compile Fuel and deadline in the captured-call continuation.
+Each continuation and scalar argument Pratt advance costs one unit. Bare
+and grouped call results share this path. A final stop check precedes
+returning the staged result to the assignment. Synchronous acquisition
+of aggregate and reference arguments retains its outer checkpoints.
+
+The fixture makes a bare and a grouped array-returning call, then a
+record-returning call with a captured array and a scalar argument. It adds
+224 units to the prior balance. At 12,055,864 compile Fuel it returns 42.
+At 12,055,863 it reports compile_limit with no result or output.
+Windows development and /O2 each passed 100 configured, 32 catalog, five
+managed project and four compile-stop cases. All 456 input hashes matched.
+Local receipt: `build/restricted-worker/20261121T232653115707Z/receipt.json`.
+
 ## Windows verification
 
 Run `python -B tools/verify-restricted-worker.py`. The development and optimized

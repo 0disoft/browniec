@@ -698,7 +698,7 @@ fn Result<record_expressions::Value,errors::Error> record_value_into(ref u8[] so
         id=if(destination<16 && p.records.records[destination] as usize==record){destination}
             else{record_results::destination(signatures,target,record,mutable,p,names.function,s.begin)?};
         let usize name=lexer::next(source,s)?;
-        let usize called=call_value(source,s,p,names,signatures,target,144+id,at,depth+groups,result_type,structure,loop_state)?;owned=true;
+        let usize called=captured_call(source,s,p,names,signatures,target,144+id,at,depth+groups,result_type,structure,loop_state,deadline,fuel)?;owned=true;
     }else{
         if(!record_values::binding(names,local)){return .err(errors::make(3,s.begin));}
         id=names.registers[local]-144;
@@ -856,11 +856,12 @@ fn Result<usize,errors::Error> array_scalar_read(ref u8[] source,ref mut lexer::
 fn Result<array_expressions::Value,errors::Error> array_grouped_value(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref locals::Table names,ref functions::Table signatures,
     u8 expected,usize length,bool mutable,usize at,usize depth,u8 result_type,usize structure,ref mut loops::State loop_state){
-    return array_value_into(source,s,p,names,signatures,expected,length,mutable,at,depth,result_type,structure,loop_state,16);
+    var usize fuel=metadata_budget::unlimited();
+    return array_value_into(source,s,p,names,signatures,expected,length,mutable,at,depth,result_type,structure,loop_state,16,0,ref mut fuel);
 }
 fn Result<array_expressions::Value,errors::Error> array_value_into(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref locals::Table names,ref functions::Table signatures,
-    u8 expected,usize length,bool mutable,usize at,usize depth,u8 result_type,usize structure,ref mut loops::State loop_state,usize destination){
+    u8 expected,usize length,bool mutable,usize at,usize depth,u8 result_type,usize structure,ref mut loops::State loop_state,usize destination,usize deadline,ref mut usize fuel){
     if(depth>signatures.semantic_depth){return .err(errors::make(4,at));}
     let usize groups=if(s.kind==40){array_expressions::open(source,s,depth,signatures.semantic_depth)?}else{0};var usize id=16;var bool owned=false;
     if(arm_syntax::operand_kind(source,s)!=0){
@@ -881,7 +882,7 @@ fn Result<array_expressions::Value,errors::Error> array_value_into(ref u8[] sour
             if((expected!=0 && expected!=element) || (length!=0 && length!=size)){return .err(errors::make(3,at));}
             id=array_locals::site(p,names.function,element,size,mutable,s.begin,destination)?;
             let usize name=lexer::next(source,s)?;
-            let usize called=call_value(source,s,p,names,signatures,target,id,at,depth+groups,result_type,structure,loop_state)?;owned=true;
+            let usize called=captured_call(source,s,p,names,signatures,target,id,at,depth+groups,result_type,structure,loop_state,deadline,fuel)?;owned=true;
         }else{
             if(!arrays::binding(names,index)){return .err(errors::make(3,s.begin));}
             id=names.registers[index]-128;let usize name=lexer::next(source,s)?;
@@ -1218,7 +1219,8 @@ fn Result<usize,errors::Error> call_value(ref u8[] source,ref mut lexer::State s
         if(signatures.param_slices[parameter] || signatures.param_lengths[parameter]!=0 || signatures.param_records[parameter]!=0){plain=false;}i+=1;
     }
     if(plain){return scalar_call(source,s,p,table,signatures,target,at,depth,result_type,structure,loop_state);}
-    return captured_call(source,s,p,table,signatures,target,destination,at,depth,result_type,structure,loop_state);
+    var usize fuel=metadata_budget::unlimited();
+    return captured_call(source,s,p,table,signatures,target,destination,at,depth,result_type,structure,loop_state,0,ref mut fuel);
 }
 // No aggregate formal can capture a temporary across scalar argument evaluation.
 // Keep the 64-entry lexical snapshot out of every scalar recursion frame.
@@ -1240,15 +1242,17 @@ fn Result<usize,errors::Error> scalar_call(ref u8[] source,ref mut lexer::State 
 }
 fn Result<usize,errors::Error> captured_call(ref u8[] source,ref mut lexer::State s,ref mut ir::Program p,
     ref locals::Table table,ref functions::Table signatures,usize target,usize destination,usize at,
-    usize depth,u8 result_type,usize structure,ref mut loops::State flow){
+    usize depth,u8 result_type,usize structure,ref mut loops::State flow,usize deadline,ref mut usize fuel){
     if(depth>signatures.semantic_depth){return .err(errors::make(4,at));}
     if(destination==16 && (signatures.return_lengths[target]!=0 || signatures.return_records[target]!=0)){return .err(errors::make(3,at));}
     let usize zero=if(destination==176){ir::integer(p,0,12,at)?}else{128};
     var call_operand_work::State w=call_operand_work::begin(table,*s,target,at,depth);var metadata_budget::State meter=metadata_budget::empty();
-    while(!w.done){let usize allowance=metadata_budget::reset(ref mut meter,s.begin)?;
+    while(!w.done){
+        discard metadata_budget::visit(fuel,deadline,s.begin)?;
+        let usize allowance=metadata_budget::reset(ref mut meter,s.begin)?;
         let bool done=aggregate_calls::advance(source,s,p,signatures,destination,ref mut w,ref mut meter)?;
         let u8 request=w.request;let usize parameter=w.parameter;let usize record=w.record;let usize length=w.length;let u8 tag=w.tag;var usize value=256;
-        if(request==1){value=expression(source,s,p,ref w.names,signatures,1,depth+1,w.tag,result_type,structure,flow)?;}
+        if(request==1){value=assignment_operand(source,s,p,ref w.names,signatures,depth+1,w.tag,result_type,structure,flow,deadline,fuel)?;}
         else if(request==2){var bool prefix=w.prefix;
             if(prefix && !w.sliced){value=call_prefix::stable(source,s,p,ref w.names,w.tag,w.length,w.record,depth)?;if(value==256){prefix=false;}}
             if(value==256){if(w.sliced){value=if(reference_calls::parameter(signatures,w.parameter)){
@@ -1261,13 +1265,18 @@ fn Result<usize,errors::Error> captured_call(ref u8[] source,ref mut lexer::Stat
                 reference_results::call(p,signatures,table,ref w.names,target,ref w.arguments[..w.arity],at)?
             }else{result_calls::finish(p,table,ref w.names,signatures,target,ref w.arguments[..w.arity],zero,at)?};}
         if(request!=0){let usize resumed=call_operand_work::resume(ref mut w,request,value)?;}
-    }return call_operand_work::prepared(ref w);
+    }
+    if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
+    return call_operand_work::prepared(ref w);
 }
 // Internal comparison seam: same prepared source/IR, independent outer CALL loop.
 pub fn Result<usize,errors::Error> specialized_call(ref u8[] source,ref mut lexer::State s,ref mut ir::Program p,
     ref locals::Table table,ref functions::Table signatures,usize target,usize destination,usize at,
     usize depth,u8 result_type,usize structure,ref mut loops::State flow,bool staged){
-    if(staged){return captured_call(source,s,p,table,signatures,target,destination,at,depth,result_type,structure,flow);}
+    if(staged){
+        var usize fuel=metadata_budget::unlimited();
+        return captured_call(source,s,p,table,signatures,target,destination,at,depth,result_type,structure,flow,0,ref mut fuel);
+    }
     return captured_call_raw(source,s,p,table,signatures,target,destination,at,depth,result_type,structure,flow);
 }
 fn Result<usize,errors::Error> captured_call_raw(ref u8[] source,ref mut lexer::State s,ref mut ir::Program p,
@@ -1553,7 +1562,7 @@ fn Result<usize, errors::Error> array_copy_statement(ref u8[] source, ref mut le
         let aggregate_work::Plan plan=aggregate_work::inspect_metered(source,*s,p,table,signatures,2,deadline,fuel)?;
         if(plan.kind==1){return array_grouped_literal_assignment(source,s,p,table,signatures,index,id,at,terminator,result_type,expr_depth,structure,loop_state,place,deadline,fuel);}
         let u8 element=p.arrays.elements[id];let usize length=p.arrays.lengths[id];
-        let array_expressions::Value value=array_grouped_value(source,s,p,table,signatures,element,length,false,at,expr_depth,result_type,structure,loop_state)?;
+        let array_expressions::Value value=array_value_into(source,s,p,table,signatures,element,length,false,at,expr_depth,result_type,structure,loop_state,16,deadline,fuel)?;
         let usize end=lexer::punctuation(source,s,terminator)?;
         let usize assigned=aggregate_stores::copy_array(p,table,place,id,value.id,value.owned,at)?;
         return .ok(index);
@@ -1567,7 +1576,7 @@ fn Result<usize, errors::Error> array_copy_statement(ref u8[] source, ref mut le
         let usize target=functions::find(source,signatures,s.begin,s.end);
         let usize temporary=array_results::destination(signatures,target,p.arrays.elements[id],p.arrays.lengths[id],false,p,table.function,s.begin)?;
         let usize name=lexer::next(source,s)?;
-        let usize called=call_value(source,s,p,table,signatures,target,temporary,at,expr_depth,result_type,structure,loop_state)?;
+        let usize called=captured_call(source,s,p,table,signatures,target,temporary,at,expr_depth,result_type,structure,loop_state,deadline,fuel)?;
         let usize end=lexer::punctuation(source,s,terminator)?;
         let usize assigned=aggregate_stores::copy_array(p,table,place,id,temporary,true,at)?;
         return .ok(index);
@@ -1645,7 +1654,7 @@ fn Result<usize, errors::Error> record_child_call(ref u8[] source, ref mut lexer
     let usize nominal=(signatures.return_records[target] as usize)-1;
     let usize temporary=record_results::destination(signatures,target,nominal,false,p,table.function,s.begin)?;
     let usize name=lexer::next(source,s)?;
-    let usize called=call_value(source,s,p,table,signatures,target,144+temporary,at,expr_depth+2,result_type,structure+1,loop_state)?;
+    let usize called=captured_call(source,s,p,table,signatures,target,144+temporary,at,expr_depth+2,result_type,structure+1,loop_state,deadline,fuel)?;
     let usize copied=record_values::stage_call_child(source,s,p,state,slots,first,temporary,at,ref signatures.context)?;
     let usize dropped=ir::record_drop(p,temporary,at)?;
     return .ok(copied);
@@ -2405,7 +2414,8 @@ fn Result<bool,errors::Error> conditional_tail(ref u8[] source,ref mut lexer::St
     if(array.kind!=0 && array.suffix==125){
         let u8 expected=if(join.kind==2){join.tag}else{0};let usize length=if(join.kind==2){join.size}else{0};
         let usize destination=if(join.kind==2 && join.value!=256){join.value-128}else{16};
-        let array_expressions::Value value=array_value_into(source,s,p,table,signatures,expected,length,join.mutable,at,depth,result_type,structure,loop_state,destination)?;
+        var usize fuel=metadata_budget::unlimited();
+        let array_expressions::Value value=array_value_into(source,s,p,table,signatures,expected,length,join.mutable,at,depth,result_type,structure,loop_state,destination,0,ref mut fuel)?;
         let usize accepted=joins::accept_array(p,join,table.function,value.id,value.owned,at)?;return .ok(false);
     }
     let u8 expected=if(join.kind==0 || join.kind==1){join.tag}else{0};
