@@ -88,7 +88,9 @@ remain 172400/1184/1792 bytes.
 ## Untyped declaration and signature integration
 
 Owning `functions::scan` / `scan_reference_returns` and scoped/input signature
-adapters now drain `function_scan_work`. Untyped single-source and immutable
+adapters now drain `function_scan_work`. Configured Engine output compiles
+check their absolute deadline at each indexed declaration or signature advance
+and before returning the complete Table. Untyped single-source and immutable
 module inputs retain exact entry selection, record order, pub/import resolution,
 parameter duplicates and reference-return candidates. Raw signature/single/index
 scans remain independent ordering oracles. The unscoped compatibility adapter

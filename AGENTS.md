@@ -1,6 +1,7 @@
-- Latest runtime checkpoint (2026-11-21): [Literal collection deadlines](docs/engineering/runtime-engine-compile-memory.md#configured-compile-deadlines)
-  stop configured output compilation between literal advances and before Builder
-  publication. Windows development and /O2 passed with zero live SDK allocations.
+- Latest runtime checkpoint (2026-11-21): [Indexed signature deadlines](docs/engineering/runtime-engine-compile-memory.md#configured-compile-deadlines)
+  stop configured output compilation between indexed signature advances,
+  including the post-body rescan. Windows development and /O2 passed with
+  zero live SDK allocations.
 
 # Brownie C agent guidance
 

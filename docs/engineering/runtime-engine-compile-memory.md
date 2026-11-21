@@ -122,8 +122,11 @@ one metadata row, checks one sealed name, or moves to the next phase. Expiry
 discards the incomplete context before signature or body lowering. Literal
 collection samples before every bounded advance and before assigning the
 finished candidate to the image Builder. An expired collection leaves the
-Builder untouched and returns the source-less deadline diagnostic. The
-compiler also checks before body preparation, before each function, and before
+Builder untouched and returns the source-less deadline diagnostic. Indexed
+signature scans sample before each advance and before returning the complete
+Table. This covers the initial scan in both output modes and the reference
+signature rescan in output-only compilation. The compiler also checks before
+body preparation, before each function, and before
 each control advance or pending semantic child. A child already running returns
 to the next checkpoint before expiry is delivered. The compiler samples again
 after lowering and before freezing the literal image. The proof driver samples
@@ -166,6 +169,14 @@ collector case also preserved a prepopulated Builder. The Engine kept its next
 Program ID and returned the SDK heap and retained Program charge to baseline.
 Windows development and /O2 passed with zero live SDK allocations at exit.
 Local receipt: `build/runtime-engine/20261121T000534935666Z/receipt.json`.
+
+The Windows verifier expired each indexed signature scan after accepting the
+first of two function signatures. It covered the initial scan in both output
+modes and the post-body reference signature rescan in output-only mode. No
+further scan advance or proof stage ran. The SDK heap and retained Program
+charge returned to baseline, and the next successful compile received Program
+ID 1. Windows development and /O2 passed with zero live SDK allocations at
+exit. Local receipt: `build/runtime-engine/20261121T001507901261Z/receipt.json`.
 
 Source lowering, work between checkpoints, and cleanup remain synchronous.
 Public Pending compilation, in-flight cancellation, and a latency bound for

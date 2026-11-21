@@ -272,6 +272,22 @@ void bc_runtime_engine_test_literal_staged(void){
  if(literal_expiry){literal_staged=1;bc_runtime_engine_test_set_clock(literal_expiry);}
 }
 void bc_runtime_engine_test_literal_stopped(void){assert(literal_expiry&&literal_staged);literal_expiry=0;}
+static uintptr_t signature_expiry;
+static unsigned signature_pass,signature_target;
+static int signature_staged;
+void bc_runtime_engine_test_expire_in_signature(uintptr_t deadline,uint32_t pass){
+ assert(host_clock_fixed&&deadline>host_clock_ticks&&!signature_expiry&&pass);
+ signature_expiry=deadline;signature_target=pass;signature_pass=0;signature_staged=0;
+}
+void bc_runtime_engine_test_signature_begin(void){if(signature_expiry){assert(!signature_staged);signature_pass++;}}
+void bc_runtime_engine_test_signature_step(void){assert(!signature_staged||!signature_expiry);}
+void bc_runtime_engine_test_signature_staged(void){
+ if(signature_expiry&&signature_pass==signature_target){signature_staged=1;bc_runtime_engine_test_set_clock(signature_expiry);}
+}
+void bc_runtime_engine_test_signature_stopped(void){
+ assert(signature_expiry&&signature_staged&&signature_pass==signature_target);
+ signature_expiry=0;
+}
 static uintptr_t body_expiry;
 static int body_requested;
 void bc_runtime_engine_test_expire_in_body(uintptr_t deadline){

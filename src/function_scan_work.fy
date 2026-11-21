@@ -11,6 +11,7 @@ import module_index as modules;
 import lexer as lexer;
 import lexer_work as tokens;
 import errors as errors;
+import runtime_clock as clock;
 import metadata_budget as budget;
 
 // Complete untyped declaration/signature candidate. Source, scope and Index
@@ -133,6 +134,19 @@ fn Result<raw::Table,errors::Error> scan_indexed_mode(ref u8[] source,ref contex
     var State w=indexed(selected,returns);var budget::State meter=budget::empty();
     w.result.scalar_host_calls=host;
     while(!w.done){let usize allowance=budget::reset(ref mut meter,0)?;let bool done=advance_indexed(source,scope,index,ref mut w,ref mut meter)?;}
+    return prepared(ref w);
+}
+
+// The Engine owns the absolute deadline. Partial tables remain private.
+pub fn Result<raw::Table,errors::Error> scan_indexed_until(ref u8[] source,ref context::Table scope,
+    ref modules::Index index,usize selected,usize deadline){
+    var State w=indexed(selected,true);var budget::State meter=budget::empty();
+    while(!w.done){
+        if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
+        let usize allowance=budget::reset(ref mut meter,0)?;
+        let bool done=advance_indexed(source,scope,index,ref mut w,ref mut meter)?;
+    }
+    if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
     return prepared(ref w);
 }
 

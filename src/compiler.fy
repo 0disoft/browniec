@@ -3510,21 +3510,23 @@ pub fn Result<usize,source_errors::Error> lower_output_modules(ref module_entrie
 }
 pub fn Result<usize,source_errors::Error> lower_output_modules_until(ref module_entries::Entry selected,
     ref mut static_images::Builder builder,ref mut reference_ir::Program code,usize deadline){
-    let source_context::Input input=collecting::collect_until(module_entries::index(selected),deadline)?;
+    let ref module_index::Index index=module_entries::index(selected);
+    let usize entry=module_entries::selected(selected);
+    let source_context::Input input=collecting::collect_until(index,deadline)?;
     let ref u8[] source=ref input.data[..input.used];
     let ref source_context::Table scope=ref input.context;
     switch(source_features::retained_scoped(source,scope)){
         case .ok(_):{}case .err(e):{return .err(module_error(selected,e,16));}
     };
-    let literal_collection::Index literals=module_literals_until(builder,source,scope,module_entries::index(selected),deadline)?;
-    var functions::Table signatures=switch(functions::scan_scoped(source,scope,selected,true)){
+    let literal_collection::Index literals=module_literals_until(builder,source,scope,index,deadline)?;
+    var functions::Table signatures=switch(signature_scan::scan_indexed_until(source,scope,index,entry,deadline)){
         case .ok(v):{v}case .err(e):{return .err(module_error(selected,e,16));}
     };signatures.output=true;
     var usize active=16;
     switch(lower_prepared_output_until(source,ref literals,ref mut signatures,ref mut code.body,ref mut active,deadline)){
         case .ok(_):{}case .err(e):{return .err(module_error(selected,e,active));}
     };
-    let usize bound=module_reference_signature(source,scope,selected,code)?;
+    let usize bound=module_reference_signature_until(source,scope,selected,code,deadline)?;
     return .ok(code.body.count);
 }
 fn Result<bool,source_errors::Error> lower_modules_mode(ref module_entries::Entry selected,
@@ -3590,7 +3592,20 @@ fn Result<usize,source_errors::Error> module_reference_signature(ref u8[] source
     var functions::Table signatures=switch(functions::scan_scoped(source,scope,selected,true)){
         case .ok(v):{v}case .err(e):{return .err(module_error(selected,e,16));}
     };
-    switch(source_origins::infer(source,ref mut signatures)){case .ok(_):{}case .err(e):{return .err(module_error(selected,e,16));}};
+    return bind_reference_signature(source,ref mut signatures,selected,code);
+}
+fn Result<usize,source_errors::Error> module_reference_signature_until(ref u8[] source,ref source_context::Table scope,
+    ref module_entries::Entry selected,ref mut reference_ir::Program code,usize deadline){
+    let ref module_index::Index index=module_entries::index(selected);
+    let usize entry=module_entries::selected(selected);
+    var functions::Table signatures=switch(signature_scan::scan_indexed_until(source,scope,index,entry,deadline)){
+        case .ok(v):{v}case .err(e):{return .err(module_error(selected,e,16));}
+    };
+    return bind_reference_signature(source,ref mut signatures,selected,code);
+}
+fn Result<usize,source_errors::Error> bind_reference_signature(ref u8[] source,ref mut functions::Table signatures,
+    ref module_entries::Entry selected,ref mut reference_ir::Program code){
+    switch(source_origins::infer(source,signatures)){case .ok(_):{}case .err(e):{return .err(module_error(selected,e,16));}};
     code.origins=signatures.return_slice_inputs;
     var u8[128] parameters=[0;128];var u8[16] results=[0;16];
     let ref ir::Program body=ref code.body;var usize f=0;
@@ -3619,7 +3634,7 @@ pub fn Result<usize,source_errors::Error> lower_input_output_modules_until(ref i
     let ref u8[] source=ref input.data[..input.used];
     let ref source_context::Table scope=ref input.context;
     let literal_collection::Index literals=module_literals_until(builder,source,scope,index,deadline)?;
-    var functions::Table signatures=switch(functions::scan_input_scoped(source,scope,selected)){
+    var functions::Table signatures=switch(signature_scan::scan_indexed_until(source,scope,index,input_entries::selected(selected),deadline)){
         case .ok(v):{v}case .err(e):{return .err(input_module_error(index,e,16));}
     };signatures.output=true;
     var usize active=16;
