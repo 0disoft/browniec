@@ -245,7 +245,7 @@ fn Result<sources::Snapshot,u8> preview_snapshot(ref u8[] source){
     var sources::Builder builder=switch(sources::builder(4096,16)){
         case .ok(v):{v}case .err(_):{return .err(1);}
     };
-    assert(sources::add(ref mut builder,b"main.brc",source).is_ok);
+    assert(sources::add(ref mut builder,b"main",source).is_ok);
     return switch(sources::freeze(ref builder)){case .ok(v):{.ok(v)}case .err(_):{.err(2)}};
 }
 fn Result<usize,u8> preview_compile_authority(){

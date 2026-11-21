@@ -522,20 +522,21 @@ pub fn Result<usize,Error> compile_anchored_project_host(ref mut Engine e,ref pr
     return retain_project_host(e,ref index,selected,imports,digest,run,limits,deadline);
 }
 
-// Public entry selection and single-source admission for the embedding adapter.
+// Public entry selection and source-set admission for the embedding adapter.
 pub fn Result<usize,Error> compile_preview_host(ref mut Engine e,sources::Snapshot snapshot,host_catalog::Catalog imports){
     let u32 access=unsafe{control_access_raw(e as ptr void)};
     if(access!=0){return .err(error(access));}
     if(!e.meta.configured){return .err(error(5));}
     let policy_limits::CompileLimits limits=host_compile_limits(e)?;
-    if(sources::count(ref snapshot)!=1 || limits.modules==0){return .err(error(8));}
-    let sources::Span original=switch(sources::whole(ref snapshot,0)){
-        case .ok(v):{v}case .err(_):{return .err(error(1));}
-    };
-    if(original.end-original.start>limits.source_bytes){return .err(error(8));}
+    let usize count=sources::count(ref snapshot);
+    if(count==0){return .err(error(1));}
+    if(count>limits.modules || sources::snapshot_bytes(ref snapshot)>limits.source_bytes){return .err(error(8));}
     let usize deadline=deadline_after(limits.deadline_ms)?;
     let modules::Index index=switch(modules::build_host(snapshot,limits.tokens)){
         case .ok(v):{v}case .err(e):{return .err(host_binding_error(e));}
+    };
+    switch(modules::match_source_names(ref index)){
+        case .ok(_):{}case .err(e):{return .err(host_binding_error(e));}
     };
     let usize selected=switch(modules::entry(ref index,b"main",b"main")){
         case .ok(v):{v}case .err(e):{return .err(host_binding_error(e));}

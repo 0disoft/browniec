@@ -229,7 +229,6 @@ static bool is_main(bc_slice name){return name.data && name.len==4 && memcmp(nam
 static uint32_t validate_compile_sources(const bc_source *sources,size_t count,bc_slice catalog){
     if(!sources||!count||(!catalog.data&&catalog.len)){return BC_BAD_ARGUMENT;}
     if(count>16||catalog.len>16384){return BC_RESOURCE_LIMIT;}
-    if(catalog.len && (count!=1||!is_main(sources[0].module))){return BC_BAD_ARGUMENT;}
     size_t bytes=0;
     for(size_t i=0;i<count;++i){
         const bc_source source=sources[i];
@@ -262,9 +261,8 @@ static uint32_t compile_program(bc_handle engine,uint32_t revision,const bc_sour
     }
     *program=(preview_child){.owner=owner};
     if(catalog.len){
-        const bc_slice source=sources[0].source_utf8;
-        __typeof__(P14(&owner->engine,source.data,source.len,catalog.data,catalog.len)) compiled=
-            P14(&owner->engine,source.data,source.len,catalog.data,catalog.len);
+        __typeof__(P14(&owner->engine,sources,count,catalog.data,catalog.len)) compiled=
+            P14(&owner->engine,sources,count,catalog.data,catalog.len);
         if(compiled.tag==FY_RESULT_OK){
             program->id=compiled.p_0;
             program->program.catalog_backed=true;

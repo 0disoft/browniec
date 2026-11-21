@@ -198,6 +198,22 @@ pub fn Result<Symbol,Error> symbol(ref Index p,usize id){
 pub fn Result<ref u8[],Error> module_name(ref Index p,usize id){
     let Module m=module_at(p,id)?;let ref Table t=table(p);let ref u8[] names=ref t.names;return .ok(names[m.begin..m.end]);
 }
+// Embedding source identities are canonical module names in caller order.
+pub fn Result<usize,Error> match_source_names(ref Index p){
+    let ref sources::Snapshot input=snapshot(p);
+    let usize count=count(p);
+    var usize row=0;
+    while(row<count){
+        let Module declared=module_at(p,row)?;
+        let ref u8[] actual=module_name(p,row)?;
+        let ref u8[] supplied=switch(sources::name(input,row)){
+            case .ok(v):{v}case .err(_):{return .err(error(.Bounds,declared.path));}
+        };
+        if(!bytes::equal(actual,supplied)){return .err(error(.Kind,declared.path));}
+        row+=1;
+    }
+    return .ok(count);
+}
 pub fn Result<usize,Error> find(ref Index p,ref u8[] path){
     let ref Table t=table(p);let ref u8[] names=ref t.names;var usize i=0;
     while(i<t.count){let Module m=t.modules[i];if(bytes::equal(path,names[m.begin..m.end])){return .ok(i);}i+=1;}

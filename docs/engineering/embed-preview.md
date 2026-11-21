@@ -80,8 +80,8 @@ untouched. Destroy a revision-2 Engine on its creating thread with
 subject to the Engine's `compile.modules` and `compile.source_bytes` limits.
 Each canonical module name must match its source declaration. Imports resolve
 within the supplied set. The entry remains public `main::main` with signature
-`fn i32 main()` or `fn i32 main(ref u8[] data)`. Catalog-backed compilation
-accepts one `main` module and up to 16,384 bytes of `brownie.catalog/1` JSON.
+`fn i32 main()` or `fn i32 main(ref u8[] data)`. Provide up to 16,384 bytes of
+`brownie.catalog/1` JSON to resolve host imports under the Engine policy.
 The caller can reuse the source and catalog storage when compilation returns.
 The Engine applies its configured deadline, working-memory limit and Program
 retention limits.
@@ -256,8 +256,8 @@ and empty payloads on cancellation and a guest trap after emission.
 
 ## Engine admission for catalog-backed embedding
 
-The private Engine can retain a catalog-backed Program from one source with a
-public `main::main` i32 entry before receiving a run configuration. It verifies
+The Engine can retain a catalog-backed Program from a source set with a public
+`main::main` i32 entry before receiving a run configuration. It verifies
 the lowered image against the exact catalog, retains its digest, and checks all
 referenced capabilities against the Engine policy. Preparing an Instance still
 requires a matching entry and explicit declarations and grants. The catalog
@@ -285,11 +285,13 @@ for a valid response while the run is live. If the run has terminated,
 `bc_step` reports its terminal event. An accepted fatal reply returns `BC_OK`
 and produces a failed event on the next step.
 
-The Windows C host passed /Od and /O2 with default stacks. Two Instances pinned
+The Windows C host passed /Od and /O2 with default stacks. The entry calls a
+function in a second module, which sends the host request. Two Instances pinned
 one Program and returned 77 and 78 at quanta 1 and 64 with equal Fuel and peak
-accounted bytes. Tests cover capability metadata, missing grants, cross-Instance
-and duplicate replies, malformed TLV, overwriting caller buffers, cancellation,
-fatal reply, and stale handles.
+accounted bytes. Tests cover the second module's name-mismatch span, capability
+metadata, missing grants, cross-Instance and duplicate replies, malformed TLV,
+overwriting caller buffers, cancellation, fatal reply, and stale handles.
+Local receipt: `build/embed-preview-rlagj8hv/receipt.json`.
 
 Both profiles also received an 8193-byte Buffer reply in three receipt chunks.
 After the caller overwrote its reply buffer, the next guest host request

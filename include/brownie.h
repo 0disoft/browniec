@@ -82,8 +82,8 @@ BC_API uint32_t BC_CALL bc_engine_create(uint32_t requested_revision,
 /* Scalar preview DLL: up to 16 sources and 4096 total UTF-8 source bytes,
    subject to the Engine's source and module limits. Each module slice names
    its source's declared module. The entry is public main::main with signature
-   i32 main() or i32 main(ref u8[] data). Catalog-backed compilation accepts
-   one main source and up to 16384 bytes of brownie.catalog/1 JSON.
+   i32 main() or i32 main(ref u8[] data). Supply up to 16384 bytes of
+   brownie.catalog/1 JSON to resolve host imports under the Engine policy.
    Source and catalog storage can be reused when the call returns. */
 BC_API uint32_t BC_CALL bc_compile(bc_handle engine,
     const bc_source *sources, uint32_t source_count, bc_slice catalog_json,

@@ -90,6 +90,7 @@ pub fn Result<Snapshot,Error> freeze(ref Builder b){
 }
 fn ref Builder sources(ref Snapshot p){return ref p.sources;}
 pub fn usize count(ref Snapshot p){return sources(p).count;}
+pub fn usize snapshot_bytes(ref Snapshot p){return sources(p).used;}
 // Initialized payload/name bytes only, excluding fixed native storage/metadata.
 pub fn usize initialized_bytes(ref Snapshot p){
     let ref Builder b=sources(p);return b.used+b.names_used;

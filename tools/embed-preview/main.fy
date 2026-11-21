@@ -13,7 +13,6 @@ import fuel as fuel;
 import runtime_policy as policies;
 import host_catalog as catalog;
 import host_exchange as host;
-import std::bytes as bytes;
 
 unsafe extern C fn void bc_embed_binding(u32 id);
 unsafe extern C fn ptr u8 bc_embed_witness_source();
@@ -50,15 +49,6 @@ fn Result<engine::Engine,engine::Error> create_configured(ptr u8 data,usize leng
     return engine::create_with_policy(policy);
 }
 
-fn Result<sources::Snapshot,engine::Error> source_snapshot(ref u8[] source){
-    var sources::Builder builder=switch(sources::builder(sources::source_limit(),16)){
-        case .ok(v):{v}case .err(_):{return .err(failed(7));}
-    };
-    if(!sources::add(ref mut builder,b"main.brc",source).is_ok){return .err(failed(4));}
-    return switch(sources::freeze(ref builder)){
-        case .ok(v):{.ok(v)}case .err(_):{.err(failed(4))}
-    };
-}
 fn Result<usize,engine::Error> add_source(ref mut sources::Builder builder,ptr void rows,usize row){
     let usize length=unsafe{bc_embed_source_size(rows,row,0)};
     let usize name_length=unsafe{bc_embed_source_size(rows,row,1)};
@@ -80,46 +70,27 @@ fn Result<usize,engine::Error> add_source(ref mut sources::Builder builder,ptr v
     };
 }
 
-fn Result<usize,engine::Error> match_module_names(ref modules::Index index){
-    let usize count=modules::count(index);
-    var usize row=0;
-    while(row<count){
-        let modules::Module declared=switch(modules::module_at(index,row)){
-            case .ok(v):{v}case .err(_):{return .err(failed(7));}
-        };
-        let ref u8[] actual=switch(modules::module_name(index,row)){
-            case .ok(v):{v}case .err(_):{return .err(failed(7));}
-        };
-        let ref u8[] supplied=switch(sources::name(modules::snapshot(index),row)){
-            case .ok(v):{v}case .err(_):{return .err(failed(7));}
-        };
-        if(!bytes::equal(actual,supplied)){
-            return .err(binding_failure(modules::Error{.kind=.Kind,.at=declared.path}));
-        }
-        row+=1;
-    }
-    return .ok(count);
-}
-
-fn Result<modules::Index,engine::Error> source_index(ref engine::Engine owner,ptr void rows,usize count){
+fn Result<sources::Snapshot,engine::Error> source_snapshot(ref engine::Engine owner,ptr void rows,usize count){
     if(count>engine::source_module_limit(owner)){return .err(failed(8));}
     var sources::Builder builder=switch(sources::builder(engine::source_byte_limit(owner),sources::name_limit())){
         case .ok(v):{v}case .err(_):{return .err(failed(7));}
     };
     var usize row=0;
     while(row<count){discard add_source(ref mut builder,rows,row)?;row+=1;}
-    let sources::Snapshot snapshot=switch(sources::freeze(ref builder)){
-        case .ok(v):{v}case .err(_):{return .err(failed(7));}
-    };
-    return switch(modules::build(snapshot)){
-        case .ok(v):{.ok(v)}case .err(e):{.err(binding_failure(e))}
+    return switch(sources::freeze(ref builder)){
+        case .ok(v):{.ok(v)}case .err(_):{.err(failed(7))}
     };
 }
 
 struct Compiled { usize program; bool accepts_input; bool emits; }
 fn Result<Compiled,engine::Error> compile(ref mut engine::Engine owner,ptr void rows,usize count,bool configured){
-    let modules::Index index=source_index(owner,rows,count)?;
-    discard match_module_names(ref index)?;
+    let sources::Snapshot snapshot=source_snapshot(owner,rows,count)?;
+    let modules::Index index=switch(modules::build(snapshot)){
+        case .ok(v):{v}case .err(e):{return .err(binding_failure(e));}
+    };
+    switch(modules::match_source_names(ref index)){
+        case .ok(_):{}case .err(e):{return .err(binding_failure(e));}
+    };
     let bool input=configured && input_entries::has_i32_input(ref index,b"main",b"main");
     let usize image_limit=images::metadata_charge()+images::byte_limit();
     let usize program=if(input){
@@ -178,10 +149,8 @@ fn Result<OutputSlice,engine::Error> output_slice(ref engine::Engine owner,usize
     return .ok(OutputSlice{.data=if(data.len==0){null}else{unsafe{data as ptr u8}},.length=data.len});
 }
 
-fn Result<usize,engine::Error> compile_host(ref mut engine::Engine owner,ptr u8 data,usize length,
+fn Result<usize,engine::Error> compile_host(ref mut engine::Engine owner,ptr void rows,usize count,
     ptr u8 catalog_data,usize catalog_size){
-    let usize source_lifetime=length;
-    let ref u8[] source=unsafe{byte_slice::from_raw_parts(ref source_lifetime,data,length)};
     let usize catalog_lifetime=catalog_size;
     let ref u8[] json=unsafe{byte_slice::from_raw_parts(ref catalog_lifetime,catalog_data,catalog_size)};
     let catalog::Catalog imports=switch(catalog::parse(json)){
@@ -193,7 +162,7 @@ fn Result<usize,engine::Error> compile_host(ref mut engine::Engine owner,ptr u8 
             }));
         }
     };
-    let sources::Snapshot snapshot=source_snapshot(source)?;
+    let sources::Snapshot snapshot=source_snapshot(owner,rows,count)?;
     return engine::compile_preview_host(owner,snapshot,imports);
 }
 
@@ -236,7 +205,7 @@ fn i32 main(){
     unsafe{bc_embed_binding(11)};discard instance_configured(ref mut owner,1,source,1,source,1,true);
     unsafe{bc_embed_binding(12)};discard engine::observe(ref mut owner,1);
     unsafe{bc_embed_binding(13)};discard output_slice(ref owner,1);
-    unsafe{bc_embed_binding(14)};discard compile_host(ref mut owner,source,1,source,1);
+    unsafe{bc_embed_binding(14)};discard compile_host(ref mut owner,null,1,source,1);
     unsafe{bc_embed_binding(15)};discard engine::preview_host_entry(ref owner,1);
     unsafe{bc_embed_binding(16)};discard host_capability(ref owner,1,1);
     unsafe{bc_embed_binding(17)};discard host_request(ref owner,1);

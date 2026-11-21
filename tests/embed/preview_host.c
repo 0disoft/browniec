@@ -739,9 +739,13 @@ static bc_event next_host_event(bc_handle instance,uint32_t quantum){
 
 static void revision_two_host_exchange(void){
     static const uint8_t main_name[]="main";
-    static const uint8_t source_text[]=
-        "module main; import host::example as api; "
-        "pub fn i32 main(){return api::check(41) + 35;}";
+    static const uint8_t rules_name[]="pricing::rules";
+    uint8_t source_text[]=
+        "module main; import pricing::rules as rules; "
+        "pub fn i32 main(){return rules::check(41) + 35;}";
+    uint8_t rules_text[]=
+        "module pricing::rules; import host::example as api; "
+        "pub fn i32 check(i32 order){return api::check(order);}";
     uint8_t catalog[]="{\"schema\":\"brownie.catalog/1\",\"imports\":["
         "{\"id\":0,\"module\":\"host::example\",\"symbol\":\"check\","
         "\"parameters\":[\"i32\"],\"result\":\"Result<i32,u32>\",\"effect\":\"read\","
@@ -755,11 +759,22 @@ static void revision_two_host_exchange(void){
     const bc_slice pure={pure_data,read_fixture("run.json",pure_data,sizeof(pure_data))};
     const bc_slice empty={0};
     const bc_slice name={main_name,sizeof(main_name)-1};
-    const bc_source source={name,{source_text,sizeof(source_text)-1}};
+    bc_source sources[]={
+        {name,{source_text,sizeof(source_text)-1}},
+        {{rules_name,sizeof(rules_name)-1},{rules_text,sizeof(rules_text)-1}},
+    };
     bc_handle engine=0,program=0,one=0,many=0,cancelled=0,fatal=0;
     bc_diagnostic diagnostic={.struct_size=sizeof(diagnostic)};
     assert(bc_engine_create(BC_ABI_REVISION,policy,&engine,&diagnostic)==BC_OK);
-    assert(bc_compile(engine,&source,1,(bc_slice){catalog,sizeof(catalog)-1},&program,&diagnostic)==BC_OK);
+    const bc_slice catalog_json={catalog,sizeof(catalog)-1};
+    sources[1].module=(bc_slice){(const uint8_t *)"other",5};
+    assert(bc_compile(engine,sources,2,catalog_json,&program,&diagnostic)==BC_COMPILE_ERROR);
+    assert(!program && diagnostic.source_index==1);
+    assert(diagnostic.byte_start==7 && diagnostic.byte_end==7+sizeof(rules_name)-1);
+    sources[1].module=(bc_slice){rules_name,sizeof(rules_name)-1};
+    assert(bc_compile(engine,sources,2,catalog_json,&program,&diagnostic)==BC_OK);
+    memset(source_text,0,sizeof(source_text));
+    memset(rules_text,0,sizeof(rules_text));
     memset(catalog,0,sizeof(catalog));
     bc_entry_info info={.struct_size=sizeof(info)};
     assert(bc_program_entry_info(engine,program,name,name,&info,&diagnostic)==BC_OK);
@@ -1005,7 +1020,7 @@ int main(void){
     puts("PASS: owner and descriptor limits of 1 trap and limits of 2 return 77");
     puts("PASS: revision-2 byte input snapshots, empty input, exact byte quota, and peak accounting");
     puts("PASS: revision-2 output authority, binary completion views, cancellation, and trap rollback");
-    puts("PASS: revision-2 host request correlation, independent replies, cancellation, and fatal reply");
+    puts("PASS: multi-module revision-2 host request correlation, independent replies, cancellation, and fatal reply");
     puts("PASS: 8193-byte host reply snapshot, cancellation during installation, and guest Result error");
     return 0;
 }
