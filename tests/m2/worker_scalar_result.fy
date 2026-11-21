@@ -19,8 +19,8 @@ fn bool accepts(ref u8[] wire,worker::Expected expected){
 
 @test
 fn void strict_scalar_result_contract(){
-    let worker::Expected check_case=worker::Expected{.run=false,.source_bytes=9,.instructions=2};
-    let worker::Expected run_case=worker::Expected{.run=true,.source_bytes=9,.instructions=2};
+    let worker::Expected check_case=worker::Expected{.run=false,.output=false,.source_bytes=9,.instructions=2};
+    let worker::Expected run_case=worker::Expected{.run=true,.output=false,.source_bytes=9,.instructions=2};
     let worker::Outcome passed=round_trip(worker::checked(),check_case);
     assert(switch(passed.status){case .Checked:{true}case .Completed:{false}case .Failed:{false}});
     let worker::Outcome minimum=round_trip(worker::completed(-2147483648),run_case);

@@ -29,12 +29,14 @@ typedef struct project_expectation {
     uint32_t run;
     const uint8_t *lengths;
     size_t count;
+    uint32_t output;
+    size_t output_limit;
 } project_expectation;
 
 static bool validate_project(const void *raw, const uint8_t *body, size_t length) {
     const project_expectation *expected = raw;
     return fy_private_fn_776f726b65725f70726f6a6563745f62726f6b65723a3a76616c69646174655f726573756c74(
-        body, length, expected->run, expected->lengths, expected->count) != 0;
+        body, length, expected->run, expected->lengths, expected->count, expected->output, expected->output_limit) != 0;
 }
 
 static PSID resolve_profile(const uint8_t *name, size_t length) {
@@ -81,9 +83,7 @@ static const worker_limits default_limits = {128 * 1024 * 1024, 2000, 4000, 4000
 
 static uint32_t run_broker(PSID sid, const wchar_t *image, const wchar_t *directory,
     const worker_exchange *exchange, const worker_limits *limits, uint64_t deadline,
-    uint8_t *reply, size_t *reply_length) {
-    uint8_t result[BC_PROJECT_RESULT_MAX];
-    const size_t result_capacity = exchange->project ? BC_PROJECT_RESULT_MAX : BC_SCALAR_RESULT_MAX;
+    uint8_t *reply, size_t result_capacity, size_t *reply_length) {
     bc_worker_broker broker = {0};
     const size_t wire = 5 * BC_WORKER_FRAME_BYTES + exchange->request_length + result_capacity + 1;
     bc_worker_broker_budget budget = {.limit = {1, sizeof(broker) + exchange->request_length + result_capacity,
@@ -96,7 +96,7 @@ static uint32_t run_broker(PSID sid, const wchar_t *image, const wchar_t *direct
         .profile = sid, .commit_bytes = limits->commit_bytes, .cpu_ms = limits->cpu_ms,
         .startup_ms = limits->startup_ms, .io_idle_ms = limits->idle_ms, .shutdown_grace_ms = limits->grace_ms,
         .deadline = deadline, .wire_limit = wire < limits->transport_bytes ? wire : limits->transport_bytes,
-        .request = exchange->request, .request_length = exchange->request_length, .result = result,
+        .request = exchange->request, .request_length = exchange->request_length, .result = reply,
         .result_capacity = result_capacity, .validate = exchange->validate, .expectation = exchange->expectation
     };
     const DWORD started = bc_worker_broker_start(&broker, &config);
@@ -116,37 +116,35 @@ static uint32_t run_broker(PSID sid, const wchar_t *image, const wchar_t *direct
     while (!bc_worker_broker_close(&broker)) Sleep(1);
     if (expired) return 2;
     if (cancelled) return 3;
-    if (!payload) return 0;
-    memcpy(reply, payload, length);
+    if (payload != reply) return 0;
     *reply_length = length;
     return 1;
 }
 
 static uint32_t invoke_broker(const uint8_t *profile, size_t profile_length,
-    const worker_exchange *exchange, const worker_limits *limits, uint8_t *reply, size_t *reply_length) {
+    const worker_exchange *exchange, const worker_limits *limits, uint8_t *reply, size_t capacity, size_t *reply_length) {
+    *reply_length = 0;
     wchar_t image[4096], directory[4096];
     if (!self_location(image, directory, _countof(image)) || !bc_cli_enable_cancel()) return 0;
     const uint64_t deadline = now_ticks() + (uint64_t)limits->session_ms * 10000;
     if (profile) {
         PSID sid = resolve_profile(profile, profile_length);
         if (!sid) return 0;
-        const uint32_t status = run_broker(sid, image, directory, exchange, limits, deadline, reply, reply_length);
+        const uint32_t status = run_broker(sid, image, directory, exchange, limits, deadline, reply, capacity, reply_length);
         FreeSid(sid);
         return status;
     }
     bc_worker_stage stage = {0};
     const DWORD setup = bc_worker_stage_open(&stage, image);
-    uint8_t pending_reply[BC_PROJECT_RESULT_MAX];
     size_t pending_length = 0;
     uint32_t status = 0;
     if (now_ticks() >= deadline) status = 2;
     else if (bc_cli_cancel_requested()) status = 3;
     else if (!setup) status = run_broker(stage.profile, stage.image, stage.directory,
-        exchange, limits, deadline, pending_reply, &pending_length);
+        exchange, limits, deadline, reply, capacity, &pending_length);
     const BOOL cleaned = bc_worker_stage_close(&stage);
     if (status != 1) return status;
     if (!cleaned) return 0;
-    memcpy(reply, pending_reply, pending_length);
     *reply_length = pending_length;
     return 1;
 }
@@ -161,7 +159,7 @@ uint32_t bc_scalar_broker_invoke(const uint8_t *profile, size_t profile_length,
     memcpy(request + 5, source, source_length);
     const scalar_expectation expected = {run, source_length};
     const worker_exchange exchange = {request, source_length + 5, validate_scalar, &expected, false};
-    return invoke_broker(profile, profile_length, &exchange, &default_limits, reply, reply_length);
+    return invoke_broker(profile, profile_length, &exchange, &default_limits, reply, BC_SCALAR_RESULT_MAX, reply_length);
 }
 
 // Trusted in-process policy projection. The worker cannot supply these bytes.
@@ -182,14 +180,17 @@ static bool read_worker_limits(const uint8_t *raw, size_t length, worker_limits 
 
 uint32_t bc_project_broker_invoke(const uint8_t *request, size_t request_length, uint32_t run,
     const uint8_t *lengths, size_t count, const uint8_t *configuration, size_t config_size,
-    uint8_t *reply, size_t *reply_length) {
+    uint32_t output, size_t output_limit, uint8_t *reply, size_t capacity, size_t *reply_length) {
     if (!request || request_length < 9 || request_length > BC_PROJECT_START_MAX ||
-        run > 1 || !lengths || !count || count > 32 || count % 2 || !reply || !reply_length) return 0;
+        run > 1 || !lengths || !count || count > 32 || count % 2 || !reply || !reply_length ||
+        output > 1 || (output && (!config_size || !run)) ||
+        (!output && output_limit) || output_limit > BC_PROJECT_OUTPUT_MAX ||
+        capacity != BC_PROJECT_RESULT_BASE + (output ? 3 + output_limit : 0)) return 0;
     const bool input_run = config_size && run && request[0] == 6 && request_length >= 21;
     if (!input_run && request[0] != (config_size ? 4u : 2u) + run) return 0;
-    const project_expectation expected = {run, lengths, count};
+    const project_expectation expected = {run, lengths, count, output, output_limit};
     const worker_exchange exchange = {request, request_length, validate_project, &expected, true};
     worker_limits limits = default_limits;
     if (config_size && !read_worker_limits(configuration, config_size, &limits)) return 0;
-    return invoke_broker(NULL, 0, &exchange, &limits, reply, reply_length);
+    return invoke_broker(NULL, 0, &exchange, &limits, reply, capacity, reply_length);
 }

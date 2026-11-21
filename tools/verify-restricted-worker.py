@@ -1,6 +1,7 @@
 """Build and run the Windows AppContainer and Job launcher fixture."""
 
 import argparse
+import base64
 from datetime import datetime, timezone
 import importlib.util
 import json
@@ -65,7 +66,7 @@ def verify_configured_project(run, need, image, folder, env):
     config = dict(schema='brownie.run/0.3', entry=manifest['entry'].copy(),
                   requires=[], grants=[], limits=policy['run'].copy())
 
-    def check(expected_exit=0, kind=None, operation='run', payload=None, value=42):
+    def check(expected_exit=0, kind=None, operation='run', payload=None, value=42, output=None):
         policy_file.write_text(json.dumps(policy), encoding='utf-8')
         run_file.write_text(json.dumps(config), encoding='utf-8')
         args = [image, '--internal-project-broker', operation, project, policy_file, run_file]
@@ -78,6 +79,11 @@ def verify_configured_project(run, need, image, folder, env):
              (data['error']['kind'] == kind and data['return_i32'] is None if kind else
               data['status'] == status and data['return_i32'] == expected and data['error'] is None),
              f'Unexpected configured project result: {data}')
+        if output is None:
+            need('output_b64' not in data, f'Unexpected guest output: {data}')
+        else:
+            need(base64.b64decode(data['output_b64'], validate=True) == output,
+                 'Guest output differs from the sealed payload')
         need(not list(Path(env['TEMP']).iterdir()), 'configured project left staged resources')
         return data
 
@@ -184,6 +190,33 @@ def verify_configured_project(run, need, image, folder, env):
     entry.write_bytes(original_entry)
     policy['compile']['source_bytes'] = source_limit
 
+    output_cap = ['brownie.output.emit']
+    binary = bytes(8192) + bytes([255])
+    payload.write_bytes(binary)
+    policy['compile']['source_bytes'] = 4096
+    entry.write_bytes(b'module app; pub fn i32 start(ref u8[] data){output::emit(ref data);return 77;}')
+    check(4, 'unavailable', payload=payload)
+    manifest['requires'] = output_cap
+    project.write_text(json.dumps(manifest), encoding='utf-8')
+    config['requires'] = output_cap
+    check(4, 'unavailable', payload=payload)
+    config['grants'] = output_cap
+    check(operation='check')
+    config['limits']['output_bytes'] = len(binary)
+    check(payload=payload, value=77, output=binary)
+    config['limits']['output_bytes'] -= 1
+    check(5, 'output_limit', payload=payload)
+    config['limits']['output_bytes'] = policy['run']['output_bytes']
+    entry.write_bytes(b'module app; pub fn i32 start(ref u8[] data){output::emit(ref data);'
+                      b'var i32 zero=0; return 1/zero;}')
+    check(5, 'zero_divisor', payload=payload)
+    entry.write_bytes(b'module app; pub fn i32 start(){output::emit(ref b"Hi");return 77;}')
+    check(value=77, output=b'Hi')
+    entry.write_bytes(original_entry)
+    policy['compile']['source_bytes'] = source_limit
+    manifest['requires'] = config['requires'] = config['grants'] = []
+    project.write_text(json.dumps(manifest), encoding='utf-8')
+
     baseline = policy['worker'].copy()
     policy['worker'].update(startup_ms=1, session_ms=1)
     policy['compile']['deadline_ms'] = policy['run']['deadline_ms'] = config['limits']['deadline_ms'] = 1
@@ -199,7 +232,7 @@ def verify_configured_project(run, need, image, folder, env):
     config['entry']['function'] = manifest['entry']['function']
     config['grants'] = ['brownie.output.emit']
     check(4, 'unavailable')
-    return 29
+    return 36
 
 
 def main():

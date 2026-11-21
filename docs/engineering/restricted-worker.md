@@ -375,8 +375,8 @@ sends the same policy and run snapshots that it admitted.
 The worker reparses the snapshots and checks the policy ceiling, entry,
 empty capability grants and effective Fuel. It creates a policy-owned
 Engine, compiles the selected entry with the bounded output-capable
-compiler and denies Programs that require emit. The worker uses the
-configured Engine for compile working
+compiler and checks the retained Program's emit requirement against the
+admitted grant. The worker uses the configured Engine for compile working
 memory, Program and Instance memory, supported VM limits, Fuel and the
 separate compile and execution deadlines. It advances the Instance in
 quanta of at most 4,096 units and destroys it before releasing the Program
@@ -398,8 +398,8 @@ opener produces a source-local `compile_limit`. The existing parser still
 validates delimiter pairing and enforces its own grammar limits.
 
 Compile Fuel, semantic depth outside this delimiter check, and type accounting
-beyond declared records remain open. Host requests and guest output still
-need worker transport integration.
+beyond declared records remain open. Host requests still need worker
+transport integration.
 
 The nesting follow-up passed twenty configured project cases per Windows
 profile. A nested block and parenthesized value returned 42 at depth two,
@@ -455,6 +455,28 @@ file took the empty-input branch. The matrix also checks entry/input
 mismatches, check-only behavior, the input Program's instruction ceiling
 and a clean staging directory after every case. Local receipt:
 `build/restricted-worker/20261121T173313253515Z/receipt.json`.
+
+### Configured sealed output
+
+The configured project can declare `brownie.output.emit`. The policy must
+permit it and the run must declare and grant it. The worker checks the
+retained Program's emit requirement before execution. A completed run with
+output authority sends a RESULT envelope containing marker 128, a little-endian
+u16 metadata length, the existing project RESULT metadata, and the sealed
+binary bytes. Unprivileged runs and failed results use the existing metadata
+format. The parent permits the envelope only for a successful run with an
+admitted grant and bounds its byte tail to the run's output ceiling.
+
+The native broker receives into the caller-owned buffer and retains it through
+I/O completion, clean process exit, stdout EOF and staging cleanup. The parent
+renders `output_b64` only after the broker returns success. No guest bytes
+are copied by the native broker during handoff.
+
+Windows development and /O2 each passed 36 configured project cases. The
+output cases verify run and manifest authority, a check with no output,
+an exact 8,193-byte round trip, rejection one byte below the output size,
+a trap after emit with no published bytes, and a zero-argument emit.
+Local receipt: `build/restricted-worker/20261121T174415853814Z/receipt.json`.
 
 ## Windows verification
 

@@ -39,62 +39,79 @@ fn i32 respond(ref u8[] request){
     let sources::Snapshot snapshot=switch(wire::unpack(request[header.run_end..header.input_start],ref project)){
         case .ok(v):{v}case .err(_):{return 4;}
     };
-    let wire::Outcome outcome=if(header.policy_end==header.manifest_end){
-        compute(ref project,snapshot,header)
+    let Result<bytes::Buffer,wire::Error> encoded=if(header.policy_end==header.manifest_end){
+        if(!wire::project_authorized(ref project,false)){return 4;}
+        wire::encode_result(compute(ref project,snapshot,header),header.run,false)
     }else{
         configured(ref project,snapshot,header,request[header.manifest_end..header.policy_end],
             request[header.policy_end..header.run_end],request[header.input_start..request.len])
     };
-    let bytes::Buffer payload=switch(wire::encode_result(outcome,header.run)){
+    let bytes::Buffer payload=switch(encoded){
         case .ok(v):{v}case .err(_):{return 4;}
     };
     let ref u8[] data=bytes::view(ref payload);
     return if(unsafe{bc_scalar_worker_finish(data as ptr u8,data.len)}!=0){0}else{4};
 }
 
-fn wire::Outcome configured(ref manifest::Project project,sources::Snapshot snapshot,wire::Header header,
+fn Result<bytes::Buffer,wire::Error> configured(ref manifest::Project project,sources::Snapshot snapshot,wire::Header header,
     ref u8[] policy,ref u8[] request,ref u8[] input){
     let policies::Policy ceiling=switch(policies::parse(policy)){
-        case .ok(v):{v}case .err(_):{return denied();}
+        case .ok(v):{v}case .err(_):{return wire::encode_result(denied(),header.run,false);}
     };
     let runs::RunConfig run=switch(runs::parse(request,ref ceiling)){
-        case .ok(v):{v}case .err(_):{return denied();}
+        case .ok(v):{v}case .err(_):{return wire::encode_result(denied(),header.run,false);}
     };
-    if(!bytes::equal(manifest::entry_module(project),runs::module_name(ref run)) ||
+    let bool output=wire::output_granted(ref run);
+    if(!wire::project_authorized(project,output) || !bytes::equal(manifest::entry_module(project),runs::module_name(ref run)) ||
        !bytes::equal(manifest::entry_function(project),runs::function_name(ref run)) ||
-       runs::requires_count(ref run)!=0 || runs::grants_count(ref run)!=0){return denied();}
+       (!output && (runs::requires_count(ref run)!=0 || runs::grants_count(ref run)!=0))){
+        return wire::encode_result(denied(),header.run,false);
+    }
     let usize fuel=runs::run_limits(ref run).fuel;
-    if(header.run && header.fuel!=(if(fuel<meter::cli_limit()){fuel}else{meter::cli_limit()})){return denied();}
+    if(header.run && header.fuel!=(if(fuel<meter::cli_limit()){fuel}else{meter::cli_limit()})){
+        return wire::encode_result(denied(),header.run,false);
+    }
     var engine::Engine owner=switch(engine::create_with_policy(ceiling)){
-        case .ok(v):{v}case .err(e):{return engine_failure(e,true);}
+        case .ok(v):{v}case .err(e):{return wire::encode_result(engine_failure(e,true),header.run,output);}
     };
-    return execute_configured(ref mut owner,project,snapshot,header,ref run,input);
+    return execute_configured(ref mut owner,project,snapshot,header,ref run,input,output);
 }
 
-fn wire::Outcome execute_configured(ref mut engine::Engine owner,ref manifest::Project project,
-    sources::Snapshot snapshot,wire::Header header,ref runs::RunConfig run,ref u8[] input){
-    let usize program=switch(engine::compile_project_snapshot_output(owner,project,snapshot,
+fn Result<bytes::Buffer,wire::Error> execute_configured(ref mut engine::Engine owner,ref manifest::Project project,
+    sources::Snapshot snapshot,wire::Header header,ref runs::RunConfig run,ref u8[] input,bool output){
+    let usize program=switch(engine::compile_project_snapshot_output(owner,project,snapshot,run,
         images::metadata_charge()+images::byte_limit())){
-        case .ok(v):{v}case .err(e):{return engine_failure(e,true);}
+        case .ok(v):{v}case .err(e):{return wire::encode_result(engine_failure(e,true),header.run,output);}
     };
     let engine::PreviewEntry profile=switch(engine::preview_entry(owner,program)){
-        case .ok(v):{v}case .err(e):{return engine_failure(e,true);}
+        case .ok(v):{v}case .err(e):{return wire::encode_result(engine_failure(e,true),header.run,output);}
     };
-    if(profile.emits){return denied();}
-    let wire::Outcome outcome=if(header.run){run_instance(owner,program,run,header,input)}
-        else{success(scalar::checked(),8)};
-    if(!engine::release_program(owner,program).is_ok || !engine::destroy(owner).is_ok){return denied();}
-    return outcome;
+    let Result<bytes::Buffer,wire::Error> encoded=if(profile.emits!=output){
+        wire::encode_result(denied(),header.run,false)
+    }else if(header.run){run_instance(owner,program,run,header,input,output)}
+    else{wire::encode_result(success(scalar::checked(),8),false,output)};
+    let bytes::Buffer result=encoded?;
+    if(!engine::release_program(owner,program).is_ok || !engine::destroy(owner).is_ok){
+        return wire::encode_result(denied(),header.run,false);
+    }
+    return .ok(result);
 }
 
-fn wire::Outcome run_instance(ref mut engine::Engine owner,usize program,ref runs::RunConfig run,
-    wire::Header header,ref u8[] input){
+fn Result<bytes::Buffer,wire::Error> run_instance(ref mut engine::Engine owner,usize program,ref runs::RunConfig run,
+    wire::Header header,ref u8[] input,bool output){
     let usize instance=switch(engine::prepare_project_snapshot_instance(owner,program,run,header.fuel,header.has_input,input)){
-        case .ok(v):{v}case .err(e):{return engine_failure(e,false);}
+        case .ok(v):{v}case .err(e):{return wire::encode_result(engine_failure(e,false),true,output);}
     };
     let wire::Outcome outcome=step_instance(owner,instance);
-    if(!engine::destroy_instance(owner,instance).is_ok){return denied();}
-    return outcome;
+    let Result<bytes::Buffer,wire::Error> encoded=if(output && scalar::is_completed(outcome.value)){
+        switch(engine::preview_output(owner,instance)){
+            case .ok(payload):{wire::encode_output(outcome,payload)}
+            case .err(e):{wire::encode_result(engine_failure(e,false),true,output)}
+        }
+    }else{wire::encode_result(outcome,true,output)};
+    let bytes::Buffer result=encoded?;
+    if(!engine::destroy_instance(owner,instance).is_ok){return wire::encode_result(denied(),true,false);}
+    return .ok(result);
 }
 
 fn wire::Outcome step_instance(ref mut engine::Engine owner,usize instance){

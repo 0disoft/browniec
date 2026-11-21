@@ -6,6 +6,8 @@ import host_wire as le;
 import json_tokens as json;
 import project_manifest as manifest;
 import runtime_input as input;
+import runtime_output as output;
+import runtime_run_config as runs;
 import source_snapshot as sources;
 import worker_scalar_result as scalar;
 import std::bytes as bytes;
@@ -13,9 +15,27 @@ import std::bytes as bytes;
 pub enum Error { Shape; Limit; Allocation; }
 pub struct Header { bool run; bool has_input; usize input_start; usize fuel; usize manifest_start; usize manifest_end; usize policy_end; usize run_end; }
 pub struct Outcome { scalar::Outcome value; u8 profile; sources::Span span; }
+pub struct ResultFrame { Outcome outcome; bool has_output; usize output_start; }
 
 pub fn usize request_limit(){return 21+3*65536+2*16+4096+input::hard_limit();}
 pub fn usize result_limit(){return 4+scalar::byte_limit();}
+pub fn usize reply_capacity(bool allow_output,usize output_limit){
+    return result_limit()+if(allow_output){3+output_limit}else{0};
+}
+
+pub fn bool output_granted(ref runs::RunConfig run){
+    return runs::requires_count(run)==1 && runs::grants_count(run)==1 &&
+        runs::declares(run,b"brownie.output.emit") && runs::grants(run,b"brownie.output.emit");
+}
+
+pub fn bool project_authorized(ref manifest::Project project,bool allow_output){
+    if(!allow_output){return manifest::requirements(project)==0;}
+    if(manifest::requirements(project)!=1){return false;}
+    return switch(manifest::requirement(project,0)){
+        case .ok(name):{bytes::equal(name,b"brownie.output.emit")}
+        case .err(_):{false}
+    };
+}
 
 fn usize u16_at(ref u8[] data,usize at){return data[at] as usize+256*(data[at+1] as usize);}
 
@@ -49,7 +69,7 @@ pub fn Result<bytes::Buffer,Error> pack(ref u8[] raw,ref manifest::Project proje
     let usize count=manifest::count(project);
     if(count==0 || count>sources::file_limit() || count!=sources::count(snapshot) ||
        lengths.len!=2*count || raw.len==0 || raw.len>json::byte_limit() ||
-       fuel>meter::cli_limit() || (!run && fuel!=0) || manifest::requirements(project)!=0 ||
+       fuel>meter::cli_limit() || (!run && fuel!=0) || (policy.len==0 && manifest::requirements(project)!=0) ||
        (policy.len==0)!=(request.len==0) || policy.len>json::byte_limit() || request.len>json::byte_limit() ||
        (has_input && (!run || policy.len==0)) || (!has_input && payload.len!=0) ||
        payload.len>input::hard_limit()){
@@ -96,7 +116,7 @@ pub fn Result<sources::Snapshot,Error> unpack(ref u8[] files,ref manifest::Proje
     let usize count=manifest::count(project);
     let usize directory=2*count;
     if(count==0 || count>sources::file_limit() || directory>files.len ||
-       files.len-directory>sources::source_limit() || manifest::requirements(project)!=0){return .err(.Shape);}
+       files.len-directory>sources::source_limit()){return .err(.Shape);}
     var usize end=directory;
     var usize row=0;
     while(row<count){
@@ -122,7 +142,7 @@ pub fn Result<sources::Snapshot,Error> unpack(ref u8[] files,ref manifest::Proje
 }
 
 // Prefix: public profile, source index (16 means absent), little-endian span end.
-pub fn Result<Outcome,Error> parse_result(ref u8[] wire,bool run,ref u8[] lengths){
+pub fn Result<Outcome,Error> parse_result(ref u8[] wire,bool run,ref u8[] lengths,bool allow_output){
     if(wire.len<=4 || wire.len>result_limit() || wire[0]>8 || wire[1]>16 ||
        lengths.len==0 || lengths.len>32 || lengths.len%2!=0){return .err(.Shape);}
     let usize source=wire[1] as usize;
@@ -130,7 +150,7 @@ pub fn Result<Outcome,Error> parse_result(ref u8[] wire,bool run,ref u8[] length
     if(located && 2*source+2>lengths.len){return .err(.Shape);}
     let usize limit=if(located){u16_at(lengths,2*source)}else{0};
     let usize end=u16_at(wire,2);
-    let scalar::Expected expected=scalar::Expected{.run=run,.source_bytes=limit,.instructions=256};
+    let scalar::Expected expected=scalar::Expected{.run=run,.output=allow_output,.source_bytes=limit,.instructions=256};
     let scalar::Outcome value=switch(scalar::parse(wire[4..wire.len],expected)){
         case .ok(v):{v}case .err(_):{return .err(.Shape);}
     };
@@ -142,9 +162,9 @@ pub fn Result<Outcome,Error> parse_result(ref u8[] wire,bool run,ref u8[] length
         .start=if(located){value.error.offset}else{0},.end=end}});
 }
 
-pub fn Result<bytes::Buffer,Error> encode_result(Outcome outcome,bool run){
+pub fn Result<bytes::Buffer,Error> encode_result(Outcome outcome,bool run,bool allow_output){
     let sources::Span span=outcome.span;
-    let scalar::Expected expected=scalar::Expected{.run=run,.source_bytes=span.end,.instructions=256};
+    let scalar::Expected expected=scalar::Expected{.run=run,.output=allow_output,.source_bytes=span.end,.instructions=256};
     let bytes::Buffer payload=switch(scalar::encode(outcome.value,expected)){
         case .ok(v):{v}case .err(_):{return .err(.Shape);}
     };
@@ -157,5 +177,39 @@ pub fn Result<bytes::Buffer,Error> encode_result(Outcome outcome,bool run){
     };
     if(!bytes::append(ref mut wire,ref prefix).is_ok ||
        !bytes::append(ref mut wire,bytes::view(ref payload)).is_ok){return .err(.Allocation);}
+    return .ok(wire);
+}
+
+// Output has its own envelope. The nested scalar result retains the original
+// framing and must be a successful run before a byte tail can be exposed.
+pub fn Result<ResultFrame,Error> parse_frame(ref u8[] wire,bool run,ref u8[] lengths,
+    bool allow_output,usize output_limit){
+    if(wire.len==0 || output_limit>output::hard_limit()){return .err(.Shape);}
+    if(wire[0]!=128){
+        let Outcome result=parse_result(wire,run,lengths,allow_output)?;
+        return .ok(ResultFrame{.outcome=result,.has_output=false,.output_start=wire.len});
+    }
+    if(!run || !allow_output || wire.len<3){return .err(.Shape);}
+    let usize meta=u16_at(wire,1);
+    if(meta>result_limit() || meta>wire.len-3){return .err(.Shape);}
+    let usize start=3+meta;
+    if(wire.len-start>output_limit){return .err(.Limit);}
+    let Outcome result=parse_result(wire[3..start],true,lengths,allow_output)?;
+    if(!scalar::is_completed(result.value)){return .err(.Shape);}
+    return .ok(ResultFrame{.outcome=result,.has_output=true,.output_start=start});
+}
+
+pub fn Result<bytes::Buffer,Error> encode_output(Outcome outcome,ref u8[] payload){
+    if(!scalar::is_completed(outcome.value)){return .err(.Shape);}
+    if(payload.len>output::hard_limit()){return .err(.Limit);}
+    let bytes::Buffer result=encode_result(outcome,true,true)?;
+    let ref u8[] metadata=bytes::view(ref result);
+    var u8[3] prefix=[128,0,0];
+    le::write_le(metadata.len,ref mut prefix[1..3]);
+    var bytes::Buffer wire=switch(bytes::with_capacity(3+metadata.len+payload.len)){
+        case .ok(v):{v}case .err(_):{return .err(.Allocation);}
+    };
+    if(!bytes::append(ref mut wire,ref prefix).is_ok || !bytes::append(ref mut wire,metadata).is_ok ||
+       !bytes::append(ref mut wire,payload).is_ok){return .err(.Allocation);}
     return .ok(wire);
 }

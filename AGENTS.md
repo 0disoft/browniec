@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-22): [Binary input inside the worker](docs/engineering/restricted-worker.md#configured-binary-input)
-  binds an explicit file to a policy-owned shared-byte Instance.
-  Development and /O2 each pass 29 configured project cases.
+- Latest runtime checkpoint (2026-11-22): [Sealed output from the worker](docs/engineering/restricted-worker.md#configured-sealed-output)
+  returns granted bytes only through the broker publication gate.
+  Development and /O2 each pass 36 configured project cases.
 
 # Brownie C agent guidance
 

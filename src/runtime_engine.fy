@@ -430,8 +430,8 @@ pub fn Result<usize,Error> compile_output(ref mut Engine e,entries::Entry select
 
 // The worker owns this snapshot and never reopens the project's members.
 pub fn Result<usize,Error> compile_project_snapshot_output(ref mut Engine e,ref projects::Project project,
-    sources::Snapshot snapshot,usize image_limit){
-    if(!e.meta.configured || projects::requirements(project)!=0){return .err(error(5));}
+    sources::Snapshot snapshot,ref run_config::RunConfig run,usize image_limit){
+    let u32 authority=project_output_mode(e,project,run)?;
     if(sources::count(ref snapshot)>source_module_limit(e) ||
        sources::snapshot_bytes(ref snapshot)>source_byte_limit(e)){return .err(error(8));}
     let usize deadline=compile_deadline(e,0)?;
@@ -445,7 +445,7 @@ pub fn Result<usize,Error> compile_project_snapshot_output(ref mut Engine e,ref 
         let input_entries::InputEntry selected=switch(input_entries::select_i32_input(index,module_name,function_name)){
             case .ok(v):{v}case .err(e):{return .err(host_binding_error(e));}
         };
-        return retain_input_entry(e,selected,image_limit,4,deadline);
+        return retain_input_entry(e,selected,image_limit,authority+2,deadline);
     }
     let entries::Entry selected=switch(entries::select_i32(index,module_name,function_name)){
         case .ok(v):{v}case .err(e):{return .err(host_binding_error(e));}
@@ -981,7 +981,7 @@ pub fn Result<usize,Error> prepare_project_snapshot_instance(ref mut Engine e,us
     ref run_config::RunConfig run,usize budget,bool has_input,ref u8[] input){
     discard check_run_policy(e,run)?;
     let PreviewEntry profile=preview_entry(e,program)?;
-    if(profile.emits || profile.accepts_input!=has_input){return .err(error(5));}
+    if(profile.accepts_input!=has_input){return .err(error(5));}
     let ScalarPreparation prepared=prepare_scalar_policy(e,program,input,profile,run,budget)?;
     return .ok(prepared.instance);
 }
@@ -2023,12 +2023,12 @@ fn u32 compile_input_output_inner(ref mut Meta m,ref mut vec::Vec<Program> v,ref
     assert(memory::record(ref mut m.programs,ref plan).is_ok);
     return switch(built){
         case .ok(code):{
-            if(mode==4){
+            if(mode>=4){
                 let policy_limits::CompileLimits limits=policy::compile_limits(vec::at<policy::Policy>(policies,0));
                 let ref compile_ir::Program image=output_programs::code(ref code);
                 if(!check_compile_image(ref image.body,limits).is_ok){return failed(m,8);}
             }
-            publish_output_program(m,v,code,plan.bytes,entry,if(mode==4){2}else{mode},deadline)
+            publish_output_program(m,v,code,plan.bytes,entry,if(mode>=4){mode-2}else{mode},deadline)
         }
         case .err(e):{compile_error(m,e)}
     };

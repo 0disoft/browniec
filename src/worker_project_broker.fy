@@ -22,16 +22,16 @@ import std::process as process;
 
 unsafe extern C fn u32 bc_project_broker_invoke(ptr u8 request,usize request_length,u32 run,
     ptr u8 lengths,usize lengths_count,ptr u8 configuration,usize config_size,
-    ptr mut u8 reply,ptr mut usize reply_length);
+    u32 output,usize output_limit,ptr mut u8 reply,usize capacity,ptr mut usize reply_length);
 
-struct Selection { bool run; usize fuel; usize source_bytes; usize modules; bool input_file; usize input_limit; }
+struct Selection { bool run; usize fuel; usize source_bytes; usize modules; bool input_file; usize input_limit; bool output; usize output_limit; }
 
-fn u32 validate_result(ptr u8 data,usize length,u32 run,ptr u8 bounds,usize count){
-    if(data==null || length==0 || length>wire::result_limit() || run>1 ||
+fn u32 validate_result(ptr u8 data,usize length,u32 run,ptr u8 bounds,usize count,u32 output,usize output_limit){
+    if(data==null || length==0 || length>wire::reply_capacity(output==1,output_limit) || run>1 || output>1 ||
        bounds==null || count==0 || count>32 || count%2!=0){return 0;}
     let ref u8[] payload=unsafe{byte_slice::from_raw_parts(ref length,data,length)};
     let ref u8[] lengths=unsafe{byte_slice::from_raw_parts(ref count,bounds,count)};
-    return if(wire::parse_result(payload,run==1,lengths).is_ok){1}else{0};
+    return if(wire::parse_frame(payload,run==1,lengths,output==1,output_limit).is_ok){1}else{0};
 }
 
 @effects(console,filesystem)
@@ -49,7 +49,7 @@ pub fn i32 execute(bool configured,bool input_file){
     };
     if(configured){return configured_project(ref path[..length],run,input_file);}
     return acquire(ref path[..length],Selection{.run=run,.fuel=if(run){meter::cli_default()}else{0},
-        .source_bytes=sources::source_limit(),.modules=sources::file_limit(),.input_file=false,.input_limit=0},b"",b"",b"",b"",b"");
+        .source_bytes=sources::source_limit(),.modules=sources::file_limit(),.input_file=false,.input_limit=0,.output=false,.output_limit=0},b"",b"",b"",b"",b"");
 }
 
 @effects(console,filesystem)
@@ -68,7 +68,8 @@ fn i32 configured_project(ref u8[] path,bool run,bool input_file){
     let runs::RunConfig request=switch(configuration::parse_run(run_bytes,ref ceiling)){
         case .ok(v):{v}case .err(e):{return failure(run,e);}
     };
-    if(runs::requires_count(ref request)!=0 || runs::grants_count(ref request)!=0){
+    let bool output=wire::output_granted(ref request);
+    if(!output && (runs::requires_count(ref request)!=0 || runs::grants_count(ref request)!=0)){
         return failure(run,errors::absent(11,0));
     }
     let limits::CompileLimits compile=policy::compile_limits(ref ceiling);
@@ -79,7 +80,7 @@ fn i32 configured_project(ref u8[] path,bool run,bool input_file){
     let u8[28] worker=worker_configuration(policy::worker_limits(ref ceiling));
     let usize input_limit=if(runtime.input_bytes<runtime.memory_bytes){runtime.input_bytes}else{runtime.memory_bytes};
     return acquire(path,Selection{.run=run,.fuel=if(run){fuel}else{0},.source_bytes=source,.modules=count,
-        .input_file=input_file,.input_limit=input_limit},
+        .input_file=input_file,.input_limit=input_limit,.output=output,.output_limit=if(run && output){runtime.output_bytes}else{0}},
         runs::module_name(ref request),runs::function_name(ref request),ref worker,policy_bytes,run_bytes);
 }
 
@@ -107,7 +108,7 @@ fn i32 acquire(ref u8[] path,Selection selected,ref u8[] module_name,ref u8[] fu
     let manifest::Project project=switch(cli::parse_manifest(ref root,raw)){
         case .ok(v):{v}case .err(e):{return failure(run,e);}
     };
-    if(manifest::requirements(ref project)!=0 || (worker.len!=0 &&
+    if(!wire::project_authorized(ref project,selected.output) || (worker.len!=0 &&
        (!bytes::equal(manifest::entry_module(ref project),module_name) ||
         !bytes::equal(manifest::entry_function(ref project),function_name)))){
         return failure(run,errors::absent(11,0));
@@ -141,18 +142,28 @@ fn i32 invoke(ref u8[] manifest_bytes,ref manifest::Project project,ref sources:
     };
     let ref u8[] input=bytes::view(ref request);
     let ref u8[] bounds=ref limits[..limit_bytes];
-    var u8[260] reply=[0;260];
+    let bool output=run && selected.output;
+    let usize capacity=wire::reply_capacity(output,selected.output_limit);
+    var bytes::Buffer reply=switch(bytes::with_capacity(capacity)){
+        case .ok(v):{v}case .err(_):{return failure(run,errors::absent(15,0));}
+    };
+    if(!bytes::resize_zeroed(ref mut reply,capacity).is_ok){return failure(run,errors::absent(15,0));}
     var usize length=0;
     let u32 status=unsafe{bc_project_broker_invoke(input as ptr u8,input.len,if(run){1}else{0},
         bounds as ptr u8,bounds.len,worker as ptr u8,worker.len,
-        ref mut reply[..] as ptr mut u8,ref mut length as ptr mut usize)};
-    if(status!=1 || length==0 || length>wire::result_limit()){
+        if(output){1}else{0},selected.output_limit,bytes::view_mut(ref mut reply) as ptr mut u8,capacity,ref mut length as ptr mut usize)};
+    if(status!=1 || length==0 || length>capacity){
         let u8 kind=if(status==2){errors::deadline_kind()}else if(status==3){errors::cancelled_kind()}else{11};
         return failure(run,errors::absent(kind,0));
     }
-    let wire::Outcome outcome=switch(wire::parse_result(ref reply[..length],run,bounds)){
+    let ref u8[] result=bytes::view(ref reply)[..length];
+    let wire::ResultFrame frame=switch(wire::parse_frame(result,run,bounds,output,selected.output_limit)){
         case .ok(v):{v}case .err(_):{return failure(run,errors::absent(11,0));}
     };
+    let wire::Outcome outcome=frame.outcome;
+    if(frame.has_output){
+        return render::published_output_profile(.JsonV2,outcome.value.value,result[frame.output_start..],outcome.profile);
+    }
     return switch(outcome.value.status){
         case .Checked:{render::selected_outcome(.JsonV2,false,false,0,errors::absent(0,0),outcome.profile)}
         case .Completed:{render::selected_outcome(.JsonV2,true,false,outcome.value.value,errors::absent(0,0),outcome.profile)}

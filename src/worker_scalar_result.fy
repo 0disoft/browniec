@@ -7,9 +7,13 @@ import std::num as num;
 
 pub enum Status { Checked; Completed; Failed; }
 pub struct Outcome { Status status; i64 value; errors::Error error; }
-pub struct Expected { bool run; usize source_bytes; usize instructions; }
+pub struct Expected { bool run; bool output; usize source_bytes; usize instructions; }
 
 pub fn usize byte_limit(){return 256;}
+
+pub fn bool is_completed(Outcome outcome){
+    return switch(outcome.status){case .Completed:{true}case .Checked:{false}case .Failed:{false}};
+}
 
 pub fn Outcome checked(){
     return Outcome{.status=.Checked,.value=0,.error=errors::absent(0,0)};
@@ -26,7 +30,7 @@ fn bool valid_error(errors::Error error, Expected expected){
     if(kind==11 || kind==errors::deadline_kind() || (expected.run && kind==errors::memory_limit_kind())){
         return error.location==errors::absent_location() && error.offset==0;
     }
-    if(!(kind>=1 && kind<=8 || kind>=12 && kind<=15 || kind==18)){return false;}
+    if(!(kind>=1 && kind<=8 || kind>=12 && kind<=15 || kind==18 || (expected.run && expected.output && kind==20))){return false;}
     if(!expected.run && !(kind<=5 || kind==15 || kind==18)){return false;}
     if(error.location==0){return error.offset<=expected.source_bytes;}
     if(error.location==errors::instruction_location()){

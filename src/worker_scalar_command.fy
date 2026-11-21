@@ -44,7 +44,7 @@ fn result::Outcome compute(ref u8[] source,bool run,usize fuel){
 }
 
 fn i32 respond(ref u8[] source,bool run,usize fuel){
-    let result::Expected expected=result::Expected{.run=run,.source_bytes=source.len,.instructions=256};
+    let result::Expected expected=result::Expected{.run=run,.output=false,.source_bytes=source.len,.instructions=256};
     let result::Outcome outcome=compute(source,run,fuel);
     let bytes::Buffer payload=switch(result::encode(outcome,expected)){
         case .ok(v):{v}case .err(_):{return 4;}

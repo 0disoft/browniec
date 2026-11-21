@@ -14,7 +14,7 @@ unsafe extern C fn u32 bc_scalar_broker_invoke(ptr u8 profile,usize profile_leng
 // The C gate calls this only with its complete, bounded RESULT span.
 fn u32 validate_result(ptr u8 data,usize length,u32 run,usize source_length){
     if(data==null || length==0 || length>result::byte_limit() || run>1 || source_length>4096){return 0;}
-    let result::Expected expected=result::Expected{.run=run==1,.source_bytes=source_length,.instructions=256};
+    let result::Expected expected=result::Expected{.run=run==1,.output=false,.source_bytes=source_length,.instructions=256};
     let ref u8[] payload=unsafe{byte_slice::from_raw_parts(ref expected,data,length)};
     return if(result::parse(payload,expected).is_ok){1}else{0};
 }
@@ -56,7 +56,7 @@ fn i32 invoke(ref u8[] profile,ref input::Source snapshot,bool run){
         let u8 kind=if(status==2){errors::deadline_kind()}else if(status==3){errors::cancelled_kind()}else{11};
         return report(run,errors::absent(kind,0));
     }
-    let result::Expected expected=result::Expected{.run=run,.source_bytes=source.len,.instructions=256};
+    let result::Expected expected=result::Expected{.run=run,.output=false,.source_bytes=source.len,.instructions=256};
     let result::Outcome outcome=switch(result::parse(ref reply[..length],expected)){
         case .ok(v):{v}case .err(_):{return report(run,errors::absent(11,0));}
     };
