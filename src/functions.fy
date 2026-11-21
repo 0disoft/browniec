@@ -60,13 +60,14 @@ pub struct Table {
     u8[128] param_slice_elements;
     usize count;
     usize entry;
+    usize expression_depth;
 }
 pub fn Table empty() {
     return Table { .context=context::empty(), .literals=literal_collection::empty(), .reference_calls=false, .reference_returns=false, .output=false, .scalar_host_calls=false, .begins = [0; 16], .ends = [0; 16], .bodies = [0; 16],
         .body_ends = [0; 16], .arities = [0; 16], .return_lengths = [0; 16], .return_records = [0; 16],
         .return_slice_elements = [0; 16], .return_slice_inputs = [0; 16], .return_slice_candidates = [0; 16], .param_begins = [0; 128],
         .param_ends = [0; 128], .return_types = [0; 16], .param_types = [0; 128],
-        .param_lengths = [0; 128], .param_arrays = [0; 128], .param_records = [0; 128], .param_slices = [false; 128], .param_slice_elements = [0; 128], .count = 0, .entry = 16 };
+        .param_lengths = [0; 128], .param_arrays = [0; 128], .param_records = [0; 128], .param_slices = [false; 128], .param_slice_elements = [0; 128], .count = 0, .entry = 16, .expression_depth = 32 };
 }
 pub fn usize find(ref u8[] source, ref Table t, usize begin, usize end) {
     if(t.count>16 || begin>end || end>source.len){return 16;}

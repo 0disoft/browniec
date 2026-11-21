@@ -143,14 +143,14 @@ fn u8 opcode(u8 kind) {
     return 6;
 }
 fn Result<usize, errors::Error> operand(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref locals::Table table, ref functions::Table signatures, usize depth, u8 expected, u8 result_type, usize structure, ref mut loops::State loop_state) {
-    if(depth>32){return .err(errors::make(4,s.begin));}
+    if(depth>signatures.expression_depth){return .err(errors::make(4,s.begin));}
     let u8 control=arm_syntax::operand_kind(source,s);
     if(control!=0){return if_operand(source,s,p,table,signatures,depth,expected,result_type,structure,loop_state);}
     if(s.kind==2 || s.kind==5){return named_operand(source,s,p,table,signatures,depth,expected,result_type,structure,loop_state);}
     return compound_operand(source,s,p,table,signatures,depth,expected,result_type,structure,loop_state);
 }
 fn Result<usize, errors::Error> compound_operand(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref locals::Table table, ref functions::Table signatures, usize depth, u8 expected, u8 result_type, usize structure, ref mut loops::State loop_state) {
-    if (depth > 32) { return .err(errors::make(4, s.begin)); }
+    if(depth>signatures.expression_depth){return .err(errors::make(4,s.begin));}
     let ref literal_collection::Index literals=ref signatures.literals;
     let usize at = s.begin;
     if(s.kind==40 && arm_syntax::conditional_atom(source,s)?.valid){
@@ -1409,7 +1409,7 @@ fn Result<usize,errors::Error> converted(ref u8[] source,ref mut lexer::State s,
     return .ok(value);
 }
 fn Result<usize, errors::Error> expression(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref locals::Table table, ref functions::Table signatures, u8 minimum, usize depth, u8 expected, u8 result_type, usize structure, ref mut loops::State loop_state) {
-    if (depth > 32) { return .err(errors::make(4, s.begin)); }
+    if(depth>signatures.expression_depth){return .err(errors::make(4,s.begin));}
     var usize left = converted(source,s,p,table,signatures,depth,expected,result_type,structure,loop_state)?;
     while (precedence(s.kind) >= minimum) {
         let u8 kind = s.kind;

@@ -397,8 +397,9 @@ outer braces. Comment and literal contents do not count. The first excess
 opener produces a source-local `compile_limit`. The existing parser still
 validates delimiter pairing and enforces its own grammar limits.
 
-Semantic depth outside this delimiter check and type accounting beyond
-declared records remain open.
+[Scalar expression depth](#scalar-expression-depth) also applies during
+lowering. Other semantic depth checks and type accounting beyond declared
+records remain open.
 
 The nesting follow-up passed twenty configured project cases per Windows
 profile. A nested block and parenthesized value returned 42 at depth two,
@@ -702,6 +703,26 @@ return a deadline error at those boundaries, and an interrupted token
 leaves the caller's lexer state untouched. The configured worker matrix
 does not force a particular index phase to time out. Local worker receipt:
 `build/restricted-worker/20261121T192158299111Z/receipt.json`.
+
+### Scalar expression depth
+
+The index carries the effective scalar expression depth into the signature
+table. Recursive expression and operand lowering and staged scalar frames
+check it at semantic depth transitions. The native depth ceiling is 32.
+Unconfigured indexes use that native ceiling, and signed-minimum literal
+handling keeps its existing precedence at the ceiling.
+
+Two nested unary operators require depth two even without nested delimiters.
+In both Windows profiles the ordinary fixture returns 42 at depth two and
+reports the operand location in the second file at depth one. The catalog
+fixture returns 77 and seals its output at depth two. At depth one it
+returns `compile_limit` with neither a guest result nor sealed output.
+Each profile passes 44 configured, 18 catalog and five managed project
+cases plus nine native host transport cases. Local receipt: `build/restricted-worker/20261121T193124257651Z/receipt.json`.
+
+The native test command cannot link the runtime clock companion. A focused
+Windows /O2 executable with the production clock shim runs the three
+existing unary regressions, including 32/33 boundaries and signed minima.
 
 ## Windows verification
 

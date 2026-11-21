@@ -174,6 +174,19 @@ def verify_configured_project(run, need, image, folder, env):
     policy['compile'] = compile_defaults
     math_file.write_bytes(original_source)
 
+    unary_source = b'module util::math;pub fn i32 answer(){return ~ ~ 42;}'
+    math_file.write_bytes(unary_source)
+    policy['compile'] = dict(compile_defaults, source_bytes=4096, depth=2)
+    check()
+    policy['compile']['depth'] = 1
+    location = check(3, 'compile_limit', 'check')['error']['location']
+    offset = unary_source.index(b'42')
+    need(location['source_index'] == 1 and location['offset'] == offset and
+         location['end_offset'] == offset + 1,
+         f'Unexpected semantic expression depth location: {location}')
+    policy['compile'] = compile_defaults
+    math_file.write_bytes(original_source)
+
     runtime = config['limits'].copy()
     config['limits'].update(memory_bytes=1, object_bytes=1, input_bytes=0, output_bytes=0,
                             host_request_bytes=1, host_response_bytes=1)
@@ -261,7 +274,7 @@ def verify_configured_project(run, need, image, folder, env):
     config['entry']['function'] = manifest['entry']['function']
     config['grants'] = ['brownie.output.emit']
     check(4, 'unavailable')
-    return 42
+    return 44
 
 
 def verify_project_host(run, need, image, folder, env):
@@ -332,6 +345,15 @@ def verify_project_host(run, need, image, folder, env):
 
     check('check')
     check()
+    original_source = source.read_bytes()
+    source.write_bytes(original_source.replace(b'return a+', b'return - - a+'))
+    original_depth = policy['compile']['depth']
+    policy['compile']['depth'] = 2
+    check()
+    policy['compile']['depth'] = 1
+    check(expected_exit=3, kind='compile_limit')
+    policy['compile']['depth'] = original_depth
+    source.write_bytes(original_source)
     replies['replies'] = rows[:1]
     check(expected_exit=4, kind='unavailable')
     replies['replies'] = rows
@@ -375,7 +397,7 @@ def verify_project_host(run, need, image, folder, env):
                        b'output::emit(ref data); let i32 a=api::check(41); return a+api::check(42);}')
     check(payload=payload)
     check(expected_exit=4, kind='unavailable')
-    return 16
+    return 18
 
 
 def main():

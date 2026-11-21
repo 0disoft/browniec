@@ -208,7 +208,10 @@ pub fn Result<bool,errors::Error> advance(ref u8[] source,ref mut lexer::State s
         }else if(active.request==2){w.waiting=true;w.request=3;}return .ok(false);}
     if(!budget::admit(meter,4096,s.begin)?){return .ok(false);}
     let usize i=w.used-1;let Frame f=current(w);let usize value=w.value;w.visits+=1;
-    if(f.phase==0){if(f.minimum!=0 && f.depth>32){return .err(errors::make(4,s.begin));}
+    if(f.phase==0){
+        // Keep the native primary preflight order at the default ceiling.
+        let usize limit=signatures.expression_depth;
+        if(f.depth>limit && (f.minimum!=0 || limit<32)){return .err(errors::make(4,s.begin));}
         bank.probe=probes::begin(*s,f.expected,f.minimum==0);w.frames[i].phase=60;return .ok(false);}
     if(f.phase==1){w.frames[i].left=value;w.frames[i].phase=2;return .ok(false);}
     if(f.phase==2){if(f.minimum==0 || precedence(s.kind)<f.minimum){w.value=f.left;w.used-=1;w.done=w.used==0;return .ok(w.done);}

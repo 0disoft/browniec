@@ -72,7 +72,7 @@ pub fn Result<bool,errors::Error> advance_indexed(ref u8[] source,ref context::T
     if(w.mode!=1){return .err(errors::make(5,0));}
     if(w.waiting || w.parsing){return child(source,w,meter);}
     if(w.phase==0){let bool done=checking::advance(source,scope,ref mut w.check,meter)?;
-        if(done){if(!w.check.result){return .err(errors::make(5,0));}w.result.context=*scope;w.phase=10;}return .ok(false);}
+        if(done){if(!w.check.result){return .err(errors::make(5,0));}w.result.context=*scope;w.result.expression_depth=modules::expression_depth(index);w.phase=10;}return .ok(false);}
     if(w.phase==11){let bool done=states::advance(source,scope,ref mut w.state,meter)?;
         if(done){w.token=states::prepared(ref w.state)?;next(w,12);}return .ok(false);}
     if(!budget::admit(meter,4096,w.active)?){return .ok(false);}

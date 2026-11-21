@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-22): [Project indexing deadline](docs/engineering/restricted-worker.md#project-indexing-deadline)
-  covers manifest binding, token continuations and index retention.
-  Both Windows worker profiles pass the focused AppContainer matrix.
+- Latest runtime checkpoint (2026-11-22): [Scalar expression depth](docs/engineering/restricted-worker.md#scalar-expression-depth)
+  applies the indexed project policy during ordinary and catalog-backed lowering.
+  Both Windows worker profiles accept unary depth two and reject depth one.
 
 # Brownie C agent guidance
 
