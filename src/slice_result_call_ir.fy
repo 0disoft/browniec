@@ -2,6 +2,7 @@ module slice_result_call_ir;
 import array_list_ir as lists;
 import ir as ir;
 import errors as errors;
+import metadata_budget as budget;
 import struct_range as records;
 import types as types;
 
@@ -10,10 +11,20 @@ import types as types;
 // 68 END_CAPTURE: child,parent,0; canonical END already belongs to handoff.
 // Cleanup markers then 67 BIND_RESULT: child,parent,lo,hi; proof-only range.
 pub fn Result<usize,errors::Error> binding(ref ir::Program p,usize pc){
+    var usize fuel=budget::unlimited();
+    return binding_metered(p,pc,0,ref mut fuel);
+}
+pub fn Result<usize,errors::Error> binding_metered(ref ir::Program p,usize pc,usize deadline,ref mut usize fuel){
     if(p.count>256 || pc>=p.count){return .err(errors::make(5,0));}
-    var usize at=pc+1;while(at<p.count){let u8 op=p.code[at*8];
-        if(op==67){return .ok(at);}if(op!=68 && op!=56 && op!=37 && op!=45 && op!=86){return .err(errors::make(5,pc));}at+=1;
-    }return .err(errors::make(5,pc));
+    var usize at=pc+1;
+    while(at<p.count){
+        discard budget::visit(fuel,deadline,pc)?;
+        let u8 op=p.code[at*8];
+        if(op==67){return .ok(at);}
+        if(op!=68 && op!=56 && op!=37 && op!=45 && op!=86){return .err(errors::make(5,pc));}
+        at+=1;
+    }
+    return .err(errors::make(5,pc));
 }
 pub fn Result<usize,errors::Error> rewrite(ref mut ir::Program p){
     if(p.count>256 || p.function_count>16){return .err(errors::make(5,0));}
@@ -38,24 +49,46 @@ pub fn Result<usize,errors::Error> rewrite(ref mut ir::Program p){
     }return .ok(count);
 }
 pub fn usize creator(ref ir::Program p,usize site){
-    if(p.count>256 || site>=16){return 256;}
-    var usize pc=0;while(pc<p.count){if((p.code[pc*8]==61 || p.code[pc*8]==67) && p.code[pc*8+1] as usize==site){return pc;}pc+=1;}return 256;
+    var usize fuel=budget::unlimited();
+    return switch(creator_metered(p,site,0,ref mut fuel)){case .ok(v):{v}case .err(_):{256}};
+}
+pub fn Result<usize,errors::Error> creator_metered(ref ir::Program p,usize site,usize deadline,ref mut usize fuel){
+    if(p.count>256 || site>=16){return .ok(256);}
+    var usize pc=0;
+    while(pc<p.count){
+        discard budget::visit(fuel,deadline,pc)?;
+        let u8 op=p.code[pc*8];
+        if((op==61 || op==67) && p.code[pc*8+1] as usize==site){return .ok(pc);}
+        pc+=1;
+    }
+    return .ok(256);
 }
 pub struct Chain { usize parent; usize count; }
 // Recipes use existing END markers to unwind one actual through a proved
 // ancestry. No depth, parent or native receipt is inferred from scalar values.
 pub fn Result<Chain,errors::Error> chain(ref ir::Program p,usize pc,usize argument){
+    var usize fuel=budget::unlimited();
+    return chain_metered(p,pc,argument,0,ref mut fuel);
+}
+pub fn Result<Chain,errors::Error> chain_metered(ref ir::Program p,usize pc,usize argument,usize deadline,ref mut usize fuel){
     if(p.count>256 || pc>=p.count || pc>=256 || p.code[pc*8]!=66){return .err(errors::make(5,pc));}
     let usize map=p.code[pc*8+3] as usize;
     if(p.call_count>32 || map>=p.call_count || map>=32 || argument>=8 || p.call_arities[map]>8 || argument>=p.call_arities[map] as usize){return .err(errors::make(5,pc));}
     let usize value=p.call_args[map*8+argument] as usize;
     if(value<160 || value>=176){return .err(errors::make(5,pc));}
-    var usize parent=value-160;var usize count=0;let usize end=binding(p,pc)?;
-    var usize at=pc+1;while(at<end){if(p.code[at*8]==68 && p.code[at*8+1] as usize==parent){
-        let usize made=creator(p,parent);
-        if(made>=pc || p.code[at*8+2]!=p.code[made*8+2] || count>=16){return .err(errors::make(5,pc));}
-        parent=p.code[at*8+2] as usize;if(parent>=16){return .err(errors::make(5,pc));}count+=1;
-    }at+=1;}return .ok(Chain{.parent=parent,.count=count});
+    var usize parent=value-160;var usize count=0;
+    let usize end=binding_metered(p,pc,deadline,fuel)?;
+    var usize at=pc+1;
+    while(at<end){
+        discard budget::visit(fuel,deadline,pc)?;
+        if(p.code[at*8]==68 && p.code[at*8+1] as usize==parent){
+            let usize made=creator_metered(p,parent,deadline,fuel)?;
+            if(made>=pc || p.code[at*8+2]!=p.code[made*8+2] || count>=16){return .err(errors::make(5,pc));}
+            parent=p.code[at*8+2] as usize;if(parent>=16){return .err(errors::make(5,pc));}count+=1;
+        }
+        at+=1;
+    }
+    return .ok(Chain{.parent=parent,.count=count});
 }
 // Called only after complete normalized CFG/type/loan proof has bounded operands.
 fn Result<bool,errors::Error> reads(ref ir::Program p,usize pc,usize r){

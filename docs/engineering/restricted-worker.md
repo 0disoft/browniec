@@ -660,8 +660,27 @@ configured, 16 catalog and five managed project cases plus nine native host
 transport cases. Local receipt:
 `build/restricted-worker/20261121T190335773644Z/receipt.json`.
 
-Nested call-capture recipes and synchronous semantic children still require
-finer-grained charging.
+### Call-capture preparation Fuel
+
+The configured output compiler charges one unit for each instruction,
+argument, binding marker and creator lookup entry visited when building
+the immutable capture plan. Each visit checks the compile deadline before
+charging or reading the next entry. A failure discards the plan before
+retention. The trusted unmetered callers use the same recipe logic.
+
+The two-file hello fixture adds four instruction visits after scratch
+planning. Windows development and /O2 return 42 at 3,535,039 units and
+return `compile_limit` at 3,535,038. Check also fails at the previous scratch
+boundary of 3,535,035. Failures yield no guest result or output. Both
+profiles pass 42 configured, 16 catalog and five managed project cases
+plus nine native host transport cases. Local receipt:
+`build/restricted-worker/20261121T191130662101Z/receipt.json`.
+
+A focused Windows /O2 fixture executes the nested capture regression from
+`tests/m2/call_capture_live.fy`. A balance of 12 fails inside the first
+creator lookup, 29 fails on the last instruction, and 30 produces the same
+two-END recipe as the unmetered path. An expired deadline leaves all 30
+units available. This fixture uses the production Windows clock shim.
 
 ## Windows verification
 

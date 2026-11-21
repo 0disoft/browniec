@@ -1,6 +1,7 @@
 module call_capture_plan;
 import ir as ir;
 import errors as errors;
+import metadata_budget as budget;
 import slice_result_call_ir as recipes;
 
 // Immutable recipes for this exact compiled Program. No live loan/owner state
@@ -26,10 +27,15 @@ fn Result<u8,errors::Error> recipe_byte(usize value,usize pc){
 // Whole-Program proof remains the caller's responsibility. Independently bound
 // every operand used here and reject map reuse across all four CALL forms.
 pub fn Result<Plan,errors::Error> prepare(ref ir::Program p){
+    var usize fuel=budget::unlimited();
+    return prepare_metered(p,0,ref mut fuel);
+}
+pub fn Result<Plan,errors::Error> prepare_metered(ref ir::Program p,usize deadline,ref mut usize fuel){
     if(p.count>256 || p.call_count>32 || p.function_count>16){return .err(invalid(0));}
     var Plan plan=empty();var bool[32] used=[false;32];
     var usize pc=0;var u32 stored_pc=0;let usize one=1;
     while(pc<p.count){
+        discard budget::visit(fuel,deadline,pc)?;
         // pc < count <= 256 proves at + 7 < 2048 and stored_pc <= 255.
         let usize at=pc*8;let u8 op=p.code[at];
         if(op==9 || op==64 || op==66 || op==78){
@@ -43,24 +49,26 @@ pub fn Result<Plan,errors::Error> prepare(ref ir::Program p){
                 if(mask>=(one<<arity)){return .err(invalid(pc));}
                 var usize i=0;
                 while(i<arity){
+                    discard budget::visit(fuel,deadline,pc)?;
                     if((mask&(one<<i))!=0){
                         // The canonical recipe proves source namespace, each
                         // creator/parent link and the sixteen-END bound.
-                        let recipes::Chain chain=recipes::chain(p,pc,i)?;
+                        let recipes::Chain chain=recipes::chain_metered(p,pc,i,deadline,fuel)?;
                         if(chain.count==0 || chain.count>16 || chain.parent>=16){return .err(invalid(pc));}
                         plan.ends[row+i]=recipe_byte(chain.count,pc)?;
                         plan.parents[row+i]=recipe_byte(chain.parent,pc)?;
                     }i+=1;
                 }
-                let usize end=recipes::binding(p,pc)?;
+                let usize end=recipes::binding_metered(p,pc,deadline,fuel)?;
                 if(end<=pc || end>=p.count || end>=256){return .err(invalid(pc));}
                 var usize marker=pc+1;
                 while(marker<end){
+                    discard budget::visit(fuel,deadline,pc)?;
                     let usize marker_at=marker*8;
                     if(p.code[marker_at]==68){
                         let usize site=p.code[marker_at+1] as usize;
                         if(site>=16 || p.code[marker_at+2]>=16){return .err(invalid(pc));}
-                        let usize made=recipes::creator(p,site);
+                        let usize made=recipes::creator_metered(p,site,deadline,fuel)?;
                         // Check the absent-creator sentinel before reading code.
                         if(made>=pc || made>=p.count || made>=256){return .err(invalid(pc));}
                         let usize made_at=made*8;

@@ -85,3 +85,28 @@ fn Result<usize,errors::Error> accepted(ref ir::Program p,ref frames::Frames sta
         variant+=1;
     }
 }
+
+@test fn void capture_preparation_meters_nested_scans_before_retention(){
+    var ir::Program p=ir::empty();assert(fixture(ref mut p)==3);
+    var usize fuel=12;
+    switch(plans::prepare_metered(ref p,0,ref mut fuel)){
+        case .ok(_):{assert(false);}case .err(e):{assert(e.kind==4 && e.offset==1 && fuel==0);}
+    };
+    fuel=29;
+    switch(plans::prepare_metered(ref p,0,ref mut fuel)){
+        case .ok(_):{assert(false);}case .err(e):{assert(e.kind==4 && e.offset==8 && fuel==0);}
+    };
+    fuel=30;
+    let plans::Plan plan=switch(plans::prepare_metered(ref p,0,ref mut fuel)){
+        case .ok(v):{v}case .err(_):{assert(false);return;}
+    };
+    assert(fuel==0 && plan.ready);
+    switch(plans::lookup(ref plan,ref p,3)){
+        case .ok(entry):{assert(entry.required==4 && entry.absent==2 && entry.ends[0]==2 && entry.parents[0]==0);}
+        case .err(_):{assert(false);}
+    };
+    fuel=30;
+    switch(plans::prepare_metered(ref p,1,ref mut fuel)){
+        case .ok(_):{assert(false);}case .err(e):{assert(e.kind==errors::deadline_kind() && fuel==30);}
+    };
+}

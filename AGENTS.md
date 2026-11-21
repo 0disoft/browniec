@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-22): [Execution scratch preparation Fuel](docs/engineering/restricted-worker.md#execution-scratch-preparation-fuel)
-  carries the proof balance into list and place planning.
-  Windows development and /O2 pass the exact 3,535,035-unit boundary.
+- Latest runtime checkpoint (2026-11-22): [Call-capture preparation Fuel](docs/engineering/restricted-worker.md#call-capture-preparation-fuel)
+  charges nested recipe walks after scratch planning.
+  Windows development and /O2 pass the exact 3,535,039-unit project boundary.
 
 # Brownie C agent guidance
 

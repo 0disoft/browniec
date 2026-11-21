@@ -1,5 +1,6 @@
 module metadata_budget;
 import errors as errors;
+import runtime_clock as clock;
 
 // Private per-dispatch allowance. A charged stage must do actual bounded work;
 // credits cannot be saved across yields and redeemed for a larger atomic scan.
@@ -14,6 +15,10 @@ pub fn Result<usize,errors::Error> charge(ref mut usize fuel,usize work,usize of
     let usize remaining=*fuel-work;
     *fuel=remaining;
     return .ok(work);
+}
+pub fn Result<usize,errors::Error> visit(ref mut usize fuel,usize deadline,usize offset){
+    if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
+    return charge(fuel,1,offset);
 }
 pub fn Result<usize,errors::Error> prepay(ref mut usize fuel,usize offset){
     return charge(fuel,limit(),offset);

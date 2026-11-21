@@ -220,7 +220,7 @@ fn Result<Program,diagnostics::Error> finish_verified(ref sources::Snapshot sour
         case .ok(v):{v}case .err(e):{return .err(absent(e));}
     };
     if(clock::expired(deadline)){return .err(absent(errors::absent(errors::deadline_kind(),0)));}
-    let call_captures::Plan calls=switch(call_captures::prepare(ref code.body)){case .ok(v):{v}case .err(e):{return .err(absent(e));}};
+    let call_captures::Plan calls=switch(call_captures::prepare_metered(ref code.body,deadline,fuel)){case .ok(v):{v}case .err(e):{return .err(absent(e));}};
     let Preparation prepared=Preparation{.sites=proof.ordinary.statics,.origins=proof.ordinary.recipes.site_origins,.list=list,.place=place,
         .work=work+code.body.arities[code.body.entry],.capacity=if(aggregates){65536}else{0},.scratch=scratch,.parameters=proof.parameters,.calls=calls};
     if(clock::expired(deadline)){return .err(absent(errors::absent(errors::deadline_kind(),0)));}
