@@ -4,6 +4,7 @@
 
 #include "native/runtime_input_reader.h"
 #include "native/host_adapter_process.h"
+#include <bcrypt.h>
 
 // One configured run per CLI process. The console thread only latches a flag.
 static volatile LONG cancel_requested;
@@ -63,20 +64,47 @@ void *bc_cli_read_input(const uint8_t *path,size_t length,size_t limit,uint32_t 
     return snapshot;
 }
 
-/* The caller supplies only sealed output, at most 1 MiB. CREATE_NEW makes
-   collision handling atomic; never retry or delete after a partial write. */
+/* Keep the staging file pinned by handle through the no-replace rename. */
 uint32_t bc_cli_write_output(const uint8_t *path,size_t length,const uint8_t *data,size_t count){
-    wchar_t extended[4+BC_AS_ROOT_CHARS+1]={L'\\',L'\\',L'?',L'\\'};
+    union { FILE_RENAME_INFO info; unsigned char bytes[sizeof(FILE_RENAME_INFO)+(4+BC_AS_ROOT_CHARS+1)*sizeof(wchar_t)]; } target={0};
+    wchar_t *extended=(wchar_t *)(target.bytes+offsetof(FILE_RENAME_INFO,FileName));
+    memcpy(extended,L"\\\\?\\",4*sizeof(wchar_t));
     wchar_t *absolute=extended+4;
     DWORD resolved=cli_disk_path(path,length,absolute);
     if(resolved<4||absolute[1]!=L':'||absolute[2]!=L'\\'||count>1048576){return 0;}
-    HANDLE file=CreateFileW(extended,GENERIC_WRITE,0,NULL,CREATE_NEW,FILE_ATTRIBUTE_NORMAL,NULL);
+    wchar_t *leaf=wcsrchr(absolute,L'\\')+1;
+    size_t prefix=(size_t)(leaf-extended);
+    static const wchar_t marker[]=L".browniec-";
+    static const wchar_t hex[]=L"0123456789abcdef";
+    uint8_t nonce[16];
+    wchar_t sibling[4+BC_AS_ROOT_CHARS+sizeof(marker)/sizeof(*marker)+2*sizeof(nonce)];
+    if(BCryptGenRandom(NULL,nonce,sizeof(nonce),BCRYPT_USE_SYSTEM_PREFERRED_RNG)<0){return 0;}
+    memcpy(sibling,extended,prefix*sizeof(wchar_t));
+    memcpy(sibling+prefix,marker,sizeof(marker)-sizeof(wchar_t));
+    wchar_t *suffix=sibling+prefix+sizeof(marker)/sizeof(*marker)-1;
+    for(size_t i=0;i<sizeof(nonce);++i){suffix[2*i]=hex[nonce[i]>>4];suffix[2*i+1]=hex[nonce[i]&15];}
+    suffix[2*sizeof(nonce)]=0;
+
+    HANDLE file=CreateFileW(sibling,GENERIC_WRITE|DELETE,0,NULL,CREATE_NEW,FILE_ATTRIBUTE_NORMAL,NULL);
     if(file==INVALID_HANDLE_VALUE){return 0;}
+    HANDLE publish=NULL;
     DWORD written=0;
     BOOL ok=GetFileType(file)==FILE_TYPE_DISK &&
-        (!count||(WriteFile(file,data,(DWORD)count,&written,NULL)&&written==count));
-    BOOL closed=CloseHandle(file);
-    return ok&&closed;
+        (!count||(WriteFile(file,data,(DWORD)count,&written,NULL)&&written==count)) &&
+        FlushFileBuffers(file) &&
+        DuplicateHandle(GetCurrentProcess(),file,GetCurrentProcess(),&publish,DELETE,FALSE,0);
+    FILE_DISPOSITION_INFO discard={TRUE};
+    if(!ok){
+        SetFileInformationByHandle(file,FileDispositionInfo,&discard,sizeof(discard));
+        CloseHandle(file);
+        return 0;
+    }
+    target.info.FileNameLength=(4+resolved)*sizeof(wchar_t);
+    ok=CloseHandle(file) && SetFileInformationByHandle(publish,FileRenameInfo,&target,
+        (DWORD)(offsetof(FILE_RENAME_INFO,FileName)+target.info.FileNameLength+sizeof(wchar_t)));
+    if(!ok){SetFileInformationByHandle(publish,FileDispositionInfo,&discard,sizeof(discard));}
+    CloseHandle(publish);
+    return ok;
 }
 
 void *bc_cli_read_stdin(size_t limit,uint32_t *status){

@@ -270,10 +270,12 @@ Choose `--output-text FILE` instead to validate the entire sealed result as
 UTF-8 before creating the file. Valid text is written byte for byte, preserving
 line endings. Invalid UTF-8 reports `output_encoding` and exits 7 without opening
 the destination. The two file options are mutually exclusive.
-Use an explicit local path. An existing file is left intact. The command opens
-the sink only after successful execution and sealing. A sink failure reports
-`output_io` and exits 7. A file created before a write failure can contain a
-partial result. The command makes one write attempt.
+Use an explicit local path. After successful execution and sealing, the CLI
+writes and flushes a temporary sibling. It closes the writing handle before
+renaming the sealed file into place. The rename is atomic and refuses to
+replace an existing destination. A sink failure reports `output_io` and exits
+7. A short write or close failure leaves the final path unpublished. The CLI
+requests removal of the temporary file on failure.
 
 During configured execution on a Windows console, Ctrl+C or Ctrl+Break requests
 cancellation. The Engine samples the request between steps and preserves any

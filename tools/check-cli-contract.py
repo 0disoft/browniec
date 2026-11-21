@@ -544,6 +544,27 @@ def check_configured_output(exe, folder):
     output_error = {'kind': 'output_io', 'location': {'kind': 'none'}}
     assert check_json(exe, [*args, '--output', sink], 7, version=2, profile=profile) == output_error
     assert sink.read_bytes() == b'A\x00'
+    contested = project / 'contested.bin'
+    command = [str(exe), *map(str, [*args, '--stdin', '--output', contested, '--json-v2'])]
+    with subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE) as first:
+        with subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE) as second:
+            candidates = [(first, b'A\x00'), (second, b'B\xff')]
+            for guest, data in candidates:
+                guest.stdin.write(data)
+                guest.stdin.close()
+                guest.stdin = None
+            codes = []
+            for guest, data in candidates:
+                stdout, stderr = guest.communicate(timeout=10)
+                assert not stderr and len(stdout.splitlines()) == 1, (stdout, stderr)
+                result = json.loads(stdout)
+                codes.append(guest.returncode)
+                if guest.returncode == 0:
+                    assert result['return_i32'] == 77 and contested.read_bytes() == data, result
+                else:
+                    assert result['error'] == output_error, result
+            assert sorted(codes) == [0, 7], codes
+    assert not list(project.glob('.browniec-*'))
     assert check_json(exe, [*args, '--output', folder / 'missing' / 'result.bin'],
                       7, version=2, profile=profile) == output_error
     assert check_json(exe, [*args, '--output', f'{sink}:extra'],

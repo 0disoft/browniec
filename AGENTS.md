@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-21): [Host literal finalization](docs/engineering/runtime-engine-compile-memory.md#host-literal-finalization)
-  clears binding scratch, decodes literals, and copies payload in bounded
-  advances. Windows development and /O2 passed deadline, heap, and wire checks.
+- Latest runtime checkpoint (2026-11-21): [Windows file publication](docs/cli/configuration.md#configured-project-output)
+  publishes sealed output by a no-replace rename. Windows /O2 CLI checks and
+  Windows /Od and /O2 short-write and close-failure probes passed.
 
 # Brownie C agent guidance
 
