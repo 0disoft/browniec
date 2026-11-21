@@ -234,6 +234,7 @@ pub fn ref images::Image literals(ref Program p){return ref stored(p).image;}
 // preparation record alone is not admission authority for unrelated raw IR.
 pub fn ref Preparation preparation(ref Program p){return ref stored(p).prepared;}
 pub fn Completion observe(ref Execution run){return run.completion;}
+pub fn usize publication_slot_bytes(){return 8*72;}
 // Actual retained SDK heap. Published is 72 bytes on pinned Windows x64;
 // generated-layout and physical-heap native guards own that assumption.
 // Late failure retains an empty Vec8, so its capacity must still be charged.

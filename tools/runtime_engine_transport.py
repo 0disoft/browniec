@@ -98,6 +98,8 @@ def project_layouts(t, c, *, host_compile=True):
     c['hostRunConfigType']=arg(39,5)
     c['hostTransitionType']=arg(41,7)
     assert arg(41,0)==c['hostExchangeVectorType']
+    assert arg(63,0)==c['hostExchangeVectorType']
+    assert arg(63,1)==c['completionType'] and arg(63,2)==c['publishedVectorType']
     assert arg(40,1)==c['programVectorType'] and arg(40,3)==arg(40,4)==c['outputVectorType']
     c['policyVectorType']=field_type(c['engineType'],8)
     c['policyType']=vector_element(c['policyVectorType'])
@@ -153,7 +155,7 @@ def project_layouts(t, c, *, host_compile=True):
     for key in ['hostProgramVectorType','hostProgramType','hostIRType','hostExchangeVectorType','hostExchangeType','hostRunConfigType','hostTransitionType']:
         if key in c:types[key]=c[key]
     c['reviewedLayouts']={k:re.search(r'^typedef struct \{\n[^}]*\} '+re.escape(v)+';$',t,re.M).group() for k,v in types.items()}
-    assert len(c['bindings'])==62 and len(c['reviewedLayouts'])==51+host_compile
+    assert len(c['bindings'])==63 and len(c['reviewedLayouts'])==51+host_compile
     for key in ['lifecycleType','setupWorkType','preparationWorkType','cleanupWorkType','runtimeMetadataType','cleanupRuntimeType','inputWindowsType','storageBufferType']:
      c['reviewedLayouts'][key]=re.search(r'^typedef struct \{\n[^}]*\} '+re.escape(c[key])+';$',t,re.M).group()
     for key in ['compileWorkType','compileWorkVectorType','compileCandidateType','compileCandidateVectorType','compileProofType','compileProofVectorType','compileProofImageType','compileOutputProofType','compileOutputProofVectorType']:

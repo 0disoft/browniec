@@ -212,6 +212,15 @@ uint32_t bc_runtime_engine_drive_host(void *raw,uint32_t mode,uintptr_t quantum,
  bc_engine_output *owner=raw;
  return B41(&owner->f_3,mode,quantum,run,request,kind,(fy_byte_slice){data,length},transition,offset);
 }
+uint32_t bc_runtime_engine_seal_host(void *raw){
+ bc_engine_output *owner=raw;
+ uint32_t status=0;
+ owner->f_3=B63(owner->f_3,&owner->f_1.f_0,&owner->f_1.f_1,&status);
+ return status;
+}
+
+_Static_assert(offsetof(bc_host_exchange,f_0)==0 && offsetof(bc_host_exchange,f_1)==32 &&
+               sizeof(((bc_host_exchange *)0)->f_1)==32,"host Buffer slots");
 
 uintptr_t bc_runtime_engine_policy_slot_bytes(void){return sizeof(bc_engine_policy);}
 

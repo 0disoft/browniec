@@ -518,8 +518,8 @@ fn Result<usize,u8> deadline_order(){
     stopped(ref mut owner,late,2,deadline,9999984,0);
     stopped(ref mut owner,tie,1,deadline,9999984,0);
     stopped(ref mut owner,staged,2,deadline,9999972,12);
-    // Each of the eight reserved Exchange slots adds one eight-byte quota counter.
-    ledger(ref owner,0,8*(63776+8*8));
+    // The eight Exchange slots include the quota counter and the output Buffer.
+    ledger(ref owner,0,8*(63776+8*(8+40)));
 
     unsafe{bc_runtime_engine_test_set_clock(18446744073709551615)};
     unsafe{probe_rebase()};
@@ -1538,7 +1538,9 @@ fn Result<usize,u8> staged_output_terminal(){
     let usize cancel=id(engine::prepare_input_host(ref mut owner,p,ref run,ref bytes_in));
     let usize expires=id(engine::prepare_input_host(ref mut owner,p,ref run,ref bytes_in));
     let usize quota=id(engine::prepare_input_host(ref mut owner,p,ref short,ref bytes_in));
+    let usize other_bytes=instance_bytes(ref owner);
     let usize success=id(engine::prepare_input_host(ref mut owner,p,ref run,ref bytes_in));
+    let usize success_charge=instance_bytes(ref owner)-other_bytes;
     let usize start=1000;
     let usize deadline=start+10000000;
     let usize waiting_fuel=emitting_wait(ref mut owner,cancel);
@@ -1550,10 +1552,18 @@ fn Result<usize,u8> staged_output_terminal(){
     assert(prefix.kind==0 && prefix.remaining==waiting_fuel-12-fuel::output_emit(4097));
     assert(!engine::take_output(ref mut owner,success).is_ok);
     let usize before_seal=instance_bytes(ref owner);
+    let usize heap_before=unsafe{probe_live_bytes()};
+    let usize attempts=unsafe{probe_attempts()};
     let engine::Event done=event(engine::step_instance(ref mut owner,success,3));
     assert(done.kind==1 && done.value==42 && done.remaining==prefix.remaining-1-fuel::output_seal());
-    // A typed i32 request is 14 bytes, and its largest reply is 12 bytes.
-    assert(instance_bytes(ref owner)==before_seal-14-12);
+    // Just the 8194-byte output and its eight 72-byte publication slots survive.
+    let usize retained=8194+8*72;
+    let usize refunded=success_charge-retained;
+    assert(instance_bytes(ref owner)==before_seal-refunded);
+    // The request and reply allocations are already gone. Seal frees execution
+    // backing with zero additional SDK allocation attempts.
+    assert(unsafe{probe_live_bytes()}==heap_before-(refunded-14-12));
+    assert(unsafe{probe_attempts()}==attempts);
 
     assert(event(engine::step_instance(ref mut owner,quota,4096)).kind==0);
     assert(event(engine::step_instance(ref mut owner,quota,8)).kind==4);

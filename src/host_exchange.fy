@@ -10,6 +10,7 @@ import runtime_run_config as runs;
 import scalar_codec as scalar;
 import types as types;
 import host_wire as wire;
+import runtime_output as output;
 import std::bytes as bytes;
 import std::num as num;
 
@@ -31,6 +32,7 @@ pub struct Binding { u32[8] words; }
 struct Grants { bool[64] allowed; }
 pub resource Exchange {
     bytes::Buffer backing;
+    bytes::Buffer staging; ptr mut u8 staging_data;
     bytes::Buffer header; ptr mut u8 header_data;
     catalog::Catalog catalog; Binding digest; Grants grants; Limits limits;
     usize deadline; usize reply_owners_left;
@@ -43,19 +45,19 @@ pub resource Output {
 }
 // Pinned Windows x64 Buffer layout: four pointer-width cells. The compiler
 // cannot mutate/project owning resource fields. The leading Buffer holds the
-// waiting request, receiving reply prefix or committed reply. Metadata moves only, never payload.
+// wire envelope and the second owns guest output. Metadata moves only.
 @link_name("fy_std_buffer_reserve_v0")
 unsafe extern C fn u32 validate_buffer_raw(ptr mut void buffer,usize capacity);
 @link_name("fy_std_buffer_append_v0")
 unsafe extern C fn u32 append_buffer_raw(ptr mut void buffer,ptr u8 data,usize length);
-fn bytes::Buffer replace_buffer(ref mut Exchange e,bytes::Buffer prepared){
+fn bytes::Buffer replace_at(ref mut Exchange e,usize offset,bytes::Buffer prepared){
     var bytes::Buffer incoming=prepared;var bytes::Buffer old=bytes::empty();
     let ptr mut void from=unsafe { ref mut incoming as ptr mut void };
     let ptr mut void to=unsafe { ref mut old as ptr mut void };
     let ref mut u8[] source=unsafe { byte_slice::from_raw_parts_mut(ref mut incoming,from,32) };
-    let ref mut u8[] target=unsafe { byte_slice::from_raw_parts_mut(e,e as ptr mut void,32) };
     let ref mut u8[] removed=unsafe { byte_slice::from_raw_parts_mut(ref mut old,to,32) };
-    var usize i=0;while(i<32){removed[i]=target[i];target[i]=source[i];source[i]=0;i+=1;}
+    let ref mut u8[] target=unsafe {byte_slice::from_raw_parts_mut(e,e as ptr mut void,64)};
+    var usize i=0;while(i<32){removed[i]=target[offset+i];target[offset+i]=source[i];source[i]=0;i+=1;}
     // Explicit SDK companion calls make all raw metadata writes observable to
     // the pinned optimizer before whole-resource moves or automatic cleanup.
     // reserve(0) validates only: no allocation, growth, copy or guest Fuel.
@@ -63,6 +65,9 @@ fn bytes::Buffer replace_buffer(ref mut Exchange e,bytes::Buffer prepared){
     assert(bytes::reserve(ref mut incoming,0).is_ok);
     assert(bytes::reserve(ref mut old,0).is_ok);
     return old;
+}
+fn bytes::Buffer replace_buffer(ref mut Exchange e,bytes::Buffer prepared){
+    return replace_at(e,0,prepared);
 }
 fn usize read(ref u8[] data,usize at){
     var usize result=0;var usize i=8;
@@ -102,10 +107,10 @@ pub fn Result<Exchange,Error> create(catalog::Catalog c,ref bool[] allowed,Limit
     let u32[8] digest=switch(catalog::digest(ref c)){
         case .ok(v):{v}case .err(_):{return .err(.Allocation);}
     };
-    return create_sized(c,allowed,limits,run,fuel,deadline,80,digest);
+    return create_sized(c,allowed,limits,run,fuel,deadline,80,digest,bytes::empty());
 }
 fn Result<Exchange,Error> create_sized(catalog::Catalog c,ref bool[] allowed,Limits limits,
-    usize run,usize fuel,usize deadline,usize size,u32[8] digest){
+    usize run,usize fuel,usize deadline,usize size,u32[8] digest,bytes::Buffer output_buffer){
     var Grants grants=Grants{.allowed=[false;64]};var usize i=0;
     while(i<allowed.len){grants.allowed[i]=allowed[i];i+=1;}
     var bytes::Buffer header=switch(bytes::with_capacity(size)){
@@ -115,8 +120,11 @@ fn Result<Exchange,Error> create_sized(catalog::Catalog c,ref bool[] allowed,Lim
         case .ok(v):{v}case .err(_):{return .err(.Allocation);}
     };
     let ptr mut u8 address=unsafe { bytes::view_mut(ref mut header) as ptr mut u8 };
+    var bytes::Buffer staging=output_buffer;
+    let ptr mut u8 staging_data=unsafe{bytes::view_mut(ref mut staging) as ptr mut u8};
     var Exchange e=Exchange{.catalog=c,.digest=Binding{.words=digest},.grants=grants,.limits=limits,
-        .deadline=deadline,.reply_owners_left=0,.backing=bytes::empty(),.header=header,.header_data=address};
+        .deadline=deadline,.reply_owners_left=0,.backing=bytes::empty(),.staging=staging,.staging_data=staging_data,
+        .header=header,.header_data=address};
     save(ref mut e,Observation{.phase=0,.cause=0,.run=run,.request=0,.import_id=0,
         .calls=0,.requests=0,.replies=0,.adapter=0,.fuel=fuel,.terminal_at=0,.external_effects_unknown=false});
     return .ok(e);
@@ -430,31 +438,31 @@ fn void load_image(ref mut Exchange e,ref ir::Program p,usize arena_end,usize fr
     }
 }
 // A typed byte cell packs a header-relative offset and exact length.
-// The typed prefix records the reply arena limit independently of frames,
-// input bytes and output staging, all of which follow that arena.
+// The header contains the output cursors. The staged payload has its own owner.
 fn usize blob_base(){return 4224;}
 fn usize output_base(ref u8[] data){return if(wide(data)){read(data,4216)}else{0};}
 fn usize output_charge(ref programs::Program p,policy_limits::RunLimits limits){
     return if(programs::emits(p)){24+limits.output_bytes}else{0};
 }
 pub fn bool has_guest_output(ref Exchange e){return header(e)[81]==3 && output_base(header(e))!=0;}
-pub fn ref u8[] guest_output(ref Exchange e){
-    let ref u8[] data=header(e);
-    if(!has_guest_output(e)){return data[..0];}
-    let usize base=output_base(data);
-    return data[base+24..base+24+read(data,base)];
-}
-pub fn usize guest_emits(ref Exchange e){
+fn usize staging_limit(ref Exchange e){return bytes::view(ref e.staging).len;}
+fn usize envelope_capacity(ref Exchange e){return bytes::capacity(ref e.backing);}
+fn usize guest_emits(ref Exchange e){
     return if(has_guest_output(e)){read(header(e),output_base(header(e))+16)}else{0};
 }
-// These totals were derived from the admitted per-call envelope bounds.
-// A successful result still owns its image, catalog and output capacity,
-// but no request or reply backing can remain after the last installation.
-pub fn Result<usize,Error> sealed_envelope_refund(ref Exchange e){
-    if(!has_guest_output(e) || state(e).phase!=0 || bytes::capacity(ref e.backing)!=0){return .err(.State);}
-    let usize calls=e.limits.calls;
-    if(calls==0){return .ok(0);}
-    return .ok(e.limits.requests_total/calls+e.limits.replies_total/calls);
+// Only success can move the staged owner. The exchange can then be destroyed
+// without affecting the published view.
+pub fn Result<output::Published,Error> take_guest_output(ref mut Exchange e){
+    if(!has_guest_output(e) || state(e).phase!=0 || envelope_capacity(e)!=0){return .err(.State);}
+    let usize base=output_base(header(e));
+    let usize used=read(header(e),base);
+    if(used>staging_limit(e) || read(header(e),base+8)!=0){return .err(.State);}
+    let usize emits=guest_emits(e);
+    let usize fuel=state(e).fuel;
+    var bytes::Buffer backing=replace_at(e,32,bytes::empty());
+    assert(bytes::resize_zeroed(ref mut backing,used).is_ok);
+    write(scalar_header(e),4216,0);
+    return .ok(output::publish_owned(backing,emits,fuel));
 }
 fn i64 pack_blob(usize start,usize length){
     return switch(num::i64_from_usize(start*4294967296+length)){case .ok(v):{v}case .err(_):{assert(false);0}};
@@ -543,9 +551,16 @@ pub fn Result<Exchange,ScalarError> create_scalar_input(ref programs::Program p,
     let ref ir::Program code=programs::code(p);
     let usize end=if(typed){arena_end(code,envelope,limits)}else{scalar_header_size()};
     let usize size=end+frame_storage(code,limits.call_frames);
-    let usize charged_output=output_charge(p,limits);
+    let bool emits=programs::emits(p);
+    let bytes::Buffer staging=if(emits){
+        var bytes::Buffer reserved=switch(bytes::with_capacity(limits.output_bytes)){
+            case .ok(v):{v}case .err(_):{return .err(.Allocation);}
+        };
+        assert(bytes::resize_zeroed(ref mut reserved,limits.output_bytes).is_ok);
+        reserved
+    }else{bytes::empty()};
     var Exchange e=switch(create_sized(exact,ref allowed[..count],bounds,run_id,limits.fuel,deadline,
-        size+input.len+charged_output,digest)){
+        size+input.len+if(emits){24}else{0},digest,staging)){
         case .ok(v):{v}case .err(_):{return .err(.Allocation);}
     };
     load_image(ref mut e,code,end,limits.call_frames);
@@ -556,7 +571,7 @@ pub fn Result<Exchange,ScalarError> create_scalar_input(ref programs::Program p,
         while(i<input.len){image[size+i]=input[i];i+=1;}
         set_reg(image,code.register_starts[code.entry],pack_blob(size,input.len));
     }
-    if(charged_output!=0){write(scalar_header(ref mut e),4216,size+input.len);}
+    if(emits){write(scalar_header(ref mut e),4216,size+input.len);}
     return .ok(e);
 }
 // Reserve the exact maximum heap backing over this admitted scalar run.
@@ -840,7 +855,7 @@ fn Result<ScalarEvent,ScalarError> emit_guest(ref mut Exchange e,usize argument,
     let ref u8[] current=header(e);
     let usize base=output_base(current);
     if(base==0){return .err(.State);}
-    let usize limit=current.len-base-24;
+    let usize limit=staging_limit(e);
     let usize bits=blob_bits(reg(current,argument));
     let usize source=bits/4294967296;
     let usize length=bits%4294967296;
@@ -854,10 +869,16 @@ fn Result<ScalarEvent,ScalarError> emit_guest(ref mut Exchange e,usize argument,
     let usize count=if(left<*work){left}else{*work};
     *work-=if(count==0){1}else{count};
     let usize next=copied+count;
+    if(count!=0){
+        let ptr mut u8 address=e.staging_data;
+        let ref u8[] input=header(e);
+        // Staging and the input image are distinct allocations owned by e.
+        var usize staging_scope=limit;
+        let ref mut u8[] target=unsafe{byte_slice::from_raw_parts_mut(ref mut staging_scope,address,limit)};
+        var usize i=copied;while(i<next){target[used+i]=input[source+i];i+=1;}
+    }
     {
         let ref mut u8[] data=scalar_header(e);
-        let usize target=base+24+used;
-        var usize i=copied;while(i<next){data[target+i]=data[source+i];i+=1;}
         if(next==length){
             write(data,base,used+length);
             write(data,base+8,0);
@@ -891,7 +912,7 @@ pub fn Result<ScalarEvent,ScalarError> step_scalar_budget(ref mut Exchange e,usi
     };
     let usize output=output_base(data);
     if(output!=0 && data[5]==0){
-        let usize limit=data.len-output-24;
+        let usize limit=staging_limit(e);
         *work-=1;
         if(spend_guest(e,prices::output_prepare(limit),now).is_ok){scalar_header(e)[5]=1;}
         return .ok(scalar_event(e));

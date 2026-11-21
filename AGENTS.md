@@ -1,6 +1,7 @@
 - Latest runtime checkpoint (2026-11-21): [Host output seal](docs/engineering/host-exchange.md#termination-with-staged-guest-output)
-  refunds the completed request and reply reservation. Windows /Od and /O2
-  verify an exact 26-byte refund and preserve the sealed result and Fuel.
+  transfers the staged output and releases the execution image, catalog and
+  exchange slots. Windows /Od and /O2 verify exact retained bytes and no
+  allocation during seal.
 
 # Brownie C agent guidance
 

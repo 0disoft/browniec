@@ -108,6 +108,7 @@ pub resource Engine {
 @link_name("bc_runtime_engine_prepare_host") unsafe extern C fn u32 prepare_host_raw(ptr mut void owner,usize program,ptr void run,ptr u8 input,usize length,usize selected);
 @link_name("bc_runtime_engine_reply_host") unsafe extern C fn u32 reply_host_raw(ptr mut void owner,usize instance,usize run,usize request,u8 kind,ptr u8 data,usize length,usize total,usize offset);
 @link_name("bc_runtime_engine_drive_host") unsafe extern C fn u32 drive_host_raw(ptr mut void owner,u32 mode,usize argument,usize run,usize request,u8 kind,ptr u8 data,usize length,ptr mut void transition,usize offset);
+@link_name("bc_runtime_engine_seal_host") unsafe extern C fn u32 seal_host_raw(ptr mut void owner);
 @link_name("bc_runtime_engine_retain_host") unsafe extern C fn u32 retain_host_raw(ptr mut void owner,ptr mut void incoming,usize deadline);
 @link_name("bc_runtime_engine_bind") unsafe extern C fn u32 bind_raw(ptr mut void owner);
 @link_name("bc_runtime_engine_compile") unsafe extern C fn u32 compile_raw(ptr mut void owner,ptr mut void incoming,usize limit,usize deadline);
@@ -1046,21 +1047,11 @@ pub fn Result<Output,Error> take_output(ref mut Engine e,usize instance){
     let u32 s=unsafe{take_output_raw(e as ptr mut void,instance,ref mut outgoing as ptr mut void)};
     if(s!=0){return .err(error(s));}return .ok(pop_output(ref mut outgoing));
 }
-fn bool has_host_output(ref Output o){
-    return vec::len<host::Exchange>(ref o.host)==1 && host::has_guest_output(vec::at<host::Exchange>(ref o.host,0));
-}
 pub fn output_programs::Completion output_completion(ref Output o){
-    if(!has_host_output(o)){return output_programs::observe(ref o.run);}
-    let ref host::Exchange exchange=vec::at<host::Exchange>(ref o.host,0);
-    let host::ScalarEvent done=switch(host::observe_scalar(exchange)){
-        case .ok(v):{v}case .err(_):{assert(false);host::empty_scalar_event()}
-    };
-    return output_programs::Completion{.success=true,.value=done.value,.remaining=done.host.fuel,
-        .diagnostic=absent(),.output_bytes=host::guest_output(exchange).len,.emits=host::guest_emits(exchange),.cancelled=false};
+    return output_programs::observe(ref o.run);
 }
-pub fn bool output_available(ref Output o){return has_host_output(o) || output_programs::has_output(ref o.run);}
+pub fn bool output_available(ref Output o){return output_programs::has_output(ref o.run);}
 pub fn ref u8[] output_view(ref Output o){
-    if(has_host_output(o)){return host::guest_output(vec::at<host::Exchange>(ref o.host,0));}
     let ref u8[] data=output_programs::view(ref o.run);
     // Tie both the empty and owned cases to this exact retained resource.
     return unsafe {byte_slice::from_raw_parts(o,data as ptr u8,data.len)};
@@ -1081,10 +1072,7 @@ pub fn Result<ref u8[],Error> preview_output(ref Engine e,usize instance){
         case .ok(v):{v}case .err(_):{return .err(error(7));}
     };
     let ref Output output=vec::at<Output>(ref e.outputs,oi);
-    if(!item.output_owned){return .err(error(7));}
-    if(item.host_terminal.phase==3){
-        if(!has_host_output(output) || item.output_bytes==0){return .err(error(7));}
-    }else if(output_programs::heap_bytes(ref output.run)!=item.output_bytes){return .err(error(7));}
+    if(!item.output_owned || output_programs::heap_bytes(ref output.run)!=item.output_bytes){return .err(error(7));}
     let ref u8[] data=output_view(output);
     return .ok(unsafe{byte_slice::from_raw_parts(e,data as ptr u8,data.len)});
 }
@@ -2079,7 +2067,9 @@ fn u32 prepare_host_inner(ref mut Meta m,ref mut vec::Vec<Program> p,ref mut vec
     if(!host_program::allows(verified,ceiling,run) || limits.fuel>m.limits.fuel){return failed(m,5);}
     if(selected!=0 && !host_program::accepts_input(verified)){return failed(m,1);}
     if(input.len>limits.input_bytes || input.len>input_bytes::hard_limit()){return failed(m,8);}
-    let usize exchange_bytes=host::scalar_storage_bound(verified,limits)+input.len;
+    let bool emits=host_program::emits(verified);
+    let usize publication=if(emits){output_programs::publication_slot_bytes()}else{0};
+    let usize exchange_bytes=host::scalar_storage_bound(verified,limits)+input.len+publication;
     let usize slots=control_layout::capacity(1);
     let usize transient=if(selected==0){0}else{selected-1};
     if(transient>limits.memory_bytes || exchange_bytes>limits.memory_bytes-transient ||
@@ -2105,10 +2095,15 @@ fn u32 prepare_host_inner(ref mut Meta m,ref mut vec::Vec<Program> p,ref mut vec
     };
     var vec::Vec<host::Exchange> saved=vec::empty<host::Exchange>();
     if(!vec::push<host::Exchange>(ref mut saved,exchange).is_ok){return failed(m,6);}
-    assert(vec::push<Output>(outputs,Output{.instance=id,.run=output_programs::vacant(limits.fuel),
+    let output_programs::Execution slot=if(emits){
+        switch(output_programs::pending_slot(limits.fuel)){
+            case .ok(value):{value}case .err(_):{return failed(m,6);}
+        }
+    }else{output_programs::vacant(limits.fuel)};
+    assert(vec::push<Output>(outputs,Output{.instance=id,.run=slot,
         .pending=vec::empty<machines::Machine>(),.host=saved}).is_ok);
     assert(vec::push<Instance>(v,Instance{.id=id,.program=code,.fuel=limits.fuel,.phase=4,.output_owned=true,.event=ready(limits.fuel),
-        .output_limit=0,.output_allowed=host_program::emits(verified),.input_bound=false,.input_bytes=0,.output_bytes=charge,.host_terminal=host::empty_scalar_event(),.deadline=0}).is_ok);
+        .output_limit=0,.output_allowed=emits,.input_bound=false,.input_bytes=0,.output_bytes=charge,.host_terminal=host::empty_scalar_event(),.deadline=0}).is_ok);
     commit_payload(m,ref reservation);
     let ref mut Program target=vec::at_mut<Program>(p,pi);target.pins+=1;
     advance(m);return success(m,id);
@@ -2150,6 +2145,34 @@ fn u32 contain_execution_fault(ref mut Meta m,ref vec::Vec<Program> programs,ref
     poison_children(m,programs,instances,outputs);
     return failed(m,14);
 }
+// Transfer the staged Buffer into the slot reserved at admission.
+// The consumed exchange vector drops its VM image, catalog and slot backing.
+fn vec::Vec<host::Exchange> seal_host_owner(vec::Vec<host::Exchange> owners,
+    ref mut output_programs::Completion completed,ref mut vec::Vec<pending_output::Published> published,
+    ref mut u32 status){
+    var vec::Vec<host::Exchange> running=owners;
+    *status=14;
+    if(vec::len<host::Exchange>(ref running)!=1 || vec::len<pending_output::Published>(published)!=0 ||
+        vec::capacity<pending_output::Published>(published)==0){return running;}
+    let u32 outcome=publish_host_result(vec::at_mut<host::Exchange>(ref mut running,0),completed,published);
+    *status=outcome;
+    if(outcome!=0){return running;}
+    return vec::empty<host::Exchange>();
+}
+fn u32 publish_host_result(ref mut host::Exchange exchange,ref mut output_programs::Completion completed,
+    ref mut vec::Vec<pending_output::Published> published){
+    let host::ScalarEvent done=switch(host::observe_scalar(exchange)){
+        case .ok(value):{value}case .err(_):{return 14;}
+    };
+    let pending_output::Published result=switch(host::take_guest_output(exchange)){
+        case .ok(value):{value}case .err(_):{return 14;}
+    };
+    let pending_output::Observation final=pending_output::published_observation(ref result);
+    assert(vec::push<pending_output::Published>(published,result).is_ok);
+    *completed=output_programs::Completion{.success=true,.value=done.value,.remaining=done.host.fuel,
+        .diagnostic=absent(),.output_bytes=final.length,.emits=final.emits,.cancelled=false};
+    return 0;
+}
 fn u32 drive_host(ref mut Meta m,ref vec::Vec<Program> p,ref mut vec::Vec<Instance> v,ref mut vec::Vec<Output> outputs,
     ref mut vec::Vec<Output> scratch,usize ii,u32 mode,usize quantum,usize run,usize request,u8 kind,ref u8[] payload,usize offset){
     let usize id=vec::at<Instance>(v,ii).id;
@@ -2163,26 +2186,23 @@ fn u32 drive_host(ref mut Meta m,ref vec::Vec<Program> p,ref mut vec::Vec<Instan
     if(status!=0){return failed(m,status);}
     if(mode==3){return success(m,request);}
     let Instance before=*vec::at<Instance>(v,ii);
-    let usize refund=if(next.scalar.phase==3 && before.output_allowed){
+    let usize retained=if(next.scalar.phase==3 && before.output_allowed){
+        {let ref mut Output saved=vec::at_mut<Output>(outputs,oi);
+         status=unsafe{seal_host_raw(saved as ptr mut void)};}
+        if(status!=0){return contain_execution_fault(m,p,v,outputs);}
         let ref Output saved=vec::at<Output>(outputs,oi);
-        if(!has_host_output(saved)){return contain_execution_fault(m,p,v,outputs);}
-        switch(host::sealed_envelope_refund(vec::at<host::Exchange>(ref saved.host,0))){
-            case .ok(bytes):{bytes}
-            case .err(_):{return contain_execution_fault(m,p,v,outputs);}
-        }
+        output_programs::heap_bytes(ref saved.run)
     }else{0};
-    if(refund>before.output_bytes){return contain_execution_fault(m,p,v,outputs);}
+    if(retained>before.output_bytes){return contain_execution_fault(m,p,v,outputs);}
     let ref mut Instance target=vec::at_mut<Instance>(v,ii);
     target.event=next.event;
     if(next.scalar.phase==3 || next.scalar.phase==4){
         if(next.scalar.phase!=3 || !target.output_allowed){
             remove_output(outputs,scratch,id);
-            release_payload(m,target.output_bytes);
-            target.output_bytes=0;target.output_owned=false;
-        }else{
-            release_payload(m,refund);
-            target.output_bytes-=refund;
+            target.output_owned=false;
         }
+        release_payload(m,before.output_bytes-retained);
+        target.output_bytes=retained;
         target.host_terminal=next.scalar;
         target.phase=2;
     }
@@ -2252,15 +2272,9 @@ fn Result<OutputTake,u32> plan_output_take(ref mut Meta m,ref vec::Vec<Instance>
     if(located.is_ok!=child.output_owned || (!child.output_owned && child.output_bytes!=0)){return .err(14);}
     let usize oi=located?;
     let ref Output owner=vec::at<Output>(outputs,oi);
-    let usize hosts=vec::len<host::Exchange>(ref owner.host);
-    if(vec::len<machines::Machine>(ref owner.pending)!=0 || hosts>1){return .err(14);}
-    if(child.host_terminal.phase==3){
-        // Host output retains the Exchange without the unused envelope reservation.
-        if(hosts!=1 || child.output_bytes==0 || !has_host_output(owner)){return .err(14);}
-    }else{
-        if(hosts!=0 || output_programs::heap_bytes(ref owner.run)!=child.output_bytes){return .err(14);}
-        if(output_programs::observe(ref owner.run).cancelled){return .err(2);}
-    }
+    if(vec::len<machines::Machine>(ref owner.pending)!=0 || vec::len<host::Exchange>(ref owner.host)!=0 ||
+        output_programs::heap_bytes(ref owner.run)!=child.output_bytes){return .err(14);}
+    if(output_programs::observe(ref owner.run).cancelled){return .err(2);}
     if(child.output_bytes>18446744073709551615-child.input_bytes){return .err(14);}
     let usize retained=child.input_bytes+child.output_bytes;
     if(retained>m.heap.instance_limit || !payload_ledger_intact(m)){return .err(14);}
@@ -2999,6 +3013,10 @@ fn void retain_host_bindings(ref mut Meta m,ref mut vec::Vec<Program> p,
     var vec::Vec<host::Exchange> owners=vec::empty<host::Exchange>();
     var HostTransition next=HostTransition{.scalar=host::empty_scalar_event(),.event=pending()};
     unsafe{binding_raw(41)};discard drive_host_owner(ref mut owners,0,0,0,0,0,b"",ref mut next,0);
+    var output_programs::Completion completed=output_programs::pending_completion(0);
+    var vec::Vec<pending_output::Published> published=vec::empty<pending_output::Published>();
+    var u32 status=0;
+    unsafe{binding_raw(63)};discard seal_host_owner(owners,ref mut completed,ref mut published,ref mut status);
 }
 
 // Low-level owning VM helpers; Engine-owned stepping above pins its own inputs.

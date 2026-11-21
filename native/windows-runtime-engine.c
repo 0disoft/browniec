@@ -96,6 +96,8 @@ typedef __typeof__(((bc_engine *)0)->f_6) bc_engine_outputs;
 #define B61 fy_private_fn_6d6f64756c655f6f75747075745f70726f6772616d3a3a616476616e63655f70726f6f665f696e6e6572 /* module_output_program::advance_proof_inner */
 #define B62 fy_private_fn_6d6f64756c655f6f75747075745f70726f6772616d3a3a66696e6973685f70726f6f665f696e6e6572 /* module_output_program::finish_proof_inner */
 
+#define B63 fy_private_fn_72756e74696d655f656e67696e653a3a7365616c5f686f73745f6f776e6572 /* runtime_engine::seal_host_owner */
+
 #include "native/runtime-engine/bridge.inc"
 
 /* Existing Engine witnesses are retained only by the evidence harness. */

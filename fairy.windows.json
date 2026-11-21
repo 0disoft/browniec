@@ -68,6 +68,7 @@
     "output_proof_work::seed_pending",
     "module_output_program::advance_proof_inner",
     "module_output_program::finish_proof_inner",
+    "runtime_engine::seal_host_owner",
     "windows_engine_bindings::incoming"
   ]
 }

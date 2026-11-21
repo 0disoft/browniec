@@ -553,14 +553,15 @@ The fixed-clock Engine test covers cancellation while waiting for a host reply,
 expiry on the last chunk of a second emit, and a one-byte-short output quota.
 Each failure leaves the output unavailable. The exact-fit peer publishes 8194
 bytes once, with two emits and unchanged terminal Fuel and result after the
-deadline. Sealing a successful result returns the reservation for the request
-and reply envelopes after confirming their backing is empty. The fixture
-returns 26 bytes of quota at seal, 14 for the request and 12 for the reply. The execution
-image, catalog and staged output remain charged while the Instance owns them.
-Taking the output clears the remaining charge, and the detached result
-outlives the Engine. Both Windows profiles passed with zero live SDK allocations.
-The refund check passed in both profiles in
-`build/runtime-engine/20261121T140335564939Z/receipt.json`.
+deadline. Preparation reserves a separate output buffer and publication slot.
+Sealing moves the buffer into that slot and releases the execution image,
+catalog clone and exchange slots. The Engine returns their charge and the
+unused request/reply reservation together. The fixture retains only 8,194
+output bytes plus 576 bytes for the publication slots. The SDK probe verifies
+that seal drops the execution allocations and makes zero allocation attempts.
+Taking the output clears the remaining Engine charge, and the detached result
+outlives the Engine. Both Windows profiles passed with zero live SDK allocations
+at exit. Local receipt: `build/runtime-engine/20261121T142527948158Z/receipt.json`.
 
 ## Engine scalar run deadline
 

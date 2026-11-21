@@ -128,6 +128,12 @@ pub fn ref u8[] view(ref Published output){return bytes::view(ref output.backing
 // Actual owned SDK bytes, excluding the inline resource and allocator overhead.
 // A reserved backing remains owned even when the logical output is empty.
 pub fn usize published_heap_bytes(ref Published output){return bytes::capacity(ref output.backing);}
+// The trusted caller has already metered, initialized and sealed these bytes.
+pub fn Published publish_owned(bytes::Buffer backing,usize emits,usize fuel){
+    let usize length=bytes::view(ref backing).len;
+    return Published{.backing=backing,
+        .final=Observation{.phase=1,.length=length,.emits=emits,.fuel=fuel,.charged=0}};
+}
 pub fn usize transaction_heap_bytes(ref Transaction t){
     return bytes::capacity(ref t.header)+bytes::capacity(ref t.backing);
 }
