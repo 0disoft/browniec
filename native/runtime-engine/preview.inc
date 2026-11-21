@@ -1,11 +1,18 @@
 /* Included after the isolated Fairy transport and reviewed binding declarations. */
 #define BC_BUILD_PREVIEW_DLL
+#define BC_ABI_BOOTSTRAP_INTERNAL
 #include "brownie_preview.h"
+#include "abi_bootstrap_layout.h"
 #include "abi_registry.h"
+#include <string.h>
+
+#pragma comment(linker, "/EXPORT:bc_engine_create")
+#pragma comment(linker, "/EXPORT:bc_engine_destroy")
 
 typedef struct preview_engine {
     bc_engine engine;
     size_t children;
+    uint32_t revision;
 } preview_engine;
 
 typedef struct preview_child {
@@ -40,17 +47,16 @@ static void remove_preview(const bc_abi_registry_admission *admission){
     if(bc_abi_registry_remove(admission,&removed)!=BC_OK || removed!=admission->object){preview_invariant();}
 }
 
-uint32_t BC_CALL bc_preview_engine_create(uint32_t revision,bc_handle *out){
-    if(revision!=BC_PREVIEW_REVISION){return BC_ABI_MISMATCH;}
-    if(!out){return BC_BAD_ARGUMENT;}
+static uint32_t create_engine(uint32_t revision,bc_slice policy,bc_handle *out){
     preview_engine *owner=HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(*owner));
     if(!owner){return BC_ALLOCATION_ERROR;}
-    __typeof__(P1()) created=P1();
+    __typeof__(P1()) created=revision==BC_ABI_REVISION?P9(policy.data,policy.len):P1();
     if(created.tag!=FY_RESULT_OK){
         HeapFree(GetProcessHeap(),0,owner);
         return preview_status(created.p_1.f_0);
     }
     owner->engine=created.p_0;
+    owner->revision=revision;
     bc_handle handle=0;
     uint32_t status=bc_abi_registry_create_engine((uintptr_t)owner,&handle);
     if(status!=BC_OK){
@@ -60,6 +66,46 @@ uint32_t BC_CALL bc_preview_engine_create(uint32_t revision,bc_handle *out){
     return preview_status(status);
 }
 
+uint32_t BC_CALL bc_preview_engine_create(uint32_t revision,bc_handle *out){
+    if(revision!=BC_PREVIEW_REVISION){return BC_ABI_MISMATCH;}
+    if(!out){return BC_BAD_ARGUMENT;}
+    return create_engine(revision,(bc_slice){0},out);
+}
+
+uint32_t BC_CALL bc_get_abi_info_v2(uint32_t revision,uint32_t capacity,bc_abi_info *out){
+    uint32_t status=P10(revision,capacity,out!=NULL);
+    if(status!=BC_OK){return status;}
+    *out=(bc_abi_info){sizeof(bc_abi_info),BC_ABI_REVISION,64,sizeof(bc_diagnostic),
+                      sizeof(bc_event),sizeof(bc_entry_info),sizeof(bc_source),sizeof(bc_slice)};
+    return BC_OK;
+}
+
+static uint32_t engine_diagnostic(bc_diagnostic *out,uint32_t status){
+    const char *message="";
+    switch(status){
+    case BC_OK: break;
+    case BC_POLICY_ERROR: message="Invalid Engine policy";break;
+    case BC_RESOURCE_LIMIT: message="Engine policy exceeds a resource limit";break;
+    case BC_ALLOCATION_ERROR: message="Engine allocation failed";break;
+    case BC_BAD_ARGUMENT: message="Invalid Engine creation arguments";break;
+    default: message="Engine creation failed";break;
+    }
+    bc_diagnostic result={.struct_size=sizeof(result),.code=status,.source_index=UINT32_MAX};
+    memcpy(result.message,message,strlen(message)+1);
+    *out=result;
+    return status;
+}
+
+uint32_t BC_CALL bc_engine_create(uint32_t revision,bc_slice policy,bc_handle *out,bc_diagnostic *diagnostic){
+    if(out){*out=0;}
+    if(revision!=BC_ABI_REVISION){return BC_ABI_MISMATCH;}
+    if(!diagnostic||diagnostic->struct_size!=sizeof(*diagnostic)){return BC_BAD_ARGUMENT;}
+    if(!out||(!policy.data&&policy.len)){return engine_diagnostic(diagnostic,BC_BAD_ARGUMENT);}
+    if(!policy.len){return engine_diagnostic(diagnostic,BC_POLICY_ERROR);}
+    if(policy.len>65536){return engine_diagnostic(diagnostic,BC_RESOURCE_LIMIT);}
+    return engine_diagnostic(diagnostic,create_engine(revision,policy,out));
+}
+
 uint32_t BC_CALL bc_preview_compile(bc_handle engine,bc_slice source,bc_handle *out){
     if(!out||!source.data||!source.len){return BC_BAD_ARGUMENT;}
     if(source.len>4096){return BC_RESOURCE_LIMIT;}
@@ -67,6 +113,7 @@ uint32_t BC_CALL bc_preview_compile(bc_handle engine,bc_slice source,bc_handle *
     uint32_t status=bc_abi_registry_enter(engine,ENGINE_HANDLE,engine,&admission);
     if(status!=BC_OK){return status;}
     preview_engine *owner=(preview_engine *)(uintptr_t)admission.object;
+    if(owner->revision!=BC_PREVIEW_REVISION){leave_preview(&admission);return BC_INVALID_HANDLE;}
     preview_child *program=HeapAlloc(GetProcessHeap(),0,sizeof(*program));
     if(!program){leave_preview(&admission);return BC_ALLOCATION_ERROR;}
     __typeof__(P2(&owner->engine,source.data,source.len)) compiled=P2(&owner->engine,source.data,source.len);
@@ -165,14 +212,21 @@ static uint32_t release_child(bc_handle child,bc_handle engine,uint32_t kind){
 uint32_t BC_CALL bc_preview_instance_destroy(bc_handle instance){return release_child(instance,0,INSTANCE_HANDLE);}
 uint32_t BC_CALL bc_preview_program_release(bc_handle engine,bc_handle program){return release_child(program,engine,PROGRAM_HANDLE);}
 
-uint32_t BC_CALL bc_preview_engine_destroy(bc_handle engine){
+static uint32_t destroy_engine(bc_handle engine,uint32_t revision){
     bc_abi_registry_admission admission;
     uint32_t status=bc_abi_registry_enter(engine,ENGINE_HANDLE,engine,&admission);
     if(status!=BC_OK){return status;}
     preview_engine *owner=(preview_engine *)(uintptr_t)admission.object;
+    if(owner->revision!=revision){leave_preview(&admission);return BC_INVALID_HANDLE;}
     if(owner->children){leave_preview(&admission);return BC_BUSY;}
     __typeof__(P8(&owner->engine)) dropped=P8(&owner->engine);
     if(dropped.tag==FY_RESULT_OK){remove_preview(&admission);HeapFree(GetProcessHeap(),0,owner);}
     else{status=dropped.p_1.f_0;leave_preview(&admission);}
     return preview_status(status);
+}
+
+uint32_t BC_CALL bc_preview_engine_destroy(bc_handle engine){return destroy_engine(engine,BC_PREVIEW_REVISION);}
+
+uint32_t BC_CALL bc_engine_destroy(bc_handle engine){
+    return destroy_engine(engine,BC_ABI_REVISION);
 }

@@ -60,6 +60,81 @@ static void independent_engine_threads(void){
     assert(CloseHandle(start));
 }
 
+static void expect_diagnostic(const bc_diagnostic *diagnostic,uint32_t code){
+    assert(diagnostic->struct_size==sizeof(*diagnostic));
+    assert(diagnostic->code==code && diagnostic->source_index==UINT32_MAX);
+    assert(diagnostic->byte_start==0 && diagnostic->byte_end==0 && diagnostic->flags==0);
+    assert(memchr(diagnostic->message,0,sizeof(diagnostic->message)));
+    assert((diagnostic->message[0]==0)==(code==BC_OK));
+}
+
+static DWORD WINAPI foreign_engine_destroy(void *arg){
+    return bc_engine_destroy(*(const bc_handle *)arg);
+}
+
+static void revision_two_engines(void){
+    bc_abi_info abi={0};
+    assert(bc_get_abi_info_v2(1,sizeof(abi),&abi)==BC_ABI_MISMATCH && abi.struct_size==0);
+    assert(bc_get_abi_info_v2(2,sizeof(abi)-1,&abi)==BC_ABI_MISMATCH && abi.struct_size==0);
+    assert(bc_get_abi_info_v2(2,sizeof(abi),&abi)==BC_OK);
+    assert(abi.abi_revision==2 && abi.struct_size==sizeof(abi) && abi.pointer_bits==64);
+    assert(abi.diagnostic_size==sizeof(bc_diagnostic) && abi.event_size==sizeof(bc_event));
+    assert(abi.entry_info_size==sizeof(bc_entry_info) && abi.source_size==sizeof(bc_source));
+    assert(abi.slice_size==sizeof(bc_slice));
+
+    bc_handle handle=UINT64_MAX;
+    bc_diagnostic diagnostic={.struct_size=1,.code=UINT32_MAX};
+    assert(bc_engine_create(1,(bc_slice){0},&handle,&diagnostic)==BC_ABI_MISMATCH);
+    assert(handle==0 && diagnostic.code==UINT32_MAX);
+    handle=UINT64_MAX;
+    assert(bc_engine_create(2,(bc_slice){0},&handle,&diagnostic)==BC_BAD_ARGUMENT);
+    assert(handle==0 && diagnostic.struct_size==1 && diagnostic.code==UINT32_MAX);
+    handle=UINT64_MAX;
+    assert(bc_engine_create(2,(bc_slice){0},&handle,NULL)==BC_BAD_ARGUMENT && handle==0);
+    diagnostic.struct_size=sizeof(diagnostic);
+    assert(bc_engine_create(2,(bc_slice){NULL,1},&handle,&diagnostic)==BC_BAD_ARGUMENT);
+    expect_diagnostic(&diagnostic,BC_BAD_ARGUMENT);
+    const uint8_t malformed[]="{\"schema\":\"brownie.policy/0.3\",\"schema\":\"brownie.policy/0.3\"}";
+    assert(bc_engine_create(2,(bc_slice){malformed,sizeof(malformed)-1},&handle,&diagnostic)==BC_POLICY_ERROR);
+    assert(handle==0);
+    expect_diagnostic(&diagnostic,BC_POLICY_ERROR);
+
+    static uint8_t policy[65537];
+    FILE *file=NULL;
+    assert(fopen_s(&file,"policy.json","rb")==0);
+    size_t length=fread(policy,1,sizeof(policy)-1,file);
+    assert(length>0 && feof(file) && fclose(file)==0);
+    uint8_t *limit=(uint8_t *)strstr((const char *)policy,"\"control_bytes\": 1048576");
+    assert(limit);
+    limit+=sizeof("\"control_bytes\": ")-1;
+    memcpy(limit,"      1",7);
+    assert(bc_engine_create(2,(bc_slice){policy,length},&handle,&diagnostic)==BC_RESOURCE_LIMIT);
+    assert(handle==0);
+    expect_diagnostic(&diagnostic,BC_RESOURCE_LIMIT);
+    memcpy(limit,"1048576",7);
+    memset(policy+length,' ',sizeof(policy)-length);
+    assert(bc_engine_create(2,(bc_slice){policy,sizeof(policy)},&handle,&diagnostic)==BC_RESOURCE_LIMIT);
+    assert(handle==0);
+    assert(bc_engine_create(2,(bc_slice){policy,sizeof(policy)-1},&handle,&diagnostic)==BC_OK);
+    assert(handle!=0);
+    expect_diagnostic(&diagnostic,BC_OK);
+    memset(policy,0,sizeof(policy));
+    HANDLE thread=CreateThread(NULL,0,foreign_engine_destroy,&handle,0,NULL);
+    DWORD status=0;
+    assert(thread && WaitForSingleObject(thread,5000)==WAIT_OBJECT_0);
+    assert(GetExitCodeThread(thread,&status) && status==BC_WRONG_THREAD && CloseHandle(thread));
+    bc_handle program=UINT64_MAX;
+    assert(bc_preview_compile(handle,(bc_slice){malformed,sizeof(malformed)-1},&program)==BC_INVALID_HANDLE);
+    assert(program==UINT64_MAX);
+    assert(bc_preview_engine_destroy(handle)==BC_INVALID_HANDLE);
+    assert(bc_engine_destroy(handle)==BC_OK);
+    assert(bc_engine_destroy(handle)==BC_INVALID_HANDLE);
+
+    assert(bc_preview_engine_create(BC_PREVIEW_REVISION,&handle)==BC_OK);
+    assert(bc_engine_destroy(handle)==BC_INVALID_HANDLE);
+    assert(bc_preview_engine_destroy(handle)==BC_OK);
+}
+
 int main(void){
     uint8_t text[]="module main; fn i32 inc(i32 n){return n+1;} "
         "pub fn i32 main(){var i32 n=70;while(n<77){n=inc(n);}return n;}";
@@ -110,7 +185,9 @@ int main(void){
     assert(bc_preview_engine_destroy(engine)==BC_OK);
     assert(bc_preview_engine_destroy(engine)==BC_INVALID_HANDLE);
     independent_engine_threads();
+    revision_two_engines();
     printf("PASS: quanta 1/64 return 77 and consume %" PRIu64 " fuel; cancellation and ownership verified\n",a.fuel_used);
     puts("PASS: four owner threads independently compiled, stepped, and destroyed their Engines without retries");
+    puts("PASS: revision-2 query, Engine policy admission, diagnostic sizing, quotas and stale handles");
     return 0;
 }

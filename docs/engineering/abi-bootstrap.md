@@ -57,11 +57,10 @@ contents and writes exactly 32 bytes, including when capacity is larger.
 Successful native callers supply valid writable storage; arbitrary invalid
 pointers are not made safe by this ABI.
 
-The public header preserves the revision-2 declarations. Only the query is
-implemented. Internal shim decoration exports that definition alone, avoiding
-exports of undefined planned functions. The host dynamically resolves the actual
-unmangled symbol and confirms all ten planned APIs are absent; there are no
-engine-success stubs or availability promotion.
+The public header preserves the revision-2 declarations. This bootstrap DLL
+exports the query alone. Its host resolves the unmangled symbol and verifies
+the singleton export. The separate [embedding DLL](embed-preview.md#revision-2-engine-lifecycle)
+exports the query and the policy-configured Engine lifecycle.
 
 ## Native evidence
 

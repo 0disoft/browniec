@@ -53,3 +53,26 @@ On Windows x64, the development and `/O2` hosts both returned 77 and consumed
 2,753,628 Fuel with either quantum. All four owner threads also completed in
 both profiles. The previous DLL rejected creation in the concurrency check.
 Both builds used the default MSVC stacks.
+
+## Revision-2 Engine lifecycle
+
+The same DLL exports `bc_get_abi_info_v2`, `bc_engine_create`, and
+`bc_engine_destroy` from [the revision-2 header](../../include/brownie.h).
+The query validates revision and capacity before touching its output.
+`bc_engine_create` takes an explicit `brownie.policy/0.3` JSON document of at
+most 65,536 bytes. The Fairy policy parser validates it and transfers the
+parsed policy into the real Engine. The caller may reuse the input buffer
+when the call returns. Set the diagnostic's `struct_size` to
+`sizeof(bc_diagnostic)`. Creation zeros the output handle at entry and
+publishes a handle only after registration. Malformed policies return
+`BC_POLICY_ERROR`. The size ceiling and an insufficient Engine control budget
+return `BC_RESOURCE_LIMIT`.
+
+Creation diagnostics have no source index or byte span. A successful
+diagnostic has code zero and an empty message. A revision mismatch leaves
+the diagnostic untouched. An invalid diagnostic size leaves its fields
+untouched. Destroy a revision-2 Engine on its creating thread with
+`bc_engine_destroy`. Scalar preview calls reject these Engine handles.
+
+Revision-2 Program and Instance calls remain open. The scalar preview
+continues to provide the executable rule path through its own API.

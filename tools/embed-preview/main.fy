@@ -1,5 +1,6 @@
 module main;
 
+import abi_bootstrap as abi;
 import module_entry as entries;
 import module_index as modules;
 import runtime_engine as engine;
@@ -8,6 +9,7 @@ import source_error as diagnostics;
 import errors as errors;
 import static_image as images;
 import fuel as fuel;
+import runtime_policy as policies;
 
 unsafe extern C fn void bc_embed_binding(u32 id);
 unsafe extern C fn ptr u8 bc_embed_witness_source();
@@ -24,6 +26,22 @@ fn engine::Error binding_failure(modules::Error error){
 
 fn Result<engine::Engine,engine::Error> create(){
     return engine::create(engine::Limits{.programs=8,.instances=16,.fuel=fuel::cli_limit()});
+}
+
+fn Result<engine::Engine,engine::Error> create_configured(ptr u8 data,usize length){
+    let usize lifetime=length;
+    let ref u8[] source=unsafe{byte_slice::from_raw_parts(ref lifetime,data,length)};
+    let policies::Policy policy=switch(policies::parse(source)){
+        case .ok(v):{v}
+        case .err(e):{
+            return .err(failed(switch(e.kind){
+                case .Allocation:{6}case .Limit:{8}
+                case .Json:{5}case .Unknown:{5}case .Duplicate:{5}case .Missing:{5}
+                case .Value:{5}case .Relation:{5}case .Authority:{5}case .Bounds:{5}
+            }));
+        }
+    };
+    return engine::create_with_policy(policy);
 }
 
 fn Result<entries::Entry,engine::Error> entry(ref u8[] source){
@@ -86,5 +104,7 @@ fn i32 main(){
     unsafe{bc_embed_binding(6)};discard engine::destroy_instance(ref mut owner,1);
     unsafe{bc_embed_binding(7)};discard engine::release_program(ref mut owner,1);
     unsafe{bc_embed_binding(8)};discard engine::destroy(ref mut owner);
+    unsafe{bc_embed_binding(9)};discard create_configured(source,1);
+    unsafe{bc_embed_binding(10)};discard abi::validate(2,32,true);
     return 0;
 }

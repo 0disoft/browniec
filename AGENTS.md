@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-21): [Concurrent Windows embedding Engines](docs/engineering/embed-preview.md)
-  use per-Engine admissions. Four owner threads compiled, stepped, and tore
-  down independent Engines without retries in Windows /Od and /O2.
+- Latest runtime checkpoint (2026-11-21): [Revision-2 Engine lifecycle](docs/engineering/embed-preview.md#revision-2-engine-lifecycle)
+  exports the ABI query and configured creation/destruction. Windows /Od and
+  /O2 verified policy admission, resource limits, diagnostics and ownership.
 
 # Brownie C agent guidance
 
