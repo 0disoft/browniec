@@ -451,6 +451,29 @@ allocations. Local receipt:
 The locked /O2 CLI returned 77 and passed its contract suite, including the
 Windows process adapter.
 
+## Resumable ordinary indexed signatures
+
+Once source preparation and any required literal collection complete, each
+Engine call advances the indexed signature cursor under the existing
+4,096-unit metadata allowance. Compile remains Prepared until body lowering
+finishes. The exact selected Entry and source context stay pinned. The
+signature cursor lives in the charged candidate backing and adds no fixed
+Engine control charge. Cancellation or expiry discards the unpublished
+candidate and source; there is no Program ID before final admission.
+
+Body lowering consumes the completed signature table. The pending reference
+route binds parameters, results and inferred origins from that same pass.
+The synchronous routes keep their existing deadline and admission sequence.
+Body lowering, origin inference and independent verification still drain
+inside their respective steps.
+
+Windows development and /O2 verified monotonic per-call batch counts on scalar
+and literal-bearing source, exact-deadline expiry before signature completion,
+candidate and source refunds, and execution returning 77 after admission.
+Both profiles ended with zero live SDK allocations. Local receipt:
+`build/runtime-engine/20261121T045048395849Z/receipt.json`.
+The locked /O2 CLI returned 77 in the quick start.
+
 ## Executed verification and remaining work
 
 [Windows evidence](../evidence/runtime-engine-compile-memory-windows-20261107.json)

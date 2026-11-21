@@ -1202,12 +1202,13 @@ fn u32 stop_compile(ref mut Meta m,ref mut CompileWork job,ref mut vec::Vec<entr
     job.failure=failure;
     return 0;
 }
-fn u32 allocate_compile_candidate(ref mut Meta m,ref mut CompileWork job,ref mut vec::Vec<programs::Lowered> candidate){
+fn u32 allocate_compile_candidate(ref mut Meta m,ref mut CompileWork job,ref entries::Entry entry,
+    ref mut vec::Vec<programs::Lowered> candidate){
     let usize width=unsafe{compile_candidate_width_raw()};
     if(width==0 || width>18446744073709551615/8){return 7;}
     let usize bytes=width*8;
     if(!memory::prepare_compile(ref mut m.programs,bytes).is_ok){return 8;}
-    if(!programs::start_lowered(candidate).is_ok){return 6;}
+    if(!programs::start_lowered(candidate,entries::selected(entry),job.source.syntax.result).is_ok){return 6;}
     assert(vec::capacity<programs::Lowered>(candidate)==8);
     assert(memory::hold_compile_candidate(ref mut m.programs,bytes).is_ok);
     job.source_bytes+=bytes;
@@ -1221,24 +1222,30 @@ fn u32 advance_compile_literals_inner(ref mut Meta m,ref entries::Entry selected
 }
 fn u32 lower_pending_compile(ref mut Meta m,ref mut CompileWork job,ref mut vec::Vec<entries::Entry> selected,
     ref mut vec::Vec<programs::Lowered> candidate){
+    let ref entries::Entry entry=vec::at<entries::Entry>(selected,0);
     if(vec::len<programs::Lowered>(candidate)==0){
-        let u32 status=allocate_compile_candidate(m,job,candidate);
+        let u32 status=allocate_compile_candidate(m,job,entry,candidate);
         if(status!=0){return stop_compile(m,job,selected,candidate,error(status));}
     }
-    if(job.source.syntax.result && !job.literals.done){
+    let ref mut programs::Lowered lowered=vec::at_mut<programs::Lowered>(candidate,0);
+    let bool collecting_literals=job.source.syntax.result && !job.literals.done;
+    if(collecting_literals || !lowered.signatures.done){
         var metadata_budget::State meter=metadata_budget::empty();
-        let ref mut programs::Lowered lowered=vec::at_mut<programs::Lowered>(candidate,0);
-        let ref entries::Entry entry=vec::at<entries::Entry>(selected,0);
-        let u32 status=unsafe{advance_compile_literals_raw(m as ptr mut void,entry as ptr void,
-            job as ptr mut void,lowered as ptr mut void,ref mut meter as ptr mut void)};
+        let u32 status=if(collecting_literals){
+            unsafe{advance_compile_literals_raw(m as ptr mut void,entry as ptr void,
+                job as ptr mut void,lowered as ptr mut void,ref mut meter as ptr mut void)}
+        }else{
+            switch(compiler::advance_module_signatures(entry,ref job.source,ref mut lowered.signatures,ref mut meter)){
+                case .ok(_):{0}case .err(e):{compile_error(m,e)}
+            }
+        };
         job.batches+=meter.stages;
         if(status!=0){let Error cause=m.error;return stop_compile(m,job,selected,candidate,cause);}
         if(clock::expired(job.deadline)){return stop_compile(m,job,selected,candidate,compile_timeout());}
         return 0;
     }
     let Result<usize,diagnostics::Error> result=programs::lower_prepared_until(
-        vec::at<entries::Entry>(selected,0),ref job.source,ref job.literals,
-        vec::at_mut<programs::Lowered>(candidate,0),job.deadline);
+        entry,ref job.source,ref job.literals,lowered,job.deadline);
     return switch(result){
         case .ok(_):{job.state=2;0}
         case .err(e):{
@@ -2256,7 +2263,7 @@ fn void retain_compile_literal_binding(ref mut Meta m,ref entries::Entry entry){
     let source_work::State source=source_work::begin(true);
     var literal_work::State literals=literal_work::empty();
     var vec::Vec<programs::Lowered> candidate=vec::empty<programs::Lowered>();
-    if(!programs::start_lowered(ref mut candidate).is_ok){assert(false);return;}
+    if(!programs::start_lowered(ref mut candidate,entries::selected(entry),false).is_ok){assert(false);return;}
     let ref mut programs::Lowered lowered=vec::at_mut<programs::Lowered>(ref mut candidate,0);
     var metadata_budget::State meter=metadata_budget::empty();
     unsafe{binding_raw(48)};discard advance_compile_literals_inner(m,entry,ref source,ref mut literals,lowered,ref mut meter);

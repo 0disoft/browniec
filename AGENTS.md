@@ -1,8 +1,7 @@
-- Latest runtime checkpoint (2026-11-21): [Resumable ordinary literal collection](docs/engineering/runtime-engine-compile-memory.md#resumable-ordinary-literal-collection)
-  advances private literal collection through discrete Engine calls and retains
-  its charged candidate through lowering and admission.
-  Windows development and /O2 passed with zero live SDK allocations.
-  Locked /O2 CLI, quick-start result 77, and CLI contract passed.
+- Latest runtime checkpoint (2026-11-21): [Resumable ordinary indexed signatures](docs/engineering/runtime-engine-compile-memory.md#resumable-ordinary-indexed-signatures)
+  passes the completed table into lowering and refunds the candidate on
+  exact-deadline expiry. Windows development and /O2 passed with zero live SDK
+  allocations. Locked /O2 CLI and quick-start result 77 passed.
 
 # Brownie C agent guidance
 
