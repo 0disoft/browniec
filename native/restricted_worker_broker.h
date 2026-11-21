@@ -12,10 +12,11 @@ typedef enum bc_worker_broker_phase {
     BC_WORKER_BROKER_READ_READY,
     BC_WORKER_BROKER_SEND_START,
     BC_WORKER_BROKER_READ_RESULT,
+    BC_WORKER_BROKER_SEND_HOST_REPLY,
     BC_WORKER_BROKER_READ_EOF,
     BC_WORKER_BROKER_WAIT_EXIT,
     BC_WORKER_BROKER_FINISH,
-    BC_WORKER_BROKER_CANCEL_START,
+    BC_WORKER_BROKER_CANCEL_TX,
     BC_WORKER_BROKER_SEND_CANCEL,
     BC_WORKER_BROKER_DRAIN_RESULT,
     BC_WORKER_BROKER_DRAIN_EOF,
@@ -37,6 +38,19 @@ typedef struct bc_worker_broker_budget {
     bc_worker_broker_amounts reserved;
 } bc_worker_broker_budget;
 
+/* A synchronous, bounded policy callback. Return zero to reject the request.
+   The spans stay disjoint and live through session close. */
+typedef size_t (*bc_worker_host_reply)(void *context, uint64_t correlation,
+    const uint8_t *request, size_t length, uint8_t *reply, size_t capacity);
+
+typedef struct bc_worker_broker_host {
+    bc_worker_host_reply respond;
+    void *context;
+    uint8_t *request, *reply;
+    size_t request_capacity, reply_capacity;
+    uint32_t max_calls;
+} bc_worker_broker_host;
+
 typedef struct bc_worker_broker {
     bc_restricted_worker worker;
     bc_worker_pipes pipes;
@@ -52,6 +66,9 @@ typedef struct bc_worker_broker {
     bc_worker_result_validator validate;
     const void *expectation;
     size_t request_length, result_capacity;
+    bc_worker_broker_host host;
+    uint32_t requests, replies;
+    bool cancel_reply;
     uint64_t phase_deadline, idle_ticks, grace_ticks, shutdown_deadline;
     uint8_t trailing;
     bc_worker_broker_phase phase;
@@ -74,9 +91,10 @@ typedef struct bc_worker_broker_run {
     size_t result_capacity;
     bc_worker_result_validator validate;
     const void *expectation;
+    bc_worker_broker_host host;
 } bc_worker_broker_run;
 
-/* One request/RESULT session. Serialize calls and start from a zeroed owner
+/* One START/RESULT session with optional sequential host exchanges. Serialize calls and start from a zeroed owner
    at a stable address. Request and result spans must be disjoint and remain
    valid through close, along with the immutable validator expectation.
    Admission reserves a session, its control and span
@@ -96,7 +114,7 @@ const uint8_t *bc_worker_broker_take(bc_worker_broker *broker, size_t *length);
 bc_worker_gate_status bc_worker_broker_cancel(bc_worker_broker *broker);
 
 /* Freeze the terminal outcome, then advance graceful shutdown or reaping.
-   Partially sent START finishes before CANCEL. After the grace deadline the
+   Partially sent START or HOST_REPLY finishes before CANCEL. After the grace deadline the
    Job is stopped. A false return retains buffers and both I/O leases. */
 bool bc_worker_broker_close(bc_worker_broker *broker);
 

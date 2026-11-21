@@ -486,6 +486,32 @@ preserves output-limit diagnostics without output. Local reports:
 `build/worker-output-frame-i0pip5nv/development.stdout` and
 `build/worker-output-frame-i0pip5nv/release.stdout`.
 
+### Broker host exchange
+
+An opted-in session borrows one request span and one reply span, reusing
+them for sequential calls. Admission reserves both spans once and reserves
+two header and payload ceilings per allowed call against the wire budget.
+The read cursor accepts a RESULT or the next HOST_REQUEST. It checks the
+directional sequence, session nonce, next correlation ID and request ceiling
+before selecting the request span. It dispatches only a complete, nonempty
+request to the bounded parent callback. The reply echoes the correlation
+and consumes the next parent sequence. RESULT keeps correlation zero and
+still requires clean EOF and exit before publication.
+
+Cancellation finishes an already-started reply before sending CANCEL at the
+next parent sequence. The broker can drain a request already in flight
+without dispatching it, then accepts only a terminal frame during that drain.
+Both request and reply spans remain reserved through reaping. This is
+native transport; the AppContainer fixture uses a bounded byte callback.
+Brownie catalog and VM host requests still need integration.
+
+Development and /O2 each passed seven AppContainer cases: two successive
+calls, wrong correlation, oversized request, call quota exhausted, callback
+rejection, cancellation before a request body is processed, and cancellation
+after a reply header is sent. Both cancellation cases receive a late RESULT
+without publishing it. Local receipt:
+`build/restricted-worker/20261121T175242080375Z/receipt.json`.
+
 ## Windows verification
 
 Run `python -B tools/verify-restricted-worker.py`. The development and optimized

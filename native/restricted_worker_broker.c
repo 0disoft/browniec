@@ -66,13 +66,24 @@ DWORD bc_worker_broker_start(bc_worker_broker *b, const bc_worker_broker_run *ru
         !run->result || !run->result_capacity ||
         !run->validate || run->request_length > BC_WORKER_FRAME_PAYLOAD_MAX ||
         run->result_capacity > BC_WORKER_FRAME_PAYLOAD_MAX) return ERROR_INVALID_PARAMETER;
-    const size_t wire = 5 * BC_WORKER_FRAME_BYTES + run->request_length + run->result_capacity + 1;
-    if (wire > run->wire_limit) return ERROR_NOT_ENOUGH_QUOTA;
+    const bc_worker_broker_host host = run->host;
+    if (host.max_calls) {
+        if (!host.respond || !host.request || !host.reply || !host.request_capacity ||
+            !host.reply_capacity || host.request_capacity > BC_WORKER_FRAME_PAYLOAD_MAX ||
+            host.reply_capacity > BC_WORKER_FRAME_PAYLOAD_MAX) return ERROR_INVALID_PARAMETER;
+    } else if (host.respond || host.request || host.reply || host.request_capacity ||
+        host.reply_capacity) return ERROR_INVALID_PARAMETER;
+    size_t wire = 5 * BC_WORKER_FRAME_BYTES + run->request_length + run->result_capacity + 1;
+    const size_t per_call = 2 * BC_WORKER_FRAME_BYTES + host.request_capacity + host.reply_capacity;
+    if (wire > run->wire_limit || host.max_calls > (run->wire_limit - wire) / per_call)
+        return ERROR_NOT_ENOUGH_QUOTA;
+    wire += host.max_calls * per_call;
     const uint64_t now = now_ticks();
     if (now >= run->deadline) return ERROR_TIMEOUT;
     const bc_worker_broker_amounts charge = {
         .sessions = 1,
-        .parent_bytes = sizeof(*b) + run->request_length + run->result_capacity,
+        .parent_bytes = sizeof(*b) + run->request_length + run->result_capacity +
+            host.request_capacity + host.reply_capacity,
         .child_commit_bytes = run->commit_bytes,
         .wire_bytes = wire
     };
@@ -91,6 +102,7 @@ DWORD bc_worker_broker_start(bc_worker_broker *b, const bc_worker_broker_run *ru
     b->result_capacity = run->result_capacity;
     b->validate = run->validate;
     b->expectation = run->expectation;
+    b->host = host;
     DWORD status = bc_worker_io_open(&b->io);
     if (!status) status = bc_worker_io_open(&b->cancel_io);
     if (!status) status = bc_worker_pipes_open(&b->pipes);
@@ -121,9 +133,29 @@ static DWORD advance_tx(bc_worker_broker *b, bc_worker_io *io) {
     return bc_worker_tx_advance(&b->tx, count) ? ERROR_SUCCESS : ERROR_INVALID_DATA;
 }
 
-static void expect_result(bc_worker_broker *b) {
-    const bc_worker_frame result = header(b, BC_WORKER_RESULT, 2, b->result_capacity);
+static void expect_worker(bc_worker_broker *b, bool allow_request) {
+    const uint64_t sequence = 2ULL + b->requests;
+    const bc_worker_frame result = header(b, BC_WORKER_RESULT, sequence, b->result_capacity);
     bc_worker_rx_begin(&b->rx, &result, b->result, b->result_capacity);
+    if (allow_request && b->requests < b->host.max_calls) {
+        bc_worker_frame request = header(b, BC_WORKER_HOST_REQUEST, sequence, b->host.request_capacity);
+        request.correlation = 1ULL + b->requests;
+        bc_worker_rx_alternate(&b->rx, &request, b->host.request, b->host.request_capacity);
+    }
+}
+
+static bool begin_host_reply(bc_worker_broker *b, const bc_worker_frame *request) {
+    if (!request->length) return false;
+    ++b->requests;
+    const size_t length = b->host.respond(b->host.context, request->correlation, b->rx.body,
+        request->length, b->host.reply, b->host.reply_capacity);
+    if (!phase_live(b, now_ticks())) return false;
+    if (!length || length > b->host.reply_capacity) return false;
+    bc_worker_frame reply = header(b, BC_WORKER_HOST_REPLY, 3ULL + b->replies, length);
+    reply.correlation = request->correlation;
+    if (!bc_worker_tx_begin(&b->tx, &reply, b->host.reply)) return false;
+    b->phase = BC_WORKER_BROKER_SEND_HOST_REPLY;
+    return true;
 }
 
 static void step_tx(bc_worker_broker *b) {
@@ -137,7 +169,7 @@ static void step_tx(bc_worker_broker *b) {
         }
         return;
     }
-    if (b->phase == BC_WORKER_BROKER_SEND_START) renew_idle(b, now);
+    if (b->phase != BC_WORKER_BROKER_SEND_HELLO) renew_idle(b, now);
     const uint8_t *bytes;
     if (bc_worker_tx_window(&b->tx, &bytes)) return;
     if (b->phase == BC_WORKER_BROKER_SEND_HELLO) {
@@ -145,7 +177,8 @@ static void step_tx(bc_worker_broker *b) {
         bc_worker_rx_begin(&b->rx, &ready, NULL, 0);
         b->phase = BC_WORKER_BROKER_READ_READY;
     } else {
-        expect_result(b);
+        if (b->phase == BC_WORKER_BROKER_SEND_HOST_REPLY) ++b->replies;
+        expect_worker(b, true);
         b->phase = BC_WORKER_BROKER_READ_RESULT;
     }
 }
@@ -200,6 +233,9 @@ static void step_rx(bc_worker_broker *b) {
         }
         renew_idle(b, now);
         b->phase = BC_WORKER_BROKER_SEND_START;
+    } else if (b->rx.received.kind == BC_WORKER_HOST_REQUEST) {
+        if (!begin_host_reply(b, &b->rx.received))
+            bc_worker_gate_stdout_end(&b->gate, false, now_ticks());
     } else {
         bc_worker_gate_stage(&b->gate, &b->rx, b->validate, b->expectation, now);
         b->phase = BC_WORKER_BROKER_READ_EOF;
@@ -213,7 +249,8 @@ bc_worker_gate_status bc_worker_broker_step(bc_worker_broker *b) {
     if (!phase_live(b, now)) return b->gate.status;
     switch (b->phase) {
     case BC_WORKER_BROKER_SEND_HELLO:
-    case BC_WORKER_BROKER_SEND_START: step_tx(b); break;
+    case BC_WORKER_BROKER_SEND_START:
+    case BC_WORKER_BROKER_SEND_HOST_REPLY: step_tx(b); break;
     case BC_WORKER_BROKER_READ_READY:
     case BC_WORKER_BROKER_READ_RESULT:
     case BC_WORKER_BROKER_READ_EOF: step_rx(b); break;
@@ -240,7 +277,7 @@ const uint8_t *bc_worker_broker_take(bc_worker_broker *b, size_t *length) {
 }
 
 static bool begin_cancel_frame(bc_worker_broker *b) {
-    const bc_worker_frame cancel = header(b, BC_WORKER_CANCEL, 3, 0);
+    const bc_worker_frame cancel = header(b, BC_WORKER_CANCEL, 3ULL + b->replies, 0);
     if (!bc_worker_tx_begin(&b->tx, &cancel, NULL)) return false;
     b->phase = BC_WORKER_BROKER_SEND_CANCEL;
     return true;
@@ -260,9 +297,16 @@ static void begin_shutdown(bc_worker_broker *b, uint64_t now) {
     settle_cancel(b, now);
     b->shutdown_deadline = bounded_deadline(now, b->grace_ticks, UINT64_MAX);
     if (b->gate.status == BC_WORKER_GATE_CANCELLED || b->gate.status == BC_WORKER_GATE_EXPIRED) {
-        if (b->phase == BC_WORKER_BROKER_SEND_START && (b->tx.sent || b->io.pipe)) {
-            b->phase = BC_WORKER_BROKER_CANCEL_START;
-            return;
+        if (b->phase == BC_WORKER_BROKER_SEND_START || b->phase == BC_WORKER_BROKER_SEND_HOST_REPLY) {
+            if (b->tx.sent || b->io.pipe) {
+                b->cancel_reply = b->phase == BC_WORKER_BROKER_SEND_HOST_REPLY;
+                b->phase = BC_WORKER_BROKER_CANCEL_TX;
+                return;
+            }
+            if (b->phase == BC_WORKER_BROKER_SEND_HOST_REPLY) {
+                expect_worker(b, false);
+                if (begin_cancel_frame(b)) return;
+            }
         }
         if ((b->phase == BC_WORKER_BROKER_READ_RESULT || b->phase == BC_WORKER_BROKER_READ_EOF) &&
             begin_cancel_frame(b)) return;
@@ -275,23 +319,35 @@ static void begin_shutdown(bc_worker_broker *b, uint64_t now) {
     if (b->io.pipe) bc_worker_io_cancel(&b->io);
 }
 
+static void drain_completed_frame(bc_worker_broker *b) {
+    if (b->rx.received.kind == BC_WORKER_HOST_REQUEST) {
+        // Never dispatch a request collected after the outcome was settled.
+        b->requests = (uint32_t)(b->rx.received.sequence - 1);
+        expect_worker(b, false);
+        b->phase = BC_WORKER_BROKER_DRAIN_RESULT;
+    } else {
+        b->phase = BC_WORKER_BROKER_DRAIN_EOF;
+    }
+}
+
 /* Return true while graceful progress remains possible. */
 static bool shutdown_step(bc_worker_broker *b) {
     if (now_ticks() >= b->shutdown_deadline) return false;
     const uint8_t *window;
     switch (b->phase) {
-    case BC_WORKER_BROKER_CANCEL_START:
+    case BC_WORKER_BROKER_CANCEL_TX:
     case BC_WORKER_BROKER_SEND_CANCEL: {
-        const bool finishing_start = b->phase == BC_WORKER_BROKER_CANCEL_START;
-        const DWORD status = advance_tx(b, finishing_start ? &b->io : &b->cancel_io);
+        const bool finishing_frame = b->phase == BC_WORKER_BROKER_CANCEL_TX;
+        const DWORD status = advance_tx(b, finishing_frame ? &b->io : &b->cancel_io);
         if (status) return status == ERROR_IO_PENDING;
         if (bc_worker_tx_window(&b->tx, &window)) return true;
-        if (finishing_start) {
-            expect_result(b);
+        if (finishing_frame) {
+            if (b->cancel_reply) ++b->replies;
+            expect_worker(b, true);
             return begin_cancel_frame(b);
         }
-        b->phase = bc_worker_rx_frame(&b->rx) ?
-            BC_WORKER_BROKER_DRAIN_EOF : BC_WORKER_BROKER_DRAIN_RESULT;
+        if (bc_worker_rx_frame(&b->rx)) drain_completed_frame(b);
+        else b->phase = BC_WORKER_BROKER_DRAIN_RESULT;
         return true;
     }
     case BC_WORKER_BROKER_DRAIN_RESULT:
@@ -307,7 +363,7 @@ static bool shutdown_step(bc_worker_broker *b) {
         }
         if (status || probe_eof) return false;
         const bc_worker_rx_status received = bc_worker_rx_advance(&b->rx, count);
-        if (received == BC_WORKER_RX_COMPLETE) b->phase = BC_WORKER_BROKER_DRAIN_EOF;
+        if (received == BC_WORKER_RX_COMPLETE) drain_completed_frame(b);
         return received != BC_WORKER_RX_REJECTED;
     }
     case BC_WORKER_BROKER_DRAIN_EXIT:

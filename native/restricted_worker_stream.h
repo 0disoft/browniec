@@ -17,8 +17,10 @@ typedef enum bc_worker_rx_status {
 typedef struct bc_worker_rx {
     bc_worker_frame expected;
     bc_worker_frame received;
+    bc_worker_frame alternate;
     uint8_t header[BC_WORKER_FRAME_BYTES];
     uint8_t *body;
+    uint8_t *alternate_body;
     size_t used;
     bc_worker_rx_status status;
 } bc_worker_rx;
@@ -26,6 +28,9 @@ typedef struct bc_worker_rx {
 /* A cursor borrows body storage until frame delivery or abandonment.
    Keep the cursor and its storage stable through every I/O completion. */
 void bc_worker_rx_begin(bc_worker_rx *rx, const bc_worker_frame *expected,
+    uint8_t *body, size_t capacity);
+/* Optional alternate kind at the same sequence, with its own body storage. */
+void bc_worker_rx_alternate(bc_worker_rx *rx, const bc_worker_frame *expected,
     uint8_t *body, size_t capacity);
 size_t bc_worker_rx_window(bc_worker_rx *rx, uint8_t **bytes);
 bc_worker_rx_status bc_worker_rx_advance(bc_worker_rx *rx, size_t transferred);

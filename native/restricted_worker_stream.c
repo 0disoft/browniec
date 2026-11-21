@@ -12,6 +12,14 @@ void bc_worker_rx_begin(bc_worker_rx *rx, const bc_worker_frame *expected,
     if (capacity < rx->expected.length) rx->expected.length = (uint32_t)capacity;
 }
 
+void bc_worker_rx_alternate(bc_worker_rx *rx, const bc_worker_frame *expected,
+    uint8_t *body, size_t capacity) {
+    rx->alternate = *expected;
+    rx->alternate_body = body;
+    if (!body) capacity = 0;
+    if (capacity < rx->alternate.length) rx->alternate.length = (uint32_t)capacity;
+}
+
 size_t bc_worker_rx_window(bc_worker_rx *rx, uint8_t **bytes) {
     *bytes = NULL;
     if (rx->status == BC_WORKER_RX_HEADER) {
@@ -32,8 +40,12 @@ bc_worker_rx_status bc_worker_rx_advance(bc_worker_rx *rx, size_t transferred) {
     if (!transferred || transferred > available) return rx->status = BC_WORKER_RX_REJECTED;
     rx->used += transferred;
     if (rx->status == BC_WORKER_RX_HEADER && rx->used == sizeof(rx->header)) {
-        if (!bc_worker_frame_preflight(rx->header, rx->used, &rx->expected, &rx->received))
-            return rx->status = BC_WORKER_RX_REJECTED;
+        if (!bc_worker_frame_preflight(rx->header, rx->used, &rx->expected, &rx->received)) {
+            if (!rx->alternate.kind ||
+                !bc_worker_frame_preflight(rx->header, rx->used, &rx->alternate, &rx->received))
+                return rx->status = BC_WORKER_RX_REJECTED;
+            rx->body = rx->alternate_body;
+        }
         rx->used = 0;
         rx->status = rx->received.length ? BC_WORKER_RX_BODY : BC_WORKER_RX_COMPLETE;
     } else if (rx->status == BC_WORKER_RX_BODY && rx->used == rx->received.length) {

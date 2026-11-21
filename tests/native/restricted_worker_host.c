@@ -117,8 +117,61 @@ static BOOL child_read(HANDLE input, uint8_t *bytes, DWORD length) {
     return TRUE;
 }
 
-enum fixture_mode { cpu, clean, early, trailing, stalled, stalled_result, cancel_reply, cancel_ignore };
+enum fixture_mode {
+    cpu, clean, early, trailing, stalled, stalled_result, cancel_reply, cancel_ignore,
+    host_ok, host_wrong_id, host_oversized, host_exhausted, host_invalid, host_cancel_rx, host_cancel_tx
+};
 enum { long_request_bytes = BC_WORKER_IO_WINDOW + 1 };
+
+static bool child_send(HANDLE output, const bc_worker_frame *frame, const uint8_t *body) {
+    uint8_t header[BC_WORKER_FRAME_BYTES];
+    DWORD count;
+    return bc_worker_frame_encode(header, frame) &&
+        WriteFile(output, header, sizeof(header), &count, NULL) && count == sizeof(header) &&
+        (!frame->length || (WriteFile(output, body, frame->length, &count, NULL) && count == frame->length));
+}
+
+static int child_host(HANDLE input, HANDLE output, bc_worker_frame frame, enum fixture_mode mode) {
+    uint8_t header[BC_WORKER_FRAME_BYTES];
+    uint8_t reply[long_request_bytes];
+    const uint8_t body[] = {41, 0};
+    uint64_t calls = mode == host_ok || mode == host_exhausted ? 2 : 1;
+    for (uint64_t call = 1; call <= calls; ++call) {
+        frame.kind = BC_WORKER_HOST_REQUEST;
+        frame.sequence = 1 + call;
+        frame.correlation = call + (mode == host_wrong_id);
+        frame.length = mode == host_oversized ? 2 : 1;
+        const uint8_t invalid = 0;
+        if (!child_send(output, &frame, mode == host_invalid ? &invalid : body)) return 21;
+        if (mode == host_wrong_id || mode == host_oversized || mode == host_invalid ||
+            (mode == host_exhausted && call == calls)) return 0;
+        bc_worker_frame expected = frame;
+        expected.sequence = 2 + call;
+        expected.kind = mode == host_cancel_rx ? BC_WORKER_CANCEL : BC_WORKER_HOST_REPLY;
+        expected.correlation = mode == host_cancel_rx ? 0 : call;
+        expected.length = mode == host_cancel_rx ? 0 : sizeof(reply);
+        bc_worker_frame incoming;
+        if (!child_read(input, header, sizeof(header)) ||
+            !bc_worker_frame_preflight(header, sizeof(header), &expected, &incoming) ||
+            incoming.length != expected.length) return 22;
+        if (incoming.length && (!child_read(input, reply, incoming.length) ||
+            reply[0] != (uint8_t)(41 + call) || reply[sizeof(reply) - 1] != 255)) return 23;
+        if (mode == host_cancel_tx) {
+            ++expected.sequence;
+            expected.kind = BC_WORKER_CANCEL;
+            expected.correlation = 0;
+            expected.length = 0;
+            if (!child_read(input, header, sizeof(header)) ||
+                !bc_worker_frame_preflight(header, sizeof(header), &expected, &incoming)) return 24;
+        }
+    }
+    frame.kind = BC_WORKER_RESULT;
+    frame.sequence = 2 + calls;
+    frame.correlation = 0;
+    frame.length = 1;
+    const uint8_t result = 42;
+    return child_send(output, &frame, &result) ? 0 : 25;
+}
 
 static int child(wchar_t *number, enum fixture_mode mode) {
     const HANDLE input = GetStdHandle(STD_INPUT_HANDLE);
@@ -160,6 +213,7 @@ static int child(wchar_t *number, enum fixture_mode mode) {
         !bc_worker_frame_complete(&received, expected.length) ||
         !child_read(input, request, expected.length) || request[0] != 41) return 8;
     if (mode == stalled_result) return child_read(input, header, 1) ? 13 : 0;
+    if (mode >= host_ok) return child_host(input, output, received, mode);
     if (mode == cancel_reply || mode == cancel_ignore) {
         for (size_t i = 1; i < expected.length; ++i)
             if (request[i] != 0) return 14;
@@ -702,7 +756,7 @@ static void verify_broker(const wchar_t *path, const wchar_t *directory,
     }
     const uint64_t reaping_limit = clock_ticks() + 50000000ULL;
     while (!bc_worker_broker_close(&broker)) {
-        check(clock_ticks() < reaping_limit && broker.phase >= BC_WORKER_BROKER_CANCEL_START &&
+        check(clock_ticks() < reaping_limit && broker.phase >= BC_WORKER_BROKER_CANCEL_TX &&
             broker.gate.status == expected && same_charge(budget.reserved, charge),
             "reaping retains the first cause and reservation");
         Sleep(1);
@@ -718,6 +772,86 @@ static bool reject_callback(const void *expectation, const uint8_t *bytes, size_
     (void)length;
     check(FALSE, "cancelled broker must never invoke the payload callback");
     return false;
+}
+
+static size_t reply_fixture(void *raw, uint64_t correlation,
+    const uint8_t *request, size_t length, uint8_t *reply, size_t capacity) {
+    unsigned *calls = raw;
+    ++*calls;
+    if (length != 1 || request[0] != 41 || correlation != *calls ||
+        capacity != long_request_bytes) return 0;
+    memset(reply, 0, capacity);
+    reply[0] = (uint8_t)(41 + correlation);
+    reply[capacity - 1] = 255;
+    return capacity;
+}
+
+static void verify_host_broker(const wchar_t *path, const wchar_t *directory,
+    const wchar_t *mode, uint32_t max_calls, bc_worker_gate_status expected, unsigned expected_calls) {
+    bc_worker_broker broker = {0};
+    wchar_t command[256];
+    check(swprintf_s(command, _countof(command), L"worker %ls %llx", mode,
+        (unsigned long long)(ULONG_PTR)decoy) > 0, "format host broker fixture command");
+    const bool cancel_rx = !wcscmp(mode, L"--child-host-cancel-rx");
+    const bool cancel_tx = !wcscmp(mode, L"--child-host-cancel-tx");
+    const uint8_t start = 41;
+    uint8_t request = 0, result = 0, reply[long_request_bytes];
+    unsigned calls = 0;
+    const size_t wire = 5 * BC_WORKER_FRAME_BYTES + 3 +
+        max_calls * (2 * BC_WORKER_FRAME_BYTES + sizeof(request) + sizeof(reply));
+    const bc_worker_broker_amounts charge = {1, sizeof(broker) + 2 +
+        sizeof(request) + sizeof(reply), commit_limit, wire};
+    bc_worker_broker_budget budget = {.limit = charge};
+    bc_worker_broker_run run = {
+        .budget = &budget, .application = path, .command_line = command, .directory = directory,
+        .profile = profile, .commit_bytes = commit_limit, .cpu_ms = cpu_limit,
+        .startup_ms = 4000, .io_idle_ms = 4000, .shutdown_grace_ms = 2500,
+        .deadline = clock_ticks() + 100000000ULL, .wire_limit = wire - 1,
+        .request = &start, .request_length = 1, .result = &result, .result_capacity = 1,
+        .validate = expected == BC_WORKER_GATE_DELIVERED ? fixture_result : reject_callback,
+        .host = {reply_fixture, &calls, &request, reply, sizeof(request), sizeof(reply), max_calls}
+    };
+    check(bc_worker_broker_start(&broker, &run) == ERROR_NOT_ENOUGH_QUOTA &&
+        !broker.worker.process, "host wire quota checked before launch");
+    run.wire_limit = wire;
+    check(bc_worker_broker_start(&broker, &run) == ERROR_SUCCESS &&
+        same_charge(budget.reserved, charge), "reserve host spans and wire at exact limits");
+    HANDLE exit_witness = NULL;
+    if (cancel_tx || cancel_rx)
+        check(DuplicateHandle(GetCurrentProcess(), broker.worker.process, GetCurrentProcess(),
+            &exit_witness, SYNCHRONIZE | PROCESS_QUERY_LIMITED_INFORMATION, FALSE, 0),
+            "retain host cancellation exit witness");
+    while (broker.gate.status == BC_WORKER_GATE_PENDING && broker.phase != BC_WORKER_BROKER_FINISH) {
+        bc_worker_broker_step(&broker);
+        if ((cancel_rx && broker.phase == BC_WORKER_BROKER_READ_RESULT &&
+             broker.rx.status == BC_WORKER_RX_BODY) ||
+            (cancel_tx && broker.phase == BC_WORKER_BROKER_SEND_HOST_REPLY &&
+             broker.tx.sent == BC_WORKER_FRAME_BYTES)) {
+            check(bc_worker_broker_cancel(&broker) == expected, "cancel with host transfer unfinished");
+            break;
+        }
+        if (broker.io.pipe || broker.phase == BC_WORKER_BROKER_WAIT_EXIT) Sleep(1);
+    }
+    size_t length = 123;
+    const uint8_t *published = bc_worker_broker_take(&broker, &length);
+    check(broker.gate.status == expected && calls == expected_calls,
+        "host broker outcome and exact dispatch count");
+    check(expected == BC_WORKER_GATE_DELIVERED ? published == &result && length == 1 && result == 42 :
+        !published && length == 123, "publish only clean RESULT after host exchange");
+    const uint64_t reap_limit = clock_ticks() + 50000000ULL;
+    while (!bc_worker_broker_close(&broker)) {
+        check(clock_ticks() < reap_limit && broker.gate.status == expected &&
+            same_charge(budget.reserved, charge), "hold host reservation and cause through reaping");
+        Sleep(1);
+    }
+    if (exit_witness) {
+        DWORD code = STILL_ACTIVE;
+        check(WaitForSingleObject(exit_witness, 0) == WAIT_OBJECT_0 &&
+            GetExitCodeProcess(exit_witness, &code) && code == 0 && result == 42 &&
+            CloseHandle(exit_witness), "worker received ordered CANCEL and drained a late RESULT");
+    }
+    check(calls == expected_calls && same_charge(budget.reserved, (bc_worker_broker_amounts){0}),
+        "no dispatch after settlement and refund host reservation exactly once");
 }
 
 static void verify_graceful_cancel(const wchar_t *path, const wchar_t *directory, bool ignore) {
@@ -925,6 +1059,13 @@ int wmain(int argc, wchar_t **argv) {
     if (argc == 3 && !wcscmp(argv[1], L"--child-stalled-result")) return child(argv[2], stalled_result);
     if (argc == 3 && !wcscmp(argv[1], L"--child-late-result")) return child(argv[2], cancel_reply);
     if (argc == 3 && !wcscmp(argv[1], L"--child-ignore-cancel")) return child(argv[2], cancel_ignore);
+    if (argc == 3 && !wcscmp(argv[1], L"--child-host-ok")) return child(argv[2], host_ok);
+    if (argc == 3 && !wcscmp(argv[1], L"--child-host-wrong-id")) return child(argv[2], host_wrong_id);
+    if (argc == 3 && !wcscmp(argv[1], L"--child-host-size")) return child(argv[2], host_oversized);
+    if (argc == 3 && !wcscmp(argv[1], L"--child-host-exhausted")) return child(argv[2], host_exhausted);
+    if (argc == 3 && !wcscmp(argv[1], L"--child-host-invalid")) return child(argv[2], host_invalid);
+    if (argc == 3 && !wcscmp(argv[1], L"--child-host-cancel-rx")) return child(argv[2], host_cancel_rx);
+    if (argc == 3 && !wcscmp(argv[1], L"--child-host-cancel-tx")) return child(argv[2], host_cancel_tx);
     check((argc == 2 || argc == 3) && atexit(cleanup) == 0, "parent fixture arguments");
     verify_frames();
     verify_stream();
@@ -1026,6 +1167,13 @@ int wmain(int argc, wchar_t **argv) {
     verify_broker(argv[1], directory, L"--child-stalled", BC_WORKER_GATE_CANCELLED);
     verify_broker(argv[1], directory, L"--child-stalled", BC_WORKER_GATE_EXPIRED);
     verify_broker(argv[1], directory, L"--child-stalled-result", BC_WORKER_GATE_EXPIRED);
+    verify_host_broker(argv[1], directory, L"--child-host-ok", 2, BC_WORKER_GATE_DELIVERED, 2);
+    verify_host_broker(argv[1], directory, L"--child-host-wrong-id", 2, BC_WORKER_GATE_PROTOCOL, 0);
+    verify_host_broker(argv[1], directory, L"--child-host-size", 2, BC_WORKER_GATE_PROTOCOL, 0);
+    verify_host_broker(argv[1], directory, L"--child-host-exhausted", 1, BC_WORKER_GATE_PROTOCOL, 1);
+    verify_host_broker(argv[1], directory, L"--child-host-invalid", 2, BC_WORKER_GATE_PROTOCOL, 1);
+    verify_host_broker(argv[1], directory, L"--child-host-cancel-rx", 2, BC_WORKER_GATE_CANCELLED, 0);
+    verify_host_broker(argv[1], directory, L"--child-host-cancel-tx", 2, BC_WORKER_GATE_CANCELLED, 1);
     verify_graceful_cancel(argv[1], directory, false);
     verify_graceful_cancel(argv[1], directory, true);
     if (argc == 3) {
@@ -1061,7 +1209,7 @@ int wmain(int argc, wchar_t **argv) {
            "\"commitDenied\":true,\"cpuTermination\":true,\"privatePipeAcl\":true,"
            "\"framedExchange\":true,\"headerMutationsRejected\":48,"
            "\"boundedStream\":true,\"pipeEof\":true,\"publicationGate\":true,"
-           "\"ioLease\":true,\"brokerSessions\":6,\"sharedBudget\":true,"
+           "\"ioLease\":true,\"brokerSessions\":6,\"hostBrokerCases\":7,\"sharedBudget\":true,"
            "\"phaseDeadlines\":true,\"gracefulCancelCases\":2,\"handleDelta\":0,\"staging\":true,"
            "\"scalarSessions\":%d,\"parentBrokerCases\":%d,\"projectWireRejections\":%d,"
            "\"parentColdHandleDelta\":%ld,\"coldHandleDelta\":%ld}\n",

@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-22): [Sealed output from the worker](docs/engineering/restricted-worker.md#configured-sealed-output)
-  returns granted bytes only through the broker publication gate.
-  Development and /O2 each pass 36 configured project cases.
+- Latest runtime checkpoint (2026-11-22): [Broker host exchange](docs/engineering/restricted-worker.md#broker-host-exchange)
+  sends correlated replies under reserved limits and preserves cancellation during pipe transfers.
+  Development and /O2 each pass seven host broker fixture cases.
 
 # Brownie C agent guidance
 

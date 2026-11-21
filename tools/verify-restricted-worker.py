@@ -335,7 +335,7 @@ def main():
                              commitDenied=True, cpuTermination=True, privatePipeAcl=True,
                              framedExchange=True, headerMutationsRejected=48,
                              boundedStream=True, pipeEof=True, publicationGate=True,
-                             ioLease=True, brokerSessions=6, sharedBudget=True,
+                             ioLease=True, brokerSessions=6, hostBrokerCases=7, sharedBudget=True,
                              phaseDeadlines=True, gracefulCancelCases=2, handleDelta=0, staging=True,
                              scalarSessions=5 if scalar else 0, parentBrokerCases=4 if scalar else 0,
                              projectWireRejections=2 if scalar else 0)
