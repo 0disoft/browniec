@@ -250,14 +250,14 @@ fn bool compile_live(CompileState state){
 }
 fn bool compile_attached(ref Engine e){return vec::at<CompileWork>(ref e.compile_work,0).id!=0;}
 pub fn Result<usize,Error> begin_compile(ref mut Engine e,entries::Entry selected,usize image_limit){
-    return begin_selected_compile(e,selected,image_limit,false);
+    return begin_selected_compile(e,selected,image_limit,false,0);
 }
 pub fn Result<usize,Error> begin_compile_output(ref mut Engine e,entries::Entry selected,usize image_limit){
-    return begin_selected_compile(e,selected,image_limit,true);
+    return begin_selected_compile(e,selected,image_limit,true,0);
 }
-fn Result<usize,Error> begin_selected_compile(ref mut Engine e,entries::Entry selected,usize image_limit,bool output){
+fn Result<usize,Error> begin_selected_compile(ref mut Engine e,entries::Entry selected,usize image_limit,bool output,usize expires){
     let usize guard=unsafe{compile_preflight(e,if(output){2}else{0},ref selected as ptr void)}?;
-    let usize deadline=compile_deadline(e,0)?;
+    let usize deadline=compile_deadline(e,expires)?;
     if(compile_attached(e)){return .err(error(3));}
     var vec::Vec<entries::Entry> incoming=vec::empty<entries::Entry>();
     if(!vec::push<entries::Entry>(ref mut incoming,selected).is_ok){return .err(error(6));}
@@ -265,15 +265,15 @@ fn Result<usize,Error> begin_selected_compile(ref mut Engine e,entries::Entry se
     return result(e,status);
 }
 pub fn Result<usize,Error> begin_compile_input(ref mut Engine e,input_entries::InputEntry selected,usize image_limit){
-    return begin_selected_input_compile(e,selected,image_limit,false);
+    return begin_selected_input_compile(e,selected,image_limit,false,0);
 }
 pub fn Result<usize,Error> begin_compile_input_output(ref mut Engine e,input_entries::InputEntry selected,usize image_limit){
-    return begin_selected_input_compile(e,selected,image_limit,true);
+    return begin_selected_input_compile(e,selected,image_limit,true,0);
 }
-fn Result<usize,Error> begin_selected_input_compile(ref mut Engine e,input_entries::InputEntry selected,usize image_limit,bool output){
+fn Result<usize,Error> begin_selected_input_compile(ref mut Engine e,input_entries::InputEntry selected,usize image_limit,bool output,usize expires){
     let usize guard=unsafe{compile_preflight(e,if(output){3}else{1},ref selected as ptr void)}?;
     if(compile_attached(e)){return .err(error(3));}
-    let usize deadline=compile_deadline(e,0)?;
+    let usize deadline=compile_deadline(e,expires)?;
     var vec::Vec<input_entries::InputEntry> incoming=vec::empty<input_entries::InputEntry>();
     if(!vec::push<input_entries::InputEntry>(ref mut incoming,selected).is_ok){return .err(error(6));}
     let u32 status=unsafe{begin_compile_input_raw(e as ptr mut void,ref mut incoming as ptr mut void,image_limit,deadline,if(output){1}else{0})};
@@ -353,13 +353,24 @@ pub fn Result<usize,Error> compile_project(ref mut Engine e,ref projects::Projec
     let usize ready=unsafe{compile_preflight(e,0,null)}?;
     if(projects::requirements(metadata)!=0){return .err(error(5));}
     let usize deadline=compile_deadline(e,0)?;
+    let entries::Entry selected=project_entry(e,metadata,root,deadline)?;
+    return retain_entry(e,selected,image_limit,0,deadline);
+}
+// Acquisition and entry selection finish before the caller receives a job.
+pub fn Result<usize,Error> begin_compile_project(ref mut Engine e,ref projects::Project metadata,ref u8[] root,usize image_limit){
+    let usize ready=unsafe{compile_preflight(e,0,null)}?;
+    if(projects::requirements(metadata)!=0){return .err(error(5));}
+    if(compile_attached(e)){return .err(error(3));}
+    let usize deadline=compile_deadline(e,0)?;
+    let entries::Entry selected=project_entry(e,metadata,root,deadline)?;
+    return begin_selected_compile(e,selected,image_limit,false,deadline);
+}
+fn Result<entries::Entry,Error> project_entry(ref Engine e,ref projects::Project metadata,ref u8[] root,usize deadline){
     let sources::Snapshot snapshot=load_project(e,metadata,root,deadline)?;
     if(clock::expired(deadline)){return .err(compile_timeout());}
-    let entries::Entry selected=switch(project_binding::select(metadata,snapshot)){
-        case .ok(v):{v}
-        case .err(reason):{return .err(project_error(reason));}
+    return switch(project_binding::select(metadata,snapshot)){
+        case .ok(v):{.ok(v)}case .err(reason):{.err(project_error(reason))}
     };
-    return retain_entry(e,selected,image_limit,0,deadline);
 }
 pub fn Result<usize,Error> compile_project_input(ref mut Engine e,ref projects::Project metadata,ref u8[] root,usize image_limit){
     let usize ready=unsafe{compile_preflight(e,1,null)}?;
@@ -367,6 +378,14 @@ pub fn Result<usize,Error> compile_project_input(ref mut Engine e,ref projects::
     let usize deadline=compile_deadline(e,0)?;
     let input_entries::InputEntry selected=project_input_entry(e,metadata,root,deadline)?;
     return retain_input_entry(e,selected,image_limit,0,deadline);
+}
+pub fn Result<usize,Error> begin_compile_project_input(ref mut Engine e,ref projects::Project metadata,ref u8[] root,usize image_limit){
+    let usize ready=unsafe{compile_preflight(e,1,null)}?;
+    if(projects::requirements(metadata)!=0){return .err(error(5));}
+    if(compile_attached(e)){return .err(error(3));}
+    let usize deadline=compile_deadline(e,0)?;
+    let input_entries::InputEntry selected=project_input_entry(e,metadata,root,deadline)?;
+    return begin_selected_input_compile(e,selected,image_limit,false,deadline);
 }
 fn Result<input_entries::InputEntry,Error> project_input_entry(ref Engine e,ref projects::Project metadata,ref u8[] root,usize deadline){
     let sources::Snapshot snapshot=load_project(e,metadata,root,deadline)?;

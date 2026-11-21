@@ -662,6 +662,22 @@ execution returns 77 and emits the supplied byte. Both native processes exited
 with zero live SDK allocations. The locked /O2 CLI quick start returned 77.
 Local receipt: `build/runtime-engine/20261121T081316707472Z/receipt.json`.
 
+## Engine-owned project compile
+
+The private Engine starts ordinary and input-only project jobs from the
+selected immutable project source. Requirement and attached-job checks precede
+file collection. Acquisition and entry selection are synchronous, and the
+same absolute deadline covers acquisition, lowering, proof, and publication.
+The job uses the same retained Program and Instance paths as selected sources.
+
+Windows development and /O2 verified rejection before file collection,
+multi-module compilation, no Program before publication, and execution through
+two Instances. Rewriting a member after the ordinary job started left its
+result at 77, while a fresh compilation returned 42. Input Instances returned
+77 and 42 from different snapshots. Both native processes exited with zero
+live SDK allocations. Local receipt:
+`build/runtime-engine/20261121T082229339823Z/receipt.json`.
+
 ## Executed verification and remaining work
 
 [Windows evidence](../evidence/runtime-engine-compile-memory-windows-20261107.json)

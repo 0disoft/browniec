@@ -1,7 +1,7 @@
-- Latest runtime checkpoint (2026-11-21): [Engine-owned input-output compile](docs/engineering/runtime-engine-compile-memory.md#engine-owned-input-output-compile)
-  runs source, lowering, and output proof through the same private compile job.
-  Windows development and /O2 passed partial-proof expiry, exact SDK byte
-  accounting, and execution returning 77 and emitting the supplied input byte.
+- Latest runtime checkpoint (2026-11-21): [Engine-owned project compile](docs/engineering/runtime-engine-compile-memory.md#engine-owned-project-compile)
+  resumes ordinary and input-only projects after source acquisition and entry
+  selection. Windows development and /O2 passed authority, snapshot isolation,
+  multi-Instance execution and teardown with zero live SDK allocations.
 
 # Brownie C agent guidance
 

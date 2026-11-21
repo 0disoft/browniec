@@ -75,6 +75,25 @@ fn void run_project(ref mut engine::Engine e,usize program,i64 expected){
     assert(done.kind==1 && done.value==expected);
     assert(id(engine::destroy_instance(e,instance))==instance);
 }
+fn usize complete_project_compile(ref mut engine::Engine e,usize job){
+    var usize steps=0;
+    while(steps<8192){
+        let engine::CompileStatus progress=switch(engine::step_compile(e,job)){
+            case .ok(v):{v}case .err(_):{assert(false);return 0;}
+        };
+        if(progress.program!=0){
+            assert(progress.batches>1 && engine::detach_compile(e,job).is_ok);
+            return progress.program;
+        }
+        switch(progress.state){
+            case .Preparing:{}case .Prepared:{}case .Lowering:{}case .Lowered:{}case .Proving:{}
+            case .Completed:{assert(false);}case .Failed:{assert(false);}case .Cancelled:{assert(false);}
+        };
+        counts(e,0,0,0);
+        steps+=1;
+    }
+    assert(false);return 0;
+}
 fn void project_engine(){
     let projects::Project manifest=project(b"{\"schema\":\"brownie.project/0.3\",\"name\":\"fixture\",\"entry\":{\"module\":\"app\",\"function\":\"start\"},\"sources\":[{\"module\":\"app\",\"path\":\"app.brc\"},{\"module\":\"helper\",\"path\":\"helper.brc\"}],\"requires\":[]}");
     let projects::Project requires=project(b"{\"schema\":\"brownie.project/0.3\",\"name\":\"fixture\",\"entry\":{\"module\":\"app\",\"function\":\"start\"},\"sources\":[{\"module\":\"app\",\"path\":\"app.brc\"}],\"requires\":[\"host.demo.read\"]}");
@@ -90,9 +109,12 @@ fn void project_engine(){
         case .err(problem):{assert(problem.status==4 && problem.diagnostic.at.source<2);}
     };
     counts(ref mut e,0,0,0);
-    let usize program=id(engine::compile_project(ref mut e,ref manifest,root,65536));
-    assert(program==1);
+    rejected(engine::begin_compile_project(ref mut e,ref requires,b"",65536),5);
+    let usize job=id(engine::begin_compile_project(ref mut e,ref manifest,root,65536));
+    rejected(engine::begin_compile_project(ref mut e,ref manifest,b"",65536),3);
     unsafe{bc_runtime_engine_test_rewrite_project()};
+    let usize program=complete_project_compile(ref mut e,job);
+    assert(program==1);
     let usize fresh=id(engine::compile_project(ref mut e,ref manifest,root,65536));
     let usize a=id(engine::create_instance(ref mut e,program,256));
     let usize b=id(engine::create_instance(ref mut e,program,256));
@@ -129,7 +151,10 @@ fn void project_input_engine(){
         case .err(problem):{assert(problem.status==4 && problem.diagnostic.at.source==0);}
     };
     counts(ref mut e,0,0,0);
-    let usize program=id(engine::compile_project_input(ref mut e,ref manifest,root,65536));
+    rejected(engine::begin_compile_project_input(ref mut e,ref requires,b"",65536),5);
+    let usize job=id(engine::begin_compile_project_input(ref mut e,ref manifest,root,65536));
+    rejected(engine::begin_compile_project_input(ref mut e,ref manifest,b"",65536),3);
+    let usize program=complete_project_compile(ref mut e,job);
     let usize a=id(engine::create_input_instance(ref mut e,program,input_snapshot(b"\x00\x23"),16000000));
     let usize b=id(engine::create_input_instance(ref mut e,program,input_snapshot(b"\x00\x00"),16000000));
     counts(ref mut e,1,2,2);
