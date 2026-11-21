@@ -30,6 +30,7 @@ def closure():
     files['output_chunk_contracts'] = ROOT / 'tests/m2/runtime_output_chunks.fy'
     files['dispatch_cursor_contracts'] = ROOT / 'tests/m2/slice_result_cursor.fy'
     files['dispatch_quantum_contracts'] = ROOT / 'tests/m2/module_dispatch_quantum.fy'
+    files['canonical_proof_contracts'] = ROOT / 'tests/m2/output_canonical_proof_work.fy'
     files['runtime_input_adoption'] = ROOT / 'native/runtime-input-adoption/adoption.fy'
     seen, todo = {}, ['main']
     while todo:
@@ -399,7 +400,8 @@ def source_copy(path):
                 'runtime_pending_memory': 'pending_memory_contracts',
                 'runtime_output_chunks': 'output_chunk_contracts',
                 'slice_result_cursor': 'dispatch_cursor_contracts',
-                'module_dispatch_quantum': 'dispatch_quantum_contracts'}
+                'module_dispatch_quantum': 'dispatch_quantum_contracts',
+                'output_canonical_proof_work': 'canonical_proof_contracts'}
     for original, alias in adapters.items():
         if path == ROOT / f'tests/m2/{original}.fy':
             text = path.read_text(encoding='utf-8').replace(f'module tests::m2::{original};', f'module {alias};')

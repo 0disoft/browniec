@@ -498,6 +498,22 @@ allocations. Local receipt:
 `build/runtime-engine/20261121T051002326671Z/receipt.json`.
 The locked /O2 CLI returned 77 in the quick start.
 
+## Resumable ordinary canonical proof
+
+The staged canonical verifier now accepts the ordinary zero-argument entry
+contract and rejects EMIT. Input-only mode still requires one shared-byte
+argument, and output modes retain their separate gate. The same 4,096-unit
+allowance bounds each staged advance. The resulting proof remains analysis
+data. The owning Engine still admits Programs through the synchronous path.
+
+The Windows Engine harness executes the canonical proof fixtures with the
+runtime clock and native companions linked. The ordinary fixture compares
+the staged and synchronous proofs for a source-derived shared-byte return,
+then checks that both reject EMIT. All five canonical proof groups and the
+existing Engine suite passed in development and /O2 with zero live SDK
+allocations. Local receipt:
+`build/runtime-engine/20261121T052244123543Z/receipt.json`.
+
 ## Executed verification and remaining work
 
 [Windows evidence](../evidence/runtime-engine-compile-memory-windows-20261107.json)

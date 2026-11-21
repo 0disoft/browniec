@@ -1,7 +1,7 @@
-- Latest runtime checkpoint (2026-11-21): [Resumable ordinary body control](docs/engineering/runtime-engine-compile-memory.md#resumable-ordinary-body-control)
-  preserves partial IR across body advances and refunds the exact candidate
-  allocation on expiry. Windows development and /O2 passed with zero live SDK
-  allocations. Locked /O2 CLI and quick-start result 77 passed.
+- Latest runtime checkpoint (2026-11-21): [Resumable ordinary canonical proof](docs/engineering/runtime-engine-compile-memory.md#resumable-ordinary-canonical-proof)
+  matches the synchronous reference proof on the ordinary ABI fixture and
+  rejects EMIT. Windows development and /O2 passed with zero live SDK allocations.
+  Engine Program admission still uses the synchronous proof.
 
 # Brownie C agent guidance
 

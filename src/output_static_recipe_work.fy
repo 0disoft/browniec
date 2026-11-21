@@ -61,10 +61,12 @@ pub fn Result<usize,errors::Error> begin(ref mut State w,ref recipes::Program un
     w.code=0;w.registers=0;w.phase=0;w.prelude=false;w.parameter=false;w.changed=false;
     w.input=input;w.output=true;w.active=true;w.done=false;return .ok(0);
 }
-// Input-program mode retains the shared-byte ABI but rejects EMIT. The canonical
-// coordinator uses this before module_input_program::inspect_input_returns.
+// Both ordinary and input-only programs reject EMIT.
+pub fn Result<usize,errors::Error> begin_without_output(ref mut State w,ref recipes::Program unit,ref images::Image image,bool input){
+    let usize begun=begin(w,unit,image,input)?;w.output=false;return .ok(begun);
+}
 pub fn Result<usize,errors::Error> begin_input(ref mut State w,ref recipes::Program unit,ref images::Image image){
-    let usize begun=begin(w,unit,image,true)?;w.output=false;return .ok(begun);
+    return begin_without_output(w,unit,image,true);
 }
 fn bool same_pair(ref State w,ref recipes::Program unit,ref images::Image image){
     return w.count==unit.body.count && w.functions==unit.body.function_count &&

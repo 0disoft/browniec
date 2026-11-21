@@ -34,7 +34,9 @@ pub struct State {
 pub fn State empty(bool input){return State{.recipes=recipes::empty(),.sites=sites::empty(),
     .metadata=metadata::empty(input),.flow=flow::empty(),.task=tasks::empty(),
     .places=places::empty(),.references=references::empty(),.function=0,.pc=0,.phase=0,.input=input,.output=true,.done=false};}
-pub fn State empty_input(){var State w=empty(true);w.output=false;return w;}
+fn State empty_without_output(bool input){var State w=empty(input);w.output=false;return w;}
+pub fn State empty_input(){return empty_without_output(true);}
+pub fn State empty_ordinary(){return empty_without_output(false);}
 // Narrow references prevent the bootstrap emitter from materializing every
 // enclosing fixed bank when projecting one immutable prepared field.
 fn records::Prepared shapes(ref metadata::State w){let ref record_work::State records=ref w.records;return records.result;}
@@ -87,7 +89,7 @@ pub fn Result<bool,errors::Error> advance(ref programs::Program unit,ref images:
         if(done){w.done=true;}return .ok(w.done);}
     if(!budget::admit(meter,4096,w.pc)?){return .ok(false);}
     if(w.phase==0){let bool input=w.input;let usize started=if(w.output){recipes::begin(ref mut w.recipes,unit,image,input)?}
-        else{recipes::begin_input(ref mut w.recipes,unit,image)?};w.phase=1;}
+        else{recipes::begin_without_output(ref mut w.recipes,unit,image,input)?};w.phase=1;}
     else if(w.phase==4){
         if(w.function==p.function_count){w.phase=7;}
         else{let usize function=w.function;let usize started=flow::begin(ref mut w.flow,function)?;w.phase=5;}
