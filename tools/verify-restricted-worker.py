@@ -83,7 +83,10 @@ def verify_configured_project(run, need, image, folder, env):
                   requires=[], grants=[], limits=policy['run'].copy())
     write_compile_fixture(folder / 'configured-compile.start', target, manifest, policy, config)
 
+    cases = 0
+
     def check(expected_exit=0, kind=None, operation='run', payload=None, value=42, output=None):
+        nonlocal cases
         policy_file.write_text(json.dumps(policy), encoding='utf-8')
         run_file.write_text(json.dumps(config), encoding='utf-8')
         args = [image, '--internal-project-broker', operation, project, policy_file, run_file]
@@ -102,6 +105,7 @@ def verify_configured_project(run, need, image, folder, env):
             need(base64.b64decode(data['output_b64'], validate=True) == output,
                  'Guest output differs from the sealed payload')
         need(not list(Path(env['TEMP']).iterdir()), 'configured project left staged resources')
+        cases += 1
         return data
 
     check()
@@ -267,6 +271,20 @@ def verify_configured_project(run, need, image, folder, env):
     policy['compile'] = dict(compile_defaults, source_bytes=4096, fuel=control_fuel - 1)
     check(3, 'compile_limit')
     policy['compile']['fuel'] = control_fuel
+    check()
+    policy['compile'] = compile_defaults
+    math_file.write_bytes(original_source)
+
+    math_file.write_bytes(b'module util::math;struct Pair{i32 value;}pub fn i32 answer(){'
+                          b'var a=[10,20];a[0+1]+=1+1;((a)[1])+=1+1;'
+                          b'{let ref mut i32[] view=ref mut a;view[0+1]+=2+2;}'
+                          b'var Pair p=Pair{.value=10};p.value+=1+1;((p).value)+=1+1;'
+                          b'return a[1]+p.value;}')
+    # The eight assignment operands add 245 Pratt advances to the fixture.
+    place_fuel = 10232871 + 245
+    policy['compile'] = dict(compile_defaults, source_bytes=4096, fuel=place_fuel - 1)
+    check(3, 'compile_limit')
+    policy['compile']['fuel'] = place_fuel
     check()
     policy['compile'] = compile_defaults
     math_file.write_bytes(original_source)
@@ -473,7 +491,7 @@ def verify_configured_project(run, need, image, folder, env):
     config['entry']['function'] = manifest['entry']['function']
     config['grants'] = ['brownie.output.emit']
     check(4, 'unavailable')
-    return 92
+    return cases
 
 
 def verify_project_host(run, need, image, folder, env):

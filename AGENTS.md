@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-22): [Scalar assignment and for-post Fuel](docs/engineering/restricted-worker.md#scalar-assignment-and-for-post-fuel)
-  checks compile stops and debits scalar right-hand sides and both post passes,
-  including the temporary IR rewind.
+- Latest runtime checkpoint (2026-11-22): [Place assignment operand Fuel](docs/engineering/restricted-worker.md#place-assignment-operand-fuel)
+  meters array, mutable slice and record-field assignment operands, including
+  grouped destinations.
 
 # Brownie C agent guidance
 

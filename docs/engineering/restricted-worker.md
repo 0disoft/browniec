@@ -1075,6 +1075,24 @@ output. Windows development and /O2 each passed 92 configured, 32 catalog,
 five managed project and four compile-stop cases. All 456 input hashes matched.
 Local receipt: `build/restricted-worker/20261121T224259752447Z/receipt.json`.
 
+### Place assignment operand Fuel
+
+Array and mutable slice index expressions and scalar assignment right-hand
+sides for array elements, slice elements and record fields use the enclosing
+compile deadline and Fuel. Grouped destinations use the same operand path.
+Each Pratt advance spends one unit, and the compiler checks for a stop before
+using the completed operand. Place selection and the old value of a compound
+assignment still precede right-hand side lowering. Whole aggregate assignments
+and synchronous operand helpers retain their existing outer checkpoints.
+
+The configured-project fixture writes plain and grouped array elements and
+record fields, and writes through a mutable slice. Its eight assignment
+operands add 245 charged Pratt advances. The project returns 42 at 10,233,116
+compile Fuel. At 10,233,115 it fails compilation with no result or output.
+Windows development and /O2 each passed 94 configured, 32 catalog, five
+managed project and four compile-stop cases. All 456 input hashes matched.
+Local receipt: `build/restricted-worker/20261121T225243809492Z/receipt.json`.
+
 ## Windows verification
 
 Run `python -B tools/verify-restricted-worker.py`. The development and optimized

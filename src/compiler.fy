@@ -1533,6 +1533,19 @@ fn bool word_is(ref u8[] source, ref lexer::State s, ref u8[] word) {
     return s.kind == 2 && lexer::equal(source[s.begin..s.end], word);
 }
 
+// Keep the unmetered oracle on its original expression path. Budgeted
+// assignments check for a stop before using each completed operand.
+fn Result<usize,errors::Error> assignment_operand(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref locals::Table names,ref functions::Table signatures,
+    usize depth,u8 expected,u8 result_type,usize structure,ref mut loops::State flow,usize deadline,ref mut usize fuel){
+    if(deadline==0 && *fuel==metadata_budget::unlimited()){
+        return expression(source,s,p,names,signatures,1,depth,expected,result_type,structure,flow);
+    }
+    let usize value=expression_metered(source,s,p,names,signatures,1,depth,expected,result_type,structure,flow,deadline,fuel)?;
+    if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
+    return .ok(value);
+}
+
 fn Result<usize, errors::Error> array_copy_statement(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref mut locals::Table table, ref functions::Table signatures, usize index, usize at, usize id, u8 terminator, u8 result_type, usize expr_depth, usize structure, ref mut loops::State loop_state,usize place) {
     if(s.kind==40 || arm_syntax::operand_kind(source,s)!=0){
         let array_expressions::Plan plan=array_expressions::inspect(source,s,p,table,signatures)?;
@@ -1565,11 +1578,11 @@ fn Result<usize, errors::Error> array_copy_statement(ref u8[] source, ref mut le
     return .ok(index);
 }
 
-fn Result<usize, errors::Error> array_write_statement(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref locals::Table table, ref functions::Table signatures, usize index, usize at, usize id, u8 terminator, u8 result_type, usize expr_depth, usize structure, ref mut loops::State loop_state) {
+fn Result<usize, errors::Error> array_write_statement(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref locals::Table table, ref functions::Table signatures, usize index, usize at, usize id, u8 terminator, u8 result_type, usize expr_depth, usize structure, ref mut loops::State loop_state,usize deadline,ref mut usize fuel) {
     if (s.kind != 91) { return .err(errors::make(3, at)); }
     let usize open = lexer::punctuation(source, s, 91)?;
     let usize index_at=s.begin;
-    let usize subscript = expression(source,s,p,table,signatures,1,expr_depth+1,12,result_type,structure,loop_state)?;
+    let usize subscript = assignment_operand(source,s,p,table,signatures,expr_depth+1,12,result_type,structure,loop_state,deadline,fuel)?;
     if (p.types[subscript] != 12) { return .err(errors::make(3, at)); }
     let usize close = lexer::punctuation(source, s, 93)?;
     if(!lexer::assignment(s.kind)){return .err(errors::make(2,s.begin));}
@@ -1580,7 +1593,7 @@ fn Result<usize, errors::Error> array_write_statement(ref u8[] source, ref mut l
     var locals::Table names=locals::snapshot(table);
     let usize place=places::select(p,ref mut names,id,subscript,index_at)?;
     let usize old=if(operation==0){128}else{ir::place_read(p,place,id,operation_at)?};
-    var usize value=expression(source,s,p,ref names,signatures,1,expr_depth,element,result_type,structure,loop_state)?;
+    var usize value=assignment_operand(source,s,p,ref names,signatures,expr_depth,element,result_type,structure,loop_state,deadline,fuel)?;
     if (p.types[value] != element) { return .err(errors::make(3, at)); }
     let usize end_statement = lexer::punctuation(source, s, terminator)?;
     if(operation!=0){value=ir::emit(p,operation,old,value,operation_at)?;}
@@ -1590,7 +1603,7 @@ fn Result<usize, errors::Error> array_write_statement(ref u8[] source, ref mut l
 }
 
 // Keep array-only lowering out of recursive scalar statement frames.
-fn Result<usize, errors::Error> array_statement(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref locals::Table table, ref functions::Table signatures, usize index, usize at, u8 terminator, u8 result_type, usize expr_depth, usize structure, ref mut loops::State loop_state) {
+fn Result<usize, errors::Error> array_statement(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref locals::Table table, ref functions::Table signatures, usize index, usize at, u8 terminator, u8 result_type, usize expr_depth, usize structure, ref mut loops::State loop_state,usize deadline,ref mut usize fuel) {
     // For headers remain scalar-only; never use an array binding as a
     // scalar register in the header/post validation paths.
     if (result_type == 0) { return .err(errors::make(3, at)); }
@@ -1605,7 +1618,7 @@ fn Result<usize, errors::Error> array_statement(ref u8[] source, ref mut lexer::
         return array_copy_statement(source,s,p,ref mut names,signatures,index,at,id,terminator,result_type,
             expr_depth,structure,loop_state,place);
     }
-    return array_write_statement(source,s,p,table,signatures,index,at,id,terminator,result_type,expr_depth,structure,loop_state);
+    return array_write_statement(source,s,p,table,signatures,index,at,id,terminator,result_type,expr_depth,structure,loop_state,deadline,fuel);
 }
 
 // Field calls publish only an anonymous returned root. Snapshot it and release
@@ -1787,11 +1800,11 @@ fn Result<usize, errors::Error> slice_initializer(ref u8[] source, ref mut lexer
 // Keep index/value expression scratch off the recursive scalar statement path.
 fn Result<usize,errors::Error> slice_write_statement(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
-    usize index,usize at,u8 terminator,u8 result_type,usize depth,usize structure,ref mut loops::State loop_state) {
+    usize index,usize at,u8 terminator,u8 result_type,usize depth,usize structure,ref mut loops::State loop_state,usize deadline,ref mut usize fuel) {
     let usize site=table.registers[index]-160;
     if(result_type==0 || !ir::exclusive(p,site) || s.kind!=91) { return .err(errors::make(3,at)); }
     let usize open=lexer::next(source,s)?;
-    let usize subscript=expression(source,s,p,table,signatures,1,depth+1,12,result_type,structure,loop_state)?;
+    let usize subscript=assignment_operand(source,s,p,table,signatures,depth+1,12,result_type,structure,loop_state,deadline,fuel)?;
     if(p.types[subscript]!=12) { return .err(errors::make(3,at)); }
     let usize close=lexer::punctuation(source,s,93)?;
     if(!lexer::assignment(s.kind)){return .err(errors::make(2,s.begin));}
@@ -1802,7 +1815,7 @@ fn Result<usize,errors::Error> slice_write_statement(ref u8[] source,ref mut lex
     var locals::Table names=locals::snapshot(table);
     let usize place=places::slice(p,ref mut names,site,subscript,at)?;
     let usize old=if(operation==0){128}else{slice_places::read(p,place,site,operation_at)?};
-    var usize value=expression(source,s,p,ref names,signatures,1,depth,element,result_type,structure,loop_state)?;
+    var usize value=assignment_operand(source,s,p,ref names,signatures,depth,element,result_type,structure,loop_state,deadline,fuel)?;
     if(p.types[value]!=element) { return .err(errors::make(3,at)); }
     let usize end=lexer::punctuation(source,s,terminator)?;
     if(operation!=0){value=ir::emit(p,operation,old,value,operation_at)?;}
@@ -2096,7 +2109,7 @@ fn Result<usize,errors::Error> record_value_assignment(ref u8[] source,ref mut l
 }
 fn Result<usize, errors::Error> record_write_statement(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p,
     ref locals::Table table, ref functions::Table signatures, usize index, usize at, u8 terminator,
-    u8 result_type, usize expr_depth, usize structure, ref mut loops::State loop_state) {
+    u8 result_type, usize expr_depth, usize structure, ref mut loops::State loop_state,usize deadline,ref mut usize fuel) {
     if (result_type == 0 || terminator != 59) { return .err(errors::make(3, at)); }
     let usize id = table.registers[index] - 144;
     let usize record = p.records.records[id] as usize;
@@ -2113,7 +2126,7 @@ fn Result<usize, errors::Error> record_write_statement(ref u8[] source, ref mut 
     var locals::Table names=locals::snapshot(table);
     let usize place=places::record(p,ref mut names,id,leaf.ordinal,at)?;
     let usize old=if(operation==0){128}else{record_places::read(p,place,id,leaf.ordinal,operation_at)?};
-    var usize value = expression(source,s,p,ref names,signatures,1,expr_depth,tag,result_type,structure,loop_state)?;
+    var usize value = assignment_operand(source,s,p,ref names,signatures,expr_depth,tag,result_type,structure,loop_state,deadline,fuel)?;
     if (p.types[value] != tag) { return .err(errors::make(3, at)); }
     let usize end = lexer::punctuation(source,s,59)?;
     if(operation!=0){value=ir::emit(p,operation,old,value,operation_at)?;}
@@ -2143,21 +2156,21 @@ fn Result<usize,errors::Error> grouped_assignment(ref u8[] source,ref mut lexer:
         if(leaf.tag==0){if(s.kind!=61){return .err(errors::make(3,s.begin));}
             let usize equals=lexer::next(source,s)?;
             let usize assigned=record_value_assignment(source,s,p,table,signatures,site,leaf,at,result_type,depth,structure,loop_state)?;return .ok(index);}
-        return grouped_place_write(source,s,p,table,signatures,index,at,2,site,leaf.ordinal,leaf.tag,at,terminator,result_type,depth,structure,loop_state);
+        return grouped_place_write(source,s,p,table,signatures,index,at,2,site,leaf.ordinal,leaf.tag,at,terminator,result_type,depth,structure,loop_state,deadline,fuel);
     }
     let bool array=arrays::binding(table,index);let bool slice=slices::binding(table,index);
-    if(array && plan.count==0){return array_statement(source,s,p,table,signatures,index,at,terminator,result_type,depth,structure,loop_state);}
+    if(array && plan.count==0){return array_statement(source,s,p,table,signatures,index,at,terminator,result_type,depth,structure,loop_state,deadline,fuel);}
     if(array || slice){
         if(result_type==0 || plan.count!=1 || plan.kinds[0]!=2){return .err(errors::make(3,at));}
         let usize site=table.registers[index]-if(array){128}else{160};
         if((array && slices::borrowed(table,p,site)) || (slice && !ir::exclusive(p,site))){return .err(errors::make(3,at));}
         var lexer::State operand=lexer::snapshot(ref plan.operands[0]);
-        let usize selected=expression(source,ref mut operand,p,table,signatures,1,depth+1,12,result_type,structure,loop_state)?;
+        let usize selected=assignment_operand(source,ref mut operand,p,table,signatures,depth+1,12,result_type,structure,loop_state,deadline,fuel)?;
         if(p.types[selected]!=12){return .err(errors::make(3,at));}
         if(operand.kind!=93 || operand.begin!=plan.ends[0]){return .err(errors::make(2,operand.begin));}
         let u8 tag=if(array){p.arrays.elements[site]}else{ir::slice_element(p,site,at)?};
         return grouped_place_write(source,s,p,table,signatures,index,at,if(array){0}else{1},site,selected,tag,
-            if(array){plan.begins[0]}else{at},terminator,result_type,depth,structure,loop_state);
+            if(array){plan.begins[0]}else{at},terminator,result_type,depth,structure,loop_state,deadline,fuel);
     }
     if(plan.count!=0){return .err(errors::make(3,at));}
     return scalar_assignment(source,s,p,table,signatures,index,at,terminator,result_type,depth,structure,loop_state,deadline,fuel);
@@ -2165,7 +2178,7 @@ fn Result<usize,errors::Error> grouped_assignment(ref u8[] source,ref mut lexer:
 fn Result<usize,errors::Error> grouped_place_write(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
     usize index,usize at,u8 kind,usize site,usize selected,u8 tag,usize select_at,
-    u8 terminator,u8 result_type,usize depth,usize structure,ref mut loops::State loop_state){
+    u8 terminator,u8 result_type,usize depth,usize structure,ref mut loops::State loop_state,usize deadline,ref mut usize fuel){
     let usize operation_at=s.begin;let u8 operation=places::compound(s.kind);
     if(operation!=0 && !types::integer(tag)){return .err(errors::make(3,operation_at));}
     let usize equals=lexer::next(source,s)?;var locals::Table names=locals::snapshot(table);
@@ -2174,7 +2187,7 @@ fn Result<usize,errors::Error> grouped_place_write(ref u8[] source,ref mut lexer
         else{places::select(p,ref mut names,site,selected,select_at)?};
     let usize old=if(operation==0){128}else if(kind==2){record_places::read(p,place,site,selected,operation_at)?}
         else if(kind==1){slice_places::read(p,place,site,operation_at)?}else{ir::place_read(p,place,site,operation_at)?};
-    var usize value=expression(source,s,p,ref names,signatures,1,depth,tag,result_type,structure,loop_state)?;
+    var usize value=assignment_operand(source,s,p,ref names,signatures,depth,tag,result_type,structure,loop_state,deadline,fuel)?;
     if(p.types[value]!=tag){return .err(errors::make(3,at));}
     let usize end=lexer::punctuation(source,s,terminator)?;
     if(operation!=0){value=ir::emit(p,operation,old,value,operation_at)?;}
@@ -2198,13 +2211,13 @@ fn Result<usize, errors::Error> statement(ref u8[] source, ref mut lexer::State 
     if (index == 64 || !table.mutable[index]) { return .err(errors::make(3, at)); }
     let usize target = lexer::next(source, s)?;
     if (record_values::binding(table, index)) {
-        return record_write_statement(source,s,p,table,signatures,index,at,terminator,result_type,expr_depth,structure,loop_state);
+        return record_write_statement(source,s,p,table,signatures,index,at,terminator,result_type,expr_depth,structure,loop_state,deadline,fuel);
     }
     if (arrays::binding(table, index)) {
-        return array_statement(source,s,p,table,signatures,index,at,terminator,result_type,expr_depth,structure,loop_state);
+        return array_statement(source,s,p,table,signatures,index,at,terminator,result_type,expr_depth,structure,loop_state,deadline,fuel);
     }
     if (slices::binding(table,index)) {
-        return slice_write_statement(source,s,p,table,signatures,index,at,terminator,result_type,expr_depth,structure,loop_state);
+        return slice_write_statement(source,s,p,table,signatures,index,at,terminator,result_type,expr_depth,structure,loop_state,deadline,fuel);
     }
     return scalar_assignment(source,s,p,table,signatures,index,at,terminator,result_type,expr_depth,structure,loop_state,deadline,fuel);
 }
@@ -2231,12 +2244,7 @@ fn Result<usize,errors::Error> scalar_assignment(ref u8[] source,ref mut lexer::
     if(operation!=0 && !types::integer(target_type)){return .err(errors::make(3,operation_at));}
     let usize equals=lexer::next(source,s)?;
     let usize old=if(operation==0){128}else{ir::emit(p,17,slot,0,operation_at)?};
-    var usize value = if(deadline==0 && *fuel==metadata_budget::unlimited()){
-        expression(source,s,p,table,signatures,1,expr_depth,target_type,result_type,structure,loop_state)?
-    }else{
-        expression_metered(source,s,p,table,signatures,1,expr_depth,target_type,result_type,structure,loop_state,deadline,fuel)?
-    };
-    if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
+    var usize value=assignment_operand(source,s,p,table,signatures,expr_depth,target_type,result_type,structure,loop_state,deadline,fuel)?;
     if (p.types[value] != target_type) { return .err(errors::make(3, at)); }
     let usize end_statement = lexer::punctuation(source, s, terminator)?;
     if(operation!=0){value=ir::emit(p,operation,old,value,operation_at)?;}
