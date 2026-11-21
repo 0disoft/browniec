@@ -4,6 +4,7 @@ import errors as errors;
 import cells as cells;
 import literal_source as literals;
 import lexer_work as staged;
+import metadata_budget as budget;
 
 // 0 EOF, 1 integer, 2 identifier, 3 byte literal, 4 text literal.
 // Literal spans retain raw spelling; decoded storage belongs to the compiler.
@@ -211,6 +212,14 @@ pub fn Result<usize, errors::Error> next_raw(ref u8[] source, ref mut State s) {
 // Preserve the raw general scanner's historical behavior beyond this profile.
 pub fn Result<usize, errors::Error> next(ref u8[] source, ref mut State s){
     if(source.len>4096){return next_raw(source,s);}return staged::next(source,s);
+}
+
+pub fn Result<usize,errors::Error> next_metered(ref u8[] source,ref mut State s,usize deadline,ref mut usize fuel){
+    if(source.len>4096){
+        discard budget::visit(fuel,deadline,s.begin)?;
+        return next_raw(source,s);
+    }
+    return staged::next_metered(source,s,deadline,fuel);
 }
 
 pub fn Result<usize, errors::Error> word(ref u8[] source, ref mut State s, ref u8[] expected) {

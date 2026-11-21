@@ -1,6 +1,5 @@
-- Latest runtime checkpoint (2026-11-22): [Aggregate call argument preparation Fuel](docs/engineering/restricted-worker.md#aggregate-call-argument-preparation-fuel)
-  extends the assignment call balance to record constructors, array literals
-  and computed slice endpoints.
+- Latest runtime checkpoint (2026-11-22): [Existing-owner argument Fuel](docs/engineering/restricted-worker.md#existing-owner-argument-fuel)
+  meters local and token scans and mutable aggregate snapshots in captured calls.
 
 # Brownie C agent guidance
 

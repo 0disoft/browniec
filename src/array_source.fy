@@ -1,5 +1,6 @@
 module array_source;
 import aggregate_copy_source_work as copies;
+import metadata_budget as budget;
 
 import lexer as lexer;
 import locals as locals;
@@ -138,6 +139,11 @@ pub fn Result<usize,errors::Error> release_at(ref locals::Table table,ref mut ir
 }
 
 pub fn Result<usize,errors::Error> copy(ref mut ir::Program p,usize function,usize source,u8 tag,usize length,bool mutable,usize offset){
+    var usize fuel=budget::unlimited();
+    return copy_metered(p,function,source,tag,length,mutable,offset,0,ref mut fuel);
+}
+pub fn Result<usize,errors::Error> copy_metered(ref mut ir::Program p,usize function,usize source,
+    u8 tag,usize length,bool mutable,usize offset,usize deadline,ref mut usize fuel){
     var copies::State w=copies::begin(5,source,0,0,0,function,mutable,false,offset,offset);w.element=tag;w.length=length;
-    return copies::clone(p,ref mut w);
+    return copies::clone_metered(p,ref mut w,deadline,fuel);
 }

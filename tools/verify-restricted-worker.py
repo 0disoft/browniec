@@ -310,7 +310,7 @@ def verify_configured_project(run, need, image, folder, env):
                           b'let Outer q=p;p.child=(q).child;'
                           b'return p.child.value+p.extra;}')
     # Grouped destination, plain destination and aggregate source paths.
-    record_assignment_fuel = 9688554 + 274
+    record_assignment_fuel = 9688554 + 274 + 10
     policy['compile'] = dict(compile_defaults, source_bytes=4096, fuel=record_assignment_fuel - 1)
     check(3, 'compile_limit')
     policy['compile']['fuel'] = record_assignment_fuel
@@ -326,7 +326,7 @@ def verify_configured_project(run, need, image, folder, env):
                           b'var Pair p=Pair{.value=0};p=pair(a,4+2);'
                           b'return a[0]+p.value;}')
     # Captured CALL and scalar argument advances share the compile balance.
-    aggregate_call_fuel = 12055640 + 224
+    aggregate_call_fuel = 12055640 + 224 + 13
     policy['compile'] = dict(compile_defaults, source_bytes=4096, fuel=aggregate_call_fuel - 1)
     check(3, 'compile_limit')
     policy['compile']['fuel'] = aggregate_call_fuel
@@ -341,10 +341,25 @@ def verify_configured_project(run, need, image, folder, env):
                           b'out=gather(Box{.value=4+6},[3+5],[7+4;2],ref input[0+0..1+0]);'
                           b'return out[0];}')
     # Constructor, array literal and slice endpoint preparation use the caller's balance.
-    aggregate_actual_fuel = 11138028 + 344
+    aggregate_actual_fuel = 11138028 + 344 + 8
     policy['compile'] = dict(compile_defaults, source_bytes=4096, fuel=aggregate_actual_fuel - 1)
     check(3, 'compile_limit')
     policy['compile']['fuel'] = aggregate_actual_fuel
+    check()
+    policy['compile'] = compile_defaults
+    math_file.write_bytes(original_source)
+
+    math_file.write_bytes(b'module util::math;struct Box{i32 value;}'
+                          b'fn i32[1] sum(i32[1] base,i32[1] a,Box box){'
+                          b'return [base[0]+a[0]+box.value];}'
+                          b'pub fn i32 answer(){let base=[10];var a=[12];'
+                          b'var Box box=Box{.value=20};var out=[0];'
+                          b'out=sum(((base)),a,(box));return out[0];}')
+    # Grouped immutable lookup and mutable array and record snapshots.
+    owner_capture_fuel = 9819007 + 40
+    policy['compile'] = dict(compile_defaults, source_bytes=4096, fuel=owner_capture_fuel - 1)
+    check(3, 'compile_limit')
+    policy['compile']['fuel'] = owner_capture_fuel
     check()
     policy['compile'] = compile_defaults
     math_file.write_bytes(original_source)

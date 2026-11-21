@@ -8,6 +8,7 @@ import struct_value_source as values;
 import cells as cells;
 import std::num as num;
 import aggregate_copy_source_work as copies;
+import metadata_budget as budget;
 
 // Reserve formals before any body so forward and mutual calls have stable sites.
 // Sites stay ordered by formal position within each owning function. Binding
@@ -66,12 +67,17 @@ pub fn Result<usize,errors::Error> capture(ref u8[] source,ref mut lexer::State 
     return capture_id(p,names,id,record,at);
 }
 pub fn Result<usize,errors::Error> capture_id(ref mut ir::Program p,ref mut locals::Table names,usize source,usize record,usize at){
+    var usize fuel=budget::unlimited();
+    return capture_id_metered(p,names,source,record,at,0,ref mut fuel);
+}
+pub fn Result<usize,errors::Error> capture_id_metered(ref mut ir::Program p,ref mut locals::Table names,
+    usize source,usize record,usize at,usize deadline,ref mut usize fuel){
     if(source>=16 || source>=p.records.count || p.records.records[source] as usize!=record || p.record_functions[source] as usize!=names.function){return .err(errors::make(3,at));}
     var usize id=source;
     if(p.records.mutable[id]) {
         if(names.count>=64){return .err(errors::make(4,at));}
         var copies::State w=copies::begin(4,id,record,0,0,names.function,false,false,at,at);
-        let usize destination=copies::clone(p,ref mut w)?;
+        let usize destination=copies::clone_metered(p,ref mut w,deadline,fuel)?;
         let usize anonymous=locals::declare(names,at,at,144+destination,false)?;
         id=destination;
     }

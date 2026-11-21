@@ -8,6 +8,7 @@ import errors as errors;
 import array_source as arrays;
 import cells as cells;
 import argument_name_work as names_work;
+import metadata_budget as budget;
 import std::num as num;
 
 // Predeclare every parameter shape, including forward and mutually recursive
@@ -58,27 +59,32 @@ pub fn Result<usize,errors::Error> capture_raw(ref u8[] source,ref mut lexer::St
     return capture_id(p,names,id,element,length,at);
 }
 pub fn Result<usize,errors::Error> capture(ref u8[] source,ref mut lexer::State s,ref mut ir::Program p,
-    ref mut locals::Table names,u8 element,usize length) {
+    ref mut locals::Table names,u8 element,usize length,usize deadline,ref mut usize fuel) {
     let usize at=s.begin;
     if(s.kind!=2) {return .err(errors::make(3,at));}
-    let usize index=names_work::local(source,names,s.begin,s.end)?;
+    let usize index=names_work::local_metered(source,names,s.begin,s.end,deadline,fuel)?;
     if(!arrays::binding(names,index)) {return .err(errors::make(3,at));}
     let usize id=names.registers[index]-128;
     if(p.arrays.elements[id]!=element || p.arrays.lengths[id]!=length ||
         p.array_functions[id] as usize!=names.function) {return .err(errors::make(3,at));}
-    let usize next=lexer::next(source,s)?;
+    let usize next=lexer::next_metered(source,s,deadline,fuel)?;
     if(s.kind!=44 && s.kind!=41) {return .err(errors::make(3,s.begin));}
-    return capture_id(p,names,id,element,length,at);
+    return capture_id_metered(p,names,id,element,length,at,deadline,fuel);
 }
 // Grouping and bare names snapshot mutable sources at the same argument point.
 pub fn Result<usize,errors::Error> capture_id(ref mut ir::Program p,ref mut locals::Table names,
     usize source,u8 element,usize length,usize at){
+    var usize fuel=budget::unlimited();
+    return capture_id_metered(p,names,source,element,length,at,0,ref mut fuel);
+}
+pub fn Result<usize,errors::Error> capture_id_metered(ref mut ir::Program p,ref mut locals::Table names,
+    usize source,u8 element,usize length,usize at,usize deadline,ref mut usize fuel){
     if(source>=16 || source>=p.arrays.count || p.arrays.elements[source]!=element || p.arrays.lengths[source]!=length ||
         p.array_functions[source] as usize!=names.function){return .err(errors::make(3,at));}
     var usize id=source;
     if(p.arrays.mutable[id]) {
         if(names.count>=64) {return .err(errors::make(4,at));}
-        id=arrays::copy(p,names.function,id,element,length,false,at)?;
+        id=arrays::copy_metered(p,names.function,id,element,length,false,at,deadline,fuel)?;
         let usize anonymous=locals::declare(names,at,at,128+id,false)?;
     }
     return .ok(128+id);

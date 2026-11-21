@@ -50,7 +50,15 @@ pub fn Result<bool,errors::Error> advance(ref mut ir::Program p,ref usize[] inpu
 }
 // Clone adapters have no metadata request or expression child. No heap scratch.
 pub fn Result<usize,errors::Error> clone(ref mut ir::Program p,ref mut State w){
+    var usize fuel=budget::unlimited();
+    return clone_metered(p,w,0,ref mut fuel);
+}
+pub fn Result<usize,errors::Error> clone_metered(ref mut ir::Program p,ref mut State w,usize deadline,ref mut usize fuel){
     let usize[1] input=[0];var usize[1] slots=[0];var budget::State meter=budget::empty();
-    while(!w.done){let usize allowance=budget::reset(ref mut meter,w.at)?;let bool done=advance(p,ref input,ref mut slots,w,ref mut meter)?;}
+    while(!w.done){
+        discard budget::visit(fuel,deadline,w.at)?;
+        let usize allowance=budget::reset(ref mut meter,w.at)?;
+        let bool done=advance(p,ref input,ref mut slots,w,ref mut meter)?;
+    }
     return prepared(w);
 }

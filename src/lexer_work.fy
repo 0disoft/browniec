@@ -145,9 +145,13 @@ pub fn Result<usize,errors::Error> next(ref u8[] source,ref mut raw::State targe
     return next_until(source,target,0);
 }
 pub fn Result<usize,errors::Error> next_until(ref u8[] source,ref mut raw::State target,usize deadline){
+    var usize fuel=budget::unlimited();
+    return next_metered(source,target,deadline,ref mut fuel);
+}
+pub fn Result<usize,errors::Error> next_metered(ref u8[] source,ref mut raw::State target,usize deadline,ref mut usize fuel){
     var State w=begin(*target);var budget::State meter=budget::empty();
     while(!w.done){
-        if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
+        discard budget::visit(fuel,deadline,target.begin)?;
         let usize allowance=budget::reset(ref mut meter,0)?;
         switch(advance(source,ref mut w,ref mut meter)){
             case .ok(_):{}

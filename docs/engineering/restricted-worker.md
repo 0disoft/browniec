@@ -1184,6 +1184,26 @@ Windows development and /O2 each passed 102 configured, 32 catalog, five
 managed project and four compile-stop cases. All 456 input hashes matched.
 Local receipt: `build/restricted-worker/20261121T233514619868Z/receipt.json`.
 
+### Existing-owner argument Fuel
+
+The immutable aggregate argument shortcut meters local lookup and token
+scanning, including grouped names. Mutable array and record snapshots debit
+each clone transition before declaring the anonymous capture. Constructor and
+grouped array operands also check the deadline and spend Fuel in the bounded
+local table lookup. The token continuation prices one unit per advance in
+its source profile. The legacy scanner for sources over 4096 bytes charges
+one unit at entry.
+
+The fixture passes a grouped immutable array and existing mutable array and
+record values to an array-returning assignment. It spends 40 additional
+units and returns 42 at 9,819,047 compile Fuel. At 9,819,046 it reports
+compile_limit without a result or output. Existing record assignment,
+aggregate call and aggregate actual fixtures spend 10, 13 and eight
+additional units, respectively.
+Windows development and /O2 each passed 104 configured, 32 catalog, five
+managed project and four compile-stop cases. All 456 input hashes matched.
+Local receipt: `build/restricted-worker/20261121T234437448177Z/receipt.json`.
+
 ## Windows verification
 
 Run `python -B tools/verify-restricted-worker.py`. The development and optimized

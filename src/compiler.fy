@@ -685,7 +685,7 @@ fn Result<record_expressions::Value,errors::Error> record_value_into(ref u8[] so
         return record_conditional_value(source,s,p,names,signatures,mutable,at,depth,result_type,structure,loop_state,destination,groups);
     }
     if(s.kind!=2 && s.kind!=5){return .err(errors::make(3,s.begin));}
-    let usize local=locals::find(source,names,s.begin,s.end);let usize target=functions::find(source,signatures,s.begin,s.end);
+    let usize local=argument_names::local_metered(source,names,s.begin,s.end,deadline,fuel)?;let usize target=functions::find(source,signatures,s.begin,s.end);
     var lexer::State look=lexer::snapshot(s);let usize next=lexer::next(source,ref mut look)?;
     var usize id=16;var bool owned=false;var usize record=32;var usize[16] slots=[0;16];
     if(look.kind==123){record=record_values::named(source,s,ref signatures.context)?;
@@ -875,7 +875,7 @@ fn Result<array_expressions::Value,errors::Error> array_value_into(ref u8[] sour
         id=array_literal_value_into(source,s,p,names,signatures,expected,length,mutable,at,depth+groups,result_type,structure,loop_state,destination,deadline,fuel)?;owned=true;
     }else{
         if(s.kind!=2 && s.kind!=5){return .err(errors::make(3,s.begin));}
-        let usize index=locals::find(source,names,s.begin,s.end);let usize target=functions::find(source,signatures,s.begin,s.end);
+        let usize index=argument_names::local_metered(source,names,s.begin,s.end,deadline,fuel)?;let usize target=functions::find(source,signatures,s.begin,s.end);
         var lexer::State look=lexer::snapshot(s);let usize next=lexer::next(source,ref mut look)?;
         if(look.kind==40){
             if(index!=64 || target>=signatures.count || signatures.return_lengths[target]==0){return .err(errors::make(3,s.begin));}
@@ -1061,7 +1061,7 @@ fn Result<usize,errors::Error> record_argument(ref u8[] source,ref mut lexer::St
     let record_expressions::Value value=record_value_into(source,s,p,names,signatures,false,at,depth,result_type,structure,loop_state,16,deadline,fuel)?;
     if(value.tag!=0 || value.record!=record || (s.kind!=44 && s.kind!=41)){return .err(errors::make(3,at));}
     if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
-    if(record_expressions::whole(p,ref value) && !value.owned){return record_calls::capture_id(p,names,value.id,record,at);}
+    if(record_expressions::whole(p,ref value) && !value.owned){return record_calls::capture_id_metered(p,names,value.id,record,at,deadline,fuel);}
     let usize id=record_expressions::materialize(p,names.function,ref value,false,at)?;
     let usize capture=locals::declare(names,at,at,144+id,false)?;return .ok(144+id);
 }
@@ -1072,7 +1072,7 @@ fn Result<usize,errors::Error> array_argument(ref u8[] source,ref mut lexer::Sta
     if(s.kind==40 || arm_syntax::operand_kind(source,s)!=0){let usize at=s.begin;
         let array_expressions::Value value=array_value_into(source,s,p,names,signatures,element,length,false,at,depth,result_type,structure,loop_state,16,deadline,fuel)?;
         if(s.kind!=44 && s.kind!=41){return .err(errors::make(3,s.begin));}
-        if(!value.owned){return array_calls::capture_id(p,names,value.id,element,length,at);}
+        if(!value.owned){return array_calls::capture_id_metered(p,names,value.id,element,length,at,deadline,fuel);}
         let usize captured=locals::declare(names,at,at,128+value.id,false)?;return .ok(128+value.id);
     }
     if(s.kind==91) {
@@ -1092,7 +1092,7 @@ fn Result<usize,errors::Error> array_argument(ref u8[] source,ref mut lexer::Sta
         let usize next=lexer::next(source,ref mut look)?;
         if(look.kind==40) {
             let usize at=s.begin;
-            if(argument_names::local(source,names,s.begin,s.end)?!=64) {return .err(errors::make(3,at));}
+            if(argument_names::local_metered(source,names,s.begin,s.end,deadline,fuel)?!=64) {return .err(errors::make(3,at));}
             let usize target=argument_names::target(source,signatures,s.begin,s.end)?;
             let usize temporary=array_results::destination(signatures,target,element,length,false,p,names.function,at)?;
             let usize name=lexer::next(source,s)?;
@@ -1102,7 +1102,7 @@ fn Result<usize,errors::Error> array_argument(ref u8[] source,ref mut lexer::Sta
             return .ok(128+temporary);
         }
     }
-    return array_calls::capture(source,s,p,names,element,length);
+    return array_calls::capture(source,s,p,names,element,length,deadline,fuel);
 }
 // A fresh literal or owned CALL result becomes a hidden owner before endpoints.
 // Publishing the owner first makes every lexical exit close the view before DROP.
@@ -1262,7 +1262,7 @@ fn Result<usize,errors::Error> captured_call(ref u8[] source,ref mut lexer::Stat
         let u8 request=w.request;let usize parameter=w.parameter;let usize record=w.record;let usize length=w.length;let u8 tag=w.tag;var usize value=256;
         if(request==1){value=assignment_operand(source,s,p,ref w.names,signatures,depth+1,w.tag,result_type,structure,flow,deadline,fuel)?;}
         else if(request==2){var bool prefix=w.prefix;
-            if(prefix && !w.sliced){value=call_prefix::stable(source,s,p,ref w.names,w.tag,w.length,w.record,depth)?;if(value==256){prefix=false;}}
+            if(prefix && !w.sliced){value=call_prefix::stable_metered(source,s,p,ref w.names,w.tag,w.length,w.record,depth,deadline,fuel)?;if(value==256){prefix=false;}}
             if(value==256){if(w.sliced){value=if(reference_calls::parameter(signatures,w.parameter)){
                     reference_argument(source,s,p,ref mut w.names,signatures,parameter,depth,result_type,structure,flow,deadline,fuel)?
                 }else{slice_argument(source,s,p,ref mut w.names,signatures,parameter,depth,result_type,structure,flow,deadline,fuel)?};}

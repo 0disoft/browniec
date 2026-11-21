@@ -20,15 +20,26 @@ pub fn Result<bool,errors::Error> advance(ref u8[] source,ref usize[] starts,ref
     if(w.compared==w.width){w.result=w.row;w.done=true;return .ok(true);}return .ok(false);
 }
 fn Result<usize,errors::Error> drain(ref u8[] source,ref usize[] starts,ref usize[] ends,usize count,
-    usize a,usize b,usize absent){var State w=begin(a,b,absent);var budget::State meter=budget::empty();
-    while(!w.done){let usize allowance=budget::reset(ref mut meter,a)?;let bool done=advance(source,starts,ends,count,ref mut w,ref mut meter)?;}
+    usize a,usize b,usize absent,usize deadline,ref mut usize fuel){
+    var State w=begin(a,b,absent);var budget::State meter=budget::empty();
+    while(!w.done){
+        discard budget::visit(fuel,deadline,a)?;
+        let usize allowance=budget::reset(ref mut meter,a)?;
+        let bool done=advance(source,starts,ends,count,ref mut w,ref mut meter)?;
+    }
     return .ok(w.result);
 }
 pub fn Result<usize,errors::Error> local(ref u8[] source,ref locals::Table names,usize a,usize b){
-    return drain(source,ref names.begins,ref names.ends,names.count,a,b,64);
+    var usize fuel=budget::unlimited();
+    return local_metered(source,names,a,b,0,ref mut fuel);
+}
+pub fn Result<usize,errors::Error> local_metered(ref u8[] source,ref locals::Table names,
+    usize a,usize b,usize deadline,ref mut usize fuel){
+    return drain(source,ref names.begins,ref names.ends,names.count,a,b,64,deadline,fuel);
 }
 pub fn Result<usize,errors::Error> target(ref u8[] source,ref functions::Table t,usize a,usize b){
     if(t.count>16 || a>b || b>source.len){return .ok(16);}
     if(t.context.modules!=0){let usize id=context::lookup(source,ref t.context,a,b,false);return .ok(if(id<t.count){id}else{16});}
-    return drain(source,ref t.begins,ref t.ends,t.count,a,b,16);
+    var usize fuel=budget::unlimited();
+    return drain(source,ref t.begins,ref t.ends,t.count,a,b,16,0,ref mut fuel);
 }
