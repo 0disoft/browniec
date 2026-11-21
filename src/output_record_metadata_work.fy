@@ -1,12 +1,13 @@
 module output_record_metadata_work;
 
 import errors as errors;
+import runtime_clock as clock;
 import metadata_budget as budget;
 import struct_layout as layouts;
 import struct_layout_work as catalog_work;
 import struct_meta as metadata;
 
-// Output-only preparation for entry-owned record metadata. The caller pins the
+// Bounded preparation for entry-owned record metadata. The caller pins the
 // exact immutable Catalog until completion. Layout validation/planning reuses
 // the independently bounded catalog kernel; this module only flattens the
 // proved layout into the existing sixteen binding rows in declaration order.
@@ -129,4 +130,19 @@ pub fn Result<bool,errors::Error> advance(ref mut State w,ref metadata::Catalog 
 pub fn Result<metadata::Prepared,errors::Error> prepared(ref State w){
     if(w.active || !w.done || w.phase!=2){return .err(invalid());}
     return .ok(w.result);
+}
+
+// Timed ordinary verification drains the same catalog and binding stages.
+pub fn Result<metadata::Prepared,errors::Error> prepare_until(ref metadata::Catalog catalog,usize deadline){
+    if(deadline==0){return metadata::prepare(catalog);}
+    if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
+    var State w=empty();var budget::State allowance=budget::empty();
+    let usize started=begin(ref mut w,catalog)?;
+    while(!w.done){
+        if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
+        let usize ready=budget::reset(ref mut allowance,0)?;
+        let bool done=advance(ref mut w,catalog,ref mut allowance)?;
+    }
+    if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
+    return prepared(ref w);
 }

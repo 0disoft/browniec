@@ -1,7 +1,7 @@
-- Latest runtime checkpoint (2026-11-21): [Selected-place lifetime deadlines](docs/engineering/runtime-engine-compile-memory.md#configured-compile-deadlines)
-  check the same absolute deadline around the presence scan and before each
-  instruction in the ordinary lifetime proof. Windows development and /O2
-  passed with zero live SDK allocations. Locked /O2 CLI and result 77 passed.
+- Latest runtime checkpoint (2026-11-21): [Record metadata deadlines](docs/engineering/runtime-engine-compile-memory.md#configured-compile-deadlines)
+  check the Engine deadline between record layout and binding traversal stages
+  during ordinary verification. Windows development and /O2 passed with zero
+  live SDK allocations. Locked /O2 CLI and result 77 passed.
 
 # Brownie C agent guidance
 

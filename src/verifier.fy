@@ -6,6 +6,7 @@ import ir as ir;
 import types as types;
 import array_meta as arrays;
 import struct_meta as records;
+import output_record_metadata_work as record_work;
 import struct_verifier as struct_verifier;
 import array_verifier as array_verifier;
 import array_list_ir as lists;
@@ -419,7 +420,7 @@ fn Result<reborrows::Sites,errors::Error> validate_values_mode(ref ir::Program p
     if (!arrays::valid(ref p.arrays)) { return .err(errors::absent(5,0)); }
     if(host_profile){if(p.list_used>4096){return .err(errors::absent(5,0));}}
     else{let usize list_metadata=lists::metadata(p)?;}
-    let records::Prepared shapes = records::prepare(ref p.records)?;
+    let records::Prepared shapes = record_work::prepare_until(ref p.records,deadline)?;
     var usize id = 0;
     while (id < 16) {
         if ((id < p.arrays.count && p.array_functions[id] as usize >= p.function_count) ||

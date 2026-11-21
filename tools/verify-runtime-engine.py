@@ -81,6 +81,15 @@ def source_copy(path):
     if path == ROOT / 'src/output_static_sites_work.fy':
         text = path.read_text(encoding='utf-8')
         return path.name, ordinary_proof_probe(text, '    if(site==16){\n        w.round+=1;', 6)
+    if path == ROOT / 'src/output_record_metadata_work.fy':
+        text = path.read_text(encoding='utf-8')
+        stage = '        let bool done=advance(ref mut w,catalog,ref mut allowance)?;'
+        need(text.count(stage) == 1, 'Timed ordinary record metadata probe anchor changed')
+        text = text.replace(stage, '        let u8 record_phase=if(w.phase==0){8}else{9};\n' + stage)
+        text = text.replace(stage, stage + '\n        unsafe{bc_runtime_engine_test_ordinary_proof_pc(record_phase)};')
+        declaration = 'unsafe extern C fn void bc_runtime_engine_test_ordinary_proof_pc(u8 phase);\n'
+        signature = 'pub fn Result<metadata::Prepared,errors::Error> prepare_until('
+        return path.name, text.replace(signature, declaration + signature, 1).encode('utf-8')
     if path == ROOT / 'src/place_ir.fy':
         text = path.read_text(encoding='utf-8')
         return path.name, ordinary_proof_probe(text, '        if (!seen[pc]) { pc += 1; continue; }', 7)
