@@ -402,7 +402,9 @@ validates delimiter pairing and enforces its own grammar limits.
 [aggregate expression depth](#aggregate-expression-depth) apply during
 lowering. The policy also covers [nominal record depth](#nominal-record-depth),
 [signature type depth](#signature-type-depth), and [local type depth](#local-type-depth).
-Type accounting beyond declared records remains open.
+[Scalar and nominal type quota](#scalar-and-nominal-type-quota) also
+checks the image before publication. Aggregate shapes and view identities
+still need type accounting.
 
 The nesting follow-up passed twenty configured project cases per Windows
 profile. A nested block and parenthesized value returned 42 at depth two,
@@ -818,6 +820,31 @@ its output at two, and fails without either at one. Each profile passed
 67 configured, 25 catalog and five managed project cases plus nine native
 host transport cases. All 455 receipt input hashes matched.
 Local receipt: `build/restricted-worker/20261121T202938733353Z/receipt.json`.
+
+### Scalar and nominal type quota
+
+The image admission check includes the distinct scalar and wrapper tags in
+registers and ordinary return metadata, the scalar leaves of those wrappers
+and of declared record fields, and each nominal record declaration. A
+catalog Result counts its exact success type and its u32 error type. Void
+and opaque pair markers are metadata. Reference return metadata suppresses
+the scalar placeholder in the underlying IR.
+
+For this subset the maximum is 52 identities, so policies at or above that
+bound skip the scan. Smaller policies visit at most 128 register tags, 16
+returns and 512 record fields, using a fixed 143-entry seen table and no
+heap allocation. The check does not add a compile Fuel debit. Type accounting
+for arrays, views and implicit host signature types remains open.
+
+Both Windows profiles accept one type across the original two modules.
+Two records sharing an i32 field require three identities. An ordinary
+`Result<i32,bool>` also requires three, including both payload types. Both
+fixtures reject at two, a quota at which the preceding /O2 image returned
+42. The saved catalog Result fixture uses four identities including the
+branch predicate and rejects at three without a result or sealed output.
+Each profile passed 71 configured, 26 catalog and five managed project
+cases plus nine native host transport cases. All 456 receipt input hashes
+matched. Local receipt: `build/restricted-worker/20261121T204100875891Z/receipt.json`.
 
 ## Windows verification
 

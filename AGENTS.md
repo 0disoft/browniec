@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-22): [Local type depth](docs/engineering/restricted-worker.md#local-type-depth)
-  applies the policy before lowering an explicitly typed local initializer.
-  Windows development and /O2 verify depth two and depth one in both worker routes.
+- Latest runtime checkpoint (2026-11-22): [Scalar and nominal type quota](docs/engineering/restricted-worker.md#scalar-and-nominal-type-quota)
+  counts distinct scalar, wrapper and nominal record identities. Windows
+  development and /O2 verify exact and one-less type limits in both worker routes.
 
 # Brownie C agent guidance
 

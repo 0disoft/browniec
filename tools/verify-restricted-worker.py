@@ -150,13 +150,26 @@ def verify_configured_project(run, need, image, folder, env):
     math_file.write_text(
         'module util::math;\nstruct One { i32 value; }\nstruct Two { i32 value; }\n'
         'pub fn i32 answer(){var i32 n=40; n+=2; return n;}\n', encoding='utf-8')
-    policy['compile'].update(source_bytes=4096, types=2)
+    policy['compile'].update(source_bytes=4096, types=3)
     check()
+    policy['compile']['types'] = 2
+    check(3, 'compile_limit')
     policy['compile']['types'] = 1
     check(3, 'compile_limit')
-    policy['compile']['types'] = 2
+    policy['compile']['types'] = 3
     policy['compile']['registers_per_function'] = 1
     check(3, 'compile_limit')
+    policy['compile'] = compile_defaults
+    math_file.write_bytes(original_source)
+
+    policy['compile'] = dict(compile_defaults, types=1)
+    check()
+    math_file.write_bytes(b'module util::math;pub fn i32 answer(){'
+                          b'let Result<i32,bool> r=.ok(42);return 42;}')
+    policy['compile'] = dict(compile_defaults, source_bytes=4096, types=3)
+    check()
+    policy['compile']['types'] = 2
+    check(3, 'compile_limit', 'check')
     policy['compile'] = compile_defaults
     math_file.write_bytes(original_source)
 
@@ -369,7 +382,7 @@ def verify_configured_project(run, need, image, folder, env):
     config['entry']['function'] = manifest['entry']['function']
     config['grants'] = ['brownie.output.emit']
     check(4, 'unavailable')
-    return 67
+    return 71
 
 
 def verify_project_host(run, need, image, folder, env):
@@ -468,7 +481,12 @@ def verify_project_host(run, need, image, folder, env):
         b'let Result<i32,u32> reply=api::check(41);'
         b'let i32 a=switch(reply){case .ok(value):{value}case .err(_):{0}};'))
     policy['compile']['depth'] = 2
+    # The saved Result's branch test also materializes a bool register.
+    policy['compile']['types'] = 4
     check()
+    policy['compile']['types'] = 3
+    check(expected_exit=3, kind='compile_limit')
+    policy['compile']['types'] = 4096
     policy['compile']['depth'] = 1
     check(expected_exit=3, kind='compile_limit')
     source.write_bytes(original_source)
@@ -520,7 +538,7 @@ def verify_project_host(run, need, image, folder, env):
     check(expected_exit=3, kind='compile_limit', payload=payload)
     policy['compile']['depth'] = original_depth
     check(expected_exit=4, kind='unavailable')
-    return 25
+    return 26
 
 
 def main():

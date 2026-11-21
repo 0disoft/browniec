@@ -44,6 +44,7 @@ import compiler as compiler;
 import host_exchange as host;
 import host_program as host_program;
 import ir as ir;
+import compile_type_budget as compile_types;
 import module_source_work as source_work;
 import literal_collection_work as literal_work;
 import function_scan_work as signature_scan;
@@ -611,7 +612,7 @@ pub fn Result<usize,Error> compile_preview_host(ref mut Engine e,sources::Snapsh
     var ir::Program code=ir::empty();
     var usize fuel=modules::compile_fuel(ref index);
     discard lower_indexed_host(ref index,selected,ref imports,ref mut code,deadline,ref mut fuel)?;
-    discard check_compile_image(ref code,limits)?;
+    discard check_compile_image(ref code,b"",limits)?;
     if(clock::expired(deadline)){return .err(compile_timeout());}
     let host_program::SourceMap map=host_program::source_set(modules::snapshot(ref index));
     let host_program::Program verified=verify_preview_host(e,ref code,imports,module_name,function_name,map)?;
@@ -646,16 +647,17 @@ fn Result<usize,Error> lower_indexed_host(ref modules::Index index,usize selecte
 fn Result<usize,Error> retain_limited_host(ref mut Engine e,ref ir::Program code,host_catalog::Catalog imports,
     ref u32[] digest,ref run_config::RunConfig run,policy_limits::CompileLimits limits,
     usize deadline,host_program::SourceMap map,ref mut usize fuel){
-    discard check_compile_image(code,limits)?;
+    discard check_compile_image(code,b"",limits)?;
     return retain_verified_host(e,code,imports,digest,run,deadline,map,fuel);
 }
-fn Result<usize,Error> check_compile_image(ref ir::Program code,policy_limits::CompileLimits limits){
+fn Result<usize,Error> check_compile_image(ref ir::Program code,ref u8[] reference_returns,policy_limits::CompileLimits limits){
     if(code.count>limits.instructions || code.function_count>limits.functions){return .err(error(8));}
     var usize f=0;
     while(f<code.function_count){
         if(code.register_ends[f]-code.register_starts[f]>limits.registers_per_function){return .err(error(8));}
         f+=1;
     }
+    if(!compile_types::fits(code,reference_returns,limits.types)){return .err(error(8));}
     return .ok(code.count);
 }
 
@@ -2038,7 +2040,7 @@ fn u32 compile_output_inner(ref mut Meta m,ref mut vec::Vec<Program> v,ref mut v
             if(m.configured){
                 let policy_limits::CompileLimits limits=policy::compile_limits(vec::at<policy::Policy>(policies,0));
                 let ref compile_ir::Program image=output_programs::code(ref code);
-                if(!check_compile_image(ref image.body,limits).is_ok){return failed(m,8);}
+                if(!check_compile_image(ref image.body,ref image.results,limits).is_ok){return failed(m,8);}
             }
             publish_output_program(m,v,code,plan.bytes,empty_entry(),0,deadline)
         }
@@ -2063,7 +2065,7 @@ fn u32 compile_input_output_inner(ref mut Meta m,ref mut vec::Vec<Program> v,ref
             if(mode>=4){
                 let policy_limits::CompileLimits limits=policy::compile_limits(vec::at<policy::Policy>(policies,0));
                 let ref compile_ir::Program image=output_programs::code(ref code);
-                if(!check_compile_image(ref image.body,limits).is_ok){return failed(m,8);}
+                if(!check_compile_image(ref image.body,ref image.results,limits).is_ok){return failed(m,8);}
             }
             publish_output_program(m,v,code,plan.bytes,entry,if(mode>=4){mode-2}else{mode},deadline)
         }
