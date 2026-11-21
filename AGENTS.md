@@ -1,6 +1,7 @@
-- Latest runtime checkpoint (2026-11-21): [Input-only compile deadlines](docs/engineering/runtime-engine-compile-memory.md#configured-compile-deadlines)
-  propagate the Engine deadline through input-only source lowering and independent
-  proof. Windows development and /O2 passed with zero live SDK allocations.
+- Latest runtime checkpoint (2026-11-21): [Ordinary module lowering deadlines](docs/engineering/runtime-engine-compile-memory.md#configured-compile-deadlines)
+  carry the Engine deadline through both ordinary source-lowering routes and
+  check it before verifier admission. Windows development and /O2 passed with
+  zero live SDK allocations.
 
 # Brownie C agent guidance
 

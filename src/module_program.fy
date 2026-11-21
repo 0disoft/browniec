@@ -6,6 +6,7 @@ import compiler as compiler;
 import program_image as programs;
 import source_error as diagnostics;
 import errors as errors;
+import runtime_clock as clock;
 import ir as ir;
 import static_call_ir as candidate;
 import static_image as images;
@@ -21,11 +22,17 @@ pub fn Result<Program,diagnostics::Error> compile(entries::Entry selected,usize 
     var retention::Plan plan=retention::unlimited();return compile_with_retention(selected,image_limit,ref mut plan);
 }
 pub fn Result<Program,diagnostics::Error> compile_with_retention(entries::Entry selected,usize image_limit,ref mut retention::Plan plan){
+    return compile_with_retention_until(selected,image_limit,plan,0);
+}
+pub fn Result<Program,diagnostics::Error> compile_with_retention_until(entries::Entry selected,usize image_limit,
+    ref mut retention::Plan plan,usize deadline){
     var images::Builder builder=switch(images::builder(4096)){
         case .ok(v):{v}case .err(_):{return .err(diagnostics::absent(errors::make(5,0)));}
     };
     var candidate::Program code=candidate::Program{.body=ir::empty(),.parameters=[0;128],.results=[0;16],.origins=[0;16]};
-    let bool references=compiler::lower_modules(ref selected,ref mut builder,ref mut code)?;
+    let bool references=if(deadline==0){compiler::lower_modules(ref selected,ref mut builder,ref mut code)?}
+        else{compiler::lower_modules_until(ref selected,ref mut builder,ref mut code,false,deadline)?};
+    if(clock::expired(deadline)){return .err(diagnostics::absent(errors::absent(errors::deadline_kind(),0)));}
     if(references){return finish_references(ref selected,ref builder,ref code,image_limit,plan);}
     return finish_legacy(ref selected,ref code.body,plan);
 }

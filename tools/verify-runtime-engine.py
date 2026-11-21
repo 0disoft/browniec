@@ -101,11 +101,11 @@ def source_copy(path):
     if path == ROOT / 'src/function_scan_work.fy':
         text = path.read_text(encoding='utf-8')
         declaration = 'pub fn Result<raw::Table,errors::Error> scan_indexed_until('
-        begin = '    var State w=indexed(selected,true);var budget::State meter=budget::empty();'
+        begin = '    var State w=indexed(selected,returns);var budget::State meter=budget::empty();'
         step = '        let bool done=advance_indexed(source,scope,index,ref mut w,ref mut meter)?;'
-        need(text.count(declaration) == text.count(begin) == 1, 'Signature deadline probe anchors changed')
+        need(text.count(declaration) == 1, 'Signature deadline probe declaration changed')
         head, timed = text.split(declaration)
-        need(timed.count(step) == 1, 'Signature timed advance probe anchor changed')
+        need(timed.count(begin) == timed.count(step) == 1, 'Signature timed advance probe anchors changed')
         timed = timed.replace(begin, begin + '\n    unsafe{bc_runtime_engine_test_signature_begin()};', 1)
         timed = timed.replace(step, '        unsafe{bc_runtime_engine_test_signature_step()};\n' + step +
                               '\n        if(!w.parsing && w.row==1 && w.result.count==1){unsafe{bc_runtime_engine_test_signature_staged()};}', 1)

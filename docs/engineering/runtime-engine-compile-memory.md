@@ -116,27 +116,31 @@ Engine receipt: `build/runtime-engine/20261120T231632275851Z/receipt.json`.
 The native collector tested expired and future deadlines using the real OS
 clock in both profiles: `build/anchored-sources/20261120T231507642754Z/receipt.json`.
 
-Input-only, output-only and input-output compilation sample the same absolute deadline before
-each source-context advance. An advance copies up to 64 source bytes, packs
+All four module compile modes sample the same absolute deadline before each
+source-context advance. An advance copies up to 64 source bytes, packs
 one metadata row, checks one sealed name, or moves to the next phase. Expiry
 discards the incomplete context before signature or body lowering. The
-output-only syntax classifier uses the staged source-context and token scanners
-with a deadline check before each advance and before observing a complete token.
+ordinary and output-only syntax classifier uses the staged source-context and
+token scanners with a deadline check before each advance and before observing a
+complete token.
 Literal collection samples before every bounded advance and before assigning the
 finished candidate to the image Builder. An expired collection leaves the
 Builder untouched and returns the source-less deadline diagnostic. Indexed
 signature scans sample before each advance and before returning the complete
-Table. This covers the initial scan in all three modes and the reference
-signature rescan in output-only compilation. Advisory returned-slice origin
-inference samples before and after each function-body walk within its fixed
-point. This covers body preparation in all three modes and the post-body reference
-binding pass in output-only mode. Scoped record preparation checks before each
+Table. This covers the initial scan in all four modes and the reference
+signature rescan for retained ordinary and output-only compilation. Advisory
+returned-slice origin inference samples before and after each function-body
+walk within its fixed point. This covers preparation of returned-reference
+bodies and post-body reference binding in both retained ordinary and output-only
+compilation. Scoped record preparation checks before each
 declaration, field resolution or layout validation advance and again before
 returning the completed table. The compiler also checks before body
 preparation, before each function, and before
 each control advance or pending semantic child. A child already running returns
 to the next checkpoint before expiry is delivered. The compiler samples again
-after lowering and before freezing the literal image. The proof driver samples
+after lowering and before freezing the literal image or entering ordinary
+admission. The ordinary legacy and returned-reference verifiers still run
+synchronously. The staged input and output proof drivers sample
 once before each bounded proof advance. Input-only compilation uses its
 separate proof with the output gate closed and checks again before returning
 the completed proof. Expiry ends the compile with
@@ -219,6 +223,14 @@ was attempted. Each rejection restored the SDK heap and Program charge.
 The same input-only source compiled one tick before expiry with Program ID 1.
 Windows development and /O2 passed with zero live SDK allocations at exit.
 Local receipt: `build/runtime-engine/20261121T005147394912Z/receipt.json`.
+
+The Windows verifier expired ordinary module compilation during source-context
+collection, syntax classification, literal collection, signature scanning,
+both origin inference passes, record scanning and body lowering. The
+rejections restored the SDK heap and Program ledger. Both ordinary source
+profiles were retained one tick before expiry. Windows development and /O2
+passed with zero live SDK allocations at exit. Local receipt:
+`build/runtime-engine/20261121T010442458057Z/receipt.json`.
 
 Source lowering, work between checkpoints, and cleanup remain synchronous.
 Public Pending compilation, in-flight cancellation, and a latency bound for

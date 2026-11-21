@@ -3167,10 +3167,10 @@ fn Result<usize,errors::Error> lower_prepared(ref u8[] source,bool origin_analys
     }
     return finish_lowering(p,signatures,returns,active);
 }
-fn Result<usize,errors::Error> lower_prepared_returns_until(ref u8[] source,ref literal_collection::Index literals,
+fn Result<usize,errors::Error> lower_prepared_until(ref u8[] source,bool references,ref literal_collection::Index literals,
     ref mut functions::Table signatures,ref mut ir::Program p,ref mut usize active,usize deadline){
     if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
-    let usize ready=prepare_lowering(source,false,true,true,literals,signatures,p,0,deadline)?;
+    let usize ready=prepare_lowering(source,false,references,references,literals,signatures,p,0,deadline)?;
     var usize f=0;
     while(f<signatures.count){
         if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
@@ -3178,7 +3178,7 @@ fn Result<usize,errors::Error> lower_prepared_returns_until(ref u8[] source,ref 
         let usize emitted=lower_body_until(source,signatures,f,p,deadline)?;
         f+=1;
     }
-    return finish_lowering(p,signatures,true,active);
+    return finish_lowering(p,signatures,references,active);
 }
 
 fn Result<usize,errors::Error> prepare_lowering(ref u8[] source,bool origin_analysis,bool references,bool returns,
@@ -3511,24 +3511,31 @@ pub fn Result<usize,source_errors::Error> lower_output_modules(ref module_entrie
 }
 pub fn Result<usize,source_errors::Error> lower_output_modules_until(ref module_entries::Entry selected,
     ref mut static_images::Builder builder,ref mut reference_ir::Program code,usize deadline){
+    let bool references=lower_modules_until(selected,builder,code,true,deadline)?;
+    return .ok(code.body.count);
+}
+pub fn Result<bool,source_errors::Error> lower_modules_until(ref module_entries::Entry selected,
+    ref mut static_images::Builder builder,ref mut reference_ir::Program code,bool output,usize deadline){
     let ref module_index::Index index=module_entries::index(selected);
     let usize entry=module_entries::selected(selected);
     let source_context::Input input=collecting::collect_until(index,deadline)?;
     let ref u8[] source=ref input.data[..input.used];
     let ref source_context::Table scope=ref input.context;
-    switch(source_features::retained_scoped_until(source,scope,deadline)){
-        case .ok(_):{}case .err(e):{return .err(module_error(selected,e,16));}
-    };
-    let literal_collection::Index literals=module_literals_until(builder,source,scope,index,deadline)?;
-    var functions::Table signatures=switch(signature_scan::scan_indexed_until(source,scope,index,entry,deadline)){
+    let bool retained=switch(source_features::retained_scoped_until(source,scope,deadline)){
         case .ok(v):{v}case .err(e):{return .err(module_error(selected,e,16));}
-    };signatures.output=true;
+    };
+    let bool references=retained || output;
+    let literal_collection::Index literals=if(references){module_literals_until(builder,source,scope,index,deadline)?}
+        else{literal_collection::empty()};
+    var functions::Table signatures=switch(signature_scan::scan_indexed_until(source,scope,index,entry,references,deadline)){
+        case .ok(v):{v}case .err(e):{return .err(module_error(selected,e,16));}
+    };signatures.output=output;
     var usize active=16;
-    switch(lower_prepared_returns_until(source,ref literals,ref mut signatures,ref mut code.body,ref mut active,deadline)){
+    switch(lower_prepared_until(source,references,ref literals,ref mut signatures,ref mut code.body,ref mut active,deadline)){
         case .ok(_):{}case .err(e):{return .err(module_error(selected,e,active));}
     };
-    let usize bound=module_reference_signature_until(source,scope,selected,code,deadline)?;
-    return .ok(code.body.count);
+    if(references){let usize bound=module_reference_signature_until(source,scope,selected,code,deadline)?;}
+    return .ok(references);
 }
 fn Result<bool,source_errors::Error> lower_modules_mode(ref module_entries::Entry selected,
     ref mut static_images::Builder builder,ref mut reference_ir::Program code,bool output){
@@ -3599,7 +3606,7 @@ fn Result<usize,source_errors::Error> module_reference_signature_until(ref u8[] 
     ref module_entries::Entry selected,ref mut reference_ir::Program code,usize deadline){
     let ref module_index::Index index=module_entries::index(selected);
     let usize entry=module_entries::selected(selected);
-    var functions::Table signatures=switch(signature_scan::scan_indexed_until(source,scope,index,entry,deadline)){
+    var functions::Table signatures=switch(signature_scan::scan_indexed_until(source,scope,index,entry,true,deadline)){
         case .ok(v):{v}case .err(e):{return .err(module_error(selected,e,16));}
     };
     return bind_reference_signature(source,ref mut signatures,selected,code,deadline);
@@ -3635,11 +3642,11 @@ pub fn Result<usize,source_errors::Error> lower_input_modules_until(ref input_en
     let ref u8[] source=ref input.data[..input.used];
     let ref source_context::Table scope=ref input.context;
     let literal_collection::Index literals=module_literals_until(builder,source,scope,index,deadline)?;
-    var functions::Table signatures=switch(signature_scan::scan_indexed_until(source,scope,index,input_entries::selected(selected),deadline)){
+    var functions::Table signatures=switch(signature_scan::scan_indexed_until(source,scope,index,input_entries::selected(selected),true,deadline)){
         case .ok(v):{v}case .err(e):{return .err(input_module_error(index,e,16));}
     };signatures.output=output;
     var usize active=16;
-    switch(lower_prepared_returns_until(source,ref literals,ref mut signatures,ref mut code.body,ref mut active,deadline)){
+    switch(lower_prepared_until(source,true,ref literals,ref mut signatures,ref mut code.body,ref mut active,deadline)){
         case .ok(_):{}case .err(e):{return .err(input_module_error(index,e,active));}
     };
     return .ok(finish_input_lowering(ref signatures,code));

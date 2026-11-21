@@ -52,8 +52,12 @@ fn void end(ref mut retention::Plan retained,ref retention::Plan local,ref mut m
 // Keeping the wrapper outside the parser adds no recursive expression frame.
 pub fn Result<ordinary::Program,diagnostics::Error> compile(entries::Entry selected,usize image_limit,
     ref mut retention::Plan retained,ref mut memory::Plan plan){
+    return compile_until(selected,image_limit,retained,plan,0);
+}
+pub fn Result<ordinary::Program,diagnostics::Error> compile_until(entries::Entry selected,usize image_limit,
+    ref mut retention::Plan retained,ref mut memory::Plan plan,usize deadline){
     var retention::Plan local=begin(retained,plan)?;
-    let Result<ordinary::Program,diagnostics::Error> built=ordinary::compile_with_retention(selected,image_limit,ref mut local);
+    let Result<ordinary::Program,diagnostics::Error> built=ordinary::compile_with_retention_until(selected,image_limit,ref mut local,deadline);
     return switch(built){
         case .ok(p):{end(retained,ref local,plan,true);.ok(p)}
         case .err(e):{end(retained,ref local,plan,false);.err(e)}

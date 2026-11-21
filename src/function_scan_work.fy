@@ -139,8 +139,8 @@ fn Result<raw::Table,errors::Error> scan_indexed_mode(ref u8[] source,ref contex
 
 // The Engine owns the absolute deadline. Partial tables remain private.
 pub fn Result<raw::Table,errors::Error> scan_indexed_until(ref u8[] source,ref context::Table scope,
-    ref modules::Index index,usize selected,usize deadline){
-    var State w=indexed(selected,true);var budget::State meter=budget::empty();
+    ref modules::Index index,usize selected,bool returns,usize deadline){
+    var State w=indexed(selected,returns);var budget::State meter=budget::empty();
     while(!w.done){
         if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
         let usize allowance=budget::reset(ref mut meter,0)?;
