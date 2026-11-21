@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-22): [Windows worker I/O lease](docs/engineering/restricted-worker.md#overlapped-io-lease)
-  holds an operation until completion is collected. Development and /O2
-  exercise native cancellation and completion winning a cancellation race.
+- Latest runtime checkpoint (2026-11-22): [Serialized Windows broker](docs/engineering/restricted-worker.md#serialized-broker-session)
+  owns the worker and I/O through reaping. Development and /O2 verify clean
+  delivery, phase and trailing-byte rejection, cancellation and expiry.
 
 # Brownie C agent guidance
 

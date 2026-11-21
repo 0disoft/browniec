@@ -6,6 +6,7 @@
 #include <userenv.h>
 #include <wchar.h>
 #include "../../native/restricted_worker.h"
+#include "../../native/restricted_worker_broker.h"
 #include "../../native/restricted_worker_gate.h"
 #include "../../native/restricted_worker_io.h"
 #include "../../native/restricted_worker_pipes.h"
@@ -82,7 +83,9 @@ static BOOL child_read(HANDLE input, uint8_t *bytes, DWORD length) {
     return TRUE;
 }
 
-static int child(wchar_t *number, BOOL clean_exit) {
+enum fixture_mode { cpu, clean, early, trailing, stalled };
+
+static int child(wchar_t *number, enum fixture_mode mode) {
     const HANDLE input = GetStdHandle(STD_INPUT_HANDLE);
     const HANDLE output = GetStdHandle(STD_OUTPUT_HANDLE);
     const HANDLE error = GetStdHandle(STD_ERROR_HANDLE);
@@ -100,10 +103,17 @@ static int child(wchar_t *number, BOOL clean_exit) {
     bc_worker_frame received;
     if (!child_read(input, header, sizeof(header)) ||
         !bc_worker_frame_preflight(header, sizeof(header), &expected, &received)) return 6;
-    received.kind = BC_WORKER_READY;
+    if (mode == stalled) return child_read(input, header, 1) ? 11 : 0;
+    if (mode == early) {
+        received.kind = BC_WORKER_RESULT;
+        received.sequence = 2;
+    } else {
+        received.kind = BC_WORKER_READY;
+    }
     DWORD count = 0;
     if (!bc_worker_frame_encode(header, &received) ||
         !WriteFile(output, header, sizeof(header), &count, NULL) || count != sizeof(header)) return 7;
+    if (mode == early) return 0;
     expected = received;
     expected.kind = BC_WORKER_START;
     expected.sequence = 2;
@@ -119,7 +129,9 @@ static int child(wchar_t *number, BOOL clean_exit) {
         !WriteFile(output, header, sizeof(header), &count, NULL) || count != sizeof(header) ||
         !WriteFile(output, &byte, 1, &count, NULL) || count != 1) return 9;
     if (!WriteFile(error, &byte, 1, &count, NULL) || count != 1) return 10;
-    if (clean_exit) return 0;
+    if (mode == trailing &&
+        (!WriteFile(output, &byte, 1, &count, NULL) || count != 1)) return 12;
+    if (mode != cpu) return 0;
     // The Job's user CPU limit must stop this process without parent intervention.
     for (;;) YieldProcessor();
 }
@@ -502,9 +514,76 @@ static void verify_clean_publication(const wchar_t *path, const wchar_t *directo
     bc_worker_pipes_close(&pipes);
 }
 
+static void verify_broker(const wchar_t *path, const wchar_t *directory,
+    const wchar_t *mode, bc_worker_gate_status expected) {
+    bc_worker_broker broker = {0};
+    wchar_t command[256];
+    check(swprintf_s(command, _countof(command), L"worker %ls %llx", mode,
+        (unsigned long long)(ULONG_PTR)decoy) > 0, "format broker fixture command");
+    const uint8_t request = 41;
+    uint8_t result = 0;
+    const size_t wire = 4 * BC_WORKER_FRAME_BYTES + 3;
+    bc_worker_broker_run run = {
+        .application = path, .command_line = command, .directory = directory,
+        .profile = profile, .commit_bytes = commit_limit, .cpu_ms = cpu_limit,
+        .deadline = clock_ticks() + 100000000ULL, .wire_limit = wire - 1,
+        .request = &request, .request_length = 1, .result = &result, .result_capacity = 1,
+        .validate = fixture_result
+    };
+    check(bc_worker_broker_start(&broker, &run) == ERROR_NOT_ENOUGH_QUOTA &&
+        !broker.worker.process && !broker.io.event, "wire capacity one byte short rejects before launch");
+    run.wire_limit = wire;
+    const DWORD status = bc_worker_broker_start(&broker, &run);
+    SetLastError(status);
+    check(status == ERROR_SUCCESS, "start worker through the broker at exact wire capacity");
+
+    while (broker.gate.status == BC_WORKER_GATE_PENDING && broker.phase != BC_WORKER_BROKER_FINISH) {
+        size_t untouched = 123;
+        check(!bc_worker_broker_take(&broker, &untouched) && untouched == 123,
+            "broker never exposes output while a phase is pending");
+        bc_worker_broker_step(&broker);
+        if (broker.phase == BC_WORKER_BROKER_READ_READY && broker.io.pipe) {
+            if (expected == BC_WORKER_GATE_CANCELLED) break;
+            if (expected == BC_WORKER_GATE_EXPIRED) {
+                // Shorten the fixture clock only after observing a real pending read.
+                broker.gate.deadline = clock_ticks();
+            }
+        }
+        if (broker.io.pipe || broker.phase == BC_WORKER_BROKER_WAIT_EXIT) Sleep(1);
+    }
+    size_t length = 123;
+    if (expected == BC_WORKER_GATE_DELIVERED) {
+        check(bc_worker_broker_take(&broker, &length) == &result && length == 1 && result == 42 &&
+            !bc_worker_broker_take(&broker, &length), "broker exposes exactly one verified success");
+    } else {
+        check(!bc_worker_broker_take(&broker, &length) && length == 123,
+            "broker withholds rejected output");
+    }
+    const bool pending = broker.io.pipe != NULL;
+    const bc_worker_gate_status terminal = broker.gate.status;
+    if (expected == BC_WORKER_GATE_CANCELLED || expected == BC_WORKER_GATE_EXPIRED) {
+        check(pending && broker.phase == BC_WORKER_BROKER_READ_READY &&
+            terminal == (expected == BC_WORKER_GATE_CANCELLED ? BC_WORKER_GATE_PENDING : expected),
+            "stop begins with a live outstanding read");
+    } else {
+        check(terminal == expected, "broker recorded the expected outcome");
+    }
+    const uint64_t reaping_limit = clock_ticks() + 50000000ULL;
+    while (!bc_worker_broker_close(&broker)) {
+        check(clock_ticks() < reaping_limit && broker.phase == BC_WORKER_BROKER_REAPING &&
+            broker.gate.status == expected, "reaping retains the first cause and owner");
+        Sleep(1);
+    }
+    check(!broker.worker.process && !broker.io.event && !broker.pipes.broker[BC_WORKER_STDOUT],
+        "broker releases resources only after reaping");
+}
+
 int wmain(int argc, wchar_t **argv) {
-    if (argc == 3 && !wcscmp(argv[1], L"--child")) return child(argv[2], FALSE);
-    if (argc == 3 && !wcscmp(argv[1], L"--child-ok")) return child(argv[2], TRUE);
+    if (argc == 3 && !wcscmp(argv[1], L"--child")) return child(argv[2], cpu);
+    if (argc == 3 && !wcscmp(argv[1], L"--child-ok")) return child(argv[2], clean);
+    if (argc == 3 && !wcscmp(argv[1], L"--child-early")) return child(argv[2], early);
+    if (argc == 3 && !wcscmp(argv[1], L"--child-trailing")) return child(argv[2], trailing);
+    if (argc == 3 && !wcscmp(argv[1], L"--child-stalled")) return child(argv[2], stalled);
     check(argc == 2 && atexit(cleanup) == 0, "parent fixture arguments");
     verify_frames();
     verify_stream();
@@ -599,6 +678,11 @@ int wmain(int argc, wchar_t **argv) {
     check(bc_restricted_worker_close(&worker), "reap completed worker");
     bc_worker_pipes_close(&pipes);
     verify_clean_publication(argv[1], directory);
+    verify_broker(argv[1], directory, L"--child-ok", BC_WORKER_GATE_DELIVERED);
+    verify_broker(argv[1], directory, L"--child-early", BC_WORKER_GATE_PROTOCOL);
+    verify_broker(argv[1], directory, L"--child-trailing", BC_WORKER_GATE_PROTOCOL);
+    verify_broker(argv[1], directory, L"--child-stalled", BC_WORKER_GATE_CANCELLED);
+    verify_broker(argv[1], directory, L"--child-stalled", BC_WORKER_GATE_EXPIRED);
     check(CloseHandle(decoy), "close decoy");
     decoy = NULL;
     check(GetProcessHandleCount(GetCurrentProcess(), &final), "final launcher handles");
@@ -609,7 +693,7 @@ int wmain(int argc, wchar_t **argv) {
            "\"commitDenied\":true,\"cpuTermination\":true,\"privatePipeAcl\":true,"
            "\"framedExchange\":true,\"headerMutationsRejected\":48,"
            "\"boundedStream\":true,\"pipeEof\":true,\"publicationGate\":true,"
-           "\"ioLease\":true,\"handleDelta\":0,"
+           "\"ioLease\":true,\"brokerSessions\":5,\"handleDelta\":0,"
            "\"coldHandleDelta\":%ld}\n", (long)final - (long)cold);
     return 0;
 }

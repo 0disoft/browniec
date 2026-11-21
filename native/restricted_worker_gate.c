@@ -52,6 +52,10 @@ void bc_worker_gate_cancel(bc_worker_gate *gate, uint64_t now) {
     if (live(gate, now)) finish(gate, BC_WORKER_GATE_CANCELLED);
 }
 
+void bc_worker_gate_io_error(bc_worker_gate *gate, uint64_t now) {
+    if (live(gate, now)) finish(gate, BC_WORKER_GATE_IO);
+}
+
 const uint8_t *bc_worker_gate_take(bc_worker_gate *gate, size_t *length, uint64_t now) {
     if (!live(gate, now) || !gate->stdout_eof || !gate->exit_ok) return NULL;
     const uint8_t *candidate = gate->candidate;

@@ -159,11 +159,16 @@ DWORD bc_restricted_worker_resume(bc_restricted_worker *worker) {
     return ERROR_SUCCESS;
 }
 
-BOOL bc_restricted_worker_close(bc_restricted_worker *worker) {
+BOOL bc_restricted_worker_stop(bc_restricted_worker *worker) {
     if (worker->job) {
         if (!CloseHandle(worker->job)) return FALSE;
         worker->job = NULL;
     }
+    return TRUE;
+}
+
+BOOL bc_restricted_worker_close(bc_restricted_worker *worker) {
+    if (!bc_restricted_worker_stop(worker)) return FALSE;
     if (worker->process && WaitForSingleObject(worker->process, 0) != WAIT_OBJECT_0)
         return FALSE;
     if (worker->thread) CloseHandle(worker->thread);

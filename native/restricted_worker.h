@@ -20,6 +20,9 @@ DWORD bc_restricted_worker_prepare(bc_restricted_worker *worker,
 /* Fail closed if the worker was not suspended exactly once. */
 DWORD bc_restricted_worker_resume(bc_restricted_worker *worker);
 
+/* Close the kill-on-close Job while keeping process and thread handles. */
+BOOL bc_restricted_worker_stop(bc_restricted_worker *worker);
+
 /* Close the Job to stop the worker and retain the process handle until exit.
    A false result requires another poll. The broker owns pipe I/O separately. */
 BOOL bc_restricted_worker_close(bc_restricted_worker *worker);

@@ -115,6 +115,31 @@ request and still held its lease until collection. The real AppContainer
 exchange also uses this owner. Both profiles returned to the warm handle
 count. Local receipt: `build/restricted-worker/20261121T153823462884Z/receipt.json`.
 
+## Serialized broker session
+
+The [Windows broker](../../native/restricted_worker_broker.h) owns the verified
+worker, private endpoints and one overlapped I/O lease. It sends HELLO, accepts
+READY, sends START, accepts a complete RESULT, probes stdout for EOF and
+observes process exit. Each step submits or collects at most one operation
+or polls the process. The gate releases a validated result only after these
+steps and while the session deadline remains live.
+
+Admission reserves four 48-byte headers, the START bytes, the caller's
+RESULT ceiling and a one-byte trailing probe before opening handles. The
+borrowed request and result storage stays reserved through teardown. Close
+on an unfinished session records cancellation or expiry, requests I/O
+cancellation, stops the Job and retains the owner through both completion
+collection and process exit.
+
+Windows development and /O2 verify five AppContainer sessions. Clean completion
+delivers once. An early RESULT and a trailing stdout byte fail the protocol.
+Cancellation and expiry reap an outstanding read. A 195-byte wire limit
+admits the one-byte request and reply fixture; 194 bytes rejects before launch.
+Warm handle delta is zero. The fixture validates one-byte results. Production
+payload schemas, host exchange, graceful cancellation and aggregate budgets
+remain integration work.
+Local receipt: `build/restricted-worker/20261121T154216262890Z/receipt.json`.
+
 ## Windows verification
 
 Run `python -B tools/verify-restricted-worker.py`. The development and optimized
@@ -140,6 +165,6 @@ all three pipes and the repeat launch again had zero net handle growth.
 Local receipt: `build/restricted-worker/20261121T152431466055Z/receipt.json`.
 
 The caller still needs trusted image and profile provisioning, strict payload
-parsing, broker phase integration, session-level reaping and budgets. The launcher
-fixture executes native test code.
+parsing, broader broker phases and aggregate budgets. The launcher fixture
+executes native test code.
 The restricted CLI remains unavailable while those pieces are built and verified.
