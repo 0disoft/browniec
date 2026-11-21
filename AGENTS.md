@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-22): [Windows restricted worker launch](docs/engineering/restricted-worker.md)
-  verifies a suspended zero-capability AppContainer and its Job before execution.
-  Development and /O2 verify OS denials, Job limits and repeat-launch cleanup.
+- Latest runtime checkpoint (2026-11-22): [Private Windows worker pipes](docs/engineering/restricted-worker.md#private-pipe-setup)
+  verify logon SID ACLs, broker PID binding and inherited pipe exchange in a
+  real AppContainer. Development and /O2 confirm repeat-launch cleanup.
 
 # Brownie C agent guidance
 

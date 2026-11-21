@@ -20,6 +20,7 @@ def main():
     out = ROOT / 'build/restricted-worker' / datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%fZ')
     out.mkdir(parents=True)
     paths = ['native/restricted_worker.c', 'native/restricted_worker.h',
+             'native/restricted_worker_pipes.c', 'native/restricted_worker_pipes.h',
              'tests/native/restricted_worker_host.c', 'tools/verify-restricted-worker.py',
              'tools/verify-runtime-store-probe.py']
     receipt = dict(schema='browniec.restricted-worker-verification/v1', status='incomplete',
@@ -45,8 +46,8 @@ def main():
             exe = folder / 'worker-host.exe'
             child = folder / 'worker fixture.exe'
             run([cl, '/nologo', '/std:c11', '/TC', '/MT', '/W4', '/WX', option,
-                 ROOT / paths[0], ROOT / paths[2], '/Fe' + str(exe),
-                 '/link', 'advapi32.lib', 'userenv.lib', '/INCREMENTAL:NO', '/Brepro'],
+                 ROOT / paths[0], ROOT / paths[2], ROOT / paths[4], '/Fe' + str(exe),
+                 '/link', 'advapi32.lib', 'bcrypt.lib', 'userenv.lib', '/INCREMENTAL:NO', '/Brepro'],
                 cwd=folder, env=env)
             shutil.copyfile(exe, child)
             (folder / 'parent-data.txt').write_bytes(b'fixture data\n')
@@ -55,7 +56,7 @@ def main():
             evidence = json.loads(run([exe, child], cwd=folder, env=runtime_env))
             helper.need({key: value for key, value in evidence.items() if key != 'coldHandleDelta'} ==
                         dict(appContainer=True, capabilities=0, inheritedPipes=3,
-                             commitDenied=True, cpuTermination=True, handleDelta=0)
+                             commitDenied=True, cpuTermination=True, privatePipeAcl=True, handleDelta=0)
                         and type(evidence.get('coldHandleDelta')) is int,
                         f'Unexpected worker result: {evidence}')
             receipt['profiles'].append(dict(profile=profile, exe=helper.image(exe), result=evidence))

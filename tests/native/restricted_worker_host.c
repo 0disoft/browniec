@@ -5,12 +5,13 @@
 #include <userenv.h>
 #include <wchar.h>
 #include "../../native/restricted_worker.h"
+#include "../../native/restricted_worker_pipes.h"
 
 enum { commit_limit = 128 * 1024 * 1024, cpu_limit = 500 };
 static const DWORD status_quota_exceeded = 0xc0000044;
 static wchar_t profile_name[64];
 static PSID profile;
-static HANDLE pipe_ends[6];
+static bc_worker_pipes pipes;
 static HANDLE decoy;
 static bc_restricted_worker worker;
 
@@ -35,10 +36,7 @@ static void cleanup(void) {
     if (worker.job) TerminateJobObject(worker.job, 1);
     if (worker.process) WaitForSingleObject(worker.process, 5000);
     bc_restricted_worker_close(&worker);
-    for (size_t i = 0; i < _countof(pipe_ends); ++i) {
-        if (pipe_ends[i]) CloseHandle(pipe_ends[i]);
-        pipe_ends[i] = NULL;
-    }
+    bc_worker_pipes_close(&pipes);
     if (decoy) CloseHandle(decoy);
     decoy = NULL;
     clean_profile();
@@ -93,17 +91,65 @@ static int child(wchar_t *number) {
     for (;;) YieldProcessor();
 }
 
-static void open_pipes(HANDLE endpoints[3]) {
-    SECURITY_ATTRIBUTES inheritable = {sizeof(inheritable), NULL, TRUE};
-    for (size_t i = 0; i < 3; ++i) {
-        HANDLE *pair = &pipe_ends[2*i];
-        check(CreatePipe(&pair[0], &pair[1], &inheritable, 0), "pipe pair");
-        endpoints[i] = pair[i != 0];
-        check(SetHandleInformation(pair[i == 0], HANDLE_FLAG_INHERIT, 0),
-            "disable parent endpoint inheritance");
+static void verify_pipes(void) {
+    HANDLE token = NULL;
+    check(OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token), "open broker token");
+    union {
+        TOKEN_GROUPS groups;
+        BYTE bytes[sizeof(TOKEN_GROUPS) + SECURITY_MAX_SID_SIZE];
+    } logon;
+    DWORD used = 0;
+    check(GetTokenInformation(token, TokenLogonSid, &logon, sizeof(logon), &used) &&
+        logon.groups.GroupCount == 1, "resolve broker logon SID");
+    check(CloseHandle(token), "close broker token");
+
+    for (size_t i = 0; i < BC_WORKER_PIPE_COUNT; ++i) {
+        HANDLE broker = pipes.broker[i], child = pipes.child[i];
+        DWORD flags = 0, instances = 0;
+        check(GetHandleInformation(broker, &flags) && !(flags & HANDLE_FLAG_INHERIT),
+            "broker endpoint is noninheritable");
+        check(GetHandleInformation(child, &flags) && (flags & HANDLE_FLAG_INHERIT),
+            "child endpoint is inheritable");
+        check(GetNamedPipeInfo(child, &flags, NULL, NULL, &instances) &&
+            !(flags & PIPE_SERVER_END) && instances == 1, "single worker pipe instance");
+        ULONG pid = 0;
+        check(GetNamedPipeClientProcessId(broker, &pid) && pid == GetCurrentProcessId(),
+            "pipe client belongs to broker before launch");
+
+        PACL acl = NULL;
+        PSECURITY_DESCRIPTOR descriptor = NULL;
+        check(GetSecurityInfo(broker, SE_KERNEL_OBJECT, DACL_SECURITY_INFORMATION,
+            NULL, NULL, &acl, NULL, &descriptor) == ERROR_SUCCESS, "query real pipe DACL");
+        ACL_SIZE_INFORMATION info;
+        void *entry = NULL;
+        check(acl && GetAclInformation(acl, &info, sizeof(info), AclSizeInformation) &&
+            info.AceCount == 1 && GetAce(acl, 0, &entry), "one pipe ACL entry");
+        ACCESS_ALLOWED_ACE *ace = entry;
+        check(ace->Header.AceType == ACCESS_ALLOWED_ACE_TYPE &&
+            !(ace->Mask & FILE_CREATE_PIPE_INSTANCE) &&
+            EqualSid(&ace->SidStart, logon.groups.Groups[0].Sid),
+            "only the broker logon SID may open endpoints");
+        LocalFree(descriptor);
     }
-    decoy = CreateEventW(&inheritable, TRUE, FALSE, NULL);
-    check(decoy != NULL, "inheritable decoy");
+}
+
+static void exchange_byte(HANDLE pipe, unsigned char *byte, BOOL write) {
+    OVERLAPPED io = {0};
+    io.hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
+    check(io.hEvent != NULL, "create test I/O event");
+    DWORD count = 0;
+    BOOL complete = write ? WriteFile(pipe, byte, 1, &count, &io) :
+        ReadFile(pipe, byte, 1, &count, &io);
+    if (!complete && GetLastError() == ERROR_IO_PENDING) {
+        if (WaitForSingleObject(io.hEvent, 5000) == WAIT_OBJECT_0) {
+            complete = GetOverlappedResult(pipe, &io, &count, FALSE);
+        } else {
+            CancelIoEx(pipe, &io);
+            GetOverlappedResult(pipe, &io, &count, TRUE);
+        }
+    }
+    check(CloseHandle(io.hEvent), "close test I/O event");
+    check(complete && count == 1, "exchange a byte over the broker endpoint");
 }
 
 static void verify_job(void) {
@@ -145,22 +191,28 @@ int wmain(int argc, wchar_t **argv) {
     const DWORD length = GetCurrentDirectoryW(_countof(directory), directory);
     check(length && length < _countof(directory), "get fixture directory");
     check(GetProcessHandleCount(GetCurrentProcess(), &cold), "cold launcher handles");
-    HANDLE endpoints[3];
-    open_pipes(endpoints);
+    DWORD pipe_status = bc_worker_pipes_open(&pipes);
+    SetLastError(pipe_status);
+    check(pipe_status == ERROR_SUCCESS, "prepare private worker pipes");
+    check(bc_worker_pipes_open(&pipes) == ERROR_INVALID_PARAMETER, "reject reopening a live pipe owner");
+    verify_pipes();
+    SECURITY_ATTRIBUTES inheritable = {sizeof(inheritable), NULL, TRUE};
+    decoy = CreateEventW(&inheritable, TRUE, FALSE, NULL);
+    check(decoy != NULL, "inheritable decoy");
     unsigned char ordinary_sid[SECURITY_MAX_SID_SIZE];
     DWORD sid_size = sizeof(ordinary_sid);
     check(CreateWellKnownSid(WinWorldSid, NULL, ordinary_sid, &sid_size), "ordinary SID fixture");
-    check(prepare(argv[1], directory, endpoints, ordinary_sid) != ERROR_SUCCESS &&
+    check(prepare(argv[1], directory, pipes.child, ordinary_sid) != ERROR_SUCCESS &&
         !worker.job && !worker.process && !worker.thread, "reject an ordinary SID without publication");
-    HANDLE invalid[3] = {endpoints[0], pipe_ends[2], endpoints[2]};
+    HANDLE invalid[3] = {pipes.child[BC_WORKER_STDIN], pipes.broker[BC_WORKER_STDOUT], pipes.child[BC_WORKER_STDERR]};
     check(prepare(argv[1], directory, invalid, profile) == ERROR_INVALID_PARAMETER &&
         !worker.process, "reject a noninheritable endpoint");
-    DWORD status = prepare(argv[1], directory, endpoints, profile);
+    DWORD status = prepare(argv[1], directory, pipes.child, profile);
     SetLastError(status);
     check(status == ERROR_SUCCESS, "prepare suspended AppContainer");
     verify_job();
     DWORD available = 1;
-    check(PeekNamedPipe(pipe_ends[2], NULL, 0, NULL, &available, NULL) && !available,
+    check(PeekNamedPipe(pipes.broker[BC_WORKER_STDOUT], NULL, 0, NULL, &available, NULL) && !available,
         "no child output before resume");
     check(bc_restricted_worker_close(&worker) ||
         (WaitForSingleObject(worker.process, 5000) == WAIT_OBJECT_0 && bc_restricted_worker_close(&worker)),
@@ -169,21 +221,16 @@ int wmain(int argc, wchar_t **argv) {
     // Measure the repeat launch with the six pipe handles and decoy still open.
     check(GetProcessHandleCount(GetCurrentProcess(), &baseline), "warm launcher handles");
 
-    status = prepare(argv[1], directory, endpoints, profile);
+    status = prepare(argv[1], directory, pipes.child, profile);
     SetLastError(status);
     check(status == ERROR_SUCCESS, "prepare AppContainer for execution");
     check(bc_restricted_worker_resume(&worker) == ERROR_SUCCESS &&
         bc_restricted_worker_resume(&worker) == ERROR_INVALID_PARAMETER, "resume exactly once");
     // Close the parent's copies of the worker endpoints so a failed child
     // yields EOF instead of leaving a read blocked.
-    for (size_t i = 0; i < 3; ++i) {
-        const size_t index = 2*i + (i != 0);
-        check(CloseHandle(pipe_ends[index]), "close child endpoint in parent");
-        pipe_ends[index] = NULL;
-    }
+    bc_worker_pipes_close_child(&pipes);
     unsigned char byte = 41;
-    DWORD count = 0;
-    check(WriteFile(pipe_ends[1], &byte, 1, &count, NULL) && count == 1, "send a fixture byte");
+    exchange_byte(pipes.broker[BC_WORKER_STDIN], &byte, TRUE);
     check(WaitForSingleObject(worker.process, 10000) == WAIT_OBJECT_0, "Job CPU limit stopped the worker");
     DWORD exit_code = 0;
     check(GetExitCodeProcess(worker.process, &exit_code), "get worker exit code");
@@ -194,15 +241,13 @@ int wmain(int argc, wchar_t **argv) {
     check(GetProcessTimes(worker.process, &began, &ended, &kernel, &user), "query terminated worker CPU time");
     const ULONGLONG user_ticks = ((ULONGLONG)user.dwHighDateTime << 32) | user.dwLowDateTime;
     check(user_ticks >= cpu_limit * 10000ULL, "worker consumed its user CPU budget");
-    for (size_t i = 2; i < 6; i += 2)
-        check(ReadFile(pipe_ends[i], &byte, 1, &count, NULL) && count == 1 && byte == 42,
-            "worker returned the fixture byte on the approved endpoints");
+    for (size_t i = BC_WORKER_STDOUT; i < BC_WORKER_PIPE_COUNT; ++i) {
+        exchange_byte(pipes.broker[i], &byte, FALSE);
+        check(byte == 42, "worker returned the fixture byte on the approved endpoints");
+    }
     check(WaitForSingleObject(decoy, 0) == WAIT_TIMEOUT, "decoy was not inherited");
     check(bc_restricted_worker_close(&worker), "reap completed worker");
-    for (size_t i = 0; i < _countof(pipe_ends); ++i) {
-        if (pipe_ends[i]) check(CloseHandle(pipe_ends[i]), "close parent endpoint");
-        pipe_ends[i] = NULL;
-    }
+    bc_worker_pipes_close(&pipes);
     check(CloseHandle(decoy), "close decoy");
     decoy = NULL;
     check(GetProcessHandleCount(GetCurrentProcess(), &final), "final launcher handles");
@@ -210,7 +255,7 @@ int wmain(int argc, wchar_t **argv) {
         fprintf(stderr, "handles cold %lu, warm %lu, final %lu\n", cold, baseline, final);
     check(final + 7 == baseline, "balanced launcher handles after warmup");
     printf("{\"appContainer\":true,\"capabilities\":0,\"inheritedPipes\":3,"
-           "\"commitDenied\":true,\"cpuTermination\":true,\"handleDelta\":0,"
+           "\"commitDenied\":true,\"cpuTermination\":true,\"privatePipeAcl\":true,\"handleDelta\":0,"
            "\"coldHandleDelta\":%ld}\n", (long)final - (long)cold);
     return 0;
 }

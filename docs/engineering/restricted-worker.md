@@ -16,6 +16,22 @@ the expected SID, and zero capabilities. A setup failure leaves the worker
 owner empty. Resuming consumes the primary-thread handle. Closing the Job
 initiates termination, and the owner retains its process handle until exit.
 
+## Private pipe setup
+
+The [pipe owner](../../native/restricted_worker_pipes.h) creates three
+one-directional byte channels with one instance and a 4096-byte buffer request
+per channel. It uses a fresh system-generated 128-bit suffix for each name,
+rejects remote connections, and applies a protected DACL with one ACE for the
+broker's logon SID. The ACE excludes the right to create another instance.
+The broker opens both ends before launch and confirms that each endpoint
+reports the broker PID for its peer. Only the blocking child endpoints are
+marked inheritable. The broker endpoints support overlapped I/O.
+
+Setup publishes all six handles together. Failed setup closes the handles
+already opened. No I/O is pending at publication. After suspended launch,
+the broker closes its copies of the child endpoints and retains its own
+endpoints until it has reaped any pending I/O.
+
 ## Windows verification
 
 Run `python -B tools/verify-restricted-worker.py`. The development and optimized
@@ -34,7 +50,13 @@ and zero net change across the repeat launch and its cleanup.
 
 Local receipt: `build/restricted-worker/20261121T152043609866Z/receipt.json`.
 
-The caller still needs trusted image and profile provisioning, authenticated
-transport, the broker publication barrier, and I/O completion and budget
-integration. The launcher fixture executes native test code. The restricted
-CLI remains unavailable while those pieces are built and verified.
+The named-pipe follow-up ran the same native AppContainer fixture in both
+profiles. It inspected each live pipe's single logon-SID ACE, one-instance
+limit, connecting PID, and inheritance flags. The child exchanged bytes over
+all three pipes and the repeat launch again had zero net handle growth.
+Local receipt: `build/restricted-worker/20261121T152431466055Z/receipt.json`.
+
+The caller still needs trusted image and profile provisioning, session
+framing and correlation, the broker publication barrier, and I/O completion
+and budget integration. The launcher fixture executes native test code.
+The restricted CLI remains unavailable while those pieces are built and verified.
