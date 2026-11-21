@@ -10,6 +10,7 @@ import output_record_metadata_work as record_work;
 import struct_verifier as struct_verifier;
 import array_verifier as array_verifier;
 import array_list_ir as lists;
+import output_list_metadata_work as list_work;
 import slice_parameters as slice_parameters;
 import slice_reborrow_ir as reborrows;
 import slice_reborrow_call_ir as reborrow_calls;
@@ -419,7 +420,7 @@ fn Result<reborrows::Sites,errors::Error> validate_values_mode(ref ir::Program p
         p.function_count == 0 || p.function_count > 16 || p.entry >= p.function_count || p.call_count > 32) { return .err(errors::absent(5,0)); }
     if (!arrays::valid(ref p.arrays)) { return .err(errors::absent(5,0)); }
     if(host_profile){if(p.list_used>4096){return .err(errors::absent(5,0));}}
-    else{let usize list_metadata=lists::metadata(p)?;}
+    else{let usize list_metadata=list_work::inspect_until(p,deadline)?;}
     let records::Prepared shapes = record_work::prepare_until(ref p.records,deadline)?;
     var usize id = 0;
     while (id < 16) {
@@ -455,7 +456,7 @@ fn Result<reborrows::Sites,errors::Error> validate_values_mode(ref ir::Program p
     }
     if (code_end != p.count || register_end != p.registers) { return .err(errors::absent(5,0)); }
     if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
-    let usize copy_metadata=copying::metadata(p)?;
+    let usize copy_metadata=copying::metadata_until(p,deadline)?;
     let usize borrowed_parameters = if(entry_kind!=0){slice_parameters::metadata_input(p)?}else{slice_parameters::metadata(p)?};
     let reborrows::Sites loans = reborrows::metadata(p)?;
     let usize parameters = array_parameters::metadata(p)?;

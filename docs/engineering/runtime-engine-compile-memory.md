@@ -155,8 +155,12 @@ before and after its presence scan and before each graph instruction. This
 includes the structural checks for unreachable instructions. Timed ordinary
 record metadata preparation reuses the staged layout and binding traversal,
 sampling before each advance and before returning the prepared metadata.
-Other metadata calls return to their surrounding checkpoint. The staged
-input and output proof drivers
+Timed ordinary array-list metadata checks before each span visit, every
+batch of at most 256 padding entries, and before returning the result.
+Copy metadata checks before each instruction and before returning, including
+unreachable instructions. Individual copy validation is synchronous. Other
+metadata calls return to their surrounding checkpoint. The staged input
+and output proof drivers
 sample once before each bounded proof advance. Input-only compilation uses its
 separate proof with the output gate closed and checks again before returning
 the completed proof. Expiry ends the compile with
@@ -312,6 +316,13 @@ before another metadata stage or SDK allocation. The ledger and heap returned
 to baseline without consuming a Program ID. Windows development and /O2
 passed with zero live SDK allocations at exit. Local receipt:
 `build/runtime-engine/20261121T022614858583Z/receipt.json`.
+
+The Windows verifier advanced to the exact deadline after the first list
+padding batch or the first copy in both ordinary source profiles. All four
+cases stopped before the next verification phase or another SDK allocation.
+The ledger and heap returned to baseline without consuming a Program ID.
+Windows development and /O2 passed with zero live SDK allocations at exit.
+Local receipt: `build/runtime-engine/20261121T023418260264Z/receipt.json`.
 
 Source lowering, work between checkpoints, and cleanup remain synchronous.
 Public Pending compilation, in-flight cancellation, and a latency bound for

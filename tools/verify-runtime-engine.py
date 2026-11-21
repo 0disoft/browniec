@@ -90,6 +90,23 @@ def source_copy(path):
         declaration = 'unsafe extern C fn void bc_runtime_engine_test_ordinary_proof_pc(u8 phase);\n'
         signature = 'pub fn Result<metadata::Prepared,errors::Error> prepare_until('
         return path.name, text.replace(signature, declaration + signature, 1).encode('utf-8')
+    if path == ROOT / 'src/output_list_metadata_work.fy':
+        text = path.read_text(encoding='utf-8')
+        stage = '        let bool done=advance(p,ref mut work,ref mut meter)?;'
+        need(text.count(stage) == 1, 'Timed list metadata probe anchor changed')
+        text = text.replace(stage, '        let bool padding=work.phase==2;\n' + stage +
+                            '\n        if(padding){unsafe{bc_runtime_engine_test_ordinary_proof_pc(10)};}')
+        signature = 'pub fn Result<usize,errors::Error> inspect_until('
+        declaration = 'unsafe extern C fn void bc_runtime_engine_test_ordinary_proof_pc(u8 phase);\n'
+        return path.name, text.replace(signature, declaration + signature, 1).encode('utf-8')
+    if path == ROOT / 'src/copy_ir.fy':
+        text = path.read_text(encoding='utf-8')
+        anchor = '                count+=1;'
+        need(text.count(anchor) == 1, 'Timed copy metadata probe anchor changed')
+        text = text.replace(anchor, anchor + '\n                if(deadline!=0){unsafe{bc_runtime_engine_test_ordinary_proof_pc(11)};}')
+        signature = 'pub fn Result<usize,errors::Error> metadata_until('
+        declaration = 'unsafe extern C fn void bc_runtime_engine_test_ordinary_proof_pc(u8 phase);\n'
+        return path.name, text.replace(signature, declaration + signature, 1).encode('utf-8')
     if path == ROOT / 'src/place_ir.fy':
         text = path.read_text(encoding='utf-8')
         return path.name, ordinary_proof_probe(text, '        if (!seen[pc]) { pc += 1; continue; }', 7)

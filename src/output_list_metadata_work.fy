@@ -2,6 +2,7 @@ module output_list_metadata_work;
 import ir as ir;
 import array_list_ir as lists;
 import errors as errors;
+import runtime_clock as clock;
 import metadata_budget as budget;
 
 // Analysis only. Keep the same immutable Program until completion. This is the
@@ -40,4 +41,16 @@ pub fn Result<bool,errors::Error> advance(ref ir::Program p,ref mut State work,r
     }
     if(work.cursor==4096){work.done=true;return .ok(true);}
     return .ok(false);
+}
+
+pub fn Result<usize,errors::Error> inspect_until(ref ir::Program p,usize deadline){
+    if(deadline==0){return lists::metadata(p);}
+    var State work=empty();var budget::State meter=budget::empty();
+    while(!work.done){
+        if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
+        let usize ready=budget::reset(ref mut meter,0)?;
+        let bool done=advance(p,ref mut work,ref mut meter)?;
+    }
+    if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
+    return .ok(p.list_used);
 }

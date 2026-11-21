@@ -2,6 +2,7 @@ module copy_ir;
 
 import ir as ir;
 import errors as errors;
+import runtime_clock as clock;
 import aggregate_copy as windows;
 import array_layout as arrays;
 import struct_layout as records;
@@ -146,11 +147,24 @@ pub fn Result<Plan,errors::Error> argument(ref ir::Program p,usize target,usize 
 // Canonical whole-Program validation calls this after function partition proof.
 // Unreachable copies receive the same domain/shape/reserved-byte checks.
 pub fn Result<usize,errors::Error> metadata(ref ir::Program p){
+    return metadata_until(p,0);
+}
+pub fn Result<usize,errors::Error> metadata_until(ref ir::Program p,usize deadline){
     if(p.count>256 || p.function_count>16){return .err(invalid(0));}
     var usize f=0;var usize count=0;
     while(f<p.function_count){
         if(p.starts[f]>=p.ends[f] || p.ends[f]>p.count){return .err(invalid(0));}
-        var usize pc=p.starts[f];while(pc<p.ends[f]){
-        if(operation(p.code[pc*8])){let Plan plan=instruction(p,pc,f)?;count+=1;}pc+=1;
-    }f+=1;}return .ok(count);
+        var usize pc=p.starts[f];
+        while(pc<p.ends[f]){
+            if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
+            if(operation(p.code[pc*8])){
+                let Plan plan=instruction(p,pc,f)?;
+                count+=1;
+            }
+            pc+=1;
+        }
+        f+=1;
+    }
+    if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
+    return .ok(count);
 }

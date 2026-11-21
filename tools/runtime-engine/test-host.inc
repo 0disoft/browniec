@@ -413,7 +413,7 @@ void bc_runtime_engine_test_plan_stopped(void){
 }
 static uint8_t ordinary_proof_target;
 void bc_runtime_engine_test_expire_in_ordinary_proof(uintptr_t deadline,uint8_t phase){
- assert(!ordinary_proof_target&&phase>=1&&phase<=9);
+ assert(!ordinary_proof_target&&phase>=1&&phase<=11);
  ordinary_proof_target=phase;
  bc_runtime_engine_test_expire_in_proof(deadline);
 }
