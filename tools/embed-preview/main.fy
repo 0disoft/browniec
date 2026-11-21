@@ -88,11 +88,11 @@ fn Result<usize,engine::Error> instance(ref mut engine::Engine owner,usize progr
 fn Result<engine::Event,engine::Error> step(ref mut engine::Engine owner,usize run,usize quantum){
     return switch(engine::step_instance(owner,run,quantum)){
         case .ok(v):{.ok(v)}
-        case .err(e):{if(e.status==11){engine::observe(owner,run)}else{.err(e)}}
+        case .err(e):{if(e.status==11 || e.status==14){engine::observe(owner,run)}else{.err(e)}}
     };
 }
 
-fn Result<usize,engine::Error> instance_configured(ref mut engine::Engine owner,usize program,ptr u8 data,usize length){
+fn Result<engine::ScalarPreparation,engine::Error> instance_configured(ref mut engine::Engine owner,usize program,ptr u8 data,usize length){
     let usize lifetime=length;
     let ref u8[] configuration=unsafe{byte_slice::from_raw_parts(ref lifetime,data,length)};
     return engine::prepare_scalar_preview(owner,program,configuration);
@@ -114,5 +114,6 @@ fn i32 main(){
     unsafe{bc_embed_binding(9)};discard create_configured(source,1);
     unsafe{bc_embed_binding(10)};discard abi::validate(2,32,true);
     unsafe{bc_embed_binding(11)};discard instance_configured(ref mut owner,1,source,1);
+    unsafe{bc_embed_binding(12)};discard engine::observe(ref mut owner,1);
     return 0;
 }

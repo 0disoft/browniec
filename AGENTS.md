@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-21): [Revision-2 scalar Instance preparation](docs/engineering/embed-preview.md#revision-2-scalar-instance-preparation)
-  exports creation and destruction. Windows /Od and /O2 verified policy
-  admission, two independent Program pins, and owner-thread cleanup.
+- Latest runtime checkpoint (2026-11-21): [Revision-2 scalar stepping](docs/engineering/embed-preview.md#revision-2-scalar-stepping)
+  exports stepping and cancellation. Windows /Od and /O2 verified shared
+  Program runs, independent cancellation, deadline precedence, and stable events.
 
 # Brownie C agent guidance
 

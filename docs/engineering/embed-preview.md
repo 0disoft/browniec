@@ -121,8 +121,28 @@ Creation zeros the output handle and issues a handle only after successful
 preparation and registration. Multiple Instances can pin one Program. The
 caller can release the Program handle while Instances still own their pins.
 `bc_instance_destroy` discards the continuation and releases its pin on the
-Engine's owner thread. Revision-2 stepping and terminal events remain pending.
+Engine's owner thread.
 
 Both Windows builds verified rejected input and run configurations, setup
 Fuel exhaustion, two Program pins, and foreign-thread and stale-handle
 rejection during Instance destruction.
+
+## Revision-2 scalar stepping
+
+`bc_step` advances the saved dispatcher with a quantum of 1 through 4096.
+Pass an event with the exact `struct_size`. Each event reports cumulative
+Fuel use, the peak accounted bytes of the prepared continuation, and elapsed
+microseconds from run admission. It carries an empty payload. The Engine
+reports yield, return, guest trap, and execution failure. Cancellation and
+deadline expiry are failed events with diagnostic codes 33 and 30.
+
+`bc_cancel` uses the Engine's existing first-cause rule. Keep stepping if
+cleanup yields. The ABI retains each terminal event and its metrics for
+subsequent observation, including after a later cancel call. Host exchanges
+and the remaining general ABI resource accounting are future work.
+
+The native C host passed both Windows `/Od` and `/O2` builds. Two Instances
+sharing a released Program handle returned 77 at quanta 1 and 64 and reported
+the same cumulative Fuel and peak accounted bytes. Additional Instances verified
+independent cancellation and that an already expired deadline wins over cancel.
+Repeated successful and cancelled terminal events matched byte for byte.

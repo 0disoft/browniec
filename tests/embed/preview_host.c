@@ -76,6 +76,18 @@ static DWORD WINAPI foreign_instance_destroy(void *arg){
     return bc_instance_destroy(*(const bc_handle *)arg);
 }
 
+static bc_event finish_revision_two(bc_handle instance,uint32_t quantum){
+    bc_event event={.struct_size=sizeof(event)};
+    for(unsigned calls=0;calls<4096;++calls){
+        assert(bc_step(instance,quantum,&event)==BC_OK);
+        assert(event.payload.data==NULL && event.payload.len==0);
+        assert(event.request_id==0 && event.import_id==0 && event.reserved==0);
+        if(event.kind!=BC_YIELD){return event;}
+    }
+    assert(0 && "revision-2 guest did not finish");
+    return event;
+}
+
 static void revision_two_instances(bc_handle engine,bc_handle program){
     uint8_t config[1024]={0};
     FILE *run=NULL;
@@ -100,6 +112,12 @@ static void revision_two_instances(bc_handle engine,bc_handle program){
     assert(bc_instance_create(engine,program,empty,json,&second,&diagnostic)==BC_OK);
     assert(first && second && first!=second);
     expect_diagnostic(&diagnostic,BC_OK);
+    bc_handle cancelled=0,expired=0;
+    assert(bc_instance_create(engine,program,empty,json,&cancelled,&diagnostic)==BC_OK);
+    uint8_t *deadline=(uint8_t *)strstr((const char *)config,"\"deadline_ms\":1000");
+    assert(deadline);
+    memcpy(deadline+sizeof("\"deadline_ms\":")-1,"   1",4);
+    assert(bc_instance_create(engine,program,empty,json,&expired,&diagnostic)==BC_OK);
     assert(bc_preview_instance_destroy(first)==BC_INVALID_HANDLE);
     HANDLE thread=CreateThread(NULL,0,foreign_instance_destroy,&first,0,NULL);
     DWORD status=0;
@@ -107,6 +125,28 @@ static void revision_two_instances(bc_handle engine,bc_handle program){
     assert(GetExitCodeThread(thread,&status) && status==BC_WRONG_THREAD && CloseHandle(thread));
     assert(bc_program_release(engine,program)==BC_OK);
     assert(bc_engine_destroy(engine)==BC_BUSY);
+    bc_event unchanged={.struct_size=sizeof(unchanged),.kind=UINT32_MAX};
+    assert(bc_step(first,0,&unchanged)==BC_BAD_ARGUMENT && unchanged.kind==UINT32_MAX);
+    assert(bc_preview_cancel(cancelled)==BC_INVALID_HANDLE);
+    assert(bc_cancel(cancelled)==BC_OK);
+    bc_event one=finish_revision_two(first,1),many=finish_revision_two(second,64);
+    assert(one.kind==BC_DONE && many.kind==BC_DONE && one.return_i32==77 && many.return_i32==77);
+    expect_diagnostic(&one.diagnostic,BC_OK);
+    assert(one.fuel_used>0 && one.fuel_used==many.fuel_used && one.trap_code==0);
+    assert(one.peak_accounted_bytes>0 && one.peak_accounted_bytes==many.peak_accounted_bytes);
+    bc_event stopped=finish_revision_two(cancelled,64);
+    assert(stopped.kind==BC_FAILED && stopped.diagnostic.code==33 && stopped.trap_code==0 && stopped.return_i32==0);
+    Sleep(32);
+    assert(bc_cancel(expired)==BC_OK);
+    bc_event timed_out=finish_revision_two(expired,64);
+    assert(timed_out.kind==BC_FAILED && timed_out.diagnostic.code==30 && timed_out.return_i32==0);
+    assert(bc_cancel(first)==BC_OK);
+    bc_event again=finish_revision_two(first,64);
+    assert(memcmp(&again,&one,sizeof(one))==0);
+    again=finish_revision_two(cancelled,1);
+    assert(memcmp(&again,&stopped,sizeof(stopped))==0);
+    assert(bc_instance_destroy(cancelled)==BC_OK);
+    assert(bc_instance_destroy(expired)==BC_OK);
     assert(bc_instance_destroy(first)==BC_OK && bc_instance_destroy(first)==BC_INVALID_HANDLE);
     assert(bc_instance_destroy(second)==BC_OK);
 }
@@ -347,5 +387,6 @@ int main(void){
     puts("PASS: revision-2 Engine source policy rejects 43 bytes and accepts 42 bytes");
     puts("PASS: revision-2 entry info verifies layout, capabilities, and owner-thread admission");
     puts("PASS: revision-2 Instance policy admission, two Program pins, and destruction");
+    puts("PASS: revision-2 quanta 1/64, independent cancellation, deadline precedence, and terminal snapshots");
     return 0;
 }

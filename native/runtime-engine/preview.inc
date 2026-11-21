@@ -12,6 +12,8 @@
 #pragma comment(linker, "/EXPORT:bc_program_entry_info")
 #pragma comment(linker, "/EXPORT:bc_instance_create")
 #pragma comment(linker, "/EXPORT:bc_instance_destroy")
+#pragma comment(linker, "/EXPORT:bc_step")
+#pragma comment(linker, "/EXPORT:bc_cancel")
 #pragma comment(linker, "/EXPORT:bc_program_release")
 
 typedef struct preview_engine {
@@ -28,6 +30,13 @@ typedef struct preview_child {
         uint8_t capabilities_json[2];
     };
 } preview_child;
+
+typedef struct preview_run {
+    preview_child child;
+    uint64_t peak;
+    uint64_t start;
+    bc_event terminal;
+} preview_run;
 
 /* The registry owns a busy admission for one Engine while its VM runs.
    The embedding build waits only to acquire the shared metadata guard. */
@@ -238,21 +247,29 @@ static uint32_t create_instance(bc_handle engine,bc_handle program,uint32_t revi
     preview_child *code=(preview_child *)(uintptr_t)admission.object;
     preview_engine *owner=code->owner;
     if(owner->revision!=revision){leave_preview(&admission);return BC_INVALID_HANDLE;}
-    preview_child *instance=HeapAlloc(GetProcessHeap(),0,sizeof(*instance));
+    preview_run *instance=HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(*instance));
     if(!instance){leave_preview(&admission);return BC_ALLOCATION_ERROR;}
-    __typeof__(P3(&owner->engine,code->id,fuel)) prepared=revision==BC_ABI_REVISION?
-        P11(&owner->engine,code->id,config.data,config.len):P3(&owner->engine,code->id,fuel);
-    if(prepared.tag==FY_RESULT_OK){
-        *instance=(preview_child){.owner=owner,.id=prepared.p_0,.fuel=fuel};
+    uint8_t failure=0;
+    if(revision==BC_ABI_REVISION){
+        __typeof__(P11(&owner->engine,code->id,config.data,config.len)) prepared=
+            P11(&owner->engine,code->id,config.data,config.len);
+        if(prepared.tag==FY_RESULT_OK){
+            instance->child=(preview_child){.owner=owner,.id=prepared.p_0.f_0,.fuel=prepared.p_0.f_1};
+            instance->peak=prepared.p_0.f_2;
+            instance->start=prepared.p_0.f_3;
+        }else{status=prepared.p_1.f_0;failure=prepared.p_1.f_1.f_0.f_0;}
+    }else{
+        __typeof__(P3(&owner->engine,code->id,fuel)) prepared=P3(&owner->engine,code->id,fuel);
+        if(prepared.tag==FY_RESULT_OK){instance->child=(preview_child){.owner=owner,.id=prepared.p_0,.fuel=fuel};}
+        else{status=prepared.p_1.f_0;failure=prepared.p_1.f_1.f_0.f_0;}
+    }
+    if(status==BC_OK){
         status=bc_abi_registry_insert(&admission,INSTANCE_HANDLE,(uintptr_t)instance,out);
         if(status==BC_OK){++owner->children;}
-        else if(P6(&owner->engine,instance->id).tag!=FY_RESULT_OK){preview_invariant();}
-    }else{
-        status=prepared.p_1.f_0;
-        // The private preparation API reports setup Fuel exhaustion as a
-        // diagnostic. No Instance exists yet, so this is a resource refusal.
-        if(status==BC_COMPILE_ERROR && prepared.p_1.f_1.f_0.f_0==8){status=BC_RESOURCE_LIMIT;}
+        else if(P6(&owner->engine,instance->child.id).tag!=FY_RESULT_OK){preview_invariant();}
     }
+    // Setup Fuel exhaustion is a resource refusal before Instance publication.
+    if(status==BC_COMPILE_ERROR && failure==8){status=BC_RESOURCE_LIMIT;}
     if(status!=BC_OK){HeapFree(GetProcessHeap(),0,instance);}
     leave_preview(&admission);
     return preview_status(status);
@@ -311,17 +328,78 @@ uint32_t BC_CALL bc_preview_step(bc_handle instance,uint32_t quantum,bc_preview_
     return preview_status(status);
 }
 
-uint32_t BC_CALL bc_preview_cancel(bc_handle instance){
+typedef __typeof__(P4((bc_engine *)0,0,0).p_0) preview_vm_event;
+
+static bc_event revision_two_event(preview_run *run,preview_vm_event event){
+    if(!event.f_4||event.f_3>run->child.fuel){preview_invariant();}
+    bc_event result={.struct_size=sizeof(result),.fuel_used=run->child.fuel-event.f_3,
+        .peak_accounted_bytes=run->peak,.elapsed_us=(bc_runtime_engine_monotonic_ticks()-run->start)/10};
+    uint32_t code=event.f_2.f_0.f_0;
+    const char *message="";
+    switch(event.f_0){
+    case 1: result.kind=BC_DONE;result.return_i32=(int32_t)event.f_1;break;
+    case 2:
+        switch(code){
+        case 15: result.kind=BC_FAILED;message="Execution allocation failed";break;
+        case 30: result.kind=BC_FAILED;message="Execution deadline expired";break;
+        case 32: result.kind=BC_FAILED;message="Execution memory limit exceeded";break;
+        case 36: result.kind=BC_FAILED;message="Engine poisoned";break;
+        default: result.kind=BC_TRAP;result.trap_code=code;message="Guest execution trapped";break;
+        }
+        break;
+    case 3: result.kind=BC_FAILED;code=33;message="Execution cancelled";break;
+    case 4: result.kind=BC_YIELD;break;
+    default: preview_invariant();
+    }
+    result.diagnostic=diagnostic_result(code,message);
+    if(code && event.f_2.f_1.f_0==0){
+        result.diagnostic.source_index=0;
+        result.diagnostic.byte_start=(uint32_t)event.f_2.f_1.f_1;
+        result.diagnostic.byte_end=(uint32_t)event.f_2.f_1.f_2;
+    }
+    if(result.kind!=BC_YIELD){run->terminal=result;}
+    return result;
+}
+
+uint32_t BC_CALL bc_step(bc_handle instance,uint32_t quantum,bc_event *out){
+    if(!out||out->struct_size!=sizeof(*out)||!quantum||quantum>4096){return BC_BAD_ARGUMENT;}
     bc_abi_registry_admission admission;
     uint32_t status=bc_abi_registry_enter_instance(instance,&admission);
     if(status!=BC_OK){return status;}
-    preview_child *run=(preview_child *)(uintptr_t)admission.object;
-    if(run->owner->revision!=BC_PREVIEW_REVISION){leave_preview(&admission);return BC_INVALID_HANDLE;}
-    __typeof__(P5(&run->owner->engine,run->id)) cancelled=P5(&run->owner->engine,run->id);
-    status=cancelled.tag==FY_RESULT_OK?BC_OK:cancelled.p_1.f_0;
+    preview_run *run=(preview_run *)(uintptr_t)admission.object;
+    if(run->child.owner->revision!=BC_ABI_REVISION){status=BC_INVALID_HANDLE;}
+    else if(run->terminal.kind){*out=run->terminal;}
+    else{
+        __typeof__(P4(&run->child.owner->engine,run->child.id,quantum)) stepped=
+            P4(&run->child.owner->engine,run->child.id,quantum);
+        if(stepped.tag!=FY_RESULT_OK){status=stepped.p_1.f_0;}
+        else{*out=revision_two_event(run,stepped.p_0);}
+    }
     leave_preview(&admission);
     return preview_status(status);
 }
+
+static uint32_t cancel_instance(bc_handle instance,uint32_t revision){
+    bc_abi_registry_admission admission;
+    uint32_t status=bc_abi_registry_enter_instance(instance,&admission);
+    if(status!=BC_OK){return status;}
+    preview_run *instance_state=(preview_run *)(uintptr_t)admission.object;
+    preview_child *run=&instance_state->child;
+    if(run->owner->revision!=revision){leave_preview(&admission);return BC_INVALID_HANDLE;}
+    if(instance_state->terminal.kind){leave_preview(&admission);return BC_OK;}
+    __typeof__(P5(&run->owner->engine,run->id)) cancelled=P5(&run->owner->engine,run->id);
+    status=cancelled.tag==FY_RESULT_OK?BC_OK:cancelled.p_1.f_0;
+    if(status==BC_OK && revision==BC_ABI_REVISION){
+        __typeof__(P12(&run->owner->engine,run->id)) observed=P12(&run->owner->engine,run->id);
+        if(observed.tag!=FY_RESULT_OK){preview_invariant();}
+        if(observed.p_0.f_0!=4){(void)revision_two_event(instance_state,observed.p_0);}
+    }
+    leave_preview(&admission);
+    return preview_status(status);
+}
+
+uint32_t BC_CALL bc_preview_cancel(bc_handle instance){return cancel_instance(instance,BC_PREVIEW_REVISION);}
+uint32_t BC_CALL bc_cancel(bc_handle instance){return cancel_instance(instance,BC_ABI_REVISION);}
 
 static uint32_t release_child(bc_handle child,bc_handle engine,uint32_t kind,uint32_t revision){
     bc_abi_registry_admission admission;

@@ -57,6 +57,7 @@ import body_source_work as body_work;
 pub struct Limits { usize programs; usize instances; usize fuel; }
 pub struct Error { u32 status; diagnostics::Error diagnostic; }
 pub struct Event { u8 kind; i64 value; diagnostics::Error diagnostic; usize remaining; bool fuel_known; }
+pub struct ScalarPreparation { usize instance; usize fuel; usize peak; usize start; }
 pub enum InstanceState { Ready; Running; WaitingHost; Stopping; Terminal; }
 pub struct InstanceStatus { InstanceState state; Event event; }
 pub enum CompileState { Preparing; Prepared; Lowering; Lowered; Proving; Completed; Failed; Cancelled; }
@@ -809,7 +810,7 @@ fn Result<run_config::RunConfig,Error> parse_scalar_run(ref Engine e,ref u8[] co
     return .ok(run);
 }
 
-pub fn Result<usize,Error> prepare_scalar_preview(ref mut Engine e,usize program,ref u8[] configuration){
+pub fn Result<ScalarPreparation,Error> prepare_scalar_preview(ref mut Engine e,usize program,ref u8[] configuration){
     if(!scalar_preview_program(e,program)?){return .err(error(5));}
     let run_config::RunConfig run=parse_scalar_run(e,configuration)?;
     if(!bytes::equal(run_config::module_name(ref run),b"main") ||
@@ -823,7 +824,9 @@ pub fn Result<usize,Error> prepare_scalar_preview(ref mut Engine e,usize program
     let u32 status=unsafe{instance_output_raw(e as ptr mut void,program,ref mut incoming as ptr mut void,
         limits.fuel,0,2,deadline)};
     let usize id=result(e,status)?;
-    return prepare_created_instance(e,id);
+    let usize prepared=prepare_created_instance(e,id)?;
+    return .ok(ScalarPreparation{.instance=prepared,.fuel=limits.fuel,.peak=pending,
+        .start=deadline-limits.deadline_ms*10000});
 }
 
 // Policy admits durations in 1..60000 ms; Windows interrupt time uses 100 ns ticks.
