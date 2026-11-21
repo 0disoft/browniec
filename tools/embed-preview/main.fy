@@ -58,14 +58,14 @@ fn Result<modules::Index,engine::Error> source_index(ref u8[] source){
     };
 }
 
-struct Compiled { usize program; bool accepts_input; }
-fn Result<Compiled,engine::Error> compile(ref mut engine::Engine owner,ptr u8 data,usize length,bool allow_input){
+struct Compiled { usize program; bool accepts_input; bool emits; }
+fn Result<Compiled,engine::Error> compile(ref mut engine::Engine owner,ptr u8 data,usize length,bool configured){
     if(length>engine::source_byte_limit(owner)){return .err(failed(8));}
     // The synchronous C caller keeps its source alive through the Snapshot copy.
     let usize lifetime=length;
     let ref u8[] source=unsafe{byte_slice::from_raw_parts(ref lifetime,data,length)};
     let modules::Index index=source_index(source)?;
-    let bool input=allow_input && input_entries::has_i32_input(ref index,b"main",b"main");
+    let bool input=configured && input_entries::has_i32_input(ref index,b"main",b"main");
     let usize image_limit=images::metadata_charge()+images::byte_limit();
     let usize program=if(input){
         let input_entries::InputEntry selected=switch(input_entries::select_i32_input(index,b"main",b"main")){
@@ -78,10 +78,15 @@ fn Result<Compiled,engine::Error> compile(ref mut engine::Engine owner,ptr u8 da
         };
         engine::compile_output(owner,selected,image_limit)?
     };
-    return switch(engine::preview_accepts_input(owner,program)){
-        case .ok(v):{.ok(Compiled{.program=program,.accepts_input=v})}
-        case .err(e):{let usize released=engine::release_program(owner,program)?;.err(e)}
+    let engine::PreviewEntry profile=switch(engine::preview_entry(owner,program)){
+        case .ok(v):{v}
+        case .err(e):{let usize released=engine::release_program(owner,program)?;return .err(e);}
     };
+    if(!configured && profile.emits){
+        let usize released=engine::release_program(owner,program)?;
+        return .err(failed(5));
+    }
+    return .ok(Compiled{.program=program,.accepts_input=profile.accepts_input,.emits=profile.emits});
 }
 
 fn Result<usize,engine::Error> instance(ref mut engine::Engine owner,usize program,usize fuel){
@@ -111,6 +116,12 @@ fn Result<engine::ScalarPreparation,engine::Error> instance_configured(ref mut e
     return engine::prepare_scalar_preview(owner,program,input,configuration);
 }
 
+struct OutputSlice { ptr u8 data; usize length; }
+fn Result<OutputSlice,engine::Error> output_slice(ref engine::Engine owner,usize instance){
+    let ref u8[] data=engine::preview_output(owner,instance)?;
+    return .ok(OutputSlice{.data=if(data.len==0){null}else{unsafe{data as ptr u8}},.length=data.len});
+}
+
 // Retain only the generated bindings. The DLL never invokes this root driver.
 fn i32 main(){
     engine::retain_native_bindings();
@@ -128,5 +139,6 @@ fn i32 main(){
     unsafe{bc_embed_binding(10)};discard abi::validate(2,32,true);
     unsafe{bc_embed_binding(11)};discard instance_configured(ref mut owner,1,source,1,source,1);
     unsafe{bc_embed_binding(12)};discard engine::observe(ref mut owner,1);
+    unsafe{bc_embed_binding(13)};discard output_slice(ref owner,1);
     return 0;
 }

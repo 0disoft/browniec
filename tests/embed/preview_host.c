@@ -80,7 +80,7 @@ static bc_event finish_revision_two(bc_handle instance,uint32_t quantum){
     bc_event event={.struct_size=sizeof(event)};
     for(unsigned calls=0;calls<4096;++calls){
         assert(bc_step(instance,quantum,&event)==BC_OK);
-        assert(event.payload.data==NULL && event.payload.len==0);
+        if(event.kind!=BC_DONE){assert(event.payload.data==NULL && event.payload.len==0);}
         assert(event.request_id==0 && event.import_id==0 && event.reserved==0);
         if(event.kind!=BC_YIELD){return event;}
     }
@@ -88,9 +88,9 @@ static bc_event finish_revision_two(bc_handle instance,uint32_t quantum){
     return event;
 }
 
-static size_t read_run_config(uint8_t *config,size_t capacity){
+static size_t read_fixture(const char *name,uint8_t *config,size_t capacity){
     FILE *run=NULL;
-    assert(fopen_s(&run,"run.json","rb")==0);
+    assert(fopen_s(&run,name,"rb")==0);
     const size_t length=fread(config,1,capacity-1,run);
     assert(length>0 && feof(run) && fclose(run)==0);
     config[length]=0;
@@ -99,7 +99,7 @@ static size_t read_run_config(uint8_t *config,size_t capacity){
 
 static void revision_two_instances(bc_handle engine,bc_handle program){
     uint8_t config[1024];
-    const size_t length=read_run_config(config,sizeof(config));
+    const size_t length=read_fixture("run.json",config,sizeof(config));
     bc_slice json={config,length},empty={0};
     bc_handle first=UINT64_MAX,second=0;
     bc_diagnostic diagnostic={.struct_size=sizeof(diagnostic)};
@@ -185,7 +185,7 @@ static void revision_two_byte_inputs(bc_handle engine){
     assert(memcmp(info.required_capabilities_json.data,"[]",2)==0);
 
     uint8_t config[1024];
-    const bc_slice run={config,read_run_config(config,sizeof(config))};
+    const bc_slice run={config,read_fixture("run.json",config,sizeof(config))};
     uint8_t *cap=(uint8_t *)strstr((const char *)config,"\"input_bytes\":1048576");
     assert(cap);
     memcpy(cap+sizeof("\"input_bytes\":")-1,"      3",7);
@@ -208,6 +208,60 @@ static void revision_two_byte_inputs(bc_handle engine){
     assert(a.peak_accounted_bytes==c.peak_accounted_bytes+3);
     assert(bc_instance_destroy(first)==BC_OK && bc_instance_destroy(second)==BC_OK);
     assert(bc_instance_destroy(absent)==BC_OK);
+}
+
+static void revision_two_output(bc_handle pure_engine){
+    static const uint8_t main[]="main";
+    static const uint8_t text[]="module main;pub fn i32 main(ref u8[] data){"
+        "output::emit(ref data);if(data[0]==0){return 1/0;}return 77;}";
+    static const uint8_t scalar[]="module main;pub fn i32 main(){output::emit(ref b\"A\\x00\");return 77;}";
+    static const char capability[]="[\"brownie.output.emit\"]";
+    const bc_slice name={main,sizeof(main)-1},empty={0};
+    const bc_source source={name,{text,sizeof(text)-1}};
+    uint8_t policy[2048],config[1024],denied[1024];
+    const bc_slice authority={policy,read_fixture("policy-output.json",policy,sizeof(policy))};
+    const bc_slice run={config,read_fixture("run-output.json",config,sizeof(config))};
+    const bc_slice no_grant={denied,read_fixture("run.json",denied,sizeof(denied))};
+    bc_handle engine=0,program=0,other=0,first=0,second=0,cancelled=0,trapped=0,refused=UINT64_MAX;
+    bc_diagnostic diagnostic={.struct_size=sizeof(diagnostic)};
+    assert(bc_compile(pure_engine,&source,1,empty,&other,&diagnostic)==BC_OK);
+    const uint8_t input_bytes[]={65,0};
+    const bc_slice input={input_bytes,sizeof(input_bytes)};
+    assert(bc_instance_create(pure_engine,other,input,run,&refused,&diagnostic)==BC_POLICY_ERROR && refused==0);
+    assert(bc_program_release(pure_engine,other)==BC_OK);
+
+    assert(bc_engine_create(2,authority,&engine,&diagnostic)==BC_OK);
+    assert(bc_compile(engine,&source,1,empty,&program,&diagnostic)==BC_OK);
+    bc_entry_info info={.struct_size=sizeof(info)};
+    assert(bc_program_entry_info(engine,program,name,name,&info,&diagnostic)==BC_OK);
+    assert(info.input_kind==BC_INPUT_BYTES && info.required_capabilities_json.len==sizeof(capability)-1);
+    assert(memcmp(info.required_capabilities_json.data,capability,sizeof(capability)-1)==0);
+    assert(bc_instance_create(engine,program,input,no_grant,&refused,&diagnostic)==BC_POLICY_ERROR && refused==0);
+    assert(bc_instance_create(engine,program,input,run,&first,&diagnostic)==BC_OK);
+    assert(bc_instance_create(engine,program,input,run,&cancelled,&diagnostic)==BC_OK);
+    const uint8_t fail_bytes[]={0,255};
+    assert(bc_instance_create(engine,program,(bc_slice){fail_bytes,sizeof(fail_bytes)},run,&trapped,&diagnostic)==BC_OK);
+    const bc_source no_input={name,{scalar,sizeof(scalar)-1}};
+    assert(bc_compile(engine,&no_input,1,empty,&other,&diagnostic)==BC_OK);
+    assert(bc_instance_create(engine,other,empty,run,&second,&diagnostic)==BC_OK);
+    assert(bc_program_release(engine,program)==BC_OK && bc_program_release(engine,other)==BC_OK);
+
+    bc_event pending={.struct_size=sizeof(pending)};
+    assert(bc_step(cancelled,1,&pending)==BC_OK && pending.kind==BC_YIELD && pending.payload.len==0);
+    assert(bc_cancel(cancelled)==BC_OK);
+    const bc_event stopped=finish_revision_two(cancelled,64),failed=finish_revision_two(trapped,64);
+    assert(stopped.kind==BC_FAILED && stopped.diagnostic.code==33);
+    assert(failed.kind==BC_TRAP && failed.trap_code==7);
+    bc_event a=finish_revision_two(first,1),b=finish_revision_two(second,64);
+    assert(a.kind==BC_DONE && b.kind==BC_DONE && a.return_i32==77 && b.return_i32==77);
+    assert(a.payload.len==sizeof(input_bytes) && memcmp(a.payload.data,input_bytes,sizeof(input_bytes))==0);
+    assert(b.payload.len==sizeof(input_bytes) && memcmp(b.payload.data,input_bytes,sizeof(input_bytes))==0);
+    assert(bc_instance_destroy(second)==BC_OK && bc_instance_destroy(trapped)==BC_OK);
+    assert(bc_cancel(first)==BC_OK);
+    bc_event repeated=finish_revision_two(first,64);
+    assert(memcmp(&a,&repeated,sizeof(a))==0 && memcmp(repeated.payload.data,input_bytes,sizeof(input_bytes))==0);
+    assert(bc_instance_destroy(first)==BC_OK && bc_instance_destroy(cancelled)==BC_OK);
+    assert(bc_engine_destroy(engine)==BC_OK);
 }
 
 static DWORD WINAPI foreign_entry_lookup(void *arg){
@@ -371,6 +425,7 @@ static void revision_two_engines(void){
     expect_diagnostic(&diagnostic,BC_OK);
     revision_two_programs(handle,(bc_slice){policy,length});
     revision_two_byte_inputs(handle);
+    revision_two_output(handle);
     revision_two_source_limit(policy,length);
     memset(policy,0,sizeof(policy));
     HANDLE thread=CreateThread(NULL,0,foreign_engine_destroy,&handle,0,NULL);
@@ -450,5 +505,6 @@ int main(void){
     puts("PASS: revision-2 quanta 1/64, independent cancellation, deadline precedence, and terminal snapshots");
     puts("PASS: call frame limit 1 traps and limit 2 returns 77 from the same Program");
     puts("PASS: revision-2 byte input snapshots, empty input, exact byte quota, and peak accounting");
+    puts("PASS: revision-2 output authority, binary completion views, cancellation, and trap rollback");
     return 0;
 }

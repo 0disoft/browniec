@@ -22,6 +22,8 @@ typedef struct preview_engine {
     uint32_t revision;
 } preview_engine;
 
+static const uint8_t emit_capabilities[]="[\"brownie.output.emit\"]";
+
 typedef struct preview_child {
     preview_engine *owner;
     uintptr_t id;
@@ -29,7 +31,8 @@ typedef struct preview_child {
         uint64_t fuel;
         struct {
             uint32_t input_kind;
-            uint8_t capabilities_json[2];
+            uint32_t capabilities_length;
+            uint8_t capabilities_json[sizeof(emit_capabilities)-1];
         } program;
     };
 } preview_child;
@@ -178,7 +181,12 @@ static uint32_t compile_program(bc_handle engine,uint32_t revision,bc_slice sour
         P2(&owner->engine,source.data,source.len,revision==BC_ABI_REVISION);
     if(compiled.tag==FY_RESULT_OK){
         *program=(preview_child){.owner=owner,.id=compiled.p_0.f_0,
-            .program={.input_kind=compiled.p_0.f_1?BC_INPUT_BYTES:BC_INPUT_NONE,.capabilities_json={'[',']'}}};
+            .program={.input_kind=compiled.p_0.f_1?BC_INPUT_BYTES:BC_INPUT_NONE,.capabilities_json={'[',']'},
+                      .capabilities_length=2}};
+        if(compiled.p_0.f_2){
+            program->program.capabilities_length=sizeof(emit_capabilities)-1;
+            memcpy(program->program.capabilities_json,emit_capabilities,sizeof(emit_capabilities)-1);
+        }
         status=bc_abi_registry_insert(&admission,PROGRAM_HANDLE,(uintptr_t)program,out);
         if(status==BC_OK){++owner->children;}
         else if(P7(&owner->engine,program->id).tag!=FY_RESULT_OK){preview_invariant();}
@@ -237,7 +245,7 @@ uint32_t BC_CALL bc_program_entry_info(bc_handle engine,bc_handle program,bc_sli
     }else{
         *out=(bc_entry_info){.struct_size=sizeof(*out),.abi_revision=BC_ABI_REVISION,
             .input_kind=code->program.input_kind,
-            .required_capabilities_json={code->program.capabilities_json,sizeof(code->program.capabilities_json)}};
+            .required_capabilities_json={code->program.capabilities_json,code->program.capabilities_length}};
     }
     leave_preview(&admission);
     *diagnostic=diagnostic_result(status,message);
@@ -342,7 +350,15 @@ static bc_event revision_two_event(preview_run *run,preview_vm_event event){
     uint32_t code=event.f_2.f_0.f_0;
     const char *message="";
     switch(event.f_0){
-    case 1: result.kind=BC_DONE;result.return_i32=(int32_t)event.f_1;break;
+    case 1: {
+        __typeof__(P13(&run->child.owner->engine,run->child.id)) output=
+            P13(&run->child.owner->engine,run->child.id);
+        if(output.tag!=FY_RESULT_OK){preview_invariant();}
+        result.kind=BC_DONE;
+        result.return_i32=(int32_t)event.f_1;
+        result.payload=(bc_slice){output.p_0.f_0,output.p_0.f_1};
+        break;
+    }
     case 2:
         switch(code){
         case 15: result.kind=BC_FAILED;message="Execution allocation failed";break;

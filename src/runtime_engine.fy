@@ -578,9 +578,9 @@ pub fn Result<bool,Error> host_program_emits(ref Engine e,usize id){
 }
 
 // Trusted embedding can reuse the output Machine for its resumable dispatcher.
-// Read the input signature from the retained proof. Output authority is denied
-// for this embedding profile.
-pub fn Result<bool,Error> preview_accepts_input(ref Engine e,usize id){
+// The embedding profile advertises the retained proof's capabilities.
+pub struct PreviewEntry { bool accepts_input; bool emits; }
+pub fn Result<PreviewEntry,Error> preview_entry(ref Engine e,usize id){
     let u32 status=unsafe{control_access_raw(e as ptr void)};
     if(status!=0){return .err(error(status));}
     let usize pi=switch(program_index(ref e.programs,id,true)){
@@ -589,8 +589,7 @@ pub fn Result<bool,Error> preview_accepts_input(ref Engine e,usize id){
     let ref Program retained=vec::at<Program>(ref e.programs,pi);
     if(vec::len<output_programs::Program>(ref retained.output)!=1){return .err(error(1));}
     let ref output_programs::Program code=vec::at<output_programs::Program>(ref retained.output,0);
-    if(output_programs::requires_emit(code)){return .err(error(5));}
-    return .ok(output_programs::accepts_input(code));
+    return .ok(PreviewEntry{.accepts_input=output_programs::accepts_input(code),.emits=output_programs::requires_emit(code)});
 }
 
 pub fn Result<usize,Error> prepare_scalar_host(ref mut Engine e,usize program,ref run_config::RunConfig run){
@@ -813,19 +812,24 @@ fn Result<run_config::RunConfig,Error> parse_scalar_run(ref Engine e,ref u8[] co
 }
 
 pub fn Result<ScalarPreparation,Error> prepare_scalar_preview(ref mut Engine e,usize program,ref u8[] input,ref u8[] configuration){
-    let bool accepts=preview_accepts_input(e,program)?;
-    if(!accepts && input.len!=0){return .err(error(1));}
+    let PreviewEntry profile=preview_entry(e,program)?;
+    if(!profile.accepts_input && input.len!=0){return .err(error(1));}
     let run_config::RunConfig run=parse_scalar_run(e,configuration)?;
     if(!bytes::equal(run_config::module_name(ref run),b"main") ||
-        !bytes::equal(run_config::function_name(ref run),b"main") ||
-        run_config::requires_count(ref run)!=0 || run_config::grants_count(ref run)!=0){return .err(error(5));}
+        !bytes::equal(run_config::function_name(ref run),b"main")){return .err(error(5));}
+    let usize capabilities=if(profile.emits){1}else{0};
+    if(run_config::requires_count(ref run)!=capabilities || run_config::grants_count(ref run)!=capabilities ||
+        (profile.emits && (!run_config::declares(ref run,b"brownie.output.emit") ||
+        !run_config::grants(ref run,b"brownie.output.emit")))){return .err(error(5));}
     let policy_limits::RunLimits limits=run_config::run_limits(ref run);
-    let usize pending=required_pending_bytes(e,program,0)?;
+    let usize output_limit=if(profile.emits){limits.output_bytes}else{0};
+    let u32 authority=if(profile.emits){3}else{2};
+    let usize pending=required_pending_bytes(e,program,output_limit)?;
     if(limits.fuel>e.meta.limits.fuel || input.len>limits.input_bytes ||
         pending>limits.memory_bytes || input.len>limits.memory_bytes-pending){return .err(error(8));}
     let usize deadline=deadline_after(limits.deadline_ms)?;
     var usize peak=pending;
-    let usize id=if(accepts){
+    let usize id=if(profile.accepts_input){
         var usize unused=0;
         let input_bytes::Snapshot snapshot=switch(input_bytes::snapshot(input,limits.input_bytes,0,ref mut unused)){
             case .ok(v):{v}
@@ -836,11 +840,11 @@ pub fn Result<ScalarPreparation,Error> prepare_scalar_preview(ref mut Engine e,u
         let usize capacity=input_bytes::capacity(ref snapshot);
         if(capacity>limits.memory_bytes-pending){return .err(error(8));}
         peak+=capacity;
-        bind_input_output(e,program,snapshot,limits.fuel,0,2,deadline)?
+        bind_input_output(e,program,snapshot,limits.fuel,output_limit,authority,deadline)?
     }else{
         var vec::Vec<input_bytes::Snapshot> incoming=vec::empty<input_bytes::Snapshot>();
         let u32 status=unsafe{instance_output_raw(e as ptr mut void,program,ref mut incoming as ptr mut void,
-            limits.fuel,0,2,deadline)};
+            limits.fuel,output_limit,authority,deadline)};
         result(e,status)?
     };
     let usize prepared=prepare_created_instance(e,id,limits.call_frames)?;
@@ -930,6 +934,27 @@ pub fn ref u8[] output_view(ref Output o){
     let ref u8[] data=output_programs::view(ref o.run);
     // Tie both the empty and owned cases to this exact retained resource.
     return unsafe {byte_slice::from_raw_parts(o,data as ptr u8,data.len)};
+}
+
+// Embedding borrows only a sealed successful result. The buffer backing
+// remains owned and charged by the Instance while the C view is live.
+pub fn Result<ref u8[],Error> preview_output(ref Engine e,usize instance){
+    let u32 access=unsafe{control_access_raw(e as ptr void)};
+    if(access!=0){return .err(error(access));}
+    let usize ii=switch(instance_index(ref e.instances,instance)){
+        case .ok(v):{v}case .err(s):{return .err(error(s));}
+    };
+    let ref Instance item=vec::at<Instance>(ref e.instances,ii);
+    if(item.phase!=2 || item.event.kind!=1){return .err(error(11));}
+    let usize oi=switch(output_index(ref e.outputs,instance)){
+        case .ok(v):{v}case .err(_):{return .err(error(7));}
+    };
+    let ref Output output=vec::at<Output>(ref e.outputs,oi);
+    if(!item.output_owned || output_programs::heap_bytes(ref output.run)!=item.output_bytes){
+        return .err(error(7));
+    }
+    let ref u8[] data=output_view(output);
+    return .ok(unsafe{byte_slice::from_raw_parts(e,data as ptr u8,data.len)});
 }
 // The accepted owning input association: its bytes move once, stay immutable,
 // and are reclaimed with the Instance even after cancellation or Program release.

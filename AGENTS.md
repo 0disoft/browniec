@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-21): [Revision-2 byte input](docs/engineering/embed-preview.md#revision-2-scalar-instance-preparation)
-  binds an immutable snapshot per Instance. Windows /Od and /O2 verified
-  separate results, empty input, exact byte quota, and peak accounting.
+- Latest runtime checkpoint (2026-11-21): [Revision-2 guest output](docs/engineering/embed-preview.md#revision-2-guest-output)
+  exposes sealed results on success. Windows /Od and /O2 verified capability
+  denial, binary views, cancellation and trap rollback.
 
 # Brownie C agent guidance
 

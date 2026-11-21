@@ -99,7 +99,9 @@ revision-2 Program handles use separate API entry points.
 `bc_program_entry_info` queries `main::main` on the same Engine and thread.
 Initialize both output structure sizes. The query returns ABI revision 2,
 the retained signature's input kind (`BC_INPUT_NONE` or `BC_INPUT_BYTES`),
-and the Program-owned, two-byte JSON capability array `[]`.
+and a Program-owned JSON capability array. The array is
+`["brownie.output.emit"]` if the verified entry can reach an emit and
+`[]` otherwise.
 The slice is read-only and expires at Program release. Failed queries leave
 entry info storage unchanged.
 
@@ -113,8 +115,10 @@ and rejection across threads, Engines, ABI revisions and stale handles.
 ## Revision-2 scalar Instance preparation
 
 `bc_instance_create` accepts guest input and an explicit
-`brownie.run/0.3` configuration. The entry must be `main::main` and `requires`
-and `grants` must be empty. The Engine validates the configuration against
+`brownie.run/0.3` configuration. The entry must be `main::main`. A Program
+with a reachable emit requires `brownie.output.emit` in both `requires` and
+`grants`, and the Engine policy must allow that capability. Otherwise both
+lists must be empty. The Engine validates the configuration against
 its own policy and reserves the prepared continuation under the requested
 memory and Fuel limits. It records the monotonic deadline before preparation.
 A zero-argument entry requires empty input. A shared-byte entry copies the
@@ -144,8 +148,8 @@ the empty snapshot.
 
 `bc_step` advances the saved dispatcher with a quantum of 1 through 4096.
 Pass an event with the exact `struct_size`. Each event reports cumulative
-Fuel use, the peak accounted bytes of the prepared continuation, and elapsed
-microseconds from run admission. It carries an empty payload. The Engine
+Fuel use, the peak accounted bytes of the prepared continuation and its
+input, and elapsed microseconds from run admission. The Engine
 reports yield, return, guest trap, and execution failure. Cancellation and
 deadline expiry are failed events with diagnostic codes 33 and 30.
 
@@ -164,3 +168,18 @@ Repeated successful and cancelled terminal events matched byte for byte.
 the Instance's limit before starting a CALL. A limit of one traps when
 `main` calls a helper, while a limit of two lets the same Program return 77.
 Both profiles verified this boundary and the source location of the trap.
+
+## Revision-2 guest output
+
+`BC_DONE` exposes the sealed bytes in a read-only `payload` slice. The
+Instance retains the buffer and its memory charge until destruction. Empty
+output is represented as NULL/0. Yields, traps, cancellation and deadline
+expiry have empty payloads. Staging and sealing use `limits.output_bytes`
+and the saved Engine dispatcher. Repeated observations return the same
+slice and terminal metrics.
+
+Both Windows builds verified the two-byte payload `41 00` from zero-argument
+and byte-input entries. The latter keeps its output view valid across Program
+release, peer Instance destruction, a late cancel, and repeated observation.
+The C host also verified rejection without a run grant or Engine permission,
+and empty payloads on cancellation and a guest trap after emission.

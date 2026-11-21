@@ -91,7 +91,8 @@ BC_API uint32_t BC_CALL bc_compile(bc_handle engine,
 BC_API uint32_t BC_CALL bc_program_entry_info(bc_handle engine, bc_handle program,
     bc_slice module, bc_slice function, bc_entry_info *out_info, bc_diagnostic *diagnostic);
 /* Scalar preview DLL: a brownie.run/0.3 configuration for main::main with
-   empty requires and grants. BC_INPUT_NONE requires empty input.
+   explicit requires and grants for a reachable output::emit.
+   BC_INPUT_NONE requires empty input.
    BC_INPUT_BYTES copies the slice during preparation, including empty input.
    The Engine checks its policy before preparing and pinning the Program. */
 BC_API uint32_t BC_CALL bc_instance_create(bc_handle engine, bc_handle program,
@@ -99,7 +100,8 @@ BC_API uint32_t BC_CALL bc_instance_create(bc_handle engine, bc_handle program,
 /* Work unit: dispatch, <=4096-byte bulk chunk or <=64-entry metadata chunk.
    Terminal events and metrics are immutable snapshots. A valid-instance API
    checkpoint may select deadline/cancel/Engine poison before semantic validation.
-   A malformed reply after that checkpoint leaves request and Fuel unchanged. */
+   A malformed reply after that checkpoint leaves request and Fuel unchanged.
+   BC_DONE payload is read-only sealed output and expires at Instance destruction. */
 BC_API uint32_t BC_CALL bc_step(bc_handle instance, uint32_t max_work_units, bc_event *out_event);
 BC_API uint32_t BC_CALL bc_host_reply(bc_handle instance, uint64_t request_id,
     uint32_t reply_kind, bc_slice typed_payload, bc_diagnostic *diagnostic);
