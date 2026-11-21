@@ -1,7 +1,7 @@
-- Latest runtime checkpoint (2026-11-21): [Shared output body lowering](docs/engineering/runtime-engine-compile-memory.md#shared-output-body-lowering)
-  connects the deadline-aware output compiler to the existing body cursor.
-  Windows development and /O2 passed deadline tests with zero live SDK
-  allocations. The private input-only job also resumes canonical proof.
+- Latest runtime checkpoint (2026-11-21): [Engine-owned output-only lowering](docs/engineering/runtime-engine-compile-memory.md#engine-owned-output-only-lowering)
+  resumes source, metadata, and body control before synchronous output proof.
+  Windows development and /O2 passed exact cancellation refunds and execution
+  returning 77 with two output bytes. Both profiles ended with zero SDK allocations.
 
 # Brownie C agent guidance
 

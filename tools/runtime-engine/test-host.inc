@@ -128,7 +128,7 @@ static DWORD WINAPI wrong_thread(void *raw){
  assert(bc_runtime_engine_call(raw,9,0,0)==10);
  assert(bc_runtime_engine_call(raw,10,0,1)==10);
  assert(bc_runtime_engine_compile(raw,(void *)(uintptr_t)1,0,0)==10);
- assert(bc_runtime_engine_begin_compile(raw,(void *)(uintptr_t)1,0,0)==10);
+ assert(bc_runtime_engine_begin_compile(raw,(void *)(uintptr_t)1,0,0,0)==10);
  assert(bc_runtime_engine_step_compile(raw,1)==10);
  assert(bc_runtime_engine_end_compile(raw,1,0)==10);
  assert(bc_runtime_engine_compile_input(raw,(void *)(uintptr_t)1,0,0)==10);
@@ -150,7 +150,7 @@ void bc_runtime_engine_test_guards(void *raw){
  assert(bc_runtime_engine_call(raw,9,0,0)==3);
  assert(bc_runtime_engine_call(raw,10,0,1)==3);
  assert(bc_runtime_engine_compile(raw,(void *)(uintptr_t)1,0,0)==3);
- assert(bc_runtime_engine_begin_compile(raw,(void *)(uintptr_t)1,0,0)==3);
+ assert(bc_runtime_engine_begin_compile(raw,(void *)(uintptr_t)1,0,0,0)==3);
  assert(bc_runtime_engine_step_compile(raw,1)==3);
  assert(bc_runtime_engine_end_compile(raw,1,1)==3);
  assert(bc_runtime_engine_compile_input(raw,(void *)(uintptr_t)1,0,0)==3);

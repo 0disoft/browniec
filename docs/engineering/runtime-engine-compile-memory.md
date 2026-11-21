@@ -619,6 +619,20 @@ Both profiles ended with zero live SDK allocations. The locked /O2 CLI build
 returned 77 and passed all 15 CLI contract checks. Local receipt:
 `build/runtime-engine/20261121T072706702610Z/receipt.json`.
 
+## Engine-owned output-only lowering
+
+A private Engine job can retain an ordinary Entry for output compilation
+and resume source preparation, literals, signatures, and body control.
+The output mode enables emit lowering while preserving output-specific
+admission and storage. A Lowered candidate has no Program ID. The final
+step still runs output proof and publication synchronously.
+
+Windows development and /O2 passed cancellation during lowering with
+exact SDK byte accounting, successful publication followed by execution
+returning 77 and emitting two bytes, and zero live SDK allocations at
+teardown. The locked /O2 CLI quick start returned 77. Local receipt:
+`build/runtime-engine/20261121T073632686896Z/receipt.json`.
+
 ## Executed verification and remaining work
 
 [Windows evidence](../evidence/runtime-engine-compile-memory-windows-20261107.json)

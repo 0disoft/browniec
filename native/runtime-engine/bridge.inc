@@ -33,9 +33,9 @@ uint32_t bc_runtime_engine_step_compile(void *raw,uintptr_t id){
                  : B42(&e->f_0,&e->f_1,&e->f_9,&e->f_10,&e->f_11,id);
  return finish(e,ticket,s);
 }
-uint32_t bc_runtime_engine_begin_compile(void *raw,void *incoming,uintptr_t limit,uintptr_t deadline){
+uint32_t bc_runtime_engine_begin_compile(void *raw,void *incoming,uintptr_t limit,uintptr_t deadline,uint32_t output){
  bc_engine *e=raw;bc_engine_ticket ticket;uint32_t s=admission(e,&ticket);if(s)return s;
- s=B44(&e->f_0,&e->f_9,&e->f_10,(bc_engine_input *)incoming,limit,deadline);return finish(e,ticket,s);
+ s=B44(&e->f_0,&e->f_9,&e->f_10,(bc_engine_input *)incoming,limit,deadline,output!=0);return finish(e,ticket,s);
 }
 uint32_t bc_runtime_engine_begin_compile_input(void *raw,void *incoming,uintptr_t limit,uintptr_t deadline){
  bc_engine *e=raw;bc_engine_ticket ticket;uint32_t s=admission(e,&ticket);if(s)return s;
@@ -57,7 +57,7 @@ uint32_t bc_runtime_engine_advance_compile_literals(void *meta,const void *selec
 uint32_t bc_runtime_engine_advance_compile_body(void *meta,const void *selected,const void *raw,void *candidate,void *meter,uintptr_t deadline){
  const bc_compile_work *job=raw;
  bc_compile_candidate *work=candidate;
- return B49(meta,selected,&job->f_9,work->f_2,&job->f_10,&work->f_3,&work->f_0,&work->f_4,&work->f_5,
+ return B49(meta,selected,&job->f_9,work->f_2,job->f_12,&job->f_10,&work->f_3,&work->f_0,&work->f_4,&work->f_5,
      &work->f_6,&work->f_7,&work->f_8,meter,deadline);
 }
 /* Reserve a single SDK-owned slot before Fairy initializes its value. */

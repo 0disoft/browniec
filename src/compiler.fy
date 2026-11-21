@@ -3590,7 +3590,7 @@ pub struct BodyProgress { usize function; usize active; u8 phase; }
 pub fn BodyProgress begin_module_bodies(){return BodyProgress{.function=0,.active=16,.phase=0};}
 
 pub fn Result<bool,source_errors::Error> advance_module_bodies(ref module_index::Index index,
-    ref module_source::State work,bool references,ref literal_work::State collection,ref mut signature_scan::State scan,
+    ref module_source::State work,bool references,bool output,ref literal_work::State collection,ref mut signature_scan::State scan,
     ref mut reference_ir::Program code,ref mut BodyProgress progress,
     ref mut lexer::State token,ref mut locals::Table names,ref mut loops::State flow,
     ref mut body_work::State cursor,ref mut metadata_budget::State meter,usize deadline){
@@ -3601,6 +3601,7 @@ pub fn Result<bool,source_errors::Error> advance_module_bodies(ref module_index:
     let ref u8[] source=ref input.data[..input.used];
     let literal_collection::Index unused=literal_collection::empty();
     let ref literal_collection::Index literals=if(references){ref collection.result}else{ref unused};
+    if(progress.phase==0){scan.result.output=output;}
     return switch(advance_module_body(source,references,literals,ref mut scan.result,code,progress,token,names,flow,cursor,meter,deadline)){
         case .ok(v):{.ok(v)}case .err(e):{.err(input_module_error(index,e,progress.active))}
     };

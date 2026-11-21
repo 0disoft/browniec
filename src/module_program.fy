@@ -81,6 +81,8 @@ pub fn Result<usize,diagnostics::Error> start_lowered(ref mut vec::Vec<Lowered> 
     };
 }
 pub fn bool signatures_done(ref Lowered lowered){return lowered.signatures.done;}
+pub fn ref candidate::Program lowered_code(ref Lowered lowered){return ref lowered.code;}
+pub fn ref images::Builder lowered_literals(ref Lowered lowered){return ref lowered.literals;}
 @link_name("bc_runtime_engine_compile_proof_storage")
 unsafe extern C fn usize proof_storage_raw(ptr void candidate);
 pub fn usize proof_storage_bytes(ref Lowered lowered){return unsafe{proof_storage_raw(lowered as ptr void)};}

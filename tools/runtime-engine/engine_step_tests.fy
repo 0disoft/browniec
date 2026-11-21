@@ -659,6 +659,38 @@ fn Result<usize,u8> pending_input_compile_lifecycle(){
     destroy(ref mut e,i);release(ref mut e,done.program);
     same_heap(ref idle);close(ref mut e);return .ok(0);
 }
+fn Result<usize,u8> pending_output_compile_lifecycle(){
+    var engine::Engine e=created()?;
+    let Heap idle=heap();
+    let ref u8[] source=b"module app;pub fn i32 chosen(){output::emit(ref b\"ok\");var i32 n=75;while(n<77){n+=1;}return n;}";
+    let usize cancelled=id(engine::begin_compile_output(ref mut e,selected(source)?,65536));
+    let engine::CompileStatus prepared=prepare_compile(ref mut e,cancelled)?;
+    let engine::CompileStatus lowering=begin_lowering(ref mut e,cancelled,prepared)?;
+    let usize charge=retained(ref e).compile_source_bytes;
+    assert(charge>0 && unsafe{probe_live_bytes()}==idle.bytes+charge);
+    let engine::CompileStatus cancelled_status=compile_status(engine::cancel_compile(ref mut e,cancelled))?;
+    assert(compile_state(cancelled_status.state)==4 && cancelled_status.program==0 && cancelled_status.batches==lowering.batches);
+    assert(engine::detach_compile(ref mut e,cancelled).is_ok && retained(ref e).compile_source_bytes==0);
+    same_heap(ref idle);
+
+    let usize job=id(engine::begin_compile_output(ref mut e,selected(source)?,65536));
+    let engine::CompileStatus ready=prepare_compile(ref mut e,job)?;
+    let engine::CompileStatus lowered=lower_compile(ref mut e,job,ready)?;
+    assert(lowered.program==0 && lowered.batches>ready.batches);
+    counts(ref mut e,0,0,0);
+    let engine::CompileStatus admitted=compile_status(engine::step_compile(ref mut e,job))?;
+    assert(compile_state(admitted.state)==2 && admitted.program==1);
+    assert(engine::detach_compile(ref mut e,job).is_ok && retained(ref e).compile_source_bytes==0);
+    let usize instance=id(engine::create_output_instance(ref mut e,admitted.program,16000000,2,true));
+    let engine::Event done=event(engine::execute_once(ref mut e,instance));
+    assert(done.kind==1 && done.value==77);
+    {
+        let engine::Output output=take(ref mut e,instance)?;
+        assert(bytes::equal(engine::output_view(ref output),b"ok"));
+    }
+    destroy(ref mut e,instance);release(ref mut e,admitted.program);
+    same_heap(ref idle);close(ref mut e);return .ok(0);
+}
 fn Result<usize,u8> pending_compile_deadline(){
     let policy::Policy ceiling=output_policy(true)?;
     var engine::Engine e=configured_engine(ceiling)?;
@@ -1551,6 +1583,7 @@ pub fn void run(){
     assert(pending_compile_candidate_cleanup().is_ok);same_heap(ref before);
     assert(pending_compile_deadline().is_ok);same_heap(ref before);
     assert(pending_input_compile_lifecycle().is_ok);same_heap(ref before);
+    assert(pending_output_compile_lifecycle().is_ok);same_heap(ref before);
     assert(configured_deadline().is_ok);same_heap(ref before);
     assert(cleanup_fault_quarantines_engine(false).is_ok);same_heap(ref before);
     assert(cleanup_fault_quarantines_engine(true).is_ok);same_heap(ref before);

@@ -2,6 +2,7 @@ module module_output_program;
 import module_entry as entries;
 import module_input_entry as input_entries;
 import module_index as modules;
+import module_program as ordinary;
 import source_snapshot as sources;
 import compiler as compiler;
 import source_error as diagnostics;
@@ -78,6 +79,11 @@ pub fn Result<Program,diagnostics::Error> compile_input_with_retention_until(inp
     var candidates::Program code=candidates::Program{.body=ir::empty(),.parameters=[0;128],.results=[0;16],.origins=[0;16]};
     let usize lowered=compiler::lower_input_modules_until(ref selected,ref mut builder,ref mut code,true,deadline)?;
     return finish_until(modules::snapshot(input_entries::index(ref selected)),ref builder,ref code,image_limit,true,plan,deadline);
+}
+pub fn Result<Program,diagnostics::Error> admit_lowered_until(ref entries::Entry selected,
+    ref ordinary::Lowered lowered,usize image_limit,ref mut retention::Plan plan,usize deadline){
+    return finish_until(modules::snapshot(entries::index(selected)),ordinary::lowered_literals(lowered),
+        ordinary::lowered_code(lowered),image_limit,false,plan,deadline);
 }
 fn Result<images::Image,diagnostics::Error> freeze(ref images::Builder builder,usize image_limit,ref mut retention::Plan plan){
     let usize payload=switch(images::planned_payload(builder)){case .ok(v):{v}case .err(_):{return .err(absent(errors::make(5,0)));}};
