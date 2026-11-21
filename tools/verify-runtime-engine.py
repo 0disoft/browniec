@@ -79,6 +79,19 @@ def source_copy(path):
                             + declaration, 1)
         text = text.replace(anchor, anchor + '\n        unsafe{bc_runtime_engine_test_context_copy(stop-w.cursor)};', 1)
         return path.name, text.encode('utf-8')
+    if path == ROOT / 'src/literal_collection_work.fy':
+        text = path.read_text(encoding='utf-8')
+        declaration = 'pub fn Result<bool,literals::Error> advance('
+        step = '    if(w.done){return .ok(true);}'
+        row = '        w.result.count+=1;next(w,8);return .ok(false);}'
+        need(text.count(declaration) == text.count(step) == text.count(row) == 1,
+             'Literal deadline probe anchors changed')
+        text = text.replace(declaration, 'unsafe extern C fn void bc_runtime_engine_test_literal_step();\n'
+                            'unsafe extern C fn void bc_runtime_engine_test_literal_staged();\n' + declaration, 1)
+        text = text.replace(step, '    unsafe{bc_runtime_engine_test_literal_step()};\n' + step, 1)
+        text = text.replace(row, '        w.result.count+=1;unsafe{bc_runtime_engine_test_literal_staged()};\n'
+                           '        next(w,8);return .ok(false);}', 1)
+        return path.name, text.encode('utf-8')
     if path == ROOT / 'src/compiler.fy':
         text=path.read_text(encoding='utf-8')
         marker='fn Result<scratch_vec::Vec<expression_work::Bank>,errors::Error> expression_scratch'

@@ -3,6 +3,7 @@ import lexer as lexer;
 import literal_source as literals;
 import static_image as images;
 import errors as errors;
+import runtime_clock as clock;
 import std::text as text;
 import literal_collection_work as staged;
 import metadata_budget as budget;
@@ -21,16 +22,37 @@ fn literals::Error source_error(u8 kind,usize offset){
 pub fn Result<Index,literals::Error> collect(ref mut images::Builder builder,ref u8[] source){
     let context::Table scope=context::empty();return collect_scoped(builder,source,ref scope);
 }
+fn Result<bool,literals::Error> next_batch(ref u8[] source,ref context::Table scope,ref images::Builder builder,
+    ref mut images::Builder candidate,ref mut staged::State w,ref mut budget::State meter){
+    switch(budget::reset(meter,0)){case .ok(_):{}case .err(e):{return .err(source_error(e.kind,e.offset));}};
+    return staged::advance(source,scope,builder,candidate,w,meter);
+}
+
 // Drain private collection children; publish caller-visible state only at success.
 pub fn Result<Index,literals::Error> collect_scoped(ref mut images::Builder builder,ref u8[] source,ref context::Table scope){
     var images::Builder candidate=images::Builder{.data=[0;4096],.catalog=images::Catalog{
         .starts=[0;16],.ends=[0;16],.text=[false;16],.count=0,.used=0},.limit=0};
     var staged::State w=staged::empty();var budget::State meter=budget::empty();
-    while(!w.done){switch(budget::reset(ref mut meter,0)){case .ok(_):{}case .err(e):{return .err(source_error(e.kind,e.offset));}};
-        switch(staged::advance(source,scope,builder,ref mut candidate,ref mut w,ref mut meter)){
-            case .ok(_):{}case .err(e):{return .err(e);}};
-    }
+    while(!w.done){let bool done=next_batch(source,scope,builder,ref mut candidate,ref mut w,ref mut meter)?;}
     let Index index=staged::prepared(ref w)?;*builder=candidate;return .ok(index);
+}
+
+// The absolute Engine deadline also covers the final publication boundary.
+pub fn Result<Index,literals::Error> collect_scoped_until(ref mut images::Builder builder,ref u8[] source,
+    ref context::Table scope,usize deadline){
+    var images::Builder candidate=images::Builder{.data=[0;4096],.catalog=images::Catalog{
+        .starts=[0;16],.ends=[0;16],.text=[false;16],.count=0,.used=0},.limit=0};
+    var staged::State w=staged::empty();var budget::State meter=budget::empty();
+    while(!w.done){
+        if(clock::expired(deadline)){return .err(deadline_error());}
+        let bool done=next_batch(source,scope,builder,ref mut candidate,ref mut w,ref mut meter)?;
+    }
+    if(clock::expired(deadline)){return .err(deadline_error());}
+    let Index index=staged::prepared(ref w)?;*builder=candidate;return .ok(index);
+}
+
+fn literals::Error deadline_error(){
+    return literals::Error{.kind=.Source,.source=errors::absent(errors::deadline_kind(),0),.image=.State};
 }
 
 // Independent whole-collection comparison path.

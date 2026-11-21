@@ -119,7 +119,10 @@ clock in both profiles: `build/anchored-sources/20261120T231507642754Z/receipt.j
 Output and input-output compilation sample the same absolute deadline before
 each source-context advance. An advance copies up to 64 source bytes, packs
 one metadata row, checks one sealed name, or moves to the next phase. Expiry
-discards the incomplete context before signature or body lowering. The
+discards the incomplete context before signature or body lowering. Literal
+collection samples before every bounded advance and before assigning the
+finished candidate to the image Builder. An expired collection leaves the
+Builder untouched and returns the source-less deadline diagnostic. The
 compiler also checks before body preparation, before each function, and before
 each control advance or pending semantic child. A child already running returns
 to the next checkpoint before expiry is delivered. The compiler samples again
@@ -156,6 +159,13 @@ The standalone body-lowering comparison passed 30 development groups. Its
 A single /O2 image passed four selected comparison and default-stack depth
 groups. Local receipts: `build/body-lowering-deadline-regression/development/receipt.json` and
 `build/body-lowering-single-image/receipt.json`.
+
+The Windows verifier expired collection after its first staged literal in both
+output entry modes. No further collection advance or proof stage ran. A direct
+collector case also preserved a prepopulated Builder. The Engine kept its next
+Program ID and returned the SDK heap and retained Program charge to baseline.
+Windows development and /O2 passed with zero live SDK allocations at exit.
+Local receipt: `build/runtime-engine/20261121T000534935666Z/receipt.json`.
 
 Source lowering, work between checkpoints, and cleanup remain synchronous.
 Public Pending compilation, in-flight cancellation, and a latency bound for

@@ -152,7 +152,9 @@ image admission; existing literal matches precede count/remaining-byte failures.
 The sixteen-occurrence ceiling remains separate from sixteen unique image IDs.
 A malformed Builder is still accepted when no literal needs interning, as in the
 raw owner. Only complete collection publishes the Index and caller Builder.
-The synchronous adapter's final fixed aggregate assignment, initial fixed scratch
+Configured Engine output compiles check their absolute deadline at each
+collection boundary and once before publication. The synchronous adapter's
+final fixed aggregate assignment, initial fixed scratch
 construction and final native image allocation/copy remain outside these advance
 contracts. Raw `collect_scoped_raw` and static image intern helpers are comparison
 oracles; the public compiler remains synchronous.

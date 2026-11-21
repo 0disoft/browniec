@@ -57,6 +57,7 @@ import slice_result_range_source as return_ranges;
 import slice_result_source_origins as source_origins;
 import slice_result_call_source as result_calls;
 import literal_collection as literal_collection;
+import literal_source as literal_source;
 import static_builders as static_builders;
 import static_source as static_source;
 import static_image as static_images;
@@ -3515,7 +3516,7 @@ pub fn Result<usize,source_errors::Error> lower_output_modules_until(ref module_
     switch(source_features::retained_scoped(source,scope)){
         case .ok(_):{}case .err(e):{return .err(module_error(selected,e,16));}
     };
-    let literal_collection::Index literals=module_literals(builder,source,scope,module_entries::index(selected))?;
+    let literal_collection::Index literals=module_literals_until(builder,source,scope,module_entries::index(selected),deadline)?;
     var functions::Table signatures=switch(functions::scan_scoped(source,scope,selected,true)){
         case .ok(v):{v}case .err(e):{return .err(module_error(selected,e,16));}
     };signatures.output=true;
@@ -3569,7 +3570,15 @@ fn Result<usize,source_errors::Error> lower_module_references(ref u8[] source,re
 }
 fn Result<literal_collection::Index,source_errors::Error> module_literals(ref mut static_images::Builder builder,
     ref u8[] source,ref source_context::Table scope,ref module_index::Index index){
-    return switch(literal_collection::collect_scoped(builder,source,scope)){
+    return module_literal_result(literal_collection::collect_scoped(builder,source,scope),index);
+}
+fn Result<literal_collection::Index,source_errors::Error> module_literals_until(ref mut static_images::Builder builder,
+    ref u8[] source,ref source_context::Table scope,ref module_index::Index index,usize deadline){
+    return module_literal_result(literal_collection::collect_scoped_until(builder,source,scope,deadline),index);
+}
+fn Result<literal_collection::Index,source_errors::Error> module_literal_result(
+    Result<literal_collection::Index,literal_source::Error> collected,ref module_index::Index index){
+    return switch(collected){
         case .ok(v):{.ok(v)}case .err(e):{return .err(input_module_error(index,public_error(switch(e.kind){
             case .Source:{image_source_error(e.source)}case .Image:{image_literal_error(e.image)}
         }),16));}
@@ -3609,7 +3618,7 @@ pub fn Result<usize,source_errors::Error> lower_input_output_modules_until(ref i
     let ref module_index::Index index=input_entries::index(selected);
     let ref u8[] source=ref input.data[..input.used];
     let ref source_context::Table scope=ref input.context;
-    let literal_collection::Index literals=module_literals(builder,source,scope,index)?;
+    let literal_collection::Index literals=module_literals_until(builder,source,scope,index,deadline)?;
     var functions::Table signatures=switch(functions::scan_input_scoped(source,scope,selected)){
         case .ok(v):{v}case .err(e):{return .err(input_module_error(index,e,16));}
     };signatures.output=true;
