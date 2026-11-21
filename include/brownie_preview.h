@@ -41,6 +41,16 @@ BC_PREVIEW_API uint32_t BC_CALL bc_preview_instance_destroy(bc_handle instance);
 BC_PREVIEW_API uint32_t BC_CALL bc_preview_program_release(bc_handle engine, bc_handle program);
 BC_PREVIEW_API uint32_t BC_CALL bc_preview_engine_destroy(bc_handle engine);
 
+/* Copy a revision-2 Instance's sealed BC_DONE output into caller-owned storage.
+   Use NULL/0 to query its exact size. A non-NULL destination smaller than that
+   size returns BC_RESOURCE_LIMIT without writing bytes. Both report the size.
+   While the Instance is live and unfinished, returns BC_BUSY. Failed or trapped
+   Instances return BC_RUN_TERMINATED. Other failures leave both outputs untouched.
+   Use writable destination and size storage that do not overlap each other or
+   any borrowed DLL views. The copy survives Instance and Engine destruction. */
+BC_PREVIEW_API uint32_t BC_CALL bc_preview_copy_output(bc_handle instance,
+    uint8_t *destination, size_t capacity, size_t *out_size);
+
 #ifdef __cplusplus
 }
 #endif

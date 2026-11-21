@@ -332,6 +332,13 @@ static void revision_two_shared_descriptors(bc_handle engine){
     puts("PASS: array, CALL and input range share limits; repeated return reuses four descriptors");
 }
 
+static DWORD WINAPI foreign_copy_output(void *arg){
+    size_t size=SIZE_MAX;
+    const uint32_t status=bc_preview_copy_output(*(bc_handle *)arg,NULL,0,&size);
+    assert(size==SIZE_MAX);
+    return status;
+}
+
 static void revision_two_output(bc_handle pure_engine){
     static const uint8_t main[]="main";
     static const uint8_t text[]="module main;pub fn i32 main(ref u8[] data){"
@@ -368,6 +375,13 @@ static void revision_two_output(bc_handle pure_engine){
     assert(bc_instance_create(engine,other,empty,run,&second,&diagnostic)==BC_OK);
     assert(bc_program_release(engine,program)==BC_OK && bc_program_release(engine,other)==BC_OK);
 
+    size_t copied=SIZE_MAX;
+    uint8_t detached[]={255,255,255};
+    assert(bc_preview_copy_output(first,detached,sizeof(detached),&copied)==BC_BUSY);
+    assert(copied==SIZE_MAX && detached[0]==255 && detached[1]==255 && detached[2]==255);
+    assert(bc_preview_copy_output(first,NULL,1,&copied)==BC_BAD_ARGUMENT && copied==SIZE_MAX);
+    assert(bc_preview_copy_output(first,NULL,0,NULL)==BC_BAD_ARGUMENT);
+
     bc_event pending={.struct_size=sizeof(pending)};
     assert(bc_step(cancelled,1,&pending)==BC_OK && pending.kind==BC_YIELD && pending.payload.len==0);
     assert(bc_cancel(cancelled)==BC_OK);
@@ -378,12 +392,30 @@ static void revision_two_output(bc_handle pure_engine){
     assert(a.kind==BC_DONE && b.kind==BC_DONE && a.return_i32==77 && b.return_i32==77);
     assert(a.payload.len==sizeof(input_bytes) && memcmp(a.payload.data,input_bytes,sizeof(input_bytes))==0);
     assert(b.payload.len==sizeof(input_bytes) && memcmp(b.payload.data,input_bytes,sizeof(input_bytes))==0);
+    assert(bc_preview_copy_output(cancelled,detached,sizeof(detached),&copied)==BC_RUN_TERMINATED);
+    assert(bc_preview_copy_output(trapped,detached,sizeof(detached),&copied)==BC_RUN_TERMINATED);
+    assert(copied==SIZE_MAX && detached[0]==255 && detached[1]==255 && detached[2]==255);
+
+    HANDLE thread=CreateThread(NULL,0,foreign_copy_output,&first,0,NULL);
+    DWORD foreign_status=0;
+    assert(thread && WaitForSingleObject(thread,5000)==WAIT_OBJECT_0);
+    assert(GetExitCodeThread(thread,&foreign_status) && foreign_status==BC_WRONG_THREAD && CloseHandle(thread));
+    assert(bc_preview_copy_output(first,NULL,0,&copied)==BC_OK && copied==sizeof(input_bytes));
+    copied=SIZE_MAX;
+    assert(bc_preview_copy_output(first,detached,1,&copied)==BC_RESOURCE_LIMIT && copied==sizeof(input_bytes));
+    assert(detached[0]==255 && detached[1]==255 && detached[2]==255);
+    assert(bc_preview_copy_output(first,detached,sizeof(input_bytes),&copied)==BC_OK && copied==sizeof(input_bytes));
     assert(bc_instance_destroy(second)==BC_OK && bc_instance_destroy(trapped)==BC_OK);
     assert(bc_cancel(first)==BC_OK);
     bc_event repeated=finish_revision_two(first,64);
     assert(memcmp(&a,&repeated,sizeof(a))==0 && memcmp(repeated.payload.data,input_bytes,sizeof(input_bytes))==0);
     assert(bc_instance_destroy(first)==BC_OK && bc_instance_destroy(cancelled)==BC_OK);
     assert(bc_engine_destroy(engine)==BC_OK);
+    assert(memcmp(detached,input_bytes,sizeof(input_bytes))==0 && detached[2]==255);
+    copied=SIZE_MAX;
+    assert(bc_preview_copy_output(first,detached,sizeof(detached),&copied)==BC_INVALID_HANDLE);
+    assert(copied==SIZE_MAX && memcmp(detached,input_bytes,sizeof(input_bytes))==0 && detached[2]==255);
+    puts("PASS: sealed output copy survives teardown; pending, failed, short, foreign and stale calls are rejected");
 }
 
 static DWORD WINAPI foreign_entry_lookup(void *arg){
@@ -816,6 +848,8 @@ int main(void){
     bc_preview_event a=finish(one,1),b=finish(many,64),c=finish(cancelled,64);
     assert(a.kind==BC_PREVIEW_DONE && b.kind==BC_PREVIEW_DONE);
     assert(a.return_i32==77 && b.return_i32==77 && a.fuel_used>0 && a.fuel_used==b.fuel_used);
+    size_t copied=SIZE_MAX;
+    assert(bc_preview_copy_output(one,NULL,0,&copied)==BC_INVALID_HANDLE && copied==SIZE_MAX);
     assert(c.kind==BC_PREVIEW_CANCELLED && c.fuel_used<a.fuel_used);
     bc_preview_event exhausted=finish(short_fuel,64);
     assert(exhausted.kind==BC_PREVIEW_TRAP && exhausted.diagnostic_code==8);

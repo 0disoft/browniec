@@ -512,6 +512,28 @@ uint32_t BC_CALL bc_step(bc_handle instance,uint32_t quantum,bc_event *out){
     return preview_status(status);
 }
 
+uint32_t BC_CALL bc_preview_copy_output(bc_handle instance,uint8_t *destination,
+                                        size_t capacity,size_t *out_size){
+    if(!out_size||(!destination&&capacity)){return BC_BAD_ARGUMENT;}
+    bc_abi_registry_admission admission;
+    uint32_t status=bc_abi_registry_enter_instance(instance,&admission);
+    if(status!=BC_OK){return status;}
+    const preview_run *run=(const preview_run *)(uintptr_t)admission.object;
+    if(run->child.owner->revision!=BC_ABI_REVISION){status=BC_INVALID_HANDLE;}
+    else if(!run->terminal.kind){status=BC_BUSY;}
+    else if(run->terminal.kind!=BC_DONE){status=BC_RUN_TERMINATED;}
+    else{
+        const bc_slice output=run->terminal.payload;
+        *out_size=output.len;
+        if(destination){
+            if(capacity<output.len){status=BC_RESOURCE_LIMIT;}
+            else if(output.len){memcpy(destination,output.data,output.len);}
+        }
+    }
+    leave_preview(&admission);
+    return status;
+}
+
 static uint32_t receive_host_reply(preview_run *run,uint64_t request_id,uint32_t kind,bc_slice payload){
     if(run->terminal.kind){return BC_RUN_TERMINATED;}
     if(!run->catalog_backed){return BC_BAD_ARGUMENT;}

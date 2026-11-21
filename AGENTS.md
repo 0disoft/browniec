@@ -1,7 +1,6 @@
-- Latest runtime checkpoint (2026-11-21): [Host reply owner quotas](docs/engineering/host-exchange.md#reply-owner-quota)
-  count completed Buffer replies against each Instance's owner limit and size the
-  reply arena accordingly. Windows /Od and /O2 verify empty and nonempty success,
-  Result error, quota failure, and zero live SDK allocations in Engine tests.
+- Latest runtime checkpoint (2026-11-21): [Sealed output copy](docs/engineering/embed-preview.md#revision-2-guest-output)
+  lets a revision-2 Instance copy successful bytes into caller storage. Windows
+  /Od and /O2 verify exact sizing, refusal without writes, and survival after teardown.
 
 # Brownie C agent guidance
 

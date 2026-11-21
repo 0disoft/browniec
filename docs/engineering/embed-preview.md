@@ -214,6 +214,20 @@ expiry have empty payloads. Staging and sealing use `limits.output_bytes`
 and the saved Engine dispatcher. Repeated observations return the same
 slice and terminal metrics.
 
+The Windows preview extension `bc_preview_copy_output` copies a successful
+revision-2 Instance's sealed output into caller storage. Query the exact size
+with a NULL destination and zero capacity. A short destination returns
+`BC_RESOURCE_LIMIT` with the required size and writes no bytes. Pending
+Instances return `BC_BUSY` and failed or trapped Instances return
+`BC_RUN_TERMINATED`. Both leave the caller's destination and size untouched.
+The call uses the same owner-thread admission as step. It does no guest work,
+does not change the stored terminal event and allocates no SDK memory. The
+caller owns the copy after destroying the Instance and Engine.
+Both Windows profiles verified independent binary storage after teardown,
+one-byte-short refusal without writes, and rejection of pending, failed,
+foreign-thread and stale handles. Local receipt:
+`build/embed-preview-yl5xttwz/receipt.json`.
+
 Both Windows builds verified the two-byte payload `41 00` from zero-argument
 and byte-input entries. The latter keeps its output view valid across Program
 release, peer Instance destruction, a late cancel, and repeated observation.
