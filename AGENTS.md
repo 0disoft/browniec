@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-22): [Bounded Windows worker stream](docs/engineering/restricted-worker.md#bounded-pipe-stream)
-  delivers only complete frames in bounded windows. Development and /O2
-  confirm an actual AppContainer pipe exchange and stdout EOF.
+- Latest runtime checkpoint (2026-11-22): [Windows worker result gate](docs/engineering/restricted-worker.md#result-publication-gate)
+  withholds staged RESULT until clean EOF and exit 0. Development and /O2
+  verify one-shot delivery and rejection after actual AppContainer Job termination.
 
 # Brownie C agent guidance
 

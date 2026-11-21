@@ -23,6 +23,7 @@ def main():
              'native/restricted_worker_pipes.c', 'native/restricted_worker_pipes.h',
              'native/restricted_worker_frame.c', 'native/restricted_worker_frame.h',
              'native/restricted_worker_stream.c', 'native/restricted_worker_stream.h',
+             'native/restricted_worker_gate.c', 'native/restricted_worker_gate.h',
              'tests/native/restricted_worker_host.c', 'tools/verify-restricted-worker.py',
              'tools/verify-runtime-store-probe.py']
     receipt = dict(schema='browniec.restricted-worker-verification/v1', status='incomplete',
@@ -49,7 +50,7 @@ def main():
             child = folder / 'worker fixture.exe'
             run([cl, '/nologo', '/std:c11', '/TC', '/MT', '/W4', '/WX', option,
                  *(ROOT / path for path in paths if path.endswith('.c')), '/Fe' + str(exe),
-                 '/link', 'advapi32.lib', 'bcrypt.lib', 'userenv.lib', '/INCREMENTAL:NO', '/Brepro'],
+                 '/link', 'advapi32.lib', 'bcrypt.lib', 'mincore.lib', 'userenv.lib', '/INCREMENTAL:NO', '/Brepro'],
                 cwd=folder, env=env)
             shutil.copyfile(exe, child)
             (folder / 'parent-data.txt').write_bytes(b'fixture data\n')
@@ -60,7 +61,7 @@ def main():
                         dict(appContainer=True, capabilities=0, inheritedPipes=3,
                              commitDenied=True, cpuTermination=True, privatePipeAcl=True,
                              framedExchange=True, headerMutationsRejected=48,
-                             boundedStream=True, pipeEof=True, handleDelta=0)
+                             boundedStream=True, pipeEof=True, publicationGate=True, handleDelta=0)
                         and type(evidence.get('coldHandleDelta')) is int,
                         f'Unexpected worker result: {evidence}')
             receipt['profiles'].append(dict(profile=profile, exe=helper.image(exe), result=evidence))

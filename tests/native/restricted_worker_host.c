@@ -6,6 +6,7 @@
 #include <userenv.h>
 #include <wchar.h>
 #include "../../native/restricted_worker.h"
+#include "../../native/restricted_worker_gate.h"
 #include "../../native/restricted_worker_pipes.h"
 #include "../../native/restricted_worker_stream.h"
 
@@ -80,7 +81,7 @@ static BOOL child_read(HANDLE input, uint8_t *bytes, DWORD length) {
     return TRUE;
 }
 
-static int child(wchar_t *number) {
+static int child(wchar_t *number, BOOL clean_exit) {
     const HANDLE input = GetStdHandle(STD_INPUT_HANDLE);
     const HANDLE output = GetStdHandle(STD_OUTPUT_HANDLE);
     const HANDLE error = GetStdHandle(STD_ERROR_HANDLE);
@@ -117,6 +118,7 @@ static int child(wchar_t *number) {
         !WriteFile(output, header, sizeof(header), &count, NULL) || count != sizeof(header) ||
         !WriteFile(output, &byte, 1, &count, NULL) || count != 1) return 9;
     if (!WriteFile(error, &byte, 1, &count, NULL) || count != 1) return 10;
+    if (clean_exit) return 0;
     // The Job's user CPU limit must stop this process without parent intervention.
     for (;;) YieldProcessor();
 }
@@ -363,16 +365,112 @@ static void verify_job(void) {
         "the suspended worker is in the Job");
 }
 
-static DWORD prepare(const wchar_t *path, const wchar_t *directory, HANDLE endpoints[3], PSID sid) {
+static DWORD prepare(const wchar_t *path, const wchar_t *directory, HANDLE endpoints[3], PSID sid,
+    BOOL clean_exit) {
     wchar_t command[256];
-    check(swprintf_s(command, _countof(command), L"worker --child %llx",
+    check(swprintf_s(command, _countof(command), L"worker %ls %llx",
+        clean_exit ? L"--child-ok" : L"--child",
         (unsigned long long)(ULONG_PTR)decoy) > 0, "format the fixture argument");
     return bc_restricted_worker_prepare(&worker, path, command, directory, sid, endpoints,
         commit_limit, cpu_limit);
 }
 
+static uint64_t clock_ticks(void) {
+    ULONGLONG now;
+    QueryInterruptTimePrecise(&now);
+    return now;
+}
+
+static bool fixture_result(const uint8_t *bytes, size_t length) {
+    return length == 1 && bytes[0] == 42;
+}
+
+static bool stdout_eof(HANDLE output) {
+    uint8_t trailing;
+    DWORD count = 0;
+    const DWORD status = transfer(output, &trailing, NULL, 1, &count);
+    check(status == ERROR_BROKEN_PIPE || (status == ERROR_SUCCESS && count == 1),
+        "observe EOF or a trailing byte");
+    return status == ERROR_BROKEN_PIPE;
+}
+
+static void verify_gate_rejections(const bc_worker_rx *rx) {
+    bc_worker_gate gate;
+    size_t length = 123;
+    bc_worker_gate_begin(&gate, 100);
+    bc_worker_gate_stdout_end(&gate, true, 1);
+    bc_worker_gate_stage(&gate, rx, fixture_result, 2);
+    check(gate.status == BC_WORKER_GATE_PROTOCOL && !gate.candidate, "EOF before RESULT is terminal");
+
+    bc_worker_gate_begin(&gate, 100);
+    bc_worker_gate_stage(&gate, rx, fixture_result, 1);
+    bc_worker_gate_stage(&gate, rx, fixture_result, 2);
+    check(gate.status == BC_WORKER_GATE_PROTOCOL && !gate.candidate, "duplicate RESULT drops candidate");
+
+    bc_worker_gate_begin(&gate, 100);
+    bc_worker_gate_stage(&gate, rx, fixture_result, 1);
+    bc_worker_gate_stdout_end(&gate, false, 2);
+    check(gate.status == BC_WORKER_GATE_PROTOCOL && !gate.candidate, "trailing stdout drops candidate");
+
+    uint8_t invalid_byte = 41;
+    bc_worker_rx invalid = *rx;
+    invalid.body = &invalid_byte;
+    bc_worker_gate_begin(&gate, 100);
+    bc_worker_gate_stage(&gate, &invalid, fixture_result, 1);
+    check(gate.status == BC_WORKER_GATE_PROTOCOL && !gate.candidate, "invalid payload cannot stage");
+
+    bc_worker_gate_begin(&gate, 100);
+    bc_worker_gate_stage(&gate, rx, fixture_result, 1);
+    bc_worker_gate_cancel(&gate, 99);
+    bc_worker_gate_exit(&gate, 1, 101);
+    check(!bc_worker_gate_take(&gate, &length, 102) && length == 123 &&
+        gate.status == BC_WORKER_GATE_CANCELLED && !gate.candidate, "first cancellation survives expiry and exit");
+
+    bc_worker_gate_begin(&gate, 100);
+    bc_worker_gate_exit(&gate, 0, 1);
+    bc_worker_gate_stage(&gate, rx, fixture_result, 2);
+    bc_worker_gate_stdout_end(&gate, true, 99);
+    check(!bc_worker_gate_take(&gate, &length, 100) && length == 123 &&
+        gate.status == BC_WORKER_GATE_EXPIRED && !gate.candidate, "deadline tick blocks an otherwise ready RESULT");
+}
+
+static void verify_clean_publication(const wchar_t *path, const wchar_t *directory) {
+    check(bc_worker_pipes_open(&pipes) == ERROR_SUCCESS, "prepare clean-exit pipes");
+    DWORD status = prepare(path, directory, pipes.child, profile, TRUE);
+    SetLastError(status);
+    check(status == ERROR_SUCCESS && bc_restricted_worker_resume(&worker) == ERROR_SUCCESS,
+        "resume clean-exit fixture");
+    bc_worker_pipes_close_child(&pipes);
+
+    bc_worker_gate gate;
+    bc_worker_gate_begin(&gate, clock_ticks() + 100000000ULL);
+    bc_worker_frame expected;
+    start_exchange(&expected);
+    expected.kind = BC_WORKER_RESULT;
+    uint8_t candidate = 0;
+    bc_worker_rx rx;
+    bc_worker_rx_begin(&rx, &expected, &candidate, 1);
+    HANDLE output = pipes.broker[BC_WORKER_STDOUT];
+    check(receive_frame(output, &rx) == BC_WORKER_RX_COMPLETE, "receive clean-exit candidate");
+    bc_worker_gate_stage(&gate, &rx, fixture_result, clock_ticks());
+    size_t length = 123;
+    check(!bc_worker_gate_take(&gate, &length, clock_ticks()) && length == 123, "RESULT alone cannot deliver");
+    const bool clean_eof = stdout_eof(output);
+    bc_worker_gate_stdout_end(&gate, clean_eof, clock_ticks());
+    check(!bc_worker_gate_take(&gate, &length, clock_ticks()), "RESULT and EOF cannot deliver without observed exit");
+    check(WaitForSingleObject(worker.process, 5000) == WAIT_OBJECT_0, "wait for clean exit");
+    DWORD exit_code = 1;
+    check(GetExitCodeProcess(worker.process, &exit_code) && exit_code == 0, "observe zero exit code");
+    bc_worker_gate_exit(&gate, exit_code, clock_ticks());
+    check(bc_worker_gate_take(&gate, &length, clock_ticks()) == &candidate && length == 1 &&
+        candidate == 42 && !bc_worker_gate_take(&gate, &length, clock_ticks()), "deliver once after all evidence");
+    check(bc_restricted_worker_close(&worker), "reap clean-exit worker");
+    bc_worker_pipes_close(&pipes);
+}
+
 int wmain(int argc, wchar_t **argv) {
-    if (argc == 3 && !wcscmp(argv[1], L"--child")) return child(argv[2]);
+    if (argc == 3 && !wcscmp(argv[1], L"--child")) return child(argv[2], FALSE);
+    if (argc == 3 && !wcscmp(argv[1], L"--child-ok")) return child(argv[2], TRUE);
     check(argc == 2 && atexit(cleanup) == 0, "parent fixture arguments");
     verify_frames();
     verify_stream();
@@ -399,12 +497,12 @@ int wmain(int argc, wchar_t **argv) {
     unsigned char ordinary_sid[SECURITY_MAX_SID_SIZE];
     DWORD sid_size = sizeof(ordinary_sid);
     check(CreateWellKnownSid(WinWorldSid, NULL, ordinary_sid, &sid_size), "ordinary SID fixture");
-    check(prepare(argv[1], directory, pipes.child, ordinary_sid) != ERROR_SUCCESS &&
+    check(prepare(argv[1], directory, pipes.child, ordinary_sid, FALSE) != ERROR_SUCCESS &&
         !worker.job && !worker.process && !worker.thread, "reject an ordinary SID without publication");
     HANDLE invalid[3] = {pipes.child[BC_WORKER_STDIN], pipes.broker[BC_WORKER_STDOUT], pipes.child[BC_WORKER_STDERR]};
-    check(prepare(argv[1], directory, invalid, profile) == ERROR_INVALID_PARAMETER &&
+    check(prepare(argv[1], directory, invalid, profile, FALSE) == ERROR_INVALID_PARAMETER &&
         !worker.process, "reject a noninheritable endpoint");
-    DWORD status = prepare(argv[1], directory, pipes.child, profile);
+    DWORD status = prepare(argv[1], directory, pipes.child, profile, FALSE);
     SetLastError(status);
     check(status == ERROR_SUCCESS, "prepare suspended AppContainer");
     verify_job();
@@ -418,7 +516,7 @@ int wmain(int argc, wchar_t **argv) {
     // Measure the repeat launch with the six pipe handles and decoy still open.
     check(GetProcessHandleCount(GetCurrentProcess(), &baseline), "warm launcher handles");
 
-    status = prepare(argv[1], directory, pipes.child, profile);
+    status = prepare(argv[1], directory, pipes.child, profile, FALSE);
     SetLastError(status);
     check(status == ERROR_SUCCESS, "prepare AppContainer for execution");
     check(bc_restricted_worker_resume(&worker) == ERROR_SUCCESS &&
@@ -445,6 +543,17 @@ int wmain(int argc, wchar_t **argv) {
     bc_worker_rx_begin(&rx, &expected, &byte, 1);
     check(receive_frame(output, &rx) == BC_WORKER_RX_COMPLETE &&
         bc_worker_rx_frame(&rx)->length == 1 && byte == 42, "receive only the entire worker RESULT");
+    verify_gate_rejections(&rx);
+    bc_worker_gate gate;
+    bc_worker_gate_begin(&gate, clock_ticks() + 100000000ULL);
+    bc_worker_gate_stage(&gate, &rx, fixture_result, clock_ticks());
+    const bool clean_eof = stdout_eof(output);
+    check(clean_eof, "observe EOF on CPU-terminated worker stdout");
+    bc_worker_gate_stdout_end(&gate, clean_eof, clock_ticks());
+    bc_worker_gate_exit(&gate, exit_code, clock_ticks());
+    size_t published_length = 123;
+    check(!bc_worker_gate_take(&gate, &published_length, clock_ticks()) && published_length == 123 &&
+        gate.status == BC_WORKER_GATE_EXIT && !gate.candidate, "reject complete RESULT on Job termination");
     ++expected.sequence;
     bc_worker_rx_begin(&rx, &expected, &byte, 1);
     check(receive_frame(output, &rx) == BC_WORKER_RX_EOF, "confirm EOF from the real worker stdout");
@@ -454,6 +563,7 @@ int wmain(int argc, wchar_t **argv) {
     check(WaitForSingleObject(decoy, 0) == WAIT_TIMEOUT, "decoy was not inherited");
     check(bc_restricted_worker_close(&worker), "reap completed worker");
     bc_worker_pipes_close(&pipes);
+    verify_clean_publication(argv[1], directory);
     check(CloseHandle(decoy), "close decoy");
     decoy = NULL;
     check(GetProcessHandleCount(GetCurrentProcess(), &final), "final launcher handles");
@@ -463,7 +573,7 @@ int wmain(int argc, wchar_t **argv) {
     printf("{\"appContainer\":true,\"capabilities\":0,\"inheritedPipes\":3,"
            "\"commitDenied\":true,\"cpuTermination\":true,\"privatePipeAcl\":true,"
            "\"framedExchange\":true,\"headerMutationsRejected\":48,"
-           "\"boundedStream\":true,\"pipeEof\":true,\"handleDelta\":0,"
+           "\"boundedStream\":true,\"pipeEof\":true,\"publicationGate\":true,\"handleDelta\":0,"
            "\"coldHandleDelta\":%ld}\n", (long)final - (long)cold);
     return 0;
 }

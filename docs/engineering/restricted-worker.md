@@ -82,6 +82,25 @@ and body, a seven-byte header followed by EOF, and zero-byte progress in cursor
 tests. Session-wide limits and the decision to publish remain broker concerns.
 Local receipt: `build/restricted-worker/20261121T153306970209Z/receipt.json`.
 
+## Result publication gate
+
+The [gate](../../native/restricted_worker_gate.h) starts after START. It
+borrows an immutable candidate only after receiving a complete RESULT and
+passing the payload validator. It releases the candidate to its caller once,
+after the broker observes stdout EOF and exit code 0 on the signaled process.
+The publication deadline is exclusive, sampled on the same monotonic clock
+as cancellation and failure observations. A duplicate RESULT, early EOF,
+trailing byte, bad payload, nonzero exit, cancellation, or expiry discards
+the candidate. Later events preserve the first terminal cause.
+
+The native AppContainer fixture checked withheld delivery after a complete
+RESULT, delivery after actual EOF and exit 0, and rejection of a complete
+RESULT after Job CPU termination. Deterministic gate cases cover ordering,
+validation, cancellation and the exact deadline tick. Both profiles had zero
+net warm-launch handles. The fixture's validator accepts one byte; the
+production worker still needs strict result schema validation.
+Local receipt: `build/restricted-worker/20261121T153623372644Z/receipt.json`.
+
 ## Windows verification
 
 Run `python -B tools/verify-restricted-worker.py`. The development and optimized
@@ -107,6 +126,6 @@ all three pipes and the repeat launch again had zero net handle growth.
 Local receipt: `build/restricted-worker/20261121T152431466055Z/receipt.json`.
 
 The caller still needs trusted image and profile provisioning, strict payload
-parsing, the broker publication barrier, and
-I/O completion and budget integration. The launcher fixture executes native test code.
+parsing, broker phase integration, I/O completion and budgets. The launcher
+fixture executes native test code.
 The restricted CLI remains unavailable while those pieces are built and verified.
