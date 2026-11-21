@@ -1549,8 +1549,11 @@ fn Result<usize,u8> staged_output_terminal(){
     let engine::Event prefix=event(engine::step_instance(ref mut owner,success,4096));
     assert(prefix.kind==0 && prefix.remaining==waiting_fuel-12-fuel::output_emit(4097));
     assert(!engine::take_output(ref mut owner,success).is_ok);
+    let usize before_seal=instance_bytes(ref owner);
     let engine::Event done=event(engine::step_instance(ref mut owner,success,3));
     assert(done.kind==1 && done.value==42 && done.remaining==prefix.remaining-1-fuel::output_seal());
+    // A typed i32 request is 14 bytes, and its largest reply is 12 bytes.
+    assert(instance_bytes(ref owner)==before_seal-14-12);
 
     assert(event(engine::step_instance(ref mut owner,quota,4096)).kind==0);
     assert(event(engine::step_instance(ref mut owner,quota,8)).kind==4);

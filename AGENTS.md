@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-21): [Revision-2 stepping](docs/engineering/embed-preview.md#revision-2-scalar-stepping)
-  preserves the original source row and byte span of traps in imported
-  functions. Windows /Od and /O2 verify both orders of the source rows.
+- Latest runtime checkpoint (2026-11-21): [Host output seal](docs/engineering/host-exchange.md#termination-with-staged-guest-output)
+  refunds the completed request and reply reservation. Windows /Od and /O2
+  verify an exact 26-byte refund and preserve the sealed result and Fuel.
 
 # Brownie C agent guidance
 

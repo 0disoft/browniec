@@ -498,9 +498,10 @@ envelopes can be live while accepting a reply. This is a per-run reservation.
 The same charge applies to the live Instance ledger and to the combined Engine
 ceiling. Program pins and control storage are accounted for separately.
 
-Completion and cancellation free the exchange and return the entire run
-reservation. The terminal observation remains in the preallocated Instance
-slot, which now uses an additional 120 bytes per slot on Windows x64.
+Completion without guest output and cancellation free the exchange and return
+the entire run reservation. The terminal observation remains in the
+preallocated Instance slot, which now uses an additional 120 bytes per slot on
+Windows x64.
 A waiting Instance can also be destroyed directly. Destroying a terminal
 Instance does not refund the same bytes twice. Program release and pins keep
 their existing lifetime rules.
@@ -552,9 +553,14 @@ The fixed-clock Engine test covers cancellation while waiting for a host reply,
 expiry on the last chunk of a second emit, and a one-byte-short output quota.
 Each failure leaves the output unavailable. The exact-fit peer publishes 8194
 bytes once, with two emits and unchanged terminal Fuel and result after the
-deadline. Taking the output clears the Engine's charge, and the detached result
+deadline. Sealing a successful result returns the reservation for the request
+and reply envelopes after confirming their backing is empty. The fixture
+returns 26 bytes of quota at seal, 14 for the request and 12 for the reply. The execution
+image, catalog and staged output remain charged while the Instance owns them.
+Taking the output clears the remaining charge, and the detached result
 outlives the Engine. Both Windows profiles passed with zero live SDK allocations.
-The local receipt is `build/runtime-engine/20261120T174149316579Z/receipt.json`.
+The refund check passed in both profiles in
+`build/runtime-engine/20261121T140335564939Z/receipt.json`.
 
 ## Engine scalar run deadline
 

@@ -2162,6 +2162,16 @@ fn u32 drive_host(ref mut Meta m,ref vec::Vec<Program> p,ref mut vec::Vec<Instan
     if(status==14){return contain_execution_fault(m,p,v,outputs);}
     if(status!=0){return failed(m,status);}
     if(mode==3){return success(m,request);}
+    let Instance before=*vec::at<Instance>(v,ii);
+    let usize refund=if(next.scalar.phase==3 && before.output_allowed){
+        let ref Output saved=vec::at<Output>(outputs,oi);
+        if(!has_host_output(saved)){return contain_execution_fault(m,p,v,outputs);}
+        switch(host::sealed_envelope_refund(vec::at<host::Exchange>(ref saved.host,0))){
+            case .ok(bytes):{bytes}
+            case .err(_):{return contain_execution_fault(m,p,v,outputs);}
+        }
+    }else{0};
+    if(refund>before.output_bytes){return contain_execution_fault(m,p,v,outputs);}
     let ref mut Instance target=vec::at_mut<Instance>(v,ii);
     target.event=next.event;
     if(next.scalar.phase==3 || next.scalar.phase==4){
@@ -2169,6 +2179,9 @@ fn u32 drive_host(ref mut Meta m,ref vec::Vec<Program> p,ref mut vec::Vec<Instan
             remove_output(outputs,scratch,id);
             release_payload(m,target.output_bytes);
             target.output_bytes=0;target.output_owned=false;
+        }else{
+            release_payload(m,refund);
+            target.output_bytes-=refund;
         }
         target.host_terminal=next.scalar;
         target.phase=2;
@@ -2242,7 +2255,7 @@ fn Result<OutputTake,u32> plan_output_take(ref mut Meta m,ref vec::Vec<Instance>
     let usize hosts=vec::len<host::Exchange>(ref owner.host);
     if(vec::len<machines::Machine>(ref owner.pending)!=0 || hosts>1){return .err(14);}
     if(child.host_terminal.phase==3){
-        // Host output retains its whole admitted Exchange reservation.
+        // Host output retains the Exchange without the unused envelope reservation.
         if(hosts!=1 || child.output_bytes==0 || !has_host_output(owner)){return .err(14);}
     }else{
         if(hosts!=0 || output_programs::heap_bytes(ref owner.run)!=child.output_bytes){return .err(14);}

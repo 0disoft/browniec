@@ -447,6 +447,15 @@ pub fn ref u8[] guest_output(ref Exchange e){
 pub fn usize guest_emits(ref Exchange e){
     return if(has_guest_output(e)){read(header(e),output_base(header(e))+16)}else{0};
 }
+// These totals were derived from the admitted per-call envelope bounds.
+// A successful result still owns its image, catalog and output capacity,
+// but no request or reply backing can remain after the last installation.
+pub fn Result<usize,Error> sealed_envelope_refund(ref Exchange e){
+    if(!has_guest_output(e) || state(e).phase!=0 || bytes::capacity(ref e.backing)!=0){return .err(.State);}
+    let usize calls=e.limits.calls;
+    if(calls==0){return .ok(0);}
+    return .ok(e.limits.requests_total/calls+e.limits.replies_total/calls);
+}
 fn i64 pack_blob(usize start,usize length){
     return switch(num::i64_from_usize(start*4294967296+length)){case .ok(v):{v}case .err(_):{assert(false);0}};
 }
