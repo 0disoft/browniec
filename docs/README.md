@@ -55,6 +55,7 @@
 | Public IR inspection | [inspect SOURCE --ir](engineering/inspect-ir.md): 19 CLI cases plus version/help per Windows profile, without guest execution |
 | Composed native checkpoint | [Integration](engineering/parallel-integration.md): final release four native groups and three public CLI cases on exact root inputs |
 | Typed host TLV codec | [Wire codecs](engineering/host-wire.md): six new and four scalar regression groups per Windows profile; catalog/host dispatch/adoption remain open |
+| Windows restricted worker launcher | [AppContainer, Job limits and OS verification](engineering/restricted-worker.md) |
 | Windows DLL ABI bootstrap | [Query DLL and C host](engineering/abi-bootstrap.md), [revision-2 declarations](../include/brownie.h) |
 | Windows scalar embedding preview | [DLL build and lifecycle](engineering/embed-preview.md), [C header](../include/brownie_preview.h) |
 | Evidence and testing | [Validation](../VALIDATION.md), [testing standard](engineering/05-testing-standard.md) |

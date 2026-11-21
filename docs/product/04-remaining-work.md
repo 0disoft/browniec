@@ -852,7 +852,7 @@ requirements of this audit. They need a justified profile decision if desired.
 
 | ID | Work and completion condition |
 | --- | --- |
-| W01 | Create and verify the restricted process/token/AppContainer, explicit inherited handles, Job process/commit/CPU limits and suspended-start/assignment sequence before untrusted compilation. Fail setup closed. |
+| W01 | The [private Windows launcher](../engineering/restricted-worker.md) creates a suspended zero-capability AppContainer in a configured Job, checks the token and Job, and inherits only explicit pipe endpoints. Development and /O2 verify real OS denial, commit and CPU enforcement, suspended cleanup and balanced repeat-launch handles. Remaining: bind trusted image/profile provisioning and this launcher to the restricted broker before untrusted compilation. |
 | W02 | Implement authenticated private pipe setup/ACL/nonce, bounded RX/TX and exact IPC framing/correlation/revision validation. Reject truncated/duplicate/trailing/malformed frames and strict JSON violations before dispatch or publication. |
 | W03 | Implement serialized parent broker phases, source/entry/policy authority and the staged-result publication barrier: valid result, exit 0, expected EOF/no trailing frame, no prior cancellation/failure and live deadline. Check-only uses the same publication discipline. |
 | W04 | Implement cancellation races, late lawful-message drain without host dispatch/output, noninterleaved CANCEL TX, monotonic session/phase/idle deadlines, bounded grace and forced Job termination. Do not overwrite the first cause. |

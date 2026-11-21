@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-22): [Catalog-backed CLI diagnostics](docs/cli/output-and-exit-codes.md#single-source-host-run)
-  preserve the guest trap location across text and both JSON versions. Windows
-  development and /O2 verify the original member span and distinct host failures.
+- Latest runtime checkpoint (2026-11-22): [Windows restricted worker launch](docs/engineering/restricted-worker.md)
+  verifies a suspended zero-capability AppContainer and its Job before execution.
+  Development and /O2 verify OS denials, Job limits and repeat-launch cleanup.
 
 # Brownie C agent guidance
 
