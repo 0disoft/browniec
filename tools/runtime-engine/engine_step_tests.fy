@@ -871,18 +871,18 @@ fn Result<usize,u8> ordinary_proof_deadline(ref mut engine::Engine e){
     return .ok(0);
 }
 fn Result<usize,u8> ordinary_record_proof_deadline(ref mut engine::Engine e){
-    let ref u8[] ordinary=b"module app;struct P{i32 x;}struct R{P p;i32 y;}pub fn i32 chosen(){let R r=R{.p=P{.x=20},.y=22};return r.p.x+r.y;}";
-    let ref u8[] references=b"module app;struct P{i32 x;}struct R{P p;i32 y;}pub fn i32 chosen(){let ref u8[] marker=b\"*\";let R r=R{.p=P{.x=20},.y=22};return r.p.x+r.y;}";
+    let ref u8[] ordinary=b"module app;struct P{i32 x;}struct R{P p;i32 y;}fn i32[2] relay_array(i32[2] a){return [a[0],a[1]];}fn R relay_record(R r){return R{.p=P{.x=r.p.x},.y=r.y};}pub fn i32 chosen(){let a=relay_array([20,22]);let R r=relay_record(R{.p=P{.x=a[0]},.y=a[1]});return r.p.x+r.y;}";
+    let ref u8[] references=b"module app;struct P{i32 x;}struct R{P p;i32 y;}fn i32[2] relay_array(i32[2] a){return [a[0],a[1]];}fn R relay_record(R r){return R{.p=P{.x=r.p.x},.y=r.y};}pub fn i32 chosen(){let ref u8[] marker=b\"*\";let a=relay_array([20,22]);let R r=relay_record(R{.p=P{.x=a[0]},.y=a[1]});return r.p.x+r.y;}";
     let Heap idle=heap();
     var usize mode=0;
-    let u8[2] phases=[8,9];
-    while(mode<4){
-        let ref u8[] source=if(mode<2){ordinary}else{references};
+    let u8[6] phases=[8,9,15,16,17,18];
+    while(mode<12){
+        let ref u8[] source=if(mode<6){ordinary}else{references};
         let entries::Entry entry=selected(source)?;
         let usize start=100+mode*20000000;
         unsafe{bc_runtime_engine_test_set_clock(start)};
         unsafe{bc_runtime_engine_test_proof_begin()};
-        unsafe{bc_runtime_engine_test_expire_in_ordinary_proof(start+20000000,phases[mode%2])};
+        unsafe{bc_runtime_engine_test_expire_in_ordinary_proof(start+20000000,phases[mode%6])};
         rejected_compile_deadline(engine::compile(e,entry,65536));
         assert(unsafe{bc_runtime_engine_test_proof_count()}==1);
         counts(e,0,0,0);same_heap(ref idle);

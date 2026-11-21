@@ -2,6 +2,7 @@ module array_results;
 
 import ir as ir;
 import errors as errors;
+import runtime_clock as clock;
 import array_parameters as parameters;
 
 fn bool shape(ref ir::Program p,usize a,usize b) {
@@ -9,8 +10,12 @@ fn bool shape(ref ir::Program p,usize a,usize b) {
 }
 // Catalog ownership and register partitions have already been checked.
 pub fn Result<usize,errors::Error> metadata(ref ir::Program p) {
+    return metadata_until(p,0);
+}
+pub fn Result<usize,errors::Error> metadata_until(ref ir::Program p,usize deadline) {
     var usize f=0;var usize count=0;
     while(f<16) {
+        if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
         let usize encoded=p.array_results[f] as usize;
         if(encoded!=0) {
             if(f>=p.function_count || f==p.entry || encoded>p.arrays.count) {return .err(errors::make(5,0));}
@@ -20,6 +25,7 @@ pub fn Result<usize,errors::Error> metadata(ref ir::Program p) {
         }
         f+=1;
     }
+    if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
     return .ok(count);
 }
 pub fn Result<usize,errors::Error> call(ref ir::Program p,usize target,usize dst,usize f,usize live,usize pc) {

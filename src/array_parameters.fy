@@ -2,6 +2,7 @@ module array_parameters;
 
 import ir as ir;
 import errors as errors;
+import runtime_clock as clock;
 import register_set as registers;
 import struct_parameters as records;
 import slice_parameters as slices;
@@ -9,9 +10,13 @@ import copy_ir as copying;
 
 // Called after catalog and function/register partitions have been verified.
 pub fn Result<usize, errors::Error> metadata(ref ir::Program p) {
+    return metadata_until(p,0);
+}
+pub fn Result<usize, errors::Error> metadata_until(ref ir::Program p,usize deadline) {
     var usize seen = 0;
     var usize r = 0;
     while (r < 128) {
+        if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
         let usize encoded = p.array_parameters[r] as usize;
         if (encoded != 0) {
             if (r >= p.registers || encoded > p.arrays.count || p.slots[r] || p.record_parameters[r] != 0) { return .err(errors::make(5, 0)); }
@@ -24,6 +29,7 @@ pub fn Result<usize, errors::Error> metadata(ref ir::Program p) {
         }
         r += 1;
     }
+    if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
     return .ok(seen);
 }
 pub fn usize initial(ref ir::Program p, usize f) {

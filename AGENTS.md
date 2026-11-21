@@ -1,7 +1,7 @@
-- Latest runtime checkpoint (2026-11-21): [Slice metadata deadlines](docs/engineering/runtime-engine-compile-memory.md#configured-compile-deadlines)
-  check slice parameter rows, reborrow instructions and parent sites during
-  ordinary verification. Windows development and /O2 passed with zero live
-  SDK allocations. Locked /O2 CLI, quick-start and reborrow result 77 passed.
+- Latest runtime checkpoint (2026-11-21): [Aggregate signature metadata deadlines](docs/engineering/runtime-engine-compile-memory.md#configured-compile-deadlines)
+  check each array and record parameter and result row during ordinary
+  verification. Windows development and /O2 passed with zero live SDK
+  allocations. Locked /O2 CLI and quick-start result 77 passed.
 
 # Brownie C agent guidance
 

@@ -125,6 +125,20 @@ def source_copy(path):
             body = body.replace(anchor, call + anchor, 1)
         first_fn = head.index('\nfn ')
         return path.name, (head[:first_fn] + '\n' + declaration + head[first_fn:] + body + tail).encode('utf-8')
+    aggregate_metadata = {'array_parameters.fy': 15, 'struct_parameters.fy': 16,
+                          'array_results.fy': 17, 'struct_results.fy': 18}
+    if path.name in aggregate_metadata and path.parent == ROOT / 'src':
+        text = path.read_text(encoding='utf-8')
+        start = text.index('pub fn', text.index('return metadata_until(p,0);'))
+        end = text.index('\n}', start)
+        body = text[start:end]
+        anchor = 'if (encoded != 0) {' if path.name.endswith('parameters.fy') else 'if(encoded!=0) {'
+        need(body.count(anchor) == 1, 'Timed aggregate metadata probe anchor changed')
+        phase = aggregate_metadata[path.name]
+        body = body.replace(anchor, anchor +
+                            f'\n            if(deadline!=0){{unsafe{{bc_runtime_engine_test_ordinary_proof_pc({phase})}};}}')
+        declaration = 'unsafe extern C fn void bc_runtime_engine_test_ordinary_proof_pc(u8 phase);\n'
+        return path.name, (text[:start] + declaration + body + text[end:]).encode('utf-8')
     if path == ROOT / 'src/place_ir.fy':
         text = path.read_text(encoding='utf-8')
         return path.name, ordinary_proof_probe(text, '        if (!seen[pc]) { pc += 1; continue; }', 7)

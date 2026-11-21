@@ -1,11 +1,16 @@
 module struct_parameters;
 import ir as ir;
 import errors as errors;
+import runtime_clock as clock;
 
 // Catalogs and function/register partitions have already been independently checked.
 pub fn Result<usize, errors::Error> metadata(ref ir::Program p) {
+    return metadata_until(p,0);
+}
+pub fn Result<usize, errors::Error> metadata_until(ref ir::Program p,usize deadline) {
     var usize seen = 0; var usize r = 0;
     while (r < 128) {
+        if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
         let usize encoded = p.record_parameters[r] as usize;
         if (encoded != 0) {
             if (r >= p.registers || encoded > p.records.count || p.slots[r] ||
@@ -18,6 +23,7 @@ pub fn Result<usize, errors::Error> metadata(ref ir::Program p) {
         }
         r += 1;
     }
+    if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
     return .ok(seen);
 }
 pub fn usize initial(ref ir::Program p, usize f) {

@@ -162,7 +162,8 @@ unreachable instructions. Individual copy validation is synchronous. Timed
 slice parameter metadata checks each function partition, site, formal
 register, and origin-coverage row. Reborrow metadata checks before each
 instruction and each parent-site validation. Both check again before returning
-their result. Other metadata calls return to their surrounding checkpoint.
+their result. Array and record signature metadata check before each parameter
+register or function result row and before returning the completed plan.
 The staged input
 and output proof drivers
 sample once before each bounded proof advance. Input-only compilation uses its
@@ -335,6 +336,13 @@ stopped without an SDK allocation after expiry or a Program ID advance.
 The ledger and heap returned to baseline. Windows development and /O2 passed
 with zero live SDK allocations at exit. Local receipt:
 `build/runtime-engine/20261121T024344600629Z/receipt.json`.
+
+The Windows verifier advanced to the exact deadline on an array or record
+parameter or return row, using both ordinary profiles with calls that pass
+and return both aggregates. All eight cases stopped before further proof or
+SDK allocation. The ledger and heap returned to baseline without consuming a
+Program ID. Windows development and /O2 passed with zero live SDK allocations
+at exit. Local receipt: `build/runtime-engine/20261121T025153342542Z/receipt.json`.
 
 Source lowering, work between checkpoints, and cleanup remain synchronous.
 Public Pending compilation, in-flight cancellation, and a latency bound for

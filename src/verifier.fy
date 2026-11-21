@@ -459,10 +459,10 @@ fn Result<reborrows::Sites,errors::Error> validate_values_mode(ref ir::Program p
     let usize copy_metadata=copying::metadata_until(p,deadline)?;
     let usize borrowed_parameters = slice_parameters::metadata_until(p,entry_kind!=0,deadline)?;
     let reborrows::Sites loans = reborrows::metadata_until(p,deadline)?;
-    let usize parameters = array_parameters::metadata(p)?;
-    let usize record_parameters = struct_parameters::metadata(p)?;
-    let usize results = array_results::metadata(p)?;
-    let usize record_results = struct_results::metadata(p)?;
+    let usize parameters = array_parameters::metadata_until(p,deadline)?;
+    let usize record_parameters = struct_parameters::metadata_until(p,deadline)?;
+    let usize results = array_results::metadata_until(p,deadline)?;
+    let usize record_results = struct_results::metadata_until(p,deadline)?;
     var bool[32] used_calls = [false; 32];
     f = 0;
     while(f<p.function_count){
