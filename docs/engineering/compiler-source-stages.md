@@ -927,3 +927,28 @@ owning compile routes. SDK allocations were zero at exit. Local receipt:
 This implements one resumable compiler stage. Engine-owned compile state,
 suspension between complete compiler phases, and in-flight cancellation
 remain open.
+
+## Resumable module source preparation
+
+One cursor now composes the source-context and syntax advances for timed
+module compilation. The caller keeps the selected Index alive. A context
+advance copies at most 64 source bytes or processes one metadata row. Once
+the context is ready, the next advance starts syntax classification against
+that same source buffer. Ordinary and output-only profiles classify syntax.
+The two input profiles finish after context collection because their
+signatures already select the retained lowering route.
+
+The synchronous compiler checks its deadline at each advance and before
+handing the prepared context to literal and signature processing. The cursor
+allows that preparation to survive a caller return. Engine-owned storage,
+interphase admission, and in-flight cancellation remain open.
+
+Windows development and /O2 passed the context-to-classifier handoff,
+ordinary/comment and retained-syntax selection, skipping classification for
+input profiles, spent allowance, and idempotent completion. Existing expiry
+tests still stop during source copy in all four profiles and during syntax
+classification in the two applicable profiles. Exit SDK allocations were
+zero. Local receipt: `build/runtime-engine/20261121T031432631535Z/receipt.json`.
+The locked /O2 CLI returned 77 and passed its contract suite on rerun after
+one transient project check returned `input_io`. The focused project group
+also passed three times each on the new and prior release binaries.

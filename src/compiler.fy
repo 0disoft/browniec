@@ -68,6 +68,7 @@ import reference_result_source as reference_results;
 import source_features as source_features;
 import source_context as source_context;
 import source_context_work as collecting;
+import module_source_work as module_source;
 import module_entry as module_entries;
 import module_input_entry as input_entries;
 import source_error as source_errors;
@@ -3518,13 +3519,12 @@ pub fn Result<bool,source_errors::Error> lower_modules_until(ref module_entries:
     ref mut static_images::Builder builder,ref mut reference_ir::Program code,bool output,usize deadline){
     let ref module_index::Index index=module_entries::index(selected);
     let usize entry=module_entries::selected(selected);
-    let source_context::Input input=collecting::collect_until(index,deadline)?;
+    var module_source::State work=module_source::begin(true);
+    let usize staged=module_source::finish_until(index,ref mut work,deadline)?;
+    let ref source_context::Input input=ref work.context.result;
     let ref u8[] source=ref input.data[..input.used];
     let ref source_context::Table scope=ref input.context;
-    let bool retained=switch(source_features::retained_scoped_until(source,scope,deadline)){
-        case .ok(v):{v}case .err(e):{return .err(module_error(selected,e,16));}
-    };
-    let bool references=retained || output;
+    let bool references=work.syntax.result || output;
     let literal_collection::Index literals=if(references){module_literals_until(builder,source,scope,index,deadline)?}
         else{literal_collection::empty()};
     var functions::Table signatures=switch(signature_scan::scan_indexed_until(source,scope,index,entry,references,deadline)){
@@ -3637,8 +3637,10 @@ pub fn Result<usize,source_errors::Error> lower_input_output_modules(ref input_e
 }
 pub fn Result<usize,source_errors::Error> lower_input_modules_until(ref input_entries::InputEntry selected,
     ref mut static_images::Builder builder,ref mut reference_ir::Program code,bool output,usize deadline){
-    let source_context::Input input=collecting::collect_until(input_entries::index(selected),deadline)?;
     let ref module_index::Index index=input_entries::index(selected);
+    var module_source::State work=module_source::begin(false);
+    let usize staged=module_source::finish_until(index,ref mut work,deadline)?;
+    let ref source_context::Input input=ref work.context.result;
     let ref u8[] source=ref input.data[..input.used];
     let ref source_context::Table scope=ref input.context;
     let literal_collection::Index literals=module_literals_until(builder,source,scope,index,deadline)?;

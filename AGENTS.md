@@ -1,7 +1,8 @@
-- Latest runtime checkpoint (2026-11-21): [Resumable source feature classification](docs/engineering/compiler-source-stages.md#resumable-scoped-syntax-classification)
-  preserves per-file context, token work and the preceding fn marker between
-  advances. Windows development and /O2 passed with zero live SDK allocations.
-  Locked /O2 CLI and quick-start result 77 passed.
+- Latest runtime checkpoint (2026-11-21): [Resumable module source preparation](docs/engineering/compiler-source-stages.md#resumable-module-source-preparation)
+  preserves source collection and syntax classification in one cursor shared by
+  all four timed module profiles. Windows development and /O2 passed with zero
+  live SDK allocations. Locked /O2 CLI, quick-start result 77 and CLI contracts
+  passed.
 
 # Brownie C agent guidance
 
