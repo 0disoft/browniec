@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-22): [Control expression Fuel](docs/engineering/restricted-worker.md#control-expression-fuel)
-  checks compile stops and debits Pratt advances for conditions and scrutinees.
-  Both Windows profiles verify the exact and one-less compile Fuel limits.
+- Latest runtime checkpoint (2026-11-22): [Scalar assignment and for-post Fuel](docs/engineering/restricted-worker.md#scalar-assignment-and-for-post-fuel)
+  checks compile stops and debits scalar right-hand sides and both post passes,
+  including the temporary IR rewind.
 
 # Brownie C agent guidance
 

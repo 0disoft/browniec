@@ -2126,7 +2126,7 @@ fn Result<usize, errors::Error> record_write_statement(ref u8[] source, ref mut 
 // grouped targets reserve a syntax plan; original target paths retain their IR.
 fn Result<usize,errors::Error> grouped_assignment(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
-    u8 terminator,u8 result_type,usize depth,usize structure,ref mut loops::State loop_state){
+    u8 terminator,u8 result_type,usize depth,usize structure,ref mut loops::State loop_state,usize deadline,ref mut usize fuel){
     let place_syntax::Plan plan=place_syntax::inspect(source,s)?;
     if(!plan.valid){return .err(errors::make(2,s.begin));}
     let usize at=plan.begin;let usize index=locals::find(source,table,plan.begin,plan.end);
@@ -2160,7 +2160,7 @@ fn Result<usize,errors::Error> grouped_assignment(ref u8[] source,ref mut lexer:
             if(array){plan.begins[0]}else{at},terminator,result_type,depth,structure,loop_state);
     }
     if(plan.count!=0){return .err(errors::make(3,at));}
-    return scalar_assignment(source,s,p,table,signatures,index,at,terminator,result_type,depth,structure,loop_state);
+    return scalar_assignment(source,s,p,table,signatures,index,at,terminator,result_type,depth,structure,loop_state,deadline,fuel);
 }
 fn Result<usize,errors::Error> grouped_place_write(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
@@ -2182,9 +2182,9 @@ fn Result<usize,errors::Error> grouped_place_write(ref u8[] source,ref mut lexer
         else if(kind==1){slice_places::store(p,place,site,value,operation_at)?}else{ir::place_store(p,place,site,value,operation_at)?};
     let usize ended=places::end(p,ref mut names,place,operation_at)?;return .ok(index);
 }
-fn Result<usize, errors::Error> statement(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref mut locals::Table table, ref functions::Table signatures, u8 terminator, u8 result_type, usize expr_depth, usize structure, ref mut loops::State loop_state) {
+fn Result<usize, errors::Error> statement(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref mut locals::Table table, ref functions::Table signatures, u8 terminator, u8 result_type, usize expr_depth, usize structure, ref mut loops::State loop_state, usize deadline, ref mut usize fuel) {
     if(word_is(source,s,b"_")){return discard_statement(source,s,p,table,signatures,terminator,result_type,expr_depth,structure,loop_state);}
-    if(s.kind==40){return grouped_assignment(source,s,p,table,signatures,terminator,result_type,expr_depth,structure,loop_state);}
+    if(s.kind==40){return grouped_assignment(source,s,p,table,signatures,terminator,result_type,expr_depth,structure,loop_state,deadline,fuel);}
     if (word_is(source, s, b"let") || word_is(source, s, b"var")) {
         return declaration(source,s,p,table,signatures,terminator,result_type,expr_depth,structure,loop_state);
     }
@@ -2206,7 +2206,7 @@ fn Result<usize, errors::Error> statement(ref u8[] source, ref mut lexer::State 
     if (slices::binding(table,index)) {
         return slice_write_statement(source,s,p,table,signatures,index,at,terminator,result_type,expr_depth,structure,loop_state);
     }
-    return scalar_assignment(source,s,p,table,signatures,index,at,terminator,result_type,expr_depth,structure,loop_state);
+    return scalar_assignment(source,s,p,table,signatures,index,at,terminator,result_type,expr_depth,structure,loop_state,deadline,fuel);
 }
 // Explicit discard acknowledges a value without a binding or extra instruction.
 // Ordinary expression/CALL lowering retains argument captures and exit cleanup.
@@ -2222,7 +2222,7 @@ fn Result<usize,errors::Error> discard_statement(ref u8[] source,ref mut lexer::
 }
 fn Result<usize,errors::Error> scalar_assignment(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
-    usize index,usize at,u8 terminator,u8 result_type,usize expr_depth,usize structure,ref mut loops::State loop_state){
+    usize index,usize at,u8 terminator,u8 result_type,usize expr_depth,usize structure,ref mut loops::State loop_state,usize deadline,ref mut usize fuel){
     if(!lexer::assignment(s.kind)){return .err(errors::make(2,s.begin));}
     let usize operation_at=s.begin;let u8 operation=places::compound(s.kind);
     // Mutable scalar bindings name stable frame slots. Capture the old value
@@ -2231,7 +2231,12 @@ fn Result<usize,errors::Error> scalar_assignment(ref u8[] source,ref mut lexer::
     if(operation!=0 && !types::integer(target_type)){return .err(errors::make(3,operation_at));}
     let usize equals=lexer::next(source,s)?;
     let usize old=if(operation==0){128}else{ir::emit(p,17,slot,0,operation_at)?};
-    var usize value = expression(source,s,p,table,signatures,1,expr_depth,target_type,result_type,structure,loop_state)?;
+    var usize value = if(deadline==0 && *fuel==metadata_budget::unlimited()){
+        expression(source,s,p,table,signatures,1,expr_depth,target_type,result_type,structure,loop_state)?
+    }else{
+        expression_metered(source,s,p,table,signatures,1,expr_depth,target_type,result_type,structure,loop_state,deadline,fuel)?
+    };
+    if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
     if (p.types[value] != target_type) { return .err(errors::make(3, at)); }
     let usize end_statement = lexer::punctuation(source, s, terminator)?;
     if(operation!=0){value=ir::emit(p,operation,old,value,operation_at)?;}
@@ -2533,15 +2538,18 @@ fn Result<bool,errors::Error> switch_join(ref u8[] source,ref mut lexer::State s
 // Validate the post clause before the body (body locals are not visible), then
 // rewind only its appended IR. Re-emission after the body preserves source order.
 // A dead post is still type checked, but consumes no runtime registers or Fuel.
-fn Result<usize, errors::Error> checked_post(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref mut locals::Table table, ref functions::Table signatures, usize expr_depth, usize structure, ref mut loops::State loop_state) {
+fn Result<usize, errors::Error> checked_post(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref mut locals::Table table, ref functions::Table signatures, usize expr_depth, usize structure, ref mut loops::State loop_state, usize deadline, ref mut usize fuel) {
     let usize at=s.begin;
+    discard metadata_budget::visit(fuel,deadline,at)?;
     if (word_is(source,s,b"let") || word_is(source,s,b"var")) {return .err(errors::make(2,at));}
     let usize code=p.count;
     let usize registers=p.registers;
     let usize constants=p.constant_count;
     let usize calls=p.call_count;
-    let usize post=statement(source,s,p,table,signatures,41,0,expr_depth,structure,loop_state)?;
+    let usize post=statement(source,s,p,table,signatures,41,0,expr_depth,structure,loop_state,deadline,fuel)?;
     if (p.call_count!=calls || !types::scalar(p.types[table.registers[post]])) {return .err(errors::make(3,at));}
+    if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
+    discard metadata_budget::charge(fuel,(p.registers-registers)+(p.count-code)*8,at)?;
     var usize r=registers;
     while(r<p.registers) {p.slots[r]=false; p.types[r]=0; r+=1;}
     // Extended instructions carry nonzero range bytes. Clear the discarded
@@ -2588,7 +2596,8 @@ fn Result<bool, errors::Error> control(ref u8[] source, ref mut lexer::State s, 
         return control_if(source,s,p,table,signatures,result_type,depth,expr_depth,loop_state);
     }
     if (s.kind == 123) { return block(source,s,p,table,signatures,result_type,depth + 1,expr_depth,loop_state); }
-    let usize regular = statement(source,s,p,table,signatures,59,result_type,expr_depth,depth,loop_state)?;
+    var usize fuel=metadata_budget::unlimited();
+    let usize regular = statement(source,s,p,table,signatures,59,result_type,expr_depth,depth,loop_state,0,ref mut fuel)?;
     return .ok(false);
 }
 
@@ -2713,9 +2722,10 @@ fn Result<bool, errors::Error> control_for(ref u8[] source, ref mut lexer::State
     let usize keyword=lexer::next(source,s)?;
     let usize open=lexer::punctuation(source,s,40)?;
     let usize calls=p.call_count;
+    var usize fuel=metadata_budget::unlimited();
     if (s.kind==59) {let usize empty=lexer::next(source,s)?;}
     else {
-        let usize init=statement(source,s,p,table,signatures,59,0,expr_depth,depth,loop_state)?;
+        let usize init=statement(source,s,p,table,signatures,59,0,expr_depth,depth,loop_state,0,ref mut fuel)?;
         if (!types::scalar(p.types[table.registers[init]])) {return .err(errors::make(3,at));}
     }
     let usize head=p.count;
@@ -2726,7 +2736,7 @@ fn Result<bool, errors::Error> control_for(ref u8[] source, ref mut lexer::State
     let usize exit=ir::raw(p,20,0,condition,0,at)?;
     let bool has_post=s.kind!=41;
     let usize post_start=s.begin;
-    if (has_post) {let usize validated=checked_post(source,s,p,table,signatures,expr_depth,depth,loop_state)?;}
+    if (has_post) {let usize validated=checked_post(source,s,p,table,signatures,expr_depth,depth,loop_state,0,ref mut fuel)?;}
     else {let usize empty=lexer::next(source,s)?;}
     let usize level=loops::enter(loop_state,head,true,at)?;
     loop_state.bindings[level]=places::scope(table);
@@ -2737,7 +2747,7 @@ fn Result<bool, errors::Error> control_for(ref u8[] source, ref mut lexer::State
         if (has_post) {
             var lexer::State post=source_context::state(source,ref signatures.context,post_start)?;
             let usize first=lexer::next(source,ref mut post)?;
-            let usize emitted=statement(source,ref mut post,p,table,signatures,41,0,expr_depth,depth,loop_state)?;
+            let usize emitted=statement(source,ref mut post,p,table,signatures,41,0,expr_depth,depth,loop_state,0,ref mut fuel)?;
         }
         let usize back=ir::raw(p,22,0,head,0,at)?;
     }
@@ -2976,7 +2986,7 @@ fn Result<usize,errors::Error> statement_in_bank(ref u8[] source,ref mut lexer::
         let bool done=semantic_work::advance(source,s,p,names,signatures,bank,ref mut w,ref mut meter)?;
         if(w.request==1){let usize completed=complete_expression_operand(source,s,p,names,signatures,result_type,structure,flow,bank,ref mut w.expression)?;
             let usize continued=semantic_work::continue_operand(ref mut w)?;
-        }else if(w.request==2){let usize value=statement(source,s,p,names,signatures,terminator,result_type,expr_depth,structure,flow)?;
+        }else if(w.request==2){let usize value=statement(source,s,p,names,signatures,terminator,result_type,expr_depth,structure,flow,deadline,fuel)?;
             let usize completed=semantic_work::resume(ref mut w,2,value,false)?;}
         else if(w.request==3){let usize end=s.end;let inference::Header header=inference::header(source,s,names)?;let usize begin=header.begin;
             let usize completed=semantic_work::resume_header(ref mut w,begin,end)?;}
@@ -3035,11 +3045,12 @@ fn Result<usize,errors::Error> complete_body_child_metered(ref u8[] source,ref m
         value=expression_metered(source,s,p,names,signatures,1,expr_depth,if(request==10){0}else{2},
             if(request==7){0}else{result_type},f.depth,flow,deadline,fuel)?;
     }else if(request==6){value=statement_staged(source,s,p,names,signatures,59,0,expr_depth,f.depth,flow,deadline,fuel)?;}
-    else if(request==8){value=checked_post(source,s,p,names,signatures,expr_depth,f.depth,flow)?;}
+    else if(request==8){value=checked_post(source,s,p,names,signatures,expr_depth,f.depth,flow,deadline,fuel)?;}
     else if(request==9){
+        discard metadata_budget::visit(fuel,deadline,f.c)?;
         var lexer::State post=source_context::state(source,ref signatures.context,f.c)?;
         let usize first=lexer::next(source,ref mut post)?;
-        value=statement(source,ref mut post,p,names,signatures,41,0,expr_depth,f.depth,flow)?;
+        value=statement(source,ref mut post,p,names,signatures,41,0,expr_depth,f.depth,flow,deadline,fuel)?;
     }else{return .err(errors::make(5,s.begin));}
     if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
     return body_work::resume(w,request,value,stopped);

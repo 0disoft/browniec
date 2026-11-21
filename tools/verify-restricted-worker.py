@@ -261,8 +261,9 @@ def verify_configured_project(run, need, image, folder, env):
                          b'while(n<2){n+=1;}for(;n<4;n+=1){}'
                          b'if(n==4 && (n+1)==5){let Option<i32> pick=.some(42);'
                          b'switch(pick){case .some(v):{return v;}case .none:{return 0;}}}return 0;}')
-    # Control expressions add 242 Pratt advances to the prior fixture price.
-    control_fuel = 9069509 + 242
+    # 242 control Pratt advances and 42 assignment Pratt advances, plus two
+    # post passes and a rewind of three registers and four 8-byte instructions.
+    control_fuel = 9069509 + 242 + 42 + 2 + 3 + 4 * 8
     policy['compile'] = dict(compile_defaults, source_bytes=4096, fuel=control_fuel - 1)
     check(3, 'compile_limit')
     policy['compile']['fuel'] = control_fuel

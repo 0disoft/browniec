@@ -1055,6 +1055,26 @@ catalog, five managed project and four compile-stop cases. All 456 input
 hashes matched.
 Local receipt: `build/restricted-worker/20261121T223314171490Z/receipt.json`.
 
+### Scalar assignment and for-post Fuel
+
+Configured compilation passes the deadline and Fuel balance into scalar
+assignment right-hand sides, including augmented assignments and grouped
+scalar targets. Before emitting the assignment, the compiler checks for a
+stop again. For a staged for-post clause it also charges one unit at the
+start of each pass. The validation pass prepays one unit per discarded
+register and instruction byte before rewinding the temporary IR. A dead
+post is still subject to validation and rewind, while re-emission occurs
+only when the body falls through or continues.
+
+The control-expression fixture also executes an augmented assignment in a
+while body and validates and re-emits another one in a for-post clause.
+Together these add 42 Pratt advances, two post-pass units, and 35 rewind
+units for three registers and four instructions. The project returns 42 at
+9,069,830 compile Fuel. At 9,069,829 it fails compilation with no result or
+output. Windows development and /O2 each passed 92 configured, 32 catalog,
+five managed project and four compile-stop cases. All 456 input hashes matched.
+Local receipt: `build/restricted-worker/20261121T224259752447Z/receipt.json`.
+
 ## Windows verification
 
 Run `python -B tools/verify-restricted-worker.py`. The development and optimized
