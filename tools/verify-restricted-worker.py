@@ -451,7 +451,8 @@ def verify_project_host(run, need, image, folder, env):
                  b''.join(field(entry[key]) for key in
                           ('module', 'symbol', 'result', 'effect', 'capability', 'adapter_revision')) +
                  u32(1) + field('i32'))
-    catalog_file.write_text(json.dumps(dict(schema='brownie.catalog/1', imports=[entry])), encoding='utf-8')
+    imports = [entry]
+    catalog_file.write_text(json.dumps(dict(schema='brownie.catalog/1', imports=imports)), encoding='utf-8')
     rows = [dict(import_id=0, kind=0,
                  request_hex=(bytes.fromhex('01000300000004000000') + u32(arg)).hex(),
                  reply_hex=(bytes.fromhex('0300000004000000') + u32(value)).hex())
@@ -488,7 +489,18 @@ def verify_project_host(run, need, image, folder, env):
         need(not list(Path(env['TEMP']).iterdir()), 'catalog project left staged resources')
 
     check('check')
+    policy['compile']['types'] = 3
     check()
+    policy['compile']['types'] = 2
+    check(expected_exit=3, kind='compile_limit')
+    policy['compile']['types'] = 3
+    unused = entry | dict(id=1, symbol='unused', parameters=['bool'], result='Result<i64,u32>')
+    imports.append(unused)
+    catalog_file.write_text(json.dumps(dict(schema='brownie.catalog/1', imports=imports)), encoding='utf-8')
+    check('check')
+    imports.pop()
+    catalog_file.write_text(json.dumps(dict(schema='brownie.catalog/1', imports=imports)), encoding='utf-8')
+    policy['compile']['types'] = 4096
     original_source = source.read_bytes()
     source.write_bytes(original_source.replace(b'return a+', b'return - - a+'))
     original_depth = policy['compile']['depth']
@@ -569,16 +581,16 @@ def verify_project_host(run, need, image, folder, env):
     source.write_bytes(b'module app; import host::example as api; pub fn i32 start(ref u8[] data){'
                        b'output::emit(ref data); let i32 a=api::check(41); return a+api::check(42);}')
     policy['compile']['depth'] = 2
-    policy['compile']['types'] = 3
+    policy['compile']['types'] = 5
     check(payload=payload)
-    policy['compile']['types'] = 2
+    policy['compile']['types'] = 4
     check(expected_exit=3, kind='compile_limit', payload=payload)
     policy['compile']['types'] = 4096
     policy['compile']['depth'] = 1
     check(expected_exit=3, kind='compile_limit', payload=payload)
     policy['compile']['depth'] = original_depth
     check(expected_exit=4, kind='unavailable')
-    return 27
+    return 29
 
 
 def main():

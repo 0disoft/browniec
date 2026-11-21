@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-22): [View type quota](docs/engineering/restricted-worker.md#view-type-quota)
-  counts slice and static view identities. Windows development and /O2 verify
-  exact and one-less limits in both configured worker routes.
+- Latest runtime checkpoint (2026-11-22): [Host signature type quota](docs/engineering/restricted-worker.md#host-signature-type-quota)
+  counts the signatures of imports used by the verified image. Windows
+  development and /O2 verify exact and one-less limits with and without input.
 
 # Brownie C agent guidance
 

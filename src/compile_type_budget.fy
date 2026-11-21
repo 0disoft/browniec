@@ -3,6 +3,9 @@ import ir as ir;
 import array_meta as arrays;
 import struct_layout as records;
 import types as types;
+import host_catalog as catalog;
+import host_program as host;
+import host_wire as wire;
 
 struct Count { bool[143] seen; usize used; usize views; }
 
@@ -69,18 +72,59 @@ fn bool view_types(ref mut Count count,ref ir::Program code,ref u8[] static_kind
     return true;
 }
 
-// One namespace for scalar and wrapper tags. Nominal declarations have
-// separate identities even when every scalar field has the same type.
-pub fn bool fits(ref ir::Program code,ref u8[] reference_returns,ref u8[] static_kinds,usize limit){
+fn usize upper_bound(ref ir::Program code){
     // 52 scalar/wrapper/nominal identities plus 12 scalar views and one text view.
-    if(limit>=65+code.arrays.count){return true;}
+    return 65+code.arrays.count;
+}
+pub fn bool fits(ref ir::Program code,ref u8[] reference_returns,ref u8[] static_kinds,usize limit){
+    if(limit>=upper_bound(code)){return true;}
+    var Count count=Count{.seen=[false;143],.used=code.records.layouts.count,.views=0};
+    return image_types(ref mut count,code,reference_returns,static_kinds) && count.used<=limit;
+}
+pub fn bool fits_host(ref host::Program program,usize limit){
+    let ref ir::Program code=host::code(program);
+    if(limit>=upper_bound(code)){return true;}
+    var Count count=Count{.seen=[false;143],.used=code.records.layouts.count,.views=0};
+    let ref u8[] input=if(host::accepts_input(program)){b"\x03"}else{b""};
+    if(!image_types(ref mut count,code,b"",input)){return false;}
+    let ref catalog::Catalog imports=host::imports(program);
+    let usize used=host::requirements(program);
+    let usize one=1;
+    var usize id=0;
+    while(id<catalog::count(imports)){
+        if((used&(one<<id))!=0 && !host_signature(ref mut count,imports,id)){return false;}
+        id+=1;
+    }
+    return count.used<=limit;
+}
+fn bool host_signature(ref mut Count count,ref catalog::Catalog imports,usize id){
+    let u8 result=switch(catalog::result_tag(imports,id)){
+        case .ok(v):{v}case .err(_):{return false;}
+    };
+    value(count,128+wire::register_tag(result));
+    let usize argc=switch(catalog::parameter_count(imports,id)){
+        case .ok(v):{v}case .err(_):{return false;}
+    };
+    var usize i=0;
+    while(i<argc){
+        let u8 tag=switch(catalog::parameter_tag(imports,id,i)){
+            case .ok(v):{v}case .err(_):{return false;}
+        };
+        if(tag==7){slice_type(count,10,false);}
+        else{value(count,wire::scalar_tag(tag));}
+        i+=1;
+    }
+    return true;
+}
+
+// Nominal declarations have separate identities even with identical fields.
+fn bool image_types(ref mut Count count,ref ir::Program code,ref u8[] reference_returns,ref u8[] static_kinds){
     let ref records::Catalog layouts=ref code.records.layouts;
-    var Count count=Count{.seen=[false;143],.used=layouts.count,.views=0};
     var usize r=0;
-    while(r<code.registers){value(ref mut count,code.types[r]);r+=1;}
+    while(r<code.registers){value(count,code.types[r]);r+=1;}
     var usize f=0;
     while(f<code.function_count){
-        if(reference_returns.len==0 || reference_returns[f]==0){value(ref mut count,code.return_types[f]);}
+        if(reference_returns.len==0 || reference_returns[f]==0){value(count,code.return_types[f]);}
         f+=1;
     }
     r=0;
@@ -88,11 +132,11 @@ pub fn bool fits(ref ir::Program code,ref u8[] reference_returns,ref u8[] static
         var usize i=0;
         while(i<layouts.fields[r] as usize){
             let usize field=r*16+i;
-            if(layouts.kinds[field]==0){value(ref mut count,layouts.types[field]);}
+            if(layouts.kinds[field]==0){value(count,layouts.types[field]);}
             i+=1;
         }
         r+=1;
     }
-    array_types(ref mut count,ref code.arrays);
-    return view_types(ref mut count,code,static_kinds) && count.used<=limit;
+    array_types(count,ref code.arrays);
+    return view_types(count,code,static_kinds);
 }

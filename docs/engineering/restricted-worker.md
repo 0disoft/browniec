@@ -404,7 +404,8 @@ lowering. The policy also covers [nominal record depth](#nominal-record-depth),
 [signature type depth](#signature-type-depth), and [local type depth](#local-type-depth).
 [Scalar and nominal type quota](#scalar-and-nominal-type-quota) also
 checks the image before publication, including [array types](#array-type-quota)
-and [view types](#view-type-quota). Implicit host type accounting remains open.
+and [view types](#view-type-quota). [Host signature types](#host-signature-type-quota)
+come from the verified import set.
 
 The nesting follow-up passed twenty configured project cases per Windows
 profile. A nested block and parenthesized value returned 42 at depth two,
@@ -834,7 +835,8 @@ For this subset the maximum is 52 identities, so policies at or above that
 bound skip the scan. Smaller policies visit at most 128 register tags, 16
 returns and 512 record fields, using a fixed 143-entry seen table and no
 heap allocation. The check does not add a compile Fuel debit. The array and view extensions
-below count additional image metadata. Implicit host signature types remain open.
+below count additional image metadata. The host extension also counts the
+verified signatures of used imports.
 
 Both Windows profiles accept one type across the original two modules.
 Two records sharing an i32 field require three identities. An ordinary
@@ -880,6 +882,26 @@ publishes a result or output. Each profile passed 83 configured, 27 catalog
 and five managed project cases plus nine native host transport cases.
 All 456 receipt input hashes matched.
 Local receipt: `build/restricted-worker/20261121T210210736772Z/receipt.json`.
+
+### Host signature type quota
+
+The catalog-backed compiler combines its image types with the parameter and
+Result identities of each import in the verifier's required-import mask.
+An implicit Result still contributes the wrapper and u32 error type after
+lowering projects it to its success value. Repeated calls and saved Results
+share their type identities. Unused catalog rows do not spend the quota.
+The check walks at most 64 imports with at most 32 parameters each and
+runs before Engine publication. It shares the image scan's fixed storage
+and currently adds no compile Fuel debit.
+
+The two scalar calls to the same import fit three identities and fail at
+two. Adding an unused import with distinct parameter and result types
+preserves the three-type limit. The shared-byte entry fits five identities,
+including u8 and its view, and fails at four with no guest result or output.
+Both Windows profiles passed 83 configured, 29 catalog and five managed
+project cases plus nine native host transport cases. All 456 receipt input
+hashes matched.
+Local receipt: `build/restricted-worker/20261121T211242201356Z/receipt.json`.
 
 ## Windows verification
 
