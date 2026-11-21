@@ -138,6 +138,26 @@ static void pipes(void){
     pipe_case(BC_RIR_LIMIT,BC_RIR_LIMIT,0,BC_RIR_OK);
     pipe_case(BC_RIR_LIMIT+1u,BC_RIR_LIMIT,0,BC_RIR_LIMIT_ERROR);
 }
+static ULONGLONG cancel_at;
+static uint32_t pipe_cancelled(void){return GetTickCount64()>=cancel_at;}
+static void timed_pipes(void){
+    HANDLE reader,writer;DWORD got,error;bc_rir_snapshot *snapshot=NULL;
+    const bc_rir_status expected[]={BC_RIR_DEADLINE,BC_RIR_CANCELLED,BC_RIR_OK};
+    for(size_t i=0;i<sizeof(expected)/sizeof(*expected);++i){
+        assert(CreatePipe(&reader,&writer,NULL,4096));
+        assert(WriteFile(writer,payload,3,&got,NULL)&&got==3);
+        if(expected[i]==BC_RIR_OK){assert(CloseHandle(writer));}
+        cancel_at=GetTickCount64()+50;
+        assert(bc_rir_stdin(reader,3,expected[i]==BC_RIR_DEADLINE?50:2000,
+                            expected[i]==BC_RIR_CANCELLED?pipe_cancelled:NULL,&snapshot,&error)==expected[i]);
+        if(expected[i]==BC_RIR_OK){exact(snapshot,payload,3);bc_rir_close(snapshot);snapshot=NULL;}
+        else {
+            assert(!snapshot&&error==(DWORD)(expected[i]==BC_RIR_DEADLINE?ERROR_TIMEOUT:ERROR_OPERATION_ABORTED));
+            assert(CloseHandle(writer));
+        }
+        assert(CloseHandle(reader));clean();
+    }
+}
 static void oom(void){
     HANDLE h,r,w;DWORD e=0,got;long attempts;bc_rir_snapshot *s=NULL;LARGE_INTEGER z,p;
     written(fixture,257);h=disk(GENERIC_READ,0);attempts=bc_rir_test_attempts();bc_rir_test_fail_after(0);
@@ -163,13 +183,14 @@ int wmain(int argc,wchar_t **argv){
     {HANDLE warm=CreateThread(NULL,0,warm_thread,NULL,0,NULL);assert(warm);assert(WaitForSingleObject(warm,10000)==WAIT_OBJECT_0);assert(CloseHandle(warm));}
     {HANDLE r,w;assert(CreatePipe(&r,&w,NULL,4096));assert(CloseHandle(w));assert(CloseHandle(r));}
     assert(GetProcessHandleCount(GetCurrentProcess(),&baseline));
-    group="files";files();group="position";position_and_errors();group="pipes";pipes();group="zero-byte-pipes";zero_observed=zero_byte_pipes();clean();group="oom";oom();group="repeated";repeated_failures();
+    group="files";files();group="position";position_and_errors();group="pipes";pipes();group="timed-pipes";timed_pipes();
+    group="zero-byte-pipes";zero_observed=zero_byte_pipes();clean();group="oom";oom();group="repeated";repeated_failures();
 #ifdef BC_RIR_ZERO_READ_SEAM
     group="injected-zero-reads";injected_zeros();clean();
 #endif
     assert(DeleteFileW(fixture));bc_rir_close(NULL);assert(bc_rir_length(NULL)==0&&bc_rir_bytes(NULL)==NULL);clean();
     assert(HeapFree(GetProcessHeap(),0,payload));
-    printf("{\"groups\":6,\"zeroBytePipeOsAttempts\":4,\"zeroBytePipeOsObserved\":%u,\"injectedZeroCases\":%u,\"live\":%ld,\"partialReads\":%ld,\"attempts\":%ld}\n",zero_observed,
+    printf("{\"groups\":7,\"zeroBytePipeOsAttempts\":4,\"zeroBytePipeOsObserved\":%u,\"injectedZeroCases\":%u,\"live\":%ld,\"partialReads\":%ld,\"attempts\":%ld}\n",zero_observed,
 #ifdef BC_RIR_ZERO_READ_SEAM
         4u,
 #else

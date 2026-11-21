@@ -10,7 +10,7 @@
 typedef struct bc_rir_snapshot bc_rir_snapshot;
 typedef enum bc_rir_status {
     BC_RIR_OK=0, BC_RIR_ARGUMENT, BC_RIR_LIMIT_ERROR, BC_RIR_KIND,
-    BC_RIR_OS, BC_RIR_ALLOCATION
+    BC_RIR_OS, BC_RIR_ALLOCATION, BC_RIR_CANCELLED, BC_RIR_DEADLINE
 } bc_rir_status;
 /* Private trusted-native APIs. Live pointer ranges and serialized handle use
    are caller obligations. *out must be NULL; every failure leaves it unchanged.
@@ -28,6 +28,10 @@ bc_rir_status bc_rir_path(const wchar_t *path,size_t length,size_t limit,
    Successful zero-byte pipe reads fail with BC_RIR_OS/ERROR_NO_DATA (no retry).
    ERROR_BROKEN_PIPE remains normal pipe EOF; successful disk zero is EOF. */
 bc_rir_status bc_rir_handle(HANDLE input,size_t limit,bc_rir_snapshot **out,DWORD *error);
+/* Apply a monotonic deadline and optional cancel predicate to redirected pipes.
+   A disk handle uses the synchronous reader. The caller's handle remains open. */
+bc_rir_status bc_rir_stdin(HANDLE input,size_t limit,DWORD timeout_ms,uint32_t (*cancelled)(void),
+                          bc_rir_snapshot **out,DWORD *error);
 size_t bc_rir_length(const bc_rir_snapshot *snapshot);
 const uint8_t *bc_rir_bytes(const bc_rir_snapshot *snapshot);
 void bc_rir_close(bc_rir_snapshot *snapshot);

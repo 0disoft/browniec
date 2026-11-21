@@ -9,17 +9,17 @@ pub struct Selection { usize argument; bool stdin; }
 
 @effects(filesystem)
 pub fn Result<input::Snapshot,errors::Error> read(Selection selection){
-    return read_with_limit(selection,input::hard_limit());
+    return read_with_limit(selection,input::hard_limit(),0);
 }
 
 @effects(filesystem)
-pub fn Result<input::Snapshot,errors::Error> read_with_limit(Selection selection,usize requested){
+pub fn Result<input::Snapshot,errors::Error> read_with_limit(Selection selection,usize requested,usize stdin_deadline_ms){
     let usize hard=input::hard_limit();
     let usize limit=if(requested<hard){requested}else{hard};
     if(selection.argument==0 && !selection.stdin){return snapshot(b"",limit);}
     let u8 limit_kind=render::input_limit_kind();
     let files::File file=(if(selection.stdin){
-        files::open_stdin(limit,limit_kind)
+        files::open_stdin(limit,limit_kind,stdin_deadline_ms)
     }else{
         files::open(selection.argument,limit,limit_kind)
     })?;

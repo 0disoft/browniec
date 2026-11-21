@@ -38,19 +38,22 @@ FFI adapter. Bytes remain owned after original handles/files are closed/deleted.
 
 Reading consumes the underlying cursor or pipe, even when a later quota/read
 failure rejects the result. No rollback, hidden retry or replay is attempted.
-Synchronous OS reads and EOF probes may block indefinitely. Neither R03 bounded
-steps, deadlines, cancellation nor point-in-time file consistency are promised.
-Payload storage is bounded; complete Engine accounting and guest input/CLI/stdin
-binding remain later work. No public availability or Fuel prices change.
+`bc_rir_stdin` adds a monotonic deadline and cancellation to synchronous byte
+pipes. A dedicated reader owns the duplicate and unpublished bytes. The caller
+cancels the reader's synchronous I/O and joins it before discarding or exposing
+the snapshot. Bytes consumed before cancellation or expiry stay consumed. The
+disk and untimed handle APIs retain synchronous behavior. These acquisitions
+remain outside guest Fuel and bounded VM steps.
 
 Run `python tools/verify-runtime-input-reader.py` on Windows with MSVC/SDK.
 The verifier builds actual production and explicit `BC_RIR_TEST` objects under
 /Od and /O2, rejects CL/_CL_/LINK and /STACK overrides, checks default PE stacks,
 and verifies production objects contain no test hooks. Three groups separately
-execute the hook-free production disk/pipe binary. Six test groups test
+execute the hook-free production disk/pipe binary. Seven test groups test
 exact/over/zero disk and pipe limits, partial pipe reads, binary bytes, cursor and
 original-handle lifetime, wrong/invalid/write-only/async handles, missing paths,
-allocation failures and repeated cleanup. Test allocation failures are explicit
+allocation failures, timed pipe EOF, open-pipe expiry and cancellation, and
+repeated cleanup. Test allocation failures are explicit
 seam evidence, not actual whole-process heap exhaustion. Every failure checks no
 partial publication; stable process handle counts (after explicit pipe/thread
 initialization before the baseline) and zero counted snapshot

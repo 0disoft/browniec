@@ -5,7 +5,7 @@ import std::process as process;
 
 // Explicit host-selected disk files, using the Windows project path rules.
 unsafe extern C fn ptr mut void bc_cli_read_input(ptr u8 path,usize length,usize limit,ptr mut u32 status);
-unsafe extern C fn ptr mut void bc_cli_read_stdin(usize limit,ptr mut u32 status);
+unsafe extern C fn ptr mut void bc_cli_read_stdin(usize limit,usize deadline_ms,ptr mut u32 status);
 unsafe extern C fn usize bc_cli_input_length(ptr mut void owner);
 unsafe extern C fn ptr u8 bc_cli_input_bytes(ptr mut void owner);
 unsafe extern C fn void bc_cli_input_close(ptr mut void owner);
@@ -36,15 +36,16 @@ pub fn Result<File,errors::Error> open(usize argument,usize limit,u8 limit_kind)
 }
 
 @effects(filesystem)
-pub fn Result<File,errors::Error> open_stdin(usize limit,u8 limit_kind){
+pub fn Result<File,errors::Error> open_stdin(usize limit,u8 limit_kind,usize deadline_ms){
     var u32 status=0;
-    let ptr mut void address=unsafe{bc_cli_read_stdin(limit,ref mut status as ptr mut u32)};
+    let ptr mut void address=unsafe{bc_cli_read_stdin(limit,deadline_ms,ref mut status as ptr mut u32)};
     return adopt(address,status,limit_kind);
 }
 
 fn Result<File,errors::Error> adopt(ptr mut void address,u32 status,u8 limit_kind){
     if(address==null){
-        let u8 kind=if(status==2){limit_kind}else if(status==5){15}else{9};
+        let u8 kind=if(status==2){limit_kind}else if(status==5){15}else if(status==6){errors::cancelled_kind()}
+            else if(status==7){errors::deadline_kind()}else{9};
         return .err(errors::absent(kind,0));
     }
     return .ok(File{.owner=address});

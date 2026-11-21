@@ -8,6 +8,7 @@
 
 // One configured run per CLI process. The console thread only latches a flag.
 static volatile LONG cancel_requested;
+static BOOL cancel_handler_installed;
 static BOOL WINAPI configured_run_control(DWORD event){
     if(event!=CTRL_C_EVENT&&event!=CTRL_BREAK_EVENT){return FALSE;}
     InterlockedExchange(&cancel_requested,1);
@@ -15,8 +16,9 @@ static BOOL WINAPI configured_run_control(DWORD event){
 }
 uint32_t bc_cli_enable_cancel(void){
     DWORD process;
-    if(!GetConsoleProcessList(&process,1)){return 1;}
-    return SetConsoleCtrlHandler(configured_run_control,TRUE)?1:0;
+    if(cancel_handler_installed||!GetConsoleProcessList(&process,1)){return 1;}
+    cancel_handler_installed=SetConsoleCtrlHandler(configured_run_control,TRUE);
+    return cancel_handler_installed?1:0;
 }
 uint32_t bc_cli_cancel_requested(void){
     return InterlockedCompareExchange(&cancel_requested,0,0)!=0;
@@ -107,9 +109,17 @@ uint32_t bc_cli_write_output(const uint8_t *path,size_t length,const uint8_t *da
     return ok;
 }
 
-void *bc_cli_read_stdin(size_t limit,uint32_t *status){
+void *bc_cli_read_stdin(size_t limit,size_t timeout_ms,uint32_t *status){
     bc_rir_snapshot *snapshot=NULL;
-    *status=(uint32_t)bc_rir_handle(GetStdHandle(STD_INPUT_HANDLE),limit,&snapshot,NULL);
+    HANDLE input=GetStdHandle(STD_INPUT_HANDLE);
+    if(timeout_ms>60000){*status=BC_RIR_ARGUMENT;return NULL;}
+    BOOL scoped=timeout_ms&&GetFileType(input)==FILE_TYPE_PIPE&&!cancel_handler_installed;
+    if(scoped&&!bc_cli_enable_cancel()){*status=BC_RIR_OS;return NULL;}
+    *status=(uint32_t)bc_rir_stdin(input,limit,(DWORD)timeout_ms,bc_cli_cancel_requested,&snapshot,NULL);
+    if(scoped&&cancel_handler_installed){
+        if(SetConsoleCtrlHandler(configured_run_control,FALSE)){cancel_handler_installed=FALSE;}
+        else if(snapshot){bc_rir_close(snapshot);snapshot=NULL;*status=BC_RIR_OS;}
+    }
     return snapshot;
 }
 

@@ -132,7 +132,7 @@ fn i32 execute_with_input(ref ProjectInput project,render::Format format,usize f
     let input_programs::Program program=switch(input_programs::compile(entry,images::metadata_charge()+images::byte_limit())){
         case .ok(v):{v}case .err(e):{return render::project_failure(format,true,e.code,snapshot,e.at,0);}
     };
-    let input::Snapshot payload=switch(binary::read(selection)){
+    let input::Snapshot payload=switch(binary::read_with_limit(selection,input::hard_limit(),30000)){
         case .ok(v):{v}case .err(e):{return failure(format,true,e,8);}
     };
     return switch(input_programs::run(ref program,ref payload,fuel)){

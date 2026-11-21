@@ -44,7 +44,7 @@ const uint8_t *bc_rir_bytes(const bc_rir_snapshot *p){return p?p->bytes:NULL;}
 /* Owns h on entry. FileModeInformation is the documented OS ULONG Mode record,
    class 16; no Fairy type/layout is copied or projected here. Reject overlapped
    handles BEFORE ReadFile, so no pending write can outlive the staging owner. */
-static bc_rir_status read_owned(HANDLE h,size_t limit,bc_rir_snapshot **out,DWORD *error){
+static bc_rir_status read_owned(HANDLE h,size_t limit,bc_rir_snapshot **out,DWORD *error,volatile LONG *stop){
     struct { ULONG Mode; } mode;
     IO_STATUS_BLOCK io;NTSTATUS nt;DWORD type,flags,state,got,request,code;
     LARGE_INTEGER size,position,zero;bc_rir_snapshot *stage=NULL;
@@ -75,6 +75,9 @@ static bc_rir_status read_owned(HANDLE h,size_t limit,bc_rir_snapshot **out,DWOR
     stage=allocate(limit);
     if(!stage){status=fail(error,BC_RIR_ALLOCATION,ERROR_NOT_ENOUGH_MEMORY);goto done;}
     for(;;){
+        if(stop&&InterlockedCompareExchange(stop,0,0)){
+            status=fail(error,BC_RIR_CANCELLED,ERROR_OPERATION_ABORTED);goto done;
+        }
         request=(DWORD)(limit-stage->length);if(request>8192){request=8192;}
         destination=request?stage->bytes+stage->length:&probe;
         if(!request){request=1;}
@@ -107,13 +110,72 @@ static bc_rir_status arguments(size_t limit,bc_rir_snapshot **out,DWORD *error){
     if(limit>BC_RIR_LIMIT){return fail(error,BC_RIR_LIMIT_ERROR,ERROR_FILE_TOO_LARGE);}
     return BC_RIR_OK;
 }
-bc_rir_status bc_rir_handle(HANDLE input,size_t limit,bc_rir_snapshot **out,DWORD *error){
-    HANDLE owned;bc_rir_status status=arguments(limit,out,error);if(status!=BC_RIR_OK){return status;}
+static bc_rir_status duplicate_input(HANDLE input,HANDLE *owned,DWORD *error){
     if(!input||input==INVALID_HANDLE_VALUE){return fail(error,BC_RIR_ARGUMENT,ERROR_INVALID_HANDLE);}
-    if(!DuplicateHandle(GetCurrentProcess(),input,GetCurrentProcess(),&owned,0,FALSE,DUPLICATE_SAME_ACCESS)){
+    if(!DuplicateHandle(GetCurrentProcess(),input,GetCurrentProcess(),owned,0,FALSE,DUPLICATE_SAME_ACCESS)){
         return fail(error,BC_RIR_OS,GetLastError());
     }
-    return read_owned(owned,limit,out,error);
+    return BC_RIR_OK;
+}
+bc_rir_status bc_rir_handle(HANDLE input,size_t limit,bc_rir_snapshot **out,DWORD *error){
+    HANDLE owned;bc_rir_status status=arguments(limit,out,error);if(status!=BC_RIR_OK){return status;}
+    status=duplicate_input(input,&owned,error);
+    return status==BC_RIR_OK?read_owned(owned,limit,out,error,NULL):status;
+}
+
+typedef struct {
+    HANDLE input;
+    size_t limit;
+    volatile LONG stop;
+    bc_rir_snapshot *snapshot;
+    bc_rir_status status;
+    DWORD error;
+    ULONGLONG completed;
+} pipe_read;
+
+static DWORD WINAPI read_pipe_thread(void *context){
+    pipe_read *job=context;
+    job->status=read_owned(job->input,job->limit,&job->snapshot,&job->error,&job->stop);
+    job->completed=GetTickCount64();
+    return 0;
+}
+
+bc_rir_status bc_rir_stdin(HANDLE input,size_t limit,DWORD timeout_ms,uint32_t (*cancelled)(void),
+                          bc_rir_snapshot **out,DWORD *error){
+    if(!timeout_ms||GetFileType(input)!=FILE_TYPE_PIPE){return bc_rir_handle(input,limit,out,error);}
+    bc_rir_status status=arguments(limit,out,error);
+    if(status!=BC_RIR_OK){return status;}
+    if(cancelled&&cancelled()){return fail(error,BC_RIR_CANCELLED,ERROR_OPERATION_ABORTED);}
+    ULONGLONG start=GetTickCount64();
+    pipe_read job={.limit=limit};
+    status=duplicate_input(input,&job.input,error);
+    if(status!=BC_RIR_OK){return status;}
+    HANDLE thread=CreateThread(NULL,0,read_pipe_thread,&job,0,NULL);
+    if(!thread){
+        DWORD code=GetLastError();CloseHandle(job.input);return fail(error,BC_RIR_OS,code);
+    }
+    DWORD code=ERROR_SUCCESS;
+    while(WaitForSingleObject(thread,0)!=WAIT_OBJECT_0){
+        if(cancelled&&cancelled()){status=BC_RIR_CANCELLED;code=ERROR_OPERATION_ABORTED;break;}
+        ULONGLONG elapsed=GetTickCount64()-start;
+        if(elapsed>=timeout_ms){status=BC_RIR_DEADLINE;code=ERROR_TIMEOUT;break;}
+        DWORD remaining=timeout_ms-(DWORD)elapsed;
+        if(WaitForSingleObject(thread,remaining<10?remaining:10)==WAIT_OBJECT_0){break;}
+    }
+    if(status==BC_RIR_OK){
+        if(cancelled&&cancelled()){status=BC_RIR_CANCELLED;code=ERROR_OPERATION_ABORTED;}
+        else if(job.completed-start>=timeout_ms){status=BC_RIR_DEADLINE;code=ERROR_TIMEOUT;}
+        else {status=job.status;code=job.error;}
+    }else{
+        // A cancellation can race with entry into ReadFile. Keep the stage alive
+        // and repeat cancellation until the reader closes the duplicate and exits.
+        InterlockedExchange(&job.stop,1);
+        do {CancelSynchronousIo(thread);} while(WaitForSingleObject(thread,10)!=WAIT_OBJECT_0);
+    }
+    CloseHandle(thread);
+    if(status==BC_RIR_OK){*out=job.snapshot;return status;}
+    bc_rir_close(job.snapshot);
+    return fail(error,status,code);
 }
 bc_rir_status bc_rir_path(const wchar_t *path,size_t length,size_t limit,bc_rir_snapshot **out,DWORD *error){
     wchar_t terminated[BC_RIR_PATH_UNITS+1u];size_t i;HANDLE h;
@@ -128,5 +190,5 @@ bc_rir_status bc_rir_path(const wchar_t *path,size_t length,size_t limit,bc_rir_
     if(h==INVALID_HANDLE_VALUE){return fail(error,BC_RIR_OS,GetLastError());}
     /* An explicit file path is disk-only; pipes require explicit HANDLE API. */
     if(GetFileType(h)!=FILE_TYPE_DISK){CloseHandle(h);return fail(error,BC_RIR_KIND,ERROR_NOT_SUPPORTED);}
-    return read_owned(h,limit,out,error);
+    return read_owned(h,limit,out,error,NULL);
 }

@@ -100,7 +100,7 @@ def main():
             need(stack == (1048576, 4096), 'Default stack required')
             fixture = folder/'binary-\uD55C\uAE00.bin'
             result = json.loads(run([exe, fixture], env=env))
-            need(result['groups'] == 6 and result['zeroBytePipeOsAttempts'] == 4 and result['injectedZeroCases'] == 0 and result['live'] == 0 and result['partialReads'] > 0,
+            need(result['groups'] == 7 and result['zeroBytePipeOsAttempts'] == 4 and result['injectedZeroCases'] == 0 and result['live'] == 0 and result['partialReads'] > 0,
                  'Real disk/pipe/ownership/OOM checks required')
             need(not fixture.exists(), 'Host fixture cleanup required')
             need(receipt['commands'][-1]['stderrSha256'] == sha(b''), 'Silent native test assertions')

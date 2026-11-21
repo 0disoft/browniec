@@ -49,10 +49,10 @@ pub fn i32 execute(render::Format format,bool execute_guest,Selection selected,b
     }
     let limits::RunLimits bounds=runs::run_limits(ref run);
     let usize limit=if(bounds.input_bytes<bounds.memory_bytes){bounds.input_bytes}else{bounds.memory_bytes};
-    let input::Snapshot payload=switch(binary::read_with_limit(selection,limit)){
+    if(unsafe{bc_cli_enable_cancel()}==0){return failure(format,true,errors::absent(5,0),8);}
+    let input::Snapshot payload=switch(binary::read_with_limit(selection,limit,bounds.deadline_ms)){
         case .ok(v):{v}case .err(e):{return failure(format,true,e,8);}
     };
-    if(unsafe{bc_cli_enable_cancel()}==0){return failure(format,true,errors::absent(5,0),8);}
     let usize instance=switch(engine::prepare_granted_instance(ref mut owner,program,ref run,payload)){
         case .ok(v):{v}
         case .err(e):{return project_failure(format,true,project,root,engine_error(e,false,8),e.diagnostic.at,8);}

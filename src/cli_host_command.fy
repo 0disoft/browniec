@@ -173,7 +173,7 @@ fn Result<usize,errors::Error> prepare_guest(ref mut engine::Engine owner,usize 
     }
     let limits::RunLimits bounds=runs::run_limits(run);
     let usize limit=if(bounds.input_bytes<bounds.memory_bytes){bounds.input_bytes}else{bounds.memory_bytes};
-    let input::Snapshot payload=binary::read_with_limit(selection,limit)?;
+    let input::Snapshot payload=binary::read_with_limit(selection,limit,bounds.deadline_ms)?;
     return switch(engine::prepare_input_host(owner,program,run,ref payload)){
         case .ok(v):{.ok(v)}
         case .err(e):{.err(if(e.status==1){errors::absent(10,0)}else{engine_error(e,false)})}

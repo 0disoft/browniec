@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-21): [Windows file publication](docs/cli/configuration.md#configured-project-output)
-  publishes sealed output by a no-replace rename. Windows /O2 CLI checks and
-  Windows /Od and /O2 short-write and close-failure probes passed.
+- Latest runtime checkpoint (2026-11-21): [Windows project stdin](docs/engineering/runtime-input-reader.md)
+  cancels and joins the pipe reader before discarding unpublished input.
+  Windows /Od and /O2 reader checks and the /O2 CLI contract passed.
 
 # Brownie C agent guidance
 

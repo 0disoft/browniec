@@ -187,7 +187,9 @@ Select one of `--input FILE` or `--stdin` on project run to use a public
 `i32(ref u8[])` entry. Select a local file by its absolute drive path or a path
 relative to the process working directory. On Windows, `--stdin` accepts a
 redirected disk file or synchronous byte pipe. Input is acquired after project
-compilation and can block until EOF. The reader accepts 0 through 1,048,576 raw
+compilation. An ordinary project allows 30 seconds for a redirected pipe to
+reach EOF. Ctrl+C or Ctrl+Break on a Windows console cancels that wait. The
+reader accepts 0 through 1,048,576 raw
 bytes, including NUL and invalid UTF-8. The VM borrows an immutable snapshot.
 Use `--fuel 16000000` when trying input programs because input metadata alone
 needs 32,768 Fuel. With neither input option the project entry takes zero arguments.
@@ -253,7 +255,11 @@ only narrow the policy ceiling. The configured entry takes a single shared
 byte slice. Pick `--input FILE` or `--stdin` for binary input. Omitting both
 supplies an empty snapshot. The input limit is the smaller of the configured
 input and memory limits, capped at 1 MiB. Read completes before guest execution
-starts, after project compilation and authority checks.
+starts, after project compilation and authority checks. In configured and
+catalog-backed projects, a redirected pipe has its own `limits.deadline_ms`
+budget from the start of input. Guest execution gets a fresh deadline. A pipe
+cancelled or expired before EOF exits 5 with `cancelled` or `deadline` before
+guest execution or output publication. Redirected disk reads stay synchronous.
 
 Use `check --project FILE --policy FILE --run FILE [--json|--json-v2]` to
 validate the same policy, grant, entry and source under the compile deadline.
@@ -280,8 +286,8 @@ requests removal of the temporary file on failure.
 During configured execution on a Windows console, Ctrl+C or Ctrl+Break requests
 cancellation. The Engine samples the request between steps and preserves any
 already committed terminal result. A cancelled run exits 5 with `cancelled`
-and discards staged output. Compilation and synchronous input acquisition finish
-before the console handler is registered.
+and discards staged output. The console handler is registered after compilation
+and before input acquisition.
 
 From the repository root on Windows, run the checked-in example:
 

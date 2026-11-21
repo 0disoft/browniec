@@ -418,7 +418,7 @@ def configured_arguments(folder):
             '--run', folder / 'run.json']
 
 
-def check_console_cancellation(exe, args, ready, destination):
+def check_console_cancellation(exe, args, ready, destination, profile='brownie.m1-scalar/1'):
     # The helper owns a separate console. Target only the test CLI process group.
     driver = r"""
 import signal
@@ -427,16 +427,23 @@ import sys
 import time
 from pathlib import Path
 
-ready = Path(sys.argv[1])
-with subprocess.Popen(sys.argv[2:], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+ready = Path(sys.argv[1]) if sys.argv[1] else None
+with subprocess.Popen(sys.argv[2:], stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=0,
+                      stdin=None if ready else subprocess.PIPE,
                       creationflags=subprocess.CREATE_NEW_PROCESS_GROUP) as guest:
     try:
-        deadline = time.monotonic() + 8
-        while not ready.exists():
-            assert guest.poll() is None, guest.communicate()
-            assert time.monotonic() < deadline, 'Adapter did not receive the request'
-            time.sleep(0.01)
+        if ready:
+            deadline = time.monotonic() + 8
+            while not ready.exists():
+                assert guest.poll() is None, guest.communicate()
+                assert time.monotonic() < deadline, 'Adapter did not receive the request'
+                time.sleep(0.01)
+        else:
+            # Larger than the pipe buffer, so this returns only after input starts.
+            assert guest.stdin.write(b'A' * 65536) == 65536
         guest.send_signal(signal.CTRL_BREAK_EVENT)
+        # Keep the stdin writer open until cancellation has actually ended the run.
+        guest.wait(timeout=5)
         out, err = guest.communicate(timeout=5)
         assert guest.returncode == 5, (guest.returncode, out, err)
     finally:
@@ -448,19 +455,18 @@ with subprocess.Popen(sys.argv[2:], stdout=subprocess.PIPE, stderr=subprocess.PI
     startup = subprocess.STARTUPINFO()
     startup.dwFlags = subprocess.STARTF_USESHOWWINDOW
     startup.wShowWindow = subprocess.SW_HIDE
-    env = os.environ | {'BC_ENGINE_ADAPTER_FIXTURE': 'c', 'BC_ENGINE_ADAPTER_READY': str(ready)}
-    run = subprocess.run([sys.executable, '-B', '-c', driver, str(ready), str(exe),
+    env = os.environ | ({'BC_ENGINE_ADAPTER_FIXTURE': 'c', 'BC_ENGINE_ADAPTER_READY': str(ready)} if ready else {})
+    run = subprocess.run([sys.executable, '-B', '-c', driver, str(ready) if ready else '', str(exe),
                           *map(str, args), '--json-v2'],
                          creationflags=subprocess.CREATE_NEW_CONSOLE, startupinfo=startup,
                          capture_output=True, timeout=15, env=env)
     assert run.returncode == 0 and not run.stderr and len(run.stdout.splitlines()) == 1, run
     assert json.loads(run.stdout) == {
         'schema': 'browniec.result/v2', 'command': 'run', 'status': 'error',
-        'profile': 'brownie.m1-scalar/1', 'return_i32': None,
+        'profile': profile, 'return_i32': None,
         'error': {'kind': 'cancelled', 'location': {'kind': 'none'}},
     }, run.stdout
     assert not destination.exists()
-    print('PASS: Windows CTRL+BREAK cancels configured execution without publishing output')
 
 
 def check_host_project_output(exe, folder, adapter):
@@ -506,6 +512,7 @@ def check_host_project_output(exe, folder, adapter):
         adapter_args = [*run[:-2], '--host-adapter', '0', 'v1', adapter,
                         '--input', payload, '--output', destination]
         check_console_cancellation(exe, adapter_args, ready, destination)
+        print('PASS: Windows CTRL+BREAK cancels configured execution without publishing output')
     else:
         print('SKIP: console cancellation requires --adapter-exe')
     print('PASS: catalog project emits across host suspension, with exact file/JSON output and failure rollback')
@@ -533,6 +540,23 @@ def check_configured_output(exe, folder):
                           profile=profile, output_b64='QQA=') is None
     assert check_json(exe, [*args, '--stdin'], 0, value=77, version=2, profile=profile,
                       input_bytes=b'A\x00', output_b64='QQA=') is None
+    stalled = project / 'stalled-stdin.bin'
+    pipe_command = [str(exe), *map(str, [*args, '--stdin', '--output', stalled, '--json-v2'])]
+    with subprocess.Popen(pipe_command, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                          stderr=subprocess.PIPE) as guest:
+        try:
+            guest.stdin.write(b'A\x00')
+            guest.stdin.flush()
+            assert guest.wait(timeout=5) == 5
+            assert not guest.stderr.read()
+            result = json.loads(guest.stdout.read())
+            assert result['return_i32'] is None and 'output_b64' not in result, result
+            assert result['error'] == {'kind': 'deadline', 'location': {'kind': 'none'}}, result
+        finally:
+            if guest.poll() is None:
+                guest.kill()
+    assert not stalled.exists()
+    check_console_cancellation(exe, [*args, '--stdin', '--output', stalled], None, stalled, profile)
     assert check_json(exe, args, 0, value=77, version=2, profile=profile, output_b64='') is None
     empty_sink = project / 'empty.bin'
     assert check_json(exe, [*args, '--output', empty_sink], 0, value=77, profile=profile) is None
@@ -544,15 +568,19 @@ def check_configured_output(exe, folder):
     output_error = {'kind': 'output_io', 'location': {'kind': 'none'}}
     assert check_json(exe, [*args, '--output', sink], 7, version=2, profile=profile) == output_error
     assert sink.read_bytes() == b'A\x00'
-    contested = project / 'contested.bin'
-    command = [str(exe), *map(str, [*args, '--stdin', '--output', contested, '--json-v2'])]
-    with subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE) as first:
-        with subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE) as second:
+    contested = folder / 'contested.bin'
+    other = folder / 'other-project'
+    shutil.copytree(CONFIGURED, other)
+    def contender(root, data):
+        incoming = root / 'contender.bin'
+        incoming.write_bytes(data)
+        command = [str(exe), *map(str, [*configured_arguments(root), '--input', incoming,
+                                       '--output', contested, '--json-v2'])]
+        return subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+    with contender(project, b'A\x00') as first:
+        with contender(other, b'B\xff') as second:
             candidates = [(first, b'A\x00'), (second, b'B\xff')]
-            for guest, data in candidates:
-                guest.stdin.write(data)
-                guest.stdin.close()
-                guest.stdin = None
             codes = []
             for guest, data in candidates:
                 stdout, stderr = guest.communicate(timeout=10)
@@ -564,7 +592,7 @@ def check_configured_output(exe, folder):
                 else:
                     assert result['error'] == output_error, result
             assert sorted(codes) == [0, 7], codes
-    assert not list(project.glob('.browniec-*'))
+    assert not list(folder.rglob('.browniec-*'))
     assert check_json(exe, [*args, '--output', folder / 'missing' / 'result.bin'],
                       7, version=2, profile=profile) == output_error
     assert check_json(exe, [*args, '--output', f'{sink}:extra'],
