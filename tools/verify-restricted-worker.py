@@ -65,12 +65,12 @@ def verify_configured_project(run, need, image, folder, env):
     config = dict(schema='brownie.run/0.3', entry=manifest['entry'].copy(),
                   requires=[], grants=[], limits=policy['run'].copy())
 
-    def check(expected_exit=0, kind=None):
+    def check(expected_exit=0, kind=None, operation='run'):
         policy_file.write_text(json.dumps(policy), encoding='utf-8')
         run_file.write_text(json.dumps(config), encoding='utf-8')
-        data = json.loads(run([image, '--internal-project-broker', 'run', project, policy_file, run_file],
+        data = json.loads(run([image, '--internal-project-broker', operation, project, policy_file, run_file],
                               cwd=folder, env=env, expected_exit=expected_exit, no_stderr=True))
-        need(data['schema'] == 'browniec.result/v2' and data['command'] == 'run' and
+        need(data['schema'] == 'browniec.result/v2' and data['command'] == operation and
              (data['error']['kind'] == kind and data['return_i32'] is None if kind else
               data['status'] == 'completed' and data['return_i32'] == 42),
              f'Unexpected configured project result: {data}')
@@ -91,14 +91,41 @@ def verify_configured_project(run, need, image, folder, env):
     check(3, 'compile_limit')
     policy['compile']['working_bytes'] = working
 
+    compile_defaults = policy['compile'].copy()
+    # The two original hello files have 27 and 17 lexer tokens, excluding EOF.
+    policy['compile'].update(tokens=44, functions=2)
+    check()
+    policy['compile']['tokens'] = 43
+    check(3, 'compile_limit')
+    policy['compile']['tokens'] = 44
+    policy['compile']['functions'] = 1
+    check(3, 'compile_limit')
+    policy['compile'] = compile_defaults.copy()
+    policy['compile']['instructions'] = 1
+    check(3, 'compile_limit', 'check')
+    policy['compile'] = compile_defaults.copy()
+
+    math_file = target / 'src/math.brc'
+    original_source = math_file.read_bytes()
+    math_file.write_text(
+        'module util::math;\nstruct One { i32 value; }\nstruct Two { i32 value; }\n'
+        'pub fn i32 answer(){var i32 n=40; n+=2; return n;}\n', encoding='utf-8')
+    policy['compile'].update(source_bytes=4096, types=2)
+    check()
+    policy['compile']['types'] = 1
+    check(3, 'compile_limit')
+    policy['compile']['types'] = 2
+    policy['compile']['registers_per_function'] = 1
+    check(3, 'compile_limit')
+    policy['compile'] = compile_defaults
+    math_file.write_bytes(original_source)
+
     runtime = config['limits'].copy()
     config['limits'].update(memory_bytes=1, object_bytes=1, input_bytes=0, output_bytes=0,
                             host_request_bytes=1, host_response_bytes=1)
     check(5, 'memory_limit')
     config['limits'] = runtime
 
-    math_file = target / 'src/math.brc'
-    original_source = math_file.read_bytes()
     math_file.write_text('module util::math;\npub fn i32 answer(){var i32 n=0;'
                          'while(n<2000000000){n+=1;}return n;}\n', encoding='utf-8')
     initial_source_limit = policy['compile']['source_bytes']
@@ -124,7 +151,7 @@ def verify_configured_project(run, need, image, folder, env):
     config['entry']['function'] = manifest['entry']['function']
     config['grants'] = ['brownie.output.emit']
     check(4, 'unavailable')
-    return 11
+    return 18
 
 
 def main():

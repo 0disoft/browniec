@@ -431,11 +431,12 @@ pub fn Result<usize,Error> compile_output(ref mut Engine e,entries::Entry select
 // The worker owns this snapshot and never reopens the project's members.
 pub fn Result<usize,Error> compile_project_snapshot_output(ref mut Engine e,ref projects::Project project,
     sources::Snapshot snapshot,usize image_limit){
-    if(projects::requirements(project)!=0){return .err(error(5));}
+    if(!e.meta.configured || projects::requirements(project)!=0){return .err(error(5));}
     if(sources::count(ref snapshot)>source_module_limit(e) ||
        sources::snapshot_bytes(ref snapshot)>source_byte_limit(e)){return .err(error(8));}
     let usize deadline=compile_deadline(e,0)?;
-    let entries::Entry selected=switch(project_binding::select(project,snapshot)){
+    let policy_limits::CompileLimits limits=configured_compile_limits(e)?;
+    let entries::Entry selected=switch(project_binding::select_limited(project,snapshot,limits.tokens,limits.functions,limits.types)){
         case .ok(v):{v}case .err(e):{return .err(host_binding_error(e));}
     };
     return retain_entry(e,selected,image_limit,2,deadline);
@@ -487,9 +488,9 @@ fn Result<policy_limits::CompileLimits,Error> source_host_limits(ref Engine e,re
     let usize checked=check_run_policy(e,run)?;
     if(!bytes::equal(run_config::module_name(run),b"main") ||
         !bytes::equal(run_config::function_name(run),b"main")){return .err(error(5));}
-    return host_compile_limits(e);
+    return configured_compile_limits(e);
 }
-fn Result<policy_limits::CompileLimits,Error> host_compile_limits(ref Engine e){
+fn Result<policy_limits::CompileLimits,Error> configured_compile_limits(ref Engine e){
     if(e.meta.poisoned){return .err(error(14));}
     if(e.meta.admission==0 || e.meta.next==0 || vec::len<Program>(ref e.programs)>=e.meta.limits.programs){return .err(error(8));}
     return .ok(policy::compile_limits(vec::at<policy::Policy>(ref e.policy,0)));
@@ -534,7 +535,7 @@ pub fn Result<usize,Error> compile_anchored_project_host(ref mut Engine e,ref pr
     ref mut anchored::Root root,host_catalog::Catalog imports,ref u32[] digest,ref run_config::RunConfig run){
     discard check_run_policy(e,run)?;
     if(!project_host_authority(project,run)){return .err(error(5));}
-    let policy_limits::CompileLimits limits=host_compile_limits(e)?;
+    let policy_limits::CompileLimits limits=configured_compile_limits(e)?;
     if(projects::count(project)>limits.modules){return .err(error(8));}
     let usize deadline=deadline_after(limits.deadline_ms)?;
     let sources::Snapshot snapshot=project_snapshot(project_loader::load_from_until(project,root,source_byte_limit(e),deadline))?;
@@ -554,7 +555,7 @@ pub fn Result<usize,Error> compile_preview_host(ref mut Engine e,sources::Snapsh
     let u32 access=unsafe{control_access_raw(e as ptr void)};
     if(access!=0){return .err(error(access));}
     if(!e.meta.configured){return .err(error(5));}
-    let policy_limits::CompileLimits limits=host_compile_limits(e)?;
+    let policy_limits::CompileLimits limits=configured_compile_limits(e)?;
     let usize count=sources::count(ref snapshot);
     if(count==0){return .err(error(1));}
     if(count>limits.modules || sources::snapshot_bytes(ref snapshot)>limits.source_bytes){return .err(error(8));}
@@ -570,7 +571,7 @@ pub fn Result<usize,Error> compile_preview_host(ref mut Engine e,sources::Snapsh
     };
     var ir::Program code=ir::empty();
     discard lower_indexed_host(ref index,selected,ref imports,ref mut code,deadline)?;
-    discard check_host_image(ref code,limits)?;
+    discard check_compile_image(ref code,limits)?;
     if(clock::expired(deadline)){return .err(compile_timeout());}
     let host_program::SourceMap map=host_program::source_set(modules::snapshot(ref index));
     let host_program::Program verified=verify_preview_host(e,ref code,imports,module_name,function_name,map)?;
@@ -601,10 +602,10 @@ fn Result<usize,Error> lower_indexed_host(ref modules::Index index,usize selecte
 }
 fn Result<usize,Error> retain_limited_host(ref mut Engine e,ref ir::Program code,host_catalog::Catalog imports,
     ref u32[] digest,ref run_config::RunConfig run,policy_limits::CompileLimits limits,usize deadline,host_program::SourceMap map){
-    discard check_host_image(code,limits)?;
+    discard check_compile_image(code,limits)?;
     return retain_verified_host(e,code,imports,digest,run,deadline,map);
 }
-fn Result<usize,Error> check_host_image(ref ir::Program code,policy_limits::CompileLimits limits){
+fn Result<usize,Error> check_compile_image(ref ir::Program code,policy_limits::CompileLimits limits){
     if(code.count>limits.instructions || code.function_count>limits.functions){return .err(error(8));}
     var usize f=0;
     while(f<code.function_count){
@@ -1974,7 +1975,8 @@ fn u32 publish_input_program_storage(ref mut Meta m,ref mut vec::Vec<Program> v,
     if(!vec::push<Program>(v,Program{.id=id,.pins=0,.released=false,.code=vec::empty<programs::Program>(),.input=retained,.output=vec::empty<output_programs::Program>(),.bytes=bytes,.execution_scratch=heap.scratch,.entry=empty_entry(),.host=vec::empty<host_program::Program>()}).is_ok){return failed(m,6);}
     assert(memory::publish(ref mut m.programs,bytes).is_ok);advance(m);return success(m,id);
 }
-fn u32 compile_output_inner(ref mut Meta m,ref mut vec::Vec<Program> v,ref mut vec::Vec<entries::Entry> incoming,usize limit,usize deadline){
+fn u32 compile_output_inner(ref mut Meta m,ref mut vec::Vec<Program> v,ref mut vec::Vec<entries::Entry> incoming,
+    usize limit,usize deadline,ref vec::Vec<policy::Policy> policies){
     if(clock::expired(deadline)){return compile_timed_out(m);}
     if(vec::len<Program>(v)>=m.limits.programs || m.next==0){return failed(m,8);}
     if(vec::len<entries::Entry>(incoming)!=1){return failed(m,1);}
@@ -1983,7 +1985,17 @@ fn u32 compile_output_inner(ref mut Meta m,ref mut vec::Vec<Program> v,ref mut v
     let Result<output_programs::Program,diagnostics::Error> built=bounded::compile_output_until(pop_entry(incoming),limit,ref mut plan,ref mut work,deadline);
     assert(memory::record_compile(ref mut m.programs,ref work).is_ok);
     assert(memory::record(ref mut m.programs,ref plan).is_ok);
-    return switch(built){case .ok(code):{publish_output_program(m,v,code,plan.bytes,empty_entry(),0,deadline)}case .err(e):{compile_error(m,e)}};
+    return switch(built){
+        case .ok(code):{
+            if(m.configured){
+                let policy_limits::CompileLimits limits=policy::compile_limits(vec::at<policy::Policy>(policies,0));
+                let ref compile_ir::Program image=output_programs::code(ref code);
+                if(!check_compile_image(ref image.body,limits).is_ok){return failed(m,8);}
+            }
+            publish_output_program(m,v,code,plan.bytes,empty_entry(),0,deadline)
+        }
+        case .err(e):{compile_error(m,e)}
+    };
 }
 fn u32 compile_input_output_inner(ref mut Meta m,ref mut vec::Vec<Program> v,ref mut vec::Vec<input_entries::InputEntry> incoming,usize limit,u32 mode,usize deadline){
     if(clock::expired(deadline)){return compile_timed_out(m);}
@@ -3008,7 +3020,8 @@ pub fn void retain_native_bindings(){
     var vec::Vec<entries::Entry> output_entry=vec::empty<entries::Entry>();
     var vec::Vec<input_entries::InputEntry> output_input_entry=vec::empty<input_entries::InputEntry>();
     var vec::Vec<BoundInput> output_input=vec::empty<BoundInput>();
-    unsafe{binding_raw(13)};discard compile_output_inner(ref mut m,ref mut output_program,ref mut output_entry,0,0);
+    let vec::Vec<policy::Policy> owned=vec::empty<policy::Policy>();
+    unsafe{binding_raw(13)};discard compile_output_inner(ref mut m,ref mut output_program,ref mut output_entry,0,0,ref owned);
     unsafe{binding_raw(14)};discard compile_input_output_inner(ref mut m,ref mut output_program,ref mut output_input_entry,0,1,0);
     unsafe{binding_raw(15)};discard output_instance_inner(ref mut m,ref mut output_program,ref mut output_instances,ref mut output_input,ref mut incoming_snapshot,0,0,0,0,0,ref outputs);
     var vec::Vec<Output> outgoing=vec::empty<Output>();
@@ -3023,7 +3036,6 @@ pub fn void retain_native_bindings(){
     unsafe{binding_raw(25)};discard program_identity(ref program_witness);
     let Output output_witness=Output{.instance=0,.run=output_programs::vacant(0),.pending=vec::empty<machines::Machine>(),.host=vec::empty<host::Exchange>()};
     unsafe{binding_raw(30)};discard output_identity(ref output_witness);
-    let vec::Vec<policy::Policy> owned=vec::empty<policy::Policy>();
     unsafe{binding_raw(37)};let vec::Vec<policy::Policy> cleared=reset_policy_storage(owned);
     var vec::Vec<host_program::Program> host_incoming=vec::empty<host_program::Program>();
     unsafe{binding_raw(38)};discard publish_host_inner(ref mut m,ref mut output_program,ref mut host_incoming,0,0,0);

@@ -383,9 +383,16 @@ quanta of at most 4,096 units and destroys it before releasing the Program
 and delivering a result. The configured path reports the reference
 profile used by this Engine.
 
-The compiler's remaining policy limits, including compile Fuel and complete
-token, depth and image ceilings, are tracked separately. Host requests,
-guest input and guest output still need worker transport integration.
+During module binding, the Engine checks aggregate lexical tokens excluding
+per-file EOF, declared functions, and declared record types against policy.
+After proof and before publishing the Program, it checks the verified
+image's instruction count, function count and registers per function
+using the same image check as the host compiler. The native token cap
+including EOF still applies to the ordinary module index.
+
+Compile Fuel, policy-controlled syntax depth, and type accounting beyond
+declared records remain open. Host requests, guest input and guest output
+still need worker transport integration.
 
 Locked Windows development and /O2 each passed eleven configured project
 cases. The two-module project returned 42. The new cases reject a compile
@@ -394,6 +401,14 @@ budget, and an execution deadline shorter than a long-running loop. The
 execution deadline case uses an independent ten-second broker session.
 When Fuel runs out during Engine preparation, the diagnostic has no source
 location. Local receipt: `build/restricted-worker/20261121T170631218424Z/receipt.json`.
+
+The compiler-limit follow-up passed eighteen configured project cases per
+Windows profile. The two-file fixture ran at exactly 44 lexical tokens and
+two functions. It failed at 43 tokens or one function. A second fixture
+ran with two declared records and failed with a one-record ceiling or a
+one-register-per-function ceiling. A check with a one-instruction ceiling
+also failed. Every policy rejection returned `compile_limit` with exit 3.
+Local receipt: `build/restricted-worker/20261121T171541509700Z/receipt.json`.
 
 Locked Windows development and /O2 each passed eight configured project
 cases. The two-module project returned 42 at its exact source-byte limit;

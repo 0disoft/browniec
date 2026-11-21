@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-22): [Policy-owned Engine in the worker](docs/engineering/restricted-worker.md#engine-policy-inside-the-worker)
-  compiles and steps the configured project inside AppContainer.
-  Development and /O2 each pass eleven configured project cases.
+- Latest runtime checkpoint (2026-11-22): [Compiler limits inside the worker](docs/engineering/restricted-worker.md#engine-policy-inside-the-worker)
+  checks lexical tokens and declarations during binding and image limits before publication.
+  Development and /O2 each pass eighteen configured project cases.
 
 # Brownie C agent guidance
 

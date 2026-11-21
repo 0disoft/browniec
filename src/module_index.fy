@@ -143,8 +143,11 @@ fn Result<usize,Error> prepare(ref sources::Snapshot snapshot,ref mut Table t,bo
         let sources::Span all=switch(sources::whole(snapshot,id)){case .ok(v):{v}case .err(_):{return .err(error(.Bounds,sources::no_source()));}};
         let ref u8[] source=switch(sources::view(snapshot,all)){case .ok(v):{v}case .err(_):{return .err(error(.Bounds,all));}};
         let usize scanned=file(source,id,t,host)?;
-        let usize used=if(host){scanned-1}else{scanned};
-        if(used>token_limit-tokens){return .err(error(.Limit,span(id,source.len,source.len)));}tokens+=used;id+=1;
+        let usize used=scanned-1;
+        if(used>token_limit-tokens || (!host && scanned>1024-tokens-id)){
+            return .err(error(.Limit,span(id,source.len,source.len)));
+        }
+        tokens+=used;id+=1;
     }
     var Import[64] bound=t.imports;
     let ref u8[] names=ref t.names;
@@ -161,6 +164,9 @@ fn Result<usize,Error> prepare(ref sources::Snapshot snapshot,ref mut Table t,bo
 }
 pub fn Result<Index,Error> build(sources::Snapshot snapshot){
     return build_mode(snapshot,false,1024);
+}
+pub fn Result<Index,Error> build_limited(sources::Snapshot snapshot,usize token_limit){
+    return build_mode(snapshot,false,if(token_limit<1024){token_limit}else{1024});
 }
 pub fn Result<Index,Error> build_host(sources::Snapshot snapshot,usize token_limit){
     return build_mode(snapshot,true,if(token_limit<1024){token_limit}else{1024});
@@ -181,6 +187,8 @@ pub fn ref sources::Snapshot snapshot(ref Index p){return ref stored(p).sources;
 fn ref Table table(ref Index p){return ref stored(p).table;}
 pub fn usize count(ref Index p){return table(p).count;}
 pub fn usize symbol_count(ref Index p){return table(p).symbol_count;}
+pub fn usize function_count(ref Index p){return table(p).functions;}
+pub fn usize record_count(ref Index p){return table(p).records;}
 pub fn usize import_count(ref Index p){return table(p).import_count;}
 pub fn Result<Import,Error> import_at(ref Index p,usize id){
     let ref Table t=table(p);if(id>=t.import_count){return .err(error(.Bounds,sources::no_source()));}return .ok(t.imports[id]);
