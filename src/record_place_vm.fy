@@ -11,6 +11,7 @@ import array_owners as owners;
 import array_vm as failures;
 import errors as errors;
 import runtime_clock as clock;
+import metadata_budget as budget;
 import fuel as meter;
 import std::vec as vec;
 
@@ -29,8 +30,14 @@ pub fn Result<Requirement,errors::Error> requirement(ref ir::Program p){
     return requirement_until(p,0);
 }
 pub fn Result<Requirement,errors::Error> requirement_until(ref ir::Program p,usize deadline){
+    var usize fuel=budget::unlimited();
+    return requirement_with_compile_fuel(p,deadline,ref mut fuel);
+}
+pub fn Result<Requirement,errors::Error> requirement_with_compile_fuel(ref ir::Program p,usize deadline,ref mut usize fuel){
     if(p.count>256){return .err(errors::make(5,0));}
     var usize width=0;var bool slices=false;var bool records=false;var usize pc=0;
+    if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
+    discard budget::charge(fuel,p.count,0)?;
     while(pc<p.count){
         if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
         if(proof::operation(p.code[pc*8])){

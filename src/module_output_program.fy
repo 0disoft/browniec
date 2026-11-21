@@ -138,8 +138,9 @@ fn u32 finish_proof_inner(ref candidates::Program code,ref mut vec::Vec<images::
     let output_proof::Proof proof=switch(proof_work::prepared(ref work.state)){
         case .ok(v):{v}case .err(e):{*failure=proof_error(snapshot,code,e);return 1;}
     };
+    var usize fuel=budget::unlimited();
     let Result<Program,diagnostics::Error> built=switch(vec::pop<images::Image>(storage)){
-        case .some(image):{finish_verified(snapshot,code,image,work.state.input,ref proof,deadline)}
+        case .some(image):{finish_verified(snapshot,code,image,work.state.input,ref proof,deadline,ref mut fuel)}
         case .none:{.err(absent(errors::absent(5,0)))}
     };
     let Program program=switch(built){case .ok(v):{v}case .err(e):{*failure=e;return 1;}};
@@ -193,7 +194,8 @@ fn Result<Program,diagnostics::Error> finish(ref sources::Snapshot sources,ref i
     let output_proof::Proof proof=switch(proof_work::inspect(code,ref image,input)){
         case .ok(v):{v}case .err(e):{return .err(proof_error(sources,code,e));}
     };
-    return finish_verified(sources,code,image,input,ref proof,0);
+    var usize fuel=budget::unlimited();
+    return finish_verified(sources,code,image,input,ref proof,0,ref mut fuel);
 }
 fn Result<Program,diagnostics::Error> finish_until(ref sources::Snapshot sources,ref images::Builder builder,
     ref candidates::Program code,usize image_limit,bool input,ref mut retention::Plan plan,usize deadline,ref mut usize fuel){
@@ -202,22 +204,25 @@ fn Result<Program,diagnostics::Error> finish_until(ref sources::Snapshot sources
     let output_proof::Proof proof=switch(proof_work::inspect_until(code,ref image,input,deadline,fuel)){
         case .ok(v):{v}case .err(e):{return .err(proof_error(sources,code,e));}
     };
-    return finish_verified(sources,code,image,input,ref proof,deadline);
+    return finish_verified(sources,code,image,input,ref proof,deadline,fuel);
 }
 fn Result<Program,diagnostics::Error> finish_verified(ref sources::Snapshot sources,ref candidates::Program code,
-    images::Image image,bool input,ref output_proof::Proof proof,usize deadline){
+    images::Image image,bool input,ref output_proof::Proof proof,usize deadline,ref mut usize fuel){
     if(clock::expired(deadline)){return .err(absent(errors::absent(errors::deadline_kind(),0)));}
-    let lists::Requirement list=switch(lists::requirement_until(ref code.body,deadline)){case .ok(v):{v}case .err(e):{return .err(absent(e));}};
+    let lists::Requirement list=switch(lists::requirement_with_compile_fuel(ref code.body,deadline,fuel)){case .ok(v):{v}case .err(e):{return .err(absent(e));}};
     if(clock::expired(deadline)){return .err(absent(errors::absent(errors::deadline_kind(),0)));}
-    let places::Requirement place=switch(places::requirement_until(ref code.body,deadline)){case .ok(v):{v}case .err(e):{return .err(absent(e));}};
+    let places::Requirement place=switch(places::requirement_with_compile_fuel(ref code.body,deadline,fuel)){case .ok(v):{v}case .err(e):{return .err(absent(e));}};
     if(clock::expired(deadline)){return .err(absent(errors::absent(errors::deadline_kind(),0)));}
     let usize work=switch(owned_calls::cost(ref code.body,code.body.entry,0)){case .ok(v):{v}case .err(e):{return .err(absent(e));}};
     if(clock::expired(deadline)){return .err(absent(errors::absent(errors::deadline_kind(),0)));}
-    let execution_heap::Plan heap=switch(execution_heap::prepare_until(ref code.body,input,true,0,deadline)){case .ok(v):{v}case .err(e):{return .err(absent(e));}};
+    let bool aggregates=code.body.arrays.count!=0 || code.body.records.count!=0;
+    let usize scratch=switch(execution_heap::scratch_bytes(ref list,ref place,aggregates,input)){
+        case .ok(v):{v}case .err(e):{return .err(absent(e));}
+    };
     if(clock::expired(deadline)){return .err(absent(errors::absent(errors::deadline_kind(),0)));}
     let call_captures::Plan calls=switch(call_captures::prepare(ref code.body)){case .ok(v):{v}case .err(e):{return .err(absent(e));}};
     let Preparation prepared=Preparation{.sites=proof.ordinary.statics,.origins=proof.ordinary.recipes.site_origins,.list=list,.place=place,
-        .work=work+code.body.arities[code.body.entry],.capacity=if(code.body.arrays.count!=0 || code.body.records.count!=0){65536}else{0},.scratch=heap.scratch,.parameters=proof.parameters,.calls=calls};
+        .work=work+code.body.arities[code.body.entry],.capacity=if(aggregates){65536}else{0},.scratch=scratch,.parameters=proof.parameters,.calls=calls};
     if(clock::expired(deadline)){return .err(absent(errors::absent(errors::deadline_kind(),0)));}
     return retain(sources,code,image,input,ref prepared);
 }

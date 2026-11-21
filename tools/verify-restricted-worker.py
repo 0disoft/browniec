@@ -116,7 +116,13 @@ def verify_configured_project(run, need, image, folder, env):
     need(fuel_error['location']['source_index'] == 1,
          f'Index Fuel reset between source members: {fuel_error}')
     # 863 prepaid batches after the 179-unit index, including independent proof.
-    full_fuel = index_fuel + 863 * 4096
+    proof_fuel = index_fuel + 863 * 4096
+    policy['compile']['fuel'] = proof_fuel
+    preparation_error = check(3, 'compile_limit', 'check')['error']
+    need(preparation_error['location']['kind'] == 'none',
+         f'Exact proof Fuel should reach execution preparation: {preparation_error}')
+    # Four instructions, visited once each by aggregate and ordinary place scans.
+    full_fuel = proof_fuel + 2 * 4
     policy['compile']['fuel'] = full_fuel - 1
     check(3, 'compile_limit')
     policy['compile']['fuel'] = full_fuel
@@ -252,7 +258,7 @@ def verify_configured_project(run, need, image, folder, env):
     config['entry']['function'] = manifest['entry']['function']
     config['grants'] = ['brownie.output.emit']
     check(4, 'unavailable')
-    return 40
+    return 41
 
 
 def verify_project_host(run, need, image, folder, env):

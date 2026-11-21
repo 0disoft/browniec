@@ -601,9 +601,9 @@ Both profiles pass 40 configured project cases, 12 catalog project cases,
 five managed project cases and nine native host transport cases. Local
 receipt: `build/restricted-worker/20261121T183550192986Z/receipt.json`.
 
-The charges cover the staged compiler dispatches and output proof. Work
-inside synchronous semantic children and final execution preparation still
-needs finer-grained metering.
+The charges at this checkpoint covered the staged compiler dispatches and
+output proof. [Execution scratch preparation](#execution-scratch-preparation-fuel)
+now uses the same balance.
 
 ### Catalog-backed lowering Fuel
 
@@ -641,6 +641,27 @@ Local receipt: `build/restricted-worker/20261121T185334424916Z/receipt.json`.
 Two existing host-proof cases also pass in an isolated /O2 fixture. Root
 test discovery reached the unrelated general specialization limit in
 `tests/m2/struct_copy.fy` before it could run those selected cases.
+
+### Execution scratch preparation Fuel
+
+After independent output proof, configured projects prepay one compile Fuel
+unit per instruction in each list or place requirement scan. Programs
+without list operands skip the list scan. Aggregate places skip the ordinary
+place scan when they determine the storage format. Scratch sizing reuses
+the verified plans, removing a second pass through each selected scan.
+The deadline remains active during planning and before retention.
+
+The two-file hello project adds eight units for two scans of its four
+instructions. Windows development and /O2 return 42 with 3,535,035 units
+and fail with `compile_limit` at 3,535,034. At the previous proof boundary
+of 3,535,027, check also fails during preparation before retaining a Program.
+Both failures yield no guest result or output. Each profile passes 41
+configured, 16 catalog and five managed project cases plus nine native host
+transport cases. Local receipt:
+`build/restricted-worker/20261121T190335773644Z/receipt.json`.
+
+Nested call-capture recipes and synchronous semantic children still require
+finer-grained charging.
 
 ## Windows verification
 

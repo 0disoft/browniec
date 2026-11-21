@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-22): [Catalog-backed proof Fuel](docs/engineering/restricted-worker.md#catalog-backed-proof-fuel)
-  continues with the balance left by catalog lowering.
-  Windows development and /O2 pass the exact 1,757,439-unit boundary.
+- Latest runtime checkpoint (2026-11-22): [Execution scratch preparation Fuel](docs/engineering/restricted-worker.md#execution-scratch-preparation-fuel)
+  carries the proof balance into list and place planning.
+  Windows development and /O2 pass the exact 3,535,035-unit boundary.
 
 # Brownie C agent guidance
 

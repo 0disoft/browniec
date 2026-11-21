@@ -8,6 +8,7 @@ import aggregate_place_vm as aggregates;
 import array_owners as owners;
 import array_slices as loans;
 import errors as errors;
+import metadata_budget as budget;
 import fuel as meter;
 import std::vec as vec;
 import std::bytes as bytes;
@@ -19,10 +20,14 @@ pub fn Result<Requirement,errors::Error> requirement(ref ir::Program p){
     return requirement_until(p,0);
 }
 pub fn Result<Requirement,errors::Error> requirement_until(ref ir::Program p,usize deadline){
-    let aggregates::Requirement extended=aggregates::requirement_until(p,deadline)?;
+    var usize fuel=budget::unlimited();
+    return requirement_with_compile_fuel(p,deadline,ref mut fuel);
+}
+pub fn Result<Requirement,errors::Error> requirement_with_compile_fuel(ref ir::Program p,usize deadline,ref mut usize fuel){
+    let aggregates::Requirement extended=aggregates::requirement_with_compile_fuel(p,deadline,fuel)?;
     if(extended.width!=0){return .ok(Requirement{.width=extended.width,.cost=extended.cost,
         .aggregate=true,.slices=false,.records=false});}
-    let records::Requirement old=records::requirement_until(p,deadline)?;
+    let records::Requirement old=records::requirement_with_compile_fuel(p,deadline,fuel)?;
     return .ok(Requirement{.width=old.width,.cost=old.cost,.aggregate=false,.slices=old.slices,.records=old.records});
 }
 pub fn Result<vec::Vec<usize>,errors::Error> prepare_metered(ref Requirement plan,usize fuel){

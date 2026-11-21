@@ -44,17 +44,22 @@ pub fn Result<Plan,errors::Error> prepare_until(ref ir::Program body,bool input,
     // Keep original requirement errors, including their instruction offsets.
     let lists::Requirement list=lists::requirement_until(body,deadline)?;
     let places::Requirement place=places::requirement_until(body,deadline)?;
-    if(list.length>4096 || list.bytes>32768 || (list.length==0)!=(list.bytes==0)){
-        return .err(invalid());
-    }
-    var usize scratch=if(body.arrays.count!=0 || body.records.count!=0){65536}else{0};
-    scratch=add(scratch,vector_bytes(list.length)?)?;
-    scratch=add(scratch,list.bytes)?;
-    scratch=add(scratch,place_bytes(ref place)?)?;
-    // Input ABI always prepares Vec<Cell>: 768 initialized, capacity 1024.
-    if(input){scratch=add(scratch,24576)?;}
+    let usize scratch=scratch_bytes(ref list,ref place,body.arrays.count!=0 || body.records.count!=0,input)?;
     // Published Vec capacity 8 * 72 and fixed Transaction header 40. Reserved
     // payload is output_limit even for zero emits; seal moves it without a copy.
     let usize output_bytes=if(output){add(616,output_limit)?}else{0};
     return .ok(Plan{.scratch=scratch,.output=output_bytes,.peak=add(scratch,output_bytes)?});
+}
+pub fn Result<usize,errors::Error> scratch_bytes(ref lists::Requirement list,ref places::Requirement place,
+    bool aggregates,bool input){
+    if(list.length>4096 || list.bytes>32768 || (list.length==0)!=(list.bytes==0)){
+        return .err(invalid());
+    }
+    var usize scratch=if(aggregates){65536}else{0};
+    scratch=add(scratch,vector_bytes(list.length)?)?;
+    scratch=add(scratch,list.bytes)?;
+    scratch=add(scratch,place_bytes(place)?)?;
+    // Input ABI always prepares Vec<Cell>: 768 initialized, capacity 1024.
+    if(input){scratch=add(scratch,24576)?;}
+    return .ok(scratch);
 }

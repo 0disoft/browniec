@@ -11,6 +11,7 @@ import struct_meta as records;
 import struct_range as ranges;
 import errors as errors;
 import runtime_clock as clock;
+import metadata_budget as budget;
 import fuel as meter;
 import std::vec as vec;
 import std::bytes as bytes;
@@ -25,8 +26,14 @@ pub fn Result<Requirement,errors::Error> requirement(ref ir::Program p){
     return requirement_until(p,0);
 }
 pub fn Result<Requirement,errors::Error> requirement_until(ref ir::Program p,usize deadline){
+    var usize fuel=budget::unlimited();
+    return requirement_with_compile_fuel(p,deadline,ref mut fuel);
+}
+pub fn Result<Requirement,errors::Error> requirement_with_compile_fuel(ref ir::Program p,usize deadline,ref mut usize fuel){
     if(p.count>256){return .err(invalid(0));}
     var usize width=0;var bool aggregate=false;var usize pc=0;
+    if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
+    discard budget::charge(fuel,p.count,0)?;
     while(pc<p.count){
         if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
         let usize at=pc*8;let u8 op=p.code[at];

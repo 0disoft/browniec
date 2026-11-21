@@ -8,12 +8,15 @@ import errors as errors;
 pub struct State { usize total; usize last; usize stages; }
 pub fn usize limit(){return 4096;}
 pub fn usize unlimited(){return 18446744073709551615;}
-pub fn Result<usize,errors::Error> prepay(ref mut usize fuel,usize offset){
-    if(*fuel==unlimited()){return .ok(limit());}
-    if(*fuel<limit()){return .err(errors::make(4,offset));}
-    let usize remaining=*fuel-limit();
+pub fn Result<usize,errors::Error> charge(ref mut usize fuel,usize work,usize offset){
+    if(*fuel==unlimited()){return .ok(work);}
+    if(*fuel<work){return .err(errors::make(4,offset));}
+    let usize remaining=*fuel-work;
     *fuel=remaining;
-    return .ok(limit());
+    return .ok(work);
+}
+pub fn Result<usize,errors::Error> prepay(ref mut usize fuel,usize offset){
+    return charge(fuel,limit(),offset);
 }
 pub fn Result<usize,errors::Error> reset_metered(ref mut State state,ref mut usize fuel,usize offset){
     discard reset(state,offset)?;

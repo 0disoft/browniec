@@ -6,6 +6,7 @@ import array_layout as layouts;
 import array_owners as owners;
 import errors as errors;
 import runtime_clock as clock;
+import metadata_budget as budget;
 import fuel as meter;
 import std::vec as vec;
 import std::bytes as bytes;
@@ -17,10 +18,15 @@ pub fn Result<Requirement,errors::Error> requirement(ref ir::Program p){
     return requirement_until(p,0);
 }
 pub fn Result<Requirement,errors::Error> requirement_until(ref ir::Program p,usize deadline){
+    var usize fuel=budget::unlimited();
+    return requirement_with_compile_fuel(p,deadline,ref mut fuel);
+}
+pub fn Result<Requirement,errors::Error> requirement_with_compile_fuel(ref ir::Program p,usize deadline,ref mut usize fuel){
     if(p.count>256 || p.list_used>4096){return .err(errors::make(5,0));}
     if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
     if(p.list_used==0){return .ok(Requirement{.length=0,.bytes=0,.cost=0});}
     var usize length=0;var usize size=0;var usize pc=0;
+    discard budget::charge(fuel,p.count,0)?;
     while(pc<p.count){
         if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
         if(lists::operation(p,pc)){
