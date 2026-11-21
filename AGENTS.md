@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-22): [Aggregate expression depth](docs/engineering/restricted-worker.md#aggregate-expression-depth)
-  applies the policy to grouped array and record expressions.
-  Both Windows worker profiles admit their projection fixtures at depth three and reject them at two.
+- Latest runtime checkpoint (2026-11-22): [Nominal record depth](docs/engineering/restricted-worker.md#nominal-record-depth)
+  applies the project policy during record layout validation. Both Windows
+  worker profiles admit the nested record at depth two and reject it at one.
 
 # Brownie C agent guidance
 

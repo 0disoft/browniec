@@ -765,6 +765,24 @@ A separate /O2 aggregate test executable exited with assertion status 134
 on both the previous and current sources. That executable supplies no
 additional evidence for the native aggregate 32/33 boundary.
 
+### Nominal record depth
+
+Indexed project lowering passes the effective compile depth into record layout
+validation. A record with scalar fields has depth one. Each nominal field can
+add one level above its child's computed depth. The native limit of 16 still
+caps the configured depth. The existing memoized walk checks the limit while
+laying out each node, including unused declarations, with no second catalog
+traversal. Layout errors point to the record whose layout exceeds the limit.
+
+The previous Windows development and /O2 images both ran the two-level record
+fixture at depth one and returned 42. Both rebuilt profiles accept the same
+project at depth two and reject it at one with `compile_limit` at `Outer` in
+`src/math.brc`. The catalog path also accepts at two, returns 77 and seals its
+output, then rejects at one without a guest result or output. Each profile
+passes 52 configured, 22 catalog and five managed project cases plus nine
+native host transport cases. All 455 receipt input hashes matched.
+Local receipt: `build/restricted-worker/20261121T201053673711Z/receipt.json`.
+
 ## Windows verification
 
 Run `python -B tools/verify-restricted-worker.py`. The development and optimized

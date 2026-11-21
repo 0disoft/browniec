@@ -8,12 +8,16 @@ import metadata_budget as budget;
 // edges, or lays out one node (at most sixteen fields). No whole-catalog helper.
 pub struct State {
     layouts::Plan plan; usize[32] records; usize[32] fields; bool[32] visiting;
-    usize root; usize depth; usize checked; usize limit; u8 phase; bool active; bool done;
+    usize root; usize depth; usize checked; usize limit; usize max_depth; u8 phase; bool active; bool done;
 }
 pub fn State empty(){return State{.plan=layouts::Plan{.count=0,.bytes=[0;32],.alignments=[0;32],.depths=[0;32],.offsets=[0;512]},
-    .records=[0;32],.fields=[0;32],.visiting=[false;32],.root=0,.depth=0,.checked=0,.limit=0,.phase=0,.active=false,.done=false};}
+    .records=[0;32],.fields=[0;32],.visiting=[false;32],.root=0,.depth=0,.checked=0,.limit=0,.max_depth=16,.phase=0,.active=false,.done=false};}
 pub fn Result<usize,layouts::Error> begin(ref mut State w,usize limit){
-    if(w.active){return .err(.Metadata);}w.limit=limit;w.phase=0;w.root=0;w.depth=0;w.checked=0;w.active=true;w.done=false;return .ok(0);
+    return begin_limited(w,limit,16);
+}
+pub fn Result<usize,layouts::Error> begin_limited(ref mut State w,usize limit,usize max_depth){
+    if(w.active || max_depth==0){return .err(.Metadata);}
+    w.max_depth=if(max_depth<16){max_depth}else{16};w.limit=limit;w.phase=0;w.root=0;w.depth=0;w.checked=0;w.active=true;w.done=false;return .ok(0);
 }
 fn usize width(u8 tag){return switch(arrays::scalar(tag,1)){case .ok(v):{v.bytes}case .err(_):{0}};}
 fn Result<usize,layouts::Error> aligned(usize value,usize alignment){
@@ -59,7 +63,7 @@ fn Result<usize,layouts::Error> node(ref mut State w,ref layouts::Catalog c){
         var usize bytes=0;var usize a=1;
         if(c.kinds[slot]==1){let ref layouts::Plan p=ref w.plan;
             bytes=p.bytes[tag];a=p.alignments[tag];let usize d=p.depths[tag];
-            if(d>=16){return .err(.Depth);}if(depth<=d){depth=d+1;}
+            if(d>=w.max_depth){return .err(.Depth);}if(depth<=d){depth=d+1;}
         }else{bytes=width(c.types[slot]);a=bytes;}
         let usize offset=aligned(size,a)?;if(bytes>18446744073709551615-offset){return .err(.Overflow);}
         size=offset+bytes;if(size>w.limit){return .err(.Quota);}if(alignment<a){alignment=a;}

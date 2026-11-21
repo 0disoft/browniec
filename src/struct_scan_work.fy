@@ -19,13 +19,13 @@ import metadata_budget as budget;
 pub struct State { raw::Table result; fields::State fields; declarations::State declaration;
     states::State state; checking::State check; planning::State layout; tokens::State scan;
     lexer::State token; lexer::State saved; usize record; usize row; usize spelling; usize width;
-    usize compared; usize visits; u8 mode; u8 phase; u8 resume;
+    usize compared; usize visits; usize max_depth; u8 mode; u8 phase; u8 resume;
     bool waiting; bool skipping; bool new_record; bool resolving; bool planning; bool done; }
 fn raw::Table blank(){return raw::Table{.context=context::empty(),.layouts=layouts::empty(),.begins=[0;32],.ends=[0;32],.bodies=[0;32]};}
 fn State seed(u8 mode){return State{.result=blank(),.fields=fields::begin(0),.declaration=declarations::structure(lexer::empty()),
     .state=states::begin(0),.check=checking::empty(),.layout=planning::empty(),.scan=tokens::begin(lexer::empty()),
     .token=lexer::empty(),.saved=lexer::empty(),.record=0,.row=0,.spelling=0,.width=0,.compared=0,.visits=0,
-    .mode=mode,.phase=0,.resume=0,.waiting=false,.skipping=false,.new_record=false,.resolving=false,.planning=false,.done=false};}
+    .max_depth=16,.mode=mode,.phase=0,.resume=0,.waiting=false,.skipping=false,.new_record=false,.resolving=false,.planning=false,.done=false};}
 pub fn State single(){return seed(0);}
 pub fn State scoped(){return seed(1);}
 fn bool word(ref u8[] source,ref lexer::State s,ref u8[] name){return s.kind==2 && lexer::equal(source[s.begin..s.end],name);}
@@ -34,7 +34,9 @@ fn void next(ref mut State w,u8 phase){let lexer::State current=w.token;w.scan=t
 fn errors::Error layout_error(ref State w,layouts::Error e){
     let u8 kind=switch(e){case .Depth:{4}case .Overflow:{4}case .Quota:{4}case .Limit:{4}
         case .Fields:{3}case .Type:{3}case .Metadata:{3}case .Cycle:{3}};
-    let usize at=if(w.mode==0){w.result.begins[0]}else if(w.layout.phase>=2){w.result.begins[w.layout.root]}else{0};
+    let usize at=if(w.mode==0){w.result.begins[0]}
+        else if(kind==4 && w.layout.depth!=0){w.result.begins[w.layout.records[w.layout.depth-1]]}
+        else if(w.layout.phase>=2){w.result.begins[w.layout.root]}else{0};
     return errors::make(kind,at);
 }
 pub fn Result<raw::Table,errors::Error> prepared(ref State w){
@@ -78,7 +80,8 @@ fn Result<bool,errors::Error> metadata(ref u8[] source,ref mut State w,ref mut b
         w.declaration=if(w.mode==0){declarations::structure(saved)}else{declarations::members(saved)};
         w.new_record=true;w.skipping=true;return .ok(false);}
     if(w.phase==20){if(w.record==w.result.layouts.count){
-            switch(planning::begin(ref mut w.layout,18446744073709551615)){case .ok(_):{}case .err(e):{return .err(layout_error(w,e));}};
+            let usize max_depth=w.max_depth;
+            switch(planning::begin_limited(ref mut w.layout,18446744073709551615,max_depth)){case .ok(_):{}case .err(e):{return .err(layout_error(w,e));}};
             w.planning=true;return .ok(false);}
         w.fields=fields::begin(w.record);w.resolving=true;return .ok(false);}
     return .err(errors::make(5,w.token.begin));
@@ -125,12 +128,12 @@ pub fn Result<raw::Table,errors::Error> scan_single_from(ref u8[] source,usize s
     return prepared(ref w);
 }
 pub fn Result<raw::Table,errors::Error> scan_scoped(ref u8[] source,ref context::Table scope){
-    return scan_scoped_until(source,scope,0);
+    return scan_scoped_until(source,scope,0,16);
 }
 
 // Keep the candidate table private through layout validation and the final clock check.
-pub fn Result<raw::Table,errors::Error> scan_scoped_until(ref u8[] source,ref context::Table scope,usize deadline){
-    var State w=scoped();var budget::State meter=budget::empty();
+pub fn Result<raw::Table,errors::Error> scan_scoped_until(ref u8[] source,ref context::Table scope,usize deadline,usize max_depth){
+    var State w=scoped();w.max_depth=max_depth;var budget::State meter=budget::empty();
     while(!w.done){
         if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
         let usize allowance=budget::reset(ref mut meter,0)?;

@@ -3134,7 +3134,7 @@ fn Result<usize,errors::Error> prepare_aggregates_from(ref u8[] source,ref mut f
     let usize results = array_results::prepare(signatures, p)?;
     let structs::Table records = if(start!=0){struct_scan::scan_single_from(source,start)?}
         else if(signatures.context.modules==0){structs::scan(source)?}
-        else{struct_scan::scan_scoped_until(source,ref signatures.context,deadline)?};
+        else{struct_scan::scan_scoped_until(source,ref signatures.context,deadline,signatures.semantic_depth)?};
     var usize f = 0;
     while (f < signatures.count) {
         if (structs::find(source, ref records, signatures.begins[f], signatures.ends[f]) != 32) {

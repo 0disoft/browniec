@@ -220,6 +220,20 @@ def verify_configured_project(run, need, image, folder, env):
     policy['compile'] = compile_defaults
     math_file.write_bytes(original_source)
 
+    nested_records = (b'module util::math;struct Outer{Inner item;}'
+                      b'struct Inner{i32 value;}pub fn i32 answer(){return 42;}')
+    math_file.write_bytes(nested_records)
+    policy['compile'] = dict(compile_defaults, source_bytes=4096, depth=2)
+    check()
+    policy['compile']['depth'] = 1
+    location = check(3, 'compile_limit', 'check')['error']['location']
+    offset = nested_records.index(b'Outer')
+    need(location['source_index'] == 1 and location['path'] == 'src/math.brc' and
+         location['offset'] == offset and location['end_offset'] == offset + 1,
+         f'Unexpected record depth location: {location}')
+    policy['compile'] = compile_defaults
+    math_file.write_bytes(original_source)
+
     runtime = config['limits'].copy()
     config['limits'].update(memory_bytes=1, object_bytes=1, input_bytes=0, output_bytes=0,
                             host_request_bytes=1, host_response_bytes=1)
@@ -307,7 +321,7 @@ def verify_configured_project(run, need, image, folder, env):
     config['entry']['function'] = manifest['entry']['function']
     config['grants'] = ['brownie.output.emit']
     check(4, 'unavailable')
-    return 50
+    return 52
 
 
 def verify_project_host(run, need, image, folder, env):
@@ -392,8 +406,16 @@ def verify_project_host(run, need, image, folder, env):
     check()
     policy['compile']['depth'] = 2
     check(expected_exit=3, kind='compile_limit')
-    policy['compile']['depth'] = original_depth
+    math = target / 'src/math.brc'
+    original_math = math.read_bytes()
+    math.write_bytes(original_math + b'struct Inner{i32 value;}struct Outer{Inner item;}')
     source.write_bytes(original_source)
+    policy['compile']['depth'] = 2
+    check()
+    policy['compile']['depth'] = 1
+    check(expected_exit=3, kind='compile_limit')
+    math.write_bytes(original_math)
+    policy['compile']['depth'] = original_depth
     replies['replies'] = rows[:1]
     check(expected_exit=4, kind='unavailable')
     replies['replies'] = rows
@@ -437,7 +459,7 @@ def verify_project_host(run, need, image, folder, env):
                        b'output::emit(ref data); let i32 a=api::check(41); return a+api::check(42);}')
     check(payload=payload)
     check(expected_exit=4, kind='unavailable')
-    return 20
+    return 22
 
 
 def main():
