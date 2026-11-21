@@ -102,8 +102,18 @@ pub fn Result<bool,errors::Error> advance(ref u8[] source,ref ir::Program p,ref 
     return .err(errors::make(5,s.begin));
 }
 pub fn Result<Plan,errors::Error> inspect(ref u8[] source,lexer::State s,ref ir::Program p,ref locals::Table table,ref functions::Table signatures,u8 mode){
-    var State w=begin(s,mode);var budget::State meter=budget::empty();while(!w.done){let usize allowance=budget::reset(ref mut meter,s.begin)?;
-        let bool done=advance(source,p,table,signatures,ref mut w,ref mut meter)?;}return prepared(ref w);
+    var usize fuel=budget::unlimited();
+    return inspect_metered(source,s,p,table,signatures,mode,0,ref mut fuel);
+}
+pub fn Result<Plan,errors::Error> inspect_metered(ref u8[] source,lexer::State s,ref ir::Program p,
+    ref locals::Table table,ref functions::Table signatures,u8 mode,usize deadline,ref mut usize fuel){
+    var State w=begin(s,mode);var budget::State meter=budget::empty();
+    while(!w.done){
+        discard budget::visit(fuel,deadline,w.look.begin)?;
+        let usize allowance=budget::reset(ref mut meter,s.begin)?;
+        let bool done=advance(source,p,table,signatures,ref mut w,ref mut meter)?;
+    }
+    return prepared(ref w);
 }
 
 // Literal/static adapters need no dummy Program or function catalog on the stack.
@@ -139,6 +149,16 @@ pub fn Result<bool,errors::Error> advance_syntax(ref u8[] source,ref locals::Tab
     return .err(errors::make(5,s.begin));
 }
 pub fn Result<Plan,errors::Error> inspect_syntax(ref u8[] source,lexer::State s,ref locals::Table table,u8 mode){
-    var State w=begin(s,mode);var budget::State meter=budget::empty();while(!w.done){let usize allowance=budget::reset(ref mut meter,s.begin)?;
-        let bool done=advance_syntax(source,table,ref mut w,ref mut meter)?;}return prepared(ref w);
+    var usize fuel=budget::unlimited();
+    return inspect_syntax_metered(source,s,table,mode,0,ref mut fuel);
+}
+pub fn Result<Plan,errors::Error> inspect_syntax_metered(ref u8[] source,lexer::State s,
+    ref locals::Table table,u8 mode,usize deadline,ref mut usize fuel){
+    var State w=begin(s,mode);var budget::State meter=budget::empty();
+    while(!w.done){
+        discard budget::visit(fuel,deadline,w.look.begin)?;
+        let usize allowance=budget::reset(ref mut meter,s.begin)?;
+        let bool done=advance_syntax(source,table,ref mut w,ref mut meter)?;
+    }
+    return prepared(ref w);
 }

@@ -7,6 +7,7 @@ import array_source as arrays;
 import ir as ir;
 import types as types;
 import errors as errors;
+import metadata_budget as budget;
 
 pub struct Projection { usize groups; u8 kind; }
 // Advisory lookahead only. A grouped scalar expression keeps its ordinary
@@ -90,5 +91,11 @@ pub fn Result<Projection,errors::Error> projection(ref u8[] source,ref lexer::St
     return .ok(Projection{.groups=plan.groups,.kind=if(plan.suffix==91 || plan.suffix==46){plan.suffix}else{0}});
 }
 pub fn Result<bool,errors::Error> is_repeated(ref u8[] source,ref lexer::State s){
-    let locals::Table names=locals::empty();let probes::Plan plan=probes::inspect_syntax(source,*s,ref names,5)?;return .ok(plan.kind!=0);
+    var usize fuel=budget::unlimited();
+    return is_repeated_metered(source,s,0,ref mut fuel);
+}
+pub fn Result<bool,errors::Error> is_repeated_metered(ref u8[] source,ref lexer::State s,usize deadline,ref mut usize fuel){
+    let locals::Table names=locals::empty();
+    let probes::Plan plan=probes::inspect_syntax_metered(source,*s,ref names,5,deadline,fuel)?;
+    return .ok(plan.kind!=0);
 }

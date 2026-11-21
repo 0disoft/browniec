@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-22): [Place assignment operand Fuel](docs/engineering/restricted-worker.md#place-assignment-operand-fuel)
-  meters array, mutable slice and record-field assignment operands, including
-  grouped destinations.
+- Latest runtime checkpoint (2026-11-22): [Array literal assignment Fuel](docs/engineering/restricted-worker.md#array-literal-assignment-fuel)
+  meters literal classification, scalar operands and dense list-pool work for
+  array replacements.
 
 # Brownie C agent guidance
 

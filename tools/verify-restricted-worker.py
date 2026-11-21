@@ -289,6 +289,19 @@ def verify_configured_project(run, need, image, folder, env):
     policy['compile'] = compile_defaults
     math_file.write_bytes(original_source)
 
+    math_file.write_bytes(b'module util::math;pub fn i32 answer(){var a=[0,0];'
+                          b'a=[5+5,2+4];((a))=([a[0]+6,a[1]+4]);'
+                          b'var b=[0,0];b=([a[0]+a[1]-5;2]);'
+                          b'return b[0]+b[1];}')
+    # Literal classification, five operands and two list-pool passes add 494 units.
+    array_assignment_fuel = 8459031 + 494
+    policy['compile'] = dict(compile_defaults, source_bytes=4096, fuel=array_assignment_fuel - 1)
+    check(3, 'compile_limit')
+    policy['compile']['fuel'] = array_assignment_fuel
+    check()
+    policy['compile'] = compile_defaults
+    math_file.write_bytes(original_source)
+
     aggregate_projections = (
         (b'module util::math;pub fn i32 answer(){let i32[1] a=[42];'
          b'let usize n= ~ ~ (a).len;if(n==1){return 42;}return 0;}', b'(a).len'),

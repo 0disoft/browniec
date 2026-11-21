@@ -1093,6 +1093,24 @@ Windows development and /O2 each passed 94 configured, 32 catalog, five
 managed project and four compile-stop cases. All 456 input hashes matched.
 Local receipt: `build/restricted-worker/20261121T225243809492Z/receipt.json`.
 
+### Array literal assignment Fuel
+
+Bare and grouped array literal replacements charge one unit per bounded
+classification or Pratt advance. The classifier and scalar operands check
+the compile deadline before advancing. List stores prepay two units per
+element before the existing validation and copy passes in the dense operand
+pool. Repeated stores evaluate a single filler. Named array copies, array
+call results and whole-record assignments retain their existing outer
+checkpoints.
+
+A configured-project fixture performs a bare list replacement, a grouped
+list replacement and a repeated fill. The new work adds 494 units to the
+previous balance. At 8,459,525 compile Fuel the project returns 42. At
+8,459,524 it fails compilation without publishing a result or output.
+Windows development and /O2 each passed 96 configured, 32 catalog, five
+managed project and four compile-stop cases. All 456 input hashes matched.
+Local receipt: `build/restricted-worker/20261121T230144734151Z/receipt.json`.
+
 ## Windows verification
 
 Run `python -B tools/verify-restricted-worker.py`. The development and optimized

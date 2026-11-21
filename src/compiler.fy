@@ -1546,10 +1546,10 @@ fn Result<usize,errors::Error> assignment_operand(ref u8[] source,ref mut lexer:
     return .ok(value);
 }
 
-fn Result<usize, errors::Error> array_copy_statement(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref mut locals::Table table, ref functions::Table signatures, usize index, usize at, usize id, u8 terminator, u8 result_type, usize expr_depth, usize structure, ref mut loops::State loop_state,usize place) {
+fn Result<usize, errors::Error> array_copy_statement(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref mut locals::Table table, ref functions::Table signatures, usize index, usize at, usize id, u8 terminator, u8 result_type, usize expr_depth, usize structure, ref mut loops::State loop_state,usize place,usize deadline,ref mut usize fuel) {
     if(s.kind==40 || arm_syntax::operand_kind(source,s)!=0){
-        let array_expressions::Plan plan=array_expressions::inspect(source,s,p,table,signatures)?;
-        if(plan.kind==1){return array_grouped_literal_assignment(source,s,p,table,signatures,index,id,at,terminator,result_type,expr_depth,structure,loop_state,place);}
+        let aggregate_work::Plan plan=aggregate_work::inspect_metered(source,*s,p,table,signatures,2,deadline,fuel)?;
+        if(plan.kind==1){return array_grouped_literal_assignment(source,s,p,table,signatures,index,id,at,terminator,result_type,expr_depth,structure,loop_state,place,deadline,fuel);}
         let u8 element=p.arrays.elements[id];let usize length=p.arrays.lengths[id];
         let array_expressions::Value value=array_grouped_value(source,s,p,table,signatures,element,length,false,at,expr_depth,result_type,structure,loop_state)?;
         let usize end=lexer::punctuation(source,s,terminator)?;
@@ -1614,9 +1614,9 @@ fn Result<usize, errors::Error> array_statement(ref u8[] source, ref mut lexer::
         var locals::Table names=locals::snapshot(table);
         let usize place=places::array(p,ref mut names,id,at)?;
         if(s.kind==91){return array_grouped_literal_assignment(source,s,p,ref mut names,signatures,index,id,at,
-            terminator,result_type,expr_depth,structure,loop_state,place);}
+            terminator,result_type,expr_depth,structure,loop_state,place,deadline,fuel);}
         return array_copy_statement(source,s,p,ref mut names,signatures,index,at,id,terminator,result_type,
-            expr_depth,structure,loop_state,place);
+            expr_depth,structure,loop_state,place,deadline,fuel);
     }
     return array_write_statement(source,s,p,table,signatures,index,at,id,terminator,result_type,expr_depth,structure,loop_state,deadline,fuel);
 }
@@ -1978,20 +1978,24 @@ fn Result<usize,errors::Error> array_list_value_into(ref u8[] source,ref mut lex
     ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
     u8 expected,usize length,bool mutable,usize offset,usize depth,u8 result_type,
     usize structure,ref mut loops::State loop_state,usize destination){
-    let vec::Vec<usize> values=array_list_cells(source,s,p,table,signatures,expected,depth,result_type,structure,loop_state)?;
+    var usize fuel=metadata_budget::unlimited();
+    let vec::Vec<usize> values=array_list_cells(source,s,p,table,signatures,expected,depth,result_type,structure,loop_state,0,ref mut fuel)?;
     let ref usize[] cells=vec::view_usize(ref values);let u8 element=p.types[cells[0]];
     return array_locals::list_into(p,table.function,cells,element,length,mutable,offset,destination);
 }
 fn Result<usize,errors::Error> array_list_assignment(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref mut locals::Table table,ref functions::Table signatures,
     usize index,usize id,usize at,u8 terminator,u8 result_type,usize depth,
-    usize structure,ref mut loops::State loop_state,usize groups,usize place){
+    usize structure,ref mut loops::State loop_state,usize groups,usize place,usize deadline,ref mut usize fuel){
     if(terminator!=59){return .err(errors::make(3,at));}
     let u8 element=p.arrays.elements[id];let usize length=p.arrays.lengths[id];
-    let vec::Vec<usize> values=array_list_cells(source,s,p,table,signatures,element,depth,result_type,structure,loop_state)?;
+    let vec::Vec<usize> values=array_list_cells(source,s,p,table,signatures,element,depth,result_type,structure,loop_state,deadline,fuel)?;
     if(vec::len<usize>(ref values)!=length){return .err(errors::make(3,at));}
     let usize close=array_expressions::close(source,s,groups)?;
     let usize end=lexer::punctuation(source,s,terminator)?;
+    // The dense pool checks the complete list before copying its register IDs.
+    if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
+    discard metadata_budget::charge(fuel,2*length,at)?;
     let usize replaced=aggregate_stores::list_array(p,table,place,id,vec::view_usize(ref values),at)?;
     return .ok(index);
 }
@@ -2000,15 +2004,15 @@ fn Result<usize,errors::Error> array_list_assignment(ref u8[] source,ref mut lex
 fn Result<usize,errors::Error> array_grouped_literal_assignment(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref mut locals::Table table,ref functions::Table signatures,
     usize index,usize id,usize at,u8 terminator,u8 result_type,usize depth,
-    usize structure,ref mut loops::State loop_state,usize place){
+    usize structure,ref mut loops::State loop_state,usize place,usize deadline,ref mut usize fuel){
     if(terminator!=59){return .err(errors::make(3,at));}
     let usize groups=if(s.kind==40){array_expressions::open(source,s,depth,signatures.semantic_depth)?}else{0};
-    if(!array_locals::is_repeated(source,s)?){
-        return array_list_assignment(source,s,p,table,signatures,index,id,at,terminator,result_type,depth+groups,structure,loop_state,groups,place);
+    if(!array_locals::is_repeated_metered(source,s,deadline,fuel)?){
+        return array_list_assignment(source,s,p,table,signatures,index,id,at,terminator,result_type,depth+groups,structure,loop_state,groups,place,deadline,fuel);
     }
     let usize open=lexer::punctuation(source,s,91)?;
     let u8 element=p.arrays.elements[id];
-    let usize value=expression(source,s,p,table,signatures,1,depth+groups,element,result_type,structure,loop_state)?;
+    let usize value=assignment_operand(source,s,p,table,signatures,depth+groups,element,result_type,structure,loop_state,deadline,fuel)?;
     if(p.types[value]!=p.arrays.elements[id]){return .err(errors::make(3,at));}
     let usize separator=lexer::punctuation(source,s,59)?;let usize length=arrays::count(source,s)?;
     if(length!=p.arrays.lengths[id]){return .err(errors::make(3,at));}
@@ -2020,7 +2024,7 @@ fn Result<usize,errors::Error> array_grouped_literal_assignment(ref u8[] source,
 // caller publishes an owner or replacement after its complete context validates.
 fn Result<vec::Vec<usize>,errors::Error> array_list_cells(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
-    u8 expected,usize depth,u8 result_type,usize structure,ref mut loops::State loop_state){
+    u8 expected,usize depth,u8 result_type,usize structure,ref mut loops::State loop_state,usize deadline,ref mut usize fuel){
     let usize open=lexer::punctuation(source,s,91)?;
     if(s.kind==93){return .err(errors::make(3,s.begin));}
     var vec::Vec<usize> values=vec::empty<usize>();var u8 element=expected;
@@ -2028,7 +2032,7 @@ fn Result<vec::Vec<usize>,errors::Error> array_list_cells(ref u8[] source,ref mu
         if(vec::len<usize>(ref values)>=4096 || p.list_used>4096 ||
             vec::len<usize>(ref values)>=4096-p.list_used){return .err(errors::make(4,s.begin));}
         let usize at=s.begin;
-        let usize value=expression(source,s,p,table,signatures,1,depth,element,result_type,structure,loop_state)?;
+        let usize value=assignment_operand(source,s,p,table,signatures,depth,element,result_type,structure,loop_state,deadline,fuel)?;
         if(value>=128 || value>=p.registers || !types::scalar(p.types[value])){return .err(errors::make(3,at));}
         if(element==0){element=p.types[value];}
         if(p.types[value]!=element){return .err(errors::make(3,at));}
