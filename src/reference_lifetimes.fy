@@ -2,6 +2,7 @@ module reference_lifetimes;
 import ir as ir;
 import static_ir as statics;
 import errors as errors;
+import runtime_clock as clock;
 
 fn errors::Error invalid(usize pc){return errors::make(5,pc);}
 // Call only after complete recipe, scalar/owner/loan and CFG proof. Dependencies
@@ -15,8 +16,13 @@ fn Result<usize,errors::Error> actual(ref ir::Program p,ref usize[] roots,usize 
     return .ok(if(root==0){0}else{one<<(root-1)});
 }
 pub fn Result<usize[16],errors::Error> prepare(ref ir::Program p,ref statics::Sites sites){
+    return prepare_until(p,sites,0);
+}
+pub fn Result<usize[16],errors::Error> prepare_until(ref ir::Program p,ref statics::Sites sites,usize deadline){
     var usize[16] roots=[0;16];var usize pc=0;
-    while(pc<p.count){let usize at=pc*8;let u8 op=p.code[at];let usize dst=p.code[at+1] as usize;
+    while(pc<p.count){
+        if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
+        let usize at=pc*8;let u8 op=p.code[at];let usize dst=p.code[at+1] as usize;
         let usize a=p.code[at+2] as usize;let usize b=p.code[at+3] as usize;
         if((op==75 || op==76) && sites.kinds[dst]==3){roots[dst]=roots[a];}
         else if(op==78 && sites.results[a]==3){let usize origin=sites.origins[a] as usize;
@@ -59,9 +65,13 @@ fn Result<usize,errors::Error> merge(ref mut bool[] seen,ref mut usize[] states,
 // A separate view-live plane keeps all aliases protected until their last
 // logical close. Closing an ordinary source loan does not end a returned view.
 pub fn Result<usize,errors::Error> inspect(ref ir::Program p,ref statics::Sites sites,ref usize[] roots){
+    return inspect_until(p,sites,roots,0);
+}
+pub fn Result<usize,errors::Error> inspect_until(ref ir::Program p,ref statics::Sites sites,ref usize[] roots,usize deadline){
     if(roots.len!=16){return .err(invalid(0));}let usize one=1;var usize f=0;
     while(f<p.function_count){var bool[256] seen=[false;256];var usize[256] states=[0;256];seen[p.starts[f]]=true;
         var usize pc=p.starts[f];while(pc<p.ends[f]){
+            if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
             if(!seen[pc]){return .err(invalid(pc));}var usize bits=states[pc];var usize protected=0;var usize site=0;
             while(site<16){if((bits&(one<<site))!=0){protected|=roots[site];}site+=1;}
             let usize checked=guard(p,pc,protected)?;let usize at=pc*8;let u8 op=p.code[at];

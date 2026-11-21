@@ -33,8 +33,8 @@ pub fn Result<Program,diagnostics::Error> compile_with_retention_until(entries::
     let bool references=if(deadline==0){compiler::lower_modules(ref selected,ref mut builder,ref mut code)?}
         else{compiler::lower_modules_until(ref selected,ref mut builder,ref mut code,false,deadline)?};
     if(clock::expired(deadline)){return .err(diagnostics::absent(errors::absent(errors::deadline_kind(),0)));}
-    if(references){return finish_references(ref selected,ref builder,ref code,image_limit,plan);}
-    return finish_legacy(ref selected,ref code.body,plan);
+    if(references){return finish_references(ref selected,ref builder,ref code,image_limit,plan,deadline);}
+    return finish_legacy(ref selected,ref code.body,plan,deadline);
 }
 fn diagnostics::Error error(ref entries::Entry selected,errors::Error e){
     return if(e.offset==0){diagnostics::absent(e)}else{diagnostics::map(modules::snapshot(entries::index(selected)),e,16)};
@@ -49,20 +49,20 @@ fn diagnostics::Error admission_error(ref entries::Entry selected,programs::Erro
             else{error(selected,errors::make(e.kind,code.offsets[e.offset]))}}
     };
 }
-fn Result<Program,diagnostics::Error> finish_legacy(ref entries::Entry selected,ref ir::Program code,ref mut retention::Plan plan){
+fn Result<Program,diagnostics::Error> finish_legacy(ref entries::Entry selected,ref ir::Program code,ref mut retention::Plan plan,usize deadline){
     if(!retention::admit(plan,0).is_ok){return .err(diagnostics::absent(errors::make(retention::quota_kind(),0)));}
-    return switch(programs::retain_public_legacy(code)){
+    return switch(programs::retain_public_legacy_until(code,deadline)){
         case .ok(v):{retain(selected,v)}case .err(e):{.err(admission_error(selected,e,code))}
     };
 }
 fn Result<Program,diagnostics::Error> finish_references(ref entries::Entry selected,ref images::Builder builder,
-    ref candidate::Program code,usize image_limit,ref mut retention::Plan plan){
+    ref candidate::Program code,usize image_limit,ref mut retention::Plan plan,usize deadline){
     let usize payload=switch(images::planned_payload(builder)){case .ok(v):{v}case .err(_):{return .err(diagnostics::absent(errors::make(5,0)));}};
     if(!retention::admit(plan,payload).is_ok){return .err(diagnostics::absent(errors::make(retention::quota_kind(),0)));}
     let images::Image image=switch(images::freeze(builder,image_limit)){
         case .ok(v):{v}case .err(e):{return .err(error(selected,compiler::public_error(programs::Error{.kind=.Literal,.code=errors::make(0,0),.literal=e})));}
     };
-    return switch(programs::retain_reference_returns(code,image,image_limit)){
+    return switch(programs::retain_reference_returns_until(code,image,image_limit,deadline)){
         case .ok(v):{retain(selected,programs::retain_public_references(v))}
         case .err(e):{.err(admission_error(selected,e,ref code.body))}
     };

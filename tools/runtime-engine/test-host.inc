@@ -370,9 +370,22 @@ void bc_runtime_engine_test_input_proof_step(void){
  assert(!output_proof_expired);
  if(output_proof_expiry)bc_runtime_engine_test_proof_visit();
 }
+static uint8_t ordinary_proof_target;
+void bc_runtime_engine_test_expire_in_ordinary_proof(uintptr_t deadline,uint8_t phase){
+ assert(!ordinary_proof_target&&phase>=1&&phase<=3);
+ ordinary_proof_target=phase;
+ bc_runtime_engine_test_expire_in_proof(deadline);
+}
+void bc_runtime_engine_test_ordinary_proof_pc(uint8_t phase){
+ if(ordinary_proof_target){
+  assert(!output_proof_expired);
+  if(phase==ordinary_proof_target)bc_runtime_engine_test_proof_visit();
+ }
+}
 void bc_runtime_engine_test_proof_begin(void){output_proof_visits=0;}
 uintptr_t bc_runtime_engine_test_proof_count(void){
  /* A late rejection at publication would already have attempted retention. */
  if(output_proof_expired){assert(probe_attempts()==output_proof_attempts);output_proof_expired=0;}
+ ordinary_proof_target=0;
  return output_proof_visits;
 }

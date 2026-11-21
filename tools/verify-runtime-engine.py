@@ -44,6 +44,16 @@ def closure():
     return sorted(seen.values())
 
 
+def ordinary_proof_probe(text, anchor, phase):
+    need(text.count(anchor) == 1, 'Ordinary verifier deadline probe anchor changed')
+    indent = anchor[:len(anchor) - len(anchor.lstrip())]
+    call = f'{indent}unsafe{{bc_runtime_engine_test_ordinary_proof_pc({phase})}};\n'
+    body = text.replace(anchor, call + anchor, 1)
+    declaration = 'unsafe extern C fn void bc_runtime_engine_test_ordinary_proof_pc(u8 phase);\n'
+    first_fn = body.index('\nfn ')
+    return (body[:first_fn] + '\n' + declaration + body[first_fn:]).encode('utf-8')
+
+
 def source_copy(path):
     if path == ROOT / 'src/slice_result_call_ir.fy':
         source = path.read_text(encoding='utf-8')
@@ -61,7 +71,11 @@ def source_copy(path):
         need(text.count(signature) == 1, 'Full output proof counter anchor changed')
         text = text.replace(signature, 'unsafe extern C fn void bc_runtime_engine_test_proof_visit();\n' +
                             signature + '\n    unsafe{bc_runtime_engine_test_proof_visit();}', 1)
-        return path.name, text.encode('utf-8')
+        return path.name, ordinary_proof_probe(text, '        if (!seen[pc])', 1)
+    if path == ROOT / 'src/static_call_ir.fy':
+        return path.name, ordinary_proof_probe(path.read_text(encoding='utf-8'), '        if(!seen[pc])', 2)
+    if path == ROOT / 'src/reference_lifetimes.fy':
+        return path.name, ordinary_proof_probe(path.read_text(encoding='utf-8'), '            if(!seen[pc])', 3)
     if path == ROOT / 'src/output_canonical_proof_work.fy':
         text = path.read_text(encoding='utf-8')
         anchor = 'if(w.phase==0){let bool input=w.input;'

@@ -1,6 +1,7 @@
 module verifier;
 
 import errors as errors;
+import runtime_clock as clock;
 import ir as ir;
 import types as types;
 import array_meta as arrays;
@@ -47,7 +48,7 @@ fn bool merge(ref mut usize[] states, ref mut bool[] seen, ref registers::Set de
     seen[target] = true;
     return true;
 }
-fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records::Prepared shapes, ref reborrows::Sites loans, ref statics::Sites static_sites, bool allow_reborrow_calls, u8 place_kind, ref mut bool[] used_calls,ref value_ir::Sites value_sites,bool host_profile) {
+fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records::Prepared shapes, ref reborrows::Sites loans, ref statics::Sites static_sites, bool allow_reborrow_calls, u8 place_kind, ref mut bool[] used_calls,ref value_ir::Sites value_sites,bool host_profile,usize deadline) {
     let usize start = p.register_starts[f];
     let usize end = p.register_ends[f];
     let usize arity = p.arities[f];
@@ -73,6 +74,7 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records
     // Solve the forward graph, then check each backedge preserves its target's
     // entry invariant. This bounded inductive proof needs no cyclic worklist.
     while (pc < p.ends[f]) {
+        if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
         if (!seen[pc]) { return .err(errors::instruction(pc)); }
         defined = registers::Set { .low = states[pc * 2], .high = states[pc * 2 + 1] };
         var usize live = array_states[pc];
@@ -407,10 +409,11 @@ fn Result<reborrows::Sites, errors::Error> validate(ref ir::Program p,bool allow
 }
 fn Result<reborrows::Sites,errors::Error> validate_values(ref ir::Program p,bool allow_reborrow_calls,
     u8 place_kind,ref statics::Sites static_sites,ref value_ir::Sites value_sites){
-    return validate_values_mode(p,allow_reborrow_calls,place_kind,static_sites,value_sites,0,false);
+    return validate_values_mode(p,allow_reborrow_calls,place_kind,static_sites,value_sites,0,false,0);
 }
 fn Result<reborrows::Sites,errors::Error> validate_values_mode(ref ir::Program p,bool allow_reborrow_calls,
-    u8 place_kind,ref statics::Sites static_sites,ref value_ir::Sites value_sites,u8 entry_kind,bool host_profile){
+    u8 place_kind,ref statics::Sites static_sites,ref value_ir::Sites value_sites,u8 entry_kind,bool host_profile,usize deadline){
+    if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
     if (p.count == 0 || p.count > 256 || p.registers == 0 || p.registers > 128 || p.constant_count > 128 ||
         p.function_count == 0 || p.function_count > 16 || p.entry >= p.function_count || p.call_count > 32) { return .err(errors::absent(5,0)); }
     if (!arrays::valid(ref p.arrays)) { return .err(errors::absent(5,0)); }
@@ -450,6 +453,7 @@ fn Result<reborrows::Sites,errors::Error> validate_values_mode(ref ir::Program p
         code_end = p.ends[f]; register_end = p.register_ends[f]; f += 1;
     }
     if (code_end != p.count || register_end != p.registers) { return .err(errors::absent(5,0)); }
+    if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
     let usize copy_metadata=copying::metadata(p)?;
     let usize borrowed_parameters = if(entry_kind!=0){slice_parameters::metadata_input(p)?}else{slice_parameters::metadata(p)?};
     let reborrows::Sites loans = reborrows::metadata(p)?;
@@ -459,10 +463,17 @@ fn Result<reborrows::Sites,errors::Error> validate_values_mode(ref ir::Program p
     let usize record_results = struct_results::metadata(p)?;
     var bool[32] used_calls = [false; 32];
     f = 0;
-    while (f < p.function_count) { let usize checked = function(p, f, ref shapes, ref loans, static_sites, allow_reborrow_calls, place_kind, ref mut used_calls,value_sites,host_profile)?; f += 1; }
+    while(f<p.function_count){
+        if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
+        let usize checked=function(p,f,ref shapes,ref loans,static_sites,allow_reborrow_calls,place_kind,
+            ref mut used_calls,value_sites,host_profile,deadline)?;
+        f+=1;
+    }
+    if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
     let usize selected_places=places::inspect_prepared(p,ref shapes)?;
     var usize call = 0;
     while (call < p.call_count) { if (!used_calls[call]) { return .err(errors::absent(5,0)); } call += 1; }
+    if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
     return .ok(loans);
 }
 
@@ -519,7 +530,11 @@ pub fn Result<usize, errors::Error> inspect(ref ir::Program p) {
 // Public admission returns the exact forest produced by the complete proof.
 // Unsupported derived CALL shapes reject in every function before guest effects.
 fn Result<usize,errors::Error> executable_calls(ref ir::Program p,ref reborrows::Sites sites){
+    return executable_calls_until(p,sites,0);
+}
+fn Result<usize,errors::Error> executable_calls_until(ref ir::Program p,ref reborrows::Sites sites,usize deadline){
     if(sites.count!=0){var usize pc=0;while(pc<p.count){
+        if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
         if(p.code[pc*8]==9 || p.code[pc*8]==78){let usize allowed=executable::call(p,sites,pc)?;}
         pc+=1;
     }}
@@ -532,17 +547,27 @@ pub fn Result<statics::Sites,errors::Error> verify_statics(ref ir::Program p,ref
     let usize calls=executable_calls(p,ref loans)?;return .ok(sites);
 }
 pub fn Result<reborrows::Sites,errors::Error> verify_sites(ref ir::Program p){
-    let reborrows::Sites sites=plain(p,reborrows::present(p))?;
-    let usize calls=executable_calls(p,ref sites)?;
+    return verify_sites_until(p,0);
+}
+fn Result<reborrows::Sites,errors::Error> verify_sites_until(ref ir::Program p,usize deadline){
+    if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
+    let statics::Sites statics=statics::empty();
+    let value_ir::Sites values=value_ir::empty();
+    let reborrows::Sites sites=validate_values_mode(p,reborrows::present(p),4,ref statics,ref values,0,false,deadline)?;
+    let usize calls=executable_calls_until(p,ref sites,deadline)?;
+    if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
     return .ok(sites);
 }
 pub fn Result<usize, errors::Error> verify(ref ir::Program p) {
-    let reborrows::Sites sites=verify_sites(p)?;return .ok(p.count);
+    return verify_until(p,0);
+}
+pub fn Result<usize,errors::Error> verify_until(ref ir::Program p,usize deadline){
+    let reborrows::Sites sites=verify_sites_until(p,deadline)?;return .ok(p.count);
 }
 pub fn Result<usize,errors::Error> verify_eval_i32(ref ir::Program p){
     let statics::Sites sites=statics::empty();
     let value_ir::Sites values=value_ir::empty();
-    let reborrows::Sites loans=validate_values_mode(p,false,4,ref sites,ref values,2,false)?;
+    let reborrows::Sites loans=validate_values_mode(p,false,4,ref sites,ref values,2,false,0)?;
     let usize calls=executable_calls(p,ref loans)?;
     return .ok(p.count);
 }
@@ -552,7 +577,7 @@ pub fn Result<usize,errors::Error> inspect_host(ref ir::Program p){
     let value_ir::Sites values=value_ir::empty();
     if(p.entry>=16){return .err(errors::absent(5,0));}
     let u8 entry_kind=if(p.arities[p.entry]==0){0}else{3};
-    let reborrows::Sites loans=validate_values_mode(p,false,4,ref static_sites,ref values,entry_kind,true)?;
+    let reborrows::Sites loans=validate_values_mode(p,false,4,ref static_sites,ref values,entry_kind,true,0)?;
     return .ok(p.count);
 }
 // Analysis-only proof does not impose the executable derived CALL subset.
@@ -589,13 +614,18 @@ pub fn Result<ReferenceCallProof,errors::Error> inspect_reference_calls(ref imag
 // executable admission. Local owner dependencies survive all returned aliases.
 pub struct ReferenceReturnProof { image_calls::Proof recipes; statics::Sites statics; reborrows::Sites loans; usize[16] owner_roots; }
 pub fn Result<ReferenceReturnProof,errors::Error> inspect_reference_returns(ref image_calls::Program unit,ref images::Image image){
-    let image_calls::Proof recipes=image_calls::inspect_reference_returns(unit,image)?;
+    return inspect_reference_returns_until(unit,image,0);
+}
+pub fn Result<ReferenceReturnProof,errors::Error> inspect_reference_returns_until(
+    ref image_calls::Program unit,ref images::Image image,usize deadline){
+    let image_calls::Proof recipes=image_calls::inspect_reference_returns_until(unit,image,deadline)?;
     let statics::Sites sites=image_sites::prepare(unit,ref recipes,image)?;
-    let ref ir::Program p=ref unit.body;
-    let reborrows::Sites loans=validate(p,true,4,ref sites)?;
-    let usize executable=executable_calls(p,ref loans)?;
-    let usize[16] roots=reference_lifetimes::prepare(p,ref sites)?;
-    let usize checked=reference_lifetimes::inspect(p,ref sites,ref roots)?;
+    let ref ir::Program p=ref unit.body;let value_ir::Sites no_values=value_ir::empty();
+    let reborrows::Sites loans=validate_values_mode(p,true,4,ref sites,ref no_values,0,false,deadline)?;
+    let usize executable=executable_calls_until(p,ref loans,deadline)?;
+    let usize[16] roots=reference_lifetimes::prepare_until(p,ref sites,deadline)?;
+    let usize checked=reference_lifetimes::inspect_until(p,ref sites,ref roots,deadline)?;
+    if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
     return .ok(ReferenceReturnProof{.recipes=recipes,.statics=sites,.loans=loans,.owner_roots=roots});
 }
 
@@ -605,7 +635,7 @@ pub fn Result<ReferenceReturnProof,errors::Error> inspect_input_returns(ref imag
     let image_calls::Proof recipes=image_calls::inspect_input_returns(unit,image)?;
     let statics::Sites sites=image_sites::prepare(unit,ref recipes,image)?;
     let ref ir::Program p=ref unit.body;let value_ir::Sites no_values=value_ir::empty();
-    let reborrows::Sites loans=validate_values_mode(p,true,4,ref sites,ref no_values,1,false)?;
+    let reborrows::Sites loans=validate_values_mode(p,true,4,ref sites,ref no_values,1,false,0)?;
     let usize executable=executable_calls(p,ref loans)?;
     let usize[16] roots=reference_lifetimes::prepare(p,ref sites)?;
     let usize checked=reference_lifetimes::inspect(p,ref sites,ref roots)?;
@@ -618,7 +648,7 @@ pub fn Result<ReferenceReturnProof,errors::Error> inspect_output_returns(ref ima
     let image_calls::Proof recipes=image_calls::inspect_output_returns(unit,image,input)?;
     var statics::Sites sites=image_sites::prepare(unit,ref recipes,image)?;sites.output=true;
     let ref ir::Program p=ref unit.body;let value_ir::Sites no_values=value_ir::empty();
-    let reborrows::Sites loans=validate_values_mode(p,true,4,ref sites,ref no_values,if(input){1}else{0},false)?;
+    let reborrows::Sites loans=validate_values_mode(p,true,4,ref sites,ref no_values,if(input){1}else{0},false,0)?;
     let usize executable=executable_calls(p,ref loans)?;
     let usize[16] roots=reference_lifetimes::prepare(p,ref sites)?;
     let usize checked=reference_lifetimes::inspect(p,ref sites,ref roots)?;

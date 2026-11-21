@@ -31,6 +31,7 @@ unsafe extern C fn usize probe_live_bytes();
 unsafe extern C fn usize probe_attempts();
 unsafe extern C fn void bc_runtime_engine_test_proof_begin();
 unsafe extern C fn void bc_runtime_engine_test_expire_in_proof(usize deadline);
+unsafe extern C fn void bc_runtime_engine_test_expire_in_ordinary_proof(usize deadline,u8 phase);
 unsafe extern C fn void bc_runtime_engine_test_expire_in_context(usize deadline);
 unsafe extern C fn usize bc_runtime_engine_test_context_bytes();
 unsafe extern C fn void bc_runtime_engine_test_expire_in_feature_comment(usize deadline);
@@ -843,6 +844,28 @@ fn Result<usize,u8> compile_body_deadline(ref mut engine::Engine e,ref configs::
     unsafe{bc_runtime_engine_test_use_os_clock()};
     return .ok(0);
 }
+fn Result<usize,u8> ordinary_proof_deadline(ref mut engine::Engine e){
+    let ref u8[] legacy=b"module app;pub fn i32 chosen(){let i32 x=20+22;return x;}";
+    let ref u8[] references=b"module app;pub fn i32 chosen(){let ref u8[] marker=b\"*\";return 42;}";
+    let Heap idle=heap();
+    var usize mode=0;
+    let u8[3] phases=[1,2,3];
+    while(mode<6){
+        let ref u8[] source=if(mode<3){legacy}else{references};
+        let entries::Entry entry=selected(source)?;
+        let usize start=100+mode*20000000;
+        unsafe{bc_runtime_engine_test_set_clock(start)};
+        unsafe{bc_runtime_engine_test_proof_begin()};
+        unsafe{bc_runtime_engine_test_expire_in_ordinary_proof(start+20000000,phases[mode%3])};
+        rejected_compile_deadline(engine::compile(e,entry,65536));
+        assert(unsafe{bc_runtime_engine_test_proof_count()}==1);
+        counts(e,0,0,0);same_heap(ref idle);
+        assert(retained(e).program_bytes==0);
+        mode+=1;
+    }
+    unsafe{bc_runtime_engine_test_use_os_clock()};
+    return .ok(0);
+}
 fn Result<usize,u8> ordinary_deadline_success(ref mut engine::Engine e){
     let ref u8[] plain=b"module app;pub fn i32 chosen(){return 42;}";
     let ref u8[] references=b"module app;pub fn i32 chosen(){let ref u8[] marker=b\"*\";return 42;}";
@@ -875,6 +898,7 @@ fn Result<usize,u8> configured_compile_deadline(){
     let usize record_publication=record_scan_publication_deadline()?;
     let usize record_checked=compile_record_scan_deadline(ref mut e,ref granted)?;
     let usize body_checked=compile_body_deadline(ref mut e,ref granted)?;
+    let usize proof_checked=ordinary_proof_deadline(ref mut e)?;
     let usize checked=compile_deadline(ref mut e,ref granted)?;
     let usize ordinary_checked=ordinary_deadline_success(ref mut e)?;
     close(ref mut e);return .ok(0);

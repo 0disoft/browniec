@@ -1,6 +1,7 @@
 module static_call_ir;
 import ir as ir;
 import errors as errors;
+import runtime_clock as clock;
 import static_image as images;
 import aggregate_place_ir as aggregates;
 import output_ir as output_ir;
@@ -139,11 +140,12 @@ fn Result<usize,errors::Error> arguments(ref Program unit,ref Proof proof,usize 
 fn Result<usize,errors::Error> merge(ref mut bool[] seen,ref mut usize[] states,usize target,usize bits,usize pc){
     if(seen[target] && states[target]!=bits){return .err(invalid(pc));}seen[target]=true;states[target]=bits;return .ok(target);
 }
-fn Result<usize,errors::Error> flow(ref Program unit,ref mut Proof proof,usize f,ref mut bool[] calls,bool output){
+fn Result<usize,errors::Error> flow(ref Program unit,ref mut Proof proof,usize f,ref mut bool[] calls,bool output,usize deadline){
     let ref ir::Program p=ref unit.body;var bool[256] seen=[false;256];var usize[256] states=[0;256];
     seen[p.starts[f]]=true;let usize one=1;var usize pc=p.starts[f];var usize after=p.starts[f];
     while(after<p.ends[f] && p.code[after*8]==77){after+=1;}
     while(pc<p.ends[f]){
+        if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
         if(!seen[pc]){return .err(invalid(pc));}var usize bits=states[pc];let usize at=pc*8;let u8 op=p.code[at];
         let usize dst=p.code[at+1] as usize;let usize a=p.code[at+2] as usize;let usize b=p.code[at+3] as usize;
         if(op==0 || (op>87 && !(output && op==116))){return .err(invalid(pc));}
@@ -204,11 +206,15 @@ fn Result<u8,errors::Error> runtime_origin(ref Program unit,usize f,usize actual
         position+=1;i+=1;
     }return .err(invalid(pc));
 }
-fn Result<usize,errors::Error> origins(ref Program unit,ref mut Proof proof){
+fn Result<usize,errors::Error> origins(ref Program unit,ref mut Proof proof,usize deadline){
     let ref ir::Program p=ref unit.body;var usize round=0;var bool changed=true;
-    while(changed && round<16){changed=false;round+=1;var usize f=0;
+    while(changed && round<16){
+        if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
+        changed=false;round+=1;var usize f=0;
         while(f<p.function_count){var u8 candidate=0;var usize pc=p.starts[f];
-            while(pc<p.ends[f]){let usize at=pc*8;let u8 op=p.code[at];let usize dst=p.code[at+1] as usize;
+            while(pc<p.ends[f]){
+                if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
+                let usize at=pc*8;let u8 op=p.code[at];let usize dst=p.code[at+1] as usize;
                 let usize a=p.code[at+2] as usize;let usize b=p.code[at+3] as usize;
                 if(op==69){proof.site_origins[dst]=9;}
                 else if(op==77){var u8 position=1;var usize r=p.register_starts[f];while(r<a){position+=1;r+=1;}proof.site_origins[dst]=position;}
@@ -231,30 +237,43 @@ fn Result<usize,errors::Error> origins(ref Program unit,ref mut Proof proof){
     var usize f=0;while(f<p.function_count){
         if(proof.result_origins[f]!=unit.origins[f]){return .err(invalid(p.starts[f]));}
         var usize pc=p.starts[f];while(pc<p.ends[f]){
+            if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
             if(p.code[pc*8]==79 && proof.site_origins[p.code[pc*8+2] as usize]!=proof.result_origins[f]){return .err(invalid(pc));}pc+=1;
         }f+=1;
     }proof.rounds=round;return .ok(round);
 }
-fn Result<Proof,errors::Error> inspect_mode(ref Program unit,ref images::Image image,bool references,bool returns,bool input,bool output){
+fn Result<Proof,errors::Error> inspect_mode(ref Program unit,ref images::Image image,bool references,bool returns,
+    bool input,bool output,usize deadline){
+    if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
     let usize bounded=header(unit,references,returns,input)?;
+    if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
     switch(images::inspect(image)){case .ok(_):{}case .err(_):{return .err(invalid(0));}};
+    if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
     var Proof proof=empty();let usize defined=definitions(unit,image,ref mut proof)?;
-    var bool[32] calls=[false;32];var usize f=0;while(f<unit.body.function_count){let usize checked=flow(unit,ref mut proof,f,ref mut calls,output)?;f+=1;}
+    var bool[32] calls=[false;32];var usize f=0;
+    while(f<unit.body.function_count){
+        let usize checked=flow(unit,ref mut proof,f,ref mut calls,output,deadline)?;f+=1;
+    }
     var usize i=0;while(i<unit.body.call_count){if(!calls[i]){return .err(invalid(0));}i+=1;}
-    let usize grounded=origins(unit,ref mut proof)?;return .ok(proof);
+    let usize grounded=origins(unit,ref mut proof,deadline)?;
+    if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
+    return .ok(proof);
 }
-pub fn Result<Proof,errors::Error> inspect(ref Program unit,ref images::Image image){return inspect_mode(unit,image,false,false,false,false);}
+pub fn Result<Proof,errors::Error> inspect(ref Program unit,ref images::Image image){return inspect_mode(unit,image,false,false,false,false,0);}
 // Kind 3 is a shared byte formal accepting image sites or runtime loan actuals.
 // It is not a result kind. This is recipe analysis, never VM admission.
-pub fn Result<Proof,errors::Error> inspect_references(ref Program unit,ref images::Image image){return inspect_mode(unit,image,true,false,false,false);}
+pub fn Result<Proof,errors::Error> inspect_references(ref Program unit,ref images::Image image){return inspect_mode(unit,image,true,false,false,false,0);}
 // Returned shared byte recipes: reconstruct exact logical origins including
 // ordinary rootless inputs. This is not canonical lifetime proof or admission.
-pub fn Result<Proof,errors::Error> inspect_reference_returns(ref Program unit,ref images::Image image){return inspect_mode(unit,image,true,true,false,false);}
+pub fn Result<Proof,errors::Error> inspect_reference_returns(ref Program unit,ref images::Image image){return inspect_reference_returns_until(unit,image,0);}
+pub fn Result<Proof,errors::Error> inspect_reference_returns_until(ref Program unit,ref images::Image image,usize deadline){
+    return inspect_mode(unit,image,true,true,false,false,deadline);
+}
 
 // Separate external input ABI; existing zero-argument admission stays closed.
-pub fn Result<Proof,errors::Error> inspect_input_returns(ref Program unit,ref images::Image image){return inspect_mode(unit,image,true,true,true,false);}
+pub fn Result<Proof,errors::Error> inspect_input_returns(ref Program unit,ref images::Image image){return inspect_mode(unit,image,true,true,true,false,0);}
 
 // Recipe stage only; verifier::inspect_output_returns adds the full proof.
 pub fn Result<Proof,errors::Error> inspect_output_returns(ref Program unit,ref images::Image image,bool input){
-    return inspect_mode(unit,image,true,true,input,true);
+    return inspect_mode(unit,image,true,true,input,true,0);
 }

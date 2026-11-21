@@ -139,9 +139,13 @@ preparation, before each function, and before
 each control advance or pending semantic child. A child already running returns
 to the next checkpoint before expiry is delivered. The compiler samples again
 after lowering and before freezing the literal image or entering ordinary
-admission. The ordinary legacy and returned-reference verifiers still run
-synchronously. The staged input and output proof drivers sample
-once before each bounded proof advance. Input-only compilation uses its
+admission. Ordinary verification samples the same deadline between proof
+phases and before each instruction in canonical CFG, recipe flow and origin,
+executable CALL, and returned-reference lifetime scans. The legacy route
+carries the deadline through both its scalar verifier and its subsequent
+reference admission. Metadata, image and place-proof calls return to their
+next surrounding checkpoint. The staged input and output proof drivers
+sample once before each bounded proof advance. Input-only compilation uses its
 separate proof with the output gate closed and checks again before returning
 the completed proof. Expiry ends the compile with
 the source-less deadline diagnostic and releases the image and any active
@@ -231,6 +235,13 @@ rejections restored the SDK heap and Program ledger. Both ordinary source
 profiles were retained one tick before expiry. Windows development and /O2
 passed with zero live SDK allocations at exit. Local receipt:
 `build/runtime-engine/20261121T010442458057Z/receipt.json`.
+
+The Windows verifier advanced to the exact deadline inside the first CFG,
+recipe-flow or reference-lifetime instruction of each ordinary profile. Six
+cases stopped before a second proof instruction or retention allocation,
+restored the SDK heap and Program charge, and preserved the next Program ID.
+Both Windows profiles passed with zero live SDK allocations at exit. Local
+receipt: `build/runtime-engine/20261121T011508635459Z/receipt.json`.
 
 Source lowering, work between checkpoints, and cleanup remain synchronous.
 Public Pending compilation, in-flight cancellation, and a latency bound for

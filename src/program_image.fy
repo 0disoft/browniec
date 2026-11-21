@@ -8,6 +8,7 @@ import slice_result_runtime as runtime;
 import slice_result_execution as execution;
 import array_owners as owners;
 import errors as errors;
+import runtime_clock as clock;
 import static_call_ir as calls;
 import verifier as call_verifier;
 import ir as ordinary;
@@ -98,14 +99,18 @@ pub fn Result<execution::Scalar,errors::Error> run_reference_scalar(ref Referenc
 pub resource ReferenceReturnProgram { calls::Program code; images::Image image; cleanup { } }
 // Complete admission borrows the candidate. Owning return slots are created only
 // after proof, keeping the nested native verifier stack independent of them.
-fn Result<usize,Error> reference_return_admission(ref calls::Program code,ref images::Image image,usize image_limit){
-    switch(call_verifier::inspect_reference_returns(code,image)){case .ok(_):{}case .err(e):{return .err(code_error(e));}};
+fn Result<usize,Error> reference_return_admission(ref calls::Program code,ref images::Image image,usize image_limit,usize deadline){
+    switch(call_verifier::inspect_reference_returns_until(code,image,deadline)){case .ok(_):{}case .err(e):{return .err(code_error(e));}};
     let usize charge=switch(images::charge(image)){case .ok(v):{v}case .err(e):{return .err(image_error(e));}};
     if(charge>image_limit){return .err(image_error(.Quota));}
     return .ok(charge);
 }
 pub fn Result<ReferenceReturnProgram,Error> retain_reference_returns(ref calls::Program code,images::Image image,usize image_limit){
-    let usize admitted=reference_return_admission(code,ref image,image_limit)?;
+    return retain_reference_returns_until(code,image,image_limit,0);
+}
+pub fn Result<ReferenceReturnProgram,Error> retain_reference_returns_until(
+    ref calls::Program code,images::Image image,usize image_limit,usize deadline){
+    let usize admitted=reference_return_admission(code,ref image,image_limit,deadline)?;
     return .ok(ReferenceReturnProgram{.code=*code,.image=image});
 }
 pub fn ref calls::Program reference_return_code(ref ReferenceReturnProgram p){return ref p.code;}
@@ -120,17 +125,21 @@ pub fn Result<execution::Scalar,errors::Error> run_reference_returns_scalar(ref 
 // Fields stay private: body borrows cannot change the admitted code/image/mode.
 pub resource PublicProgram { ReferenceReturnProgram program; bool reference; cleanup { } }
 pub fn Result<PublicProgram,Error> retain_public_legacy(ref ordinary::Program code){
-    switch(call_verifier::verify(code)){case .ok(_):{}case .err(e):{return .err(code_error(e));}};
+    return retain_public_legacy_until(code,0);
+}
+pub fn Result<PublicProgram,Error> retain_public_legacy_until(ref ordinary::Program code,usize deadline){
+    switch(call_verifier::verify_until(code,deadline)){case .ok(_):{}case .err(e):{return .err(code_error(e));}};
+    if(clock::expired(deadline)){return .err(code_error(errors::absent(errors::deadline_kind(),0)));}
     var images::Builder builder=switch(images::builder(0)){case .ok(v):{v}case .err(e):{return .err(image_error(e));}};
     let images::Image image=switch(images::freeze(ref builder,images::metadata_charge())){
         case .ok(v):{v}case .err(e):{return .err(image_error(e));}
     };
-    let usize admitted=legacy_reference_admission(code,ref image)?;
+    let usize admitted=legacy_reference_admission(code,ref image,deadline)?;
     return .ok(publish_legacy(code,image));
 }
-fn Result<usize,Error> legacy_reference_admission(ref ordinary::Program code,ref images::Image image){
+fn Result<usize,Error> legacy_reference_admission(ref ordinary::Program code,ref images::Image image,usize deadline){
     let calls::Program unit=calls::Program{.body=*code,.parameters=[0;128],.results=[0;16],.origins=[0;16]};
-    return reference_return_admission(ref unit,image,images::metadata_charge());
+    return reference_return_admission(ref unit,image,images::metadata_charge(),deadline);
 }
 fn PublicProgram publish_legacy(ref ordinary::Program code,images::Image image){
     let calls::Program unit=calls::Program{.body=*code,.parameters=[0;128],.results=[0;16],.origins=[0;16]};
