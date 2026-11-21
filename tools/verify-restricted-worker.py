@@ -256,6 +256,8 @@ def main():
              'native/restricted_worker_io.c', 'native/restricted_worker_io.h',
              'native/restricted_worker_broker.c', 'native/restricted_worker_broker.h',
              'native/restricted_worker_stage.c', 'native/restricted_worker_stage.h',
+             'native/windows-scalar-worker.c', 'native/windows-scalar-worker.h',
+             'native/restricted_worker_payload.h',
              'tests/native/restricted_worker_host.c', 'tools/verify-restricted-worker.py',
              'tools/verify-runtime-store-probe.py']
     c_sources = [path for path in paths if path.endswith('.c')]
@@ -335,7 +337,7 @@ def main():
                              commitDenied=True, cpuTermination=True, privatePipeAcl=True,
                              framedExchange=True, headerMutationsRejected=48,
                              boundedStream=True, pipeEof=True, publicationGate=True,
-                             ioLease=True, brokerSessions=6, hostBrokerCases=7, sharedBudget=True,
+                             ioLease=True, brokerSessions=6, hostBrokerCases=9, sharedBudget=True,
                              phaseDeadlines=True, gracefulCancelCases=2, handleDelta=0, staging=True,
                              scalarSessions=5 if scalar else 0, parentBrokerCases=4 if scalar else 0,
                              projectWireRejections=2 if scalar else 0)

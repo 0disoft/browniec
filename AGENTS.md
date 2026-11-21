@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-22): [Broker host exchange](docs/engineering/restricted-worker.md#broker-host-exchange)
-  sends correlated replies under reserved limits and preserves cancellation during pipe transfers.
-  Development and /O2 each pass seven host broker fixture cases.
+- Latest runtime checkpoint (2026-11-22): [Project worker host exchange](docs/engineering/restricted-worker.md#project-worker-host-exchange)
+  receives correlated replies or CANCEL on the inherited session.
+  Development and /O2 each pass nine host broker fixture cases.
 
 # Brownie C agent guidance
 

@@ -512,6 +512,23 @@ after a reply header is sent. Both cancellation cases receive a late RESULT
 without publishing it. Local receipt:
 `build/restricted-worker/20261121T175242080375Z/receipt.json`.
 
+### Project worker host exchange
+
+The native project worker keeps the inherited input pipe after consuming
+START. It sends a nonempty HOST_REQUEST at the next worker sequence, then
+waits for a matching HOST_REPLY or CANCEL at the next broker sequence.
+The reply header must match the nonce, sequence, correlation and buffer
+ceiling before the worker reads the body. The function reports a reply
+length only after receiving every byte. CANCEL has a separate outcome and
+prevents another host call. A failed transfer closes the RESULT path.
+
+The fixture uses the production worker functions for two successive calls
+and for CANCEL while awaiting the first reply. The cancelled call retains
+the caller's length sentinel and cannot be repeated. The broker drains
+the late RESULT and preserves cancellation. All nine native host cases
+passed in Windows development and /O2. Local receipt:
+`build/restricted-worker/20261121T175501251899Z/receipt.json`.
+
 ## Windows verification
 
 Run `python -B tools/verify-restricted-worker.py`. The development and optimized

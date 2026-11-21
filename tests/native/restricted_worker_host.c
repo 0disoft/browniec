@@ -12,6 +12,7 @@
 #include "../../native/restricted_worker_pipes.h"
 #include "../../native/restricted_worker_stage.h"
 #include "../../native/restricted_worker_stream.h"
+#include "../../native/windows-scalar-worker.h"
 
 enum { commit_limit = 128 * 1024 * 1024, cpu_limit = 500 };
 static const DWORD status_quota_exceeded = 0xc0000044;
@@ -237,6 +238,26 @@ static int child(wchar_t *number, enum fixture_mode mode) {
     if (mode != cpu) return 0;
     // The Job's user CPU limit must stop this process without parent intervention.
     for (;;) YieldProcessor();
+}
+
+static int production_peer(bool cancel) {
+    uint8_t start[9];
+    if (bc_project_worker_begin() != sizeof(start) || !bc_project_worker_read(start, sizeof(start)) ||
+        start[0] != 41 || bc_project_worker_read(start, sizeof(start))) return 26;
+    const uint8_t request = start[0];
+    uint8_t reply[long_request_bytes];
+    size_t length = 123;
+    if (cancel) {
+        if (bc_project_worker_host(&request, 1, reply, sizeof(reply), &length) != 2 || length != 123 ||
+            bc_project_worker_host(&request, 1, reply, sizeof(reply), &length) || length != 123) return 27;
+    } else {
+        for (uint8_t i = 1; i <= 2; ++i) {
+            if (bc_project_worker_host(&request, 1, reply, sizeof(reply), &length) != 1 ||
+                length != sizeof(reply) || reply[0] != 41 + i || reply[length - 1] != 255) return 28;
+        }
+    }
+    const uint8_t result = 42;
+    return bc_scalar_worker_finish(&result, 1) ? 0 : 29;
 }
 
 static void verify_pipes(void) {
@@ -792,14 +813,17 @@ static void verify_host_broker(const wchar_t *path, const wchar_t *directory,
     wchar_t command[256];
     check(swprintf_s(command, _countof(command), L"worker %ls %llx", mode,
         (unsigned long long)(ULONG_PTR)decoy) > 0, "format host broker fixture command");
-    const bool cancel_rx = !wcscmp(mode, L"--child-host-cancel-rx");
+    const bool peer_cancel = !wcscmp(mode, L"--child-peer-cancel");
+    const bool peer = peer_cancel || !wcscmp(mode, L"--child-peer-ok");
+    const bool cancel_rx = peer_cancel || !wcscmp(mode, L"--child-host-cancel-rx");
     const bool cancel_tx = !wcscmp(mode, L"--child-host-cancel-tx");
-    const uint8_t start = 41;
+    const uint8_t start[9] = {41};
+    const size_t start_length = peer ? sizeof(start) : 1;
     uint8_t request = 0, result = 0, reply[long_request_bytes];
     unsigned calls = 0;
-    const size_t wire = 5 * BC_WORKER_FRAME_BYTES + 3 +
+    const size_t wire = 5 * BC_WORKER_FRAME_BYTES + start_length + 2 +
         max_calls * (2 * BC_WORKER_FRAME_BYTES + sizeof(request) + sizeof(reply));
-    const bc_worker_broker_amounts charge = {1, sizeof(broker) + 2 +
+    const bc_worker_broker_amounts charge = {1, sizeof(broker) + start_length + 1 +
         sizeof(request) + sizeof(reply), commit_limit, wire};
     bc_worker_broker_budget budget = {.limit = charge};
     bc_worker_broker_run run = {
@@ -807,7 +831,7 @@ static void verify_host_broker(const wchar_t *path, const wchar_t *directory,
         .profile = profile, .commit_bytes = commit_limit, .cpu_ms = cpu_limit,
         .startup_ms = 4000, .io_idle_ms = 4000, .shutdown_grace_ms = 2500,
         .deadline = clock_ticks() + 100000000ULL, .wire_limit = wire - 1,
-        .request = &start, .request_length = 1, .result = &result, .result_capacity = 1,
+        .request = start, .request_length = start_length, .result = &result, .result_capacity = 1,
         .validate = expected == BC_WORKER_GATE_DELIVERED ? fixture_result : reject_callback,
         .host = {reply_fixture, &calls, &request, reply, sizeof(request), sizeof(reply), max_calls}
     };
@@ -1066,6 +1090,8 @@ int wmain(int argc, wchar_t **argv) {
     if (argc == 3 && !wcscmp(argv[1], L"--child-host-invalid")) return child(argv[2], host_invalid);
     if (argc == 3 && !wcscmp(argv[1], L"--child-host-cancel-rx")) return child(argv[2], host_cancel_rx);
     if (argc == 3 && !wcscmp(argv[1], L"--child-host-cancel-tx")) return child(argv[2], host_cancel_tx);
+    if (argc == 3 && !wcscmp(argv[1], L"--child-peer-ok")) return production_peer(false);
+    if (argc == 3 && !wcscmp(argv[1], L"--child-peer-cancel")) return production_peer(true);
     check((argc == 2 || argc == 3) && atexit(cleanup) == 0, "parent fixture arguments");
     verify_frames();
     verify_stream();
@@ -1174,6 +1200,8 @@ int wmain(int argc, wchar_t **argv) {
     verify_host_broker(argv[1], directory, L"--child-host-invalid", 2, BC_WORKER_GATE_PROTOCOL, 1);
     verify_host_broker(argv[1], directory, L"--child-host-cancel-rx", 2, BC_WORKER_GATE_CANCELLED, 0);
     verify_host_broker(argv[1], directory, L"--child-host-cancel-tx", 2, BC_WORKER_GATE_CANCELLED, 1);
+    verify_host_broker(argv[1], directory, L"--child-peer-ok", 2, BC_WORKER_GATE_DELIVERED, 2);
+    verify_host_broker(argv[1], directory, L"--child-peer-cancel", 2, BC_WORKER_GATE_CANCELLED, 0);
     verify_graceful_cancel(argv[1], directory, false);
     verify_graceful_cancel(argv[1], directory, true);
     if (argc == 3) {
@@ -1209,7 +1237,7 @@ int wmain(int argc, wchar_t **argv) {
            "\"commitDenied\":true,\"cpuTermination\":true,\"privatePipeAcl\":true,"
            "\"framedExchange\":true,\"headerMutationsRejected\":48,"
            "\"boundedStream\":true,\"pipeEof\":true,\"publicationGate\":true,"
-           "\"ioLease\":true,\"brokerSessions\":6,\"hostBrokerCases\":7,\"sharedBudget\":true,"
+           "\"ioLease\":true,\"brokerSessions\":6,\"hostBrokerCases\":9,\"sharedBudget\":true,"
            "\"phaseDeadlines\":true,\"gracefulCancelCases\":2,\"handleDelta\":0,\"staging\":true,"
            "\"scalarSessions\":%d,\"parentBrokerCases\":%d,\"projectWireRejections\":%d,"
            "\"parentColdHandleDelta\":%ld,\"coldHandleDelta\":%ld}\n",

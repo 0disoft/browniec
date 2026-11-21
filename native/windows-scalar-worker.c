@@ -1,11 +1,14 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-#include "native/restricted_worker_frame.h"
-#include "native/restricted_worker_payload.h"
+#include "restricted_worker_frame.h"
+#include "restricted_worker_payload.h"
+#include "windows-scalar-worker.h"
 
 static HANDLE input_pipe, result_pipe;
 static bc_worker_frame result_frame;
-static size_t result_capacity;
+static size_t start_length, result_capacity;
+static uint64_t next_call;
+static bool start_read, host_cancelled;
 
 static bool confined(void) {
     BOOL assigned = FALSE;
@@ -67,6 +70,10 @@ static size_t begin(bool project) {
     expected.length = project ? BC_PROJECT_START_MAX : BC_SCALAR_START_MAX;
     if (!receive(input, &expected, &session) || session.length < (project ? 9u : 5u)) return 0;
     input_pipe = input;
+    start_length = session.length;
+    start_read = false;
+    next_call = project ? 1 : 0;
+    host_cancelled = false;
     session.kind = BC_WORKER_RESULT;
     result_frame = session;
     result_pipe = output;
@@ -75,9 +82,12 @@ static size_t begin(bool project) {
 }
 
 static bool read_start(uint8_t *request, size_t length) {
-    if (!input_pipe || !request || length != result_frame.length ||
-        !transfer(input_pipe, request, NULL, result_frame.length)) return false;
-    input_pipe = NULL;
+    if (!input_pipe || start_read || !request || length != start_length) return false;
+    if (!transfer(input_pipe, request, NULL, (DWORD)start_length)) {
+        result_pipe = NULL;
+        return false;
+    }
+    start_read = true;
     return true;
 }
 
@@ -95,8 +105,48 @@ uint32_t bc_project_worker_read(uint8_t *request, size_t length) {
     return read_start(request, length);
 }
 
+uint32_t bc_project_worker_host(const uint8_t *request, size_t request_length,
+    uint8_t *reply, size_t reply_capacity, size_t *reply_length) {
+    if (!start_read || !result_pipe || !next_call || host_cancelled ||
+        !request || !request_length || request_length > BC_PROJECT_HOST_MAX ||
+        !reply || !reply_capacity || reply_capacity > BC_PROJECT_HOST_MAX || !reply_length)
+        return 0;
+    bc_worker_frame host = result_frame;
+    host.kind = BC_WORKER_HOST_REQUEST;
+    host.correlation = next_call;
+    host.length = (uint32_t)request_length;
+    if (!send(result_pipe, &host) || !transfer(result_pipe, NULL, request, host.length)) {
+        result_pipe = NULL;
+        return 0;
+    }
+    ++result_frame.sequence;
+
+    host.kind = BC_WORKER_HOST_REPLY;
+    host.sequence = 2 + next_call;
+    host.length = (uint32_t)reply_capacity;
+    uint8_t wire[BC_WORKER_FRAME_BYTES];
+    bc_worker_frame received;
+    if (transfer(input_pipe, wire, NULL, sizeof(wire))) {
+        if (bc_worker_frame_preflight(wire, sizeof(wire), &host, &received) &&
+            received.length && transfer(input_pipe, reply, NULL, received.length)) {
+            ++next_call;
+            *reply_length = received.length;
+            return 1;
+        }
+        host.kind = BC_WORKER_CANCEL;
+        host.length = 0;
+        host.correlation = 0;
+        if (bc_worker_frame_preflight(wire, sizeof(wire), &host, &received)) {
+            host_cancelled = true;
+            return 2;
+        }
+    }
+    result_pipe = NULL;
+    return 0;
+}
+
 uint32_t bc_scalar_worker_finish(const uint8_t *result, size_t length) {
-    if (input_pipe || !result_pipe || !result || !length || length > result_capacity) return 0;
+    if (!start_read || !result_pipe || !result || !length || length > result_capacity) return 0;
     HANDLE output = result_pipe;
     result_pipe = NULL;
     result_frame.length = (uint32_t)length;
