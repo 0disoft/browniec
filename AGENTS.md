@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-21): [Multi-module host requests](docs/engineering/embed-preview.md#revision-2-host-requests-and-replies)
-  admit revision-2 source sets with a host catalog. Windows /Od and /O2 verify
-  second-source diagnostics and independent replies through the imported module.
+- Latest runtime checkpoint (2026-11-21): [Named embedding entries](docs/engineering/embed-preview.md#revision-2-scalar-programs)
+  bind a selected public module and function through compile, query and run.
+  Windows /Od and /O2 verify byte-input and catalog-backed entries.
 
 # Brownie C agent guidance
 

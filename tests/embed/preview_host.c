@@ -98,6 +98,19 @@ static size_t read_fixture(const char *name,uint8_t *config,size_t capacity){
     return length;
 }
 
+static bc_slice named_run(const char *fixture,uint8_t *out,size_t capacity,
+                          const char *module,const char *function){
+    uint8_t base[1024];
+    read_fixture(fixture,base,sizeof(base));
+    const char *tail=strstr((const char *)base,"\"requires\":");
+    assert(tail);
+    const int length=snprintf((char *)out,capacity,
+        "{\"schema\":\"brownie.run/0.3\",\"entry\":{\"module\":\"%s\",\"function\":\"%s\"},%s",
+        module,function,tail);
+    assert(length>0 && (size_t)length<capacity);
+    return (bc_slice){out,(size_t)length};
+}
+
 static void revision_two_instances(bc_handle engine,bc_handle program){
     uint8_t config[1024];
     const size_t length=read_fixture("run.json",config,sizeof(config));
@@ -578,6 +591,40 @@ static void revision_two_modules(bc_handle engine,bc_slice policy){
     puts("PASS: two module sources, second-source diagnostics, policy count, and total byte limit");
 }
 
+static void revision_two_named_entry(bc_handle engine){
+    uint8_t module[]="pricing::quote",function[]="amount";
+    static const uint8_t text[]="module pricing::quote; fn i32 hidden(){return 42;}"
+        "pub fn i32 amount(ref u8[] data){return hidden()+(data[0] as i32);}";
+    const bc_slice module_name={module,sizeof(module)-1},function_name={function,sizeof(function)-1};
+    const bc_slice hidden={(const uint8_t *)"hidden",6},empty={0},input={(const uint8_t *)"#",1};
+    const bc_source source={module_name,{text,sizeof(text)-1}};
+    bc_handle program=UINT64_MAX,instance=UINT64_MAX;
+    bc_diagnostic diagnostic={.struct_size=sizeof(diagnostic)};
+    assert(bc_compile(engine,&source,1,empty,&program,&diagnostic)==BC_COMPILE_ERROR && !program);
+    assert(bc_preview_compile_entry(engine,&source,1,empty,module_name,hidden,&program,&diagnostic)==BC_COMPILE_ERROR);
+    assert(!program && diagnostic.source_index==0);
+    assert(bc_preview_compile_entry(engine,&source,1,empty,module_name,function_name,&program,&diagnostic)==BC_OK);
+    memset(module,0,sizeof(module));
+    memset(function,0,sizeof(function));
+    const bc_slice expected_module={(const uint8_t *)"pricing::quote",sizeof(module)-1};
+    const bc_slice expected_function={(const uint8_t *)"amount",sizeof(function)-1};
+    bc_entry_info info={.struct_size=sizeof(info),.abi_revision=UINT32_MAX};
+    assert(bc_program_entry_info(engine,program,expected_module,hidden,&info,&diagnostic)==BC_BAD_ARGUMENT);
+    assert(info.abi_revision==UINT32_MAX);
+    assert(bc_program_entry_info(engine,program,expected_module,expected_function,&info,&diagnostic)==BC_OK);
+    assert(info.abi_revision==2 && info.input_kind==BC_INPUT_BYTES);
+    uint8_t config[1024];
+    const bc_slice mismatch=named_run("run.json",config,sizeof(config),"pricing::quote","hidden");
+    assert(bc_instance_create(engine,program,input,mismatch,&instance,&diagnostic)==BC_POLICY_ERROR && !instance);
+    const bc_slice run=named_run("run.json",config,sizeof(config),"pricing::quote","amount");
+    assert(bc_instance_create(engine,program,input,run,&instance,&diagnostic)==BC_OK);
+    assert(bc_program_release(engine,program)==BC_OK);
+    const bc_event result=finish_revision_two(instance,64);
+    assert(result.kind==BC_DONE && result.return_i32==77);
+    assert(bc_instance_destroy(instance)==BC_OK);
+    puts("PASS: named shared-byte entry owns its names and rejects private and mismatched entries");
+}
+
 static void revision_two_programs(bc_handle engine,bc_slice policy){
     static const uint8_t module[]="main";
     static const uint8_t invalid[]="module main; pub fn bool main(){return true;}";
@@ -704,6 +751,7 @@ static void revision_two_engines(void){
     expect_diagnostic(&diagnostic,BC_OK);
     revision_two_programs(handle,(bc_slice){policy,length});
     revision_two_modules(handle,(bc_slice){policy,length});
+    revision_two_named_entry(handle);
     revision_two_byte_inputs(handle);
     revision_two_shared_descriptors(handle);
     revision_two_slot_limits(handle);
@@ -738,11 +786,11 @@ static bc_event next_host_event(bc_handle instance,uint32_t quantum){
 }
 
 static void revision_two_host_exchange(void){
-    static const uint8_t main_name[]="main";
+    static const uint8_t quote_module[]="pricing::quote",quote_function[]="quote";
     static const uint8_t rules_name[]="pricing::rules";
     uint8_t source_text[]=
-        "module main; import pricing::rules as rules; "
-        "pub fn i32 main(){return rules::check(41) + 35;}";
+        "module pricing::quote; import pricing::rules as rules; "
+        "pub fn i32 quote(){return rules::check(41) + 35;}";
     uint8_t rules_text[]=
         "module pricing::rules; import host::example as api; "
         "pub fn i32 check(i32 order){return api::check(order);}";
@@ -755,10 +803,10 @@ static void revision_two_host_exchange(void){
     static const char caps[]="[\"host.example.check\"]";
     uint8_t policy_data[4096],run_data[1024],pure_data[1024];
     const bc_slice policy={policy_data,read_fixture("policy-host.json",policy_data,sizeof(policy_data))};
-    const bc_slice run={run_data,read_fixture("run-host.json",run_data,sizeof(run_data))};
-    const bc_slice pure={pure_data,read_fixture("run.json",pure_data,sizeof(pure_data))};
+    const bc_slice run=named_run("run-host.json",run_data,sizeof(run_data),"pricing::quote","quote");
+    const bc_slice pure=named_run("run.json",pure_data,sizeof(pure_data),"pricing::quote","quote");
     const bc_slice empty={0};
-    const bc_slice name={main_name,sizeof(main_name)-1};
+    const bc_slice name={quote_module,sizeof(quote_module)-1},function={quote_function,sizeof(quote_function)-1};
     bc_source sources[]={
         {name,{source_text,sizeof(source_text)-1}},
         {{rules_name,sizeof(rules_name)-1},{rules_text,sizeof(rules_text)-1}},
@@ -768,19 +816,21 @@ static void revision_two_host_exchange(void){
     assert(bc_engine_create(BC_ABI_REVISION,policy,&engine,&diagnostic)==BC_OK);
     const bc_slice catalog_json={catalog,sizeof(catalog)-1};
     sources[1].module=(bc_slice){(const uint8_t *)"other",5};
-    assert(bc_compile(engine,sources,2,catalog_json,&program,&diagnostic)==BC_COMPILE_ERROR);
+    assert(bc_preview_compile_entry(engine,sources,2,catalog_json,name,function,&program,&diagnostic)==BC_COMPILE_ERROR);
     assert(!program && diagnostic.source_index==1);
     assert(diagnostic.byte_start==7 && diagnostic.byte_end==7+sizeof(rules_name)-1);
     sources[1].module=(bc_slice){rules_name,sizeof(rules_name)-1};
-    assert(bc_compile(engine,sources,2,catalog_json,&program,&diagnostic)==BC_OK);
+    assert(bc_preview_compile_entry(engine,sources,2,catalog_json,name,function,&program,&diagnostic)==BC_OK);
     memset(source_text,0,sizeof(source_text));
     memset(rules_text,0,sizeof(rules_text));
     memset(catalog,0,sizeof(catalog));
     bc_entry_info info={.struct_size=sizeof(info)};
-    assert(bc_program_entry_info(engine,program,name,name,&info,&diagnostic)==BC_OK);
+    assert(bc_program_entry_info(engine,program,name,function,&info,&diagnostic)==BC_OK);
     assert(info.input_kind==BC_INPUT_NONE && info.required_capabilities_json.len==sizeof(caps)-1);
     assert(memcmp(info.required_capabilities_json.data,caps,sizeof(caps)-1)==0);
     assert(bc_instance_create(engine,program,empty,pure,&one,&diagnostic)==BC_POLICY_ERROR && one==0);
+    const bc_slice wrong=named_run("run-host.json",pure_data,sizeof(pure_data),"pricing::quote","other");
+    assert(bc_instance_create(engine,program,empty,wrong,&one,&diagnostic)==BC_POLICY_ERROR && one==0);
     assert(bc_instance_create(engine,program,empty,run,&one,&diagnostic)==BC_OK);
     assert(bc_instance_create(engine,program,empty,run,&many,&diagnostic)==BC_OK);
     assert(bc_instance_create(engine,program,empty,run,&cancelled,&diagnostic)==BC_OK);

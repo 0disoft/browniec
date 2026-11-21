@@ -83,7 +83,10 @@ fn Result<sources::Snapshot,engine::Error> source_snapshot(ref engine::Engine ow
 }
 
 struct Compiled { usize program; bool accepts_input; bool emits; }
-fn Result<Compiled,engine::Error> compile(ref mut engine::Engine owner,ptr void rows,usize count,bool configured){
+fn Result<Compiled,engine::Error> compile(ref mut engine::Engine owner,ptr void rows,usize count,bool configured,
+    ptr u8 module_data,usize module_size,ptr u8 function_data,usize function_size){
+    let ref u8[] module_name=unsafe{byte_slice::from_raw_parts(ref module_size,module_data,module_size)};
+    let ref u8[] function_name=unsafe{byte_slice::from_raw_parts(ref function_size,function_data,function_size)};
     let sources::Snapshot snapshot=source_snapshot(owner,rows,count)?;
     let modules::Index index=switch(modules::build(snapshot)){
         case .ok(v):{v}case .err(e):{return .err(binding_failure(e));}
@@ -91,15 +94,15 @@ fn Result<Compiled,engine::Error> compile(ref mut engine::Engine owner,ptr void 
     switch(modules::match_source_names(ref index)){
         case .ok(_):{}case .err(e):{return .err(binding_failure(e));}
     };
-    let bool input=configured && input_entries::has_i32_input(ref index,b"main",b"main");
+    let bool input=configured && input_entries::has_i32_input(ref index,module_name,function_name);
     let usize image_limit=images::metadata_charge()+images::byte_limit();
     let usize program=if(input){
-        let input_entries::InputEntry selected=switch(input_entries::select_i32_input(index,b"main",b"main")){
+        let input_entries::InputEntry selected=switch(input_entries::select_i32_input(index,module_name,function_name)){
             case .ok(v):{v}case .err(e):{return .err(binding_failure(e));}
         };
         engine::compile_input_output(owner,selected,image_limit)?
     }else{
-        let entries::Entry selected=switch(entries::select_i32(index,b"main",b"main")){
+        let entries::Entry selected=switch(entries::select_i32(index,module_name,function_name)){
             case .ok(v):{v}case .err(e):{return .err(binding_failure(e));}
         };
         engine::compile_output(owner,selected,image_limit)?
@@ -134,13 +137,16 @@ fn Result<engine::Event,engine::Error> step(ref mut engine::Engine owner,usize r
 }
 
 fn Result<engine::ScalarPreparation,engine::Error> instance_configured(ref mut engine::Engine owner,usize program,
-    ptr u8 bytes,usize size,ptr u8 data,usize length,bool catalog_backed){
+    ptr u8 bytes,usize size,ptr u8 data,usize length,bool catalog_backed,
+    ptr u8 module_data,usize module_size,ptr u8 function_data,usize function_size){
     let usize lifetime=length;
     let ref u8[] configuration=unsafe{byte_slice::from_raw_parts(ref lifetime,data,length)};
     let usize input_lifetime=size;
     let ref u8[] input=if(size==0){b""}else{unsafe{byte_slice::from_raw_parts(ref input_lifetime,bytes,size)}};
     if(catalog_backed){return engine::prepare_host_preview(owner,program,input,configuration);}
-    return engine::prepare_scalar_preview(owner,program,input,configuration);
+    let ref u8[] module_name=unsafe{byte_slice::from_raw_parts(ref module_size,module_data,module_size)};
+    let ref u8[] function_name=unsafe{byte_slice::from_raw_parts(ref function_size,function_data,function_size)};
+    return engine::prepare_scalar_preview(owner,program,input,configuration,module_name,function_name);
 }
 
 struct OutputSlice { ptr u8 data; usize length; }
@@ -150,7 +156,10 @@ fn Result<OutputSlice,engine::Error> output_slice(ref engine::Engine owner,usize
 }
 
 fn Result<usize,engine::Error> compile_host(ref mut engine::Engine owner,ptr void rows,usize count,
-    ptr u8 catalog_data,usize catalog_size){
+    ptr u8 catalog_data,usize catalog_size,
+    ptr u8 module_data,usize module_size,ptr u8 function_data,usize function_size){
+    let ref u8[] module_name=unsafe{byte_slice::from_raw_parts(ref module_size,module_data,module_size)};
+    let ref u8[] function_name=unsafe{byte_slice::from_raw_parts(ref function_size,function_data,function_size)};
     let usize catalog_lifetime=catalog_size;
     let ref u8[] json=unsafe{byte_slice::from_raw_parts(ref catalog_lifetime,catalog_data,catalog_size)};
     let catalog::Catalog imports=switch(catalog::parse(json)){
@@ -163,7 +172,7 @@ fn Result<usize,engine::Error> compile_host(ref mut engine::Engine owner,ptr voi
         }
     };
     let sources::Snapshot snapshot=source_snapshot(owner,rows,count)?;
-    return engine::compile_preview_host(owner,snapshot,imports);
+    return engine::compile_preview_host(owner,snapshot,imports,module_name,function_name);
 }
 
 fn Result<OutputSlice,engine::Error> host_capability(ref engine::Engine owner,usize program,usize index){
@@ -193,7 +202,7 @@ fn i32 main(){
     unsafe{bc_embed_binding(1)};
     var engine::Engine owner=switch(create()){case .ok(v):{v}case .err(_):{return 1;}};
     let ptr u8 source=unsafe{bc_embed_witness_source()};
-    unsafe{bc_embed_binding(2)};discard compile(ref mut owner,null,1,true);
+    unsafe{bc_embed_binding(2)};discard compile(ref mut owner,null,1,true,source,1,source,1);
     unsafe{bc_embed_binding(3)};discard instance(ref mut owner,1,1);
     unsafe{bc_embed_binding(4)};discard step(ref mut owner,1,1);
     unsafe{bc_embed_binding(5)};discard engine::cancel_ready(ref mut owner,1);
@@ -202,10 +211,10 @@ fn i32 main(){
     unsafe{bc_embed_binding(8)};discard engine::destroy(ref mut owner);
     unsafe{bc_embed_binding(9)};discard create_configured(source,1);
     unsafe{bc_embed_binding(10)};discard abi::validate(2,32,true);
-    unsafe{bc_embed_binding(11)};discard instance_configured(ref mut owner,1,source,1,source,1,true);
+    unsafe{bc_embed_binding(11)};discard instance_configured(ref mut owner,1,source,1,source,1,true,source,1,source,1);
     unsafe{bc_embed_binding(12)};discard engine::observe(ref mut owner,1);
     unsafe{bc_embed_binding(13)};discard output_slice(ref owner,1);
-    unsafe{bc_embed_binding(14)};discard compile_host(ref mut owner,null,1,source,1);
+    unsafe{bc_embed_binding(14)};discard compile_host(ref mut owner,null,1,source,1,source,1,source,1);
     unsafe{bc_embed_binding(15)};discard engine::preview_host_entry(ref owner,1);
     unsafe{bc_embed_binding(16)};discard host_capability(ref owner,1,1);
     unsafe{bc_embed_binding(17)};discard host_request(ref owner,1);

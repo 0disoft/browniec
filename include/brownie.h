@@ -88,12 +88,13 @@ BC_API uint32_t BC_CALL bc_engine_create(uint32_t requested_revision,
 BC_API uint32_t BC_CALL bc_compile(bc_handle engine,
     const bc_source *sources, uint32_t source_count, bc_slice catalog_json,
     bc_handle *out_program, bc_diagnostic *diagnostic);
-/* Scalar preview DLL: query main::main on the owning thread. Initialize both
-   output sizes. The read-only JSON view is valid until Program release. */
+/* Scalar preview DLL: query the compiled entry on the owning thread.
+   Initialize both output sizes. The read-only JSON view is valid until
+   Program release. */
 BC_API uint32_t BC_CALL bc_program_entry_info(bc_handle engine, bc_handle program,
     bc_slice module, bc_slice function, bc_entry_info *out_info, bc_diagnostic *diagnostic);
-/* Scalar preview DLL: a brownie.run/0.3 configuration for main::main with
-   explicit requires and grants for verified host imports and output::emit.
+/* Scalar preview DLL: a brownie.run/0.3 configuration for the compiled entry
+   with explicit requires and grants for verified host imports and output::emit.
    BC_INPUT_NONE requires empty input.
    BC_INPUT_BYTES copies the slice during preparation, including empty input.
    The Engine checks its policy before preparing and pinning the Program. */

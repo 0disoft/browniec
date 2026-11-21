@@ -79,8 +79,11 @@ untouched. Destroy a revision-2 Engine on its creating thread with
 `bc_compile` accepts 1 to 16 `bc_source` rows and up to 4096 total source bytes,
 subject to the Engine's `compile.modules` and `compile.source_bytes` limits.
 Each canonical module name must match its source declaration. Imports resolve
-within the supplied set. The entry remains public `main::main` with signature
-`fn i32 main()` or `fn i32 main(ref u8[] data)`. Provide up to 16,384 bytes of
+within the supplied set. The default entry is public `main::main`.
+The Windows extension `bc_preview_compile_entry` accepts an explicit public
+module/function pair and copies the two names into Program-owned storage.
+Both compile calls accept an i32 return with either no parameters or one
+`ref u8[]` parameter. Provide up to 16,384 bytes of
 `brownie.catalog/1` JSON to resolve host imports under the Engine policy.
 The caller can reuse the source and catalog storage when compilation returns.
 The Engine applies its configured deadline, working-memory limit and Program
@@ -97,7 +100,8 @@ Program handle on its owner thread. Successful release invalidates the handle.
 An Engine with a live Program returns `BC_BUSY` on destruction. Preview and
 revision-2 Program handles use separate API entry points.
 
-`bc_program_entry_info` queries `main::main` on the same Engine and thread.
+`bc_program_entry_info` queries the compiled entry on the same Engine and
+thread. Pass the exact module and function names selected at compilation.
 Initialize both output structure sizes. The query returns ABI revision 2,
 the retained signature's input kind (`BC_INPUT_NONE` or `BC_INPUT_BYTES`),
 and a Program-owned JSON capability array. The array contains each distinct capability referenced by the verified image,
@@ -117,10 +121,17 @@ and the shared 4096-byte source ceiling. Local receipt:
 Both builds also verify the entry info fields, failure output preservation,
 and rejection across threads, Engines, ABI revisions and stale handles.
 
+The named-entry fixtures pass in both Windows profiles. A shared-byte rule
+returns 77 after the caller overwrites both name buffers and releases the
+Program. A separate named rule calls a host import through another module and
+returns 77 and 78 in two Instances. Private entry selection and mismatched
+entry metadata and run configurations are rejected. Local receipt:
+`build/embed-preview-0vhxmny3/receipt.json`.
+
 ## Revision-2 scalar Instance preparation
 
 `bc_instance_create` accepts guest input and an explicit
-`brownie.run/0.3` configuration. The entry must be `main::main`. A Program
+`brownie.run/0.3` configuration. The entry must match the compiled Program. A Program
 with host requests or a reachable emit requires those capabilities in both
 `requires` and `grants`, and the Engine policy must allow them. With an empty
 catalog, the lists contain just the emit capability when required, or are empty
@@ -257,7 +268,7 @@ and empty payloads on cancellation and a guest trap after emission.
 ## Engine admission for catalog-backed embedding
 
 The Engine can retain a catalog-backed Program from a source set with a public
-`main::main` i32 entry before receiving a run configuration. It verifies
+i32 entry before receiving a run configuration. It verifies
 the lowered image against the exact catalog, retains its digest, and checks all
 referenced capabilities against the Engine policy. Preparing an Instance still
 requires a matching entry and explicit declarations and grants. The catalog

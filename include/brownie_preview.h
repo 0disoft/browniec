@@ -41,6 +41,15 @@ BC_PREVIEW_API uint32_t BC_CALL bc_preview_instance_destroy(bc_handle instance);
 BC_PREVIEW_API uint32_t BC_CALL bc_preview_program_release(bc_handle engine, bc_handle program);
 BC_PREVIEW_API uint32_t BC_CALL bc_preview_engine_destroy(bc_handle engine);
 
+/* Compile a revision-2 Program for one public module/function pair. Module and
+   function names have limits of 128 and 64 bytes, respectively. The selected
+   function must have a supported i32 entry signature. Use the same names for
+   bc_program_entry_info and in the Instance's run configuration. The Program
+   copies both names during the call. */
+BC_PREVIEW_API uint32_t BC_CALL bc_preview_compile_entry(bc_handle engine,
+    const bc_source *sources, uint32_t source_count, bc_slice catalog_json,
+    bc_slice module, bc_slice function, bc_handle *out_program, bc_diagnostic *diagnostic);
+
 /* Prepare a revision-2 Instance with an optional Windows manual-reset event.
    Pass NULL to use the ordinary preparation path. Keep the event open and
    signaled once cancellation is requested. Another thread may signal it

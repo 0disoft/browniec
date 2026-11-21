@@ -254,7 +254,7 @@ fn Result<usize,u8> preview_compile_authority(){
     let policy::Policy closed=parsed_policy(false)?;
     var engine::Engine denied=configured(closed)?;
     let sources::Snapshot denied_source=preview_snapshot(source)?;
-    rejected(engine::compile_preview_host(ref mut denied,denied_source,catalog_from(source_catalog())?),5);
+    rejected(engine::compile_preview_host(ref mut denied,denied_source,catalog_from(source_catalog())?,b"main",b"main"),5);
     assert(counts(ref mut denied).programs==0);
     assert(id(engine::destroy(ref mut denied))==0);
 
@@ -263,9 +263,9 @@ fn Result<usize,u8> preview_compile_authority(){
     let runs::RunConfig missing=switch(runs::parse(source_run_undeclared(),ref ceiling)){case .ok(v):{v}case .err(_):{return .err(4);}};
     var engine::Engine owner=configured(ceiling)?;
     let sources::Snapshot private_source=preview_snapshot(private)?;
-    rejected(engine::compile_preview_host(ref mut owner,private_source,catalog_from(source_catalog())?),4);
+    rejected(engine::compile_preview_host(ref mut owner,private_source,catalog_from(source_catalog())?,b"main",b"main"),4);
     let sources::Snapshot accepted=preview_snapshot(source)?;
-    let usize program=id(engine::compile_preview_host(ref mut owner,accepted,catalog_from(source_catalog())?));
+    let usize program=id(engine::compile_preview_host(ref mut owner,accepted,catalog_from(source_catalog())?,b"main",b"main"));
     rejected(engine::prepare_scalar_host(ref mut owner,program,ref missing),5);
     let usize instance=id(engine::prepare_scalar_host(ref mut owner,program,ref run));
     assert(event(engine::step_instance(ref mut owner,instance,8)).kind==4);

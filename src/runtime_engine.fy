@@ -523,7 +523,8 @@ pub fn Result<usize,Error> compile_anchored_project_host(ref mut Engine e,ref pr
 }
 
 // Public entry selection and source-set admission for the embedding adapter.
-pub fn Result<usize,Error> compile_preview_host(ref mut Engine e,sources::Snapshot snapshot,host_catalog::Catalog imports){
+pub fn Result<usize,Error> compile_preview_host(ref mut Engine e,sources::Snapshot snapshot,host_catalog::Catalog imports,
+    ref u8[] module_name,ref u8[] function_name){
     let u32 access=unsafe{control_access_raw(e as ptr void)};
     if(access!=0){return .err(error(access));}
     if(!e.meta.configured){return .err(error(5));}
@@ -538,19 +539,20 @@ pub fn Result<usize,Error> compile_preview_host(ref mut Engine e,sources::Snapsh
     switch(modules::match_source_names(ref index)){
         case .ok(_):{}case .err(e):{return .err(host_binding_error(e));}
     };
-    let usize selected=switch(modules::entry(ref index,b"main",b"main")){
+    let usize selected=switch(modules::entry(ref index,module_name,function_name)){
         case .ok(v):{v}case .err(e):{return .err(host_binding_error(e));}
     };
     var ir::Program code=ir::empty();
     discard lower_indexed_host(ref index,selected,ref imports,ref mut code,deadline)?;
     discard check_host_image(ref code,limits)?;
     if(clock::expired(deadline)){return .err(compile_timeout());}
-    let host_program::Program verified=verify_preview_host(e,ref code,imports)?;
+    let host_program::Program verified=verify_preview_host(e,ref code,imports,module_name,function_name)?;
     return publish_verified_host(e,verified,deadline);
 }
-fn Result<host_program::Program,Error> verify_preview_host(ref Engine e,ref ir::Program code,host_catalog::Catalog imports){
+fn Result<host_program::Program,Error> verify_preview_host(ref Engine e,ref ir::Program code,host_catalog::Catalog imports,
+    ref u8[] module_name,ref u8[] function_name){
     let Result<host_program::Program,host_program::Error> checked=host_program::retain_for_entry(code,imports,
-        vec::at<policy::Policy>(ref e.policy,0),b"main",b"main");
+        vec::at<policy::Policy>(ref e.policy,0),module_name,function_name);
     return host_verification(checked);
 }
 fn Error host_binding_error(modules::Error e){
@@ -925,12 +927,13 @@ fn Result<ScalarPreparation,Error> preview_host_prepared(ref Engine e,usize id,p
         .start=host::deadline(exchange)-limits.deadline_ms*10000});
 }
 
-pub fn Result<ScalarPreparation,Error> prepare_scalar_preview(ref mut Engine e,usize program,ref u8[] input,ref u8[] configuration){
+pub fn Result<ScalarPreparation,Error> prepare_scalar_preview(ref mut Engine e,usize program,ref u8[] input,
+    ref u8[] configuration,ref u8[] module_name,ref u8[] function_name){
     let PreviewEntry profile=preview_entry(e,program)?;
     if(!profile.accepts_input && input.len!=0){return .err(error(1));}
     let run_config::RunConfig run=parse_scalar_run(e,configuration)?;
-    if(!bytes::equal(run_config::module_name(ref run),b"main") ||
-        !bytes::equal(run_config::function_name(ref run),b"main")){return .err(error(5));}
+    if(!bytes::equal(run_config::module_name(ref run),module_name) ||
+        !bytes::equal(run_config::function_name(ref run),function_name)){return .err(error(5));}
     let usize capabilities=if(profile.emits){1}else{0};
     if(run_config::requires_count(ref run)!=capabilities || run_config::grants_count(ref run)!=capabilities ||
         (profile.emits && (!run_config::declares(ref run,b"brownie.output.emit") ||

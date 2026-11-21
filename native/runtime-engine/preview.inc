@@ -27,6 +27,7 @@ typedef struct preview_engine {
 static const uint8_t emit_capability[]="brownie.output.emit";
 static const uint8_t emit_capabilities[]="[\"brownie.output.emit\"]";
 static const uint8_t no_capabilities[]="[]";
+static const bc_slice main_name={(const uint8_t *)"main",4};
 
 typedef struct preview_child {
     preview_engine *owner;
@@ -37,6 +38,8 @@ typedef struct preview_child {
             uint32_t input_kind;
             bool catalog_backed;
             bc_slice capabilities;
+            bc_slice module;
+            bc_slice function;
         } program;
     };
 } preview_child;
@@ -224,7 +227,9 @@ uintptr_t bc_embed_source_size(const void *rows,uintptr_t index,uint32_t module_
     return module_name?source->module.len:source->source_utf8.len;
 }
 
-static bool is_main(bc_slice name){return name.data && name.len==4 && memcmp(name.data,"main",4)==0;}
+static bool same_name(bc_slice actual,bc_slice expected){
+    return actual.data && actual.len==expected.len && memcmp(actual.data,expected.data,expected.len)==0;
+}
 
 static uint32_t validate_compile_sources(const bc_source *sources,size_t count,bc_slice catalog){
     if(!sources||!count||(!catalog.data&&catalog.len)){return BC_BAD_ARGUMENT;}
@@ -242,9 +247,12 @@ static uint32_t validate_compile_sources(const bc_source *sources,size_t count,b
 }
 
 static uint32_t compile_program(bc_handle engine,uint32_t revision,const bc_source *sources,size_t count,
-                                 bc_slice catalog,bc_handle *out,bc_diagnostic *diagnostic){
+                                 bc_slice catalog,bc_slice module,bc_slice function,bc_handle *out,
+                                 bc_diagnostic *diagnostic){
     size_t index=SIZE_MAX,start=0,end=0;
-    uint32_t status=out?validate_compile_sources(sources,count,catalog):BC_BAD_ARGUMENT;
+    const bool has_entry=module.data && module.len && function.data && function.len;
+    uint32_t status=out && has_entry?validate_compile_sources(sources,count,catalog):BC_BAD_ARGUMENT;
+    if(status==BC_OK && (module.len>128 || function.len>64)){status=BC_RESOURCE_LIMIT;}
     if(status!=BC_OK){return compile_diagnostic(diagnostic,status,NULL,0,index,0,0);}
     bc_abi_registry_admission admission;
     status=bc_abi_registry_enter(engine,ENGINE_HANDLE,engine,&admission);
@@ -254,15 +262,21 @@ static uint32_t compile_program(bc_handle engine,uint32_t revision,const bc_sour
         leave_preview(&admission);
         return compile_diagnostic(diagnostic,BC_INVALID_HANDLE,NULL,0,index,0,0);
     }
-    preview_child *program=HeapAlloc(GetProcessHeap(),0,sizeof(*program));
+    preview_child *program=HeapAlloc(GetProcessHeap(),0,sizeof(*program)+module.len+function.len);
     if(!program){
         leave_preview(&admission);
         return compile_diagnostic(diagnostic,BC_ALLOCATION_ERROR,NULL,0,index,0,0);
     }
     *program=(preview_child){.owner=owner};
+    uint8_t *names=(uint8_t *)(program+1);
+    memcpy(names,module.data,module.len);
+    memcpy(names+module.len,function.data,function.len);
+    module=program->program.module=(bc_slice){names,module.len};
+    function=program->program.function=(bc_slice){names+module.len,function.len};
     if(catalog.len){
-        __typeof__(P14(&owner->engine,sources,count,catalog.data,catalog.len)) compiled=
-            P14(&owner->engine,sources,count,catalog.data,catalog.len);
+        __typeof__(P14(&owner->engine,sources,count,catalog.data,catalog.len,
+                      module.data,module.len,function.data,function.len)) compiled=
+            P14(&owner->engine,sources,count,catalog.data,catalog.len,module.data,module.len,function.data,function.len);
         if(compiled.tag==FY_RESULT_OK){
             program->id=compiled.p_0;
             program->program.catalog_backed=true;
@@ -277,8 +291,8 @@ static uint32_t compile_program(bc_handle engine,uint32_t revision,const bc_sour
             end=compiled.p_1.f_1.f_1.f_2;
         }
     }else{
-        __typeof__(P2(&owner->engine,sources,count,false)) compiled=
-            P2(&owner->engine,sources,count,revision==BC_ABI_REVISION);
+        __typeof__(P2(&owner->engine,sources,count,false,module.data,module.len,function.data,function.len)) compiled=
+            P2(&owner->engine,sources,count,revision==BC_ABI_REVISION,module.data,module.len,function.data,function.len);
         if(compiled.tag==FY_RESULT_OK){
             program->id=compiled.p_0.f_0;
             program->program.input_kind=compiled.p_0.f_1?BC_INPUT_BYTES:BC_INPUT_NONE;
@@ -302,15 +316,20 @@ static uint32_t compile_program(bc_handle engine,uint32_t revision,const bc_sour
 }
 
 uint32_t BC_CALL bc_preview_compile(bc_handle engine,bc_slice source,bc_handle *out){
-    const bc_source row={{(const uint8_t *)"main",4},source};
-    return compile_program(engine,BC_PREVIEW_REVISION,&row,1,(bc_slice){0},out,NULL);
+    const bc_source row={main_name,source};
+    return compile_program(engine,BC_PREVIEW_REVISION,&row,1,(bc_slice){0},main_name,main_name,out,NULL);
 }
 
 uint32_t BC_CALL bc_compile(bc_handle engine,const bc_source *sources,uint32_t source_count,
                             bc_slice catalog,bc_handle *out,bc_diagnostic *diagnostic){
+    return bc_preview_compile_entry(engine,sources,source_count,catalog,main_name,main_name,out,diagnostic);
+}
+
+uint32_t BC_CALL bc_preview_compile_entry(bc_handle engine,const bc_source *sources,uint32_t source_count,
+    bc_slice catalog,bc_slice module,bc_slice function,bc_handle *out,bc_diagnostic *diagnostic){
     if(out){*out=0;}
     if(!diagnostic||diagnostic->struct_size!=sizeof(*diagnostic)){return BC_BAD_ARGUMENT;}
-    return compile_program(engine,BC_ABI_REVISION,sources,source_count,catalog,out,diagnostic);
+    return compile_program(engine,BC_ABI_REVISION,sources,source_count,catalog,module,function,out,diagnostic);
 }
 
 uint32_t BC_CALL bc_program_entry_info(bc_handle engine,bc_handle program,bc_slice module,bc_slice function,
@@ -331,9 +350,9 @@ uint32_t BC_CALL bc_program_entry_info(bc_handle engine,bc_handle program,bc_sli
     if(code->owner->revision!=BC_ABI_REVISION){
         status=BC_INVALID_HANDLE;
         message="Invalid revision-2 Program handle";
-    }else if(!is_main(module)||!is_main(function)){
+    }else if(!same_name(module,code->program.module)||!same_name(function,code->program.function)){
         status=BC_BAD_ARGUMENT;
-        message="Scalar Program entry must be main::main";
+        message="Entry does not match the compiled Program";
     }else{
         *out=(bc_entry_info){.struct_size=sizeof(*out),.abi_revision=BC_ABI_REVISION,
             .input_kind=code->program.input_kind,
@@ -367,8 +386,11 @@ static uint32_t create_instance(bc_handle engine,bc_handle program,uint32_t revi
     if(!instance){leave_preview(&admission);return BC_ALLOCATION_ERROR;}
     uint8_t failure=0;
     if(revision==BC_ABI_REVISION){
-        __typeof__(P11(&owner->engine,code->id,input.data,input.len,config.data,config.len,false)) prepared=
-            P11(&owner->engine,code->id,input.data,input.len,config.data,config.len,code->program.catalog_backed);
+        const bc_slice module=code->program.module,function=code->program.function;
+        __typeof__(P11(&owner->engine,code->id,input.data,input.len,config.data,config.len,false,
+                      module.data,module.len,function.data,function.len)) prepared=
+            P11(&owner->engine,code->id,input.data,input.len,config.data,config.len,code->program.catalog_backed,
+                module.data,module.len,function.data,function.len);
         if(prepared.tag==FY_RESULT_OK){
             instance->child=(preview_child){.owner=owner,.id=prepared.p_0.f_0,.fuel=prepared.p_0.f_1};
             instance->catalog_backed=code->program.catalog_backed;
