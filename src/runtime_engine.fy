@@ -860,15 +860,18 @@ pub fn Result<usize,Error> prepare_granted_instance(ref mut Engine e,usize progr
     let policy_limits::RunLimits limits=check_run_input(e,run,ref input)?;
     let bool emits=program_authority(e,program,run)?;
     let usize max_output=if(emits){limits.output_bytes}else{0};
-    let usize pending=required_pending_bytes(e,program,max_output)?;
+    let pending_cursors::Limits selected=select_run_vm_limits(limits);
+    let usize pending=required_pending_bytes_with_limits(e,program,max_output,selected)?;
     if(pending>limits.memory_bytes-input_bytes::capacity(ref input)){return .err(error(8));}
     let usize deadline=deadline_after(limits.deadline_ms)?;
     let usize instance=bind_input_output(e,program,input,limits.fuel,max_output,if(emits){3}else{2},deadline)?;
-    return prepare_created_instance(e,instance,limits);
+    return prepare_created_instance(e,instance,selected);
 }
 
-fn Result<usize,Error> prepare_created_instance(ref mut Engine e,usize instance,policy_limits::RunLimits limits){
-    let pending_cursors::Limits selected=pending_cursors::limits(limits.call_frames,limits.owner_entries,limits.descriptor_entries);
+fn pending_cursors::Limits select_run_vm_limits(policy_limits::RunLimits limits){
+    return pending_cursors::limits(limits.call_frames,limits.owner_entries,limits.descriptor_entries,limits.object_bytes);
+}
+fn Result<usize,Error> prepare_created_instance(ref mut Engine e,usize instance,pending_cursors::Limits selected){
     return switch(prepare_instance_limits(e,instance,selected)){
         case .ok(_):{.ok(instance)}
         case .err(failure):{let usize disposed=destroy_instance(e,instance)?;.err(failure)}
@@ -928,7 +931,8 @@ pub fn Result<ScalarPreparation,Error> prepare_scalar_preview(ref mut Engine e,u
     let policy_limits::RunLimits limits=run_config::run_limits(ref run);
     let usize output_limit=if(profile.emits){limits.output_bytes}else{0};
     let u32 authority=if(profile.emits){3}else{2};
-    let usize pending=required_pending_bytes(e,program,output_limit)?;
+    let pending_cursors::Limits selected=select_run_vm_limits(limits);
+    let usize pending=required_pending_bytes_with_limits(e,program,output_limit,selected)?;
     if(limits.fuel>e.meta.limits.fuel || input.len>limits.input_bytes ||
         pending>limits.memory_bytes || input.len>limits.memory_bytes-pending){return .err(error(8));}
     let usize deadline=deadline_after(limits.deadline_ms)?;
@@ -951,7 +955,7 @@ pub fn Result<ScalarPreparation,Error> prepare_scalar_preview(ref mut Engine e,u
             limits.fuel,output_limit,authority,deadline)};
         result(e,status)?
     };
-    let usize prepared=prepare_created_instance(e,id,limits)?;
+    let usize prepared=prepare_created_instance(e,id,selected)?;
     return .ok(ScalarPreparation{.instance=prepared,.fuel=limits.fuel,.peak=peak,
         .start=deadline-limits.deadline_ms*10000});
 }
@@ -1436,19 +1440,26 @@ pub fn Result<usize,Error> required_execution_bytes(ref Engine e,usize program,u
     };
     return execution_bytes(vec::at<Program>(ref e.programs,index),output_limit);
 }
-fn Result<usize,Error> pending_bytes(ref Program program,usize limit){
+fn Result<usize,Error> pending_bytes(ref Program program,usize limit,pending_cursors::Limits selected){
     if(vec::len<output_programs::Program>(ref program.output)!=1 || limit>1048576){return .err(error(1));}
-    return switch(pending_heap::prepare(program.execution_scratch,limit,pending_vm::pending_core_stride(),pending_vm::pending_machine_stride())){
+    let ref output_programs::Program retained=vec::at<output_programs::Program>(ref program.output,0);
+    let usize capacity=output_programs::preparation(retained).capacity;
+    if(program.execution_scratch<capacity){return .err(error(8));}
+    let usize scratch=program.execution_scratch-capacity+pending_cursors::aggregate_capacity(selected,capacity);
+    return switch(pending_heap::prepare(scratch,limit,pending_vm::pending_core_stride(),pending_vm::pending_machine_stride())){
         case .ok(v):{.ok(v.retained)}case .err(_):{.err(error(8))}
     };
 }
 pub fn Result<usize,Error> required_pending_bytes(ref Engine e,usize program,usize output_limit){
+    return required_pending_bytes_with_limits(e,program,output_limit,pending_cursors::default_limits());
+}
+fn Result<usize,Error> required_pending_bytes_with_limits(ref Engine e,usize program,usize output_limit,pending_cursors::Limits selected){
     let u32 status=unsafe{control_access_raw(e as ptr void)};
     if(status!=0){return .err(error(status));}if(e.meta.closed){return .err(error(2));}
     let usize index=switch(program_index(ref e.programs,program,false)){
         case .ok(v):{v}case .err(status):{return .err(error(status));}
     };
-    return pending_bytes(vec::at<Program>(ref e.programs,index),output_limit);
+    return pending_bytes(vec::at<Program>(ref e.programs,index),output_limit,selected);
 }
 fn u32 reserve_execution(ref mut Meta m,ref Program program,ref Instance instance){
     let usize transient=switch(execution_bytes(program,instance.output_limit)){
@@ -2521,7 +2532,7 @@ fn u32 prepare_instance_inner(ref mut Meta m,ref vec::Vec<Program> p,ref mut vec
             return failed(m,status);
         }
     };
-    let usize charge=switch(pending_bytes(code,before.output_limit)){case .ok(v):{v}case .err(e):{return failed(m,e.status);}};
+    let usize charge=switch(pending_bytes(code,before.output_limit,limits)){case .ok(v):{v}case .err(e):{return failed(m,e.status);}};
     if(charge>18446744073709551615-before.input_bytes){return failed(m,8);}
     let live::Plan ownership=switch(prepare_payload(m,before.input_bytes,before.input_bytes+charge,0)){
         case .ok(v):{v}case .err(s):{return failed(m,s);}

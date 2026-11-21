@@ -1,6 +1,7 @@
-- Latest runtime checkpoint (2026-11-21): [Revision-2 slot quotas](docs/engineering/embed-preview.md#revision-2-scalar-stepping)
-  enforces configured owner and descriptor limits in the saved aggregate VM.
-  Windows /Od and /O2 verify one-slot traps and two-slot success.
+- Latest runtime checkpoint (2026-11-21): [Revision-2 aggregate quotas](docs/engineering/embed-preview.md#revision-2-scalar-stepping)
+  apply the configured object-byte ceiling to the saved array/record arena,
+  memory admission and setup Fuel. Windows /Od and /O2 verify 8-byte success,
+  7-byte trap, exact accounting and zero live SDK allocations in Engine tests.
 
 # Brownie C agent guidance
 

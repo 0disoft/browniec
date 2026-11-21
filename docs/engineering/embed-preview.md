@@ -185,6 +185,19 @@ returns 77 after the limited Instance is destroyed. Both profiles pass with
 default native stacks. Input-window and catalog-backed storage have their own
 representations and are outside these fixed-table checks.
 
+The saved array/record VM reserves a shared payload arena of
+`min(limits.object_bytes, 65536)` bytes for Programs with aggregate layouts.
+Programs without aggregate layouts reserve zero payload bytes. The same
+capacity drives memory admission, setup Fuel, and the arena's allocation
+checks. Alignment padding counts toward the arena limit.
+
+The native host creates three Instances from one Program with two live
+four-byte arrays. An eight-byte ceiling allows the Program to return 77.
+Seven bytes traps with code 13 at the second allocation. The reported peaks
+differ by one byte. With the default run configuration, the Program still
+returns 77, with 65,528 additional bytes of peak accounting and 65,528
+additional setup Fuel compared with the eight-byte run.
+
 ## Revision-2 guest output
 
 `BC_DONE` exposes the sealed bytes in a read-only `payload` slice. The

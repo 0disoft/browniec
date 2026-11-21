@@ -209,6 +209,40 @@ static void revision_two_slot_limits(bc_handle engine){
     revision_two_slot_limit(engine,descriptors,sizeof(descriptors)-1,"\"descriptor_entries\":");
 }
 
+static void revision_two_object_bytes(bc_handle engine){
+    static const uint8_t root[]="main";
+    static const uint8_t text[]="module main; pub fn i32 main(){"
+        "let i32[1] first=[40;1];let i32[1] second=[37;1];return first[0]+second[0];}";
+    const bc_source source={{root,sizeof(root)-1},{text,sizeof(text)-1}};
+    uint8_t config[1024];
+    const bc_slice run={config,read_fixture("run.json",config,sizeof(config))};
+    char *limit=strstr((char *)config,"\"object_bytes\":4194304");
+    assert(limit);
+    limit+=sizeof("\"object_bytes\":")-1;
+    bc_handle program=0,exact=0,short_one=0,default_limit=0;
+    bc_diagnostic diag={.struct_size=sizeof(diag)};
+    assert(bc_compile(engine,&source,1,(bc_slice){0},&program,&diag)==BC_OK);
+    assert(bc_instance_create(engine,program,(bc_slice){0},run,&default_limit,&diag)==BC_OK);
+    memcpy(limit,"      8",7);
+    assert(bc_instance_create(engine,program,(bc_slice){0},run,&exact,&diag)==BC_OK);
+    memcpy(limit,"      7",7);
+    assert(bc_instance_create(engine,program,(bc_slice){0},run,&short_one,&diag)==BC_OK);
+    assert(bc_program_release(engine,program)==BC_OK);
+
+    const bc_event refused=finish_revision_two(short_one,1);
+    assert(refused.kind==BC_TRAP && refused.trap_code==13 && refused.diagnostic.source_index==0);
+    assert(bc_instance_destroy(short_one)==BC_OK);
+    const bc_event done=finish_revision_two(exact,64);
+    const bc_event unrestricted=finish_revision_two(default_limit,64);
+    assert(done.kind==BC_DONE && unrestricted.kind==BC_DONE);
+    assert(done.return_i32==77 && unrestricted.return_i32==77);
+    assert(done.peak_accounted_bytes==refused.peak_accounted_bytes+1);
+    assert(unrestricted.peak_accounted_bytes==done.peak_accounted_bytes+65536-8);
+    assert(unrestricted.fuel_used==done.fuel_used+65536-8);
+    assert(bc_instance_destroy(exact)==BC_OK);
+    assert(bc_instance_destroy(default_limit)==BC_OK);
+}
+
 static void revision_two_byte_inputs(bc_handle engine){
     static const uint8_t main[]="main";
     static const uint8_t text[]="module main; pub fn i32 main(ref u8[] data){"
@@ -466,6 +500,7 @@ static void revision_two_engines(void){
     revision_two_programs(handle,(bc_slice){policy,length});
     revision_two_byte_inputs(handle);
     revision_two_slot_limits(handle);
+    revision_two_object_bytes(handle);
     revision_two_output(handle);
     revision_two_source_limit(policy,length);
     memset(policy,0,sizeof(policy));

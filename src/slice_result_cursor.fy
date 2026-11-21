@@ -12,30 +12,34 @@ import return_metadata_execution as return_metadata;
 // The dispatcher owns these inline/native-stack values; no heap is allocated.
 // Register/static banks stay separately borrowed: the pinned compiler treats
 // simultaneous loans of sibling array fields as loans of the whole struct.
-pub struct Limits { u8 frames; u8 owners; u8 descriptors; }
-pub fn Limits default_limits(){return Limits{.frames=31,.owners=16,.descriptors=16};}
+pub struct Limits { u8 frames; u8 owners; u8 descriptors; usize object_bytes; }
+pub fn Limits default_limits(){return Limits{.frames=31,.owners=16,.descriptors=16,.object_bytes=65536};}
 
 fn u8 narrow(usize value,u8 ceiling){
     if(value>=ceiling as usize){return ceiling;}
     let i64 small=switch(num::i64_from_usize(value)){case .ok(v):{v}case .err(_):{assert(false);0}};
     return switch(num::u8_from_i64(small)){case .ok(v):{v}case .err(_):{assert(false);0}};
 }
-pub fn Limits limits(usize frames,usize owners,usize descriptors){
-    return Limits{.frames=narrow(frames,31),.owners=narrow(owners,16),.descriptors=narrow(descriptors,16)};
+pub fn Limits limits(usize frames,usize owners,usize descriptors,usize object_bytes){
+    return Limits{.frames=narrow(frames,31),.owners=narrow(owners,16),.descriptors=narrow(descriptors,16),
+        .object_bytes=if(object_bytes>65536){65536}else{object_bytes}};
 }
-// Operation 9 has one native word for its argument. Each narrowed count
-// fits five bits. Keep serialization here and execution on the typed value.
+pub fn usize aggregate_capacity(Limits selected,usize capacity){
+    return if(capacity>selected.object_bytes){selected.object_bytes}else{capacity};
+}
+// Operation 9 packs three five-bit counts followed by the effective byte
+// ceiling. The backing limit of 65536 needs seventeen bits.
 pub fn usize encode_limits(Limits selected){
-    return (selected.frames as usize) | ((selected.owners as usize)<<5) | ((selected.descriptors as usize)<<10);
+    return (selected.frames as usize) | ((selected.owners as usize)<<5) | ((selected.descriptors as usize)<<10) | (selected.object_bytes<<15);
 }
 pub fn Result<Limits,errors::Error> decode_limits(usize word){
     let usize frames=word&31;
     let usize owners=(word>>5)&31;
     let usize descriptors=(word>>10)&31;
-    if(word>>15!=0 || frames==0 || owners==0 || owners>16 || descriptors==0 || descriptors>16){
-        return .err(errors::make(5,0));
-    }
-    return .ok(limits(frames,owners,descriptors));
+    let usize object_bytes=word>>15;
+    if(frames==0 || owners==0 || owners>16 || descriptors==0 || descriptors>16 ||
+        object_bytes==0 || object_bytes>65536){return .err(errors::make(5,0));}
+    return .ok(limits(frames,owners,descriptors,object_bytes));
 }
 
 pub struct Cursor { usize pc; bool active; output_copy::State output; fills::State array; calls::State call; returns::State returned; metadata_budget::State metadata; u8 call_metadata_phase; Limits limits; return_metadata::State return_metadata; }

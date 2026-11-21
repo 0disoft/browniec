@@ -174,7 +174,7 @@ fn u32 pending_core_setup_inner(ref output_programs::Program p,ref mut machines:
     if(!metadata_budget::reset(ref mut cursor.metadata,0).is_ok){return 5;}
     if(!metadata_budget::admit(ref mut cursor.metadata,4096,0).is_ok){return 5;}
     let ref output_programs::Preparation prepared=output_programs::preparation(p);
-    if(machines::initialize_staged(core,m.lifecycle.index,prepared.capacity,ref prepared.sites,ref prepared.origins,cursor.limits)){m.lifecycle.phase=4;}
+    if(machines::initialize_staged(core,m.lifecycle.index,m.lifecycle.setup.plan.payload,ref prepared.sites,ref prepared.origins,cursor.limits)){m.lifecycle.phase=4;}
     m.lifecycle.index+=1;assert(pending_cursors::finish(ref mut statistics,1,true).is_ok);
     m.cursor=cursor;m.stats=statistics;return 0;
 }

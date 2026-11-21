@@ -106,7 +106,8 @@ fn Result<Machine,errors::Error> open_selected(ref ir::Program body,ref static_i
     var runtime_output::Transaction staged=switch(runtime_output::open_metered(output_limit,allowed,ref mut remaining)){
         case .ok(value):{value}case .err(e):{return .err(output_steps::failure(e,0));}
     };
-    let usize capacity=if(body.arrays.count!=0 || body.records.count!=0){65536}else{0};
+    let usize capacity=slice_result_cursor::aggregate_capacity(limits,
+        if(body.arrays.count!=0 || body.records.count!=0){65536}else{0});
     let usize preparation=if(capacity==0){0}else{1+capacity};
     let lists::Requirement list_plan=if(cached){*cached_list}else{lists::requirement(body)?};
     let places::Requirement place_plan=if(cached){*cached_place}else{places::requirement(body)?};
@@ -193,7 +194,7 @@ fn void retain_core_types(){
 // Reserve storage during admission; every linear initialization loop is resumed.
 fn Result<Machine,errors::Error> reserve_prepared(ref lists::Requirement list,ref places::Requirement place,
     usize capacity,bool input,usize input_length,usize remaining,runtime_output::Transaction staged,slice_result_cursor::Limits limits){
-    if(limits.frames==0 || limits.owners==0 || limits.descriptors==0){return .err(errors::make(5,0));}
+    if(limits.frames==0 || limits.owners==0 || limits.descriptors==0 || limits.object_bytes==0){return .err(errors::make(5,0));}
     let usize stride=native_size();
     let u8 kind=if(place.width==0){0}else if(place.aggregate){3}else if(place.records){2}else if(place.slices){1}else{0};
     let usize prefix=if(kind==3){3}else if(kind==2){2}else if(kind==1){1}else{0};
