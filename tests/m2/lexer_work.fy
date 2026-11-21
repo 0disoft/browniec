@@ -3,6 +3,7 @@ import lexer_work as work;
 import lexer as raw;
 import metadata_budget as budget;
 import errors as errors;
+import std::bytes as bytes;
 fn void equal(ref raw::State a,ref raw::State b){
     assert(a.cursor==b.cursor && a.begin==b.begin && a.end==b.end && a.tokens==b.tokens && a.kind==b.kind &&
         a.value==b.value && a.min_magnitude==b.min_magnitude && a.context==b.context);
@@ -59,4 +60,50 @@ fn raw::State scoped(ref u8[] source,usize start,usize end,bool text){return swi
     source=[65;4096];source[0]=34;source[4095]=34;trace(ref source,raw::empty());
     trace(b"/* /*x*/",raw::empty());trace(b"//bad\r",raw::empty());trace(b"/*\x00*/",raw::empty());
     trace(b"/*\xef\xbb\xbf*/",raw::empty());trace(b" /* good */ \"\xff\\q\"",raw::empty());
+}
+
+fn bytes::Buffer large_source(u8 fill){
+    let u8[4096] chunk=[fill;4096];
+    var bytes::Buffer buffer=bytes::empty();
+    assert(bytes::append(ref mut buffer,ref chunk).is_ok);
+    assert(bytes::append(ref mut buffer,ref chunk).is_ok);
+    assert(bytes::append(ref mut buffer,ref chunk[..1]).is_ok);
+    return buffer;
+}
+@test fn void large_sources_keep_raw_tokens_and_error_offsets(){
+    var bytes::Buffer buffer=large_source(65);
+    trace(bytes::view(ref buffer),raw::empty());
+    {let ref mut u8[] source=bytes::view_mut(ref mut buffer);
+        source[0]=47;source[1]=42;source[8190]=42;source[8191]=47;source[8192]=59;}
+    trace(bytes::view(ref buffer),raw::empty());
+    {let ref mut u8[] source=bytes::view_mut(ref mut buffer);source[8190]=13;}
+    trace(bytes::view(ref buffer),raw::empty());
+    {let ref mut u8[] source=bytes::view_mut(ref mut buffer);source[8190]=65;}
+    trace(bytes::view(ref buffer),raw::empty());
+    {let ref mut u8[] source=bytes::view_mut(ref mut buffer);source[0]=34;source[1]=34;}
+    let ref u8[] source=bytes::view(ref buffer);
+    trace(source,raw::empty());trace(source,scoped(source,0,2,false));
+}
+@test fn void large_source_metered_scan_commits_only_the_complete_token(){
+    var bytes::Buffer buffer=large_source(32);
+    {let ref mut u8[] target=bytes::view_mut(ref mut buffer);target[8192]=59;}
+    let ref u8[] source=bytes::view(ref buffer);
+    let raw::State initial=raw::empty();var raw::State token=initial;
+    // One setup dispatch, 512 whitespace dispatches, and one token dispatch.
+    var usize fuel=514;
+    switch(raw::next_metered(source,ref mut token,1,ref mut fuel)){
+        case .ok(_):{assert(false);}
+        case .err(e):{assert(e.kind==errors::deadline_kind() && fuel==514);}
+    };
+    equal(ref token,ref initial);
+    fuel=513;
+    switch(raw::next_metered(source,ref mut token,0,ref mut fuel)){
+        case .ok(_):{assert(false);}
+        case .err(e):{assert(e.kind==4 && fuel==0);}
+    };
+    equal(ref token,ref initial);
+    fuel=514;
+    assert(raw::next_metered(source,ref mut token,0,ref mut fuel).is_ok);
+    assert(fuel==0 && token.kind==59 && token.begin==8192 &&
+        token.end==8193 && token.cursor==8193 && token.tokens==1);
 }

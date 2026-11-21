@@ -1204,6 +1204,26 @@ Windows development and /O2 each passed 104 configured, 32 catalog, five
 managed project and four compile-stop cases. All 456 input hashes matched.
 Local receipt: `build/restricted-worker/20261121T234437448177Z/receipt.json`.
 
+### Large-source token Fuel
+
+Metered token reads now advance the same bounded scanner when the backing
+source exceeds 4096 bytes. Each dispatch spends one Fuel unit and checks
+the compile deadline. Successful scans commit the final token state.
+Fuel or deadline exhaustion leaves the caller's input state intact. Syntax
+errors still expose the same state and byte offsets as the raw scanner.
+The project source admission and unscoped literal-size rules are preserved.
+
+The focused fixture compares raw and staged identifiers, comments, error
+locations and scoped literal handling in an 8193-byte source. An input
+with 8192 spaces followed by a semicolon needs 514 Fuel. At 513 it fails
+with the original token state intact. An expired deadline spends zero Fuel
+and also preserves that state.
+
+Run python -B tools/verify-lexer-work.py for the five focused groups in
+Windows development and /O2. Its isolated build links the production clock
+companion so the fixture exercises the metered entry point. Both profiles
+passed and recorded their input hashes under build/lexer-work/.
+
 ## Windows verification
 
 Run `python -B tools/verify-restricted-worker.py`. The development and optimized

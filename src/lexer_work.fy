@@ -5,7 +5,7 @@ import cells as cells;
 import errors as errors;
 import runtime_clock as clock;
 import metadata_budget as budget;
-// Private token continuation for <=4096 immutable source bytes. At most sixteen
+// Private token continuation over immutable source bytes. At most sixteen
 // byte/scan transitions run in a fresh stage; literal decoding has its own leaf.
 // Qualified-name lookahead stays private until the same raw commit points.
 pub struct Scan { raw::State target; literals::State literal; usize inner; usize depth;
@@ -115,7 +115,6 @@ fn Result<bool,errors::Error> scan(ref u8[] source,ref mut Scan w,ref mut budget
 pub fn Result<bool,errors::Error> advance(ref u8[] source,ref mut State w,ref mut budget::State meter){
     if(w.done){return .ok(true);}if(meter.last!=0){return .ok(false);}
     if(w.phase==0){if(!budget::admit(meter,4096,0)?){return .ok(false);}
-        if(source.len>4096){return .err(errors::make(4,4096));}
         let raw::State current=token(ref w.scan);w.limit=source.len;
         if(current.context!=0){let usize bits=current.context as usize;let usize start=bits&8191;let usize end=(bits>>13)&8191;
             if((bits>>28)!=0 || (bits&67108864)==0 || start>end || end>source.len || current.cursor<start || current.cursor>end){return .err(errors::make(5,current.cursor));}
