@@ -288,6 +288,24 @@ void bc_runtime_engine_test_signature_stopped(void){
  assert(signature_expiry&&signature_staged&&signature_pass==signature_target);
  signature_expiry=0;
 }
+static uintptr_t origin_expiry;
+static unsigned origin_pass,origin_target,origin_walks;
+void bc_runtime_engine_test_expire_in_origin(uintptr_t deadline,uint32_t pass){
+ assert(host_clock_fixed&&deadline>host_clock_ticks&&!origin_expiry&&pass);
+ origin_expiry=deadline;origin_target=pass;origin_pass=0;origin_walks=0;
+}
+void bc_runtime_engine_test_origin_begin(uintptr_t deadline){
+ if(origin_expiry){assert(deadline==origin_expiry&&!origin_walks);origin_pass++;}
+}
+void bc_runtime_engine_test_origin_walk(uint8_t completed){
+ if(!origin_expiry||origin_pass!=origin_target)return;
+ assert(!origin_walks);
+ if(completed){origin_walks++;bc_runtime_engine_test_set_clock(origin_expiry);}
+}
+void bc_runtime_engine_test_origin_stopped(void){
+ assert(origin_expiry&&origin_pass==origin_target&&origin_walks==1);
+ origin_expiry=0;
+}
 static uintptr_t body_expiry;
 static int body_requested;
 void bc_runtime_engine_test_expire_in_body(uintptr_t deadline){

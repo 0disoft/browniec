@@ -3157,7 +3157,7 @@ fn Result<usize, errors::Error> lower_into(ref u8[] source,bool origin_analysis,
 }
 fn Result<usize,errors::Error> lower_prepared(ref u8[] source,bool origin_analysis,bool references,bool returns,
     ref literal_collection::Index literals,ref mut functions::Table signatures,ref mut ir::Program p,ref mut usize active,usize start){
-    let usize ready=prepare_lowering(source,origin_analysis,references,returns,literals,signatures,p,start)?;
+    let usize ready=prepare_lowering(source,origin_analysis,references,returns,literals,signatures,p,start,0)?;
     var usize f=0;
     while(f<signatures.count){
         let usize scoped=locate_body(source,signatures,f,active)?;
@@ -3169,7 +3169,7 @@ fn Result<usize,errors::Error> lower_prepared(ref u8[] source,bool origin_analys
 fn Result<usize,errors::Error> lower_prepared_output_until(ref u8[] source,ref literal_collection::Index literals,
     ref mut functions::Table signatures,ref mut ir::Program p,ref mut usize active,usize deadline){
     if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
-    let usize ready=prepare_lowering(source,false,true,true,literals,signatures,p,0)?;
+    let usize ready=prepare_lowering(source,false,true,true,literals,signatures,p,0,deadline)?;
     var usize f=0;
     while(f<signatures.count){
         if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
@@ -3181,7 +3181,7 @@ fn Result<usize,errors::Error> lower_prepared_output_until(ref u8[] source,ref l
 }
 
 fn Result<usize,errors::Error> prepare_lowering(ref u8[] source,bool origin_analysis,bool references,bool returns,
-    ref literal_collection::Index literals,ref mut functions::Table signatures,ref mut ir::Program p,usize start){
+    ref literal_collection::Index literals,ref mut functions::Table signatures,ref mut ir::Program p,usize start,usize deadline){
     signatures.literals=*literals;signatures.reference_calls=references;
     // Signature candidates do not prove a returned borrow's origin or lifetime.
     // Ordinary/public lowering rejects these declarations, even unreachable
@@ -3194,7 +3194,7 @@ fn Result<usize,errors::Error> prepare_lowering(ref u8[] source,bool origin_anal
         }
         declaration += 1;
     }
-    if(origin_analysis || returns){let usize inferred=source_origins::infer(source,signatures)?;}
+    if(origin_analysis || returns){let usize inferred=source_origins::infer_until(source,signatures,deadline)?;}
     p.function_count = signatures.count;
     p.entry = signatures.entry;
     p.return_types = signatures.return_types;
@@ -3592,7 +3592,7 @@ fn Result<usize,source_errors::Error> module_reference_signature(ref u8[] source
     var functions::Table signatures=switch(functions::scan_scoped(source,scope,selected,true)){
         case .ok(v):{v}case .err(e):{return .err(module_error(selected,e,16));}
     };
-    return bind_reference_signature(source,ref mut signatures,selected,code);
+    return bind_reference_signature(source,ref mut signatures,selected,code,0);
 }
 fn Result<usize,source_errors::Error> module_reference_signature_until(ref u8[] source,ref source_context::Table scope,
     ref module_entries::Entry selected,ref mut reference_ir::Program code,usize deadline){
@@ -3601,11 +3601,11 @@ fn Result<usize,source_errors::Error> module_reference_signature_until(ref u8[] 
     var functions::Table signatures=switch(signature_scan::scan_indexed_until(source,scope,index,entry,deadline)){
         case .ok(v):{v}case .err(e):{return .err(module_error(selected,e,16));}
     };
-    return bind_reference_signature(source,ref mut signatures,selected,code);
+    return bind_reference_signature(source,ref mut signatures,selected,code,deadline);
 }
 fn Result<usize,source_errors::Error> bind_reference_signature(ref u8[] source,ref mut functions::Table signatures,
-    ref module_entries::Entry selected,ref mut reference_ir::Program code){
-    switch(source_origins::infer(source,signatures)){case .ok(_):{}case .err(e):{return .err(module_error(selected,e,16));}};
+    ref module_entries::Entry selected,ref mut reference_ir::Program code,usize deadline){
+    switch(source_origins::infer_until(source,signatures,deadline)){case .ok(_):{}case .err(e):{return .err(module_error(selected,e,16));}};
     code.origins=signatures.return_slice_inputs;
     var u8[128] parameters=[0;128];var u8[16] results=[0;16];
     let ref ir::Program body=ref code.body;var usize f=0;

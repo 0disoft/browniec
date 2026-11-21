@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-21): [Indexed signature deadlines](docs/engineering/runtime-engine-compile-memory.md#configured-compile-deadlines)
-  stop configured output compilation between indexed signature advances,
-  including the post-body rescan. Windows development and /O2 passed with
+- Latest runtime checkpoint (2026-11-21): [Returned-slice origin deadlines](docs/engineering/runtime-engine-compile-memory.md#configured-compile-deadlines)
+  stop configured output compilation around each origin body walk, including
+  the post-body reference binding pass. Windows development and /O2 passed with
   zero live SDK allocations.
 
 # Brownie C agent guidance

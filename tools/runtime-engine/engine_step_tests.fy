@@ -35,6 +35,8 @@ unsafe extern C fn void bc_runtime_engine_test_expire_in_literal(usize deadline)
 unsafe extern C fn void bc_runtime_engine_test_literal_stopped();
 unsafe extern C fn void bc_runtime_engine_test_expire_in_signature(usize deadline,u32 pass);
 unsafe extern C fn void bc_runtime_engine_test_signature_stopped();
+unsafe extern C fn void bc_runtime_engine_test_expire_in_origin(usize deadline,u32 pass);
+unsafe extern C fn void bc_runtime_engine_test_origin_stopped();
 unsafe extern C fn void bc_runtime_engine_test_expire_in_body(usize deadline);
 unsafe extern C fn void bc_runtime_engine_test_body_stopped();
 unsafe extern C fn usize bc_runtime_engine_test_proof_count();
@@ -712,6 +714,29 @@ fn Result<usize,u8> compile_signature_deadline(ref mut engine::Engine e,ref conf
     unsafe{bc_runtime_engine_test_use_os_clock()};
     return .ok(0);
 }
+fn Result<usize,u8> compile_origin_deadline(ref mut engine::Engine e,ref configs::RunConfig run){
+    let ref u8[] ordinary=b"module app;fn ref u8[] tail(ref u8[] data){return data[1..];}pub fn i32 chosen(){return 42;}";
+    let ref u8[] input=b"module app;fn ref u8[] tail(ref u8[] data){return data[1..];}pub fn i32 chosen(ref u8[] data){return 42;}";
+    let Heap idle=heap();
+    var usize mode=0;
+    while(mode<3){
+        let usize start=100+mode*20000000;
+        unsafe{bc_runtime_engine_test_set_clock(start)};
+        unsafe{bc_runtime_engine_test_proof_begin()};
+        unsafe{bc_runtime_engine_test_expire_in_origin(start+20000000,if(mode==2){2}else{1})};
+        let Result<usize,engine::Error> result=if(mode==1){engine::compile_granted_output(e,indexed(input)?,run,65536)}
+            else{engine::compile_output(e,selected(ordinary)?,65536)};
+        rejected_compile_deadline(result);
+        unsafe{bc_runtime_engine_test_origin_stopped()};
+        assert(unsafe{bc_runtime_engine_test_proof_count()}==0);
+        counts(e,0,0,0);same_heap(ref idle);
+        assert(retained(e).program_bytes==0);
+        mode+=1;
+    }
+    unsafe{bc_runtime_engine_test_use_os_clock()};
+    return .ok(0);
+}
+
 fn Result<usize,u8> compile_body_deadline(ref mut engine::Engine e,ref configs::RunConfig run){
     let ref u8[] ordinary=b"module app;pub fn i32 chosen(){let i32 x=20+22;return x;}";
     let ref u8[] input=b"module app;pub fn i32 chosen(ref u8[] data){let i32 x=20+22;return x;}";
@@ -742,6 +767,7 @@ fn Result<usize,u8> configured_compile_deadline(){
     literal_transaction_deadline();
     let usize literal_checked=compile_literal_deadline(ref mut e,ref granted)?;
     let usize signature_checked=compile_signature_deadline(ref mut e,ref granted)?;
+    let usize origin_checked=compile_origin_deadline(ref mut e,ref granted)?;
     let usize body_checked=compile_body_deadline(ref mut e,ref granted)?;
     let usize checked=compile_deadline(ref mut e,ref granted)?;
     close(ref mut e);return .ok(0);

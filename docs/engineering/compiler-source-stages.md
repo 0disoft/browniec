@@ -66,6 +66,8 @@ and input-output compilation use the same source-context and body control
 advances with their
 [absolute compile deadline](runtime-engine-compile-memory.md#configured-compile-deadlines).
 The body driver checks again before dispatching each pending semantic child.
+Returned-slice origin inference checks around each function-body walk, including
+the output-only reference binding pass after body lowering.
 Public compilation still uses its existing admission gates and remains synchronous. No public Pending
 compile, cancellation protocol, time bound or peak-stack improvement follows.
 

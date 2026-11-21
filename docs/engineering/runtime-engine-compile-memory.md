@@ -125,8 +125,11 @@ finished candidate to the image Builder. An expired collection leaves the
 Builder untouched and returns the source-less deadline diagnostic. Indexed
 signature scans sample before each advance and before returning the complete
 Table. This covers the initial scan in both output modes and the reference
-signature rescan in output-only compilation. The compiler also checks before
-body preparation, before each function, and before
+signature rescan in output-only compilation. Advisory returned-slice origin
+inference samples before and after each function-body walk within its fixed
+point. This covers body preparation in both modes and the post-body reference
+binding pass in output-only mode. The compiler also checks before body
+preparation, before each function, and before
 each control advance or pending semantic child. A child already running returns
 to the next checkpoint before expiry is delivered. The compiler samples again
 after lowering and before freezing the literal image. The proof driver samples
@@ -177,6 +180,14 @@ further scan advance or proof stage ran. The SDK heap and retained Program
 charge returned to baseline, and the next successful compile received Program
 ID 1. Windows development and /O2 passed with zero live SDK allocations at
 exit. Local receipt: `build/runtime-engine/20261121T001507901261Z/receipt.json`.
+
+The Windows verifier expired the deadline after the first successful origin
+body walk. It covered body preparation in both output modes and the output-only
+post-body reference binding pass. Each rejection reported a source-less deadline
+before another walk or a proof advance, restored the Engine ledger and SDK heap,
+and preserved the next Program ID. Development and /O2 passed with zero live
+SDK allocations at exit. Local receipt:
+`build/runtime-engine/20261121T002541558630Z/receipt.json`.
 
 Source lowering, work between checkpoints, and cleanup remain synchronous.
 Public Pending compilation, in-flight cancellation, and a latency bound for

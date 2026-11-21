@@ -107,6 +107,20 @@ def source_copy(path):
                  'unsafe extern C fn void bc_runtime_engine_test_signature_step();\n'
                  'unsafe extern C fn void bc_runtime_engine_test_signature_staged();\n')
         return path.name, (head + calls + declaration + timed).encode('utf-8')
+    if path == ROOT / 'src/slice_result_source_origins.fy':
+        text = path.read_text(encoding='utf-8')
+        declaration = 'pub fn Result<usize,errors::Error> infer_until('
+        signature = 'ref mut functions::Table t,usize deadline){'
+        walk = '            let u8 found=walk::body(source,t,ref t.return_slice_inputs,f)?;'
+        need(text.count(declaration) == text.count(signature) == text.count(walk) == 1,
+             'Source origin deadline probe anchors changed')
+        text = text.replace(declaration, 'unsafe extern C fn void bc_runtime_engine_test_origin_begin(usize deadline);\n'
+                            'unsafe extern C fn void bc_runtime_engine_test_origin_walk(u8 completed);\n'
+                            + declaration, 1)
+        text = text.replace(signature, signature + '\n    unsafe{bc_runtime_engine_test_origin_begin(deadline)};', 1)
+        text = text.replace(walk, '            unsafe{bc_runtime_engine_test_origin_walk(0)};\n' + walk +
+                            '\n            unsafe{bc_runtime_engine_test_origin_walk(1)};', 1)
+        return path.name, text.encode('utf-8')
     if path == ROOT / 'src/compiler.fy':
         text=path.read_text(encoding='utf-8')
         marker='fn Result<scratch_vec::Vec<expression_work::Bank>,errors::Error> expression_scratch'
