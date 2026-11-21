@@ -74,5 +74,28 @@ the diagnostic untouched. An invalid diagnostic size leaves its fields
 untouched. Destroy a revision-2 Engine on its creating thread with
 `bc_engine_destroy`. Scalar preview calls reject these Engine handles.
 
-Revision-2 Program and Instance calls remain open. The scalar preview
-continues to provide the executable rule path through its own API.
+## Revision-2 scalar Programs
+
+`bc_compile` accepts one `bc_source` whose module slice is `main` and whose
+source declares `module main;` with a public `fn i32 main()`. Pass an empty
+catalog slice. The source is copied during the call and may be reused when
+it returns. The existing Engine applies its configured compile deadline,
+working-memory limit and Program retention limits. This path has a fixed
+4096-byte source ceiling. Wiring the remaining compile policy fields into
+source admission is still pending.
+
+Initialize the diagnostic's exact `struct_size`. The call zeros the output
+handle on entry and publishes a Program only after compilation and handle
+registration succeed. Diagnostics report the API result code and preserve the
+original source span when available. An absent span uses `UINT32_MAX` and
+byte offsets `0/0`. A nonempty catalog returns `BC_POLICY_ERROR`.
+
+`bc_program_release` accepts the originating revision-2 Engine and a live
+Program handle on its owner thread. Successful release invalidates the handle.
+An Engine with a live Program returns `BC_BUSY` on destruction. Preview and
+revision-2 Program handles use separate API entry points. Revision-2 entry
+query and Instance execution are still pending.
+
+The native C host passed both Windows `/Od` and `/O2` builds. It verifies
+4096-byte admission and 4097-byte rejection, exact source diagnostics,
+cross-Engine and cross-revision rejection, and stale Program handles.

@@ -1,8 +1,7 @@
 /* Brownie C ABI revision 2, derived from design v0.3.0 contracts/host-abi.h.
    Windows x64, natural alignment, no packed structs, __cdecl.
-   Bootstrap slice: ONLY bc_get_abi_info_v2 is implemented/exported.
-   All remaining function declarations describe planned APIs, unavailable here.
-   No engine, instance, handle registry or embedding availability is provided. */
+   The bootstrap DLL exports bc_get_abi_info_v2. The scalar preview DLL also
+   exports the Engine and scalar Program lifecycle documented below. */
 #ifndef BROWNIE_HOST_ABI_H
 #define BROWNIE_HOST_ABI_H
 #include <stddef.h>
@@ -68,8 +67,8 @@ enum bc_input_kind { BC_INPUT_NONE=0, BC_INPUT_BYTES=1 };
    returns BC_BAD_ARGUMENT. Failure leaves caller memory untouched. Success
    writes exactly 32 bytes, even if capacity is larger. Only trusted native
    callers with writable storage of at least 32 bytes may request success.
-   Planned APIs below: initialize struct_size before calls; verify ABI before
-   engine creation. These declarations do not imply exported implementations.
+   Initialize struct_size before calls and verify ABI before Engine creation.
+   Check the artifact's documented exports before using other declarations.
    Trusted native callers only. NULL is valid for zero-length slices, not outputs.
    All child handles belong to their Engine's owner-thread lifetime. No callbacks.
    Handles use one bounded kind/generation registry, never native pointers.
@@ -78,10 +77,11 @@ enum bc_input_kind { BC_INPUT_NONE=0, BC_INPUT_BYTES=1 };
    source_index UINT32_MAX, byte span 0/0 and an empty NUL message. */
 BC_BOOTSTRAP_QUERY_API uint32_t BC_CALL bc_get_abi_info_v2(uint32_t requested_revision,
     uint32_t out_capacity, bc_abi_info *out_info);
-/* Planned declarations retain canonical host import/export annotations.
-   The bootstrap shim suppresses annotations using its private internal mode. */
 BC_API uint32_t BC_CALL bc_engine_create(uint32_t requested_revision,
     bc_slice policy_json, bc_handle *out_engine, bc_diagnostic *diagnostic);
+/* Scalar preview DLL: one source of 1..4096 UTF-8 bytes with module slice
+   "main", a matching module declaration and public fn i32 main(). The catalog
+   must be empty. Source storage can be reused after this call. */
 BC_API uint32_t BC_CALL bc_compile(bc_handle engine,
     const bc_source *sources, uint32_t source_count, bc_slice catalog_json,
     bc_handle *out_program, bc_diagnostic *diagnostic);

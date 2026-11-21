@@ -60,7 +60,8 @@ pointers are not made safe by this ABI.
 The public header preserves the revision-2 declarations. This bootstrap DLL
 exports the query alone. Its host resolves the unmangled symbol and verifies
 the singleton export. The separate [embedding DLL](embed-preview.md#revision-2-engine-lifecycle)
-exports the query and the policy-configured Engine lifecycle.
+exports the query, the policy-configured Engine lifecycle and the
+[scalar Program lifecycle](embed-preview.md#revision-2-scalar-programs).
 
 ## Native evidence
 

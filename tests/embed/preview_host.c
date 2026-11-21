@@ -72,6 +72,60 @@ static DWORD WINAPI foreign_engine_destroy(void *arg){
     return bc_engine_destroy(*(const bc_handle *)arg);
 }
 
+static void revision_two_programs(bc_handle engine,bc_slice policy){
+    static const uint8_t module[]="main";
+    static const uint8_t invalid[]="module main; pub fn bool main(){return true;}";
+    static const uint8_t valid[]="module main; pub fn i32 main(){return 77;}";
+    const bc_slice empty={0};
+    bc_source source={{module,sizeof(module)-1},{invalid,sizeof(invalid)-1}};
+    bc_handle program=UINT64_MAX;
+    bc_diagnostic diagnostic={.struct_size=1,.code=UINT32_MAX};
+    assert(bc_compile(engine,&source,1,empty,&program,&diagnostic)==BC_BAD_ARGUMENT);
+    assert(program==0 && diagnostic.struct_size==1 && diagnostic.code==UINT32_MAX);
+    diagnostic.struct_size=sizeof(diagnostic);
+    assert(bc_compile(engine,NULL,1,empty,&program,&diagnostic)==BC_BAD_ARGUMENT && program==0);
+    assert(bc_compile(engine,&source,0,empty,&program,&diagnostic)==BC_BAD_ARGUMENT && program==0);
+    assert(bc_compile(engine,&source,2,empty,&program,&diagnostic)==BC_BAD_ARGUMENT && program==0);
+    assert(bc_compile(engine,&source,1,(bc_slice){NULL,1},&program,&diagnostic)==BC_BAD_ARGUMENT);
+    assert(bc_compile(engine,&source,1,(bc_slice){module,1},&program,&diagnostic)==BC_POLICY_ERROR);
+    expect_diagnostic(&diagnostic,BC_POLICY_ERROR);
+    assert(bc_compile(engine,&source,1,empty,&program,&diagnostic)==BC_COMPILE_ERROR && program==0);
+    assert(diagnostic.code==BC_COMPILE_ERROR && diagnostic.source_index==0);
+    assert(diagnostic.byte_start==20 && diagnostic.byte_end==24 && diagnostic.message[0]);
+
+    source.source_utf8=(bc_slice){NULL,sizeof(valid)-1};
+    assert(bc_compile(engine,&source,1,empty,&program,&diagnostic)==BC_BAD_ARGUMENT && program==0);
+    uint8_t large[4097];
+    memset(large,' ',sizeof(large));
+    memcpy(large,valid,sizeof(valid)-1);
+    source.source_utf8=(bc_slice){large,sizeof(large)};
+    assert(bc_compile(engine,&source,1,empty,&program,&diagnostic)==BC_RESOURCE_LIMIT && program==0);
+    expect_diagnostic(&diagnostic,BC_RESOURCE_LIMIT);
+    --source.source_utf8.len;
+    assert(bc_compile(engine,&source,1,empty,&program,&diagnostic)==BC_OK && program!=0);
+    expect_diagnostic(&diagnostic,BC_OK);
+    assert(bc_engine_destroy(engine)==BC_BUSY);
+    assert(bc_program_release(engine,engine)==BC_INVALID_HANDLE);
+    assert(bc_preview_program_release(engine,program)==BC_INVALID_HANDLE);
+    bc_handle instance=UINT64_MAX;
+    assert(bc_preview_instance_create(engine,program,4000000,&instance)==BC_INVALID_HANDLE);
+    assert(instance==UINT64_MAX);
+
+    bc_handle other=0;
+    assert(bc_engine_create(2,policy,&other,&diagnostic)==BC_OK);
+    assert(bc_program_release(other,program)==BC_INVALID_HANDLE);
+    assert(bc_engine_destroy(other)==BC_OK);
+    assert(bc_preview_engine_create(BC_PREVIEW_REVISION,&other)==BC_OK);
+    bc_handle wrong=UINT64_MAX;
+    assert(bc_compile(other,&source,1,empty,&wrong,&diagnostic)==BC_INVALID_HANDLE && wrong==0);
+    assert(bc_preview_compile(other,(bc_slice){valid,sizeof(valid)-1},&wrong)==BC_OK);
+    assert(bc_program_release(other,wrong)==BC_INVALID_HANDLE);
+    assert(bc_preview_program_release(other,wrong)==BC_OK);
+    assert(bc_preview_engine_destroy(other)==BC_OK);
+    assert(bc_program_release(engine,program)==BC_OK);
+    assert(bc_program_release(engine,program)==BC_INVALID_HANDLE);
+}
+
 static void revision_two_engines(void){
     bc_abi_info abi={0};
     assert(bc_get_abi_info_v2(1,sizeof(abi),&abi)==BC_ABI_MISMATCH && abi.struct_size==0);
@@ -118,6 +172,7 @@ static void revision_two_engines(void){
     assert(bc_engine_create(2,(bc_slice){policy,sizeof(policy)-1},&handle,&diagnostic)==BC_OK);
     assert(handle!=0);
     expect_diagnostic(&diagnostic,BC_OK);
+    revision_two_programs(handle,(bc_slice){policy,length});
     memset(policy,0,sizeof(policy));
     HANDLE thread=CreateThread(NULL,0,foreign_engine_destroy,&handle,0,NULL);
     DWORD status=0;
@@ -189,5 +244,6 @@ int main(void){
     printf("PASS: quanta 1/64 return 77 and consume %" PRIu64 " fuel; cancellation and ownership verified\n",a.fuel_used);
     puts("PASS: four owner threads independently compiled, stepped, and destroyed their Engines without retries");
     puts("PASS: revision-2 query, Engine policy admission, diagnostic sizing, quotas and stale handles");
+    puts("PASS: revision-2 scalar compilation, source spans, size limits and Program ownership");
     return 0;
 }
