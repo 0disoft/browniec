@@ -72,6 +72,17 @@ static DWORD WINAPI foreign_engine_destroy(void *arg){
     return bc_engine_destroy(*(const bc_handle *)arg);
 }
 
+static DWORD WINAPI foreign_entry_lookup(void *arg){
+    const bc_handle *handles=arg;
+    const bc_slice main_name={(const uint8_t *)"main",4};
+    bc_entry_info info={.struct_size=sizeof(info),.abi_revision=UINT32_MAX};
+    bc_diagnostic diagnostic={.struct_size=sizeof(diagnostic)};
+    uint32_t status=bc_program_entry_info(handles[0],handles[1],main_name,main_name,&info,&diagnostic);
+    assert(info.abi_revision==UINT32_MAX);
+    expect_diagnostic(&diagnostic,status);
+    return status;
+}
+
 static void revision_two_source_limit(uint8_t *policy,size_t length){
     static const uint8_t module[]="main";
     static const uint8_t text[]="module main; pub fn i32 main(){return 77;} ";
@@ -128,6 +139,26 @@ static void revision_two_programs(bc_handle engine,bc_slice policy){
     --source.source_utf8.len;
     assert(bc_compile(engine,&source,1,empty,&program,&diagnostic)==BC_OK && program!=0);
     expect_diagnostic(&diagnostic,BC_OK);
+    memset(large,0,sizeof(large));
+    const bc_slice main_name=source.module;
+    bc_entry_info info={.struct_size=1,.abi_revision=UINT32_MAX};
+    assert(bc_program_entry_info(engine,program,main_name,main_name,&info,&diagnostic)==BC_BAD_ARGUMENT);
+    assert(info.struct_size==1 && info.abi_revision==UINT32_MAX);
+    expect_diagnostic(&diagnostic,BC_BAD_ARGUMENT);
+    info.struct_size=sizeof(info);
+    assert(bc_program_entry_info(engine,program,main_name,main_name,&info,NULL)==BC_BAD_ARGUMENT);
+    assert(bc_program_entry_info(engine,program,main_name,empty,&info,&diagnostic)==BC_BAD_ARGUMENT);
+    assert(info.abi_revision==UINT32_MAX);
+    assert(bc_program_entry_info(engine,program,main_name,main_name,&info,&diagnostic)==BC_OK);
+    expect_diagnostic(&diagnostic,BC_OK);
+    assert(info.struct_size==sizeof(info) && info.abi_revision==2 && info.reserved==0);
+    assert(info.input_kind==BC_INPUT_NONE && info.required_capabilities_json.len==2);
+    assert(memcmp(info.required_capabilities_json.data,"[]",2)==0);
+    bc_handle handles[]={engine,program};
+    HANDLE thread=CreateThread(NULL,0,foreign_entry_lookup,handles,0,NULL);
+    DWORD status=0;
+    assert(thread && WaitForSingleObject(thread,5000)==WAIT_OBJECT_0);
+    assert(GetExitCodeThread(thread,&status) && status==BC_WRONG_THREAD && CloseHandle(thread));
     assert(bc_engine_destroy(engine)==BC_BUSY);
     assert(bc_program_release(engine,engine)==BC_INVALID_HANDLE);
     assert(bc_preview_program_release(engine,program)==BC_INVALID_HANDLE);
@@ -137,16 +168,20 @@ static void revision_two_programs(bc_handle engine,bc_slice policy){
 
     bc_handle other=0;
     assert(bc_engine_create(2,policy,&other,&diagnostic)==BC_OK);
+    assert(bc_program_entry_info(other,program,main_name,main_name,&info,&diagnostic)==BC_INVALID_HANDLE);
     assert(bc_program_release(other,program)==BC_INVALID_HANDLE);
     assert(bc_engine_destroy(other)==BC_OK);
     assert(bc_preview_engine_create(BC_PREVIEW_REVISION,&other)==BC_OK);
     bc_handle wrong=UINT64_MAX;
+    source.source_utf8=(bc_slice){valid,sizeof(valid)-1};
     assert(bc_compile(other,&source,1,empty,&wrong,&diagnostic)==BC_INVALID_HANDLE && wrong==0);
     assert(bc_preview_compile(other,(bc_slice){valid,sizeof(valid)-1},&wrong)==BC_OK);
+    assert(bc_program_entry_info(other,wrong,main_name,main_name,&info,&diagnostic)==BC_INVALID_HANDLE);
     assert(bc_program_release(other,wrong)==BC_INVALID_HANDLE);
     assert(bc_preview_program_release(other,wrong)==BC_OK);
     assert(bc_preview_engine_destroy(other)==BC_OK);
     assert(bc_program_release(engine,program)==BC_OK);
+    assert(bc_program_entry_info(engine,program,main_name,main_name,&info,&diagnostic)==BC_INVALID_HANDLE);
     assert(bc_program_release(engine,program)==BC_INVALID_HANDLE);
 }
 
@@ -271,5 +306,6 @@ int main(void){
     puts("PASS: revision-2 query, Engine policy admission, diagnostic sizing, quotas and stale handles");
     puts("PASS: revision-2 scalar compilation, source spans, size limits and Program ownership");
     puts("PASS: revision-2 Engine source policy rejects 43 bytes and accepts 42 bytes");
+    puts("PASS: revision-2 entry info verifies layout, capabilities, and owner-thread admission");
     return 0;
 }

@@ -9,6 +9,7 @@
 #pragma comment(linker, "/EXPORT:bc_engine_create")
 #pragma comment(linker, "/EXPORT:bc_engine_destroy")
 #pragma comment(linker, "/EXPORT:bc_compile")
+#pragma comment(linker, "/EXPORT:bc_program_entry_info")
 #pragma comment(linker, "/EXPORT:bc_program_release")
 
 typedef struct preview_engine {
@@ -20,7 +21,10 @@ typedef struct preview_engine {
 typedef struct preview_child {
     preview_engine *owner;
     uintptr_t id;
-    uint64_t fuel;
+    union {
+        uint64_t fuel;
+        uint8_t capabilities_json[2];
+    };
 } preview_child;
 
 /* The registry owns a busy admission for one Engine while its VM runs.
@@ -82,6 +86,12 @@ uint32_t BC_CALL bc_get_abi_info_v2(uint32_t revision,uint32_t capacity,bc_abi_i
     return BC_OK;
 }
 
+static bc_diagnostic diagnostic_result(uint32_t status,const char *message){
+    bc_diagnostic result={.struct_size=sizeof(result),.code=status,.source_index=UINT32_MAX};
+    memcpy(result.message,message,strlen(message)+1);
+    return result;
+}
+
 static uint32_t engine_diagnostic(bc_diagnostic *out,uint32_t status){
     const char *message="";
     switch(status){
@@ -92,9 +102,7 @@ static uint32_t engine_diagnostic(bc_diagnostic *out,uint32_t status){
     case BC_BAD_ARGUMENT: message="Invalid Engine creation arguments";break;
     default: message="Engine creation failed";break;
     }
-    bc_diagnostic result={.struct_size=sizeof(result),.code=status,.source_index=UINT32_MAX};
-    memcpy(result.message,message,strlen(message)+1);
-    *out=result;
+    *out=diagnostic_result(status,message);
     return status;
 }
 
@@ -124,13 +132,12 @@ static uint32_t compile_diagnostic(bc_diagnostic *out,uint32_t status,bc_slice s
     case BC_ALLOCATION_ERROR: message="Compilation allocation failed";break;
     default: message="Compilation failed";break;
     }
-    bc_diagnostic result={.struct_size=sizeof(result),.code=status,.source_index=UINT32_MAX};
+    bc_diagnostic result=diagnostic_result(status,message);
     if(status!=BC_OK && index==0 && start<=end && end<=source.len){
         result.source_index=0;
         result.byte_start=(uint32_t)start;
         result.byte_end=(uint32_t)end;
     }
-    memcpy(result.message,message,strlen(message)+1);
     *out=result;
     return status;
 }
@@ -155,7 +162,7 @@ static uint32_t compile_program(bc_handle engine,uint32_t revision,bc_slice sour
     }
     __typeof__(P2(&owner->engine,source.data,source.len)) compiled=P2(&owner->engine,source.data,source.len);
     if(compiled.tag==FY_RESULT_OK){
-        *program=(preview_child){owner,compiled.p_0,0};
+        *program=(preview_child){.owner=owner,.id=compiled.p_0,.capabilities_json={'[',']'}};
         status=bc_abi_registry_insert(&admission,PROGRAM_HANDLE,(uintptr_t)program,out);
         if(status==BC_OK){++owner->children;}
         else if(P7(&owner->engine,program->id).tag!=FY_RESULT_OK){preview_invariant();}
@@ -174,6 +181,8 @@ uint32_t BC_CALL bc_preview_compile(bc_handle engine,bc_slice source,bc_handle *
     return compile_program(engine,BC_PREVIEW_REVISION,source,out,NULL);
 }
 
+static int is_main(bc_slice name){return name.data && name.len==4 && memcmp(name.data,"main",4)==0;}
+
 uint32_t BC_CALL bc_compile(bc_handle engine,const bc_source *sources,uint32_t source_count,
                             bc_slice catalog,bc_handle *out,bc_diagnostic *diagnostic){
     if(out){*out=0;}
@@ -181,12 +190,42 @@ uint32_t BC_CALL bc_compile(bc_handle engine,const bc_source *sources,uint32_t s
     if(!out||!sources||source_count!=1||(!catalog.data&&catalog.len)){
         return compile_diagnostic(diagnostic,BC_BAD_ARGUMENT,(bc_slice){0},SIZE_MAX,0,0);
     }
-    bc_slice module=sources[0].module;
-    if(!module.data||module.len!=4||memcmp(module.data,"main",4)!=0){
+    if(!is_main(sources[0].module)){
         return compile_diagnostic(diagnostic,BC_BAD_ARGUMENT,(bc_slice){0},SIZE_MAX,0,0);
     }
     if(catalog.len){return compile_diagnostic(diagnostic,BC_POLICY_ERROR,(bc_slice){0},SIZE_MAX,0,0);}
     return compile_program(engine,BC_ABI_REVISION,sources[0].source_utf8,out,diagnostic);
+}
+
+uint32_t BC_CALL bc_program_entry_info(bc_handle engine,bc_handle program,bc_slice module,bc_slice function,
+                                       bc_entry_info *out,bc_diagnostic *diagnostic){
+    if(!diagnostic||diagnostic->struct_size!=sizeof(*diagnostic)){return BC_BAD_ARGUMENT;}
+    if(!out||out->struct_size!=sizeof(*out)){
+        *diagnostic=diagnostic_result(BC_BAD_ARGUMENT,"Invalid entry info output");
+        return BC_BAD_ARGUMENT;
+    }
+    bc_abi_registry_admission admission;
+    uint32_t status=bc_abi_registry_enter(program,PROGRAM_HANDLE,engine,&admission);
+    if(status!=BC_OK){
+        *diagnostic=diagnostic_result(status,"Program entry lookup could not enter the Engine");
+        return status;
+    }
+    const preview_child *code=(const preview_child *)(uintptr_t)admission.object;
+    const char *message="";
+    if(code->owner->revision!=BC_ABI_REVISION){
+        status=BC_INVALID_HANDLE;
+        message="Invalid revision-2 Program handle";
+    }else if(!is_main(module)||!is_main(function)){
+        status=BC_BAD_ARGUMENT;
+        message="Scalar Program entry must be main::main";
+    }else{
+        // The verified scalar profile admits no host catalog or input.
+        *out=(bc_entry_info){.struct_size=sizeof(*out),.abi_revision=BC_ABI_REVISION,.input_kind=BC_INPUT_NONE,
+            .required_capabilities_json={code->capabilities_json,sizeof(code->capabilities_json)}};
+    }
+    leave_preview(&admission);
+    *diagnostic=diagnostic_result(status,message);
+    return status;
 }
 
 uint32_t BC_CALL bc_preview_instance_create(bc_handle engine,bc_handle program,uint64_t fuel,bc_handle *out){
@@ -202,7 +241,7 @@ uint32_t BC_CALL bc_preview_instance_create(bc_handle engine,bc_handle program,u
     if(!instance){leave_preview(&admission);return BC_ALLOCATION_ERROR;}
     __typeof__(P3(&owner->engine,code->id,fuel)) prepared=P3(&owner->engine,code->id,fuel);
     if(prepared.tag==FY_RESULT_OK){
-        *instance=(preview_child){owner,prepared.p_0,fuel};
+        *instance=(preview_child){.owner=owner,.id=prepared.p_0,.fuel=fuel};
         status=bc_abi_registry_insert(&admission,INSTANCE_HANDLE,(uintptr_t)instance,out);
         if(status==BC_OK){++owner->children;}
         else if(P6(&owner->engine,instance->id).tag!=FY_RESULT_OK){preview_invariant();}

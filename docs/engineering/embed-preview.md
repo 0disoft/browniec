@@ -93,10 +93,17 @@ byte offsets `0/0`. A nonempty catalog returns `BC_POLICY_ERROR`.
 `bc_program_release` accepts the originating revision-2 Engine and a live
 Program handle on its owner thread. Successful release invalidates the handle.
 An Engine with a live Program returns `BC_BUSY` on destruction. Preview and
-revision-2 Program handles use separate API entry points. Revision-2 entry
-query and Instance execution are still pending.
+revision-2 Program handles use separate API entry points.
+
+`bc_program_entry_info` queries `main::main` on the same Engine and thread.
+Initialize both output structure sizes. The query returns ABI revision 2,
+`BC_INPUT_NONE`, and the Program-owned, two-byte JSON capability array `[]`.
+The slice is read-only and expires at Program release. Failed queries leave
+entry info storage unchanged. Revision-2 Instance execution is still pending.
 
 The native C host passed both Windows `/Od` and `/O2` builds. It verifies
 4096-byte admission and 4097-byte rejection, exact source diagnostics,
 cross-Engine and cross-revision rejection, and stale Program handles.
 An Engine configured for 42 source bytes accepts exactly 42 and rejects 43.
+Both builds also verify the entry info fields, failure output preservation,
+and rejection across threads, Engines, ABI revisions and stale handles.

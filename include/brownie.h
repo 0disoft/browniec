@@ -85,6 +85,8 @@ BC_API uint32_t BC_CALL bc_engine_create(uint32_t requested_revision,
 BC_API uint32_t BC_CALL bc_compile(bc_handle engine,
     const bc_source *sources, uint32_t source_count, bc_slice catalog_json,
     bc_handle *out_program, bc_diagnostic *diagnostic);
+/* Scalar preview DLL: query main::main on the owning thread. Initialize both
+   output sizes. The read-only JSON view is valid until Program release. */
 BC_API uint32_t BC_CALL bc_program_entry_info(bc_handle engine, bc_handle program,
     bc_slice module, bc_slice function, bc_entry_info *out_info, bc_diagnostic *diagnostic);
 BC_API uint32_t BC_CALL bc_instance_create(bc_handle engine, bc_handle program,
