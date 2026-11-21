@@ -529,6 +529,12 @@ the late RESULT and preserves cancellation. All nine native host cases
 passed in Windows development and /O2. Local receipt:
 `build/restricted-worker/20261121T175501251899Z/receipt.json`.
 
+The locked Brownie executable also built in both profiles using the
+root-qualified native headers required by Fairy C's generated bridge.
+Each profile passed the nine native host cases and the five managed and
+36 configured project cases using the freshly built executable. Local
+receipt: `build/restricted-worker/20261121T180147737119Z/receipt.json`.
+
 ## Windows verification
 
 Run `python -B tools/verify-restricted-worker.py`. The development and optimized

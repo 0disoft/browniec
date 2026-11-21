@@ -1,8 +1,8 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-#include "restricted_worker_frame.h"
-#include "restricted_worker_payload.h"
-#include "windows-scalar-worker.h"
+#include "native/restricted_worker_frame.h"
+#include "native/restricted_worker_payload.h"
+#include "native/windows-scalar-worker.h"
 
 static HANDLE input_pipe, result_pipe;
 static bc_worker_frame result_frame;

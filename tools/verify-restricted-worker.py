@@ -294,7 +294,7 @@ def main():
             folder.mkdir()
             exe = folder / 'worker-host.exe'
             child = folder / 'worker fixture.exe'
-            run([cl, '/nologo', '/std:c11', '/TC', '/MT', '/W4', '/WX', option,
+            run([cl, '/nologo', '/std:c11', '/TC', '/MT', '/W4', '/WX', option, '/I'+str(ROOT),
                  *(ROOT / path for path in c_sources), '/Fe' + str(exe),
                  '/link', 'advapi32.lib', 'bcrypt.lib', 'mincore.lib', 'userenv.lib', '/INCREMENTAL:NO', '/Brepro'],
                 cwd=folder, env=env)
