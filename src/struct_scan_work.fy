@@ -11,6 +11,7 @@ import lexer as lexer;
 import lexer_work as tokens;
 import locals as locals;
 import errors as errors;
+import runtime_clock as clock;
 import metadata_budget as budget;
 
 // Preserve the raw two passes: validate every declaration before resolving any
@@ -124,7 +125,17 @@ pub fn Result<raw::Table,errors::Error> scan_single_from(ref u8[] source,usize s
     return prepared(ref w);
 }
 pub fn Result<raw::Table,errors::Error> scan_scoped(ref u8[] source,ref context::Table scope){
+    return scan_scoped_until(source,scope,0);
+}
+
+// Keep the candidate table private through layout validation and the final clock check.
+pub fn Result<raw::Table,errors::Error> scan_scoped_until(ref u8[] source,ref context::Table scope,usize deadline){
     var State w=scoped();var budget::State meter=budget::empty();
-    while(!w.done){let usize allowance=budget::reset(ref mut meter,0)?;let bool done=advance_scoped(source,scope,ref mut w,ref mut meter)?;}
+    while(!w.done){
+        if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
+        let usize allowance=budget::reset(ref mut meter,0)?;
+        let bool done=advance_scoped(source,scope,ref mut w,ref mut meter)?;
+    }
+    if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
     return prepared(ref w);
 }

@@ -3115,14 +3115,15 @@ fn Result<usize,errors::Error> body(ref u8[] source,ref functions::Table signatu
 
 // Release source-name/catalog scratch before recursive expression lowering.
 pub fn Result<usize, errors::Error> prepare_aggregates(ref u8[] source, ref mut functions::Table signatures, ref mut ir::Program p) {
-    return prepare_aggregates_from(source,signatures,p,0);
+    return prepare_aggregates_from(source,signatures,p,0,0);
 }
-fn Result<usize,errors::Error> prepare_aggregates_from(ref u8[] source,ref mut functions::Table signatures,ref mut ir::Program p,usize start){
+fn Result<usize,errors::Error> prepare_aggregates_from(ref u8[] source,ref mut functions::Table signatures,
+    ref mut ir::Program p,usize start,usize deadline){
     let usize parameters = array_calls::prepare(signatures, p)?;
     let usize results = array_results::prepare(signatures, p)?;
     let structs::Table records = if(start!=0){struct_scan::scan_single_from(source,start)?}
         else if(signatures.context.modules==0){structs::scan(source)?}
-        else{structs::scan_scoped(source,ref signatures.context)?};
+        else{struct_scan::scan_scoped_until(source,ref signatures.context,deadline)?};
     var usize f = 0;
     while (f < signatures.count) {
         if (structs::find(source, ref records, signatures.begins[f], signatures.ends[f]) != 32) {
@@ -3211,7 +3212,7 @@ fn Result<usize,errors::Error> prepare_lowering(ref u8[] source,bool origin_anal
             declaration+=1;
         }
     }
-    let usize aggregates=prepare_aggregates_from(source,signatures,p,start)?;
+    let usize aggregates=prepare_aggregates_from(source,signatures,p,start,deadline)?;
     return .ok(aggregates);
 }
 fn Result<usize,errors::Error> locate_body(ref u8[] source,ref functions::Table signatures,usize f,ref mut usize active){

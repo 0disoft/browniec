@@ -128,7 +128,9 @@ Table. This covers the initial scan in both output modes and the reference
 signature rescan in output-only compilation. Advisory returned-slice origin
 inference samples before and after each function-body walk within its fixed
 point. This covers body preparation in both modes and the post-body reference
-binding pass in output-only mode. The compiler also checks before body
+binding pass in output-only mode. Scoped record preparation checks before each
+declaration, field resolution or layout validation advance and again before
+returning the completed table. The compiler also checks before body
 preparation, before each function, and before
 each control advance or pending semantic child. A child already running returns
 to the next checkpoint before expiry is delivered. The compiler samples again
@@ -188,6 +190,14 @@ before another walk or a proof advance, restored the Engine ledger and SDK heap,
 and preserved the next Program ID. Development and /O2 passed with zero live
 SDK allocations at exit. Local receipt:
 `build/runtime-engine/20261121T002541558630Z/receipt.json`.
+
+The Windows verifier expired both output modes after resolving the first
+record's fields. Each compile avoided further record advances and proof work,
+preserved the next Program ID and restored the retained Program charge and
+SDK heap. A direct scanner case accepted the layout one tick before the
+deadline and rejected it at the deadline after the final layout check.
+Development and /O2 passed with zero live SDK allocations at exit. Local
+receipt: `build/runtime-engine/20261121T003403167586Z/receipt.json`.
 
 Source lowering, work between checkpoints, and cleanup remain synchronous.
 Public Pending compilation, in-flight cancellation, and a latency bound for

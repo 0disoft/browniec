@@ -107,6 +107,19 @@ def source_copy(path):
                  'unsafe extern C fn void bc_runtime_engine_test_signature_step();\n'
                  'unsafe extern C fn void bc_runtime_engine_test_signature_staged();\n')
         return path.name, (head + calls + declaration + timed).encode('utf-8')
+    if path == ROOT / 'src/struct_scan_work.fy':
+        text = path.read_text(encoding='utf-8')
+        declaration = 'pub fn Result<raw::Table,errors::Error> scan_scoped_until('
+        step = '        let bool done=advance_scoped(source,scope,ref mut w,ref mut meter)?;'
+        need(text.count(declaration) == text.count(step) == 1, 'Record scan deadline probe anchors changed')
+        text = text.replace(declaration, 'unsafe extern C fn void bc_runtime_engine_test_record_scan_step();\n'
+                            'unsafe extern C fn void bc_runtime_engine_test_record_scan_progress(u8 stage);\n'
+                            + declaration, 1)
+        text = text.replace(step, '        unsafe{bc_runtime_engine_test_record_scan_step()};\n' + step +
+                            '\n        if(done){unsafe{bc_runtime_engine_test_record_scan_progress(2)};}'
+                            '\n        else if(w.phase==20 && w.record==1 && !w.resolving){'
+                            'unsafe{bc_runtime_engine_test_record_scan_progress(1)};}', 1)
+        return path.name, text.encode('utf-8')
     if path == ROOT / 'src/slice_result_source_origins.fy':
         text = path.read_text(encoding='utf-8')
         declaration = 'pub fn Result<usize,errors::Error> infer_until('

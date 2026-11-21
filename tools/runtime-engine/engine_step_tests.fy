@@ -22,6 +22,8 @@ import literal_collection as literals;
 import literal_source as literal_source;
 import static_image as images;
 import source_context as context;
+import source_context_work as collecting;
+import struct_scan_work as record_scan;
 
 // Engine.step fixtures only. The parent owns native transport and integration.
 unsafe extern C fn usize probe_live();
@@ -37,6 +39,8 @@ unsafe extern C fn void bc_runtime_engine_test_expire_in_signature(usize deadlin
 unsafe extern C fn void bc_runtime_engine_test_signature_stopped();
 unsafe extern C fn void bc_runtime_engine_test_expire_in_origin(usize deadline,u32 pass);
 unsafe extern C fn void bc_runtime_engine_test_origin_stopped();
+unsafe extern C fn void bc_runtime_engine_test_expire_in_record_scan(usize deadline,u8 stage);
+unsafe extern C fn void bc_runtime_engine_test_record_scan_stopped();
 unsafe extern C fn void bc_runtime_engine_test_expire_in_body(usize deadline);
 unsafe extern C fn void bc_runtime_engine_test_body_stopped();
 unsafe extern C fn usize bc_runtime_engine_test_proof_count();
@@ -737,6 +741,50 @@ fn Result<usize,u8> compile_origin_deadline(ref mut engine::Engine e,ref configs
     return .ok(0);
 }
 
+fn Result<usize,u8> record_scan_publication_deadline(){
+    let modules::Index index=indexed(b"module app;struct P{i32 x;}pub fn i32 chosen(){return 42;}")?;
+    let context::Input input=switch(collecting::collect(ref index)){
+        case .ok(v):{v}case .err(_):{return .err(10);}
+    };
+    let ref u8[] source=ref input.data[..input.used];
+    let ref context::Table scope=ref input.context;
+    unsafe{bc_runtime_engine_test_set_clock(199)};
+    switch(record_scan::scan_scoped_until(source,scope,200)){
+        case .ok(table):{assert(table.layouts.count==1 && table.layouts.fields[0]==1);}
+        case .err(_):{assert(false);}
+    };
+    unsafe{bc_runtime_engine_test_expire_in_record_scan(200,2)};
+    switch(record_scan::scan_scoped_until(source,scope,200)){
+        case .ok(_):{assert(false);}
+        case .err(e):{assert(e.kind==errors::deadline_kind() && e.location==errors::absent_location());}
+    };
+    unsafe{bc_runtime_engine_test_record_scan_stopped()};
+    unsafe{bc_runtime_engine_test_use_os_clock()};
+    return .ok(0);
+}
+fn Result<usize,u8> compile_record_scan_deadline(ref mut engine::Engine e,ref configs::RunConfig run){
+    let ref u8[] ordinary=b"module app;struct P{i32 x;}pub fn i32 chosen(){return 42;}";
+    let ref u8[] input=b"module app;struct P{i32 x;}pub fn i32 chosen(ref u8[] data){return 42;}";
+    let Heap idle=heap();
+    var usize mode=0;
+    while(mode<2){
+        let usize start=100+mode*20000000;
+        unsafe{bc_runtime_engine_test_set_clock(start)};
+        unsafe{bc_runtime_engine_test_proof_begin()};
+        unsafe{bc_runtime_engine_test_expire_in_record_scan(start+20000000,1)};
+        let Result<usize,engine::Error> result=if(mode==0){engine::compile_output(e,selected(ordinary)?,65536)}
+            else{engine::compile_granted_output(e,indexed(input)?,run,65536)};
+        rejected_compile_deadline(result);
+        unsafe{bc_runtime_engine_test_record_scan_stopped()};
+        assert(unsafe{bc_runtime_engine_test_proof_count()}==0);
+        counts(e,0,0,0);same_heap(ref idle);
+        assert(retained(e).program_bytes==0);
+        mode+=1;
+    }
+    unsafe{bc_runtime_engine_test_use_os_clock()};
+    return .ok(0);
+}
+
 fn Result<usize,u8> compile_body_deadline(ref mut engine::Engine e,ref configs::RunConfig run){
     let ref u8[] ordinary=b"module app;pub fn i32 chosen(){let i32 x=20+22;return x;}";
     let ref u8[] input=b"module app;pub fn i32 chosen(ref u8[] data){let i32 x=20+22;return x;}";
@@ -768,6 +816,8 @@ fn Result<usize,u8> configured_compile_deadline(){
     let usize literal_checked=compile_literal_deadline(ref mut e,ref granted)?;
     let usize signature_checked=compile_signature_deadline(ref mut e,ref granted)?;
     let usize origin_checked=compile_origin_deadline(ref mut e,ref granted)?;
+    let usize record_publication=record_scan_publication_deadline()?;
+    let usize record_checked=compile_record_scan_deadline(ref mut e,ref granted)?;
     let usize body_checked=compile_body_deadline(ref mut e,ref granted)?;
     let usize checked=compile_deadline(ref mut e,ref granted)?;
     close(ref mut e);return .ok(0);

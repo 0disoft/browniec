@@ -306,6 +306,22 @@ void bc_runtime_engine_test_origin_stopped(void){
  assert(origin_expiry&&origin_pass==origin_target&&origin_walks==1);
  origin_expiry=0;
 }
+static uintptr_t record_scan_expiry;
+static uint8_t record_scan_target;
+static int record_scan_reached;
+void bc_runtime_engine_test_expire_in_record_scan(uintptr_t deadline,uint8_t stage){
+ assert(host_clock_fixed&&deadline>host_clock_ticks&&!record_scan_expiry&&(stage==1||stage==2));
+ record_scan_expiry=deadline;record_scan_target=stage;record_scan_reached=0;
+}
+void bc_runtime_engine_test_record_scan_step(void){assert(!record_scan_expiry||!record_scan_reached);}
+void bc_runtime_engine_test_record_scan_progress(uint8_t stage){
+ if(record_scan_expiry&&stage==record_scan_target){
+  assert(!record_scan_reached);record_scan_reached=1;bc_runtime_engine_test_set_clock(record_scan_expiry);
+ }
+}
+void bc_runtime_engine_test_record_scan_stopped(void){
+ assert(record_scan_expiry&&record_scan_reached);record_scan_expiry=0;
+}
 static uintptr_t body_expiry;
 static int body_requested;
 void bc_runtime_engine_test_expire_in_body(uintptr_t deadline){

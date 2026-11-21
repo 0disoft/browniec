@@ -67,7 +67,9 @@ advances with their
 [absolute compile deadline](runtime-engine-compile-memory.md#configured-compile-deadlines).
 The body driver checks again before dispatching each pending semantic child.
 Returned-slice origin inference checks around each function-body walk, including
-the output-only reference binding pass after body lowering.
+the output-only reference binding pass after body lowering. Scoped record
+scanning checks between declaration, field and layout advances and before
+returning the validated table to body preparation.
 Public compilation still uses its existing admission gates and remains synchronous. No public Pending
 compile, cancellation protocol, time bound or peak-stack improvement follows.
 
