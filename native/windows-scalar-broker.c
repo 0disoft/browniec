@@ -88,11 +88,11 @@ uint32_t bc_scalar_broker_invoke(const uint8_t *profile, size_t profile_length,
             bc_worker_broker_step(&broker);
             if (broker.io.pipe || broker.phase == BC_WORKER_BROKER_WAIT_EXIT) Sleep(1);
         }
-        if (!bc_cli_cancel_requested()) payload = bc_worker_broker_take(&broker, &length);
+        if (bc_cli_cancel_requested()) bc_worker_broker_cancel(&broker);
+        else payload = bc_worker_broker_take(&broker, &length);
     }
     const bool expired = started == ERROR_TIMEOUT || broker.gate.status == BC_WORKER_GATE_EXPIRED;
-    const bool cancelled = !started && broker.gate.status == BC_WORKER_GATE_PENDING &&
-        bc_cli_cancel_requested();
+    const bool cancelled = broker.gate.status == BC_WORKER_GATE_CANCELLED;
     while (!bc_worker_broker_close(&broker)) Sleep(1);
     if (expired) return 2;
     if (cancelled) return 3;

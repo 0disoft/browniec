@@ -171,6 +171,14 @@ phase expires, while the overall session deadline is still live. Reaping
 returns the reservation with zero net warm handles in each profile.
 Local receipt: `build/restricted-worker/20261121T154634779864Z/receipt.json`.
 
+The private parent settles explicit cancellation through the broker before
+teardown. One monotonic sample chooses cancellation or an already expired
+phase, and the parent reports that latched outcome. The native fixture checks
+cancellation on an actual pending pipe read both before and after the startup
+deadline. The earlier cancellation survives a later expiry during cleanup.
+Development and /O2 passed those cases and the parent publication checks.
+Local receipt: `build/restricted-worker/20261121T162851207548Z/receipt.json`.
+
 ### Graceful cancellation
 
 Cancellation freezes the result gate immediately. If START is in flight,

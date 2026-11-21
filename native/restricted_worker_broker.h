@@ -91,6 +91,10 @@ DWORD bc_worker_broker_start(bc_worker_broker *broker, const bc_worker_broker_ru
 bc_worker_gate_status bc_worker_broker_step(bc_worker_broker *broker);
 const uint8_t *bc_worker_broker_take(bc_worker_broker *broker, size_t *length);
 
+/* Resolve cancellation and expiry against one clock sample. Close still
+   owns transport shutdown and releases the session after reaping. */
+bc_worker_gate_status bc_worker_broker_cancel(bc_worker_broker *broker);
+
 /* Freeze the terminal outcome, then advance graceful shutdown or reaping.
    Partially sent START finishes before CANCEL. After the grace deadline the
    Job is stopped. A false return retains buffers and both I/O leases. */

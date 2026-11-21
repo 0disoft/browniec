@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-22): [Scalar parent publication](docs/engineering/restricted-worker.md#scalar-parent-publication)
-  validates restricted worker JSON before rendering. Development and /O2
-  verify actual check/run, source diagnostics and private setup failure.
+- Latest runtime checkpoint (2026-11-22): [Windows broker deadlines](docs/engineering/restricted-worker.md#phase-deadlines)
+  settle parent cancellation against one monotonic sample before teardown.
+  Development and /O2 verify both outcomes with actual pending pipe reads.
 
 # Brownie C agent guidance
 

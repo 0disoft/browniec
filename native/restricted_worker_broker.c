@@ -246,8 +246,18 @@ static bool begin_cancel_frame(bc_worker_broker *b) {
     return true;
 }
 
+static void settle_cancel(bc_worker_broker *b, uint64_t now) {
+    if (b->phase != BC_WORKER_BROKER_IDLE && phase_live(b, now))
+        bc_worker_gate_cancel(&b->gate, now);
+}
+
+bc_worker_gate_status bc_worker_broker_cancel(bc_worker_broker *b) {
+    settle_cancel(b, now_ticks());
+    return b->gate.status;
+}
+
 static void begin_shutdown(bc_worker_broker *b, uint64_t now) {
-    if (phase_live(b, now)) bc_worker_gate_cancel(&b->gate, now);
+    settle_cancel(b, now);
     b->shutdown_deadline = bounded_deadline(now, b->grace_ticks, UINT64_MAX);
     if (b->gate.status == BC_WORKER_GATE_CANCELLED || b->gate.status == BC_WORKER_GATE_EXPIRED) {
         if (b->phase == BC_WORKER_BROKER_SEND_START && (b->tx.sent || b->io.pipe)) {

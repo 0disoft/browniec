@@ -592,6 +592,7 @@ static void verify_broker(const wchar_t *path, const wchar_t *directory,
     const bc_worker_broker_amounts charge = {1, sizeof(broker) + 2, commit_limit, wire};
     bc_worker_broker_budget budget = {.limit = charge};
     const bool idle_expiry = !wcscmp(mode, L"--child-stalled-result");
+    const bool cancel_at_expiry = expected == BC_WORKER_GATE_EXPIRED && !idle_expiry;
     const bc_worker_broker_phase wait_phase = idle_expiry ?
         BC_WORKER_BROKER_READ_RESULT : BC_WORKER_BROKER_READ_READY;
     bc_worker_broker_run run = {
@@ -618,9 +619,22 @@ static void verify_broker(const wchar_t *path, const wchar_t *directory,
         size_t untouched = 123;
         check(!bc_worker_broker_take(&broker, &untouched) && untouched == 123,
             "broker never exposes output while a phase is pending");
+        if (cancel_at_expiry && broker.io.pipe) {
+            if (clock_ticks() >= startup_deadline) {
+                check(bc_worker_broker_cancel(&broker) == BC_WORKER_GATE_EXPIRED,
+                    "an explicit cancel observed after startup expiry records the deadline");
+                break;
+            }
+            Sleep(1);
+            continue;
+        }
         bc_worker_broker_step(&broker);
         if (broker.phase == BC_WORKER_BROKER_READ_READY && broker.io.pipe &&
-            expected == BC_WORKER_GATE_CANCELLED) break;
+            expected == BC_WORKER_GATE_CANCELLED) {
+            check(bc_worker_broker_cancel(&broker) == BC_WORKER_GATE_CANCELLED,
+                "an explicit cancel before expiry records cancellation");
+            break;
+        }
         if (broker.io.pipe || broker.phase == BC_WORKER_BROKER_WAIT_EXIT) Sleep(1);
     }
     size_t length = 123;
@@ -634,10 +648,14 @@ static void verify_broker(const wchar_t *path, const wchar_t *directory,
     const bool pending = broker.io.pipe != NULL;
     const bc_worker_gate_status terminal = broker.gate.status;
     if (expected == BC_WORKER_GATE_CANCELLED || expected == BC_WORKER_GATE_EXPIRED) {
-        check(pending && broker.phase == wait_phase &&
-            terminal == (expected == BC_WORKER_GATE_CANCELLED ? BC_WORKER_GATE_PENDING : expected),
+        check(pending && broker.phase == wait_phase && terminal == expected,
             "stop begins with a live outstanding read");
-        if (expected == BC_WORKER_GATE_CANCELLED) verify_shared_budget(&budget, &run, charge);
+        if (expected == BC_WORKER_GATE_CANCELLED) {
+            verify_shared_budget(&budget, &run, charge);
+            broker.phase_deadline = clock_ticks();
+            check(bc_worker_broker_cancel(&broker) == BC_WORKER_GATE_CANCELLED,
+                "expiry during cleanup cannot overwrite the cancelled outcome");
+        }
         else {
             const uint64_t now = clock_ticks();
             check(now >= broker.phase_deadline && now < run.deadline &&
