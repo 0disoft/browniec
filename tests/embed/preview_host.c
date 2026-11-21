@@ -109,9 +109,17 @@ static void revision_two_instances(bc_handle engine,bc_handle program){
     assert(bc_instance_create(engine,program,empty,json,&first,&diagnostic)==BC_RESOURCE_LIMIT && first==0);
     memcpy(fuel,"10000000",8);
     assert(bc_instance_create(engine,program,empty,json,&first,&diagnostic)==BC_OK);
+    uint8_t *frames=(uint8_t *)strstr((const char *)config,"\"call_frames\":128");
+    assert(frames);
+    frames+=sizeof("\"call_frames\":")-1;
+    memcpy(frames,"  2",3);
     assert(bc_instance_create(engine,program,empty,json,&second,&diagnostic)==BC_OK);
     assert(first && second && first!=second);
     expect_diagnostic(&diagnostic,BC_OK);
+    bc_handle limited=0;
+    memcpy(frames,"  1",3);
+    assert(bc_instance_create(engine,program,empty,json,&limited,&diagnostic)==BC_OK);
+    memcpy(frames,"128",3);
     bc_handle cancelled=0,expired=0;
     assert(bc_instance_create(engine,program,empty,json,&cancelled,&diagnostic)==BC_OK);
     uint8_t *deadline=(uint8_t *)strstr((const char *)config,"\"deadline_ms\":1000");
@@ -134,6 +142,9 @@ static void revision_two_instances(bc_handle engine,bc_handle program){
     expect_diagnostic(&one.diagnostic,BC_OK);
     assert(one.fuel_used>0 && one.fuel_used==many.fuel_used && one.trap_code==0);
     assert(one.peak_accounted_bytes>0 && one.peak_accounted_bytes==many.peak_accounted_bytes);
+    bc_event limit=finish_revision_two(limited,64);
+    assert(limit.kind==BC_TRAP && limit.trap_code==12 && limit.diagnostic.code==12);
+    assert(limit.diagnostic.source_index==0 && limit.return_i32==0);
     bc_event stopped=finish_revision_two(cancelled,64);
     assert(stopped.kind==BC_FAILED && stopped.diagnostic.code==33 && stopped.trap_code==0 && stopped.return_i32==0);
     Sleep(32);
@@ -147,6 +158,7 @@ static void revision_two_instances(bc_handle engine,bc_handle program){
     assert(memcmp(&again,&stopped,sizeof(stopped))==0);
     assert(bc_instance_destroy(cancelled)==BC_OK);
     assert(bc_instance_destroy(expired)==BC_OK);
+    assert(bc_instance_destroy(limited)==BC_OK);
     assert(bc_instance_destroy(first)==BC_OK && bc_instance_destroy(first)==BC_INVALID_HANDLE);
     assert(bc_instance_destroy(second)==BC_OK);
 }
@@ -189,7 +201,7 @@ static void revision_two_source_limit(uint8_t *policy,size_t length){
 static void revision_two_programs(bc_handle engine,bc_slice policy){
     static const uint8_t module[]="main";
     static const uint8_t invalid[]="module main; pub fn bool main(){return true;}";
-    static const uint8_t valid[]="module main; pub fn i32 main(){return 77;}";
+    static const uint8_t valid[]="module main; fn i32 fee(){return 77;} pub fn i32 main(){return fee();}";
     const bc_slice empty={0};
     bc_source source={{module,sizeof(module)-1},{invalid,sizeof(invalid)-1}};
     bc_handle program=UINT64_MAX;
@@ -388,5 +400,6 @@ int main(void){
     puts("PASS: revision-2 entry info verifies layout, capabilities, and owner-thread admission");
     puts("PASS: revision-2 Instance policy admission, two Program pins, and destruction");
     puts("PASS: revision-2 quanta 1/64, independent cancellation, deadline precedence, and terminal snapshots");
+    puts("PASS: call frame limit 1 traps and limit 2 returns 77 from the same Program");
     return 0;
 }

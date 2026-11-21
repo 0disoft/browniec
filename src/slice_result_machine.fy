@@ -64,18 +64,18 @@ pub fn Result<Machine,errors::Error> open(ref ir::Program body,ref static_ir::Si
     ref u8[] origins,usize budget,usize output_limit,bool allowed,bool input,usize input_length){
     let lists::Requirement list=lists::Requirement{.length=0,.bytes=0,.cost=0};
     let places::Requirement place=places::Requirement{.width=0,.cost=0,.aggregate=false,.slices=false,.records=false};
-    return open_selected(body,sites,origins,budget,output_limit,allowed,input,input_length,false,ref list,ref place,0);
+    return open_selected(body,sites,origins,budget,output_limit,allowed,input,input_length,false,ref list,ref place,0,31);
 }
 // Only an owning immutable Program supplies these cached plans. The raw helper
 // above retains its requirement scans and their original admission ordering.
 pub fn Result<Machine,errors::Error> open_prepared(ref ir::Program body,ref static_ir::Sites sites,
     ref u8[] origins,usize budget,usize output_limit,bool allowed,bool input,usize input_length,
-    ref lists::Requirement list,ref places::Requirement place,usize work){
-    return open_selected(body,sites,origins,budget,output_limit,allowed,input,input_length,true,list,place,work);
+    ref lists::Requirement list,ref places::Requirement place,usize work,usize frame_limit){
+    return open_selected(body,sites,origins,budget,output_limit,allowed,input,input_length,true,list,place,work,frame_limit);
 }
 fn Result<Machine,errors::Error> open_selected(ref ir::Program body,ref static_ir::Sites sites,
     ref u8[] origins,usize budget,usize output_limit,bool allowed,bool input,usize input_length,
-    bool cached,ref lists::Requirement cached_list,ref places::Requirement cached_place,usize cached_work){
+    bool cached,ref lists::Requirement cached_list,ref places::Requirement cached_place,usize cached_work,usize frame_limit){
     // Only dimensions and the entry ABI are checked here. The parent admits the
     // exact code/image; planning below reuses the canonical scratch requirements.
     if(body.count==0 || body.count>256 || body.registers==0 || body.registers>128 ||
@@ -115,7 +115,7 @@ fn Result<Machine,errors::Error> open_selected(ref ir::Program body,ref static_i
     if(remaining<preparation+input_cost+slice_result_runtime::cost()+work+list_plan.cost+place_plan.cost){
         return .err(errors::make(8,0));
     }
-    if(cached){return reserve_prepared(ref list_plan,ref place_plan,capacity,input,input_length,remaining,staged);}
+    if(cached){return reserve_prepared(ref list_plan,ref place_plan,capacity,input,input_length,remaining,staged,frame_limit);}
     var bytes::Buffer payload=if(capacity==0){bytes::empty()}else{backing::prepare(capacity)?};
     remaining-=preparation;
     let slice_result_runtime::State state=slice_result_runtime::empty(capacity);
@@ -149,6 +149,7 @@ fn Result<Machine,errors::Error> open_selected(ref ir::Program body,ref static_i
 @link_name("bc_runtime_pending_core_stride") unsafe extern C fn usize native_size_raw();
 fn usize native_size(){return unsafe{native_size_raw()};}
 pub fn Meta observe(ref Machine machine){return machine.meta;}
+
 
 pub struct Stop { bool cancelled; usize remaining; errors::Error failure; }
 pub fn Option<Stop> stopping(ref Machine machine){
@@ -191,7 +192,8 @@ fn void retain_core_types(){
 
 // Reserve storage during admission; every linear initialization loop is resumed.
 fn Result<Machine,errors::Error> reserve_prepared(ref lists::Requirement list,ref places::Requirement place,
-    usize capacity,bool input,usize input_length,usize remaining,runtime_output::Transaction staged){
+    usize capacity,bool input,usize input_length,usize remaining,runtime_output::Transaction staged,usize frame_limit){
+    if(frame_limit==0){return .err(errors::make(5,0));}
     let usize stride=native_size();
     let u8 kind=if(place.width==0){0}else if(place.aggregate){3}else if(place.records){2}else if(place.slices){1}else{0};
     let usize prefix=if(kind==3){3}else if(kind==2){2}else if(kind==1){1}else{0};
@@ -208,6 +210,8 @@ fn Result<Machine,errors::Error> reserve_prepared(ref lists::Requirement list,re
     var bytes::Buffer scratch=reserve_bytes(list.bytes)?;var vec::Vec<usize> places=vec::empty<usize>();
     if(count!=0 && !vec::reserve<usize>(ref mut places,count).is_ok){return .err(errors::make(15,0));}
     var slice_result_cursor::Cursor cursor=slice_result_cursor::empty();cursor.active=true;
+    cursor.frame_limit=0;
+    while(cursor.frame_limit<31 && (cursor.frame_limit as usize)<frame_limit){cursor.frame_limit+=1;}
     return .ok(Machine{.core=core,.payload=payload,.list_cells=values,.list_scratch=scratch,.place_state=places,
         .windows=windows,.staged=staged,.meta=Meta{.cursor=cursor,.stats=slice_result_cursor::stats(),
         .remaining=remaining-if(capacity==0){0}else{1+capacity}-if(input){meter::input_prepare()}else{0}-list.cost-place.cost,

@@ -782,11 +782,11 @@ pub fn Result<usize,Error> prepare_granted_instance(ref mut Engine e,usize progr
     if(pending>limits.memory_bytes-input_bytes::capacity(ref input)){return .err(error(8));}
     let usize deadline=deadline_after(limits.deadline_ms)?;
     let usize instance=bind_input_output(e,program,input,limits.fuel,max_output,if(emits){3}else{2},deadline)?;
-    return prepare_created_instance(e,instance);
+    return prepare_created_instance(e,instance,limits.call_frames);
 }
 
-fn Result<usize,Error> prepare_created_instance(ref mut Engine e,usize instance){
-    return switch(prepare_instance(e,instance)){
+fn Result<usize,Error> prepare_created_instance(ref mut Engine e,usize instance,usize frame_limit){
+    return switch(prepare_instance_frames(e,instance,frame_limit)){
         case .ok(_):{.ok(instance)}
         case .err(failure):{let usize disposed=destroy_instance(e,instance)?;.err(failure)}
     };
@@ -824,7 +824,7 @@ pub fn Result<ScalarPreparation,Error> prepare_scalar_preview(ref mut Engine e,u
     let u32 status=unsafe{instance_output_raw(e as ptr mut void,program,ref mut incoming as ptr mut void,
         limits.fuel,0,2,deadline)};
     let usize id=result(e,status)?;
-    let usize prepared=prepare_created_instance(e,id)?;
+    let usize prepared=prepare_created_instance(e,id,limits.call_frames)?;
     return .ok(ScalarPreparation{.instance=prepared,.fuel=limits.fuel,.peak=pending,
         .start=deadline-limits.deadline_ms*10000});
 }
@@ -932,7 +932,10 @@ pub fn Result<Event,Error> execute_once(ref mut Engine e,usize instance){
 // Preparation owns the continuation but executes no guest opcode. Step is a
 // separate operation; a prepared Instance cannot enter the synchronous path.
 pub fn Result<Event,Error> prepare_instance(ref mut Engine e,usize instance){
-    let u32 s=unsafe{call_raw(e as ptr mut void,9,instance,0)};
+    return prepare_instance_frames(e,instance,31);
+}
+fn Result<Event,Error> prepare_instance_frames(ref mut Engine e,usize instance,usize frame_limit){
+    let u32 s=unsafe{call_raw(e as ptr mut void,9,instance,frame_limit)};
     let usize completed=result(e,s)?;return .ok(e.meta.event);
 }
 pub fn Result<Event,Error> step_instance(ref mut Engine e,usize instance,usize quantum){
@@ -2333,19 +2336,20 @@ fn u32 execute_output_inner(ref mut Meta m,ref vec::Vec<Program> p,ref mut vec::
     return publish_output_run(m,p,v,outputs,ii,run);
 }
 fn Result<machines::Machine,diagnostics::Error> open_instance_machine(ref output_programs::Program code,
-    ref vec::Vec<BoundInput> inputs,Option<usize> bound,usize budget,usize limit,bool allowed){
+    ref vec::Vec<BoundInput> inputs,Option<usize> bound,usize budget,usize limit,bool allowed,usize frame_limit){
     return switch(bound){
-        case .some(index):{pending_vm::prepare_pending_output(code,ref vec::at<BoundInput>(inputs,index).input,budget,limit,allowed)}
+        case .some(index):{pending_vm::prepare_with_frame_limit(code,ref vec::at<BoundInput>(inputs,index).input,budget,limit,allowed,frame_limit)}
         case .none:{
             var usize unused=0;let input_bytes::Snapshot empty=switch(input_bytes::snapshot(b"",0,0,ref mut unused)){
                 case .ok(v):{v}case .err(_):{return .err(diagnostics::absent(errors::make(15,0)));}
             };
-            pending_vm::prepare_pending_output(code,ref empty,budget,limit,allowed)
+            pending_vm::prepare_with_frame_limit(code,ref empty,budget,limit,allowed,frame_limit)
         }
     };
 }
 fn u32 prepare_instance_inner(ref mut Meta m,ref vec::Vec<Program> p,ref mut vec::Vec<Instance> v,
-    ref vec::Vec<BoundInput> inputs,ref mut vec::Vec<Output> outputs,usize id){
+    ref vec::Vec<BoundInput> inputs,ref mut vec::Vec<Output> outputs,usize id,usize frame_limit){
+    if(frame_limit==0){return failed(m,1);}
     let usize ii=switch(instance_index(v,id)){case .ok(x):{x}case .err(s):{return failed(m,s);}};
     let Instance before=*vec::at<Instance>(v,ii);
     if(before.phase!=0){return failed(m,3);}
@@ -2376,7 +2380,7 @@ fn u32 prepare_instance_inner(ref mut Meta m,ref vec::Vec<Program> p,ref mut vec
     let output_programs::Execution slot=switch(output_programs::pending_slot(before.fuel)){
         case .ok(v):{v}case .err(_):{return failed(m,6);}
     };
-    let machines::Machine machine=switch(open_instance_machine(retained,inputs,bound,before.fuel,before.output_limit,before.output_allowed)){
+    let machines::Machine machine=switch(open_instance_machine(retained,inputs,bound,before.fuel,before.output_limit,before.output_allowed,frame_limit)){
         case .ok(v):{v}case .err(e):{
             if(e.code.kind==15){return failed(m,6);}
             if(e.code.kind!=8){return contain_execution_fault(m,p,v,outputs);}
@@ -2598,7 +2602,7 @@ fn u32 dispatch_inner(ref mut Meta m,ref mut vec::Vec<Program> p,ref mut vec::Ve
     if(operation==6){return observe_inner(m,v,id);}
     if(operation==7){return cancel_inner(m,p,v,inputs,outputs,output_scratch,id);}
     if(operation==8){return inspect_inner(m,p,v);}
-    if(operation==9){return prepare_instance_inner(m,p,v,inputs,outputs,id);}
+    if(operation==9){return prepare_instance_inner(m,p,v,inputs,outputs,id,argument);}
     if(operation==10){return step_instance_inner(m,p,v,inputs,outputs,output_scratch,id,argument);}
     if(operation==11){return claim_host_inner(m,p,v,outputs,output_scratch,id,argument);}
     return failed(m,1);

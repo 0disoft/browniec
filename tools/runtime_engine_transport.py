@@ -118,7 +118,7 @@ def project_layouts(t, c, *, host_compile=True):
     c['returnCatalogWorkType']=field_type(c['returnRecordPlanType'],0)
     c['callCopyPlanType']=field_type(c['coreType'],8)
     assert arg(26,11)==c['callCopyPlanType']
-    c['returnMetadataType']=field_type(c['cursorType'],8)
+    c['returnMetadataType']=field_type(c['cursorType'],9)
     c['lifecycleType']=field_type(c['pendingMetaType'],6)
     c['setupWorkType']=field_type(c['lifecycleType'],0)
     c['preparationWorkType']=field_type(c['lifecycleType'],1)

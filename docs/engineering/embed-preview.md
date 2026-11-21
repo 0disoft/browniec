@@ -146,3 +146,8 @@ sharing a released Program handle returned 77 at quanta 1 and 64 and reported
 the same cumulative Fuel and peak accounted bytes. Additional Instances verified
 independent cancellation and that an already expired deadline wins over cancel.
 Repeated successful and cancelled terminal events matched byte for byte.
+
+`limits.call_frames` includes the entry frame. The saved dispatcher checks
+the Instance's limit before starting a CALL. A limit of one traps when
+`main` calls a helper, while a limit of two lets the same Program return 77.
+Both profiles verified this boundary and the source location of the trap.

@@ -330,7 +330,8 @@ def source_copy(path):
         text = text.replace(anchor, anchor + '\n' + injected, 1)
         if path.name == 'runtime_engine.fy':
             binding = 'let Result<usize,u32> located=input_index(inputs,child.id);'
-            opening = '    ref vec::Vec<BoundInput> inputs,Option<usize> bound,usize budget,usize limit,bool allowed){'
+            opening = ('    ref vec::Vec<BoundInput> inputs,Option<usize> bound,usize budget,usize limit,'
+                       'bool allowed,usize frame_limit){')
             capacity_check = 'input_bytes::capacity(input)!=child.input_bytes'
             publication = 'if(bytes>616+before.output_limit ||'
             need(text.count(binding) == text.count(opening) == text.count(capacity_check) == text.count(publication) == 1,

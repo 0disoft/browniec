@@ -1,6 +1,6 @@
 - Latest runtime checkpoint (2026-11-21): [Revision-2 scalar stepping](docs/engineering/embed-preview.md#revision-2-scalar-stepping)
-  exports stepping and cancellation. Windows /Od and /O2 verified shared
-  Program runs, independent cancellation, deadline precedence, and stable events.
+  enforces the configured call-frame limit per Instance. Windows /Od and /O2
+  verified a one-frame trap and a two-frame success with the same Program.
 
 # Brownie C agent guidance
 
