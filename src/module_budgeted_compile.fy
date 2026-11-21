@@ -61,8 +61,12 @@ pub fn Result<ordinary::Program,diagnostics::Error> compile(entries::Entry selec
 }
 pub fn Result<inputs::Program,diagnostics::Error> compile_input(input_entries::InputEntry selected,usize image_limit,
     ref mut retention::Plan retained,ref mut memory::Plan plan){
+    return compile_input_until(selected,image_limit,retained,plan,0);
+}
+pub fn Result<inputs::Program,diagnostics::Error> compile_input_until(input_entries::InputEntry selected,usize image_limit,
+    ref mut retention::Plan retained,ref mut memory::Plan plan,usize deadline){
     var retention::Plan local=begin(retained,plan)?;
-    let Result<inputs::Program,diagnostics::Error> built=inputs::compile_with_retention(selected,image_limit,ref mut local);
+    let Result<inputs::Program,diagnostics::Error> built=inputs::compile_with_retention_until(selected,image_limit,ref mut local,deadline);
     return switch(built){
         case .ok(p):{end(retained,ref local,plan,true);.ok(p)}
         case .err(e):{end(retained,ref local,plan,false);.err(e)}

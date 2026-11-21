@@ -5,6 +5,7 @@ import source_snapshot as sources;
 import compiler as compiler;
 import source_error as diagnostics;
 import errors as errors;
+import runtime_clock as clock;
 import ir as ir;
 import static_call_ir as candidates;
 import static_image as images;
@@ -30,12 +31,17 @@ pub fn Result<Program,diagnostics::Error> compile(entries::InputEntry selected,u
     var retention::Plan plan=retention::unlimited();return compile_with_retention(selected,image_limit,ref mut plan);
 }
 pub fn Result<Program,diagnostics::Error> compile_with_retention(entries::InputEntry selected,usize image_limit,ref mut retention::Plan plan){
+    return compile_with_retention_until(selected,image_limit,plan,0);
+}
+pub fn Result<Program,diagnostics::Error> compile_with_retention_until(entries::InputEntry selected,usize image_limit,
+    ref mut retention::Plan plan,usize deadline){
     var images::Builder builder=switch(images::builder(4096)){
         case .ok(v):{v}case .err(e):{return .err(literal(e));}
     };
     var candidates::Program code=candidates::Program{.body=ir::empty(),.parameters=[0;128],.results=[0;16],.origins=[0;16]};
-    let usize lowered=compiler::lower_input_modules(ref selected,ref mut builder,ref mut code)?;
-    return finish(ref selected,ref builder,ref code,image_limit,plan);
+    let usize lowered=if(deadline==0){compiler::lower_input_modules(ref selected,ref mut builder,ref mut code)?}
+        else{compiler::lower_input_modules_until(ref selected,ref mut builder,ref mut code,false,deadline)?};
+    return finish(ref selected,ref builder,ref code,image_limit,plan,deadline);
 }
 fn diagnostics::Error literal(images::Error e){
     return diagnostics::absent(compiler::public_error(program_images::Error{.kind=.Literal,.code=errors::make(0,0),.literal=e}));
@@ -46,13 +52,14 @@ fn diagnostics::Error map(ref entries::InputEntry selected,errors::Error e){
 // Keep source lowering, full independent proof and the owning return slots on
 // separate native stack frames. Quota is checked before retaining image/code.
 fn Result<Program,diagnostics::Error> finish(ref entries::InputEntry selected,ref images::Builder builder,
-    ref candidates::Program code,usize image_limit,ref mut retention::Plan plan){
+    ref candidates::Program code,usize image_limit,ref mut retention::Plan plan,usize deadline){
+    if(clock::expired(deadline)){return .err(diagnostics::absent(errors::absent(errors::deadline_kind(),0)));}
     let usize payload=switch(images::planned_payload(builder)){case .ok(v):{v}case .err(_):{return .err(diagnostics::absent(errors::make(5,0)));}};
     if(!retention::admit(plan,payload).is_ok){return .err(diagnostics::absent(errors::make(retention::quota_kind(),0)));}
     let images::Image image=switch(images::freeze(builder,image_limit)){
         case .ok(v):{v}case .err(e):{return .err(literal(e));}
     };
-    switch(proof_work::inspect_input(code,ref image)){
+    switch(proof_work::inspect_input_until(code,ref image,deadline)){
         case .ok(_):{}case .err(e):{
             if(e.offset==0 || e.offset>=code.body.count){return .err(diagnostics::absent(e));}
             return .err(map(selected,errors::make(e.kind,code.body.offsets[e.offset])));

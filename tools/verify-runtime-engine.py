@@ -69,6 +69,12 @@ def source_copy(path):
         text = text.replace('// Private complete canonical proof.',
                             'unsafe extern C fn void bc_runtime_engine_test_proof_visit();\n// Private complete canonical proof.', 1)
         text = text.replace(anchor, 'if(w.phase==0){if(w.output){unsafe{bc_runtime_engine_test_proof_visit();}}let bool input=w.input;', 1)
+        declaration = 'pub fn Result<verifier::ReferenceReturnProof,errors::Error> inspect_input_until('
+        step = '        let bool done=advance(unit,image,ref mut w,ref mut meter)?;'
+        need(text.count(declaration) == text.count(step) == 1, 'Input proof deadline probe anchors changed')
+        text = text.replace(declaration, 'unsafe extern C fn void bc_runtime_engine_test_input_proof_step();\n'
+                            + declaration, 1)
+        text = text.replace(step, '        unsafe{bc_runtime_engine_test_input_proof_step()};\n' + step, 1)
         return path.name, text.encode('utf-8')
     if path == ROOT / 'src/source_context_work.fy':
         text = path.read_text(encoding='utf-8')

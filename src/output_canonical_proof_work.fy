@@ -3,6 +3,7 @@ import static_call_ir as programs;
 import static_image as images;
 import verifier as verifier;
 import errors as errors;
+import runtime_clock as clock;
 import metadata_budget as budget;
 import output_static_recipe_work as recipes;
 import output_static_sites_work as sites;
@@ -109,8 +110,15 @@ pub fn Result<verifier::ReferenceReturnProof,errors::Error> prepared(ref State w
 // Keep the separate input ABI/output gate while draining the same stages for
 // the existing synchronous owning compiler. This does not admit raw callbacks.
 pub fn Result<verifier::ReferenceReturnProof,errors::Error> inspect_input(ref programs::Program unit,ref images::Image image){
-    var State w=empty(true);w.output=false;var budget::State meter=budget::empty();
-    while(!w.done){let usize allowance=budget::reset(ref mut meter,0)?;
-        let bool done=advance(unit,image,ref mut w,ref mut meter)?;}
+    return inspect_input_until(unit,image,0);
+}
+pub fn Result<verifier::ReferenceReturnProof,errors::Error> inspect_input_until(ref programs::Program unit,ref images::Image image,usize deadline){
+    var State w=empty_input();var budget::State meter=budget::empty();
+    while(!w.done){
+        if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
+        let usize allowance=budget::reset(ref mut meter,0)?;
+        let bool done=advance(unit,image,ref mut w,ref mut meter)?;
+    }
+    if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
     return prepared(ref w);
 }

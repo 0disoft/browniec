@@ -1130,7 +1130,7 @@ fn u32 compile_input_inner(ref mut Meta m,ref mut vec::Vec<Program> v,ref mut ve
     if(vec::len<input_entries::InputEntry>(incoming)!=1){return failed(m,1);}
     var retention::Plan plan=switch(retention_plan(m,1)){case .ok(p):{p}case .err(s):{return failed(m,s);}};
     var compilation::Plan work=switch(compile_work(m,unsafe{compile_fact_raw(incoming as ptr void,1,2)},input_entry_heap(vec::at<input_entries::InputEntry>(incoming,0)))){case .ok(p):{p}case .err(status):{return failed(m,status);}};
-    let Result<input_programs::Program,diagnostics::Error> built=bounded::compile_input(pop_input_entry(incoming),image_limit,ref mut plan,ref mut work);
+    let Result<input_programs::Program,diagnostics::Error> built=bounded::compile_input_until(pop_input_entry(incoming),image_limit,ref mut plan,ref mut work,deadline);
     assert(memory::record_compile(ref mut m.programs,ref work).is_ok);
     assert(memory::record(ref mut m.programs,ref plan).is_ok);
     return switch(built){case .ok(code):{publish_input_program(m,v,code,plan.bytes,deadline)}case .err(e):{compile_error(m,e)}};

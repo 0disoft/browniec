@@ -366,6 +366,10 @@ void bc_runtime_engine_test_proof_visit(void){
   output_proof_attempts=probe_attempts();output_proof_expired=1;
  }
 }
+void bc_runtime_engine_test_input_proof_step(void){
+ assert(!output_proof_expired);
+ if(output_proof_expiry)bc_runtime_engine_test_proof_visit();
+}
 void bc_runtime_engine_test_proof_begin(void){output_proof_visits=0;}
 uintptr_t bc_runtime_engine_test_proof_count(void){
  /* A late rejection at publication would already have attempted retention. */

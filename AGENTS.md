@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-21): [Scoped syntax classifier deadlines](docs/engineering/runtime-engine-compile-memory.md#configured-compile-deadlines)
-  stop configured output compilation between source-state and lexer advances.
-  Windows development and /O2 passed with zero live SDK allocations.
+- Latest runtime checkpoint (2026-11-21): [Input-only compile deadlines](docs/engineering/runtime-engine-compile-memory.md#configured-compile-deadlines)
+  propagate the Engine deadline through input-only source lowering and independent
+  proof. Windows development and /O2 passed with zero live SDK allocations.
 
 # Brownie C agent guidance
 

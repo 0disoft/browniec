@@ -116,7 +116,7 @@ Engine receipt: `build/runtime-engine/20261120T231632275851Z/receipt.json`.
 The native collector tested expired and future deadlines using the real OS
 clock in both profiles: `build/anchored-sources/20261120T231507642754Z/receipt.json`.
 
-Output and input-output compilation sample the same absolute deadline before
+Input-only, output-only and input-output compilation sample the same absolute deadline before
 each source-context advance. An advance copies up to 64 source bytes, packs
 one metadata row, checks one sealed name, or moves to the next phase. Expiry
 discards the incomplete context before signature or body lowering. The
@@ -126,10 +126,10 @@ Literal collection samples before every bounded advance and before assigning the
 finished candidate to the image Builder. An expired collection leaves the
 Builder untouched and returns the source-less deadline diagnostic. Indexed
 signature scans sample before each advance and before returning the complete
-Table. This covers the initial scan in both output modes and the reference
+Table. This covers the initial scan in all three modes and the reference
 signature rescan in output-only compilation. Advisory returned-slice origin
 inference samples before and after each function-body walk within its fixed
-point. This covers body preparation in both modes and the post-body reference
+point. This covers body preparation in all three modes and the post-body reference
 binding pass in output-only mode. Scoped record preparation checks before each
 declaration, field resolution or layout validation advance and again before
 returning the completed table. The compiler also checks before body
@@ -137,7 +137,9 @@ preparation, before each function, and before
 each control advance or pending semantic child. A child already running returns
 to the next checkpoint before expiry is delivered. The compiler samples again
 after lowering and before freezing the literal image. The proof driver samples
-once before each bounded proof advance. Expiry ends the compile with
+once before each bounded proof advance. Input-only compilation uses its
+separate proof with the output gate closed and checks again before returning
+the completed proof. Expiry ends the compile with
 the source-less deadline diagnostic and releases the image and any active
 reservation. Only a complete proof can enter Program retention. The final
 publication check still covers the synchronous work after proof.
@@ -208,6 +210,15 @@ Program retention and SDK heap returned to baseline and the next
 successful compile still used Program ID 1. Windows development and /O2
 passed with zero live SDK allocations at exit. Local receipt:
 `build/runtime-engine/20261121T004315648470Z/receipt.json`.
+
+The Windows verifier expired input-only compilation independently during
+source-context collection, literal collection, signature scanning, origin
+inference, record scanning, body lowering and canonical proof. At proof
+expiry only one proof advance ran and no subsequent retention allocation
+was attempted. Each rejection restored the SDK heap and Program charge.
+The same input-only source compiled one tick before expiry with Program ID 1.
+Windows development and /O2 passed with zero live SDK allocations at exit.
+Local receipt: `build/runtime-engine/20261121T005147394912Z/receipt.json`.
 
 Source lowering, work between checkpoints, and cleanup remain synchronous.
 Public Pending compilation, in-flight cancellation, and a latency bound for

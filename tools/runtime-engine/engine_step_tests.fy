@@ -607,24 +607,24 @@ fn Result<usize,u8> compile_deadline(ref mut engine::Engine e,ref configs::RunCo
         assert(retained(e).program_bytes==0);
         mode+=1;
     }
-    // Advance to the exact deadline from inside the canonical proof. Both
-    // variants must stop at the next proof boundary and reclaim the image.
+    // All three staged proof routes stop at the next boundary and reclaim the image.
     mode=2;
-    while(mode<4){
+    while(mode<5){
         let usize start=100+(mode+3)*20000000;
         unsafe{bc_runtime_engine_test_set_clock(start)};
         unsafe{bc_runtime_engine_test_proof_begin()};
         unsafe{bc_runtime_engine_test_expire_in_proof(start+20000000)};
         let Result<usize,engine::Error> result=if(mode==2){engine::compile_output(e,selected(ordinary)?,65536)}
-            else{engine::compile_granted_output(e,indexed(input)?,run,65536)};
+            else if(mode==3){engine::compile_granted_output(e,indexed(input)?,run,65536)}
+            else{engine::compile_input(e,selected_input(input)?,65536)};
         rejected_compile_deadline(result);
         assert(unsafe{bc_runtime_engine_test_proof_count()}==1);
         counts(e,0,0,0);same_heap(ref idle);
         assert(retained(e).program_bytes==0);
         mode+=1;
     }
-    unsafe{bc_runtime_engine_test_clock_advance(3,100+8*20000000-1)};
-    let usize p=id(engine::compile_granted_output(e,indexed(input)?,run,65536));
+    unsafe{bc_runtime_engine_test_clock_advance(3,100+9*20000000-1)};
+    let usize p=id(engine::compile_input(e,selected_input(input)?,65536));
     assert(p==1);
     unsafe{bc_runtime_engine_test_use_os_clock()};
     release(e,p);counts(e,0,0,0);same_heap(ref idle);return .ok(0);
@@ -634,13 +634,14 @@ fn Result<usize,u8> compile_context_deadline(ref mut engine::Engine e,ref config
     let ref u8[] input=b"module app;pub fn i32 chosen(ref u8[] data){                     return 42;}";
     let Heap idle=heap();
     var usize mode=0;
-    while(mode<2){
+    while(mode<3){
         let usize start=100+mode*20000000;
         unsafe{bc_runtime_engine_test_set_clock(start)};
         unsafe{bc_runtime_engine_test_proof_begin()};
         unsafe{bc_runtime_engine_test_expire_in_context(start+20000000)};
         let Result<usize,engine::Error> result=if(mode==0){engine::compile_output(e,selected(ordinary)?,65536)}
-            else{engine::compile_granted_output(e,indexed(input)?,run,65536)};
+            else if(mode==1){engine::compile_granted_output(e,indexed(input)?,run,65536)}
+            else{engine::compile_input(e,selected_input(input)?,65536)};
         rejected_compile_deadline(result);
         assert(unsafe{bc_runtime_engine_test_context_bytes()}==64);
         assert(unsafe{bc_runtime_engine_test_proof_count()}==0);
@@ -693,17 +694,18 @@ fn void literal_transaction_deadline(){
     unsafe{bc_runtime_engine_test_use_os_clock()};
 }
 fn Result<usize,u8> compile_literal_deadline(ref mut engine::Engine e,ref configs::RunConfig run){
-    let ref u8[] ordinary=b"module app;pub fn i32 chosen(){output::emit(ref b\"one\");output::emit(ref b\"two\");return 42;}";
-    let ref u8[] input=b"module app;pub fn i32 chosen(ref u8[] data){output::emit(ref b\"one\");output::emit(ref b\"two\");return 42;}";
+    let ref u8[] ordinary=b"module app;pub fn i32 chosen(){let ref u8[] first=b\"one\";let ref u8[] second=b\"two\";return 42;}";
+    let ref u8[] input=b"module app;pub fn i32 chosen(ref u8[] data){let ref u8[] first=b\"one\";let ref u8[] second=b\"two\";return 42;}";
     let Heap idle=heap();
     var usize mode=0;
-    while(mode<2){
+    while(mode<3){
         let usize start=100+mode*20000000;
         unsafe{bc_runtime_engine_test_set_clock(start)};
         unsafe{bc_runtime_engine_test_proof_begin()};
         unsafe{bc_runtime_engine_test_expire_in_literal(start+20000000)};
         let Result<usize,engine::Error> result=if(mode==0){engine::compile_output(e,selected(ordinary)?,65536)}
-            else{engine::compile_granted_output(e,indexed(input)?,run,65536)};
+            else if(mode==1){engine::compile_granted_output(e,indexed(input)?,run,65536)}
+            else{engine::compile_input(e,selected_input(input)?,65536)};
         rejected_compile_deadline(result);
         unsafe{bc_runtime_engine_test_literal_stopped()};
         assert(unsafe{bc_runtime_engine_test_proof_count()}==0);
@@ -719,12 +721,13 @@ fn Result<usize,u8> compile_signature_deadline(ref mut engine::Engine e,ref conf
     let ref u8[] input=b"module app;fn i32 helper(){return 42;}pub fn i32 chosen(ref u8[] data){return helper();}";
     let Heap idle=heap();
     var usize mode=0;
-    while(mode<3){
+    while(mode<4){
         let usize start=100+mode*20000000;
         unsafe{bc_runtime_engine_test_set_clock(start)};
         unsafe{bc_runtime_engine_test_proof_begin()};
         unsafe{bc_runtime_engine_test_expire_in_signature(start+20000000,if(mode==2){2}else{1})};
         let Result<usize,engine::Error> result=if(mode==1){engine::compile_granted_output(e,indexed(input)?,run,65536)}
+            else if(mode==3){engine::compile_input(e,selected_input(input)?,65536)}
             else{engine::compile_output(e,selected(ordinary)?,65536)};
         rejected_compile_deadline(result);
         unsafe{bc_runtime_engine_test_signature_stopped()};
@@ -741,12 +744,13 @@ fn Result<usize,u8> compile_origin_deadline(ref mut engine::Engine e,ref configs
     let ref u8[] input=b"module app;fn ref u8[] tail(ref u8[] data){return data[1..];}pub fn i32 chosen(ref u8[] data){return 42;}";
     let Heap idle=heap();
     var usize mode=0;
-    while(mode<3){
+    while(mode<4){
         let usize start=100+mode*20000000;
         unsafe{bc_runtime_engine_test_set_clock(start)};
         unsafe{bc_runtime_engine_test_proof_begin()};
         unsafe{bc_runtime_engine_test_expire_in_origin(start+20000000,if(mode==2){2}else{1})};
         let Result<usize,engine::Error> result=if(mode==1){engine::compile_granted_output(e,indexed(input)?,run,65536)}
+            else if(mode==3){engine::compile_input(e,selected_input(input)?,65536)}
             else{engine::compile_output(e,selected(ordinary)?,65536)};
         rejected_compile_deadline(result);
         unsafe{bc_runtime_engine_test_origin_stopped()};
@@ -785,13 +789,14 @@ fn Result<usize,u8> compile_record_scan_deadline(ref mut engine::Engine e,ref co
     let ref u8[] input=b"module app;struct P{i32 x;}pub fn i32 chosen(ref u8[] data){return 42;}";
     let Heap idle=heap();
     var usize mode=0;
-    while(mode<2){
+    while(mode<3){
         let usize start=100+mode*20000000;
         unsafe{bc_runtime_engine_test_set_clock(start)};
         unsafe{bc_runtime_engine_test_proof_begin()};
         unsafe{bc_runtime_engine_test_expire_in_record_scan(start+20000000,1)};
         let Result<usize,engine::Error> result=if(mode==0){engine::compile_output(e,selected(ordinary)?,65536)}
-            else{engine::compile_granted_output(e,indexed(input)?,run,65536)};
+            else if(mode==1){engine::compile_granted_output(e,indexed(input)?,run,65536)}
+            else{engine::compile_input(e,selected_input(input)?,65536)};
         rejected_compile_deadline(result);
         unsafe{bc_runtime_engine_test_record_scan_stopped()};
         assert(unsafe{bc_runtime_engine_test_proof_count()}==0);
@@ -808,13 +813,14 @@ fn Result<usize,u8> compile_body_deadline(ref mut engine::Engine e,ref configs::
     let ref u8[] input=b"module app;pub fn i32 chosen(ref u8[] data){let i32 x=20+22;return x;}";
     let Heap idle=heap();
     var usize mode=0;
-    while(mode<2){
+    while(mode<3){
         let usize start=100+mode*20000000;
         unsafe{bc_runtime_engine_test_set_clock(start)};
         unsafe{bc_runtime_engine_test_proof_begin()};
         unsafe{bc_runtime_engine_test_expire_in_body(start+20000000)};
         let Result<usize,engine::Error> result=if(mode==0){engine::compile_output(e,selected(ordinary)?,65536)}
-            else{engine::compile_granted_output(e,indexed(input)?,run,65536)};
+            else if(mode==1){engine::compile_granted_output(e,indexed(input)?,run,65536)}
+            else{engine::compile_input(e,selected_input(input)?,65536)};
         rejected_compile_deadline(result);
         unsafe{bc_runtime_engine_test_body_stopped()};
         assert(unsafe{bc_runtime_engine_test_proof_count()}==0);

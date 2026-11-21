@@ -61,9 +61,9 @@ lexer state on failure, including qualified lookahead. Decoder checks preserve
 escape-before-encoding diagnostics and exact source offsets.
 
 Lexer and primitive-type compatibility adapters retain the historical raw path
-for sources larger than this private 4096-byte profile. Configured Engine output
-and input-output compilation use the same source-context and body control
-advances with their
+for sources larger than this private 4096-byte profile. Configured Engine
+input-only, output-only and input-output compilation use the same source-context
+and body control advances with their
 [absolute compile deadline](runtime-engine-compile-memory.md#configured-compile-deadlines).
 The output-only syntax classifier checks before each scoped source-state or
 token advance and before using a complete token. The body driver checks again
