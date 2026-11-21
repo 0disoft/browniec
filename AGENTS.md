@@ -1,6 +1,7 @@
-- Latest runtime checkpoint (2026-11-21): [Sealed output copy](docs/engineering/embed-preview.md#revision-2-guest-output)
-  lets a revision-2 Instance copy successful bytes into caller storage. Windows
-  /Od and /O2 verify exact sizing, refusal without writes, and survival after teardown.
+- Latest runtime checkpoint (2026-11-21): [Cancellable Instance preparation](docs/engineering/embed-preview.md#revision-2-scalar-instance-preparation)
+  accepts a Windows event and rolls back an unpublished Instance at the native
+  publication boundary. Windows /Od and /O2 verify cancellation during input
+  copying and a successful retry.
 
 # Brownie C agent guidance
 

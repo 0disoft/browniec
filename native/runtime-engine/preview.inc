@@ -325,14 +325,25 @@ uint32_t BC_CALL bc_program_entry_info(bc_handle engine,bc_handle program,bc_sli
     return status;
 }
 
+static uint32_t preparation_status(HANDLE cancel_event){
+    if(!cancel_event){return BC_OK;}
+    switch(WaitForSingleObject(cancel_event,0)){
+    case WAIT_TIMEOUT: return BC_OK;
+    case WAIT_OBJECT_0: return BC_RUN_TERMINATED;
+    default: return BC_BAD_ARGUMENT;
+    }
+}
+
 static uint32_t create_instance(bc_handle engine,bc_handle program,uint32_t revision,uint64_t fuel,
-                                bc_slice input,bc_slice config,bc_handle *out){
+                                bc_slice input,bc_slice config,HANDLE cancel_event,bc_handle *out){
     bc_abi_registry_admission admission;
     uint32_t status=bc_abi_registry_enter(program,PROGRAM_HANDLE,engine,&admission);
     if(status!=BC_OK){return status;}
     preview_child *code=(preview_child *)(uintptr_t)admission.object;
     preview_engine *owner=code->owner;
     if(owner->revision!=revision){leave_preview(&admission);return BC_INVALID_HANDLE;}
+    status=preparation_status(cancel_event);
+    if(status!=BC_OK){leave_preview(&admission);return status;}
     preview_run *instance=HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(*instance));
     if(!instance){leave_preview(&admission);return BC_ALLOCATION_ERROR;}
     uint8_t failure=0;
@@ -351,7 +362,10 @@ static uint32_t create_instance(bc_handle engine,bc_handle program,uint32_t revi
         else{status=prepared.p_1.f_0;failure=prepared.p_1.f_1.f_0.f_0;}
     }
     if(status==BC_OK){
-        status=bc_abi_registry_insert(&admission,INSTANCE_HANDLE,(uintptr_t)instance,out);
+        status=preparation_status(cancel_event);
+        if(status==BC_OK){
+            status=bc_abi_registry_insert(&admission,INSTANCE_HANDLE,(uintptr_t)instance,out);
+        }
         if(status==BC_OK){++owner->children;}
         else if(P6(&owner->engine,instance->child.id).tag!=FY_RESULT_OK){preview_invariant();}
     }
@@ -365,11 +379,11 @@ static uint32_t create_instance(bc_handle engine,bc_handle program,uint32_t revi
 uint32_t BC_CALL bc_preview_instance_create(bc_handle engine,bc_handle program,uint64_t fuel,bc_handle *out){
     if(!out){return BC_BAD_ARGUMENT;}
     if(fuel>BC_PREVIEW_MAX_FUEL){return BC_RESOURCE_LIMIT;}
-    return create_instance(engine,program,BC_PREVIEW_REVISION,fuel,(bc_slice){0},(bc_slice){0},out);
+    return create_instance(engine,program,BC_PREVIEW_REVISION,fuel,(bc_slice){0},(bc_slice){0},NULL,out);
 }
 
-uint32_t BC_CALL bc_instance_create(bc_handle engine,bc_handle program,bc_slice input,bc_slice config,
-                                    bc_handle *out,bc_diagnostic *diagnostic){
+uint32_t BC_CALL bc_preview_instance_create_cancellable(bc_handle engine,bc_handle program,
+    bc_slice input,bc_slice config,void *cancel_event,bc_handle *out,bc_diagnostic *diagnostic){
     if(out){*out=0;}
     if(!diagnostic||diagnostic->struct_size!=sizeof(*diagnostic)){return BC_BAD_ARGUMENT;}
     uint32_t status;
@@ -381,11 +395,17 @@ uint32_t BC_CALL bc_instance_create(bc_handle engine,bc_handle program,bc_slice 
         status=BC_RESOURCE_LIMIT;
         message="Run configuration exceeds the byte limit";
     }else{
-        status=create_instance(engine,program,BC_ABI_REVISION,0,input,config,out);
-        message=status==BC_OK?"":"Instance preparation failed";
+        status=create_instance(engine,program,BC_ABI_REVISION,0,input,config,cancel_event,out);
+        message=status==BC_OK?"":status==BC_RUN_TERMINATED?
+            "Instance preparation cancelled":"Instance preparation failed";
     }
     *diagnostic=diagnostic_result(status,message);
     return status;
+}
+
+uint32_t BC_CALL bc_instance_create(bc_handle engine,bc_handle program,bc_slice input,bc_slice config,
+                                    bc_handle *out,bc_diagnostic *diagnostic){
+    return bc_preview_instance_create_cancellable(engine,program,input,config,NULL,out,diagnostic);
 }
 
 uint32_t BC_CALL bc_preview_step(bc_handle instance,uint32_t quantum,bc_preview_event *out){

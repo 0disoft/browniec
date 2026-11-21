@@ -133,6 +133,20 @@ caller can release the Program handle while Instances still own their pins.
 `bc_instance_destroy` discards the continuation and releases its pin on the
 Engine's owner thread.
 
+The Windows preview extension `bc_preview_instance_create_cancellable` accepts
+a borrowed manual-reset event that another thread can signal. With an event,
+the owner thread checks for cancellation after authenticating the Program and
+again before publishing a successfully prepared Instance. A signaled event
+returns `BC_RUN_TERMINATED` with a zero output handle. The final check releases
+the provisional continuation, input and Program pin through ordinary Instance
+destruction. Keep the event open until the call returns and leave it signaled
+once cancellation is requested. The event is scoped to preparation. Use
+`bc_cancel` on a published Instance. The synchronous Fairy constructor runs to
+its next native boundary before the cancellation is observed.
+Both Windows profiles signaled the event from a second thread at the first
+input read, verified that creation returned no handle, and retried the same
+Program to return 77. Local receipt: `build/embed-preview-nee8smeg/receipt.json`.
+
 Both Windows builds verified rejected input and run configurations, setup
 Fuel exhaustion, two Program pins, and foreign-thread and stale-handle
 rejection during Instance destruction.

@@ -244,6 +244,68 @@ static void revision_two_object_bytes(bc_handle engine){
     assert(bc_instance_destroy(default_limit)==BC_OK);
 }
 
+static HANDLE input_read, preparation_cancel;
+static const uint8_t *guarded_input;
+
+static LONG WINAPI signal_on_input_read(EXCEPTION_POINTERS *exception){
+    const EXCEPTION_RECORD *record=exception->ExceptionRecord;
+    if(record->ExceptionCode!=STATUS_GUARD_PAGE_VIOLATION || record->NumberParameters<2 ||
+        record->ExceptionInformation[1]!=(ULONG_PTR)guarded_input){
+        return EXCEPTION_CONTINUE_SEARCH;
+    }
+    assert(SetEvent(input_read));
+    assert(WaitForSingleObject(preparation_cancel,5000)==WAIT_OBJECT_0);
+    return EXCEPTION_CONTINUE_EXECUTION;
+}
+
+static DWORD WINAPI cancel_on_input_read(void *arg){
+    const HANDLE cancel=arg;
+    assert(WaitForSingleObject(input_read,5000)==WAIT_OBJECT_0);
+    assert(SetEvent(cancel));
+    return 0;
+}
+
+static void cancel_preparation(bc_handle engine,bc_handle program,bc_slice run){
+    input_read=CreateEventW(NULL,TRUE,FALSE,NULL);
+    preparation_cancel=CreateEventW(NULL,TRUE,TRUE,NULL);
+    assert(input_read && preparation_cancel);
+    bc_handle instance=UINT64_MAX;
+    bc_diagnostic diagnostic={.struct_size=sizeof(diagnostic)};
+    assert(bc_preview_instance_create_cancellable(engine,program,(bc_slice){0},run,
+        preparation_cancel,&instance,&diagnostic)==BC_RUN_TERMINATED && instance==0);
+    expect_diagnostic(&diagnostic,BC_RUN_TERMINATED);
+    assert(ResetEvent(preparation_cancel));
+
+    uint8_t *data=VirtualAlloc(NULL,4096,MEM_RESERVE|MEM_COMMIT,PAGE_READWRITE);
+    assert(data);
+    memcpy(data,(const uint8_t[]){0,255,77},3);
+    guarded_input=data;
+    void *handler=AddVectoredExceptionHandler(1,signal_on_input_read);
+    DWORD previous=0;
+    assert(handler && VirtualProtect(data,4096,PAGE_READWRITE|PAGE_GUARD,&previous));
+    HANDLE thread=CreateThread(NULL,0,cancel_on_input_read,preparation_cancel,0,NULL);
+    assert(thread);
+    instance=UINT64_MAX;
+    const bc_slice input={data,3};
+    assert(bc_preview_instance_create_cancellable(engine,program,input,run,
+        preparation_cancel,&instance,&diagnostic)==BC_RUN_TERMINATED && instance==0);
+    expect_diagnostic(&diagnostic,BC_RUN_TERMINATED);
+    assert(WaitForSingleObject(thread,5000)==WAIT_OBJECT_0);
+    assert(CloseHandle(thread) && RemoveVectoredExceptionHandler(handler));
+    guarded_input=NULL;
+
+    assert(ResetEvent(preparation_cancel));
+    assert(bc_preview_instance_create_cancellable(engine,program,input,run,
+        preparation_cancel,&instance,&diagnostic)==BC_OK && instance!=0);
+    assert(SetEvent(preparation_cancel));
+    const bc_event result=finish_revision_two(instance,64);
+    assert(result.kind==BC_DONE && result.return_i32==77);
+    assert(bc_instance_destroy(instance)==BC_OK);
+    assert(VirtualFree(data,0,MEM_RELEASE));
+    assert(CloseHandle(input_read) && CloseHandle(preparation_cancel));
+    puts("PASS: preparation cancellation before and during input copy leaves no handle; clean retry returns 77");
+}
+
 static void revision_two_byte_inputs(bc_handle engine){
     static const uint8_t main[]="main";
     static const uint8_t text[]="module main; pub fn i32 main(ref u8[] data){"
@@ -264,6 +326,7 @@ static void revision_two_byte_inputs(bc_handle engine){
     uint8_t *cap=(uint8_t *)strstr((const char *)config,"\"input_bytes\":1048576");
     assert(cap);
     memcpy(cap+sizeof("\"input_bytes\":")-1,"      3",7);
+    cancel_preparation(engine,program,run);
     uint8_t bytes[]={0,255,42,99};
     assert(bc_instance_create(engine,program,(bc_slice){NULL,1},run,&refused,&diagnostic)==BC_BAD_ARGUMENT);
     assert(refused==0);

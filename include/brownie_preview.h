@@ -41,6 +41,16 @@ BC_PREVIEW_API uint32_t BC_CALL bc_preview_instance_destroy(bc_handle instance);
 BC_PREVIEW_API uint32_t BC_CALL bc_preview_program_release(bc_handle engine, bc_handle program);
 BC_PREVIEW_API uint32_t BC_CALL bc_preview_engine_destroy(bc_handle engine);
 
+/* Prepare a revision-2 Instance with an optional Windows manual-reset event.
+   Pass NULL to use the ordinary preparation path. Keep the event open and
+   signaled once cancellation is requested. Another thread may signal it
+   while the owner thread is inside this call. A cancellation observed before
+   publication returns BC_RUN_TERMINATED, leaves out_instance zero and releases
+   provisional storage. The event is borrowed for the duration of the call. */
+BC_PREVIEW_API uint32_t BC_CALL bc_preview_instance_create_cancellable(bc_handle engine,
+    bc_handle program, bc_slice input, bc_slice run_config_json, void *cancel_event,
+    bc_handle *out_instance, bc_diagnostic *diagnostic);
+
 /* Copy a revision-2 Instance's sealed BC_DONE output into caller-owned storage.
    Use NULL/0 to query its exact size. A non-NULL destination smaller than that
    size returns BC_RESOURCE_LIMIT without writing bytes. Both report the size.
