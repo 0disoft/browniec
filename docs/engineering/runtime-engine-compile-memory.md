@@ -146,7 +146,12 @@ carries the deadline through both its scalar verifier and its subsequent
 reference admission. Timed ordinary verification uses the staged literal
 image proof and samples before each catalog or payload stage and before
 accepting the complete image. Each UTF-8 stage validates at most 259 bytes.
-Other metadata and place-proof calls return to their surrounding checkpoint. The staged input and output proof drivers
+Reference recipe definition scans sample before each instruction and each
+formal-coverage register. Timed ordinary verification also reuses staged
+reference root preparation, which samples before each site or round
+transition and before returning the complete plan. A site can scan up to
+256 call or return instructions. Other metadata and place-proof calls return
+to their surrounding checkpoint. The staged input and output proof drivers
 sample once before each bounded proof advance. Input-only compilation uses its
 separate proof with the output gate closed and checks again before returning
 the completed proof. Expiry ends the compile with
@@ -281,6 +286,13 @@ ledger and heap returned to baseline without consuming a Program ID. The same
 source compiled one tick before expiry. Windows development and /O2 passed
 with zero live SDK allocations at exit. Local receipt:
 `build/runtime-engine/20261121T015538551853Z/receipt.json`.
+
+The Windows verifier advanced to the exact deadline on the first recipe
+definition instruction or the first root-round transition in both ordinary
+source profiles. All four cases stopped before a second probe or a new SDK
+allocation and restored the ledger and heap without consuming a Program ID.
+Windows development and /O2 passed with zero live SDK allocations at exit.
+Local receipt: `build/runtime-engine/20261121T020446164516Z/receipt.json`.
 
 Source lowering, work between checkpoints, and cleanup remain synchronous.
 Public Pending compilation, in-flight cancellation, and a latency bound for

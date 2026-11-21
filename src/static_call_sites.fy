@@ -4,6 +4,9 @@ import static_ir as statics;
 import static_image as images;
 import ir as ir;
 import errors as errors;
+import runtime_clock as clock;
+import metadata_budget as budget;
+import output_static_sites_work as work;
 
 // A proof window set contains actual OPEN definition identities, not pointers.
 // It permits different literals at different calls without broadening a value.
@@ -48,4 +51,19 @@ pub fn Result<statics::Sites,errors::Error> prepare(ref calls::Program unit,ref 
     // fifteen edges. Latent or runtime-only reference formals may have no image
     // roots. Runtime provenance belongs to canonical loan proof, not this set.
     return .ok(sites);
+}
+
+
+// Timed verification uses the same bounded root analysis as the staged proof.
+pub fn Result<statics::Sites,errors::Error> prepare_until(ref calls::Program unit,ref calls::Proof proof,
+    ref images::Image image,usize deadline){
+    if(deadline==0){return prepare(unit,proof,image);}
+    var work::State state=work::empty();var budget::State meter=budget::empty();
+    while(!state.done){
+        if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
+        let usize allowance=budget::reset(ref mut meter,0)?;
+        let bool done=work::advance(unit,proof,image,ref mut state,ref mut meter)?;
+    }
+    if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
+    return .ok(state.result);
 }

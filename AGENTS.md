@@ -1,7 +1,7 @@
-- Latest runtime checkpoint (2026-11-21): [Literal image verification deadlines](docs/engineering/runtime-engine-compile-memory.md#configured-compile-deadlines)
-  reuse bounded image stages in timed ordinary verification. Windows development
-  and /O2 passed with zero live SDK allocations. The locked /O2 CLI build and
-  quick-start result 77 also passed.
+- Latest runtime checkpoint (2026-11-21): [Reference definition and root deadlines](docs/engineering/runtime-engine-compile-memory.md#configured-compile-deadlines)
+  check each definition instruction or register and reuse staged reference
+  root preparation. Windows development and /O2 passed with zero live SDK
+  allocations. The locked /O2 CLI build and quick-start result 77 also passed.
 
 # Brownie C agent guidance
 

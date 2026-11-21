@@ -619,7 +619,7 @@ pub fn Result<ReferenceReturnProof,errors::Error> inspect_reference_returns(ref 
 pub fn Result<ReferenceReturnProof,errors::Error> inspect_reference_returns_until(
     ref image_calls::Program unit,ref images::Image image,usize deadline){
     let image_calls::Proof recipes=image_calls::inspect_reference_returns_until(unit,image,deadline)?;
-    let statics::Sites sites=image_sites::prepare(unit,ref recipes,image)?;
+    let statics::Sites sites=image_sites::prepare_until(unit,ref recipes,image,deadline)?;
     let ref ir::Program p=ref unit.body;let value_ir::Sites no_values=value_ir::empty();
     let reborrows::Sites loans=validate_values_mode(p,true,4,ref sites,ref no_values,0,false,deadline)?;
     let usize executable=executable_calls_until(p,ref loans,deadline)?;

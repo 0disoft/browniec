@@ -73,7 +73,14 @@ def source_copy(path):
                             signature + '\n    unsafe{bc_runtime_engine_test_proof_visit();}', 1)
         return path.name, ordinary_proof_probe(text, '        if (!seen[pc])', 1)
     if path == ROOT / 'src/static_call_ir.fy':
-        return path.name, ordinary_proof_probe(path.read_text(encoding='utf-8'), '        if(!seen[pc])', 2)
+        text = path.read_text(encoding='utf-8')
+        anchor = '\n            let usize at=pc*8;let u8 op=p.code[at];let usize dst=p.code[at+1] as usize;'
+        need(text.count(anchor) == 1, 'Ordinary definition probe anchor changed')
+        text = text.replace(anchor, '\n            unsafe{bc_runtime_engine_test_ordinary_proof_pc(5)};' + anchor, 1)
+        return path.name, ordinary_proof_probe(text, '        if(!seen[pc])', 2)
+    if path == ROOT / 'src/output_static_sites_work.fy':
+        text = path.read_text(encoding='utf-8')
+        return path.name, ordinary_proof_probe(text, '    if(site==16){\n        w.round+=1;', 6)
     if path == ROOT / 'src/reference_lifetimes.fy':
         return path.name, ordinary_proof_probe(path.read_text(encoding='utf-8'), '            if(!seen[pc])', 3)
     if path == ROOT / 'src/module_output_program.fy':

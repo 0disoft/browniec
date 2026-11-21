@@ -74,10 +74,12 @@ fn Result<usize,errors::Error> define(ref mut Proof proof,usize dst,usize f,u8 k
     proof.definitions[dst]=pc;proof.functions[dst]=f;proof.kinds[dst]=kind;proof.sites+=1;return .ok(dst);
 }
 fn bool prior(ref Proof proof,usize site,usize f,usize pc){return site<16 && proof.functions[site]==f && proof.definitions[site]<pc;}
-fn Result<usize,errors::Error> definitions(ref Program unit,ref images::Image image,ref mut Proof proof){
+fn Result<usize,errors::Error> definitions(ref Program unit,ref images::Image image,ref mut Proof proof,usize deadline){
     let ref ir::Program p=ref unit.body;var usize f=0;
     while(f<p.function_count){var bool prelude=true;var usize last=0;var bool parameter=false;var usize pc=p.starts[f];
-        while(pc<p.ends[f]){let usize at=pc*8;let u8 op=p.code[at];let usize dst=p.code[at+1] as usize;
+        while(pc<p.ends[f]){
+            if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
+            let usize at=pc*8;let u8 op=p.code[at];let usize dst=p.code[at+1] as usize;
             let usize a=p.code[at+2] as usize;let usize b=p.code[at+3] as usize;
             if(op>=77 && op<=87 && !reserved(p,at)){return .err(invalid(pc));}
             if(op==77){
@@ -108,7 +110,11 @@ fn Result<usize,errors::Error> definitions(ref Program unit,ref images::Image im
             pc+=1;
         }f+=1;
     }
-    var usize r=0;while(r<p.registers){if(unit.parameters[r]!=0 && proof.formal_sites[r]==0){return .err(invalid(0));}r+=1;}
+    var usize r=0;while(r<p.registers){
+        if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
+        if(unit.parameters[r]!=0 && proof.formal_sites[r]==0){return .err(invalid(0));}r+=1;
+    }
+    if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
     return .ok(proof.sites);
 }
 fn bool live(ref Proof proof,usize site,usize f,usize bits){
@@ -248,7 +254,7 @@ fn Result<Proof,errors::Error> inspect_mode(ref Program unit,ref images::Image i
     if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
     let usize bounded=header(unit,references,returns,input)?;
     let usize inspected=image_work::inspect_until(image,deadline)?;
-    var Proof proof=empty();let usize defined=definitions(unit,image,ref mut proof)?;
+    var Proof proof=empty();let usize defined=definitions(unit,image,ref mut proof,deadline)?;
     var bool[32] calls=[false;32];var usize f=0;
     while(f<unit.body.function_count){
         let usize checked=flow(unit,ref mut proof,f,ref mut calls,output,deadline)?;f+=1;
