@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-21): [Revision-2 guest output](docs/engineering/embed-preview.md#revision-2-guest-output)
-  exposes sealed results on success. Windows /Od and /O2 verified capability
-  denial, binary views, cancellation and trap rollback.
+- Latest runtime checkpoint (2026-11-21): [Catalog-backed embedding admission](docs/engineering/embed-preview.md#engine-admission-for-catalog-backed-embedding)
+  separates Engine-owned compilation from per-Instance grants. Windows /Od and
+  /O2 verify policy denial and a typed request/reply returning 77.
 
 # Brownie C agent guidance
 

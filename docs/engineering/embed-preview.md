@@ -183,3 +183,17 @@ and byte-input entries. The latter keeps its output view valid across Program
 release, peer Instance destruction, a late cancel, and repeated observation.
 The C host also verified rejection without a run grant or Engine permission,
 and empty payloads on cancellation and a guest trap after emission.
+
+## Engine admission for catalog-backed embedding
+
+The private Engine can retain a catalog-backed Program from one source with a
+public `main::main` i32 entry before receiving a run configuration. It verifies
+the lowered image against the exact catalog, retains its digest, and checks all
+referenced capabilities against the Engine policy. Preparing an Instance still
+requires a matching entry and explicit declarations and grants. The catalog
+alone provides no grant.
+
+The Windows Engine verifier passed development and /O2 with default stacks and
+zero live SDK allocations. It exercised policy denial, private entry rejection,
+missing run declaration rejection and a typed i32 reply that returned 77.
+The preview DLL still requires an empty catalog at its C entry point.

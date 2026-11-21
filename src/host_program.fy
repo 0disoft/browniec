@@ -180,15 +180,38 @@ pub fn Result<Program,Error> retain(ref ir::Program code,catalog::Catalog import
         (has_emit(code) && !allows_output(run))){
         return .err(.Authority);
     }
-    return publish(code,imports,digest,required,run);
+    return publish(code,imports,digest,required,runs::module_name(run),runs::function_name(run));
+}
+
+// Compilation binds the Engine ceiling and verified import set. Each Instance
+// must independently declare and receive the required capabilities at admission.
+pub fn Result<Program,Error> retain_for_entry(ref ir::Program code,catalog::Catalog imports,
+    ref policy::Policy ceiling,ref u8[] module_name,ref u8[] function_name){
+    let usize required=inspect(code,ref imports)?;
+    let usize one=1;
+    var usize id=0;
+    while(id<catalog::count(ref imports)){
+        if((required&(one<<id))!=0){
+            let ref u8[] cap=switch(catalog::capability(ref imports,id)){
+                case .ok(v):{v}case .err(_):{return .err(.Catalog);}
+            };
+            if(!policy::contains_capability(ceiling,cap)){return .err(.Authority);}
+        }
+        id+=1;
+    }
+    if(has_emit(code) && !policy::contains_capability(ceiling,b"brownie.output.emit")){return .err(.Authority);}
+    let u32[8] digest=switch(catalog::digest(ref imports)){
+        case .ok(v):{v}case .err(_):{return .err(.Catalog);}
+    };
+    return publish(code,imports,digest,required,module_name,function_name);
 }
 
 fn Result<Program,Error> publish(ref ir::Program code,catalog::Catalog imports,u32[8] digest,
-    usize required,ref runs::RunConfig run){
-    let bytes::Buffer scope=switch(bytes::copy(runs::module_name(run))){
+    usize required,ref u8[] module_name,ref u8[] function_name){
+    let bytes::Buffer scope=switch(bytes::copy(module_name)){
         case .ok(v):{v}case .err(_):{return .err(.Allocation);}
     };
-    let bytes::Buffer name=switch(bytes::copy(runs::function_name(run))){
+    let bytes::Buffer name=switch(bytes::copy(function_name)){
         case .ok(v):{v}case .err(_):{return .err(.Allocation);}
     };
     var vec::Vec<ir::Program> retained=vec::empty<ir::Program>();

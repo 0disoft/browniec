@@ -241,6 +241,44 @@ fn Result<usize,u8> source_round_trip(){
     assert(id(engine::destroy(ref mut owner))==0);
     return .ok(1);
 }
+fn Result<sources::Snapshot,u8> preview_snapshot(ref u8[] source){
+    var sources::Builder builder=switch(sources::builder(4096,16)){
+        case .ok(v):{v}case .err(_):{return .err(1);}
+    };
+    assert(sources::add(ref mut builder,b"main.brc",source).is_ok);
+    return switch(sources::freeze(ref builder)){case .ok(v):{.ok(v)}case .err(_):{.err(2)}};
+}
+fn Result<usize,u8> preview_compile_authority(){
+    let ref u8[] source=b"module main; import host::example as api; pub fn i32 main(){ return api::check(41) + 35; }";
+    let ref u8[] private=b"module main; fn i32 main(){ return 77; }";
+    let policy::Policy closed=parsed_policy(false)?;
+    var engine::Engine denied=configured(closed)?;
+    let sources::Snapshot denied_source=preview_snapshot(source)?;
+    rejected(engine::compile_preview_host(ref mut denied,denied_source,catalog_from(source_catalog())?),5);
+    assert(counts(ref mut denied).programs==0);
+    assert(id(engine::destroy(ref mut denied))==0);
+
+    let policy::Policy ceiling=parsed_policy(true)?;
+    let runs::RunConfig run=switch(runs::parse(source_run_config(),ref ceiling)){case .ok(v):{v}case .err(_):{return .err(3);}};
+    let runs::RunConfig missing=switch(runs::parse(source_run_undeclared(),ref ceiling)){case .ok(v):{v}case .err(_):{return .err(4);}};
+    var engine::Engine owner=configured(ceiling)?;
+    let sources::Snapshot private_source=preview_snapshot(private)?;
+    rejected(engine::compile_preview_host(ref mut owner,private_source,catalog_from(source_catalog())?),4);
+    let sources::Snapshot accepted=preview_snapshot(source)?;
+    let usize program=id(engine::compile_preview_host(ref mut owner,accepted,catalog_from(source_catalog())?));
+    rejected(engine::prepare_scalar_host(ref mut owner,program,ref missing),5);
+    let usize instance=id(engine::prepare_scalar_host(ref mut owner,program,ref run));
+    assert(event(engine::step_instance(ref mut owner,instance,8)).kind==4);
+    let engine::HostRequest pending=request(ref owner,instance);
+    assert(pending.import_id==1 && pending.run==instance);
+    discard event(engine::reply_scalar_host(ref mut owner,instance,pending.run,pending.request,0,answer()));
+    let engine::Event done=event(engine::step_instance(ref mut owner,instance,8));
+    assert(done.kind==1 && done.value==77);
+    assert(id(engine::destroy_instance(ref mut owner,instance))==instance);
+    assert(id(engine::release_program(ref mut owner,program))==program);
+    assert(id(engine::destroy(ref mut owner))==0);
+    return .ok(1);
+}
 fn Result<usize,u8> helper_host_calls(){
     let ref u8[] source=b"module main; import host::example as api; fn i32 inner(bool recur, i32 n){ if(recur){ return inner(false,n) + n; } return api::check(n); } fn i32 main(){ return inner(true,41) + -6; }";
     let ref u8[] recursion=b"module main; fn i32 main(){ return again(); } fn i32 again(){ return again(); }";
@@ -1670,6 +1708,7 @@ pub fn void run(){
     assert(host_fault_quarantines_engine(2).is_ok);
     assert(host_fault_quarantines_engine(3).is_ok);
     assert(source_round_trip().is_ok);
+    assert(preview_compile_authority().is_ok);
     assert(helper_host_calls().is_ok);
     assert(typed_source_round_trip().is_ok);
     assert(pending_memory().is_ok);

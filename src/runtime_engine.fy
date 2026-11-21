@@ -514,26 +514,66 @@ pub fn Result<usize,Error> compile_anchored_project_host(ref mut Engine e,ref pr
     };
     return retain_project_host(e,ref index,selected,imports,digest,run,limits,deadline);
 }
+
+// Public entry selection and single-source admission for the embedding adapter.
+pub fn Result<usize,Error> compile_preview_host(ref mut Engine e,sources::Snapshot snapshot,host_catalog::Catalog imports){
+    let u32 access=unsafe{control_access_raw(e as ptr void)};
+    if(access!=0){return .err(error(access));}
+    if(!e.meta.configured){return .err(error(5));}
+    let policy_limits::CompileLimits limits=host_compile_limits(e)?;
+    if(sources::count(ref snapshot)!=1 || limits.modules==0){return .err(error(8));}
+    let sources::Span original=switch(sources::whole(ref snapshot,0)){
+        case .ok(v):{v}case .err(_):{return .err(error(1));}
+    };
+    if(original.end-original.start>limits.source_bytes){return .err(error(8));}
+    let usize deadline=deadline_after(limits.deadline_ms)?;
+    let modules::Index index=switch(modules::build_host(snapshot,limits.tokens)){
+        case .ok(v):{v}case .err(e):{return .err(host_binding_error(e));}
+    };
+    let usize selected=switch(modules::entry(ref index,b"main",b"main")){
+        case .ok(v):{v}case .err(e):{return .err(host_binding_error(e));}
+    };
+    var ir::Program code=ir::empty();
+    discard lower_indexed_host(ref index,selected,ref imports,ref mut code,deadline)?;
+    discard check_host_image(ref code,limits)?;
+    if(clock::expired(deadline)){return .err(compile_timeout());}
+    let host_program::Program verified=verify_preview_host(e,ref code,imports)?;
+    return publish_verified_host(e,verified,deadline);
+}
+fn Result<host_program::Program,Error> verify_preview_host(ref Engine e,ref ir::Program code,host_catalog::Catalog imports){
+    let Result<host_program::Program,host_program::Error> checked=host_program::retain_for_entry(code,imports,
+        vec::at<policy::Policy>(ref e.policy,0),b"main",b"main");
+    return host_verification(checked);
+}
 fn Error host_binding_error(modules::Error e){
     return Error{.status=4,.diagnostic=diagnostics::Error{.code=diagnostics::binding(e),.at=e.at}};
 }
 fn Result<usize,Error> retain_project_host(ref mut Engine e,ref modules::Index index,usize selected,
     host_catalog::Catalog imports,ref u32[] digest,ref run_config::RunConfig run,policy_limits::CompileLimits limits,usize deadline){
     var ir::Program code=ir::empty();
-    switch(compiler::lower_project_host(index,selected,ref imports,ref mut code,deadline)){
-        case .ok(_):{}case .err(e):{return .err(Error{.status=4,.diagnostic=e});}
-    };
+    discard lower_indexed_host(index,selected,ref imports,ref mut code,deadline)?;
     return retain_limited_host(e,ref code,imports,digest,run,limits,deadline);
+}
+fn Result<usize,Error> lower_indexed_host(ref modules::Index index,usize selected,ref host_catalog::Catalog imports,
+    ref mut ir::Program code,usize deadline){
+    return switch(compiler::lower_project_host(index,selected,imports,code,deadline)){
+        case .ok(v):{.ok(v)}
+        case .err(e):{.err(if(e.code.kind==errors::deadline_kind()){compile_timeout()}else{Error{.status=4,.diagnostic=e}})}
+    };
 }
 fn Result<usize,Error> retain_limited_host(ref mut Engine e,ref ir::Program code,host_catalog::Catalog imports,
     ref u32[] digest,ref run_config::RunConfig run,policy_limits::CompileLimits limits,usize deadline){
+    discard check_host_image(code,limits)?;
+    return retain_verified_host(e,code,imports,digest,run,deadline);
+}
+fn Result<usize,Error> check_host_image(ref ir::Program code,policy_limits::CompileLimits limits){
     if(code.count>limits.instructions || code.function_count>limits.functions){return .err(error(8));}
     var usize f=0;
     while(f<code.function_count){
         if(code.register_ends[f]-code.register_starts[f]>limits.registers_per_function){return .err(error(8));}
         f+=1;
     }
-    return retain_verified_host(e,code,imports,digest,run,deadline);
+    return .ok(code.count);
 }
 
 // Trusted internal IR admission. The Engine retains the resulting verified owner.
@@ -547,6 +587,9 @@ fn Result<usize,Error> retain_verified_host(ref mut Engine e,ref ir::Program cod
     ref u32[] digest,ref run_config::RunConfig run,usize deadline){
     if(clock::expired(deadline)){return .err(compile_timeout());}
     let host_program::Program verified=verify_scalar_host(e,code,imports,digest,run)?;
+    return publish_verified_host(e,verified,deadline);
+}
+fn Result<usize,Error> publish_verified_host(ref mut Engine e,host_program::Program verified,usize deadline){
     var vec::Vec<host_program::Program> incoming=vec::empty<host_program::Program>();
     if(!vec::push<host_program::Program>(ref mut incoming,verified).is_ok){return .err(error(6));}
     let u32 status=unsafe{retain_host_raw(e as ptr mut void,ref mut incoming as ptr mut void,deadline)};
@@ -558,7 +601,12 @@ fn Result<host_program::Program,Error> verify_scalar_host(ref Engine e,ref ir::P
     let usize checked=check_run_policy(e,run)?;
     if(e.meta.poisoned){return .err(error(14));}
     if(e.meta.admission==0 || e.meta.next==0 || vec::len<Program>(ref e.programs)>=e.meta.limits.programs){return .err(error(8));}
-    return switch(host_program::retain(code,imports,digest,vec::at<policy::Policy>(ref e.policy,0),run)){
+    let Result<host_program::Program,host_program::Error> proof=host_program::retain(code,imports,digest,
+        vec::at<policy::Policy>(ref e.policy,0),run);
+    return host_verification(proof);
+}
+fn Result<host_program::Program,Error> host_verification(Result<host_program::Program,host_program::Error> checked){
+    return switch(checked){
         case .ok(v):{.ok(v)}
         case .err(reason):{return .err(error(switch(reason){
             case .Authority:{5}case .Allocation:{6}case .Code:{4}case .Catalog:{1}case .Binding:{1}
