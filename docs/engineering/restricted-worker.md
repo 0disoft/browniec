@@ -195,6 +195,33 @@ terminated after a 300 ms grace window. Both cases refunded their exact
 reservations and the full fixture reported zero net warm handles.
 Local receipt: `build/restricted-worker/20261121T155129609214Z/receipt.json`.
 
+### Scalar RESULT payload
+
+The private [Fairy codec](../../src/worker_scalar_result.fy) caps JSON RESULT
+payloads at 256 bytes. Every object requires schema
+`browniec.worker-result/v1` and a status. A checked result has those two
+fields. A completed run adds a decimal `return_i32` in signed 32-bit range.
+An error adds `kind`, `location` and `offset`. Source positions can point
+to EOF, verifier instruction indices must be below the supplied instruction
+ceiling, and an absent position has offset zero. The parent supplies the
+expected operation and ceilings. Field names are matched after JSON escape
+decoding. Duplicate, unknown, missing, nested or trailing content is rejected
+before a typed outcome is returned.
+
+The same codec creates the payload from the typed outcome. This schema is an
+internal scalar transport contract. The broker still needs to bind it to
+actual source execution and parent publication. Projects, output bytes and
+host exchange need their own integrated payloads.
+
+The focused native case passed Windows development and /O2 with the same
+root sources and lock in a test checkout containing only that case. Native
+test loading with the full test tree reports `E4503` at
+`tests/m2/struct_function_ir.fy:28`. The same error was reproduced from the
+preceding commit with the existing CLI locations case selected. Local
+reports: `build/worker-result-thda5j4j/development.stdout`,
+`build/worker-result-thda5j4j/release.stdout` and
+`build/worker-result-btngpe_b/development.stderr`.
+
 ## Windows verification
 
 Run `python -B tools/verify-restricted-worker.py`. The development and optimized

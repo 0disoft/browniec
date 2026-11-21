@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-22): [Windows broker cancellation](docs/engineering/restricted-worker.md#graceful-cancellation)
-  preserves START/CANCEL framing and drains late RESULT without publication.
-  Development and /O2 verify cooperative and forced AppContainer shutdown.
+- Latest runtime checkpoint (2026-11-22): [Scalar worker RESULT payload](docs/engineering/restricted-worker.md#scalar-result-payload)
+  adds a strict Fairy codec. The focused native case passed development and
+  /O2 in an isolated test checkout with the root sources and lock.
 
 # Brownie C agent guidance
 
