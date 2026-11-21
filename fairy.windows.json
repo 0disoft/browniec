@@ -3,16 +3,19 @@
   "subsystem": "console",
   "libraries": [
     "ntdll.lib",
-    "bcrypt.lib"
+    "bcrypt.lib",
+    "userenv.lib"
   ],
   "sources": [
     "native/windows-project-cli.c",
     "native/windows-project-input-reader.c",
     "native/windows-runtime-engine.c",
     "native/windows-host-adapter-process.c",
-    "native/windows-scalar-worker.c"
+    "native/windows-scalar-worker.c",
+    "native/windows-scalar-broker.c"
   ],
   "privateFunctions": [
+    "worker_scalar_broker::validate_result",
     "worker_scalar_command::compute",
     "runtime_engine::bind_inner",
     "runtime_engine::begin_inner",

@@ -2,7 +2,7 @@
 #include <string.h>
 
 static const uint8_t magic[] = {'B', 'C', 'W', 'K'};
-static const uint8_t empty_nonce[BC_WORKER_NONCE_BYTES] = {0};
+static const uint8_t empty_frame_nonce[BC_WORKER_NONCE_BYTES] = {0};
 
 static void put_le(uint8_t *bytes, size_t length, uint64_t value) {
     for (size_t i = 0; i < length; ++i) {
@@ -20,7 +20,7 @@ static uint64_t get_le(const uint8_t *bytes, size_t length) {
 static bool valid(const bc_worker_frame *frame) {
     if (frame->kind < BC_WORKER_HELLO || frame->kind > BC_WORKER_ERROR ||
         !frame->sequence || frame->length > BC_WORKER_FRAME_PAYLOAD_MAX ||
-        !memcmp(frame->nonce, empty_nonce, sizeof(empty_nonce))) return false;
+        !memcmp(frame->nonce, empty_frame_nonce, sizeof(empty_frame_nonce))) return false;
     if (frame->kind == BC_WORKER_HELLO || frame->kind == BC_WORKER_READY)
         return frame->sequence == 1 && !frame->correlation && !frame->length;
     if (frame->kind == BC_WORKER_CANCEL && frame->length) return false;
@@ -55,7 +55,7 @@ bool bc_worker_frame_preflight(const uint8_t *header, size_t bytes,
         parsed.sequence != expected->sequence || parsed.correlation != expected->correlation)
         return false;
     const bool initial_hello = expected->kind == BC_WORKER_HELLO &&
-        !memcmp(expected->nonce, empty_nonce, sizeof(empty_nonce));
+        !memcmp(expected->nonce, empty_frame_nonce, sizeof(empty_frame_nonce));
     if (!initial_hello && memcmp(parsed.nonce, expected->nonce, sizeof(parsed.nonce))) return false;
     *frame = parsed;
     return true;

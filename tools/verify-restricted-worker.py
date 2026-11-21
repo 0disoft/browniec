@@ -78,19 +78,22 @@ def main():
                 scalar = folder / 'browniec.exe'
                 shutil.copyfile(scalar_images / profile / scalar.name, scalar)
                 shutil.copyfile(ROOT / 'examples/answer.brc', folder / 'answer.brc')
+                (folder / 'bad-source.brc').write_bytes(b'\xff')
                 run([scalar, '--internal-scalar-worker'], cwd=folder, env=runtime_env,
                     expected_exit=4, silent=True)
                 command.append(scalar)
             evidence = json.loads(run(command, cwd=folder, env=runtime_env))
-            helper.need({key: value for key, value in evidence.items() if key != 'coldHandleDelta'} ==
+            helper.need({key: value for key, value in evidence.items()
+                         if key not in {'coldHandleDelta', 'parentColdHandleDelta'}} ==
                         dict(appContainer=True, capabilities=0, inheritedPipes=3,
                              commitDenied=True, cpuTermination=True, privatePipeAcl=True,
                              framedExchange=True, headerMutationsRejected=48,
                              boundedStream=True, pipeEof=True, publicationGate=True,
                              ioLease=True, brokerSessions=6, sharedBudget=True,
                              phaseDeadlines=True, gracefulCancelCases=2, handleDelta=0,
-                             scalarSessions=5 if scalar else 0)
-                        and type(evidence.get('coldHandleDelta')) is int,
+                             scalarSessions=5 if scalar else 0, parentBrokerCases=4 if scalar else 0)
+                        and type(evidence.get('coldHandleDelta')) is int
+                        and evidence.get('parentColdHandleDelta') in ((0, 1) if scalar else (0,)),
                         f'Unexpected worker result: {evidence}')
             receipt['profiles'].append(dict(profile=profile, exe=helper.image(exe), result=evidence))
             if scalar:

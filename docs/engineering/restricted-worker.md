@@ -209,9 +209,9 @@ decoding. Duplicate, unknown, missing, nested or trailing content is rejected
 before a typed outcome is returned.
 
 The same codec creates the payload from the typed outcome. This schema is an
-internal scalar transport contract. The parent still needs to use the Fairy
-decoder as its publication validator. Projects, output bytes and host exchange
-need their own integrated payloads.
+internal scalar transport contract shared by the worker and the parent's
+publication validator. Projects, output bytes and host exchange need their
+own integrated payloads.
 
 The focused native case passed Windows development and /O2 with the same
 root sources and lock in a test checkout containing only that case. Native
@@ -257,6 +257,30 @@ expectation and rejected it before publication. Both profiles passed all
 five scalar sessions with zero net warm handles.
 Local receipt: `build/restricted-worker/20261121T161323928124Z/receipt.json`.
 
+### Scalar parent publication
+
+The [Windows parent bridge](../../native/windows-scalar-broker.c) launches its
+own image with an explicitly supplied AppContainer profile. The private
+parent path expects the caller to provision that profile and grant image
+read/execute. It uses a 128 MiB Job commit ceiling and a 2 s user CPU ceiling
+for scalar verification. The parent snapshots the source from the selected
+disk file; the child gets the original bytes over START.
+
+The gate calls the [Fairy validator](../../src/worker_scalar_broker.fy) on the
+complete result using the parent's operation and source size. The validator
+borrows at most 256 bytes and invokes the same strict codec as the worker.
+After EOF and a successful child exit, the parent reads the typed result and
+uses the existing CLI formatter. A profile or transport failure cannot fall
+back to local compilation. This route is private pending profile/image
+provisioning and broader policy, source and host integration.
+
+Locked Windows development and /O2 passed check, run returning 77,
+invalid UTF-8 producing a lexical error at byte 0, and invalid profile
+producing unavailable. Each invocation returned exactly one expected CLI
+result. The first ordinary parent launch added one handle to each fixture
+process; the remaining success and failure launches showed zero handle
+growth. Local receipt: `build/restricted-worker/20261121T162302104825Z/receipt.json`.
+
 ## Windows verification
 
 Run `python -B tools/verify-restricted-worker.py`. The development and optimized
@@ -281,6 +305,6 @@ limit, connecting PID, and inheritance flags. The child exchanged bytes over
 all three pipes and the repeat launch again had zero net handle growth.
 Local receipt: `build/restricted-worker/20261121T152431466055Z/receipt.json`.
 
-The caller still needs production image and profile provisioning, typed
-parent result validation, broader broker phases and aggregate budgets.
+The caller still needs production image and profile provisioning, broader
+broker phases and aggregate budgets.
 The restricted CLI remains unavailable while those pieces are built and verified.

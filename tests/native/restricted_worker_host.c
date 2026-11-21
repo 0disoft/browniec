@@ -805,6 +805,47 @@ static void verify_scalar_programs(const wchar_t *path, const wchar_t *directory
         "{\"schema\":\"browniec.worker-result/v1\",\"status\":\"error\",\"kind\":1,\"location\":0,\"offset\":0}", true);
 }
 
+static void verify_parent_broker(const wchar_t *image, const wchar_t *directory,
+    const wchar_t *name, const wchar_t *operation, const wchar_t *source,
+    DWORD expected_exit, const char *expected_output) {
+    wchar_t command[256];
+    check(swprintf_s(command, _countof(command), L"browniec --internal-scalar-broker %ls %ls %ls",
+        name, operation, source) > 0, "format parent broker fixture command");
+    SECURITY_ATTRIBUTES inherit = {sizeof(inherit), NULL, TRUE};
+    HANDLE input = CreateFileW(L"NUL", GENERIC_READ, FILE_SHARE_READ, &inherit, OPEN_EXISTING, 0, NULL);
+    HANDLE read = NULL, write = NULL;
+    check(input != INVALID_HANDLE_VALUE && CreatePipe(&read, &write, &inherit, 4096) &&
+        SetHandleInformation(read, HANDLE_FLAG_INHERIT, 0), "prepare parent broker fixture streams");
+    STARTUPINFOW setup = {0};
+    setup.cb = sizeof(setup);
+    setup.dwFlags = STARTF_USESTDHANDLES;
+    setup.hStdInput = input;
+    setup.hStdOutput = write;
+    setup.hStdError = write;
+    PROCESS_INFORMATION parent = {0};
+    check(CreateProcessW(image, command, NULL, NULL, TRUE, CREATE_NO_WINDOW,
+        NULL, directory, &setup, &parent), "launch actual parent broker command");
+    CloseHandle(parent.hThread);
+    CloseHandle(input);
+    CloseHandle(write);
+    if (WaitForSingleObject(parent.hProcess, 15000) != WAIT_OBJECT_0) {
+        TerminateProcess(parent.hProcess, ERROR_TIMEOUT);
+        check(FALSE, "parent broker command did not finish");
+    }
+    DWORD code = STILL_ACTIVE;
+    check(GetExitCodeProcess(parent.hProcess, &code) && CloseHandle(parent.hProcess),
+        "reap parent broker command");
+    char data[256] = {0};
+    DWORD used = 0, count = 0;
+    while (used < sizeof(data) - 1 && ReadFile(read, data + used,
+        (DWORD)sizeof(data) - 1 - used, &count, NULL) && count) used += count;
+    check(CloseHandle(read), "close parent broker output");
+    if (code != expected_exit || strcmp(data, expected_output))
+        fprintf(stderr, "parent broker command: exit=%lu, output=%s\n", code, data);
+    check(code == expected_exit && used == strlen(expected_output) &&
+        !memcmp(data, expected_output, used), "verify exactly one parent result and the expected exit");
+}
+
 int wmain(int argc, wchar_t **argv) {
     if (argc == 3 && !wcscmp(argv[1], L"--child")) return child(argv[2], cpu);
     if (argc == 3 && !wcscmp(argv[1], L"--child-ok")) return child(argv[2], clean);
@@ -920,17 +961,35 @@ int wmain(int argc, wchar_t **argv) {
     if (argc == 3) verify_scalar_programs(argv[2], directory);
     check(CloseHandle(decoy), "close decoy");
     decoy = NULL;
+    long parent_cold_delta = 0;
+    if (argc == 3) {
+        DWORD before_parent = 0, warm_parent = 0, after_parent = 0;
+        check(GetProcessHandleCount(GetCurrentProcess(), &before_parent), "count handles before parent commands");
+        verify_parent_broker(argv[2], directory, profile_name, L"check", L"answer.brc", 0,
+            "{\"schema\":\"browniec.result/v1\",\"profile\":\"brownie.m1-scalar/1\",\"command\":\"check\",\"status\":\"checked\",\"return_i32\":null,\"error\":null}\n");
+        check(GetProcessHandleCount(GetCurrentProcess(), &warm_parent), "count handles after first parent command");
+        parent_cold_delta = (long)warm_parent - (long)before_parent;
+        check(parent_cold_delta >= 0 && parent_cold_delta <= 1, "bound first parent launch handle change");
+        verify_parent_broker(argv[2], directory, profile_name, L"run", L"answer.brc", 0,
+            "{\"schema\":\"browniec.result/v1\",\"profile\":\"brownie.m1-scalar/1\",\"command\":\"run\",\"status\":\"completed\",\"return_i32\":77,\"error\":null}\n");
+        verify_parent_broker(argv[2], directory, profile_name, L"check", L"bad-source.brc", 3,
+            "{\"schema\":\"browniec.result/v1\",\"profile\":\"brownie.m1-scalar/1\",\"command\":\"check\",\"status\":\"error\",\"return_i32\":null,\"error\":{\"kind\":\"lexical\",\"byte_offset\":0}}\n");
+        verify_parent_broker(argv[2], directory, L"bad/profile", L"run", L"answer.brc", 4,
+            "{\"schema\":\"browniec.result/v1\",\"profile\":\"brownie.m1-scalar/1\",\"command\":\"run\",\"status\":\"error\",\"return_i32\":null,\"error\":{\"kind\":\"unavailable\",\"byte_offset\":0}}\n");
+        check(GetProcessHandleCount(GetCurrentProcess(), &after_parent) && after_parent == warm_parent,
+            "success and failure parent commands leave no repeat handle increase");
+    }
     check(GetProcessHandleCount(GetCurrentProcess(), &final), "final launcher handles");
-    if (final + 7 != baseline)
+    if ((long)final + 7 != (long)baseline + parent_cold_delta)
         fprintf(stderr, "handles cold %lu, warm %lu, final %lu\n", cold, baseline, final);
-    check(final + 7 == baseline, "balanced launcher handles after warmup");
+    check((long)final + 7 == (long)baseline + parent_cold_delta, "balanced launcher handles after warmup");
     printf("{\"appContainer\":true,\"capabilities\":0,\"inheritedPipes\":3,"
            "\"commitDenied\":true,\"cpuTermination\":true,\"privatePipeAcl\":true,"
            "\"framedExchange\":true,\"headerMutationsRejected\":48,"
            "\"boundedStream\":true,\"pipeEof\":true,\"publicationGate\":true,"
            "\"ioLease\":true,\"brokerSessions\":6,\"sharedBudget\":true,"
            "\"phaseDeadlines\":true,\"gracefulCancelCases\":2,\"handleDelta\":0,"
-           "\"scalarSessions\":%d,\"coldHandleDelta\":%ld}\n",
-           argc == 3 ? 5 : 0, (long)final - (long)cold);
+           "\"scalarSessions\":%d,\"parentBrokerCases\":%d,\"parentColdHandleDelta\":%ld,\"coldHandleDelta\":%ld}\n",
+           argc == 3 ? 5 : 0, argc == 3 ? 4 : 0, parent_cold_delta, (long)final - (long)cold);
     return 0;
 }

@@ -1,6 +1,6 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-#include "native/restricted_worker_frame.c"
+#include "native/restricted_worker_frame.h"
 
 static HANDLE result_pipe;
 static bc_worker_frame result_frame;

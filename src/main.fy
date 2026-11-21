@@ -23,6 +23,7 @@ import cli_source_input as source_input;
 import cli_configured_project as configured;
 import cli_host_command as hosts;
 import worker_scalar_command as worker;
+import worker_scalar_broker as broker;
 
 @effects(console)
 fn i32 fail(render::Format format, bool run, u8 kind) {
@@ -39,6 +40,9 @@ fn i32 main() {
     let ref u8[] command_view = ref command;
     if(argc==2 && lexer::equal(command_view[..command_length],b"--internal-scalar-worker")){
         return worker::execute();
+    }
+    if(argc==5 && lexer::equal(command_view[..command_length],b"--internal-scalar-broker")){
+        return broker::execute();
     }
     if (lexer::equal(command_view[..command_length], b"--version")) {
         if (argc == 2) {
