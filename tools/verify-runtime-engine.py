@@ -99,6 +99,15 @@ def source_copy(path):
         text = text.replace(signature, declaration + signature, 1)
         text = text.replace(anchor, anchor + f'\n        unsafe{{bc_runtime_engine_test_plan_visit(pc,{plan_kind})}};', 1)
         return path.name, text.encode('utf-8')
+    if path == ROOT / 'src/output_image_work.fy':
+        text = path.read_text(encoding='utf-8')
+        signature = 'pub fn Result<bool,images::Error> advance_catalog('
+        anchor = '    w.cursor=end;'
+        need(text.count(signature) == text.count(anchor) == 1, 'Image deadline probe anchors changed')
+        declaration = 'unsafe extern C fn void bc_runtime_engine_test_ordinary_image_chunk(usize start,usize end);\n'
+        text = text.replace(signature, declaration + signature, 1)
+        text = text.replace(anchor, '    unsafe{bc_runtime_engine_test_ordinary_image_chunk(w.cursor,end)};\n' + anchor, 1)
+        return path.name, text.encode('utf-8')
     if path == ROOT / 'src/output_canonical_proof_work.fy':
         text = path.read_text(encoding='utf-8')
         anchor = 'if(w.phase==0){let bool input=w.input;'

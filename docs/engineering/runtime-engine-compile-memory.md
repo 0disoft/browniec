@@ -143,8 +143,10 @@ admission. Ordinary verification samples the same deadline between proof
 phases and before each instruction in canonical CFG, recipe flow and origin,
 executable CALL, and returned-reference lifetime scans. The legacy route
 carries the deadline through both its scalar verifier and its subsequent
-reference admission. Metadata, image and place-proof calls return to their
-next surrounding checkpoint. The staged input and output proof drivers
+reference admission. Timed ordinary verification uses the staged literal
+image proof and samples before each catalog or payload stage and before
+accepting the complete image. Each UTF-8 stage validates at most 259 bytes.
+Other metadata and place-proof calls return to their surrounding checkpoint. The staged input and output proof drivers
 sample once before each bounded proof advance. Input-only compilation uses its
 separate proof with the output gate closed and checks again before returning
 the completed proof. Expiry ends the compile with
@@ -271,6 +273,14 @@ later instruction or SDK allocation was attempted, and the heap and Program
 charge returned to baseline without consuming a Program ID. Both Windows
 profiles passed with zero live SDK allocations at exit. Local receipt:
 `build/runtime-engine/20261121T014545022819Z/receipt.json`.
+
+The Windows verifier advanced to the exact deadline after validating the
+first 258 bytes of a text literal whose three-byte scalar crossed the
+256-byte cut. The next image chunk and further proof did not run. The Program
+ledger and heap returned to baseline without consuming a Program ID. The same
+source compiled one tick before expiry. Windows development and /O2 passed
+with zero live SDK allocations at exit. Local receipt:
+`build/runtime-engine/20261121T015538551853Z/receipt.json`.
 
 Source lowering, work between checkpoints, and cleanup remain synchronous.
 Public Pending compilation, in-flight cancellation, and a latency bound for

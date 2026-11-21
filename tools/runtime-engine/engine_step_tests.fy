@@ -947,9 +947,23 @@ fn Result<usize,u8> list_plan_deadline(ref mut engine::Engine e,ref configs::Run
     unsafe{bc_runtime_engine_test_use_os_clock()};
     return .ok(0);
 }
+fn ref u8[] ordinary_image_source(){return b"module app;pub fn i32 chosen(){let ref str marker=\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\xED\x95\x9C tail\";return 42;}";}
+fn Result<usize,u8> ordinary_image_deadline(ref mut engine::Engine e){
+    let Heap idle=heap();
+    let entries::Entry entry=selected(ordinary_image_source())?;
+    unsafe{bc_runtime_engine_test_set_clock(100)};
+    unsafe{bc_runtime_engine_test_proof_begin()};
+    unsafe{bc_runtime_engine_test_expire_in_ordinary_proof(20000100,4)};
+    rejected_compile_deadline(engine::compile(e,entry,65536));
+    assert(unsafe{bc_runtime_engine_test_proof_count()}==1);
+    counts(e,0,0,0);same_heap(ref idle);
+    assert(retained(e).program_bytes==0);
+    unsafe{bc_runtime_engine_test_use_os_clock()};
+    return .ok(0);
+}
 fn Result<usize,u8> ordinary_deadline_success(ref mut engine::Engine e){
     let ref u8[] plain=b"module app;pub fn i32 chosen(){return 42;}";
-    let ref u8[] references=b"module app;pub fn i32 chosen(){let ref u8[] marker=b\"*\";return 42;}";
+    let ref u8[] references=ordinary_image_source();
     let Heap idle=heap();
     var usize mode=0;
     while(mode<2){
@@ -983,6 +997,7 @@ fn Result<usize,u8> configured_compile_deadline(){
     let usize output_prepare_checked=output_prepare_deadline(ref mut e,ref granted)?;
     let usize place_checked=place_plan_deadline(ref mut e,ref granted)?;
     let usize list_checked=list_plan_deadline(ref mut e,ref granted)?;
+    let usize image_checked=ordinary_image_deadline(ref mut e)?;
     let usize checked=compile_deadline(ref mut e,ref granted)?;
     let usize ordinary_checked=ordinary_deadline_success(ref mut e)?;
     close(ref mut e);return .ok(0);

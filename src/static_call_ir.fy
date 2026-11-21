@@ -3,6 +3,7 @@ import ir as ir;
 import errors as errors;
 import runtime_clock as clock;
 import static_image as images;
+import output_image_work as image_work;
 import aggregate_place_ir as aggregates;
 import output_ir as output_ir;
 
@@ -246,9 +247,7 @@ fn Result<Proof,errors::Error> inspect_mode(ref Program unit,ref images::Image i
     bool input,bool output,usize deadline){
     if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
     let usize bounded=header(unit,references,returns,input)?;
-    if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
-    switch(images::inspect(image)){case .ok(_):{}case .err(_):{return .err(invalid(0));}};
-    if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
+    let usize inspected=image_work::inspect_until(image,deadline)?;
     var Proof proof=empty();let usize defined=definitions(unit,image,ref mut proof)?;
     var bool[32] calls=[false;32];var usize f=0;
     while(f<unit.body.function_count){

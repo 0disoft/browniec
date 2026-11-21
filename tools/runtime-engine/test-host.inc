@@ -413,7 +413,7 @@ void bc_runtime_engine_test_plan_stopped(void){
 }
 static uint8_t ordinary_proof_target;
 void bc_runtime_engine_test_expire_in_ordinary_proof(uintptr_t deadline,uint8_t phase){
- assert(!ordinary_proof_target&&phase>=1&&phase<=3);
+ assert(!ordinary_proof_target&&phase>=1&&phase<=4);
  ordinary_proof_target=phase;
  bc_runtime_engine_test_expire_in_proof(deadline);
 }
@@ -422,6 +422,11 @@ void bc_runtime_engine_test_ordinary_proof_pc(uint8_t phase){
   assert(!output_proof_expired);
   if(phase==ordinary_proof_target)bc_runtime_engine_test_proof_visit();
  }
+}
+void bc_runtime_engine_test_ordinary_image_chunk(uintptr_t start,uintptr_t end){
+ if(ordinary_proof_target!=4)return;
+ assert(start==0&&end==258);
+ bc_runtime_engine_test_ordinary_proof_pc(4);
 }
 void bc_runtime_engine_test_proof_begin(void){output_proof_visits=0;}
 uintptr_t bc_runtime_engine_test_proof_count(void){
