@@ -726,6 +726,78 @@ static void verify_graceful_cancel(const wchar_t *path, const wchar_t *directory
         "refund cancellation and fixture witness");
 }
 
+static const char *expected_scalar_payload;
+
+static bool scalar_payload(const uint8_t *body, size_t size) {
+    const size_t expected = strlen(expected_scalar_payload);
+    if (size < expected || memcmp(body, expected_scalar_payload, expected) || body[size - 1] != '}')
+        return false;
+    if (expected_scalar_payload[expected - 1] == '}') return size == expected;
+    for (size_t i = expected; i < size - 1; ++i)
+        if (body[i] < '0' || body[i] > '9') return false;
+    return size > expected + 1;
+}
+
+static void verify_scalar(const wchar_t *path, const wchar_t *directory,
+    const uint8_t *request, size_t request_length, const char *expected) {
+    bc_worker_broker broker = {0};
+    uint8_t result[256];
+    const size_t wire = 5 * BC_WORKER_FRAME_BYTES + request_length + sizeof(result) + 1;
+    const bc_worker_broker_amounts charge = {
+        1, sizeof(broker) + request_length + sizeof(result), commit_limit, wire
+    };
+    bc_worker_broker_budget budget = {.limit = charge};
+    wchar_t command[] = L"worker --internal-scalar-worker";
+    const bc_worker_broker_run run = {
+        .budget = &budget, .application = path, .command_line = command, .directory = directory,
+        .profile = profile, .commit_bytes = commit_limit, .cpu_ms = 2000,
+        .startup_ms = 4000, .io_idle_ms = 4000, .shutdown_grace_ms = 500,
+        .deadline = clock_ticks() + 100000000ULL, .wire_limit = wire,
+        .request = request, .request_length = request_length, .result = result,
+        .result_capacity = sizeof(result), .validate = scalar_payload
+    };
+    expected_scalar_payload = expected;
+    DWORD status = bc_worker_broker_start(&broker, &run);
+    SetLastError(status);
+    check(status == ERROR_SUCCESS, "launch real Brownie scalar worker");
+    while (broker.gate.status == BC_WORKER_GATE_PENDING && broker.phase != BC_WORKER_BROKER_FINISH) {
+        bc_worker_broker_step(&broker);
+        if (broker.io.pipe || broker.phase == BC_WORKER_BROKER_WAIT_EXIT) Sleep(1);
+    }
+    size_t length = 0;
+    if (broker.gate.status != BC_WORKER_GATE_PENDING)
+        fprintf(stderr, "scalar gate status %d, phase %d, body %.*s\n", broker.gate.status,
+            broker.phase, (int)broker.rx.used, (const char *)result);
+    check(bc_worker_broker_take(&broker, &length) == result && scalar_payload(result, length) &&
+        !bc_worker_broker_take(&broker, &length), "publish validated Brownie scalar outcome once");
+    const uint64_t limit = clock_ticks() + 50000000ULL;
+    while (!bc_worker_broker_close(&broker)) {
+        check(clock_ticks() < limit, "reap actual Brownie scalar worker");
+        Sleep(1);
+    }
+    check(same_charge(budget.reserved, (bc_worker_broker_amounts){0}), "refund scalar worker budget");
+}
+
+static void verify_scalar_programs(const wchar_t *path, const wchar_t *directory) {
+    FILE *source = NULL;
+    check(!fopen_s(&source, "answer.brc", "rb"), "open answer fixture in the parent");
+    uint8_t request[4101] = {0};
+    const size_t source_bytes = fread(request + 5, 1, sizeof(request) - 5, source);
+    check(source_bytes && feof(source) && !ferror(source) && !fclose(source), "snapshot answer fixture");
+    verify_scalar(path, directory, request, source_bytes + 5,
+        "{\"schema\":\"browniec.worker-result/v1\",\"status\":\"checked\"}");
+    request[0] = 1;
+    request[2] = 1;
+    verify_scalar(path, directory, request, source_bytes + 5,
+        "{\"schema\":\"browniec.worker-result/v1\",\"status\":\"completed\",\"return_i32\":77}");
+    request[2] = 0;
+    verify_scalar(path, directory, request, source_bytes + 5,
+        "{\"schema\":\"browniec.worker-result/v1\",\"status\":\"error\",\"kind\":8,\"location\":0,\"offset\":");
+    const uint8_t lexical_error[] = {0, 0, 0, 0, 0, 255};
+    verify_scalar(path, directory, lexical_error, sizeof(lexical_error),
+        "{\"schema\":\"browniec.worker-result/v1\",\"status\":\"error\",\"kind\":1,\"location\":0,\"offset\":0}");
+}
+
 int wmain(int argc, wchar_t **argv) {
     if (argc == 3 && !wcscmp(argv[1], L"--child")) return child(argv[2], cpu);
     if (argc == 3 && !wcscmp(argv[1], L"--child-ok")) return child(argv[2], clean);
@@ -735,7 +807,7 @@ int wmain(int argc, wchar_t **argv) {
     if (argc == 3 && !wcscmp(argv[1], L"--child-stalled-result")) return child(argv[2], stalled_result);
     if (argc == 3 && !wcscmp(argv[1], L"--child-late-result")) return child(argv[2], cancel_reply);
     if (argc == 3 && !wcscmp(argv[1], L"--child-ignore-cancel")) return child(argv[2], cancel_ignore);
-    check(argc == 2 && atexit(cleanup) == 0, "parent fixture arguments");
+    check((argc == 2 || argc == 3) && atexit(cleanup) == 0, "parent fixture arguments");
     verify_frames();
     verify_stream();
     DWORD cold = 0, baseline = 0, final = 0;
@@ -746,6 +818,7 @@ int wmain(int argc, wchar_t **argv) {
     if (FAILED(created)) SetLastError((DWORD)created);
     check(SUCCEEDED(created), "create ephemeral fixture profile");
     permit_execute(argv[1]);
+    if (argc == 3) permit_execute(argv[2]);
     wchar_t directory[MAX_PATH];
     const DWORD length = GetCurrentDirectoryW(_countof(directory), directory);
     check(length && length < _countof(directory), "get fixture directory");
@@ -837,6 +910,7 @@ int wmain(int argc, wchar_t **argv) {
     verify_broker(argv[1], directory, L"--child-stalled-result", BC_WORKER_GATE_EXPIRED);
     verify_graceful_cancel(argv[1], directory, false);
     verify_graceful_cancel(argv[1], directory, true);
+    if (argc == 3) verify_scalar_programs(argv[2], directory);
     check(CloseHandle(decoy), "close decoy");
     decoy = NULL;
     check(GetProcessHandleCount(GetCurrentProcess(), &final), "final launcher handles");
@@ -849,6 +923,7 @@ int wmain(int argc, wchar_t **argv) {
            "\"boundedStream\":true,\"pipeEof\":true,\"publicationGate\":true,"
            "\"ioLease\":true,\"brokerSessions\":6,\"sharedBudget\":true,"
            "\"phaseDeadlines\":true,\"gracefulCancelCases\":2,\"handleDelta\":0,"
-           "\"coldHandleDelta\":%ld}\n", (long)final - (long)cold);
+           "\"scalarSessions\":%d,\"coldHandleDelta\":%ld}\n",
+           argc == 3 ? 4 : 0, (long)final - (long)cold);
     return 0;
 }

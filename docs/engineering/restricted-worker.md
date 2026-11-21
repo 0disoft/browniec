@@ -209,9 +209,9 @@ decoding. Duplicate, unknown, missing, nested or trailing content is rejected
 before a typed outcome is returned.
 
 The same codec creates the payload from the typed outcome. This schema is an
-internal scalar transport contract. The broker still needs to bind it to
-actual source execution and parent publication. Projects, output bytes and
-host exchange need their own integrated payloads.
+internal scalar transport contract. The parent still needs to use the Fairy
+decoder as its publication validator. Projects, output bytes and host exchange
+need their own integrated payloads.
 
 The focused native case passed Windows development and /O2 with the same
 root sources and lock in a test checkout containing only that case. Native
@@ -221,6 +221,33 @@ preceding commit with the existing CLI locations case selected. Local
 reports: `build/worker-result-thda5j4j/development.stdout`,
 `build/worker-result-thda5j4j/release.stdout` and
 `build/worker-result-btngpe_b/development.stderr`.
+
+### Scalar source in the actual worker
+
+The Windows CLI image contains a private one-shot worker entry. The
+[Windows shim](../../native/windows-scalar-worker.c) checks Job membership,
+the AppContainer token and byte-pipe client endpoints from the same server
+process before accepting HELLO. It validates the START header and length
+before reading the body. START holds one operation byte (0 check, 1 run),
+four little-endian Fuel bytes, and up to 4096 original source bytes. Check
+requires zero Fuel and run uses the existing CLI Fuel ceiling.
+
+The [Fairy command](../../src/worker_scalar_command.fy) compiles only inside
+the admitted worker. Check verifies the Program without running it. Run uses
+the existing VM and sends a typed RESULT for guest success or failure. The
+worker emits its frames exclusively on the inherited stdout pipe.
+
+The locked development and /O2 CLI images each ran four actual sessions
+through the native broker: check, `examples/answer.brc` returning 77,
+zero-Fuel failure, and invalid UTF-8 with source offset 0. The fixture
+validates the expected payload and publishes only after EOF and exit 0.
+Direct use of the worker entry from the ordinary process returned 4 and
+produced zero stdout and stderr bytes. Warm handle delta remained zero.
+The native check accepts the images with
+`python -B tools/verify-restricted-worker.py --scalar-images build/restricted-scalar-images`.
+The directory contains `development/browniec.exe` and `release/browniec.exe`
+from `fairyc build --locked` and `fairyc build --release --locked`.
+Local receipt: `build/restricted-worker/20261121T161049790834Z/receipt.json`.
 
 ## Windows verification
 
@@ -246,7 +273,6 @@ limit, connecting PID, and inheritance flags. The child exchanged bytes over
 all three pipes and the repeat launch again had zero net handle growth.
 Local receipt: `build/restricted-worker/20261121T152431466055Z/receipt.json`.
 
-The caller still needs trusted image and profile provisioning, strict payload
-parsing, broader broker phases and aggregate budgets. The launcher fixture
-executes native test code.
+The caller still needs production image and profile provisioning, typed
+parent result validation, broader broker phases and aggregate budgets.
 The restricted CLI remains unavailable while those pieces are built and verified.

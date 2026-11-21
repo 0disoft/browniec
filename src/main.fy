@@ -22,6 +22,7 @@ import cli_project_input as project_input;
 import cli_source_input as source_input;
 import cli_configured_project as configured;
 import cli_host_command as hosts;
+import worker_scalar_command as worker;
 
 @effects(console)
 fn i32 fail(render::Format format, bool run, u8 kind) {
@@ -36,6 +37,9 @@ fn i32 main() {
         case .ok(n): { n } case .err(_): { return fail(.Text, false, 10); }
     };
     let ref u8[] command_view = ref command;
+    if(argc==2 && lexer::equal(command_view[..command_length],b"--internal-scalar-worker")){
+        return worker::execute();
+    }
     if (lexer::equal(command_view[..command_length], b"--version")) {
         if (argc == 2) {
             return if (io::write("Brownie C experimental: brownie.m1-scalar/1, brownie.m2-array-read/1, brownie.m2-array-write/1, brownie.m2-array-copy/1, brownie.m2-struct-read/1, brownie.m2-struct-write/1, brownie.m2-struct-copy/1, brownie.m2-struct-nested/1\n").is_ok) { 0 } else { 7 };

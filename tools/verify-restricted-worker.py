@@ -1,5 +1,6 @@
 """Build and run the Windows AppContainer and Job launcher fixture."""
 
+import argparse
 from datetime import datetime, timezone
 import importlib.util
 import json
@@ -12,6 +13,11 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--scalar-images', type=Path,
+                        help='directory containing locked development/browniec.exe and release/browniec.exe')
+    args = parser.parse_args()
+    scalar_images = args.scalar_images.resolve() if args.scalar_images else None
     spec = importlib.util.spec_from_file_location('probe', ROOT / 'tools/verify-runtime-store-probe.py')
     helper = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(helper)
@@ -28,11 +34,18 @@ def main():
              'native/restricted_worker_broker.c', 'native/restricted_worker_broker.h',
              'tests/native/restricted_worker_host.c', 'tools/verify-restricted-worker.py',
              'tools/verify-runtime-store-probe.py']
+    c_sources = [path for path in paths if path.endswith('.c')]
+    if scalar_images:
+        paths.extend(['fairy.windows.json', 'fairy.toml', 'fairy.lock', 'examples/answer.brc'])
+        paths.extend(path.relative_to(ROOT).as_posix()
+                     for folder in ('src', 'native') for path in sorted((ROOT / folder).rglob('*'))
+                     if path.is_file())
+        paths = list(dict.fromkeys(paths))
     receipt = dict(schema='browniec.restricted-worker-verification/v1', status='incomplete',
                    inputs=[dict(path=p, sha256=helper.sha((ROOT / p).read_bytes())) for p in paths],
                    profiles=[], commands=[])
 
-    def run(args, cwd=out, env=None, timeout=30):
+    def run(args, cwd=out, env=None, timeout=30, expected_exit=0, silent=False):
         command = list(map(str, args))
         result = subprocess.run(command, cwd=cwd, env=env, capture_output=True, timeout=timeout)
         index = len(receipt['commands'])
@@ -40,7 +53,8 @@ def main():
         helper.write(out / stdout, result.stdout)
         helper.write(out / stderr, result.stderr)
         receipt['commands'].append(dict(argv=command, exit=result.returncode, stdout=stdout, stderr=stderr))
-        helper.need(result.returncode == 0, f'{command}: {result.returncode}: {result.stdout!r} {result.stderr!r}')
+        helper.need(result.returncode == expected_exit and (not silent or not (result.stdout or result.stderr)),
+                    f'{command}: {result.returncode}: {result.stdout!r} {result.stderr!r}')
         return result.stdout
 
     try:
@@ -51,24 +65,36 @@ def main():
             exe = folder / 'worker-host.exe'
             child = folder / 'worker fixture.exe'
             run([cl, '/nologo', '/std:c11', '/TC', '/MT', '/W4', '/WX', option,
-                 *(ROOT / path for path in paths if path.endswith('.c')), '/Fe' + str(exe),
+                 *(ROOT / path for path in c_sources), '/Fe' + str(exe),
                  '/link', 'advapi32.lib', 'bcrypt.lib', 'mincore.lib', 'userenv.lib', '/INCREMENTAL:NO', '/Brepro'],
                 cwd=folder, env=env)
             shutil.copyfile(exe, child)
             (folder / 'parent-data.txt').write_bytes(b'fixture data\n')
             runtime_env = {k: v for k, v in os.environ.items()
                            if k.upper() in {'SYSTEMROOT', 'WINDIR', 'LOCALAPPDATA', 'USERPROFILE', 'TEMP', 'TMP'}}
-            evidence = json.loads(run([exe, child], cwd=folder, env=runtime_env))
+            command = [exe, child]
+            scalar = None
+            if scalar_images:
+                scalar = folder / 'browniec.exe'
+                shutil.copyfile(scalar_images / profile / scalar.name, scalar)
+                shutil.copyfile(ROOT / 'examples/answer.brc', folder / 'answer.brc')
+                run([scalar, '--internal-scalar-worker'], cwd=folder, env=runtime_env,
+                    expected_exit=4, silent=True)
+                command.append(scalar)
+            evidence = json.loads(run(command, cwd=folder, env=runtime_env))
             helper.need({key: value for key, value in evidence.items() if key != 'coldHandleDelta'} ==
                         dict(appContainer=True, capabilities=0, inheritedPipes=3,
                              commitDenied=True, cpuTermination=True, privatePipeAcl=True,
                              framedExchange=True, headerMutationsRejected=48,
                              boundedStream=True, pipeEof=True, publicationGate=True,
                              ioLease=True, brokerSessions=6, sharedBudget=True,
-                             phaseDeadlines=True, gracefulCancelCases=2, handleDelta=0)
+                             phaseDeadlines=True, gracefulCancelCases=2, handleDelta=0,
+                             scalarSessions=4 if scalar else 0)
                         and type(evidence.get('coldHandleDelta')) is int,
                         f'Unexpected worker result: {evidence}')
             receipt['profiles'].append(dict(profile=profile, exe=helper.image(exe), result=evidence))
+            if scalar:
+                receipt['profiles'][-1]['scalarWorker'] = helper.image(scalar)
             print(f'PASS {profile}: {evidence}', flush=True)
         helper.need(all(helper.sha((ROOT / i['path']).read_bytes()) == i['sha256'] for i in receipt['inputs']),
                     'Inputs changed during verification')

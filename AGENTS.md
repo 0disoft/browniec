@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-22): [Scalar worker RESULT payload](docs/engineering/restricted-worker.md#scalar-result-payload)
-  adds a strict Fairy codec. The focused native case passed development and
-  /O2 in an isolated test checkout with the root sources and lock.
+- Latest runtime checkpoint (2026-11-22): [Actual scalar source worker](docs/engineering/restricted-worker.md#scalar-source-in-the-actual-worker)
+  compiles, checks and runs original source in an AppContainer. Development
+  and /O2 verify result 77, diagnostics and balanced handles through the broker.
 
 # Brownie C agent guidance
 

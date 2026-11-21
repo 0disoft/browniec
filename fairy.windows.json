@@ -9,9 +9,11 @@
     "native/windows-project-cli.c",
     "native/windows-project-input-reader.c",
     "native/windows-runtime-engine.c",
-    "native/windows-host-adapter-process.c"
+    "native/windows-host-adapter-process.c",
+    "native/windows-scalar-worker.c"
   ],
   "privateFunctions": [
+    "worker_scalar_command::compute",
     "runtime_engine::bind_inner",
     "runtime_engine::begin_inner",
     "runtime_engine::end_inner",
