@@ -1,7 +1,7 @@
-- Latest runtime checkpoint (2026-11-21): [Resumable input-only canonical proof](docs/engineering/runtime-engine-compile-memory.md#resumable-input-only-canonical-proof)
-  advances one proof batch per step before input Program publication. Windows
-  development and /O2 passed cancellation and expiry during proof, execution
-  returning 77, and zero live SDK allocations after teardown.
+- Latest runtime checkpoint (2026-11-21): [Shared output body lowering](docs/engineering/runtime-engine-compile-memory.md#shared-output-body-lowering)
+  connects the deadline-aware output compiler to the existing body cursor.
+  Windows development and /O2 passed deadline tests with zero live SDK
+  allocations. The private input-only job also resumes canonical proof.
 
 # Brownie C agent guidance
 

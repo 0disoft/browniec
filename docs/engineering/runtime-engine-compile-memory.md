@@ -604,6 +604,21 @@ The native profiles in local receipt
 worktree hash check detected edits for the subsequent CI repair, so all 400
 receipt inputs were checked against this change's staged snapshot.
 
+## Shared output body lowering
+
+The deadline-aware output and input-output compiler routes drain the same
+body cursor as input-only compilation. They keep output enabled in the
+prepared signatures and retain the source index for diagnostics. Output-only
+compilation now scans indexed signatures and infers returned-view origins once
+each instead of twice. The synchronous adapters still return only after
+candidate verification and retention.
+
+Windows development and /O2 passed both output modes, deadline injection at
+body and proof boundaries, and the single-pass signature and origin checks.
+Both profiles ended with zero live SDK allocations. The locked /O2 CLI build
+returned 77 and passed all 15 CLI contract checks. Local receipt:
+`build/runtime-engine/20261121T072706702610Z/receipt.json`.
+
 ## Executed verification and remaining work
 
 [Windows evidence](../evidence/runtime-engine-compile-memory-windows-20261107.json)

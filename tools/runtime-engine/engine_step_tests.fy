@@ -31,6 +31,7 @@ import struct_scan_work as record_scan;
 unsafe extern C fn usize probe_live();
 unsafe extern C fn usize probe_live_bytes();
 unsafe extern C fn usize probe_attempts();
+unsafe extern C fn usize bc_runtime_engine_test_compile_next(ptr void owner);
 unsafe extern C fn void bc_runtime_engine_test_proof_begin();
 unsafe extern C fn void bc_runtime_engine_test_expire_in_proof(usize deadline);
 unsafe extern C fn void bc_runtime_engine_test_expire_in_output_prepare(usize deadline,u8 stage);
@@ -45,9 +46,9 @@ unsafe extern C fn void bc_runtime_engine_test_feature_stopped();
 unsafe extern C fn void bc_runtime_engine_test_expire_in_literal(usize deadline);
 unsafe extern C fn void bc_runtime_engine_test_literal_stopped();
 unsafe extern C fn void bc_runtime_engine_test_expire_in_signature(usize deadline,u32 pass);
-unsafe extern C fn void bc_runtime_engine_test_signature_stopped();
+unsafe extern C fn void bc_runtime_engine_test_signature_stopped(u32 single_pass);
 unsafe extern C fn void bc_runtime_engine_test_expire_in_origin(usize deadline,u32 pass);
-unsafe extern C fn void bc_runtime_engine_test_origin_stopped();
+unsafe extern C fn void bc_runtime_engine_test_origin_stopped(u32 single_pass);
 unsafe extern C fn void bc_runtime_engine_test_expire_in_record_scan(usize deadline,u8 stage);
 unsafe extern C fn void bc_runtime_engine_test_record_scan_stopped();
 unsafe extern C fn void bc_runtime_engine_test_expire_in_body(usize deadline);
@@ -863,6 +864,7 @@ fn Result<usize,u8> compile_deadline(ref mut engine::Engine e,ref configs::RunCo
     let ref u8[] ordinary=b"module app;pub fn i32 chosen(){return 42;}";
     let ref u8[] input=b"module app;pub fn i32 chosen(ref u8[] data){return 42;}";
     let Heap idle=heap();
+    let usize next=unsafe{bc_runtime_engine_test_compile_next(e as ptr void)};
     var usize mode=0;
     while(mode<4){
         unsafe{bc_runtime_engine_test_set_clock(100+mode*20000000)};
@@ -894,7 +896,7 @@ fn Result<usize,u8> compile_deadline(ref mut engine::Engine e,ref configs::RunCo
     }
     unsafe{bc_runtime_engine_test_clock_advance(3,100+9*20000000-1)};
     let usize p=id(engine::compile_input(e,selected_input(input)?,65536));
-    assert(p==1);
+    assert(p==next);
     unsafe{bc_runtime_engine_test_use_os_clock()};
     release(e,p);counts(e,0,0,0);same_heap(ref idle);return .ok(0);
 }
@@ -1047,9 +1049,16 @@ fn Result<usize,u8> compile_signature_deadline(ref mut engine::Engine e,ref conf
             else if(mode==3){engine::compile_input(e,selected_input(input)?,65536)}
             else if(mode==4){engine::compile(e,selected(ordinary)?,65536)}
             else{engine::compile_output(e,selected(ordinary)?,65536)};
-        rejected_compile_deadline(result);
-        unsafe{bc_runtime_engine_test_signature_stopped()};
-        assert(unsafe{bc_runtime_engine_test_proof_count()}==0);
+        if(mode==2){
+            // Output lowering carries the first signature result to proof.
+            let usize program=id(result);
+            unsafe{bc_runtime_engine_test_signature_stopped(1)};
+            release(e,program);
+        }else{
+            rejected_compile_deadline(result);
+            unsafe{bc_runtime_engine_test_signature_stopped(0)};
+            assert(unsafe{bc_runtime_engine_test_proof_count()}==0);
+        }
         counts(e,0,0,0);same_heap(ref idle);
         assert(retained(e).program_bytes==0);
         mode+=1;
@@ -1071,9 +1080,16 @@ fn Result<usize,u8> compile_origin_deadline(ref mut engine::Engine e,ref configs
             else if(mode==3){engine::compile_input(e,selected_input(input)?,65536)}
             else if(mode>=4){engine::compile(e,selected(ordinary)?,65536)}
             else{engine::compile_output(e,selected(ordinary)?,65536)};
-        rejected_compile_deadline(result);
-        unsafe{bc_runtime_engine_test_origin_stopped()};
-        assert(unsafe{bc_runtime_engine_test_proof_count()}==0);
+        if(mode==2){
+            // Output lowering carries the first origin inference result to proof.
+            let usize program=id(result);
+            unsafe{bc_runtime_engine_test_origin_stopped(1)};
+            release(e,program);
+        }else{
+            rejected_compile_deadline(result);
+            unsafe{bc_runtime_engine_test_origin_stopped(0)};
+            assert(unsafe{bc_runtime_engine_test_proof_count()}==0);
+        }
         counts(e,0,0,0);same_heap(ref idle);
         assert(retained(e).program_bytes==0);
         mode+=1;
@@ -1313,6 +1329,7 @@ fn Result<usize,u8> ordinary_deadline_success(ref mut engine::Engine e){
     let ref u8[] plain=b"module app;pub fn i32 chosen(){return 42;}";
     let ref u8[] references=ordinary_image_source();
     let Heap idle=heap();
+    let usize next=unsafe{bc_runtime_engine_test_compile_next(e as ptr void)};
     var usize mode=0;
     while(mode<2){
         let ref u8[] source=if(mode==0){plain}else{references};
@@ -1321,7 +1338,7 @@ fn Result<usize,u8> ordinary_deadline_success(ref mut engine::Engine e){
         unsafe{bc_runtime_engine_test_clock_advance(3,20000099)};
         let usize p=id(engine::compile(e,entry,65536));
         unsafe{bc_runtime_engine_test_use_os_clock()};
-        assert(p==mode+2);
+        assert(p==next+mode);
         counts(e,1,0,0);
         release(e,p);counts(e,0,0,0);same_heap(ref idle);
         mode+=1;

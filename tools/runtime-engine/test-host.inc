@@ -312,8 +312,10 @@ void bc_runtime_engine_test_signature_step(void){assert(!signature_staged||!sign
 void bc_runtime_engine_test_signature_staged(void){
  if(signature_expiry&&signature_pass==signature_target){signature_staged=1;bc_runtime_engine_test_set_clock(signature_expiry);}
 }
-void bc_runtime_engine_test_signature_stopped(void){
- assert(signature_expiry&&signature_staged&&signature_pass==signature_target);
+void bc_runtime_engine_test_signature_stopped(uint32_t single_pass){
+ assert(signature_expiry);
+ if(single_pass){assert(signature_pass==1&&!signature_staged);}
+ else{assert(signature_staged&&signature_pass==signature_target);}
  signature_expiry=0;
 }
 static uintptr_t origin_expiry;
@@ -330,8 +332,10 @@ void bc_runtime_engine_test_origin_walk(uint8_t completed){
  assert(!origin_walks);
  if(completed){origin_walks++;bc_runtime_engine_test_set_clock(origin_expiry);}
 }
-void bc_runtime_engine_test_origin_stopped(void){
- assert(origin_expiry&&origin_pass==origin_target&&origin_walks==1);
+void bc_runtime_engine_test_origin_stopped(uint32_t single_pass){
+ assert(origin_expiry);
+ if(single_pass){assert(origin_pass==1&&!origin_walks);}
+ else{assert(origin_pass==origin_target&&origin_walks==1);}
  origin_expiry=0;
 }
 static uintptr_t record_scan_expiry;

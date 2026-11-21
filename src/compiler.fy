@@ -3556,7 +3556,12 @@ fn Result<bool,source_errors::Error> lower_modules_literals_until(ref module_ent
     var functions::Table signatures=switch(signature_scan::scan_indexed_until(source,scope,index,entry,references,deadline)){
         case .ok(v):{v}case .err(e):{return .err(module_error(selected,e,16));}
     };
-    let bool lowered=lower_modules_signatures_until(selected,work,literals,ref mut signatures,code,output,deadline)?;
+    if(output){
+        signatures.output=true;
+        let usize lowered=lower_reference_bodies_until(index,source,literals,ref mut signatures,code,deadline)?;
+        return .ok(true);
+    }
+    let bool lowered=lower_modules_signatures_until(selected,work,literals,ref mut signatures,code,false,deadline)?;
     if(lowered){let usize bound=module_reference_signature_until(source,scope,selected,code,deadline)?;}
     return .ok(lowered);
 }
@@ -3768,17 +3773,12 @@ pub fn Result<usize,source_errors::Error> lower_input_modules_prepared_until(ref
     var functions::Table signatures=switch(signature_scan::scan_indexed_until(source,scope,index,input_entries::selected(selected),true,deadline)){
         case .ok(v):{v}case .err(e):{return .err(input_module_error(index,e,16));}
     };
-    if(!output){return lower_input_bodies_until(index,source,ref literals,ref mut signatures,code,deadline);}
-    signatures.output=true;
-    var usize active=16;
-    switch(lower_prepared_until(source,true,ref literals,ref mut signatures,ref mut code.body,ref mut active,deadline)){
-        case .ok(_):{}case .err(e):{return .err(input_module_error(index,e,active));}
-    };
-    return .ok(finish_reference_lowering(ref signatures,code));
+    signatures.output=output;
+    return lower_reference_bodies_until(index,source,ref literals,ref mut signatures,code,deadline);
 }
-// The input ABI always needs reference metadata. This drain uses the same
-// body cursor as the private Engine and preserves the selected Index for spans.
-fn Result<usize,source_errors::Error> lower_input_bodies_until(ref module_index::Index index,ref u8[] source,
+// Input and output both require reference metadata. The synchronous adapters
+// drain the same body cursor as the private Engine and preserve the Index for spans.
+fn Result<usize,source_errors::Error> lower_reference_bodies_until(ref module_index::Index index,ref u8[] source,
     ref literal_collection::Index literals,ref mut functions::Table signatures,ref mut reference_ir::Program code,usize deadline){
     var BodyProgress progress=begin_module_bodies();
     var lexer::State token=lexer::empty();var locals::Table names=locals::empty();
@@ -3817,7 +3817,9 @@ fn Result<usize,source_errors::Error> lower_input_collected(ref source_context::
     return .ok(finish_reference_lowering(ref signatures,code));
 }
 fn usize finish_reference_lowering(ref functions::Table signatures,ref mut reference_ir::Program code){
-    code.origins=signatures.return_slice_inputs;var usize f=0;
+    code.origins=signatures.return_slice_inputs;
+    code.parameters=[0;128];code.results=[0;16];
+    var usize f=0;
     while(f<signatures.count){
         if(signatures.return_slice_elements[f]==10){code.results[f]=3;}
         var usize i=0;while(i<signatures.arities[f]){let usize at=f*8+i;
