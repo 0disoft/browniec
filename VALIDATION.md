@@ -1662,6 +1662,15 @@ scalar `browniec` CLI, native compiler/verifier/VM, and black-box source cases.
 Do not report a proposed command as executed. Do not treat a design package, static
 link check, Python model, or source fixture as proof of the Brownie VM.
 
+Run the [Windows file publication probe](tools/verify-cli-output-publication.py)
+with Python and MSVC to exercise the production output shim in development and
+optimized hosts. It forces a short write, a write failure after a real partial
+write, and a failure status after actually closing the writing handle. Each
+case asserts that the destination and temporary sibling are absent and the
+publisher's handles are closed. A fresh call verifies exact binary output to the
+same path. The public CLI contract check separately covers concurrent writers,
+preservation of existing files, and exit 7 for file publication failures.
+
 ## Evidence levels
 
 | Level | What it can establish |
