@@ -39,6 +39,12 @@ static bool validate_project(const void *raw, const uint8_t *body, size_t length
         body, length, expected->run, expected->lengths, expected->count, expected->output, expected->output_limit) != 0;
 }
 
+static size_t respond_project_host(void *context, uint64_t correlation,
+    const uint8_t *request, size_t length, uint8_t *reply, size_t capacity) {
+    (void)correlation;
+    return fy_private_fn_776f726b65725f70726f6a6563745f62726f6b65723a3a726573706f6e645f686f7374(context, request, length, reply, capacity);
+}
+
 static PSID resolve_profile(const uint8_t *name, size_t length) {
     wchar_t profile[64];
     if (!name || !length || length >= _countof(profile)) return NULL;
@@ -70,6 +76,7 @@ typedef struct worker_exchange {
     bc_worker_result_validator validate;
     const void *expectation;
     bool project;
+    bc_worker_broker_host host;
 } worker_exchange;
 
 typedef struct worker_limits {
@@ -85,9 +92,11 @@ static uint32_t run_broker(PSID sid, const wchar_t *image, const wchar_t *direct
     const worker_exchange *exchange, const worker_limits *limits, uint64_t deadline,
     uint8_t *reply, size_t result_capacity, size_t *reply_length) {
     bc_worker_broker broker = {0};
-    const size_t wire = 5 * BC_WORKER_FRAME_BYTES + exchange->request_length + result_capacity + 1;
+    const size_t wire = exchange->host.max_calls ? limits->transport_bytes :
+        5 * BC_WORKER_FRAME_BYTES + exchange->request_length + result_capacity + 1;
     bc_worker_broker_budget budget = {.limit = {1, sizeof(broker) + exchange->request_length + result_capacity,
         limits->commit_bytes, limits->transport_bytes}};
+    budget.limit.parent_bytes += exchange->host.request_capacity + exchange->host.reply_capacity;
     wchar_t scalar_command[] = L"browniec --internal-scalar-worker";
     wchar_t project_command[] = L"browniec --internal-project-worker";
     const bc_worker_broker_run config = {
@@ -97,7 +106,8 @@ static uint32_t run_broker(PSID sid, const wchar_t *image, const wchar_t *direct
         .startup_ms = limits->startup_ms, .io_idle_ms = limits->idle_ms, .shutdown_grace_ms = limits->grace_ms,
         .deadline = deadline, .wire_limit = wire < limits->transport_bytes ? wire : limits->transport_bytes,
         .request = exchange->request, .request_length = exchange->request_length, .result = reply,
-        .result_capacity = result_capacity, .validate = exchange->validate, .expectation = exchange->expectation
+        .result_capacity = result_capacity, .validate = exchange->validate, .expectation = exchange->expectation,
+        .host = exchange->host
     };
     const DWORD started = bc_worker_broker_start(&broker, &config);
     size_t length = 0;
@@ -158,7 +168,7 @@ uint32_t bc_scalar_broker_invoke(const uint8_t *profile, size_t profile_length,
     put_le(request + 1, 4, fuel);
     memcpy(request + 5, source, source_length);
     const scalar_expectation expected = {run, source_length};
-    const worker_exchange exchange = {request, source_length + 5, validate_scalar, &expected, false};
+    const worker_exchange exchange = {request, source_length + 5, validate_scalar, &expected, false, {0}};
     return invoke_broker(profile, profile_length, &exchange, &default_limits, reply, BC_SCALAR_RESULT_MAX, reply_length);
 }
 
@@ -180,17 +190,36 @@ static bool read_worker_limits(const uint8_t *raw, size_t length, worker_limits 
 
 uint32_t bc_project_broker_invoke(const uint8_t *request, size_t request_length, uint32_t run,
     const uint8_t *lengths, size_t count, const uint8_t *configuration, size_t config_size,
-    uint32_t output, size_t output_limit, uint8_t *reply, size_t capacity, size_t *reply_length) {
+    uint32_t output, size_t output_limit, const uint8_t *host_limits, const void *replay,
+    uint8_t *reply, size_t capacity, size_t *reply_length) {
     if (!request || request_length < 9 || request_length > BC_PROJECT_START_MAX ||
         run > 1 || !lengths || !count || count > 32 || count % 2 || !reply || !reply_length ||
         output > 1 || (output && (!config_size || !run)) ||
         (!output && output_limit) || output_limit > BC_PROJECT_OUTPUT_MAX ||
         capacity != BC_PROJECT_RESULT_BASE + (output ? 3 + output_limit : 0)) return 0;
+    const bool host = config_size && request_length >= 25 && request[0] >= 7 && request[0] <= 9;
     const bool input_run = config_size && run && request[0] == 6 && request_length >= 21;
-    if (!input_run && request[0] != (config_size ? 4u : 2u) + run) return 0;
+    if (host) {
+        if ((run != 0) != (request[0] != 7) || (replay != NULL) != (run != 0)) return 0;
+    } else if (replay || (!input_run && request[0] != (config_size ? 4u : 2u) + run)) {
+        return 0;
+    }
     const project_expectation expected = {run, lengths, count, output, output_limit};
-    const worker_exchange exchange = {request, request_length, validate_project, &expected, true};
+    worker_exchange exchange = {request, request_length, validate_project, &expected, true, {0}};
     worker_limits limits = default_limits;
     if (config_size && !read_worker_limits(configuration, config_size, &limits)) return 0;
-    return invoke_broker(NULL, 0, &exchange, &limits, reply, capacity, reply_length);
+    if (!replay) return invoke_broker(NULL, 0, &exchange, &limits, reply, capacity, reply_length);
+    if (!host_limits) return 0;
+    const uint32_t calls = (uint32_t)get_le(host_limits, 4);
+    if (!calls) return invoke_broker(NULL, 0, &exchange, &limits, reply, capacity, reply_length);
+    const size_t request_cap = (size_t)get_le(host_limits + 4, 4);
+    const size_t reply_cap = (size_t)get_le(host_limits + 8, 4);
+    if (calls > 65535 || request_cap < 4 || request_cap > 4100 || !reply_cap || reply_cap > 4097) return 0;
+    uint8_t *staging = HeapAlloc(GetProcessHeap(), 0, request_cap + reply_cap);
+    if (!staging) return 0;
+    exchange.host = (bc_worker_broker_host){respond_project_host, (void *)replay,
+        staging, staging + request_cap, request_cap, reply_cap, calls};
+    const uint32_t status = invoke_broker(NULL, 0, &exchange, &limits, reply, capacity, reply_length);
+    HeapFree(GetProcessHeap(), 0, staging);
+    return status;
 }

@@ -3,6 +3,7 @@
 import argparse
 import base64
 from datetime import datetime, timezone
+import hashlib
 import importlib.util
 import json
 import os
@@ -235,6 +236,105 @@ def verify_configured_project(run, need, image, folder, env):
     return 36
 
 
+def verify_project_host(run, need, image, folder, env):
+    target = folder / 'catalog-project'
+    shutil.copytree(HELLO_PROJECT, target)
+    project = target / 'project.json'
+    policy_file = target / 'policy.json'
+    config_file = target / 'run.json'
+    catalog_file = target / 'catalog.json'
+    replies_file = target / 'replies.json'
+    source = target / 'src/main.brc'
+    manifest = json.loads(project.read_bytes())
+    cap = 'host.example.check'
+    manifest['requires'] = ['brownie.output.emit', cap]
+    policy = json.loads(POLICY_EXAMPLE.read_bytes())
+    policy['capabilities'] = manifest['requires']
+    config = dict(schema='brownie.run/0.3', entry=manifest['entry'],
+                  requires=manifest['requires'], grants=manifest['requires'],
+                  limits=policy['run'] | dict(host_calls=2, host_request_bytes=14, host_response_bytes=12))
+    entry = dict(id=0, module='host::example', symbol='check', parameters=['i32'],
+                 result='Result<i32,u32>', effect='read', capability=cap, adapter_revision='v1')
+
+    def u32(value):
+        return value.to_bytes(4, 'little')
+
+    def field(value):
+        return u32(len(value)) + value.encode('ascii')
+
+    canonical = (b'BRC-CATALOG-1\n' + u32(1) + u32(0) +
+                 b''.join(field(entry[key]) for key in
+                          ('module', 'symbol', 'result', 'effect', 'capability', 'adapter_revision')) +
+                 u32(1) + field('i32'))
+    catalog_file.write_text(json.dumps(dict(schema='brownie.catalog/1', imports=[entry])), encoding='utf-8')
+    rows = [dict(import_id=0, kind=0,
+                 request_hex=(bytes.fromhex('01000300000004000000') + u32(arg)).hex(),
+                 reply_hex=(bytes.fromhex('0300000004000000') + u32(value)).hex())
+            for arg, value in [(41, 42), (42, 35)]]
+    replies = dict(schema='brownie.host-replies/1',
+                   catalog_sha256=hashlib.sha256(canonical).hexdigest(), replies=rows)
+    source.write_bytes(b'module app; import host::example as api; pub fn i32 start(){'
+                       b'output::emit(b"before"); let i32 a=api::check(41);'
+                       b'return a+api::check(42);}')
+
+    def check(operation='run', expected_exit=0, kind=None, payload=None):
+        for path, value in ((project, manifest), (policy_file, policy), (config_file, config),
+                            (replies_file, replies)):
+            path.write_text(json.dumps(value), encoding='utf-8')
+        args = [image, '--internal-project-host-broker', operation, project, policy_file,
+                config_file, catalog_file]
+        if operation == 'run':
+            args.append(replies_file)
+        if payload is not None:
+            args.append(payload)
+        data = json.loads(run(args, cwd=folder, env=env, expected_exit=expected_exit, no_stderr=True))
+        need(data['schema'] == 'browniec.result/v2' and data['command'] == operation,
+             f'Unexpected catalog project response: {data}')
+        if kind:
+            need(data['error']['kind'] == kind and data['return_i32'] is None and 'output_b64' not in data,
+                 f'Catalog project published a failed result: {data}')
+        elif operation == 'run':
+            need(data['status'] == 'completed' and data['return_i32'] == 77 and data['error'] is None
+                 and base64.b64decode(data['output_b64'], validate=True) == b'before',
+                 f'Catalog project failed to resume and seal its output: {data}')
+        else:
+            need(data['status'] == 'checked' and data['error'] is None and 'output_b64' not in data,
+                 f'Catalog project check executed or failed: {data}')
+        need(not list(Path(env['TEMP']).iterdir()), 'catalog project left staged resources')
+
+    check('check')
+    check()
+    replies['replies'] = rows[:1]
+    check(expected_exit=4, kind='unavailable')
+    replies['replies'] = rows
+    config['grants'] = ['brownie.output.emit']
+    check(expected_exit=4, kind='unavailable')
+    config['grants'] = manifest['requires']
+    config['limits']['host_calls'] = 1
+    check(expected_exit=5, kind='allocation')
+    config['limits']['host_calls'] = 2
+    config['limits']['host_request_bytes'] = 13
+    check(expected_exit=5, kind='allocation')
+    config['limits']['host_request_bytes'] = 14
+    config['limits']['host_response_bytes'] = 11
+    check(expected_exit=4, kind='unavailable')
+    config['limits']['host_response_bytes'] = 12
+    original_digest = replies['catalog_sha256']
+    replies['catalog_sha256'] = '00' * 32
+    check(expected_exit=2, kind='usage')
+    replies['catalog_sha256'] = original_digest
+    policy['compile']['instructions'] = 1
+    check('check', expected_exit=3, kind='compile_limit')
+    policy['compile']['instructions'] = 262144
+    payload = target / 'input.bin'
+    payload.write_bytes(b'before')
+    source.write_bytes(b'module app; import host::example as api; pub fn i32 start(ref u8[] data){'
+                       b'output::emit(ref data); let i32 a=api::check(41); return a+api::check(42);}')
+    check(payload=payload)
+    check(expected_exit=4, kind='unavailable')
+    return 11
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--scalar-images', type=Path,
@@ -329,6 +429,7 @@ def main():
                             and not list(stage_temp.iterdir()), 'staging failure fell back or left files')
                 managed_project_cases = verify_managed_project(run, helper.need, scalar, folder, stage_env)
                 configured_project_cases = verify_configured_project(run, helper.need, scalar, folder, stage_env)
+                project_host_cases = verify_project_host(run, helper.need, scalar, folder, stage_env)
                 command.append(scalar)
             evidence = json.loads(run(command, cwd=folder, env=runtime_env))
             helper.need({key: value for key, value in evidence.items()
@@ -349,6 +450,7 @@ def main():
                 receipt['profiles'][-1]['scalarWorker'] = helper.image(scalar)
                 receipt['profiles'][-1]['managedProjectCases'] = managed_project_cases
                 receipt['profiles'][-1]['configuredProjectCases'] = configured_project_cases
+                receipt['profiles'][-1]['projectHostCases'] = project_host_cases
             print(f'PASS {profile}: {evidence}', flush=True)
         helper.need(all(helper.sha((ROOT / i['path']).read_bytes()) == i['sha256'] for i in receipt['inputs']),
                     'Inputs changed during verification')

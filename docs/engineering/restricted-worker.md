@@ -535,6 +535,40 @@ Each profile passed the nine native host cases and the five managed and
 36 configured project cases using the freshly built executable. Local
 receipt: `build/restricted-worker/20261121T180147737119Z/receipt.json`.
 
+## Catalog-backed project execution
+
+The internal project host broker accepts an explicit catalog and, for run, a
+digest-bound table of typed replies. The broker sends the catalog in START
+with the exact policy, run configuration and project snapshot. The reply
+table stays in the parent. The worker verifies manifest requirements, run
+grants and Engine policy before it retains a Program. Host project admission
+uses the same source, token, declaration, delimiter and IR ceilings as the
+configured project path.
+
+The worker steps its Instance until it needs a host reply. It copies the
+pending request, claims it once and sends the four-byte import ID followed
+by the typed payload. The parent resolves the import in its explicit catalog,
+checks the capability against its own declaration and grant, and matches the
+exact request bytes in the prevalidated table. A reply is a one-byte kind
+followed by its typed payload. The worker submits it to the originating
+Instance with the original Engine request ID after IPC correlation and
+complete frame receipt. Engine validation and the existing sealed output
+path govern guest resumption and publication.
+
+The private adapter caps each payload at 4096 bytes in addition to the run
+policy. The broker reserves both staging spans and the worst-case wire bytes
+for the configured call count. The current adapter serves explicit in-memory
+replies. Trusted process dispatch from the broker and public restricted
+admission are still open.
+
+Locked Windows development and /O2 builds each passed eleven catalog
+project cases, including two calls yielding 77, explicit input, successful
+output publication, and no output on a missing lookup or quota failure. Both
+profiles also passed nine native host transport cases, five managed project
+cases, and 36 configured project cases. Native fixtures cover correlation and
+cancellation while transferring a request or reply. Local receipt:
+\`build/restricted-worker/20261121T181726030809Z/receipt.json\`.
+
 ## Windows verification
 
 Run `python -B tools/verify-restricted-worker.py`. The development and optimized

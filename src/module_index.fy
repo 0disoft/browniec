@@ -174,7 +174,10 @@ pub fn Result<Index,Error> build_limited(sources::Snapshot snapshot,usize token_
     return build_mode(snapshot,false,if(token_limit<1024){token_limit}else{1024},nesting_limit);
 }
 pub fn Result<Index,Error> build_host(sources::Snapshot snapshot,usize token_limit){
-    return build_mode(snapshot,true,if(token_limit<1024){token_limit}else{1024},1024);
+    return build_host_limited(snapshot,token_limit,1024);
+}
+pub fn Result<Index,Error> build_host_limited(sources::Snapshot snapshot,usize token_limit,usize nesting_limit){
+    return build_mode(snapshot,true,if(token_limit<1024){token_limit}else{1024},nesting_limit);
 }
 fn Result<Index,Error> build_mode(sources::Snapshot snapshot,bool host,usize token_limit,usize nesting_limit){
     var Table t=empty();let usize ready=prepare(ref snapshot,ref mut t,host,token_limit,nesting_limit)?;

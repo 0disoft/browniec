@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-22): [Project worker host exchange](docs/engineering/restricted-worker.md#project-worker-host-exchange)
-  receives correlated replies or CANCEL on the inherited session.
-  Development and /O2 each pass nine host broker fixture cases.
+- Latest runtime checkpoint (2026-11-22): [Catalog-backed project execution](docs/engineering/restricted-worker.md#catalog-backed-project-execution)
+  routes verified Engine host calls through the AppContainer broker.
+  Development and /O2 each pass eleven catalog project cases.
 
 # Brownie C agent guidance
 

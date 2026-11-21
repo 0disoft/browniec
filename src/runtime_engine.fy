@@ -526,7 +526,7 @@ pub fn Result<usize,Error> compile_scalar_host(ref mut Engine e,ref u8[] source,
     return retain_limited_host(e,ref code,imports,digest,run,limits,deadline,host_program::single_source(source.len));
 }
 
-fn bool project_host_authority(ref projects::Project project,ref run_config::RunConfig run){
+pub fn bool project_host_authority(ref projects::Project project,ref run_config::RunConfig run){
     let usize count=projects::requirements(project);
     if(count!=run_config::requires_count(run) ||
        !bytes::equal(projects::entry_module(project),run_config::module_name(run)) ||
@@ -558,6 +558,32 @@ pub fn Result<usize,Error> compile_anchored_project_host(ref mut Engine e,ref pr
         case .ok(v):{v}case .err(e):{return .err(host_binding_error(e));}
     };
     return retain_project_host(e,ref index,selected,imports,digest,run,limits,deadline);
+}
+
+// The broker supplies an owning snapshot and an explicitly selected catalog.
+pub fn Result<usize,Error> compile_project_snapshot_host(ref mut Engine e,ref projects::Project project,
+    sources::Snapshot snapshot,host_catalog::Catalog imports,ref u32[] digest,ref run_config::RunConfig run){
+    discard check_run_policy(e,run)?;
+    if(!project_host_authority(project,run)){return .err(error(5));}
+    let policy_limits::CompileLimits limits=configured_compile_limits(e)?;
+    if(sources::count(ref snapshot)>limits.modules ||
+        sources::snapshot_bytes(ref snapshot)>limits.source_bytes){return .err(error(8));}
+    let usize deadline=deadline_after(limits.deadline_ms)?;
+    let modules::Index index=switch(project_binding::index_host_limited(project,snapshot,
+        limits.tokens,limits.functions,limits.types,limits.depth)){
+        case .ok(v):{v}case .err(e):{return .err(host_binding_error(e));}
+    };
+    let usize selected=switch(modules::entry(ref index,projects::entry_module(project),projects::entry_function(project))){
+        case .ok(v):{v}case .err(e):{return .err(host_binding_error(e));}
+    };
+    return retain_project_host(e,ref index,selected,imports,digest,run,limits,deadline);
+}
+
+pub fn Result<usize,Error> prepare_project_snapshot_host(ref mut Engine e,usize program,
+    ref run_config::RunConfig run,bool has_input,ref u8[] input){
+    let PreviewHostEntry entry=preview_host_entry(e,program)?;
+    if(entry.input!=has_input || (!has_input && input.len!=0)){return .err(error(5));}
+    return prepare_host(e,program,run,input,0);
 }
 
 // Public entry selection and source-set admission for the embedding adapter.

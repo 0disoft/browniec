@@ -7,6 +7,10 @@ import cli_run_configuration as configuration;
 import errors as errors;
 import fuel as meter;
 import host_wire as le;
+import host_catalog as catalog;
+import cli_host_replies as replies;
+import host_memory_adapter as adapters;
+import runtime_engine as engine;
 import project_manifest as manifest;
 import project_source_loader as loader;
 import json_tokens as json;
@@ -22,7 +26,27 @@ import std::process as process;
 
 unsafe extern C fn u32 bc_project_broker_invoke(ptr u8 request,usize request_length,u32 run,
     ptr u8 lengths,usize lengths_count,ptr u8 configuration,usize config_size,
-    u32 output,usize output_limit,ptr mut u8 reply,usize capacity,ptr mut usize reply_length);
+    u32 output,usize output_limit,ptr u8 host_limits,ptr void replay,
+    ptr mut u8 reply,usize capacity,ptr mut usize reply_length);
+
+resource Replay {
+    catalog::Catalog imports; runs::RunConfig run; replies::Replies responses;
+    cleanup { }
+}
+
+fn usize respond_host(ref Replay replay,ptr u8 request,usize length,ptr mut u8 reply,usize size){
+    var usize capacity=size;
+    if(request==null || reply==null || length<4 || length-4>adapters::byte_limit() ||
+        capacity==0 || capacity-1>adapters::byte_limit()){return 0;}
+    let ref u8[] raw=unsafe{byte_slice::from_raw_parts(ref length,request,length)};
+    let usize import_id=le::read_u32(raw[..4]);
+    let ref u8[] capability=switch(catalog::capability(ref replay.imports,import_id)){
+        case .ok(v):{v}case .err(_):{return 0;}
+    };
+    if(!runs::declares(ref replay.run,capability) || !runs::grants(ref replay.run,capability)){return 0;}
+    let ref mut u8[] response=unsafe{byte_slice::from_raw_parts_mut(ref mut capacity,reply,size)};
+    return replies::copy_reply(ref replay.responses,import_id,raw[4..],response);
+}
 
 struct Selection { bool run; usize fuel; usize source_bytes; usize modules; bool input_file; usize input_limit; bool output; usize output_limit; }
 
@@ -35,7 +59,7 @@ fn u32 validate_result(ptr u8 data,usize length,u32 run,ptr u8 bounds,usize coun
 }
 
 @effects(console,filesystem)
-pub fn i32 execute(bool configured,bool input_file){
+pub fn i32 execute(bool configured,bool input_file,bool host){
     var u8[8] operation=[0;8];
     let usize size=switch(process::arg(2,ref mut operation)){
         case .ok(v):{v}case .err(_):{return failure(false,errors::absent(10,0));}
@@ -47,13 +71,16 @@ pub fn i32 execute(bool configured,bool input_file){
     let usize length=switch(process::arg(3,ref mut path)){
         case .ok(v):{v}case .err(_):{return failure(run,errors::absent(10,0));}
     };
-    if(configured){return configured_project(ref path[..length],run,input_file);}
+    if(host && process::arg_count()!=(if(run){if(input_file){9}else{8}}else{7})){
+        return failure(run,errors::absent(10,0));
+    }
+    if(configured){return configured_project(ref path[..length],run,input_file,host);}
     return acquire(ref path[..length],Selection{.run=run,.fuel=if(run){meter::cli_default()}else{0},
-        .source_bytes=sources::source_limit(),.modules=sources::file_limit(),.input_file=false,.input_limit=0,.output=false,.output_limit=0},b"",b"",b"",b"",b"");
+        .source_bytes=sources::source_limit(),.modules=sources::file_limit(),.input_file=false,.input_limit=0,.output=false,.output_limit=0},b"",b"",b"",b"",b"",b"",.none);
 }
 
 @effects(console,filesystem)
-fn i32 configured_project(ref u8[] path,bool run,bool input_file){
+fn i32 configured_project(ref u8[] path,bool run,bool input_file,bool host){
     let files::File policy_file=switch(files::open(4,json::byte_limit(),10)){
         case .ok(v):{v}case .err(e):{return failure(run,e);}
     };
@@ -68,8 +95,9 @@ fn i32 configured_project(ref u8[] path,bool run,bool input_file){
     let runs::RunConfig request=switch(configuration::parse_run(run_bytes,ref ceiling)){
         case .ok(v):{v}case .err(e):{return failure(run,e);}
     };
-    let bool output=wire::output_granted(ref request);
-    if(!output && (runs::requires_count(ref request)!=0 || runs::grants_count(ref request)!=0)){
+    let bool output=if(host){runs::declares(ref request,b"brownie.output.emit") && runs::grants(ref request,b"brownie.output.emit")}
+        else{wire::output_granted(ref request)};
+    if(!host && !output && (runs::requires_count(ref request)!=0 || runs::grants_count(ref request)!=0)){
         return failure(run,errors::absent(11,0));
     }
     let limits::CompileLimits compile=policy::compile_limits(ref ceiling);
@@ -79,9 +107,39 @@ fn i32 configured_project(ref u8[] path,bool run,bool input_file){
     let usize count=if(compile.modules<sources::file_limit()){compile.modules}else{sources::file_limit()};
     let u8[28] worker=worker_configuration(policy::worker_limits(ref ceiling));
     let usize input_limit=if(runtime.input_bytes<runtime.memory_bytes){runtime.input_bytes}else{runtime.memory_bytes};
-    return acquire(path,Selection{.run=run,.fuel=if(run){fuel}else{0},.source_bytes=source,.modules=count,
-        .input_file=input_file,.input_limit=input_limit,.output=output,.output_limit=if(run && output){runtime.output_bytes}else{0}},
-        runs::module_name(ref request),runs::function_name(ref request),ref worker,policy_bytes,run_bytes);
+    let Selection selected=Selection{.run=run,.fuel=if(run){fuel}else{0},.source_bytes=source,.modules=count,
+        .input_file=input_file,.input_limit=input_limit,.output=output,.output_limit=if(run && output){runtime.output_bytes}else{0}};
+    if(host){
+        if(run && runtime.fuel!=fuel){return failure(run,errors::absent(11,0));}
+        return catalog_project(path,selected,ref worker,policy_bytes,run_bytes,request);
+    }
+    return acquire(path,selected,runs::module_name(ref request),runs::function_name(ref request),
+        ref worker,policy_bytes,run_bytes,b"",.none);
+}
+
+@effects(console,filesystem)
+fn i32 catalog_project(ref u8[] path,Selection selected,ref u8[] worker,ref u8[] policy_bytes,
+    ref u8[] run_bytes,runs::RunConfig run){
+    let files::File file=switch(files::open(6,catalog::byte_limit(),10)){
+        case .ok(v):{v}case .err(e):{return failure(selected.run,e);}
+    };
+    let ref u8[] raw=files::view(ref file);
+    let catalog::Catalog imports=switch(catalog::parse(raw)){
+        case .ok(v):{v}case .err(e):{return failure(selected.run,configuration::catalog_failure(e));}
+    };
+    if(!selected.run){
+        return acquire(path,selected,runs::module_name(ref run),runs::function_name(ref run),
+            worker,policy_bytes,run_bytes,raw,.none);
+    }
+    let u32[8] digest=switch(catalog::digest(ref imports)){
+        case .ok(v):{v}case .err(e):{return failure(true,configuration::catalog_failure(e));}
+    };
+    let replies::Replies responses=switch(replies::read(7,ref imports,digest)){
+        case .ok(v):{v}case .err(e):{return failure(true,e);}
+    };
+    let Replay replay=Replay{.imports=imports,.run=run,.responses=responses};
+    return acquire(path,selected,runs::module_name(ref replay.run),runs::function_name(ref replay.run),
+        worker,policy_bytes,run_bytes,raw,.some(ref replay));
 }
 
 fn u8[28] worker_configuration(limits::WorkerLimits worker){
@@ -98,7 +156,7 @@ fn u8[28] worker_configuration(limits::WorkerLimits worker){
 
 @effects(console,filesystem)
 fn i32 acquire(ref u8[] path,Selection selected,ref u8[] module_name,ref u8[] function_name,ref u8[] worker,
-    ref u8[] policy_bytes,ref u8[] run_bytes){
+    ref u8[] policy_bytes,ref u8[] run_bytes,ref u8[] imports,Option<ref Replay> replay){
     let bool run=selected.run;
     var bytes::Buffer data=bytes::empty();
     var anchored::Root root=switch(cli::open_manifest(path,ref mut data)){
@@ -108,7 +166,11 @@ fn i32 acquire(ref u8[] path,Selection selected,ref u8[] module_name,ref u8[] fu
     let manifest::Project project=switch(cli::parse_manifest(ref root,raw)){
         case .ok(v):{v}case .err(e):{return failure(run,e);}
     };
-    if(!wire::project_authorized(ref project,selected.output) || (worker.len!=0 &&
+    let bool authorized=switch(replay){
+        case .some(route):{engine::project_host_authority(ref project,ref route.run)}
+        case .none:{imports.len!=0 || wire::project_authorized(ref project,selected.output)}
+    };
+    if(!authorized || (worker.len!=0 &&
        (!bytes::equal(manifest::entry_module(ref project),module_name) ||
         !bytes::equal(manifest::entry_function(ref project),function_name)))){
         return failure(run,errors::absent(11,0));
@@ -120,23 +182,24 @@ fn i32 acquire(ref u8[] path,Selection selected,ref u8[] module_name,ref u8[] fu
     };
     let ref u8[] project_bytes=raw[..anchored::manifest_bytes(ref root)];
     if(!selected.input_file){
-        return invoke(project_bytes,ref project,ref snapshot,selected,worker,policy_bytes,run_bytes,b"");
+        return invoke(project_bytes,ref project,ref snapshot,selected,worker,policy_bytes,run_bytes,imports,replay,b"");
     }
     let usize limit=if(selected.input_limit<input::hard_limit()){selected.input_limit}else{input::hard_limit()};
-    let files::File file=switch(files::open(6,limit,render::input_limit_kind())){
+    let files::File file=switch(files::open(if(imports.len==0){6}else{8},limit,render::input_limit_kind())){
         case .ok(v):{v}case .err(e):{return failure(run,e);}
     };
-    return invoke(project_bytes,ref project,ref snapshot,selected,worker,policy_bytes,run_bytes,files::view(ref file));
+    return invoke(project_bytes,ref project,ref snapshot,selected,worker,policy_bytes,run_bytes,imports,replay,files::view(ref file));
 }
 
 @effects(console)
 fn i32 invoke(ref u8[] manifest_bytes,ref manifest::Project project,ref sources::Snapshot snapshot,
-    Selection selected,ref u8[] worker,ref u8[] policy_bytes,ref u8[] run_bytes,ref u8[] payload){
+    Selection selected,ref u8[] worker,ref u8[] policy_bytes,ref u8[] run_bytes,
+    ref u8[] imports,Option<ref Replay> replay,ref u8[] payload){
     let bool run=selected.run;
     var u8[32] limits=[0;32];
     let usize limit_bytes=2*sources::count(snapshot);
     let bytes::Buffer request=switch(wire::pack(manifest_bytes,project,snapshot,run,
-        selected.fuel,policy_bytes,run_bytes,selected.input_file,payload,ref mut limits[..limit_bytes])){
+        selected.fuel,policy_bytes,run_bytes,imports,selected.input_file,payload,ref mut limits[..limit_bytes])){
         case .ok(v):{v}
         case .err(e):{return failure(run,errors::absent(switch(e){case .Shape:{11}case .Limit:{4}case .Allocation:{15}},0));}
     };
@@ -149,9 +212,21 @@ fn i32 invoke(ref u8[] manifest_bytes,ref manifest::Project project,ref sources:
     };
     if(!bytes::resize_zeroed(ref mut reply,capacity).is_ok){return failure(run,errors::absent(15,0));}
     var usize length=0;
+    var u8[12] host=[0;12];
+    let ptr void context=switch(replay){
+        case .some(route):{
+            let limits::RunLimits limits=runs::run_limits(ref route.run);
+            let usize cap=adapters::byte_limit();
+            le::write_le(limits.host_calls,ref mut host[..4]);
+            le::write_le(4+if(limits.host_request_bytes<cap){limits.host_request_bytes}else{cap},ref mut host[4..8]);
+            le::write_le(1+if(limits.host_response_bytes<cap){limits.host_response_bytes}else{cap},ref mut host[8..]);
+            unsafe{route as ptr void}
+        }
+        case .none:{null}
+    };
     let u32 status=unsafe{bc_project_broker_invoke(input as ptr u8,input.len,if(run){1}else{0},
         bounds as ptr u8,bounds.len,worker as ptr u8,worker.len,
-        if(output){1}else{0},selected.output_limit,bytes::view_mut(ref mut reply) as ptr mut u8,capacity,ref mut length as ptr mut usize)};
+        if(output){1}else{0},selected.output_limit,ref host[..] as ptr u8,context,bytes::view_mut(ref mut reply) as ptr mut u8,capacity,ref mut length as ptr mut usize)};
     if(status!=1 || length==0 || length>capacity){
         let u8 kind=if(status==2){errors::deadline_kind()}else if(status==3){errors::cancelled_kind()}else{11};
         return failure(run,errors::absent(kind,0));

@@ -85,6 +85,17 @@ pub fn Result<modules::Index,modules::Error> index_host(ref project::Project map
     let usize checked=headers(map,ref index,ref order)?;
     return .ok(index);
 }
+pub fn Result<modules::Index,modules::Error> index_host_limited(ref project::Project map,sources::Snapshot snapshot,
+    usize tokens,usize functions,usize records,usize nesting_limit){
+    var usize[16] order=[32;16];
+    discard file_map(map,ref snapshot,ref mut order)?;
+    let modules::Index index=modules::build_host_limited(snapshot,tokens,nesting_limit)?;
+    if(modules::function_count(ref index)>functions || modules::record_count(ref index)>records){
+        return .err(error(.Limit,sources::no_source()));
+    }
+    discard headers(map,ref index,ref order)?;
+    return .ok(index);
+}
 pub fn Result<input_entries::InputEntry,modules::Error> select_input(ref project::Project map,sources::Snapshot snapshot){
     let modules::Index index=build_index(map,snapshot)?;
     return input_entries::select_i32_input(index,project::entry_module(map),project::entry_function(map));

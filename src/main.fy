@@ -50,7 +50,10 @@ fn i32 main() {
         return project_worker::execute();
     }
     if((argc==4 || argc==6 || argc==7) && lexer::equal(command_view[..command_length],b"--internal-project-broker")){
-        return project_broker::execute(argc>=6,argc==7);
+        return project_broker::execute(argc>=6,argc==7,false);
+    }
+    if(argc>=7 && argc<=9 && lexer::equal(command_view[..command_length],b"--internal-project-host-broker")){
+        return project_broker::execute(true,argc==9,true);
     }
     if (lexer::equal(command_view[..command_length], b"--version")) {
         if (argc == 2) {

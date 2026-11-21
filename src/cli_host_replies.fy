@@ -152,6 +152,21 @@ pub fn Result<Replies,errors::Error> read(usize argument,ref catalog::Catalog im
         case .ok(v):{.ok(v)}case .err(e):{.err(problem(e))}
     };
 }
+// The broker has already checked the import authority against its own run.
+pub fn usize copy_reply(ref Replies replies,usize import_id,ref u8[] request,ref mut u8[] response){
+    let usize i=switch(find(replies,request,import_id)){
+        case .some(v):{v}case .none:{64}
+    };
+    if(i==64){return 0;}
+    let ref Row entry=vec::at<Row>(ref replies.rows,i);
+    let ref u8[] data=json::view(ref replies.wire,entry.reply);
+    if(response.len==0 || data.len>response.len-1){return 0;}
+    response[0]=entry.kind;
+    var usize at=0;
+    while(at<data.len){response[1+at]=data[at];at+=1;}
+    return 1+data.len;
+}
+
 fn Option<usize> find(ref Replies replies,ref u8[] request,usize import_id){
     var usize i=0;
     while(i<vec::len<Row>(ref replies.rows)){
