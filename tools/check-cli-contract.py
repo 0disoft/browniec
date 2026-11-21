@@ -418,21 +418,26 @@ def configured_arguments(folder):
             '--run', folder / 'run.json']
 
 
-def check_console_cancellation(exe, args, project):
+def check_console_cancellation(exe, args, ready, destination):
     # The helper owns a separate console. Target only the test CLI process group.
     driver = r"""
 import signal
 import subprocess
 import sys
 import time
+from pathlib import Path
 
-with subprocess.Popen(sys.argv[1:], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+ready = Path(sys.argv[1])
+with subprocess.Popen(sys.argv[2:], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                       creationflags=subprocess.CREATE_NEW_PROCESS_GROUP) as guest:
     try:
-        time.sleep(0.6)
-        assert guest.poll() is None, guest.communicate()
+        deadline = time.monotonic() + 8
+        while not ready.exists():
+            assert guest.poll() is None, guest.communicate()
+            assert time.monotonic() < deadline, 'Adapter did not receive the request'
+            time.sleep(0.01)
         guest.send_signal(signal.CTRL_BREAK_EVENT)
-        out, err = guest.communicate(timeout=8)
+        out, err = guest.communicate(timeout=5)
         assert guest.returncode == 5, (guest.returncode, out, err)
     finally:
         if guest.poll() is None:
@@ -443,20 +448,22 @@ with subprocess.Popen(sys.argv[1:], stdout=subprocess.PIPE, stderr=subprocess.PI
     startup = subprocess.STARTUPINFO()
     startup.dwFlags = subprocess.STARTF_USESHOWWINDOW
     startup.wShowWindow = subprocess.SW_HIDE
-    run = subprocess.run([sys.executable, '-B', '-c', driver, str(exe),
-                          *map(str, args), '--input', str(project / 'payload.bin'), '--json-v2'],
+    env = os.environ | {'BC_ENGINE_ADAPTER_FIXTURE': 'c', 'BC_ENGINE_ADAPTER_READY': str(ready)}
+    run = subprocess.run([sys.executable, '-B', '-c', driver, str(ready), str(exe),
+                          *map(str, args), '--json-v2'],
                          creationflags=subprocess.CREATE_NEW_CONSOLE, startupinfo=startup,
-                         capture_output=True, timeout=12)
+                         capture_output=True, timeout=15, env=env)
     assert run.returncode == 0 and not run.stderr and len(run.stdout.splitlines()) == 1, run
     assert json.loads(run.stdout) == {
         'schema': 'browniec.result/v2', 'command': 'run', 'status': 'error',
-        'profile': 'brownie.m2-reference/1', 'return_i32': None,
+        'profile': 'brownie.m1-scalar/1', 'return_i32': None,
         'error': {'kind': 'cancelled', 'location': {'kind': 'none'}},
-    }
+    }, run.stdout
+    assert not destination.exists()
     print('PASS: Windows CTRL+BREAK cancels configured execution without publishing output')
 
 
-def check_host_project_output(exe, folder):
+def check_host_project_output(exe, folder, adapter):
     check, run = make_host_project(folder)
     manifest, policy, config, replies = check[2], check[6], check[8], run[-1]
     source = folder / 'app.brc'
@@ -489,6 +496,18 @@ def check_host_project_output(exe, folder):
     replies.write_text(json.dumps(json.loads(replies.read_bytes()) | {'replies': []}), encoding='utf-8')
     assert check_json(exe, file_run, 4, version=2, input_bytes=message)['kind'] == 'unavailable'
     assert not destination.exists()
+    if adapter:
+        payload = folder / 'payload.bin'
+        payload.write_bytes(message)
+        ready = folder / 'adapter-ready'
+        limits = allowed['limits'] | {'deadline_ms': 10000}
+        config.write_text(json.dumps(allowed | {'limits': limits}), encoding='utf-8')
+        policy.write_text(json.dumps(json.loads(policy.read_bytes()) | {'run': limits}), encoding='utf-8')
+        adapter_args = [*run[:-2], '--host-adapter', '0', 'v1', adapter,
+                        '--input', payload, '--output', destination]
+        check_console_cancellation(exe, adapter_args, ready, destination)
+    else:
+        print('SKIP: console cancellation requires --adapter-exe')
     print('PASS: catalog project emits across host suspension, with exact file/JSON output and failure rollback')
 
 
@@ -589,15 +608,6 @@ def check_configured_output(exe, folder):
     assert check_json(exe, file_run, 5, version=2, profile=profile) == error
     assert not unpublished.exists()
 
-    policy_file = project / 'policy.json'
-    original_policy = policy_file.read_bytes()
-    ceiling = json.loads(original_policy)
-    extended = config['limits'] | {'fuel': 16000000, 'deadline_ms': 10000}
-    policy_file.write_text(json.dumps(ceiling | {'run': extended}), encoding='utf-8')
-    update(limits=extended)
-    check_console_cancellation(exe, [*args, '--output-text', unpublished], project)
-    assert not unpublished.exists()
-    policy_file.write_bytes(original_policy)
     update()
 
     source.write_bytes(b'module app;pub fn i32 transform(ref u8[] data){return true;}')
@@ -915,7 +925,7 @@ def main():
         check_host_catalog(exe, host_check)
         check_host_project(exe, project_host_check, project_host_run)
         check_host_project_input(exe, project_host_check, project_host_run)
-        check_host_project_output(exe, Path(temp) / 'host-output')
+        check_host_project_output(exe, Path(temp) / 'host-output', adapter)
         check_project(exe, Path(temp))
         check_project_input(exe, Path(temp))
         check_source_input(exe, Path(temp))
