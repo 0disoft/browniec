@@ -66,6 +66,22 @@ duplicate sequences, crossed correlations and size boundaries. Both profiles
 retained zero net warm-launch handles. The RESULT stays fixture data.
 Local receipt: `build/restricted-worker/20261121T152949567319Z/receipt.json`.
 
+## Bounded pipe stream
+
+The [RX and TX cursors](../../native/restricted_worker_stream.h) offer a
+48-byte header window and then body windows of at most 4096 bytes. RX clamps
+the phase limit to the caller's buffer capacity. A rejected header exposes
+zero body bytes for reading. The cursor returns a frame only after the entire
+declared body arrives. RX distinguishes EOF before a header from truncation
+inside a header or body. TX keeps the header and body in separate windows and
+preserves its position across short writes.
+
+Development and /O2 verify the real AppContainer exchange and stdout EOF with
+these cursors. The same fixture checks a 4097-byte body, one-byte-short storage
+and body, a seven-byte header followed by EOF, and zero-byte progress in cursor
+tests. Session-wide limits and the decision to publish remain broker concerns.
+Local receipt: `build/restricted-worker/20261121T153306970209Z/receipt.json`.
+
 ## Windows verification
 
 Run `python -B tools/verify-restricted-worker.py`. The development and optimized
@@ -90,7 +106,7 @@ limit, connecting PID, and inheritance flags. The child exchanged bytes over
 all three pipes and the repeat launch again had zero net handle growth.
 Local receipt: `build/restricted-worker/20261121T152431466055Z/receipt.json`.
 
-The caller still needs trusted image and profile provisioning, bounded frame
-stream handling, strict payload parsing, the broker publication barrier, and
+The caller still needs trusted image and profile provisioning, strict payload
+parsing, the broker publication barrier, and
 I/O completion and budget integration. The launcher fixture executes native test code.
 The restricted CLI remains unavailable while those pieces are built and verified.

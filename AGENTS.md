@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-22): [Windows worker session headers](docs/engineering/restricted-worker.md#session-frame-headers)
-  verify nonce binding, sequence, correlation and length on an actual
-  AppContainer pipe exchange in development and /O2.
+- Latest runtime checkpoint (2026-11-22): [Bounded Windows worker stream](docs/engineering/restricted-worker.md#bounded-pipe-stream)
+  delivers only complete frames in bounded windows. Development and /O2
+  confirm an actual AppContainer pipe exchange and stdout EOF.
 
 # Brownie C agent guidance
 

@@ -22,6 +22,7 @@ def main():
     paths = ['native/restricted_worker.c', 'native/restricted_worker.h',
              'native/restricted_worker_pipes.c', 'native/restricted_worker_pipes.h',
              'native/restricted_worker_frame.c', 'native/restricted_worker_frame.h',
+             'native/restricted_worker_stream.c', 'native/restricted_worker_stream.h',
              'tests/native/restricted_worker_host.c', 'tools/verify-restricted-worker.py',
              'tools/verify-runtime-store-probe.py']
     receipt = dict(schema='browniec.restricted-worker-verification/v1', status='incomplete',
@@ -58,7 +59,8 @@ def main():
             helper.need({key: value for key, value in evidence.items() if key != 'coldHandleDelta'} ==
                         dict(appContainer=True, capabilities=0, inheritedPipes=3,
                              commitDenied=True, cpuTermination=True, privatePipeAcl=True,
-                             framedExchange=True, headerMutationsRejected=48, handleDelta=0)
+                             framedExchange=True, headerMutationsRejected=48,
+                             boundedStream=True, pipeEof=True, handleDelta=0)
                         and type(evidence.get('coldHandleDelta')) is int,
                         f'Unexpected worker result: {evidence}')
             receipt['profiles'].append(dict(profile=profile, exe=helper.image(exe), result=evidence))
