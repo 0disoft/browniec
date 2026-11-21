@@ -11,6 +11,7 @@ import project_manifest as manifest;
 import project_source_loader as loader;
 import json_tokens as json;
 import render as render;
+import runtime_input as input;
 import runtime_policy as policy;
 import runtime_policy_limits as limits;
 import runtime_run_config as runs;
@@ -23,7 +24,7 @@ unsafe extern C fn u32 bc_project_broker_invoke(ptr u8 request,usize request_len
     ptr u8 lengths,usize lengths_count,ptr u8 configuration,usize config_size,
     ptr mut u8 reply,ptr mut usize reply_length);
 
-struct Selection { bool run; usize fuel; usize source_bytes; usize modules; }
+struct Selection { bool run; usize fuel; usize source_bytes; usize modules; bool input_file; usize input_limit; }
 
 fn u32 validate_result(ptr u8 data,usize length,u32 run,ptr u8 bounds,usize count){
     if(data==null || length==0 || length>wire::result_limit() || run>1 ||
@@ -34,25 +35,25 @@ fn u32 validate_result(ptr u8 data,usize length,u32 run,ptr u8 bounds,usize coun
 }
 
 @effects(console,filesystem)
-pub fn i32 execute(bool configured){
+pub fn i32 execute(bool configured,bool input_file){
     var u8[8] operation=[0;8];
     let usize size=switch(process::arg(2,ref mut operation)){
         case .ok(v):{v}case .err(_):{return failure(false,errors::absent(10,0));}
     };
     let ref u8[] op=ref operation[..size];
     let bool run=bytes::equal(op,b"run");
-    if(!run && !bytes::equal(op,b"check")){return failure(false,errors::absent(10,0));}
+    if(!run && (input_file || !bytes::equal(op,b"check"))){return failure(false,errors::absent(10,0));}
     var u8[3072] path=[0;3072];
     let usize length=switch(process::arg(3,ref mut path)){
         case .ok(v):{v}case .err(_):{return failure(run,errors::absent(10,0));}
     };
-    if(configured){return configured_project(ref path[..length],run);}
+    if(configured){return configured_project(ref path[..length],run,input_file);}
     return acquire(ref path[..length],Selection{.run=run,.fuel=if(run){meter::cli_default()}else{0},
-        .source_bytes=sources::source_limit(),.modules=sources::file_limit()},b"",b"",b"",b"",b"");
+        .source_bytes=sources::source_limit(),.modules=sources::file_limit(),.input_file=false,.input_limit=0},b"",b"",b"",b"",b"");
 }
 
 @effects(console,filesystem)
-fn i32 configured_project(ref u8[] path,bool run){
+fn i32 configured_project(ref u8[] path,bool run,bool input_file){
     let files::File policy_file=switch(files::open(4,json::byte_limit(),10)){
         case .ok(v):{v}case .err(e):{return failure(run,e);}
     };
@@ -76,7 +77,9 @@ fn i32 configured_project(ref u8[] path,bool run){
     let usize source=if(compile.source_bytes<sources::source_limit()){compile.source_bytes}else{sources::source_limit()};
     let usize count=if(compile.modules<sources::file_limit()){compile.modules}else{sources::file_limit()};
     let u8[28] worker=worker_configuration(policy::worker_limits(ref ceiling));
-    return acquire(path,Selection{.run=run,.fuel=if(run){fuel}else{0},.source_bytes=source,.modules=count},
+    let usize input_limit=if(runtime.input_bytes<runtime.memory_bytes){runtime.input_bytes}else{runtime.memory_bytes};
+    return acquire(path,Selection{.run=run,.fuel=if(run){fuel}else{0},.source_bytes=source,.modules=count,
+        .input_file=input_file,.input_limit=input_limit},
         runs::module_name(ref request),runs::function_name(ref request),ref worker,policy_bytes,run_bytes);
 }
 
@@ -92,7 +95,7 @@ fn u8[28] worker_configuration(limits::WorkerLimits worker){
     return packed;
 }
 
-@effects(console)
+@effects(console,filesystem)
 fn i32 acquire(ref u8[] path,Selection selected,ref u8[] module_name,ref u8[] function_name,ref u8[] worker,
     ref u8[] policy_bytes,ref u8[] run_bytes){
     let bool run=selected.run;
@@ -114,17 +117,25 @@ fn i32 acquire(ref u8[] path,Selection selected,ref u8[] module_name,ref u8[] fu
         case .ok(v):{v}
         case .err(e):{return failure(run,errors::absent(cli::acquisition_kind(e),0));}
     };
-    return invoke(raw[..anchored::manifest_bytes(ref root)],ref project,ref snapshot,selected,worker,policy_bytes,run_bytes);
+    let ref u8[] project_bytes=raw[..anchored::manifest_bytes(ref root)];
+    if(!selected.input_file){
+        return invoke(project_bytes,ref project,ref snapshot,selected,worker,policy_bytes,run_bytes,b"");
+    }
+    let usize limit=if(selected.input_limit<input::hard_limit()){selected.input_limit}else{input::hard_limit()};
+    let files::File file=switch(files::open(6,limit,render::input_limit_kind())){
+        case .ok(v):{v}case .err(e):{return failure(run,e);}
+    };
+    return invoke(project_bytes,ref project,ref snapshot,selected,worker,policy_bytes,run_bytes,files::view(ref file));
 }
 
 @effects(console)
 fn i32 invoke(ref u8[] manifest_bytes,ref manifest::Project project,ref sources::Snapshot snapshot,
-    Selection selected,ref u8[] worker,ref u8[] policy_bytes,ref u8[] run_bytes){
+    Selection selected,ref u8[] worker,ref u8[] policy_bytes,ref u8[] run_bytes,ref u8[] payload){
     let bool run=selected.run;
     var u8[32] limits=[0;32];
     let usize limit_bytes=2*sources::count(snapshot);
     let bytes::Buffer request=switch(wire::pack(manifest_bytes,project,snapshot,run,
-        selected.fuel,policy_bytes,run_bytes,ref mut limits[..limit_bytes])){
+        selected.fuel,policy_bytes,run_bytes,selected.input_file,payload,ref mut limits[..limit_bytes])){
         case .ok(v):{v}
         case .err(e):{return failure(run,errors::absent(switch(e){case .Shape:{11}case .Limit:{4}case .Allocation:{15}},0));}
     };

@@ -16,18 +16,19 @@ import worker_project_wire as wire;
 import worker_scalar_result as scalar;
 import std::bytes as bytes;
 
-unsafe extern C fn usize bc_scalar_worker_start(ptr mut u8 buffer,usize capacity);
+unsafe extern C fn usize bc_project_worker_begin();
+unsafe extern C fn u32 bc_project_worker_read(ptr mut u8 buffer,usize length);
 unsafe extern C fn u32 bc_scalar_worker_finish(ptr u8 result,usize length);
 
 pub fn i32 execute(){
-    let usize capacity=wire::request_limit();
-    var bytes::Buffer request=switch(bytes::with_capacity(capacity)){
+    let usize length=unsafe{bc_project_worker_begin()};
+    if(length==0 || length>wire::request_limit()){return 4;}
+    var bytes::Buffer request=switch(bytes::with_capacity(length)){
         case .ok(v):{v}case .err(_):{return 4;}
     };
-    if(!bytes::resize_zeroed(ref mut request,capacity).is_ok){return 4;}
-    let usize length=unsafe{bc_scalar_worker_start(bytes::view_mut(ref mut request) as ptr mut u8,capacity)};
-    if(length==0 || length>capacity){return 4;}
-    return respond(bytes::view(ref request)[..length]);
+    if(!bytes::resize_zeroed(ref mut request,length).is_ok ||
+       unsafe{bc_project_worker_read(bytes::view_mut(ref mut request) as ptr mut u8,length)}==0){return 4;}
+    return respond(bytes::view(ref request));
 }
 
 fn i32 respond(ref u8[] request){
@@ -35,14 +36,14 @@ fn i32 respond(ref u8[] request){
     let manifest::Project project=switch(manifest::parse(request[header.manifest_start..header.manifest_end])){
         case .ok(v):{v}case .err(_):{return 4;}
     };
-    let sources::Snapshot snapshot=switch(wire::unpack(request[header.run_end..request.len],ref project)){
+    let sources::Snapshot snapshot=switch(wire::unpack(request[header.run_end..header.input_start],ref project)){
         case .ok(v):{v}case .err(_):{return 4;}
     };
     let wire::Outcome outcome=if(header.policy_end==header.manifest_end){
         compute(ref project,snapshot,header)
     }else{
         configured(ref project,snapshot,header,request[header.manifest_end..header.policy_end],
-            request[header.policy_end..header.run_end])
+            request[header.policy_end..header.run_end],request[header.input_start..request.len])
     };
     let bytes::Buffer payload=switch(wire::encode_result(outcome,header.run)){
         case .ok(v):{v}case .err(_):{return 4;}
@@ -52,7 +53,7 @@ fn i32 respond(ref u8[] request){
 }
 
 fn wire::Outcome configured(ref manifest::Project project,sources::Snapshot snapshot,wire::Header header,
-    ref u8[] policy,ref u8[] request){
+    ref u8[] policy,ref u8[] request,ref u8[] input){
     let policies::Policy ceiling=switch(policies::parse(policy)){
         case .ok(v):{v}case .err(_):{return denied();}
     };
@@ -67,11 +68,11 @@ fn wire::Outcome configured(ref manifest::Project project,sources::Snapshot snap
     var engine::Engine owner=switch(engine::create_with_policy(ceiling)){
         case .ok(v):{v}case .err(e):{return engine_failure(e,true);}
     };
-    return execute_configured(ref mut owner,project,snapshot,header,ref run);
+    return execute_configured(ref mut owner,project,snapshot,header,ref run,input);
 }
 
 fn wire::Outcome execute_configured(ref mut engine::Engine owner,ref manifest::Project project,
-    sources::Snapshot snapshot,wire::Header header,ref runs::RunConfig run){
+    sources::Snapshot snapshot,wire::Header header,ref runs::RunConfig run,ref u8[] input){
     let usize program=switch(engine::compile_project_snapshot_output(owner,project,snapshot,
         images::metadata_charge()+images::byte_limit())){
         case .ok(v):{v}case .err(e):{return engine_failure(e,true);}
@@ -79,15 +80,16 @@ fn wire::Outcome execute_configured(ref mut engine::Engine owner,ref manifest::P
     let engine::PreviewEntry profile=switch(engine::preview_entry(owner,program)){
         case .ok(v):{v}case .err(e):{return engine_failure(e,true);}
     };
-    if(profile.accepts_input || profile.emits){return denied();}
-    let wire::Outcome outcome=if(header.run){run_instance(owner,program,run,header.fuel)}
+    if(profile.emits){return denied();}
+    let wire::Outcome outcome=if(header.run){run_instance(owner,program,run,header,input)}
         else{success(scalar::checked(),8)};
     if(!engine::release_program(owner,program).is_ok || !engine::destroy(owner).is_ok){return denied();}
     return outcome;
 }
 
-fn wire::Outcome run_instance(ref mut engine::Engine owner,usize program,ref runs::RunConfig run,usize fuel){
-    let usize instance=switch(engine::prepare_project_snapshot_instance(owner,program,run,fuel)){
+fn wire::Outcome run_instance(ref mut engine::Engine owner,usize program,ref runs::RunConfig run,
+    wire::Header header,ref u8[] input){
+    let usize instance=switch(engine::prepare_project_snapshot_instance(owner,program,run,header.fuel,header.has_input,input)){
         case .ok(v):{v}case .err(e):{return engine_failure(e,false);}
     };
     let wire::Outcome outcome=step_instance(owner,instance);

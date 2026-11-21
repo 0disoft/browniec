@@ -3,7 +3,7 @@
 #include "native/restricted_worker_frame.h"
 #include "native/restricted_worker_payload.h"
 
-static HANDLE result_pipe;
+static HANDLE input_pipe, result_pipe;
 static bc_worker_frame result_frame;
 static size_t result_capacity;
 
@@ -50,9 +50,8 @@ static bool send(HANDLE output, const bc_worker_frame *frame) {
     return bc_worker_frame_encode(wire, frame) && transfer(output, NULL, wire, sizeof(wire));
 }
 
-size_t bc_scalar_worker_start(uint8_t *request, size_t capacity) {
-    const bool project = capacity == BC_PROJECT_START_MAX;
-    if (result_pipe || !request || (!project && capacity != BC_SCALAR_START_MAX) || !confined()) return 0;
+static size_t begin(bool project) {
+    if (input_pipe || result_pipe || !confined()) return 0;
     HANDLE input = GetStdHandle(STD_INPUT_HANDLE), output = GetStdHandle(STD_OUTPUT_HANDLE);
     ULONG input_pid = 0, output_pid = 0;
     if (input == output || !client_pipe(input, &input_pid) ||
@@ -65,9 +64,9 @@ size_t bc_scalar_worker_start(uint8_t *request, size_t capacity) {
     expected = session;
     expected.kind = BC_WORKER_START;
     expected.sequence = 2;
-    expected.length = (uint32_t)capacity;
-    if (!receive(input, &expected, &session) || session.length < (project ? 9u : 5u) ||
-        !transfer(input, request, NULL, session.length)) return 0;
+    expected.length = project ? BC_PROJECT_START_MAX : BC_SCALAR_START_MAX;
+    if (!receive(input, &expected, &session) || session.length < (project ? 9u : 5u)) return 0;
+    input_pipe = input;
     session.kind = BC_WORKER_RESULT;
     result_frame = session;
     result_pipe = output;
@@ -75,8 +74,29 @@ size_t bc_scalar_worker_start(uint8_t *request, size_t capacity) {
     return session.length;
 }
 
+static bool read_start(uint8_t *request, size_t length) {
+    if (!input_pipe || !request || length != result_frame.length ||
+        !transfer(input_pipe, request, NULL, result_frame.length)) return false;
+    input_pipe = NULL;
+    return true;
+}
+
+size_t bc_scalar_worker_start(uint8_t *request, size_t capacity) {
+    if (!request || capacity != BC_SCALAR_START_MAX) return 0;
+    const size_t length = begin(false);
+    return length && read_start(request, length) ? length : 0;
+}
+
+size_t bc_project_worker_begin(void) {
+    return begin(true);
+}
+
+uint32_t bc_project_worker_read(uint8_t *request, size_t length) {
+    return read_start(request, length);
+}
+
 uint32_t bc_scalar_worker_finish(const uint8_t *result, size_t length) {
-    if (!result_pipe || !result || !length || length > result_capacity) return 0;
+    if (input_pipe || !result_pipe || !result || !length || length > result_capacity) return 0;
     HANDLE output = result_pipe;
     result_pipe = NULL;
     result_frame.length = (uint32_t)length;

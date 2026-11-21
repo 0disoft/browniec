@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-22): [Compiler limits inside the worker](docs/engineering/restricted-worker.md#engine-policy-inside-the-worker)
-  enforce policy delimiter nesting while indexing declaration bodies.
-  Development and /O2 each pass twenty configured project cases.
+- Latest runtime checkpoint (2026-11-22): [Binary input inside the worker](docs/engineering/restricted-worker.md#configured-binary-input)
+  binds an explicit file to a policy-owned shared-byte Instance.
+  Development and /O2 each pass 29 configured project cases.
 
 # Brownie C agent guidance
 

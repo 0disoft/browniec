@@ -49,8 +49,8 @@ fn i32 main() {
     if(argc==2 && lexer::equal(command_view[..command_length],b"--internal-project-worker")){
         return project_worker::execute();
     }
-    if((argc==4 || argc==6) && lexer::equal(command_view[..command_length],b"--internal-project-broker")){
-        return project_broker::execute(argc==6);
+    if((argc==4 || argc==6 || argc==7) && lexer::equal(command_view[..command_length],b"--internal-project-broker")){
+        return project_broker::execute(argc>=6,argc==7);
     }
     if (lexer::equal(command_view[..command_length], b"--version")) {
         if (argc == 2) {

@@ -436,7 +436,18 @@ pub fn Result<usize,Error> compile_project_snapshot_output(ref mut Engine e,ref 
        sources::snapshot_bytes(ref snapshot)>source_byte_limit(e)){return .err(error(8));}
     let usize deadline=compile_deadline(e,0)?;
     let policy_limits::CompileLimits limits=configured_compile_limits(e)?;
-    let entries::Entry selected=switch(project_binding::select_limited(project,snapshot,limits.tokens,limits.functions,limits.types,limits.depth)){
+    let modules::Index index=switch(project_binding::index_limited(project,snapshot,limits.tokens,limits.functions,limits.types,limits.depth)){
+        case .ok(v):{v}case .err(e):{return .err(host_binding_error(e));}
+    };
+    let ref u8[] module_name=projects::entry_module(project);
+    let ref u8[] function_name=projects::entry_function(project);
+    if(input_entries::has_i32_input(ref index,module_name,function_name)){
+        let input_entries::InputEntry selected=switch(input_entries::select_i32_input(index,module_name,function_name)){
+            case .ok(v):{v}case .err(e):{return .err(host_binding_error(e));}
+        };
+        return retain_input_entry(e,selected,image_limit,4,deadline);
+    }
+    let entries::Entry selected=switch(entries::select_i32(index,module_name,function_name)){
         case .ok(v):{v}case .err(e):{return .err(host_binding_error(e));}
     };
     return retain_entry(e,selected,image_limit,2,deadline);
@@ -967,11 +978,11 @@ pub fn Result<ScalarPreparation,Error> prepare_scalar_preview(ref mut Engine e,u
 }
 
 pub fn Result<usize,Error> prepare_project_snapshot_instance(ref mut Engine e,usize program,
-    ref run_config::RunConfig run,usize budget){
+    ref run_config::RunConfig run,usize budget,bool has_input,ref u8[] input){
     discard check_run_policy(e,run)?;
     let PreviewEntry profile=preview_entry(e,program)?;
-    if(profile.emits || profile.accepts_input){return .err(error(5));}
-    let ScalarPreparation prepared=prepare_scalar_policy(e,program,b"",profile,run,budget)?;
+    if(profile.emits || profile.accepts_input!=has_input){return .err(error(5));}
+    let ScalarPreparation prepared=prepare_scalar_policy(e,program,input,profile,run,budget)?;
     return .ok(prepared.instance);
 }
 
@@ -1997,7 +2008,7 @@ fn u32 compile_output_inner(ref mut Meta m,ref mut vec::Vec<Program> v,ref mut v
         case .err(e):{compile_error(m,e)}
     };
 }
-fn u32 compile_input_output_inner(ref mut Meta m,ref mut vec::Vec<Program> v,ref mut vec::Vec<input_entries::InputEntry> incoming,usize limit,u32 mode,usize deadline){
+fn u32 compile_input_output_inner(ref mut Meta m,ref mut vec::Vec<Program> v,ref mut vec::Vec<input_entries::InputEntry> incoming,usize limit,u32 mode,usize deadline,ref vec::Vec<policy::Policy> policies){
     if(clock::expired(deadline)){return compile_timed_out(m);}
     if(mode>1 && !m.configured){return failed(m,5);}
     if(vec::len<Program>(v)>=m.limits.programs || m.next==0){return failed(m,8);}
@@ -2010,7 +2021,17 @@ fn u32 compile_input_output_inner(ref mut Meta m,ref mut vec::Vec<Program> v,ref
     let Result<output_programs::Program,diagnostics::Error> built=bounded::compile_input_output_until(pop_input_entry(incoming),limit,ref mut plan,ref mut work,deadline);
     assert(memory::record_compile(ref mut m.programs,ref work).is_ok);
     assert(memory::record(ref mut m.programs,ref plan).is_ok);
-    return switch(built){case .ok(code):{publish_output_program(m,v,code,plan.bytes,entry,mode,deadline)}case .err(e):{compile_error(m,e)}};
+    return switch(built){
+        case .ok(code):{
+            if(mode==4){
+                let policy_limits::CompileLimits limits=policy::compile_limits(vec::at<policy::Policy>(policies,0));
+                let ref compile_ir::Program image=output_programs::code(ref code);
+                if(!check_compile_image(ref image.body,limits).is_ok){return failed(m,8);}
+            }
+            publish_output_program(m,v,code,plan.bytes,entry,if(mode==4){2}else{mode},deadline)
+        }
+        case .err(e):{compile_error(m,e)}
+    };
 }
 fn EntryBinding empty_entry(){
     return EntryBinding{.scope=[0;128],.function=[0;64],.scope_len=0,.function_len=0,.emits=false,.requires_output=false};
@@ -3022,7 +3043,7 @@ pub fn void retain_native_bindings(){
     var vec::Vec<BoundInput> output_input=vec::empty<BoundInput>();
     let vec::Vec<policy::Policy> owned=vec::empty<policy::Policy>();
     unsafe{binding_raw(13)};discard compile_output_inner(ref mut m,ref mut output_program,ref mut output_entry,0,0,ref owned);
-    unsafe{binding_raw(14)};discard compile_input_output_inner(ref mut m,ref mut output_program,ref mut output_input_entry,0,1,0);
+    unsafe{binding_raw(14)};discard compile_input_output_inner(ref mut m,ref mut output_program,ref mut output_input_entry,0,1,0,ref owned);
     unsafe{binding_raw(15)};discard output_instance_inner(ref mut m,ref mut output_program,ref mut output_instances,ref mut output_input,ref mut incoming_snapshot,0,0,0,0,0,ref outputs);
     var vec::Vec<Output> outgoing=vec::empty<Output>();
     unsafe{binding_raw(24)};discard output_preflight_width(ref mut m,ref mut output_instances,ref outputs,0,1,ref output_program);

@@ -375,8 +375,8 @@ sends the same policy and run snapshots that it admitted.
 The worker reparses the snapshots and checks the policy ceiling, entry,
 empty capability grants and effective Fuel. It creates a policy-owned
 Engine, compiles the selected entry with the bounded output-capable
-compiler and verifies that the retained Program requires neither input
-nor emit. The worker uses the configured Engine for compile working
+compiler and denies Programs that require emit. The worker uses the
+configured Engine for compile working
 memory, Program and Instance memory, supported VM limits, Fuel and the
 separate compile and execution deadlines. It advances the Instance in
 quanta of at most 4,096 units and destroys it before releasing the Program
@@ -398,8 +398,8 @@ opener produces a source-local `compile_limit`. The existing parser still
 validates delimiter pairing and enforces its own grammar limits.
 
 Compile Fuel, semantic depth outside this delimiter check, and type accounting
-beyond declared records remain open. Host requests, guest input and guest
-output still need worker transport integration.
+beyond declared records remain open. Host requests and guest output still
+need worker transport integration.
 
 The nesting follow-up passed twenty configured project cases per Windows
 profile. A nested block and parenthesized value returned 42 at depth two,
@@ -432,6 +432,29 @@ and a nonempty grant were denied. A one-millisecond session expired
 without publishing a guest result. The temp staging root was empty after
 every case. Local receipt:
 `build/restricted-worker/20261121T165734114642Z/receipt.json`.
+
+### Configured binary input
+
+The private broker accepts `--internal-project-broker run MANIFEST POLICY
+RUN INPUT`. The parent opens the explicit file under the lower of the run's
+input and memory ceilings and the 1 MiB input cap. START operation 6 adds
+a little-endian u32 input length at byte 17. The payload follows the last
+source member. The maximum START is 1,249,333 bytes. After native framing
+admits the message, the worker allocates the announced size and reads that
+exact body. It validates the input length separately from the source
+directory, compiles the named public entry, and binds a policy-checked
+input snapshot to the Instance. A shared-byte run requires an explicit
+file, which can contain zero bytes. A scalar run rejects an input file.
+Check accepts either supported signature without opening an input file.
+Result publication still requires the existing broker gate.
+
+Windows development and /O2 each passed 29 configured project cases. A
+file of 8,193 bytes passed at that limit and failed with `input_limit` one
+byte below it. A 1 MiB file returned the unsigned final byte, and an empty
+file took the empty-input branch. The matrix also checks entry/input
+mismatches, check-only behavior, the input Program's instruction ceiling
+and a clean staging directory after every case. Local receipt:
+`build/restricted-worker/20261121T173313253515Z/receipt.json`.
 
 ## Windows verification
 

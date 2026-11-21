@@ -65,14 +65,18 @@ def verify_configured_project(run, need, image, folder, env):
     config = dict(schema='brownie.run/0.3', entry=manifest['entry'].copy(),
                   requires=[], grants=[], limits=policy['run'].copy())
 
-    def check(expected_exit=0, kind=None, operation='run'):
+    def check(expected_exit=0, kind=None, operation='run', payload=None, value=42):
         policy_file.write_text(json.dumps(policy), encoding='utf-8')
         run_file.write_text(json.dumps(config), encoding='utf-8')
-        data = json.loads(run([image, '--internal-project-broker', operation, project, policy_file, run_file],
-                              cwd=folder, env=env, expected_exit=expected_exit, no_stderr=True))
+        args = [image, '--internal-project-broker', operation, project, policy_file, run_file]
+        if payload is not None:
+            args.append(payload)
+        data = json.loads(run(args, cwd=folder, env=env, expected_exit=expected_exit, no_stderr=True))
+        status = 'checked' if operation == 'check' else 'completed'
+        expected = value if operation == 'run' else None
         need(data['schema'] == 'browniec.result/v2' and data['command'] == operation and
              (data['error']['kind'] == kind and data['return_i32'] is None if kind else
-              data['status'] == 'completed' and data['return_i32'] == 42),
+              data['status'] == status and data['return_i32'] == expected and data['error'] is None),
              f'Unexpected configured project result: {data}')
         need(not list(Path(env['TEMP']).iterdir()), 'configured project left staged resources')
         return data
@@ -151,6 +155,35 @@ def verify_configured_project(run, need, image, folder, env):
     policy['compile']['source_bytes'] = initial_source_limit
     math_file.write_bytes(original_source)
 
+    entry = target / 'src/main.brc'
+    original_entry = entry.read_bytes()
+    payload = target / 'guest.bin'
+    payload.write_bytes(bytes(8192) + bytes([255]))
+    check(4, 'unavailable', payload=payload)
+    entry.write_bytes(b'module app; pub fn i32 start(ref u8[] data){'
+                      b'if(data.len==0){return 0;}return data[data.len-1] as i32;}')
+    source_limit = policy['compile']['source_bytes']
+    input_limit = config['limits']['input_bytes']
+    policy['compile']['source_bytes'] = 4096
+    config['limits']['input_bytes'] = 8193
+    check(payload=payload, value=255)
+    config['limits']['input_bytes'] = 8192
+    check(5, 'input_limit', payload=payload)
+    config['limits']['input_bytes'] = input_limit
+    check(operation='check')
+    check(4, 'unavailable')
+    check(2, 'usage', operation='check', payload=payload)
+    instruction_limit = policy['compile']['instructions']
+    policy['compile']['instructions'] = 1
+    check(3, 'compile_limit', operation='check')
+    policy['compile']['instructions'] = instruction_limit
+    payload.write_bytes(bytes(1048575) + bytes([77]))
+    check(payload=payload, value=77)
+    payload.write_bytes(b'')
+    check(payload=payload, value=0)
+    entry.write_bytes(original_entry)
+    policy['compile']['source_bytes'] = source_limit
+
     baseline = policy['worker'].copy()
     policy['worker'].update(startup_ms=1, session_ms=1)
     policy['compile']['deadline_ms'] = policy['run']['deadline_ms'] = config['limits']['deadline_ms'] = 1
@@ -166,7 +199,7 @@ def verify_configured_project(run, need, image, folder, env):
     config['entry']['function'] = manifest['entry']['function']
     config['grants'] = ['brownie.output.emit']
     check(4, 'unavailable')
-    return 20
+    return 29
 
 
 def main():

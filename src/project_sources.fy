@@ -69,7 +69,7 @@ pub fn Result<entries::Entry,modules::Error> select(ref project::Project map,sou
     return entries::select_i32(index,project::entry_module(map),project::entry_function(map));
 }
 
-pub fn Result<entries::Entry,modules::Error> select_limited(ref project::Project map,sources::Snapshot snapshot,
+pub fn Result<modules::Index,modules::Error> index_limited(ref project::Project map,sources::Snapshot snapshot,
     usize tokens,usize functions,usize records,usize nesting_limit){
     var usize[16] order=[32;16];let usize mapped=file_map(map,ref snapshot,ref mut order)?;
     let modules::Index index=modules::build_limited(snapshot,tokens,nesting_limit)?;
@@ -77,7 +77,7 @@ pub fn Result<entries::Entry,modules::Error> select_limited(ref project::Project
         return .err(error(.Limit,sources::no_source()));
     }
     let usize checked=headers(map,ref index,ref order)?;
-    return entries::select_i32(index,project::entry_module(map),project::entry_function(map));
+    return .ok(index);
 }
 pub fn Result<modules::Index,modules::Error> index_host(ref project::Project map,sources::Snapshot snapshot,usize token_limit){
     var usize[16] order=[32;16];let usize mapped=file_map(map,ref snapshot,ref mut order)?;
