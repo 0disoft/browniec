@@ -7,6 +7,7 @@
 #include <wchar.h>
 #include "../../native/restricted_worker.h"
 #include "../../native/restricted_worker_gate.h"
+#include "../../native/restricted_worker_io.h"
 #include "../../native/restricted_worker_pipes.h"
 #include "../../native/restricted_worker_stream.h"
 
@@ -165,27 +166,60 @@ static void verify_pipes(void) {
     }
 }
 
-static DWORD transfer(HANDLE pipe, void *receive, const void *send, DWORD length, DWORD *count) {
-    OVERLAPPED io = {0};
-    io.hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
-    check(io.hEvent != NULL, "create test I/O event");
-    BOOL complete = send ? WriteFile(pipe, send, length, count, &io) :
-        ReadFile(pipe, receive, length, count, &io);
-    DWORD status = complete ? ERROR_SUCCESS : GetLastError();
+static DWORD transfer(HANDLE pipe, uint8_t *receive, const uint8_t *send, DWORD length, DWORD *count) {
+    bc_worker_io io = {0};
+    check(bc_worker_io_open(&io) == ERROR_SUCCESS, "open fixture I/O lease");
+    DWORD status = bc_worker_io_start(&io, pipe, receive, send, length, count);
     if (status == ERROR_IO_PENDING) {
-        const DWORD wait = WaitForSingleObject(io.hEvent, 5000);
+        const DWORD wait = WaitForSingleObject(io.event, 5000);
         if (wait == WAIT_OBJECT_0) {
-            complete = GetOverlappedResult(pipe, &io, count, FALSE);
-            status = complete ? ERROR_SUCCESS : GetLastError();
+            status = bc_worker_io_poll(&io, count);
         } else {
             status = wait == WAIT_TIMEOUT ? ERROR_TIMEOUT : GetLastError();
-            CancelIoEx(pipe, &io);
-            GetOverlappedResult(pipe, &io, count, TRUE);
+            bc_worker_io_cancel(&io);
+            check(WaitForSingleObject(io.event, 5000) == WAIT_OBJECT_0, "wait for fixture I/O reap");
+            bc_worker_io_poll(&io, count);
         }
     }
-    check(CloseHandle(io.hEvent), "close test I/O event");
+    check(bc_worker_io_close(&io) == ERROR_SUCCESS, "close fixture I/O lease");
     SetLastError(status);
     return status;
+}
+
+static void verify_io_lifetime(void) {
+    bc_worker_io io = {0};
+    check(bc_worker_io_open(&io) == ERROR_SUCCESS, "open native I/O lifetime fixture");
+    HANDLE output = pipes.broker[BC_WORKER_STDOUT];
+    HANDLE peer = pipes.child[BC_WORKER_STDOUT];
+    DWORD flags = HANDLE_FLAG_INHERIT;
+    check(GetHandleInformation(io.event, &flags) && !(flags & HANDLE_FLAG_INHERIT),
+        "I/O event is noninheritable");
+    uint8_t byte = 19;
+    DWORD count = 123;
+    check(bc_worker_io_start(&io, output, &byte, NULL, 1, &count) == ERROR_IO_PENDING &&
+        bc_worker_io_poll(&io, &count) == ERROR_IO_PENDING && count == 123,
+        "idle reader has a pending lease and no byte count");
+    check(bc_worker_io_start(&io, output, &byte, NULL, 1, &count) == ERROR_BUSY &&
+        bc_worker_io_cancel(&io) == ERROR_SUCCESS &&
+        bc_worker_io_close(&io) == ERROR_IO_PENDING && io.pipe == output,
+        "cancel neither reuses nor closes an uncollected lease");
+    check(WaitForSingleObject(io.event, 5000) == WAIT_OBJECT_0 &&
+        bc_worker_io_poll(&io, &count) == ERROR_OPERATION_ABORTED && count == 123 && byte == 19,
+        "explicitly reap the cancelled operation");
+
+    check(bc_worker_io_start(&io, output, &byte, NULL, 1, &count) == ERROR_IO_PENDING,
+        "reuse a reaped event for another transfer");
+    const uint8_t sent = 42;
+    DWORD written = 0;
+    check(WriteFile(peer, &sent, 1, &written, NULL) && written == 1 &&
+        WaitForSingleObject(io.event, 5000) == WAIT_OBJECT_0, "complete before cancellation request");
+    const DWORD cancelled = bc_worker_io_cancel(&io);
+    check((cancelled == ERROR_NOT_FOUND || cancelled == ERROR_SUCCESS) &&
+        bc_worker_io_close(&io) == ERROR_IO_PENDING &&
+        bc_worker_io_poll(&io, &count) == ERROR_SUCCESS && count == 1 && byte == sent,
+        "completion wins the cancellation race and still requires reap");
+    check(bc_worker_io_close(&io) == ERROR_SUCCESS && !io.event && !io.pipe,
+        "release the event after actual completion");
 }
 
 static void send_frame(HANDLE pipe, const bc_worker_frame *frame, const uint8_t *body) {
@@ -491,6 +525,7 @@ int wmain(int argc, wchar_t **argv) {
     check(pipe_status == ERROR_SUCCESS, "prepare private worker pipes");
     check(bc_worker_pipes_open(&pipes) == ERROR_INVALID_PARAMETER, "reject reopening a live pipe owner");
     verify_pipes();
+    verify_io_lifetime();
     SECURITY_ATTRIBUTES inheritable = {sizeof(inheritable), NULL, TRUE};
     decoy = CreateEventW(&inheritable, TRUE, FALSE, NULL);
     check(decoy != NULL, "inheritable decoy");
@@ -573,7 +608,8 @@ int wmain(int argc, wchar_t **argv) {
     printf("{\"appContainer\":true,\"capabilities\":0,\"inheritedPipes\":3,"
            "\"commitDenied\":true,\"cpuTermination\":true,\"privatePipeAcl\":true,"
            "\"framedExchange\":true,\"headerMutationsRejected\":48,"
-           "\"boundedStream\":true,\"pipeEof\":true,\"publicationGate\":true,\"handleDelta\":0,"
+           "\"boundedStream\":true,\"pipeEof\":true,\"publicationGate\":true,"
+           "\"ioLease\":true,\"handleDelta\":0,"
            "\"coldHandleDelta\":%ld}\n", (long)final - (long)cold);
     return 0;
 }

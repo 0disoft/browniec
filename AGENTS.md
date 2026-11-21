@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-22): [Windows worker result gate](docs/engineering/restricted-worker.md#result-publication-gate)
-  withholds staged RESULT until clean EOF and exit 0. Development and /O2
-  verify one-shot delivery and rejection after actual AppContainer Job termination.
+- Latest runtime checkpoint (2026-11-22): [Windows worker I/O lease](docs/engineering/restricted-worker.md#overlapped-io-lease)
+  holds an operation until completion is collected. Development and /O2
+  exercise native cancellation and completion winning a cancellation race.
 
 # Brownie C agent guidance
 

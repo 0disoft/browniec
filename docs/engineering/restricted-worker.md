@@ -101,6 +101,20 @@ net warm-launch handles. The fixture's validator accepts one byte; the
 production worker still needs strict result schema validation.
 Local receipt: `build/restricted-worker/20261121T153623372644Z/receipt.json`.
 
+## Overlapped I/O lease
+
+The [I/O owner](../../native/restricted_worker_io.h) submits one read or write
+of at most 4096 bytes with a private event. While the operation is pending,
+the owner retains its `OVERLAPPED` storage and borrows the pipe and buffer.
+Only polling a terminal Windows completion releases that borrow. The owner
+rejects both a second submission and an event close before collection.
+
+The native fixture observed a pending read, then cancellation and a collected
+`ERROR_OPERATION_ABORTED`. A second read completed before the cancellation
+request and still held its lease until collection. The real AppContainer
+exchange also uses this owner. Both profiles returned to the warm handle
+count. Local receipt: `build/restricted-worker/20261121T153823462884Z/receipt.json`.
+
 ## Windows verification
 
 Run `python -B tools/verify-restricted-worker.py`. The development and optimized
@@ -126,6 +140,6 @@ all three pipes and the repeat launch again had zero net handle growth.
 Local receipt: `build/restricted-worker/20261121T152431466055Z/receipt.json`.
 
 The caller still needs trusted image and profile provisioning, strict payload
-parsing, broker phase integration, I/O completion and budgets. The launcher
+parsing, broker phase integration, session-level reaping and budgets. The launcher
 fixture executes native test code.
 The restricted CLI remains unavailable while those pieces are built and verified.
