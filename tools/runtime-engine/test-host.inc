@@ -261,13 +261,31 @@ void bc_runtime_engine_test_context_copy(uintptr_t bytes){
 uintptr_t bc_runtime_engine_test_context_bytes(void){
  assert(context_measuring);context_measuring=0;return context_bytes;
 }
+static uintptr_t feature_expiry;
+static uintptr_t feature_comment_bytes;
+void bc_runtime_engine_test_expire_in_feature_comment(uintptr_t deadline){
+ assert(host_clock_fixed&&deadline>host_clock_ticks&&!feature_expiry);
+ feature_expiry=deadline;feature_comment_bytes=0;
+}
+void bc_runtime_engine_test_feature_step(void){assert(!feature_expiry||!feature_comment_bytes);}
+void bc_runtime_engine_test_feature_comment(uintptr_t bytes){
+ if(feature_expiry){
+  assert(!feature_comment_bytes&&bytes>2&&bytes<=18);
+  feature_comment_bytes=bytes;bc_runtime_engine_test_set_clock(feature_expiry);
+ }
+}
+void bc_runtime_engine_test_feature_stopped(void){
+ assert(feature_expiry&&feature_comment_bytes);feature_expiry=0;
+}
 static uintptr_t literal_expiry;
 static int literal_staged;
 void bc_runtime_engine_test_expire_in_literal(uintptr_t deadline){
  assert(host_clock_fixed&&deadline>host_clock_ticks&&!literal_expiry);
  literal_expiry=deadline;literal_staged=0;
 }
-void bc_runtime_engine_test_literal_step(void){assert(!literal_expiry||!literal_staged);}
+void bc_runtime_engine_test_literal_step(void){
+ assert((!literal_expiry||!literal_staged)&&(!feature_expiry||!feature_comment_bytes));
+}
 void bc_runtime_engine_test_literal_staged(void){
  if(literal_expiry){literal_staged=1;bc_runtime_engine_test_set_clock(literal_expiry);}
 }

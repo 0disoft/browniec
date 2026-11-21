@@ -107,6 +107,18 @@ def source_copy(path):
                  'unsafe extern C fn void bc_runtime_engine_test_signature_step();\n'
                  'unsafe extern C fn void bc_runtime_engine_test_signature_staged();\n')
         return path.name, (head + calls + declaration + timed).encode('utf-8')
+    if path == ROOT / 'src/source_features.fy':
+        text = path.read_text(encoding='utf-8')
+        declaration = 'fn Result<lexer::State,errors::Error> next_token('
+        step = '        let bool done=tokens::advance(source,ref mut w,ref mut meter)?;'
+        need(text.count(declaration) == text.count(step) == 1, 'Source feature deadline probe anchors changed')
+        text = text.replace(declaration, 'unsafe extern C fn void bc_runtime_engine_test_feature_step();\n'
+                            'unsafe extern C fn void bc_runtime_engine_test_feature_comment(usize bytes);\n'
+                            + declaration, 1)
+        text = text.replace(step, '        unsafe{bc_runtime_engine_test_feature_step()};\n' + step +
+                            '\n        if(!done && w.scan.mode==2){'
+                            'unsafe{bc_runtime_engine_test_feature_comment(w.scan.inner-w.scan.opener)};}', 1)
+        return path.name, text.encode('utf-8')
     if path == ROOT / 'src/struct_scan_work.fy':
         text = path.read_text(encoding='utf-8')
         declaration = 'pub fn Result<raw::Table,errors::Error> scan_scoped_until('

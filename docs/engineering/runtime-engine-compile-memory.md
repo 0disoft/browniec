@@ -119,8 +119,10 @@ clock in both profiles: `build/anchored-sources/20261120T231507642754Z/receipt.j
 Output and input-output compilation sample the same absolute deadline before
 each source-context advance. An advance copies up to 64 source bytes, packs
 one metadata row, checks one sealed name, or moves to the next phase. Expiry
-discards the incomplete context before signature or body lowering. Literal
-collection samples before every bounded advance and before assigning the
+discards the incomplete context before signature or body lowering. The
+output-only syntax classifier uses the staged source-context and token scanners
+with a deadline check before each advance and before observing a complete token.
+Literal collection samples before every bounded advance and before assigning the
 finished candidate to the image Builder. An expired collection leaves the
 Builder untouched and returns the source-less deadline diagnostic. Indexed
 signature scans sample before each advance and before returning the complete
@@ -198,6 +200,14 @@ SDK heap. A direct scanner case accepted the layout one tick before the
 deadline and rejected it at the deadline after the final layout check.
 Development and /O2 passed with zero live SDK allocations at exit. Local
 receipt: `build/runtime-engine/20261121T003403167586Z/receipt.json`.
+
+The Windows verifier advanced the clock to the exact deadline during the
+first batch of an unfinished block comment in the output-only syntax
+classifier. No subsequent lexer advance, literal collection or proof ran.
+Program retention and SDK heap returned to baseline and the next
+successful compile still used Program ID 1. Windows development and /O2
+passed with zero live SDK allocations at exit. Local receipt:
+`build/runtime-engine/20261121T004315648470Z/receipt.json`.
 
 Source lowering, work between checkpoints, and cleanup remain synchronous.
 Public Pending compilation, in-flight cancellation, and a latency bound for

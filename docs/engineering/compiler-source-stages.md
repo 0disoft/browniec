@@ -65,7 +65,9 @@ for sources larger than this private 4096-byte profile. Configured Engine output
 and input-output compilation use the same source-context and body control
 advances with their
 [absolute compile deadline](runtime-engine-compile-memory.md#configured-compile-deadlines).
-The body driver checks again before dispatching each pending semantic child.
+The output-only syntax classifier checks before each scoped source-state or
+token advance and before using a complete token. The body driver checks again
+before dispatching each pending semantic child.
 Returned-slice origin inference checks around each function-body walk, including
 the output-only reference binding pass after body lowering. Scoped record
 scanning checks between declaration, field and layout advances and before

@@ -3516,7 +3516,7 @@ pub fn Result<usize,source_errors::Error> lower_output_modules_until(ref module_
     let source_context::Input input=collecting::collect_until(index,deadline)?;
     let ref u8[] source=ref input.data[..input.used];
     let ref source_context::Table scope=ref input.context;
-    switch(source_features::retained_scoped(source,scope)){
+    switch(source_features::retained_scoped_until(source,scope,deadline)){
         case .ok(_):{}case .err(e):{return .err(module_error(selected,e,16));}
     };
     let literal_collection::Index literals=module_literals_until(builder,source,scope,index,deadline)?;

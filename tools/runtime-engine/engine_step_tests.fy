@@ -33,6 +33,8 @@ unsafe extern C fn void bc_runtime_engine_test_proof_begin();
 unsafe extern C fn void bc_runtime_engine_test_expire_in_proof(usize deadline);
 unsafe extern C fn void bc_runtime_engine_test_expire_in_context(usize deadline);
 unsafe extern C fn usize bc_runtime_engine_test_context_bytes();
+unsafe extern C fn void bc_runtime_engine_test_expire_in_feature_comment(usize deadline);
+unsafe extern C fn void bc_runtime_engine_test_feature_stopped();
 unsafe extern C fn void bc_runtime_engine_test_expire_in_literal(usize deadline);
 unsafe extern C fn void bc_runtime_engine_test_literal_stopped();
 unsafe extern C fn void bc_runtime_engine_test_expire_in_signature(usize deadline,u32 pass);
@@ -649,6 +651,22 @@ fn Result<usize,u8> compile_context_deadline(ref mut engine::Engine e,ref config
     unsafe{bc_runtime_engine_test_use_os_clock()};
     return .ok(0);
 }
+fn Result<usize,u8> compile_feature_deadline(ref mut engine::Engine e){
+    let ref u8[] source=b"module app;/* a long comment mentions fn ref and b\"ignored\" and stays in progress after one scanner batch. */pub fn i32 chosen(){return 42;}";
+    let Heap idle=heap();
+    let entries::Entry entry=selected(source)?;
+    unsafe{bc_runtime_engine_test_set_clock(100)};
+    unsafe{bc_runtime_engine_test_proof_begin()};
+    unsafe{bc_runtime_engine_test_expire_in_feature_comment(20000100)};
+    rejected_compile_deadline(engine::compile_output(e,entry,65536));
+    unsafe{bc_runtime_engine_test_feature_stopped()};
+    assert(unsafe{bc_runtime_engine_test_proof_count()}==0);
+    counts(e,0,0,0);
+    assert(retained(e).program_bytes==0);
+    same_heap(ref idle);
+    unsafe{bc_runtime_engine_test_use_os_clock()};
+    return .ok(0);
+}
 fn void literal_transaction_deadline(){
     var images::Builder b=images::full_builder();
     assert(images::intern_bytes(ref mut b,b"seed").is_ok);
@@ -812,6 +830,7 @@ fn Result<usize,u8> configured_compile_deadline(){
     let configs::RunConfig granted=run_config(ref ceiling,0)?;
     var engine::Engine e=configured_engine(ceiling)?;
     let usize context_checked=compile_context_deadline(ref mut e,ref granted)?;
+    let usize feature_checked=compile_feature_deadline(ref mut e)?;
     literal_transaction_deadline();
     let usize literal_checked=compile_literal_deadline(ref mut e,ref granted)?;
     let usize signature_checked=compile_signature_deadline(ref mut e,ref granted)?;
