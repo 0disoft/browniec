@@ -128,6 +128,9 @@ static DWORD WINAPI wrong_thread(void *raw){
  assert(bc_runtime_engine_call(raw,9,0,0)==10);
  assert(bc_runtime_engine_call(raw,10,0,1)==10);
  assert(bc_runtime_engine_compile(raw,(void *)(uintptr_t)1,0,0)==10);
+ assert(bc_runtime_engine_begin_compile(raw,(void *)(uintptr_t)1,0,0)==10);
+ assert(bc_runtime_engine_step_compile(raw,1)==10);
+ assert(bc_runtime_engine_end_compile(raw,1,0)==10);
  assert(bc_runtime_engine_compile_input(raw,(void *)(uintptr_t)1,0,0)==10);
  assert(bc_runtime_engine_instance_input(raw,0,(void *)(uintptr_t)1,0)==10);
  assert(bc_runtime_engine_compile_output(raw,(void *)(uintptr_t)1,0,0,0)==10);
@@ -147,6 +150,9 @@ void bc_runtime_engine_test_guards(void *raw){
  assert(bc_runtime_engine_call(raw,9,0,0)==3);
  assert(bc_runtime_engine_call(raw,10,0,1)==3);
  assert(bc_runtime_engine_compile(raw,(void *)(uintptr_t)1,0,0)==3);
+ assert(bc_runtime_engine_begin_compile(raw,(void *)(uintptr_t)1,0,0)==3);
+ assert(bc_runtime_engine_step_compile(raw,1)==3);
+ assert(bc_runtime_engine_end_compile(raw,1,1)==3);
  assert(bc_runtime_engine_compile_input(raw,(void *)(uintptr_t)1,0,0)==3);
  assert(bc_runtime_engine_instance_input(raw,0,(void *)(uintptr_t)1,0)==3);
  assert(bc_runtime_engine_compile_output(raw,(void *)(uintptr_t)1,0,0,0)==3);
@@ -218,21 +224,24 @@ int main(void){
 
 extern size_t probe_live_bytes(void),probe_peak_bytes(void),probe_attempts(void);
 extern void probe_measure_begin(void);
-static uintptr_t small_heap_bytes=0,maximum_heap_bytes=0,owner_bytes=0;static unsigned control_cases=0;
+static uintptr_t small_heap_bytes=0,maximum_heap_bytes=0,owner_bytes=0,compile_entry_bytes=0,compile_work_bytes=0;static unsigned control_cases=0;
 void bc_runtime_engine_test_control_begin(void){probe_measure_begin();}
 void bc_runtime_engine_test_control_no_allocations(void){assert(probe_attempts()==0&&probe_live_bytes()==0);}
 void bc_runtime_engine_test_control_storage(const void *raw,uintptr_t expected,uint32_t kind){
  const bc_engine *e=raw;size_t sizes=e->f_1.f_1+e->f_2.f_1+e->f_3.f_1+e->f_4.f_1+e->f_5.f_1+e->f_6.f_1+e->f_7.f_1;
- assert(expected==sizeof(*e)+sizes&&probe_live()==7&&probe_live_bytes()==sizes&&probe_peak_bytes()==sizes&&probe_attempts()==7);
+ size_t entry_bytes=e->f_10.f_1;assert(entry_bytes==8*sizeof(bc_ordinary_entry));
+ size_t work_bytes=e->f_9.f_1;assert(work_bytes==8*sizeof(bc_compile_work));sizes+=entry_bytes+work_bytes;
+ assert(expected==sizeof(*e)+sizes&&probe_live()==9&&probe_live_bytes()==sizes&&probe_peak_bytes()==sizes&&probe_attempts()==9);
  assert(e->f_1.f_4==sizeof(bc_engine_program)&&e->f_3.f_4==sizeof(bc_engine_instance));
  assert(e->f_4.f_4==sizeof(bc_engine_bound_input)&&e->f_6.f_4==sizeof(bc_engine_output));
- if(kind==1){small_heap_bytes=sizes;owner_bytes=sizeof(*e);}if(kind==2)assert(sizes==small_heap_bytes);
+ if(kind==1){small_heap_bytes=sizes;owner_bytes=sizeof(*e);compile_entry_bytes=entry_bytes;compile_work_bytes=work_bytes;}if(kind==2)assert(sizes==small_heap_bytes);
  if(kind==4)maximum_heap_bytes=sizes;control_cases++;
 }
 void bc_runtime_engine_test_control_report(void){
- assert(control_cases==6&&small_heap_bytes*8==maximum_heap_bytes&&probe_live()==0&&probe_live_bytes()==0);
+ size_t fixed=compile_entry_bytes+compile_work_bytes;
+ assert(control_cases==6&&(small_heap_bytes-fixed)*8+fixed==maximum_heap_bytes&&probe_live()==0&&probe_live_bytes()==0);
  FILE *f=fopen("control-metrics.json","wb");assert(f);
- assert(fprintf(f,"{\"cases\":6,\"smallHeapBytes\":%llu,\"maximumHeapBytes\":%llu,\"ownerBytes\":%llu}\n",(unsigned long long)small_heap_bytes,(unsigned long long)maximum_heap_bytes,(unsigned long long)owner_bytes)>0);
+ assert(fprintf(f,"{\"cases\":6,\"smallHeapBytes\":%llu,\"maximumHeapBytes\":%llu,\"ownerBytes\":%llu,\"compileEntryBytes\":%llu,\"compileWorkBytes\":%llu}\n",(unsigned long long)small_heap_bytes,(unsigned long long)maximum_heap_bytes,(unsigned long long)owner_bytes,(unsigned long long)compile_entry_bytes,(unsigned long long)compile_work_bytes)>0);
  assert(fclose(f)==0);
 }
 
@@ -243,7 +252,7 @@ void bc_runtime_engine_test_program_probe(void){probe_rebase();probe_retention_b
 void bc_runtime_engine_test_program_no_retention_allocations(void){assert(probe_no_retention_allocations());}
 void bc_runtime_engine_test_program_storage(const void *raw,uintptr_t bytes){
  const bc_engine *e=raw;size_t control=e->f_1.f_1+e->f_2.f_1+e->f_3.f_1+e->f_4.f_1+e->f_5.f_1+e->f_6.f_1+e->f_7.f_1;
- assert(bytes<=SIZE_MAX-control&&probe_live_bytes()==control+bytes);
+ control+=e->f_9.f_1+e->f_10.f_1;assert(bytes<=SIZE_MAX-control&&probe_live_bytes()==control+bytes);
 }
 static uintptr_t context_expiry;
 static size_t context_bytes;

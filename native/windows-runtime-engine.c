@@ -3,6 +3,7 @@
 #include "native/abi_thread_identity.c"
 
 typedef fy_private_type_72756e74696d655f656e67696e653a3a456e67696e65 bc_engine; /* runtime_engine::Engine */
+typedef fy_private_type_72756e74696d655f656e67696e653a3a436f6d70696c65576f726b bc_compile_work; /* runtime_engine::CompileWork */
 typedef fy_private_type_72756e74696d655f656e67696e653a3a50726f6772616d bc_engine_program; /* runtime_engine::Program */
 typedef fy_private_type_72756e74696d655f656e67696e653a3a426f756e64496e707574 bc_engine_bound_input; /* runtime_engine::BoundInput */
 typedef fy_private_type_72756e74696d655f656e67696e653a3a496e7374616e6365 bc_engine_instance; /* runtime_engine::Instance */
@@ -64,6 +65,11 @@ typedef __typeof__(((bc_engine *)0)->f_6) bc_engine_outputs;
 #define B39 fy_private_fn_72756e74696d655f656e67696e653a3a707265706172655f686f73745f696e6e6572 /* runtime_engine::prepare_host_inner */
 #define B40 fy_private_fn_72756e74696d655f656e67696e653a3a7265706c795f686f73745f696e6e6572 /* runtime_engine::reply_host_inner */
 #define B41 fy_private_fn_72756e74696d655f656e67696e653a3a64726976655f686f73745f6f776e6572 /* runtime_engine::drive_host_owner */
+#define B42 fy_private_fn_72756e74696d655f656e67696e653a3a737465705f636f6d70696c655f696e6e6572 /* runtime_engine::step_compile_inner */
+#define B43 fy_private_fn_72756e74696d655f656e67696e653a3a72657365745f636f6d70696c655f73746f72616765 /* runtime_engine::reset_compile_storage */
+#define B44 fy_private_fn_72756e74696d655f656e67696e653a3a626567696e5f636f6d70696c655f696e6e6572 /* runtime_engine::begin_compile_inner */
+#define B45 fy_private_fn_72756e74696d655f656e67696e653a3a656e645f636f6d70696c655f696e6e6572 /* runtime_engine::end_compile_inner */
+#define B46 fy_private_fn_72756e74696d655f656e67696e653a3a72657365745f636f6d70696c655f776f726b /* runtime_engine::reset_compile_work */
 
 #include "native/runtime-engine/bridge.inc"
 

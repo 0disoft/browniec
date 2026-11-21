@@ -444,6 +444,80 @@ fn Result<engine::Engine,u8> configured_engine(policy::Policy ceiling){
 fn void rejected_id(Result<usize,engine::Error> r,u32 status){
     switch(r){case .ok(_):{assert(false);}case .err(failure):{assert(failure.status==status);}};
 }
+fn Result<engine::CompileStatus,u8> compile_status(Result<engine::CompileStatus,engine::Error> result){
+    return switch(result){case .ok(v):{.ok(v)}case .err(_):{.err(1)}};
+}
+fn u8 compile_state(engine::CompileState state){
+    return switch(state){case .Preparing:{0}case .Prepared:{1}case .Completed:{2}case .Failed:{3}case .Cancelled:{4}};
+}
+fn Result<usize,u8> pending_compile_lifecycle(){
+    var engine::Engine e=created()?;
+    let Heap idle=heap();
+    let ref u8[] source=b"module app;/* this deliberately spans more than one lexer batch to check the cursor survives a caller return */pub fn i32 chosen(){return 77;}";
+    let usize cancelled=id(engine::begin_compile(ref mut e,selected(source)?,65536));
+    rejected_id(engine::begin_compile(ref mut e,selected(source)?,65536),3);
+    rejected_id(engine::compile(ref mut e,selected(source)?,65536),3);
+    rejected_id(engine::destroy(ref mut e),3);
+    let memory::Observation held=retained(ref e);
+    assert(held.compile_source_bytes>0 && unsafe{probe_live_bytes()}==idle.bytes+held.compile_source_bytes);
+    let engine::CompileStatus first=compile_status(engine::step_compile(ref mut e,cancelled))?;
+    assert(compile_state(first.state)==0 && first.batches==1);
+    let engine::CompileStatus stopped=compile_status(engine::cancel_compile(ref mut e,cancelled))?;
+    assert(compile_state(stopped.state)==4 && stopped.program==0 && stopped.batches==1);
+    same_heap(ref idle);assert(retained(ref e).compile_source_bytes==0);
+    let engine::CompileStatus again=compile_status(engine::step_compile(ref mut e,cancelled))?;
+    assert(compile_state(again.state)==4 && again.batches==stopped.batches);
+    assert(engine::detach_compile(ref mut e,cancelled).is_ok);
+    assert(!engine::observe_compile(ref e,cancelled).is_ok);
+
+    let usize current=id(engine::begin_compile(ref mut e,selected(source)?,65536));assert(current==cancelled+1);
+    assert(!engine::step_compile(ref mut e,cancelled).is_ok);
+    var engine::CompileStatus progress=compile_status(engine::observe_compile(ref e,current))?;
+    while(compile_state(progress.state)==0){
+        let usize prior=progress.batches;
+        progress=compile_status(engine::step_compile(ref mut e,current))?;
+        assert(progress.batches==prior+1 && progress.batches<256);
+    }
+    assert(compile_state(progress.state)==1 && progress.program==0 && progress.batches>1);
+    assert(!engine::detach_compile(ref mut e,current).is_ok);
+    counts(ref mut e,0,0,0);
+    let engine::CompileStatus completed=compile_status(engine::step_compile(ref mut e,current))?;
+    assert(compile_state(completed.state)==2 && completed.program==1 && completed.batches==progress.batches);
+    assert(retained(ref e).compile_source_bytes==0);
+    assert(engine::detach_compile(ref mut e,current).is_ok);
+    let usize i=id(engine::create_instance(ref mut e,completed.program,256));
+    let engine::Event result=event(engine::execute_once(ref mut e,i));
+    assert(result.kind==1 && result.value==77);
+    destroy(ref mut e,i);release(ref mut e,completed.program);
+    same_heap(ref idle);close(ref mut e);return .ok(0);
+}
+fn Result<usize,u8> pending_compile_deadline(){
+    let policy::Policy ceiling=output_policy(true)?;
+    var engine::Engine e=configured_engine(ceiling)?;
+    let Heap idle=heap();
+    let ref u8[] source=b"module app;pub fn i32 chosen(){return 77;}";
+    var usize mode=0;
+    while(mode<2){
+        let usize start=100+20000000*mode;
+        unsafe{bc_runtime_engine_test_set_clock(start)};
+        let usize job=id(engine::begin_compile(ref mut e,selected(source)?,65536));
+        let engine::CompileStatus first=compile_status(engine::step_compile(ref mut e,job))?;
+        assert(first.batches==1);
+        unsafe{bc_runtime_engine_test_set_clock(start+20000000)};
+        let engine::CompileStatus expired=if(mode==0){compile_status(engine::step_compile(ref mut e,job))?}
+            else{compile_status(engine::cancel_compile(ref mut e,job))?};
+        assert(compile_state(expired.state)==3 && expired.batches==1 && expired.program==0);
+        assert(expired.failure.status==4 && expired.failure.diagnostic.code.kind==errors::deadline_kind());
+        let engine::CompileStatus again=compile_status(engine::cancel_compile(ref mut e,job))?;
+        assert(compile_state(again.state)==3 && again.failure.status==4);
+        same_diagnostic(again.failure.diagnostic,expired.failure.diagnostic);
+        same_heap(ref idle);assert(retained(ref e).compile_source_bytes==0);
+        assert(engine::detach_compile(ref mut e,job).is_ok);
+        mode+=1;
+    }
+    unsafe{bc_runtime_engine_test_use_os_clock()};
+    counts(ref mut e,0,0,0);close(ref mut e);return .ok(0);
+}
 fn Result<usize,u8> configured_output(){
     let policy::Policy ceiling=output_policy(true)?;
     let configs::RunConfig granted=run_config(ref ceiling,0)?;
@@ -1268,6 +1342,8 @@ pub fn void run(){
     assert(configured_output().is_ok);same_heap(ref before);
     assert(project_output().is_ok);same_heap(ref before);
     assert(configured_compile_deadline().is_ok);same_heap(ref before);
+    assert(pending_compile_lifecycle().is_ok);same_heap(ref before);
+    assert(pending_compile_deadline().is_ok);same_heap(ref before);
     assert(configured_deadline().is_ok);same_heap(ref before);
     assert(cleanup_fault_quarantines_engine(false).is_ok);same_heap(ref before);
     assert(cleanup_fault_quarantines_engine(true).is_ok);same_heap(ref before);

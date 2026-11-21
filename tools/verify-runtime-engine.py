@@ -508,6 +508,10 @@ def main():
         projections.extend([('30',0,'outputType'),('38',2,'hostProgramVectorType'),('39',3,'outputVectorType'),('39',4,'policyVectorType'),('39',5,'hostRunConfigType'),
                             ('40',1,'programVectorType'),('40',3,'outputVectorType'),('40',4,'outputVectorType'),
                             ('41',0,'hostExchangeVectorType'),('41',7,'hostTransitionType')])
+        projections.extend([('42',1,'programVectorType'),('42',2,'compileWorkVectorType'),('42',3,'incomingType'),
+                            ('43',0,'incomingType'),('44',1,'compileWorkVectorType'),('44',2,'incomingType'),
+                            ('44',3,'incomingType'),('45',1,'compileWorkVectorType'),('45',2,'incomingType'),
+                            ('46',0,'compileWorkVectorType')])
         projections.extend([('31',0,'pendingVectorType'),('31',1,'completionType'),('31',2,'publishedVectorType'),
                             ('31',3,'outputProgramType'),('31',4,'snapshotType'),('33',0,'pendingVectorType')])
         for binding, index, key in projections:
@@ -532,6 +536,8 @@ def main():
         layout_types.update({key + '_entry': name for key, name in contract['entryTypes'].items()})
         for key in ['policyType','policyVectorType','hostProgramVectorType','hostProgramType','hostIRType','hostExchangeVectorType','hostExchangeType','hostRunConfigType','hostTransitionType']:
             layout_types[key]=contract[key]
+        layout_types['compileWorkType']=contract['compileWorkType']
+        layout_types['compileWorkVectorType']=contract['compileWorkVectorType']
         need(set(layout_types) == set(contract['reviewedLayouts']), 'Reviewed layout set changed')
         cached_field=re.search(r'\b(fy_struct_\d+) f_4;',contract['reviewedLayouts']['output_stored'])
         need(cached_field is not None and cached_field.group(1)==contract['preparationType'],
@@ -606,6 +612,7 @@ def main():
         for key, name in contract['entryTypes'].items():
             bindings += f'typedef {name} bc_{key}_entry;\n'
         bindings += f'typedef {contract["policyType"]} bc_engine_policy;\n'
+        bindings += f'typedef {contract["compileWorkType"]} bc_compile_work;\n'
         bindings += f'typedef {contract["hostProgramType"]} bc_host_program;\ntypedef {contract["hostIRType"]} bc_host_ir;\n'
         bindings += f'typedef {contract["hostExchangeType"]} bc_host_exchange;\n'
         bindings += '\n'.join(f'#define B{key} {value}' for key, value in contract['bindings'].items()) + '\n'
@@ -691,7 +698,8 @@ def main():
                  receipt['commands'][-1]['stderrSha256'] == sha(b''), 'Expected silent native success')
             metrics_raw = (output / 'control-metrics.json').read_bytes()
             metrics = json.loads(metrics_raw)
-            need(metrics['cases'] == 6 and metrics['smallHeapBytes'] * 8 == metrics['maximumHeapBytes'],
+            fixed = metrics['compileEntryBytes'] + metrics['compileWorkBytes']
+            need(metrics['cases'] == 6 and fixed > 0 and (metrics['smallHeapBytes']-fixed) * 8 + fixed == metrics['maximumHeapBytes'],
                  'Expected eightfold reduction in one-slot control backing')
             write(folder / 'control-metrics.json', metrics_raw)
             preparation_raw=(output / 'preparation-metrics.json').read_bytes()

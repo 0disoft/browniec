@@ -1,7 +1,7 @@
-- Latest runtime checkpoint (2026-11-21): [Compile source charges](docs/engineering/runtime-engine-compile-memory.md#compile-source-charges)
-  account for the ordinary compile's adopted Index and incoming vector under
-  the shared heap ceiling. Windows development and /O2 passed with zero live
-  SDK allocations. Locked /O2 CLI and quick-start result 77 passed.
+- Latest runtime checkpoint (2026-11-21): [Engine-owned ordinary compile](docs/engineering/runtime-engine-compile-memory.md#engine-owned-ordinary-compile)
+  preserves source preparation across calls and supports cancellation, expiry
+  and terminal detach. Windows development and /O2 passed with zero live SDK
+  allocations. Locked /O2 CLI, quick-start result 77 and CLI contracts passed.
 
 # Brownie C agent guidance
 

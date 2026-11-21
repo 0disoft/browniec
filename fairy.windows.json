@@ -47,6 +47,11 @@
     "runtime_engine::prepare_host_inner",
     "runtime_engine::reply_host_inner",
     "runtime_engine::drive_host_owner",
+    "runtime_engine::step_compile_inner",
+    "runtime_engine::reset_compile_storage",
+    "runtime_engine::begin_compile_inner",
+    "runtime_engine::end_compile_inner",
+    "runtime_engine::reset_compile_work",
     "windows_engine_bindings::incoming"
   ]
 }

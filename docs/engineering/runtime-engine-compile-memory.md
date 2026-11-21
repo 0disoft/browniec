@@ -370,8 +370,40 @@ other owners' charges. The native tests ended with zero live SDK allocations.
 The locked /O2 CLI returned 77. Local receipt:
 `build/runtime-engine/20261121T033444048057Z/receipt.json`.
 
-This ledger supports the pending compile owner. Retention of compile state
-across Engine calls and cancellation of that owner remain open.
+The Engine-owned ordinary compile described below uses the same ledger
+across caller returns.
+
+## Engine-owned ordinary compile
+
+The private Engine can start one ordinary compile, step it, observe its
+status, cancel it and detach its terminal status. The Engine owns the selected
+Index and the source preparation cursor. Each Preparing step advances one
+source batch. Prepared returns before IR lowering. The following step lowers
+and independently admits the Program, with the existing deadline checks.
+Program IDs are assigned only on publication. A terminal status remains
+observable until detached, including after a repeated step or cancel.
+
+At each step or cancel the Engine compares the original absolute deadline.
+Cancellation before the deadline and expiry at the deadline both release the
+selected Index. Program publication and failed admission also release that
+source charge. The Engine's fixed work and Entry vectors are charged at
+creation and freed at destruction. Destruction refuses a live compile so the
+owner can cancel it first. The public CLI continues to use synchronous
+compilation.
+
+Windows development and /O2 verified one batch per Preparing call, distinct
+Prepared observation, execution of the resulting Program, stale ID rejection,
+and stable cancellation and expiry causes with exact source refunds. Both
+profiles ended with zero live SDK allocations at default stack settings. The
+fixed vectors charge 42,944 bytes and the inline Engine grows by 96 bytes.
+An earlier inline cursor caused Windows development exit `0xC00000FD`.
+Moving the cursor to the charged fixed vector resolved that failure. Local
+receipt: `build/runtime-engine/20261121T035836301837Z/receipt.json`.
+The locked /O2 CLI build returned 77 and passed its contract checks.
+
+Lowering and verification within the Prepared step still run synchronously.
+The remaining compile profiles, bounded steps through those phases and
+in-flight cancellation remain open.
 
 ## Executed verification and remaining work
 

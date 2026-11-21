@@ -26,11 +26,25 @@ static uint32_t finish(bc_engine *e,bc_engine_ticket ticket,uint32_t result){
  uint32_t s=B3(&e->f_0,ticket.owner.thread,ticket.owner.lifetime,ticket.epoch);return s?s:result;
 }
 static void reset_closed(bc_engine *e,uint32_t operation,uint32_t status){
- if(!status && operation==4){e->f_1=B6(e->f_1);e->f_2=B6(e->f_2);e->f_3=B7(e->f_3);e->f_4=B12(e->f_4);e->f_5=B12(e->f_5);e->f_6=B17(e->f_6);e->f_7=B17(e->f_7);e->f_8=B37(e->f_8);}
+ if(!status && operation==4){e->f_1=B6(e->f_1);e->f_2=B6(e->f_2);e->f_3=B7(e->f_3);e->f_4=B12(e->f_4);e->f_5=B12(e->f_5);e->f_6=B17(e->f_6);e->f_7=B17(e->f_7);e->f_8=B37(e->f_8);e->f_10=B43(e->f_10);e->f_9=B46(e->f_9);}
 }
 uint32_t bc_runtime_engine_compile(void *raw,void *incoming,uintptr_t limit,uintptr_t deadline){
  bc_engine *e=raw;bc_engine_ticket ticket;uint32_t s=admission(e,&ticket);if(s)return s;
  s=B4(&e->f_0,&e->f_1,(bc_engine_input *)incoming,limit,deadline);return finish(e,ticket,s);
+}
+uint32_t bc_runtime_engine_step_compile(void *raw,uintptr_t id){
+ bc_engine *e=raw;bc_engine_ticket ticket;uint32_t s=admission(e,&ticket);if(s)return s;
+ s=B42(&e->f_0,&e->f_1,&e->f_9,&e->f_10,id);return finish(e,ticket,s);
+}
+uint32_t bc_runtime_engine_begin_compile(void *raw,void *incoming,uintptr_t limit,uintptr_t deadline){
+ bc_engine *e=raw;bc_engine_ticket ticket;uint32_t s=admission(e,&ticket);if(s)return s;
+ s=B44(&e->f_0,&e->f_9,&e->f_10,(bc_engine_input *)incoming,limit,deadline);return finish(e,ticket,s);
+}
+uint32_t bc_runtime_engine_end_compile(void *raw,uintptr_t id,uint32_t detach){
+ bc_engine *e=raw;bc_abi_thread_identity id_owner;uint32_t s=bc_abi_guard_enter(&id_owner);if(s)return s;
+ s=B18(&e->f_0,id_owner.thread,id_owner.lifetime);
+ if(!s)s=B45(&e->f_0,&e->f_9,&e->f_10,id,detach!=0);
+ uint32_t end=bc_abi_guard_leave(id_owner);return end?end:s;
 }
 uint32_t bc_runtime_engine_compile_input(void *raw,void *incoming,uintptr_t limit,uintptr_t deadline){
  bc_engine *e=raw;bc_engine_ticket ticket;uint32_t s=admission(e,&ticket);if(s)return s;
@@ -108,7 +122,8 @@ uintptr_t bc_runtime_engine_control_layout(uint32_t kind){
  switch(kind){
  case 0:return sizeof(bc_engine);case 1:return sizeof(bc_engine_program);
  case 2:return sizeof(bc_engine_instance);case 3:return sizeof(bc_engine_bound_input);
- case 4:return sizeof(bc_engine_output);default:return 0;
+ case 4:return sizeof(bc_engine_output);case 5:return sizeof(bc_ordinary_entry);
+ case 6:return sizeof(bc_compile_work);default:return 0;
  }
 }
 uint32_t bc_runtime_engine_control_access(const void *raw){

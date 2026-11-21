@@ -24,5 +24,7 @@ pub fn Result<usize,control::Error> required(usize programs,usize instances){
     bytes=add(bytes,unsafe{layout_raw(2)},i)?;
     bytes=add(bytes,unsafe{layout_raw(3)},2*i)?;
     bytes=add(bytes,unsafe{layout_raw(4)},2*i)?;
+    bytes=add(bytes,unsafe{layout_raw(5)},capacity(1))?;
+    bytes=add(bytes,unsafe{layout_raw(6)},capacity(1))?;
     return .ok(bytes);
 }

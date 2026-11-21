@@ -77,7 +77,7 @@ def field_type(owner,index):
 
 # Resolve resource roles from typed projections, never previous numeric IDs.
 def vector_element(vector):
- matches=set(re.findall(r'^static (?:const )?(fy_resource_\d+) \* fy_fn_\d+\((?:const )?'+re.escape(vector)+r' \* [^,]+, uintptr_t [^;]+;',t,re.M))
+ matches=set(re.findall(r'^static (?:const )?(fy_(?:struct|resource)_\d+) \* fy_fn_\d+\((?:const )?'+re.escape(vector)+r' \* [^,]+, uintptr_t [^;]+;',t,re.M))
  assert len(matches)==1,(vector,matches)
  return matches.pop()
 c['sourceIndexType']=field_type(c['entryTypes']['ordinary'],0)
@@ -91,6 +91,10 @@ for layout,name in re.findall(r'^(typedef struct \{\n[^}]*\} (fy_resource_\d+);)
  if re.search(r'\b'+re.escape(arg(1,0))+r' f_0;',layout) and re.search(r'\b'+re.escape(c['programVectorType'])+r' f_1;',layout):engine_candidates.append(name)
 assert len(engine_candidates)==1,engine_candidates
 c['engineType']=engine_candidates[0]
+c['compileWorkVectorType']=field_type(c['engineType'],9)
+c['compileWorkType']=vector_element(c['compileWorkVectorType'])
+assert arg(42,2)==arg(44,1)==arg(45,1)==arg(46,0)==c['compileWorkVectorType']
+assert arg(42,3)==arg(43,0)==arg(44,2)==arg(44,3)==arg(45,2)==field_type(c['engineType'],10)==c['incomingType']
 c['hostProgramVectorType']=field_type(c['programType'],9)
 assert arg(38,2)==c['hostProgramVectorType']
 c['hostProgramType']=vector_element(c['hostProgramVectorType'])
@@ -157,10 +161,12 @@ types['policyType']=c['policyType']
 types['capturePlanType']=c['capturePlanType']
 for key in ['hostProgramVectorType','hostProgramType','hostIRType','hostExchangeVectorType','hostExchangeType','hostRunConfigType','hostTransitionType']:types[key]=c[key]
 c['reviewedLayouts']={k:re.search(r'^typedef struct \{\n[^}]*\} '+re.escape(v)+';$',t,re.M).group() for k,v in types.items()}
-assert len(c['bindings'])==41 and len(c['reviewedLayouts'])==52
+assert len(c['bindings'])==46 and len(c['reviewedLayouts'])==52
 for key in ['lifecycleType','setupWorkType','preparationWorkType','cleanupWorkType','runtimeMetadataType','cleanupRuntimeType','inputWindowsType','storageBufferType']:
  c['reviewedLayouts'][key]=re.search(r'^typedef struct \{\n[^}]*\} '+re.escape(c[key])+';$',t,re.M).group()
-assert len(c['reviewedLayouts'])==60
+for key in ['compileWorkType','compileWorkVectorType']:
+ c['reviewedLayouts'][key]=re.search(r'^typedef struct \{\n[^}]*\} '+re.escape(c[key])+';$',t,re.M).group()
+assert len(c['reviewedLayouts'])==62
 c['transportSha256']=hashlib.sha256(generated).hexdigest()
 c['compilerScratch']=reviewed_scratch(t)
 c['sourceInputs']=[dict(path=p.relative_to(root).as_posix(),sha256=hashlib.sha256(p.read_bytes()).hexdigest()) for p in sources]
