@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-22): [Declaration and return child Fuel](docs/engineering/restricted-worker.md#declaration-and-return-child-fuel)
-  checks compile stops and debits each staged semantic advance. Both Windows
-  profiles verify the exact and one-less Fuel limits for a typed declaration.
+- Latest runtime checkpoint (2026-11-22): [Control expression Fuel](docs/engineering/restricted-worker.md#control-expression-fuel)
+  checks compile stops and debits Pratt advances for conditions and scrutinees.
+  Both Windows profiles verify the exact and one-less compile Fuel limits.
 
 # Brownie C agent guidance
 

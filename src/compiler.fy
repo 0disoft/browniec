@@ -1505,17 +1505,25 @@ fn Result<usize,errors::Error> complete_expression_operand(ref u8[] source,ref m
 pub fn Result<usize,errors::Error> expression_staged(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,u8 minimum,
     usize depth,u8 expected,u8 result_type,usize structure,ref mut loops::State flow){
+    var usize fuel=metadata_budget::unlimited();
+    return expression_metered(source,s,p,table,signatures,minimum,depth,expected,result_type,structure,flow,0,ref mut fuel);
+}
+fn Result<usize,errors::Error> expression_metered(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,u8 minimum,
+    usize depth,u8 expected,u8 result_type,usize structure,ref mut loops::State flow,usize deadline,ref mut usize fuel){
     var scratch_vec::Vec<expression_work::Bank> scratch=expression_scratch(s.begin)?;let ref mut expression_work::Bank bank=scratch_vec::at_mut<expression_work::Bank>(ref mut scratch,0);
-    return expression_in_bank(source,s,p,table,signatures,minimum,depth,expected,result_type,structure,flow,bank);
+    return expression_in_bank(source,s,p,table,signatures,minimum,depth,expected,result_type,structure,flow,bank,deadline,fuel);
 }
 // A lone, uncaptured root has no suspended CALL or array frame in this Bank.
 // Its conditional child may reuse classifier scratch; the parent State stays
 // separately owned, and tail() reinitializes its transient postfix state.
 fn Result<usize,errors::Error> expression_in_bank(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,u8 minimum,
-    usize depth,u8 expected,u8 result_type,usize structure,ref mut loops::State flow,ref mut expression_work::Bank bank){
+    usize depth,u8 expected,u8 result_type,usize structure,ref mut loops::State flow,ref mut expression_work::Bank bank,usize deadline,ref mut usize fuel){
     var scratch_vec::Vec<expression_work::State> state=expression_state(depth,minimum,expected,s.begin)?;let ref mut expression_work::State w=scratch_vec::at_mut<expression_work::State>(ref mut state,0);var metadata_budget::State meter=metadata_budget::empty();
-    while(!w.done){let usize allowance=metadata_budget::reset(ref mut meter,s.begin)?;
+    while(!w.done){
+        discard metadata_budget::visit(fuel,deadline,0)?;
+        let usize allowance=metadata_budget::reset(ref mut meter,s.begin)?;
         let bool done=expression_work::advance(source,s,p,table,signatures,bank,w,ref mut meter)?;
         if(w.waiting){let usize completed=complete_expression_operand(source,s,p,table,signatures,result_type,structure,flow,bank,w)?;}
     }return expression_work::prepared(w);
@@ -2420,7 +2428,8 @@ fn Result<Yield,errors::Error> if_value_staged(ref u8[] source,ref mut lexer::St
         let bool done=value_work::advance(source,s,p,signatures,ref mut join,w,ref mut meter)?;
         let u8 request=w.request;let usize child_structure=w.child_structure;let usize child_depth=w.child_depth;var usize value=0;var bool stopped=false;
         if(request==1 || request==4){value=if(reuse){
-            expression_in_bank(source,s,p,ref w.names,signatures,1,w.child_depth,w.expected,result_type,w.child_structure,flow,bank)?
+            var usize fuel=metadata_budget::unlimited();
+            expression_in_bank(source,s,p,ref w.names,signatures,1,w.child_depth,w.expected,result_type,w.child_structure,flow,bank,0,ref mut fuel)?
         }else{expression_staged(source,s,p,ref w.names,signatures,1,w.child_depth,w.expected,result_type,w.child_structure,flow)?};}
         else if(request==2){stopped=value_control_staged(source,s,p,ref mut w.names,signatures,result_type,child_structure,child_depth,flow)?;}
         else if(request==3){stopped=conditional_tail(source,s,p,ref w.names,signatures,ref mut join,w.child_depth,result_type,w.child_structure,flow)?;}
@@ -3023,8 +3032,8 @@ fn Result<usize,errors::Error> complete_body_child_metered(ref u8[] source,ref m
     if(request==1){value=statement_staged(source,s,p,names,signatures,59,result_type,expr_depth,f.depth,flow,deadline,fuel)?;}
     else if(request==2){stopped=return_staged(source,s,p,names,signatures,result_type,f.depth,expr_depth,flow,deadline,fuel)?;}
     else if(request==4 || request==5 || request==7 || request==10){
-        value=expression_staged(source,s,p,names,signatures,1,expr_depth,if(request==10){0}else{2},
-            if(request==7){0}else{result_type},f.depth,flow)?;
+        value=expression_metered(source,s,p,names,signatures,1,expr_depth,if(request==10){0}else{2},
+            if(request==7){0}else{result_type},f.depth,flow,deadline,fuel)?;
     }else if(request==6){value=statement_staged(source,s,p,names,signatures,59,0,expr_depth,f.depth,flow,deadline,fuel)?;}
     else if(request==8){value=checked_post(source,s,p,names,signatures,expr_depth,f.depth,flow)?;}
     else if(request==9){

@@ -1039,6 +1039,22 @@ development and /O2 each passed 90 configured, 32 catalog, five managed
 project and four compile-stop cases. All 456 receipt input hashes matched.
 Local receipt: `build/restricted-worker/20261121T222511913063Z/receipt.json`.
 
+### Control expression Fuel
+
+The `if`, `while` and `for` conditions and the `switch` scrutinee use the
+same compile deadline and Fuel balance as the enclosing body. Each Pratt
+advance checks the deadline and spends one unit. The enclosing body checks
+for a stop again before using the completed expression. Operand helpers
+that still perform synchronous work retain their outer checkpoints.
+
+The fixture combines both loop forms, a short-circuit `if`, and an
+`Option<i32>` switch. Its four control expressions spend 242 units on Pratt
+advances. The full project returns 42 at 9,069,751 units and fails compilation
+at 9,069,750. Windows development and /O2 each passed 92 configured, 32
+catalog, five managed project and four compile-stop cases. All 456 input
+hashes matched.
+Local receipt: `build/restricted-worker/20261121T223314171490Z/receipt.json`.
+
 ## Windows verification
 
 Run `python -B tools/verify-restricted-worker.py`. The development and optimized

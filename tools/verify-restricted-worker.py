@@ -257,6 +257,16 @@ def verify_configured_project(run, need, image, folder, env):
     need(location['source_index'] == 1 and location['path'] == 'src/math.brc' and
          location['offset'] == offset and location['end_offset'] == offset + 1,
          f'Unexpected control depth location: {location}')
+    math_file.write_bytes(b'module util::math;pub fn i32 answer(){var i32 n=0;'
+                         b'while(n<2){n+=1;}for(;n<4;n+=1){}'
+                         b'if(n==4 && (n+1)==5){let Option<i32> pick=.some(42);'
+                         b'switch(pick){case .some(v):{return v;}case .none:{return 0;}}}return 0;}')
+    # Control expressions add 242 Pratt advances to the prior fixture price.
+    control_fuel = 9069509 + 242
+    policy['compile'] = dict(compile_defaults, source_bytes=4096, fuel=control_fuel - 1)
+    check(3, 'compile_limit')
+    policy['compile']['fuel'] = control_fuel
+    check()
     policy['compile'] = compile_defaults
     math_file.write_bytes(original_source)
 
@@ -462,7 +472,7 @@ def verify_configured_project(run, need, image, folder, env):
     config['entry']['function'] = manifest['entry']['function']
     config['grants'] = ['brownie.output.emit']
     check(4, 'unavailable')
-    return 90
+    return 92
 
 
 def verify_project_host(run, need, image, folder, env):
