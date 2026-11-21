@@ -112,11 +112,11 @@ fn Result<Program,diagnostics::Error> finish_verified(ref sources::Snapshot sour
     if(clock::expired(deadline)){return .err(absent(errors::absent(errors::deadline_kind(),0)));}
     let lists::Requirement list=switch(lists::requirement(ref code.body)){case .ok(v):{v}case .err(e):{return .err(absent(e));}};
     if(clock::expired(deadline)){return .err(absent(errors::absent(errors::deadline_kind(),0)));}
-    let places::Requirement place=switch(places::requirement(ref code.body)){case .ok(v):{v}case .err(e):{return .err(absent(e));}};
+    let places::Requirement place=switch(places::requirement_until(ref code.body,deadline)){case .ok(v):{v}case .err(e):{return .err(absent(e));}};
     if(clock::expired(deadline)){return .err(absent(errors::absent(errors::deadline_kind(),0)));}
     let usize work=switch(owned_calls::cost(ref code.body,code.body.entry,0)){case .ok(v):{v}case .err(e):{return .err(absent(e));}};
     if(clock::expired(deadline)){return .err(absent(errors::absent(errors::deadline_kind(),0)));}
-    let execution_heap::Plan heap=switch(execution_heap::prepare(ref code.body,input,true,0)){case .ok(v):{v}case .err(e):{return .err(absent(e));}};
+    let execution_heap::Plan heap=switch(execution_heap::prepare_until(ref code.body,input,true,0,deadline)){case .ok(v):{v}case .err(e):{return .err(absent(e));}};
     if(clock::expired(deadline)){return .err(absent(errors::absent(errors::deadline_kind(),0)));}
     let call_captures::Plan calls=switch(call_captures::prepare(ref code.body)){case .ok(v):{v}case .err(e):{return .err(absent(e));}};
     let Preparation prepared=Preparation{.sites=proof.ordinary.statics,.origins=proof.ordinary.recipes.site_origins,.list=list,.place=place,

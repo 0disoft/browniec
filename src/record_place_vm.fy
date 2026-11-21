@@ -10,6 +10,7 @@ import scalar_codec as codec;
 import array_owners as owners;
 import array_vm as failures;
 import errors as errors;
+import runtime_clock as clock;
 import fuel as meter;
 import std::vec as vec;
 
@@ -25,12 +26,18 @@ fn Result<usize,errors::Error> kind(ref ir::Program p,usize pc){
     return .ok(mode);
 }
 pub fn Result<Requirement,errors::Error> requirement(ref ir::Program p){
+    return requirement_until(p,0);
+}
+pub fn Result<Requirement,errors::Error> requirement_until(ref ir::Program p,usize deadline){
     if(p.count>256){return .err(errors::make(5,0));}
     var usize width=0;var bool slices=false;var bool records=false;var usize pc=0;
-    while(pc<p.count){if(proof::operation(p.code[pc*8])){
+    while(pc<p.count){
+        if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
+        if(proof::operation(p.code[pc*8])){
         let usize mode=kind(p,pc)?;let usize id=p.code[pc*8+if(p.code[pc*8]==84){2}else{1}] as usize;
         if(mode==1){slices=true;}if(mode==2){records=true;}if(width<=id){width=id+1;}
     }pc+=1;}
+    if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
     let usize price=if(records){meter::record_place_prepare(width)}else if(slices){meter::slice_place_prepare(width)}else{meter::place_prepare(width)};
     return .ok(Requirement{.width=width,.slices=slices,.records=records,.cost=price});
 }

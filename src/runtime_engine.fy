@@ -1110,8 +1110,11 @@ fn entries::Entry pop_entry(ref mut vec::Vec<entries::Entry> v){return switch(ve
     case .some(e):{e}case .none:{assert(false);pop_entry(v)}
 };}
 fn u32 publish_program(ref mut Meta m,ref mut vec::Vec<Program> v,programs::Program code,usize bytes,usize deadline){
-    let execution_heap::Plan heap=switch(execution_heap::prepare(programs::body(ref code),false,false,0)){
-        case .ok(v):{v}case .err(_):{return failed(m,7);}
+    let execution_heap::Plan heap=switch(execution_heap::prepare_until(programs::body(ref code),false,false,0,deadline)){
+        case .ok(v):{v}case .err(e):{
+            if(e.kind==errors::deadline_kind()){return compile_timed_out(m);}
+            return failed(m,7);
+        }
     };
     let usize id=m.next;
     var vec::Vec<programs::Program> retained=vec::empty<programs::Program>();
@@ -1136,8 +1139,11 @@ fn u32 compile_input_inner(ref mut Meta m,ref mut vec::Vec<Program> v,ref mut ve
     return switch(built){case .ok(code):{publish_input_program(m,v,code,plan.bytes,deadline)}case .err(e):{compile_error(m,e)}};
 }
 fn u32 publish_input_program(ref mut Meta m,ref mut vec::Vec<Program> v,input_programs::Program code,usize bytes,usize deadline){
-    let execution_heap::Plan heap=switch(execution_heap::prepare(ref input_programs::code(ref code).body,true,false,0)){
-        case .ok(v):{v}case .err(_):{return failed(m,7);}
+    let execution_heap::Plan heap=switch(execution_heap::prepare_until(ref input_programs::code(ref code).body,true,false,0,deadline)){
+        case .ok(v):{v}case .err(e):{
+            if(e.kind==errors::deadline_kind()){return compile_timed_out(m);}
+            return failed(m,7);
+        }
     };
     let usize id=m.next;var vec::Vec<input_programs::Program> retained=vec::empty<input_programs::Program>();
     if(!vec::reserve<input_programs::Program>(ref mut retained,1).is_ok){return failed(m,6);}

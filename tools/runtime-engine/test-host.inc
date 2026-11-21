@@ -391,6 +391,26 @@ void bc_runtime_engine_test_output_prepare_stopped(void){
  assert(probe_attempts()==output_prepare_attempts);
  output_prepare_expiry=0;
 }
+static uintptr_t place_expiry;
+static size_t place_attempts;
+static uint8_t place_target,place_scan;
+void bc_runtime_engine_test_expire_in_place(uintptr_t deadline,uint8_t scan){
+ assert(host_clock_fixed&&deadline>host_clock_ticks&&!place_expiry&&scan>=1&&scan<=4);
+ place_expiry=deadline;place_target=scan;place_scan=0;
+}
+void bc_runtime_engine_test_place_visit(uintptr_t pc){
+ if(!place_expiry)return;
+ assert(place_scan<place_target);
+ if(pc==0&&++place_scan==place_target){
+  bc_runtime_engine_test_set_clock(place_expiry);
+  place_attempts=probe_attempts();
+ }
+}
+void bc_runtime_engine_test_place_stopped(void){
+ assert(place_expiry&&place_scan==place_target);
+ assert(probe_attempts()==place_attempts);
+ place_expiry=0;
+}
 static uint8_t ordinary_proof_target;
 void bc_runtime_engine_test_expire_in_ordinary_proof(uintptr_t deadline,uint8_t phase){
  assert(!ordinary_proof_target&&phase>=1&&phase<=3);

@@ -16,10 +16,13 @@ import std::bytes as bytes;
 // Existing invocations retain their exact original storage and setup prices.
 pub struct Requirement { usize width; usize cost; bool aggregate; bool slices; bool records; }
 pub fn Result<Requirement,errors::Error> requirement(ref ir::Program p){
-    let aggregates::Requirement extended=aggregates::requirement(p)?;
+    return requirement_until(p,0);
+}
+pub fn Result<Requirement,errors::Error> requirement_until(ref ir::Program p,usize deadline){
+    let aggregates::Requirement extended=aggregates::requirement_until(p,deadline)?;
     if(extended.width!=0){return .ok(Requirement{.width=extended.width,.cost=extended.cost,
         .aggregate=true,.slices=false,.records=false});}
-    let records::Requirement old=records::requirement(p)?;
+    let records::Requirement old=records::requirement_until(p,deadline)?;
     return .ok(Requirement{.width=old.width,.cost=old.cost,.aggregate=false,.slices=old.slices,.records=old.records});
 }
 pub fn Result<vec::Vec<usize>,errors::Error> prepare_metered(ref Requirement plan,usize fuel){

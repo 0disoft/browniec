@@ -10,6 +10,7 @@ import array_list_ir as lists;
 import struct_meta as records;
 import struct_range as ranges;
 import errors as errors;
+import runtime_clock as clock;
 import fuel as meter;
 import std::vec as vec;
 import std::bytes as bytes;
@@ -21,9 +22,14 @@ import std::bytes as bytes;
 pub struct Requirement { usize width; usize cost; }
 fn errors::Error invalid(usize at){return errors::make(5,at);}
 pub fn Result<Requirement,errors::Error> requirement(ref ir::Program p){
+    return requirement_until(p,0);
+}
+pub fn Result<Requirement,errors::Error> requirement_until(ref ir::Program p,usize deadline){
     if(p.count>256){return .err(invalid(0));}
     var usize width=0;var bool aggregate=false;var usize pc=0;
-    while(pc<p.count){let usize at=pc*8;let u8 op=p.code[at];
+    while(pc<p.count){
+        if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
+        let usize at=pc*8;let u8 op=p.code[at];
         if(graph::operation(op)){
             let u8 kind=p.code[at+4];let usize id=p.code[at+if(op==84){2}else{1}] as usize;
             if(id>=16 || kind>4 || (op==84 && kind>=3) || (op==87 && kind<3)){
@@ -34,6 +40,7 @@ pub fn Result<Requirement,errors::Error> requirement(ref ir::Program p){
             if(kind>=3){aggregate=true;}if(width<=id){width=id+1;}
         }pc+=1;
     }
+    if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
     let usize selected=if(aggregate){width}else{0};
     return .ok(Requirement{.width=selected,.cost=meter::aggregate_place_prepare(selected)});
 }

@@ -151,8 +151,10 @@ the completed proof. Expiry ends the compile with
 the source-less deadline diagnostic and releases the image and any active
 reservation. After a complete output proof, the compiler checks the same
 deadline before list, place, CALL cost, execution heap and capture planning,
-and again before allocating the retained Program. The final Engine
-publication check precedes registration.
+and again before allocating the retained Program. Both place-requirement
+scans sample before each instruction and before returning a plan, including
+the scans inside execution heap accounting in all four compile modes. The
+final Engine publication check precedes registration.
 
 The Windows verifier advanced the clock to the exact deadline in the first
 source copy for both output entry modes. Each compile copied exactly 64 bytes
@@ -251,6 +253,14 @@ stage and made zero further SDK allocation attempts. The SDK heap and Program
 charge returned to baseline, and the next successful compile used Program ID 1.
 Windows development and /O2 passed with zero live SDK allocations at exit.
 Local receipt: `build/runtime-engine/20261121T012309774139Z/receipt.json`.
+
+The Windows verifier advanced to the exact deadline during each available
+place scan across the four compile modes. In all 12 cases, compilation stopped
+before a second instruction in the target scan or another SDK allocation.
+The SDK heap and Program charge returned to baseline, and the next successful
+compile used Program ID 1. Windows development and /O2 passed with zero live
+SDK allocations at exit. Local receipt:
+`build/runtime-engine/20261121T013738359375Z/receipt.json`.
 
 Source lowering, work between checkpoints, and cleanup remain synchronous.
 Public Pending compilation, in-flight cancellation, and a latency bound for
