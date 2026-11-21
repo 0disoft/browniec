@@ -90,6 +90,7 @@ DWORD bc_worker_broker_start(bc_worker_broker *b, const bc_worker_broker_run *ru
     b->result = run->result;
     b->result_capacity = run->result_capacity;
     b->validate = run->validate;
+    b->expectation = run->expectation;
     DWORD status = bc_worker_io_open(&b->io);
     if (!status) status = bc_worker_io_open(&b->cancel_io);
     if (!status) status = bc_worker_pipes_open(&b->pipes);
@@ -200,7 +201,7 @@ static void step_rx(bc_worker_broker *b) {
         renew_idle(b, now);
         b->phase = BC_WORKER_BROKER_SEND_START;
     } else {
-        bc_worker_gate_stage(&b->gate, &b->rx, b->validate, now);
+        bc_worker_gate_stage(&b->gate, &b->rx, b->validate, b->expectation, now);
         b->phase = BC_WORKER_BROKER_READ_EOF;
     }
 }

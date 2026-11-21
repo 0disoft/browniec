@@ -28,10 +28,10 @@ typedef struct bc_worker_gate {
    failure, and owns it after take. */
 void bc_worker_gate_begin(bc_worker_gate *gate, uint64_t deadline);
 
-/* Validate the entire payload before allowing it to become a candidate. */
-typedef bool (*bc_worker_result_validator)(const uint8_t *body, size_t length);
+/* Validate the entire payload against the session's trusted expectation. */
+typedef bool (*bc_worker_result_validator)(const void *expectation, const uint8_t *body, size_t length);
 void bc_worker_gate_stage(bc_worker_gate *gate, const bc_worker_rx *rx,
-    bc_worker_result_validator validate, uint64_t now);
+    bc_worker_result_validator validate, const void *expectation, uint64_t now);
 
 /* Call once stdout is known to be finished or any trailing byte is seen.
    Report process exit only after an OS wait observed the process signal. */

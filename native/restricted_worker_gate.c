@@ -18,11 +18,11 @@ void bc_worker_gate_begin(bc_worker_gate *gate, uint64_t deadline) {
 }
 
 void bc_worker_gate_stage(bc_worker_gate *gate, const bc_worker_rx *rx,
-    bc_worker_result_validator validate, uint64_t now) {
+    bc_worker_result_validator validate, const void *expectation, uint64_t now) {
     if (!live(gate, now)) return;
     const bc_worker_frame *frame = bc_worker_rx_frame(rx);
     if (gate->candidate || gate->stdout_eof || !frame || frame->kind != BC_WORKER_RESULT ||
-        !frame->length || !validate || !validate(rx->body, frame->length)) {
+        !frame->length || !validate || !validate(expectation, rx->body, frame->length)) {
         finish(gate, BC_WORKER_GATE_PROTOCOL);
         return;
     }

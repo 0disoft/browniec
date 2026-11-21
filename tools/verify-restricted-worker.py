@@ -89,7 +89,7 @@ def main():
                              boundedStream=True, pipeEof=True, publicationGate=True,
                              ioLease=True, brokerSessions=6, sharedBudget=True,
                              phaseDeadlines=True, gracefulCancelCases=2, handleDelta=0,
-                             scalarSessions=4 if scalar else 0)
+                             scalarSessions=5 if scalar else 0)
                         and type(evidence.get('coldHandleDelta')) is int,
                         f'Unexpected worker result: {evidence}')
             receipt['profiles'].append(dict(profile=profile, exe=helper.image(exe), result=evidence))

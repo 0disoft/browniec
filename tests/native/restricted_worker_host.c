@@ -442,8 +442,9 @@ static uint64_t clock_ticks(void) {
     return now;
 }
 
-static bool fixture_result(const uint8_t *bytes, size_t length) {
-    return length == 1 && bytes[0] == 42;
+static bool fixture_result(const void *expectation, const uint8_t *bytes, size_t length) {
+    const uint8_t expected = expectation ? *(const uint8_t *)expectation : 42;
+    return length == 1 && bytes[0] == expected;
 }
 
 static bool stdout_eof(HANDLE output) {
@@ -460,16 +461,16 @@ static void verify_gate_rejections(const bc_worker_rx *rx) {
     size_t length = 123;
     bc_worker_gate_begin(&gate, 100);
     bc_worker_gate_stdout_end(&gate, true, 1);
-    bc_worker_gate_stage(&gate, rx, fixture_result, 2);
+    bc_worker_gate_stage(&gate, rx, fixture_result, NULL, 2);
     check(gate.status == BC_WORKER_GATE_PROTOCOL && !gate.candidate, "EOF before RESULT is terminal");
 
     bc_worker_gate_begin(&gate, 100);
-    bc_worker_gate_stage(&gate, rx, fixture_result, 1);
-    bc_worker_gate_stage(&gate, rx, fixture_result, 2);
+    bc_worker_gate_stage(&gate, rx, fixture_result, NULL, 1);
+    bc_worker_gate_stage(&gate, rx, fixture_result, NULL, 2);
     check(gate.status == BC_WORKER_GATE_PROTOCOL && !gate.candidate, "duplicate RESULT drops candidate");
 
     bc_worker_gate_begin(&gate, 100);
-    bc_worker_gate_stage(&gate, rx, fixture_result, 1);
+    bc_worker_gate_stage(&gate, rx, fixture_result, NULL, 1);
     bc_worker_gate_stdout_end(&gate, false, 2);
     check(gate.status == BC_WORKER_GATE_PROTOCOL && !gate.candidate, "trailing stdout drops candidate");
 
@@ -477,11 +478,11 @@ static void verify_gate_rejections(const bc_worker_rx *rx) {
     bc_worker_rx invalid = *rx;
     invalid.body = &invalid_byte;
     bc_worker_gate_begin(&gate, 100);
-    bc_worker_gate_stage(&gate, &invalid, fixture_result, 1);
+    bc_worker_gate_stage(&gate, &invalid, fixture_result, NULL, 1);
     check(gate.status == BC_WORKER_GATE_PROTOCOL && !gate.candidate, "invalid payload cannot stage");
 
     bc_worker_gate_begin(&gate, 100);
-    bc_worker_gate_stage(&gate, rx, fixture_result, 1);
+    bc_worker_gate_stage(&gate, rx, fixture_result, NULL, 1);
     bc_worker_gate_cancel(&gate, 99);
     bc_worker_gate_exit(&gate, 1, 101);
     check(!bc_worker_gate_take(&gate, &length, 102) && length == 123 &&
@@ -489,7 +490,7 @@ static void verify_gate_rejections(const bc_worker_rx *rx) {
 
     bc_worker_gate_begin(&gate, 100);
     bc_worker_gate_exit(&gate, 0, 1);
-    bc_worker_gate_stage(&gate, rx, fixture_result, 2);
+    bc_worker_gate_stage(&gate, rx, fixture_result, NULL, 2);
     bc_worker_gate_stdout_end(&gate, true, 99);
     check(!bc_worker_gate_take(&gate, &length, 100) && length == 123 &&
         gate.status == BC_WORKER_GATE_EXPIRED && !gate.candidate, "deadline tick blocks an otherwise ready RESULT");
@@ -513,7 +514,7 @@ static void verify_clean_publication(const wchar_t *path, const wchar_t *directo
     bc_worker_rx_begin(&rx, &expected, &candidate, 1);
     HANDLE output = pipes.broker[BC_WORKER_STDOUT];
     check(receive_frame(output, &rx) == BC_WORKER_RX_COMPLETE, "receive clean-exit candidate");
-    bc_worker_gate_stage(&gate, &rx, fixture_result, clock_ticks());
+    bc_worker_gate_stage(&gate, &rx, fixture_result, NULL, clock_ticks());
     size_t length = 123;
     check(!bc_worker_gate_take(&gate, &length, clock_ticks()) && length == 123, "RESULT alone cannot deliver");
     const bool clean_eof = stdout_eof(output);
@@ -659,7 +660,8 @@ static void verify_broker(const wchar_t *path, const wchar_t *directory,
         "broker releases resources only after reaping");
 }
 
-static bool reject_callback(const uint8_t *bytes, size_t length) {
+static bool reject_callback(const void *expectation, const uint8_t *bytes, size_t length) {
+    (void)expectation;
     (void)bytes;
     (void)length;
     check(FALSE, "cancelled broker must never invoke the payload callback");
@@ -726,9 +728,8 @@ static void verify_graceful_cancel(const wchar_t *path, const wchar_t *directory
         "refund cancellation and fixture witness");
 }
 
-static const char *expected_scalar_payload;
-
-static bool scalar_payload(const uint8_t *body, size_t size) {
+static bool scalar_payload(const void *expectation, const uint8_t *body, size_t size) {
+    const char *expected_scalar_payload = expectation;
     const size_t expected = strlen(expected_scalar_payload);
     if (size < expected || memcmp(body, expected_scalar_payload, expected) || body[size - 1] != '}')
         return false;
@@ -739,7 +740,7 @@ static bool scalar_payload(const uint8_t *body, size_t size) {
 }
 
 static void verify_scalar(const wchar_t *path, const wchar_t *directory,
-    const uint8_t *request, size_t request_length, const char *expected) {
+    const uint8_t *request, size_t request_length, const char *expected, bool accept) {
     bc_worker_broker broker = {0};
     uint8_t result[256];
     const size_t wire = 5 * BC_WORKER_FRAME_BYTES + request_length + sizeof(result) + 1;
@@ -754,9 +755,8 @@ static void verify_scalar(const wchar_t *path, const wchar_t *directory,
         .startup_ms = 4000, .io_idle_ms = 4000, .shutdown_grace_ms = 500,
         .deadline = clock_ticks() + 100000000ULL, .wire_limit = wire,
         .request = request, .request_length = request_length, .result = result,
-        .result_capacity = sizeof(result), .validate = scalar_payload
+        .result_capacity = sizeof(result), .validate = scalar_payload, .expectation = expected
     };
-    expected_scalar_payload = expected;
     DWORD status = bc_worker_broker_start(&broker, &run);
     SetLastError(status);
     check(status == ERROR_SUCCESS, "launch real Brownie scalar worker");
@@ -765,11 +765,16 @@ static void verify_scalar(const wchar_t *path, const wchar_t *directory,
         if (broker.io.pipe || broker.phase == BC_WORKER_BROKER_WAIT_EXIT) Sleep(1);
     }
     size_t length = 0;
-    if (broker.gate.status != BC_WORKER_GATE_PENDING)
+    if (accept && broker.gate.status != BC_WORKER_GATE_PENDING)
         fprintf(stderr, "scalar gate status %d, phase %d, body %.*s\n", broker.gate.status,
             broker.phase, (int)broker.rx.used, (const char *)result);
-    check(bc_worker_broker_take(&broker, &length) == result && scalar_payload(result, length) &&
-        !bc_worker_broker_take(&broker, &length), "publish validated Brownie scalar outcome once");
+    if (accept) {
+        check(bc_worker_broker_take(&broker, &length) == result && scalar_payload(expected, result, length) &&
+            !bc_worker_broker_take(&broker, &length), "publish validated Brownie scalar outcome once");
+    } else {
+        check(broker.gate.status == BC_WORKER_GATE_PROTOCOL && !bc_worker_broker_take(&broker, &length) &&
+            !length, "a complete result mismatching this session cannot publish");
+    }
     const uint64_t limit = clock_ticks() + 50000000ULL;
     while (!bc_worker_broker_close(&broker)) {
         check(clock_ticks() < limit, "reap actual Brownie scalar worker");
@@ -785,17 +790,19 @@ static void verify_scalar_programs(const wchar_t *path, const wchar_t *directory
     const size_t source_bytes = fread(request + 5, 1, sizeof(request) - 5, source);
     check(source_bytes && feof(source) && !ferror(source) && !fclose(source), "snapshot answer fixture");
     verify_scalar(path, directory, request, source_bytes + 5,
-        "{\"schema\":\"browniec.worker-result/v1\",\"status\":\"checked\"}");
+        "{\"schema\":\"browniec.worker-result/v1\",\"status\":\"checked\"}", true);
     request[0] = 1;
     request[2] = 1;
     verify_scalar(path, directory, request, source_bytes + 5,
-        "{\"schema\":\"browniec.worker-result/v1\",\"status\":\"completed\",\"return_i32\":77}");
+        "{\"schema\":\"browniec.worker-result/v1\",\"status\":\"completed\",\"return_i32\":77}", true);
+    verify_scalar(path, directory, request, source_bytes + 5,
+        "{\"schema\":\"browniec.worker-result/v1\",\"status\":\"checked\"}", false);
     request[2] = 0;
     verify_scalar(path, directory, request, source_bytes + 5,
-        "{\"schema\":\"browniec.worker-result/v1\",\"status\":\"error\",\"kind\":8,\"location\":0,\"offset\":");
+        "{\"schema\":\"browniec.worker-result/v1\",\"status\":\"error\",\"kind\":8,\"location\":0,\"offset\":", true);
     const uint8_t lexical_error[] = {0, 0, 0, 0, 0, 255};
     verify_scalar(path, directory, lexical_error, sizeof(lexical_error),
-        "{\"schema\":\"browniec.worker-result/v1\",\"status\":\"error\",\"kind\":1,\"location\":0,\"offset\":0}");
+        "{\"schema\":\"browniec.worker-result/v1\",\"status\":\"error\",\"kind\":1,\"location\":0,\"offset\":0}", true);
 }
 
 int wmain(int argc, wchar_t **argv) {
@@ -884,7 +891,7 @@ int wmain(int argc, wchar_t **argv) {
     verify_gate_rejections(&rx);
     bc_worker_gate gate;
     bc_worker_gate_begin(&gate, clock_ticks() + 100000000ULL);
-    bc_worker_gate_stage(&gate, &rx, fixture_result, clock_ticks());
+    bc_worker_gate_stage(&gate, &rx, fixture_result, NULL, clock_ticks());
     const bool clean_eof = stdout_eof(output);
     check(clean_eof, "observe EOF on CPU-terminated worker stdout");
     bc_worker_gate_stdout_end(&gate, clean_eof, clock_ticks());
@@ -924,6 +931,6 @@ int wmain(int argc, wchar_t **argv) {
            "\"ioLease\":true,\"brokerSessions\":6,\"sharedBudget\":true,"
            "\"phaseDeadlines\":true,\"gracefulCancelCases\":2,\"handleDelta\":0,"
            "\"scalarSessions\":%d,\"coldHandleDelta\":%ld}\n",
-           argc == 3 ? 4 : 0, (long)final - (long)cold);
+           argc == 3 ? 5 : 0, (long)final - (long)cold);
     return 0;
 }

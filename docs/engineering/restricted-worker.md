@@ -249,6 +249,14 @@ The directory contains `development/browniec.exe` and `release/browniec.exe`
 from `fairyc build --locked` and `fairyc build --release --locked`.
 Local receipt: `build/restricted-worker/20261121T161049790834Z/receipt.json`.
 
+The broker passes each session's immutable expectation to its result
+validator. The expectation is bound at admission and remains borrowed until
+close. The fixture no longer needs shared mutable validation state. An
+additional native case received a complete run result under a check
+expectation and rejected it before publication. Both profiles passed all
+five scalar sessions with zero net warm handles.
+Local receipt: `build/restricted-worker/20261121T161323928124Z/receipt.json`.
+
 ## Windows verification
 
 Run `python -B tools/verify-restricted-worker.py`. The development and optimized

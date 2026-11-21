@@ -50,6 +50,7 @@ typedef struct bc_worker_broker {
     const uint8_t *request;
     uint8_t *result;
     bc_worker_result_validator validate;
+    const void *expectation;
     size_t request_length, result_capacity;
     uint64_t phase_deadline, idle_ticks, grace_ticks, shutdown_deadline;
     uint8_t trailing;
@@ -72,11 +73,13 @@ typedef struct bc_worker_broker_run {
     uint8_t *result;
     size_t result_capacity;
     bc_worker_result_validator validate;
+    const void *expectation;
 } bc_worker_broker_run;
 
 /* One request/RESULT session. Serialize calls and start from a zeroed owner
    at a stable address. Request and result spans must be disjoint and remain
-   valid through close. Admission reserves a session, its control and span
+   valid through close, along with the immutable validator expectation.
+   Admission reserves a session, its control and span
    bytes, Job commit ceiling and wire envelope against the shared budget.
    The absolute session deadline uses QueryInterruptTimePrecise ticks.
    Startup covers launch through READY; after READY each completed transfer

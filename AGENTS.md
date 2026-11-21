@@ -1,6 +1,6 @@
 - Latest runtime checkpoint (2026-11-22): [Actual scalar source worker](docs/engineering/restricted-worker.md#scalar-source-in-the-actual-worker)
   compiles, checks and runs original source in an AppContainer. Development
-  and /O2 verify result 77, diagnostics and balanced handles through the broker.
+  and /O2 verify result 77 and rejection against a different expected operation.
 
 # Brownie C agent guidance
 
