@@ -524,7 +524,8 @@ pub fn Result<usize,Error> compile_scalar_host(ref mut Engine e,ref u8[] source,
                 .code=problem,.at=sources::Span{.source=0,.start=at,.end=if(at<source.len){at+1}else{at}}}});
         }
     };
-    return retain_limited_host(e,ref code,imports,digest,run,limits,deadline,host_program::single_source(source.len));
+    var usize fuel=metadata_budget::unlimited();
+    return retain_limited_host(e,ref code,imports,digest,run,limits,deadline,host_program::single_source(source.len),ref mut fuel);
 }
 
 pub fn bool project_host_authority(ref projects::Project project,ref run_config::RunConfig run){
@@ -631,7 +632,7 @@ fn Result<usize,Error> retain_project_host(ref mut Engine e,ref modules::Index i
     var usize fuel=modules::compile_fuel(index);
     discard lower_indexed_host(index,selected,ref imports,ref mut code,deadline,ref mut fuel)?;
     let host_program::SourceMap map=host_program::source_set(modules::snapshot(index));
-    return retain_limited_host(e,ref code,imports,digest,run,limits,deadline,map);
+    return retain_limited_host(e,ref code,imports,digest,run,limits,deadline,map,ref mut fuel);
 }
 fn Result<usize,Error> lower_indexed_host(ref modules::Index index,usize selected,ref host_catalog::Catalog imports,
     ref mut ir::Program code,usize deadline,ref mut usize fuel){
@@ -641,9 +642,10 @@ fn Result<usize,Error> lower_indexed_host(ref modules::Index index,usize selecte
     };
 }
 fn Result<usize,Error> retain_limited_host(ref mut Engine e,ref ir::Program code,host_catalog::Catalog imports,
-    ref u32[] digest,ref run_config::RunConfig run,policy_limits::CompileLimits limits,usize deadline,host_program::SourceMap map){
+    ref u32[] digest,ref run_config::RunConfig run,policy_limits::CompileLimits limits,
+    usize deadline,host_program::SourceMap map,ref mut usize fuel){
     discard check_compile_image(code,limits)?;
-    return retain_verified_host(e,code,imports,digest,run,deadline,map);
+    return retain_verified_host(e,code,imports,digest,run,deadline,map,fuel);
 }
 fn Result<usize,Error> check_compile_image(ref ir::Program code,policy_limits::CompileLimits limits){
     if(code.count>limits.instructions || code.function_count>limits.functions){return .err(error(8));}
@@ -660,12 +662,13 @@ pub fn Result<usize,Error> retain_scalar_host(ref mut Engine e,ref ir::Program c
     ref u32[] digest,ref run_config::RunConfig run){
     let usize checked=check_run_policy(e,run)?;
     let usize deadline=compile_deadline(e,0)?;
-    return retain_verified_host(e,code,imports,digest,run,deadline,host_program::unknown_sources());
+    var usize fuel=metadata_budget::unlimited();
+    return retain_verified_host(e,code,imports,digest,run,deadline,host_program::unknown_sources(),ref mut fuel);
 }
 fn Result<usize,Error> retain_verified_host(ref mut Engine e,ref ir::Program code,host_catalog::Catalog imports,
-    ref u32[] digest,ref run_config::RunConfig run,usize deadline,host_program::SourceMap map){
+    ref u32[] digest,ref run_config::RunConfig run,usize deadline,host_program::SourceMap map,ref mut usize fuel){
     if(clock::expired(deadline)){return .err(compile_timeout());}
-    let host_program::Program verified=verify_scalar_host(e,code,imports,digest,run,map)?;
+    let host_program::Program verified=verify_scalar_host(e,code,imports,digest,run,map,deadline,fuel)?;
     return publish_verified_host(e,verified,deadline);
 }
 fn Result<usize,Error> publish_verified_host(ref mut Engine e,host_program::Program verified,usize deadline){
@@ -676,20 +679,23 @@ fn Result<usize,Error> publish_verified_host(ref mut Engine e,host_program::Prog
 }
 
 fn Result<host_program::Program,Error> verify_scalar_host(ref Engine e,ref ir::Program code,host_catalog::Catalog imports,
-    ref u32[] digest,ref run_config::RunConfig run,host_program::SourceMap map){
+    ref u32[] digest,ref run_config::RunConfig run,host_program::SourceMap map,usize deadline,ref mut usize fuel){
     let usize checked=check_run_policy(e,run)?;
     if(e.meta.poisoned){return .err(error(14));}
     if(e.meta.admission==0 || e.meta.next==0 || vec::len<Program>(ref e.programs)>=e.meta.limits.programs){return .err(error(8));}
-    let Result<host_program::Program,host_program::Error> proof=host_program::retain(code,imports,digest,
-        vec::at<policy::Policy>(ref e.policy,0),run,map);
+    let Result<host_program::Program,host_program::Error> proof=host_program::retain_metered(code,imports,digest,
+        vec::at<policy::Policy>(ref e.policy,0),run,map,deadline,fuel);
     return host_verification(proof);
 }
 fn Result<host_program::Program,Error> host_verification(Result<host_program::Program,host_program::Error> checked){
     return switch(checked){
         case .ok(v):{.ok(v)}
-        case .err(reason):{return .err(error(switch(reason){
-            case .Authority:{5}case .Allocation:{6}case .Code:{4}case .Catalog:{1}case .Binding:{1}
-        }));}
+        case .err(reason):{return .err(switch(reason){
+            case .Authority:{error(5)}case .Allocation:{error(6)}case .Code:{error(4)}
+            case .Catalog:{error(1)}case .Binding:{error(1)}
+            case .Fuel:{Error{.status=4,.diagnostic=diagnostics::absent(errors::absent(4,0))}}
+            case .Deadline:{compile_timeout()}
+        });}
     };
 }
 

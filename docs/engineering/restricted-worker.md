@@ -620,7 +620,27 @@ without a guest result or output. Each profile passed 14 catalog project
 cases, 40 configured project cases, five managed project cases and nine
 native host transport cases. Local receipt: `build/restricted-worker/20261121T184432127814Z/receipt.json`.
 
-The independent catalog verifier still needs to consume the same balance.
+### Catalog-backed proof Fuel
+
+The independent catalog verifier continues with the balance left after
+lowering. It prepays catalog digest binding, type metadata, opcode checks,
+CFG metadata, each function and instruction in the CFG pass, and final
+capability validation before allocating the retained Program. Verification
+checks the compile deadline at the same boundaries. The explicit IR charges
+use the existing 4,096-unit compile batch allowance.
+
+The two-call fixture spends 28 additional batches in verification. With
+only the 1,642,751 units needed by indexing and lowering, check returns
+`compile_limit` in verification. Windows development and /O2 both check and
+run at 1,757,439 units, yielding 77 and the expected output on run.
+At 1,757,438, run returns `compile_limit` with no guest result or output.
+Each profile passes 16 catalog project cases, 40 configured project cases,
+five managed project cases and nine native host transport cases.
+Local receipt: `build/restricted-worker/20261121T185334424916Z/receipt.json`.
+
+Two existing host-proof cases also pass in an isolated /O2 fixture. Root
+test discovery reached the unrelated general specialization limit in
+`tests/m2/struct_copy.fy` before it could run those selected cases.
 
 ## Windows verification
 

@@ -348,11 +348,16 @@ def verify_project_host(run, need, image, folder, env):
     original_compile_fuel = policy['compile']['fuel']
     policy['compile']['fuel'] = 1
     check('check', expected_exit=3, kind='compile_limit')
-    # The catalog fixture spends 255 index units and 401 lowering batches.
-    full_fuel = 255 + 401 * 4096
+    # The 401 lowering batches leave no Fuel for the independent proof.
+    lowering_fuel = 255 + 401 * 4096
+    policy['compile']['fuel'] = lowering_fuel
+    check('check', expected_exit=3, kind='compile_limit')
+    # Verification itself needs 28 more batches from the same balance.
+    full_fuel = lowering_fuel + 28 * 4096
     policy['compile']['fuel'] = full_fuel - 1
     check(expected_exit=3, kind='compile_limit')
     policy['compile']['fuel'] = full_fuel
+    check('check')
     check()
     policy['compile']['fuel'] = original_compile_fuel
     payload = target / 'input.bin'
@@ -361,7 +366,7 @@ def verify_project_host(run, need, image, folder, env):
                        b'output::emit(ref data); let i32 a=api::check(41); return a+api::check(42);}')
     check(payload=payload)
     check(expected_exit=4, kind='unavailable')
-    return 14
+    return 16
 
 
 def main():

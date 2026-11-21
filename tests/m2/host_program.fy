@@ -47,6 +47,7 @@ fn Result<u32[8],u8> digest(ref catalog::Catalog imports){
 fn usize rejected(Result<programs::Program,programs::Error> result){
     return switch(result){case .ok(_):{0}case .err(e):{switch(e){
         case .Code:{1}case .Catalog:{2}case .Binding:{3}case .Authority:{4}case .Allocation:{5}
+        case .Fuel:{6}case .Deadline:{7}
     }}};
 }
 
@@ -59,7 +60,7 @@ fn Result<usize,u8> binding_cases(){
     let u32[8] expected=digest(ref original)?;
     let ir::Program source=candidate()?;
     assert(!verifier::verify(ref source).is_ok);
-    let programs::Program p=switch(programs::retain(ref source,original,ref expected,ref ceiling,ref allowed)){
+    let programs::Program p=switch(programs::retain(ref source,original,ref expected,ref ceiling,ref allowed,programs::unknown_sources())){
         case .ok(v):{v}case .err(_):{return .err(8);}
     };
     let u32[8] actual=programs::binding(ref p);
@@ -67,12 +68,12 @@ fn Result<usize,u8> binding_cases(){
     assert(programs::requirements(ref p)==1 && programs::allows(ref p,ref ceiling,ref allowed));
     assert(!programs::allows(ref p,ref ceiling,ref missing));
     assert(!programs::allows(ref p,ref denied,ref allowed));
-    assert(rejected(programs::retain(ref source,catalog_from(json())?,ref expected,ref ceiling,ref missing))==4);
+    assert(rejected(programs::retain(ref source,catalog_from(json())?,ref expected,ref ceiling,ref missing,programs::unknown_sources()))==4);
     let catalog::Catalog changed=catalog_from(b"{\"schema\":\"brownie.catalog/1\",\"imports\":[{\"id\":0,\"module\":\"host::example\",\"symbol\":\"check\",\"parameters\":[\"i32\"],\"result\":\"Result<i32,u32>\",\"effect\":\"read\",\"capability\":\"host.example.check\",\"adapter_revision\":\"v2\"}]}")?;
-    assert(rejected(programs::retain(ref source,changed,ref expected,ref ceiling,ref allowed))==3);
+    assert(rejected(programs::retain(ref source,changed,ref expected,ref ceiling,ref allowed,programs::unknown_sources()))==3);
     let catalog::Catalog wrong=catalog_from(b"{\"schema\":\"brownie.catalog/1\",\"imports\":[{\"id\":0,\"module\":\"host::example\",\"symbol\":\"check\",\"parameters\":[\"bool\"],\"result\":\"Result<i32,u32>\",\"effect\":\"read\",\"capability\":\"host.example.check\",\"adapter_revision\":\"v1\"}]}")?;
     let u32[8] wrong_digest=digest(ref wrong)?;
-    assert(rejected(programs::retain(ref source,wrong,ref wrong_digest,ref ceiling,ref allowed))==2);
+    assert(rejected(programs::retain(ref source,wrong,ref wrong_digest,ref ceiling,ref allowed,programs::unknown_sources()))==2);
     return .ok(1);
 }
 
@@ -83,10 +84,10 @@ fn Result<usize,u8> operand_cases(){
     let u32[8] expected=digest(ref expected_catalog)?;
     var ir::Program source=candidate()?;
     source.code[10]=1; // Destination was not defined before this request.
-    assert(rejected(programs::retain(ref source,catalog_from(json())?,ref expected,ref ceiling,ref allowed))==1);
+    assert(rejected(programs::retain(ref source,catalog_from(json())?,ref expected,ref ceiling,ref allowed,programs::unknown_sources()))==1);
     source.code[10]=0;
     source.code[11]=64;
-    assert(rejected(programs::retain(ref source,catalog_from(json())?,ref expected,ref ceiling,ref allowed))==2);
+    assert(rejected(programs::retain(ref source,catalog_from(json())?,ref expected,ref ceiling,ref allowed,programs::unknown_sources()))==2);
     return .ok(1);
 }
 
@@ -97,7 +98,7 @@ fn Result<programs::Program,u8> retained(ref policy::Policy ceiling,ref runs::Ru
     let catalog::Catalog imports=catalog_from(json())?;
     let u32[8] expected=digest(ref imports)?;
     let ir::Program source=candidate()?;
-    return switch(programs::retain(ref source,imports,ref expected,ceiling,run)){
+    return switch(programs::retain(ref source,imports,ref expected,ceiling,run,programs::unknown_sources())){
         case .ok(v):{.ok(v)}case .err(_):{.err(9)}
     };
 }

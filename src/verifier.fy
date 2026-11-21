@@ -2,6 +2,7 @@ module verifier;
 
 import errors as errors;
 import runtime_clock as clock;
+import metadata_budget as budget;
 import ir as ir;
 import types as types;
 import array_meta as arrays;
@@ -50,7 +51,7 @@ fn bool merge(ref mut usize[] states, ref mut bool[] seen, ref registers::Set de
     seen[target] = true;
     return true;
 }
-fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records::Prepared shapes, ref reborrows::Sites loans, ref statics::Sites static_sites, bool allow_reborrow_calls, u8 place_kind, ref mut bool[] used_calls,ref value_ir::Sites value_sites,bool host_profile,usize deadline) {
+fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records::Prepared shapes, ref reborrows::Sites loans, ref statics::Sites static_sites, bool allow_reborrow_calls, u8 place_kind, ref mut bool[] used_calls,ref value_ir::Sites value_sites,bool host_profile,usize deadline,ref mut usize fuel) {
     let usize start = p.register_starts[f];
     let usize end = p.register_ends[f];
     let usize arity = p.arities[f];
@@ -77,6 +78,7 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records
     // entry invariant. This bounded inductive proof needs no cyclic worklist.
     while (pc < p.ends[f]) {
         if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
+        discard budget::prepay(fuel,pc)?;
         if (!seen[pc]) { return .err(errors::instruction(pc)); }
         defined = registers::Set { .low = states[pc * 2], .high = states[pc * 2 + 1] };
         var usize live = array_states[pc];
@@ -415,9 +417,15 @@ fn Result<reborrows::Sites,errors::Error> validate_values(ref ir::Program p,bool
 }
 fn Result<reborrows::Sites,errors::Error> validate_values_mode(ref ir::Program p,bool allow_reborrow_calls,
     u8 place_kind,ref statics::Sites static_sites,ref value_ir::Sites value_sites,u8 entry_kind,bool host_profile,usize deadline){
+    var usize fuel=budget::unlimited();
+    return validate_values_metered(p,allow_reborrow_calls,place_kind,static_sites,value_sites,entry_kind,host_profile,deadline,ref mut fuel);
+}
+fn Result<reborrows::Sites,errors::Error> validate_values_metered(ref ir::Program p,bool allow_reborrow_calls,
+    u8 place_kind,ref statics::Sites static_sites,ref value_ir::Sites value_sites,u8 entry_kind,bool host_profile,usize deadline,ref mut usize fuel){
     if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
     if (p.count == 0 || p.count > 256 || p.registers == 0 || p.registers > 128 || p.constant_count > 128 ||
         p.function_count == 0 || p.function_count > 16 || p.entry >= p.function_count || p.call_count > 32) { return .err(errors::absent(5,0)); }
+    discard budget::prepay(fuel,0)?;
     if (!arrays::valid(ref p.arrays)) { return .err(errors::absent(5,0)); }
     if(host_profile){if(p.list_used>4096){return .err(errors::absent(5,0));}}
     else{let usize list_metadata=list_work::inspect_until(p,deadline)?;}
@@ -456,6 +464,7 @@ fn Result<reborrows::Sites,errors::Error> validate_values_mode(ref ir::Program p
     }
     if (code_end != p.count || register_end != p.registers) { return .err(errors::absent(5,0)); }
     if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
+    discard budget::prepay(fuel,0)?;
     let usize copy_metadata=copying::metadata_until(p,deadline)?;
     let usize borrowed_parameters = slice_parameters::metadata_until(p,entry_kind!=0,deadline)?;
     let reborrows::Sites loans = reborrows::metadata_until(p,deadline)?;
@@ -467,11 +476,13 @@ fn Result<reborrows::Sites,errors::Error> validate_values_mode(ref ir::Program p
     f = 0;
     while(f<p.function_count){
         if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
+        discard budget::prepay(fuel,p.starts[f])?;
         let usize checked=function(p,f,ref shapes,ref loans,static_sites,allow_reborrow_calls,place_kind,
-            ref mut used_calls,value_sites,host_profile,deadline)?;
+            ref mut used_calls,value_sites,host_profile,deadline,fuel)?;
         f+=1;
     }
     if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
+    discard budget::prepay(fuel,0)?;
     let usize selected_places=places::inspect_prepared_until(p,ref shapes,deadline)?;
     var usize call = 0;
     while (call < p.call_count) { if (!used_calls[call]) { return .err(errors::absent(5,0)); } call += 1; }
@@ -552,10 +563,14 @@ pub fn Result<reborrows::Sites,errors::Error> verify_sites(ref ir::Program p){
     return verify_sites_until(p,0);
 }
 fn Result<reborrows::Sites,errors::Error> verify_sites_until(ref ir::Program p,usize deadline){
+    var usize fuel=budget::unlimited();
+    return verify_sites_metered(p,deadline,ref mut fuel);
+}
+fn Result<reborrows::Sites,errors::Error> verify_sites_metered(ref ir::Program p,usize deadline,ref mut usize fuel){
     if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
     let statics::Sites statics=statics::empty();
     let value_ir::Sites values=value_ir::empty();
-    let reborrows::Sites sites=validate_values_mode(p,reborrows::present(p),4,ref statics,ref values,0,false,deadline)?;
+    let reborrows::Sites sites=validate_values_metered(p,reborrows::present(p),4,ref statics,ref values,0,false,deadline,fuel)?;
     let usize calls=executable_calls_until(p,ref sites,deadline)?;
     if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
     return .ok(sites);
@@ -574,12 +589,16 @@ pub fn Result<usize,errors::Error> verify_eval_i32(ref ir::Program p){
     return .ok(p.count);
 }
 // Scalar host admission checks catalog types before invoking this CFG proof.
-pub fn Result<usize,errors::Error> inspect_host(ref ir::Program p){
+pub fn Result<usize,errors::Error> inspect_host_metered(ref ir::Program p,bool typed,usize deadline,ref mut usize fuel){
+    if(!typed){
+        discard verify_sites_metered(p,deadline,fuel)?;
+        return .ok(p.count);
+    }
     let statics::Sites static_sites=statics::empty();
     let value_ir::Sites values=value_ir::empty();
     if(p.entry>=16){return .err(errors::absent(5,0));}
     let u8 entry_kind=if(p.arities[p.entry]==0){0}else{3};
-    let reborrows::Sites loans=validate_values_mode(p,false,4,ref static_sites,ref values,entry_kind,true,0)?;
+    let reborrows::Sites loans=validate_values_metered(p,false,4,ref static_sites,ref values,entry_kind,true,deadline,fuel)?;
     return .ok(p.count);
 }
 // Analysis-only proof does not impose the executable derived CALL subset.

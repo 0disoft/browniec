@@ -7,12 +7,15 @@ import runtime_run_config as runs;
 import std::bytes as bytes;
 import std::vec as vec;
 import verifier as verifier;
+import runtime_clock as clock;
+import metadata_budget as budget;
+import errors as errors;
 import types as types;
 import host_wire as wire;
 import source_snapshot as sources;
 
 // Private scalar host dialect. The ordinary verifier still rejects opcode 117.
-pub enum Error { Code; Catalog; Binding; Authority; Allocation; }
+pub enum Error { Code; Catalog; Binding; Authority; Allocation; Fuel; Deadline; }
 struct Digest { u32[8] words; }
 pub struct SourceMap { usize[16] lengths; }
 pub resource Program {
@@ -68,10 +71,16 @@ pub fn bool typed(ref ir::Program code){
 // HOST_REQUEST: dst=i32 destination, a=i32 argument, b=catalog import ID.
 // The independent scalar verifier checks the same input and output registers
 // through an ADD proxy. The proxy is temporary and never executes.
-fn Result<usize,Error> inspect(ref ir::Program code,ref catalog::Catalog imports){
+fn Result<usize,Error> prepay(ref mut usize fuel,usize deadline){
+    if(clock::expired(deadline)){return .err(.Deadline);}
+    if(!budget::prepay(fuel,0).is_ok){return .err(.Fuel);}
+    return .ok(0);
+}
+fn Result<usize,Error> inspect(ref ir::Program code,ref catalog::Catalog imports,usize deadline,ref mut usize fuel){
     if(code.count==0 || code.count>256 || code.registers>128 ||
         code.function_count==0 || code.function_count>16 || code.entry>=code.function_count || code.arrays.count!=0 ||
         code.records.count!=0 || code.list_used>4096){return .err(.Code);}
+    discard prepay(fuel,deadline)?;
     var usize reg=0;
     while(reg<code.registers){
         if(!types::scalar(code.types[reg]) && (code.slots[reg] || (code.types[reg]!=14 && !types::host_storage(code.types[reg])))){return .err(.Code);}
@@ -100,6 +109,7 @@ fn Result<usize,Error> inspect(ref ir::Program code,ref catalog::Catalog imports
     var usize pc=0;
     let usize one=1;
     while(pc<code.count){
+        discard prepay(fuel,deadline)?;
         let usize at=pc*8;
         let u8 op=code.code[at];
         if(op==request_opcode()){
@@ -127,13 +137,18 @@ fn Result<usize,Error> inspect(ref ir::Program code,ref catalog::Catalog imports
         }
         pc+=1;
     }
-    if(typed_code){
-        if(!verifier::inspect_host(ref scalar).is_ok){return .err(.Code);}
-    }else{
+    if(!typed_code){
         var usize r=0;
         while(r<code.registers){if(code.types[r]!=1 && code.types[r]!=2){return .err(.Code);}r+=1;}
-        if(!verifier::verify(ref scalar).is_ok){return .err(.Code);}
     }
+    switch(verifier::inspect_host_metered(ref scalar,typed_code,deadline,fuel)){
+        case .ok(_):{}
+        case .err(e):{
+            if(e.kind==errors::deadline_kind()){return .err(.Deadline);}
+            if(e.kind==4 && *fuel!=budget::unlimited()){return .err(.Fuel);}
+            return .err(.Code);
+        }
+    };
     return .ok(required);
 }
 
@@ -174,11 +189,20 @@ fn bool allowed_imports(ref catalog::Catalog imports,usize required,ref runs::Ru
 
 pub fn Result<Program,Error> retain(ref ir::Program code,catalog::Catalog imports,
     ref u32[] expected,ref policy::Policy ceiling,ref runs::RunConfig run,SourceMap map){
+    var usize fuel=budget::unlimited();
+    return retain_metered(code,imports,expected,ceiling,run,map,0,ref mut fuel);
+}
+
+pub fn Result<Program,Error> retain_metered(ref ir::Program code,catalog::Catalog imports,
+    ref u32[] expected,ref policy::Policy ceiling,ref runs::RunConfig run,SourceMap map,
+    usize deadline,ref mut usize fuel){
+    discard prepay(fuel,deadline)?;
     let u32[8] digest=switch(catalog::digest(ref imports)){
         case .ok(v):{v}case .err(_):{return .err(.Catalog);}
     };
     if(!same_digest(expected,ref digest)){return .err(.Binding);}
-    let usize required=inspect(code,ref imports)?;
+    let usize required=inspect(code,ref imports,deadline,fuel)?;
+    discard prepay(fuel,deadline)?;
     if(!runs::narrowed_to(run,ceiling) || !allowed_imports(ref imports,required,run) ||
         (has_emit(code) && !allows_output(run))){
         return .err(.Authority);
@@ -190,7 +214,8 @@ pub fn Result<Program,Error> retain(ref ir::Program code,catalog::Catalog import
 // must independently declare and receive the required capabilities at admission.
 pub fn Result<Program,Error> retain_for_entry(ref ir::Program code,catalog::Catalog imports,
     ref policy::Policy ceiling,ref u8[] module_name,ref u8[] function_name,SourceMap map){
-    let usize required=inspect(code,ref imports)?;
+    var usize fuel=budget::unlimited();
+    let usize required=inspect(code,ref imports,0,ref mut fuel)?;
     let usize one=1;
     var usize id=0;
     while(id<catalog::count(ref imports)){
