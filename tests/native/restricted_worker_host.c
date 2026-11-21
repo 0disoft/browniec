@@ -83,7 +83,7 @@ static BOOL child_read(HANDLE input, uint8_t *bytes, DWORD length) {
     return TRUE;
 }
 
-enum fixture_mode { cpu, clean, early, trailing, stalled };
+enum fixture_mode { cpu, clean, early, trailing, stalled, stalled_result };
 
 static int child(wchar_t *number, enum fixture_mode mode) {
     const HANDLE input = GetStdHandle(STD_INPUT_HANDLE);
@@ -123,6 +123,7 @@ static int child(wchar_t *number, enum fixture_mode mode) {
         !bc_worker_frame_preflight(header, sizeof(header), &expected, &received) ||
         !bc_worker_frame_complete(&received, 1) ||
         !child_read(input, &byte, 1) || byte != 41) return 8;
+    if (mode == stalled_result) return child_read(input, header, 1) ? 13 : 0;
     ++byte;
     received.kind = BC_WORKER_RESULT;
     if (!bc_worker_frame_encode(header, &received) ||
@@ -575,10 +576,15 @@ static void verify_broker(const wchar_t *path, const wchar_t *directory,
     const size_t wire = 4 * BC_WORKER_FRAME_BYTES + 3;
     const bc_worker_broker_amounts charge = {1, sizeof(broker) + 2, commit_limit, wire};
     bc_worker_broker_budget budget = {.limit = charge};
+    const bool idle_expiry = !wcscmp(mode, L"--child-stalled-result");
+    const bc_worker_broker_phase wait_phase = idle_expiry ?
+        BC_WORKER_BROKER_READ_RESULT : BC_WORKER_BROKER_READ_READY;
     bc_worker_broker_run run = {
         .budget = &budget,
         .application = path, .command_line = command, .directory = directory,
         .profile = profile, .commit_bytes = commit_limit, .cpu_ms = cpu_limit,
+        .startup_ms = expected == BC_WORKER_GATE_EXPIRED && !idle_expiry ? 1200 : 4000,
+        .io_idle_ms = idle_expiry ? 500 : 4000,
         .deadline = clock_ticks() + 100000000ULL, .wire_limit = wire - 1,
         .request = &request, .request_length = 1, .result = &result, .result_capacity = 1,
         .validate = fixture_result
@@ -590,19 +596,15 @@ static void verify_broker(const wchar_t *path, const wchar_t *directory,
     SetLastError(status);
     check(status == ERROR_SUCCESS && same_charge(budget.reserved, charge),
         "start worker through the broker at exact wire and aggregate capacity");
+    const uint64_t startup_deadline = broker.phase_deadline;
 
     while (broker.gate.status == BC_WORKER_GATE_PENDING && broker.phase != BC_WORKER_BROKER_FINISH) {
         size_t untouched = 123;
         check(!bc_worker_broker_take(&broker, &untouched) && untouched == 123,
             "broker never exposes output while a phase is pending");
         bc_worker_broker_step(&broker);
-        if (broker.phase == BC_WORKER_BROKER_READ_READY && broker.io.pipe) {
-            if (expected == BC_WORKER_GATE_CANCELLED) break;
-            if (expected == BC_WORKER_GATE_EXPIRED) {
-                // Shorten the fixture clock only after observing a real pending read.
-                broker.gate.deadline = clock_ticks();
-            }
-        }
+        if (broker.phase == BC_WORKER_BROKER_READ_READY && broker.io.pipe &&
+            expected == BC_WORKER_GATE_CANCELLED) break;
         if (broker.io.pipe || broker.phase == BC_WORKER_BROKER_WAIT_EXIT) Sleep(1);
     }
     size_t length = 123;
@@ -616,10 +618,17 @@ static void verify_broker(const wchar_t *path, const wchar_t *directory,
     const bool pending = broker.io.pipe != NULL;
     const bc_worker_gate_status terminal = broker.gate.status;
     if (expected == BC_WORKER_GATE_CANCELLED || expected == BC_WORKER_GATE_EXPIRED) {
-        check(pending && broker.phase == BC_WORKER_BROKER_READ_READY &&
+        check(pending && broker.phase == wait_phase &&
             terminal == (expected == BC_WORKER_GATE_CANCELLED ? BC_WORKER_GATE_PENDING : expected),
             "stop begins with a live outstanding read");
         if (expected == BC_WORKER_GATE_CANCELLED) verify_shared_budget(&budget, &run, charge);
+        else {
+            const uint64_t now = clock_ticks();
+            check(now >= broker.phase_deadline && now < run.deadline &&
+                (idle_expiry ? broker.phase_deadline != startup_deadline :
+                    broker.phase_deadline == startup_deadline),
+                "actual phase expiry precedes the session deadline");
+        }
     } else {
         check(terminal == expected, "broker recorded the expected outcome");
     }
@@ -641,6 +650,7 @@ int wmain(int argc, wchar_t **argv) {
     if (argc == 3 && !wcscmp(argv[1], L"--child-early")) return child(argv[2], early);
     if (argc == 3 && !wcscmp(argv[1], L"--child-trailing")) return child(argv[2], trailing);
     if (argc == 3 && !wcscmp(argv[1], L"--child-stalled")) return child(argv[2], stalled);
+    if (argc == 3 && !wcscmp(argv[1], L"--child-stalled-result")) return child(argv[2], stalled_result);
     check(argc == 2 && atexit(cleanup) == 0, "parent fixture arguments");
     verify_frames();
     verify_stream();
@@ -740,6 +750,7 @@ int wmain(int argc, wchar_t **argv) {
     verify_broker(argv[1], directory, L"--child-trailing", BC_WORKER_GATE_PROTOCOL);
     verify_broker(argv[1], directory, L"--child-stalled", BC_WORKER_GATE_CANCELLED);
     verify_broker(argv[1], directory, L"--child-stalled", BC_WORKER_GATE_EXPIRED);
+    verify_broker(argv[1], directory, L"--child-stalled-result", BC_WORKER_GATE_EXPIRED);
     check(CloseHandle(decoy), "close decoy");
     decoy = NULL;
     check(GetProcessHandleCount(GetCurrentProcess(), &final), "final launcher handles");
@@ -750,7 +761,8 @@ int wmain(int argc, wchar_t **argv) {
            "\"commitDenied\":true,\"cpuTermination\":true,\"privatePipeAcl\":true,"
            "\"framedExchange\":true,\"headerMutationsRejected\":48,"
            "\"boundedStream\":true,\"pipeEof\":true,\"publicationGate\":true,"
-           "\"ioLease\":true,\"brokerSessions\":5,\"sharedBudget\":true,\"handleDelta\":0,"
+           "\"ioLease\":true,\"brokerSessions\":6,\"sharedBudget\":true,"
+           "\"phaseDeadlines\":true,\"handleDelta\":0,"
            "\"coldHandleDelta\":%ld}\n", (long)final - (long)cold);
     return 0;
 }

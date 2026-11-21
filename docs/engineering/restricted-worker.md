@@ -157,6 +157,22 @@ without returning the first session's charge. Startup rollback restored the
 same counters, all reservations returned to zero, and warm handle delta was
 zero. Local receipt: `build/restricted-worker/20261121T154433211461Z/receipt.json`.
 
+### Phase deadlines
+
+The broker starts the startup window before opening handles and requires
+READY by its end. After READY it starts an idle window and renews it only
+when a pipe transfer makes progress or stdout reaches clean EOF. No phase
+window extends the absolute session deadline. The broker samples Windows
+interrupt time before processing a completion or accepting process exit.
+Close records expiry if that phase window already elapsed and preserves an
+earlier terminal cause.
+
+Windows development and /O2 verify separately expiring startup before
+READY and idle after START. Both cases hold an outstanding read when the
+phase expires, while the overall session deadline is still live. Reaping
+returns the reservation with zero net warm handles in each profile.
+Local receipt: `build/restricted-worker/20261121T154634779864Z/receipt.json`.
+
 ## Windows verification
 
 Run `python -B tools/verify-restricted-worker.py`. The development and optimized

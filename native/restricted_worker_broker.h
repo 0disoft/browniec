@@ -45,6 +45,7 @@ typedef struct bc_worker_broker {
     uint8_t *result;
     bc_worker_result_validator validate;
     size_t request_length, result_capacity;
+    uint64_t phase_deadline, idle_ticks;
     uint8_t trailing;
     bc_worker_broker_phase phase;
 } bc_worker_broker;
@@ -57,6 +58,7 @@ typedef struct bc_worker_broker_run {
     PSID profile;
     SIZE_T commit_bytes;
     DWORD cpu_ms;
+    DWORD startup_ms, io_idle_ms;
     uint64_t deadline;
     size_t wire_limit;
     const uint8_t *request;
@@ -70,7 +72,9 @@ typedef struct bc_worker_broker_run {
    at a stable address. Request and result spans must be disjoint and remain
    valid through close. Admission reserves a session, its control and span
    bytes, Job commit ceiling and wire envelope against the shared budget.
-   The deadline uses QueryInterruptTimePrecise ticks.
+   The absolute session deadline uses QueryInterruptTimePrecise ticks.
+   Startup covers launch through READY; after READY each completed transfer
+   renews the idle window within the session deadline.
    Call close even on start failure, until it reports the owner released. */
 DWORD bc_worker_broker_start(bc_worker_broker *broker, const bc_worker_broker_run *run);
 

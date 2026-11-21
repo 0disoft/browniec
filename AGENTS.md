@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-22): [Shared Windows broker admission](docs/engineering/restricted-worker.md#shared-admission-budget)
-  reserves session, parent, child commit and wire capacity through reaping.
-  Development and /O2 verify concurrent admission, rollback and refunds.
+- Latest runtime checkpoint (2026-11-22): [Windows broker phase deadlines](docs/engineering/restricted-worker.md#phase-deadlines)
+  enforce distinct startup and idle windows under the session deadline.
+  Development and /O2 verify expiry with actual outstanding reads.
 
 # Brownie C agent guidance
 

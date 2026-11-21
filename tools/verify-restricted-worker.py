@@ -64,7 +64,8 @@ def main():
                              commitDenied=True, cpuTermination=True, privatePipeAcl=True,
                              framedExchange=True, headerMutationsRejected=48,
                              boundedStream=True, pipeEof=True, publicationGate=True,
-                             ioLease=True, brokerSessions=5, sharedBudget=True, handleDelta=0)
+                             ioLease=True, brokerSessions=6, sharedBudget=True,
+                             phaseDeadlines=True, handleDelta=0)
                         and type(evidence.get('coldHandleDelta')) is int,
                         f'Unexpected worker result: {evidence}')
             receipt['profiles'].append(dict(profile=profile, exe=helper.image(exe), result=evidence))

@@ -38,6 +38,7 @@ void bc_worker_gate_stage(bc_worker_gate *gate, const bc_worker_rx *rx,
 void bc_worker_gate_stdout_end(bc_worker_gate *gate, bool clean_eof, uint64_t now);
 void bc_worker_gate_exit(bc_worker_gate *gate, uint32_t code, uint64_t now);
 void bc_worker_gate_io_error(bc_worker_gate *gate, uint64_t now);
+void bc_worker_gate_expire(bc_worker_gate *gate);
 void bc_worker_gate_cancel(bc_worker_gate *gate, uint64_t now);
 
 /* Deliver once, only before the deadline and after both EOF and exit 0.

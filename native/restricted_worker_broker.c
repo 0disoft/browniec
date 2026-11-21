@@ -10,6 +10,21 @@ static uint64_t now_ticks(void) {
     return now;
 }
 
+static uint64_t bounded_deadline(uint64_t now, uint64_t duration, uint64_t session) {
+    return now >= session || duration >= session - now ? session : now + duration;
+}
+
+static bool phase_live(bc_worker_broker *b, uint64_t now) {
+    if (b->gate.status != BC_WORKER_GATE_PENDING) return false;
+    if (now < b->phase_deadline) return true;
+    bc_worker_gate_expire(&b->gate);
+    return false;
+}
+
+static void renew_idle(bc_worker_broker *b, uint64_t now) {
+    b->phase_deadline = bounded_deadline(now, b->idle_ticks, b->gate.deadline);
+}
+
 static bc_worker_frame header(const bc_worker_broker *b, bc_worker_frame_kind kind,
     uint64_t sequence, size_t length) {
     bc_worker_frame frame = {.kind = kind, .sequence = sequence, .length = (uint32_t)length};
@@ -45,13 +60,15 @@ static void refund(bc_worker_broker *b) {
 
 DWORD bc_worker_broker_start(bc_worker_broker *b, const bc_worker_broker_run *run) {
     if (b->phase != BC_WORKER_BROKER_IDLE) return ERROR_BUSY;
-    if (!run->budget || !run->commit_bytes || (run->request_length && !run->request) ||
+    if (!run->budget || !run->commit_bytes || !run->startup_ms || !run->io_idle_ms ||
+        (run->request_length && !run->request) ||
         !run->result || !run->result_capacity ||
         !run->validate || run->request_length > BC_WORKER_FRAME_PAYLOAD_MAX ||
         run->result_capacity > BC_WORKER_FRAME_PAYLOAD_MAX) return ERROR_INVALID_PARAMETER;
     const size_t wire = 4 * BC_WORKER_FRAME_BYTES + run->request_length + run->result_capacity + 1;
     if (wire > run->wire_limit) return ERROR_NOT_ENOUGH_QUOTA;
-    if (now_ticks() >= run->deadline) return ERROR_TIMEOUT;
+    const uint64_t now = now_ticks();
+    if (now >= run->deadline) return ERROR_TIMEOUT;
     const bc_worker_broker_amounts charge = {
         .sessions = 1,
         .parent_bytes = sizeof(*b) + run->request_length + run->result_capacity,
@@ -63,6 +80,8 @@ DWORD bc_worker_broker_start(bc_worker_broker *b, const bc_worker_broker_run *ru
     b->budget = run->budget;
     b->charge = charge;
     bc_worker_gate_begin(&b->gate, run->deadline);
+    b->phase_deadline = bounded_deadline(now, (uint64_t)run->startup_ms * 10000, run->deadline);
+    b->idle_ticks = (uint64_t)run->io_idle_ms * 10000;
     b->phase = BC_WORKER_BROKER_SEND_HELLO;
     b->request = run->request;
     b->request_length = run->request_length;
@@ -78,7 +97,7 @@ DWORD bc_worker_broker_start(bc_worker_broker *b, const bc_worker_broker_run *ru
     if (!status) status = bc_restricted_worker_prepare(&b->worker, run->application,
         run->command_line, run->directory, run->profile, b->pipes.child, run->commit_bytes, run->cpu_ms);
     bc_worker_pipes_close_child(&b->pipes);
-    if (!status) status = now_ticks() < run->deadline ?
+    if (!status) status = phase_live(b, now_ticks()) ?
         bc_restricted_worker_resume(&b->worker) : ERROR_TIMEOUT;
     if (status) {
         bc_worker_gate_io_error(&b->gate, now_ticks());
@@ -99,10 +118,13 @@ static void step_tx(bc_worker_broker *b) {
             (DWORD)length, &count);
     }
     if (status == ERROR_IO_PENDING) return;
+    const uint64_t now = now_ticks();
+    if (!phase_live(b, now)) return;
     if (status || !bc_worker_tx_advance(&b->tx, count)) {
-        bc_worker_gate_io_error(&b->gate, now_ticks());
+        bc_worker_gate_io_error(&b->gate, now);
         return;
     }
+    if (b->phase == BC_WORKER_BROKER_SEND_START) renew_idle(b, now);
     if (bc_worker_tx_window(&b->tx, &bytes)) return;
     if (b->phase == BC_WORKER_BROKER_SEND_HELLO) {
         const bc_worker_frame ready = header(b, BC_WORKER_READY, 1, 0);
@@ -130,17 +152,20 @@ static void step_rx(bc_worker_broker *b) {
     if (status == ERROR_IO_PENDING) return;
     const bool eof = status == ERROR_BROKEN_PIPE;
     const uint64_t now = now_ticks();
+    if (!phase_live(b, now)) return;
     if (status && !eof) {
         bc_worker_gate_io_error(&b->gate, now);
         return;
     }
     if (probe_eof) {
         bc_worker_gate_stdout_end(&b->gate, eof, now);
+        if (eof) renew_idle(b, now);
         b->phase = BC_WORKER_BROKER_WAIT_EXIT;
         return;
     }
     const bc_worker_rx_status received = eof ? bc_worker_rx_eof(&b->rx) :
         bc_worker_rx_advance(&b->rx, count);
+    if (b->phase == BC_WORKER_BROKER_READ_RESULT && count) renew_idle(b, now);
     if (received == BC_WORKER_RX_HEADER || received == BC_WORKER_RX_BODY) return;
     if (received != BC_WORKER_RX_COMPLETE) {
         bc_worker_gate_stdout_end(&b->gate, false, now);
@@ -152,6 +177,7 @@ static void step_rx(bc_worker_broker *b) {
             bc_worker_gate_io_error(&b->gate, now);
             return;
         }
+        renew_idle(b, now);
         b->phase = BC_WORKER_BROKER_SEND_START;
     } else {
         bc_worker_gate_stage(&b->gate, &b->rx, b->validate, now);
@@ -163,10 +189,7 @@ bc_worker_gate_status bc_worker_broker_step(bc_worker_broker *b) {
     if (b->gate.status != BC_WORKER_GATE_PENDING || b->phase == BC_WORKER_BROKER_IDLE)
         return b->gate.status;
     const uint64_t now = now_ticks();
-    if (now >= b->gate.deadline) {
-        bc_worker_gate_cancel(&b->gate, now);
-        return b->gate.status;
-    }
+    if (!phase_live(b, now)) return b->gate.status;
     switch (b->phase) {
     case BC_WORKER_BROKER_SEND_HELLO:
     case BC_WORKER_BROKER_SEND_START: step_tx(b); break;
@@ -177,10 +200,12 @@ bc_worker_gate_status bc_worker_broker_step(bc_worker_broker *b) {
         const DWORD wait = WaitForSingleObject(b->worker.process, 0);
         if (wait == WAIT_TIMEOUT) break;
         DWORD code = 0;
-        if (wait != WAIT_OBJECT_0 || !GetExitCodeProcess(b->worker.process, &code))
-            bc_worker_gate_io_error(&b->gate, now_ticks());
-        else
-            bc_worker_gate_exit(&b->gate, code, now_ticks());
+        const BOOL known = wait == WAIT_OBJECT_0 && GetExitCodeProcess(b->worker.process, &code);
+        const uint64_t observed = now_ticks();
+        if (!phase_live(b, observed)) break;
+        if (known) bc_worker_gate_exit(&b->gate, code, observed);
+        else bc_worker_gate_io_error(&b->gate, observed);
+        b->phase_deadline = b->gate.deadline;
         b->phase = BC_WORKER_BROKER_FINISH;
         break;
     }
@@ -196,7 +221,8 @@ const uint8_t *bc_worker_broker_take(bc_worker_broker *b, size_t *length) {
 bool bc_worker_broker_close(bc_worker_broker *b) {
     if (b->phase == BC_WORKER_BROKER_IDLE) return true;
     if (b->phase != BC_WORKER_BROKER_REAPING) {
-        bc_worker_gate_cancel(&b->gate, now_ticks());
+        const uint64_t now = now_ticks();
+        if (phase_live(b, now)) bc_worker_gate_cancel(&b->gate, now);
         if (b->io.pipe) bc_worker_io_cancel(&b->io);
         b->phase = BC_WORKER_BROKER_REAPING;
     }
