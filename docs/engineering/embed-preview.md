@@ -80,9 +80,9 @@ untouched. Destroy a revision-2 Engine on its creating thread with
 source declares `module main;` with a public `fn i32 main()`. Pass an empty
 catalog slice. The source is copied during the call and may be reused when
 it returns. The existing Engine applies its configured compile deadline,
-working-memory limit and Program retention limits. This path has a fixed
-4096-byte source ceiling. Wiring the remaining compile policy fields into
-source admission is still pending.
+working-memory limit and Program retention limits. The source ceiling is the
+smaller of 4096 bytes and the Engine's `compile.source_bytes` limit. Wiring
+the remaining compile policy fields into source admission is still pending.
 
 Initialize the diagnostic's exact `struct_size`. The call zeros the output
 handle on entry and publishes a Program only after compilation and handle
@@ -99,3 +99,4 @@ query and Instance execution are still pending.
 The native C host passed both Windows `/Od` and `/O2` builds. It verifies
 4096-byte admission and 4097-byte rejection, exact source diagnostics,
 cross-Engine and cross-revision rejection, and stale Program handles.
+An Engine configured for 42 source bytes accepts exactly 42 and rejects 43.

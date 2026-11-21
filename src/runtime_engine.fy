@@ -326,14 +326,14 @@ fn Result<usize,Error> retain_entry(ref mut Engine e,entries::Entry selected,usi
     };
     return result(e,status);
 }
-fn usize project_source_limit(ref Engine e){
+pub fn usize source_byte_limit(ref Engine e){
     let usize ceiling=sources::source_limit();
     if(!e.meta.configured){return ceiling;}
     let policy_limits::CompileLimits bounds=policy::compile_limits(vec::at<policy::Policy>(ref e.policy,0));
     return if(bounds.source_bytes<ceiling){bounds.source_bytes}else{ceiling};
 }
 fn Result<sources::Snapshot,Error> load_project(ref Engine e,ref projects::Project metadata,ref u8[] root,usize deadline){
-    let usize limit=project_source_limit(e);
+    let usize limit=source_byte_limit(e);
     return project_snapshot(project_loader::load_until(metadata,root,limit,deadline));
 }
 fn Result<sources::Snapshot,Error> project_snapshot(Result<sources::Snapshot,project_loader::Error> collected){
@@ -503,7 +503,7 @@ pub fn Result<usize,Error> compile_anchored_project_host(ref mut Engine e,ref pr
     let policy_limits::CompileLimits limits=host_compile_limits(e)?;
     if(projects::count(project)>limits.modules){return .err(error(8));}
     let usize deadline=deadline_after(limits.deadline_ms)?;
-    let sources::Snapshot snapshot=project_snapshot(project_loader::load_from_until(project,root,project_source_limit(e),deadline))?;
+    let sources::Snapshot snapshot=project_snapshot(project_loader::load_from_until(project,root,source_byte_limit(e),deadline))?;
     if(clock::expired(deadline)){return .err(compile_timeout());}
     let modules::Index index=switch(project_binding::index_host(project,snapshot,limits.tokens)){
         case .ok(v):{v}case .err(e):{return .err(host_binding_error(e));}
@@ -753,7 +753,7 @@ pub fn Result<usize,Error> begin_compile_anchored_project_output(ref mut Engine 
 }
 fn Result<input_entries::InputEntry,Error> anchored_project_input_entry(ref Engine e,ref projects::Project metadata,
     ref mut anchored::Root root,usize deadline){
-    let sources::Snapshot snapshot=project_snapshot(project_loader::load_from_until(metadata,root,project_source_limit(e),deadline))?;
+    let sources::Snapshot snapshot=project_snapshot(project_loader::load_from_until(metadata,root,source_byte_limit(e),deadline))?;
     return select_project_input(metadata,snapshot,deadline);
 }
 

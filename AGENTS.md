@@ -1,6 +1,6 @@
 - Latest runtime checkpoint (2026-11-21): [Revision-2 scalar Programs](docs/engineering/embed-preview.md#revision-2-scalar-programs)
   exports compilation and release. Windows /Od and /O2 verified source spans,
-  size limits, cross-Engine and cross-revision rejection, and stale handles.
+  fixed and policy source limits, Engine ownership, and stale handles.
 
 # Brownie C agent guidance
 

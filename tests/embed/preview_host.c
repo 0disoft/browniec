@@ -72,6 +72,30 @@ static DWORD WINAPI foreign_engine_destroy(void *arg){
     return bc_engine_destroy(*(const bc_handle *)arg);
 }
 
+static void revision_two_source_limit(uint8_t *policy,size_t length){
+    static const uint8_t module[]="main";
+    static const uint8_t text[]="module main; pub fn i32 main(){return 77;} ";
+    uint8_t *limit=(uint8_t *)strstr((const char *)policy,"\"source_bytes\": 262144");
+    assert(limit);
+    limit+=sizeof("\"source_bytes\": ")-1;
+    assert(sizeof(text)-2==42);
+    memcpy(limit,"    42",6);
+    bc_handle engine=0,program=UINT64_MAX;
+    bc_diagnostic diagnostic={.struct_size=sizeof(diagnostic)};
+    assert(bc_engine_create(2,(bc_slice){policy,length},&engine,&diagnostic)==BC_OK);
+    memcpy(limit,"262144",6);
+
+    bc_source source={{module,sizeof(module)-1},{text,sizeof(text)-1}};
+    assert(bc_compile(engine,&source,1,(bc_slice){0},&program,&diagnostic)==BC_RESOURCE_LIMIT);
+    assert(program==0);
+    expect_diagnostic(&diagnostic,BC_RESOURCE_LIMIT);
+    --source.source_utf8.len;
+    assert(bc_compile(engine,&source,1,(bc_slice){0},&program,&diagnostic)==BC_OK);
+    expect_diagnostic(&diagnostic,BC_OK);
+    assert(bc_program_release(engine,program)==BC_OK);
+    assert(bc_engine_destroy(engine)==BC_OK);
+}
+
 static void revision_two_programs(bc_handle engine,bc_slice policy){
     static const uint8_t module[]="main";
     static const uint8_t invalid[]="module main; pub fn bool main(){return true;}";
@@ -173,6 +197,7 @@ static void revision_two_engines(void){
     assert(handle!=0);
     expect_diagnostic(&diagnostic,BC_OK);
     revision_two_programs(handle,(bc_slice){policy,length});
+    revision_two_source_limit(policy,length);
     memset(policy,0,sizeof(policy));
     HANDLE thread=CreateThread(NULL,0,foreign_engine_destroy,&handle,0,NULL);
     DWORD status=0;
@@ -245,5 +270,6 @@ int main(void){
     puts("PASS: four owner threads independently compiled, stepped, and destroyed their Engines without retries");
     puts("PASS: revision-2 query, Engine policy admission, diagnostic sizing, quotas and stale handles");
     puts("PASS: revision-2 scalar compilation, source spans, size limits and Program ownership");
+    puts("PASS: revision-2 Engine source policy rejects 43 bytes and accepts 42 bytes");
     return 0;
 }

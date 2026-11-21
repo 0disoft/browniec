@@ -61,6 +61,7 @@ fn Result<entries::Entry,engine::Error> entry(ref u8[] source){
 }
 
 fn Result<usize,engine::Error> compile(ref mut engine::Engine owner,ptr u8 data,usize length){
+    if(length>engine::source_byte_limit(owner)){return .err(failed(8));}
     // The synchronous C caller keeps its source alive through the Snapshot copy.
     let usize lifetime=length;
     let ref u8[] source=unsafe{byte_slice::from_raw_parts(ref lifetime,data,length)};
