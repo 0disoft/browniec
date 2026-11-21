@@ -77,7 +77,8 @@ untouched. Destroy a revision-2 Engine on its creating thread with
 ## Revision-2 scalar Programs
 
 `bc_compile` accepts one `bc_source` whose module slice is `main` and whose
-source declares `module main;` with a public `fn i32 main()`. Pass an empty
+source declares `module main;` with a public `fn i32 main()` or
+`fn i32 main(ref u8[] data)`. Pass an empty
 catalog slice. The source is copied during the call and may be reused when
 it returns. The existing Engine applies its configured compile deadline,
 working-memory limit and Program retention limits. The source ceiling is the
@@ -97,7 +98,8 @@ revision-2 Program handles use separate API entry points.
 
 `bc_program_entry_info` queries `main::main` on the same Engine and thread.
 Initialize both output structure sizes. The query returns ABI revision 2,
-`BC_INPUT_NONE`, and the Program-owned, two-byte JSON capability array `[]`.
+the retained signature's input kind (`BC_INPUT_NONE` or `BC_INPUT_BYTES`),
+and the Program-owned, two-byte JSON capability array `[]`.
 The slice is read-only and expires at Program release. Failed queries leave
 entry info storage unchanged.
 
@@ -110,12 +112,16 @@ and rejection across threads, Engines, ABI revisions and stale handles.
 
 ## Revision-2 scalar Instance preparation
 
-`bc_instance_create` accepts empty guest input and an explicit
+`bc_instance_create` accepts guest input and an explicit
 `brownie.run/0.3` configuration. The entry must be `main::main` and `requires`
 and `grants` must be empty. The Engine validates the configuration against
 its own policy and reserves the prepared continuation under the requested
 memory and Fuel limits. It records the monotonic deadline before preparation.
-The caller can reuse the configuration buffer when the call returns.
+A zero-argument entry requires empty input. A shared-byte entry copies the
+input into an immutable Instance-owned snapshot. Empty input is a valid
+snapshot. The Engine checks `limits.input_bytes` and charges snapshot storage
+alongside the continuation against the memory limit. The caller can reuse
+the input and configuration buffers once the call returns.
 
 Creation zeros the output handle and issues a handle only after successful
 preparation and registration. Multiple Instances can pin one Program. The
@@ -126,6 +132,13 @@ Engine's owner thread.
 Both Windows builds verified rejected input and run configurations, setup
 Fuel exhaustion, two Program pins, and foreign-thread and stale-handle
 rejection during Instance destruction.
+
+Both builds also verified that two Instances sharing a byte-input Program
+retain different snapshots of the same caller buffer. After the buffer was
+overwritten and the Program handle released, they returned 42 and 77. An
+empty snapshot returned -1. A three-byte ceiling admitted three bytes and
+refused four, and the peak accounted bytes increased by exactly three over
+the empty snapshot.
 
 ## Revision-2 scalar stepping
 

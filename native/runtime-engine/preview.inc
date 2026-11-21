@@ -27,7 +27,10 @@ typedef struct preview_child {
     uintptr_t id;
     union {
         uint64_t fuel;
-        uint8_t capabilities_json[2];
+        struct {
+            uint32_t input_kind;
+            uint8_t capabilities_json[2];
+        } program;
     };
 } preview_child;
 
@@ -171,9 +174,11 @@ static uint32_t compile_program(bc_handle engine,uint32_t revision,bc_slice sour
         leave_preview(&admission);
         return compile_diagnostic(diagnostic,BC_ALLOCATION_ERROR,source,index,0,0);
     }
-    __typeof__(P2(&owner->engine,source.data,source.len)) compiled=P2(&owner->engine,source.data,source.len);
+    __typeof__(P2(&owner->engine,source.data,source.len,0)) compiled=
+        P2(&owner->engine,source.data,source.len,revision==BC_ABI_REVISION);
     if(compiled.tag==FY_RESULT_OK){
-        *program=(preview_child){.owner=owner,.id=compiled.p_0,.capabilities_json={'[',']'}};
+        *program=(preview_child){.owner=owner,.id=compiled.p_0.f_0,
+            .program={.input_kind=compiled.p_0.f_1?BC_INPUT_BYTES:BC_INPUT_NONE,.capabilities_json={'[',']'}}};
         status=bc_abi_registry_insert(&admission,PROGRAM_HANDLE,(uintptr_t)program,out);
         if(status==BC_OK){++owner->children;}
         else if(P7(&owner->engine,program->id).tag!=FY_RESULT_OK){preview_invariant();}
@@ -230,9 +235,9 @@ uint32_t BC_CALL bc_program_entry_info(bc_handle engine,bc_handle program,bc_sli
         status=BC_BAD_ARGUMENT;
         message="Scalar Program entry must be main::main";
     }else{
-        // The verified scalar profile admits no host catalog or input.
-        *out=(bc_entry_info){.struct_size=sizeof(*out),.abi_revision=BC_ABI_REVISION,.input_kind=BC_INPUT_NONE,
-            .required_capabilities_json={code->capabilities_json,sizeof(code->capabilities_json)}};
+        *out=(bc_entry_info){.struct_size=sizeof(*out),.abi_revision=BC_ABI_REVISION,
+            .input_kind=code->program.input_kind,
+            .required_capabilities_json={code->program.capabilities_json,sizeof(code->program.capabilities_json)}};
     }
     leave_preview(&admission);
     *diagnostic=diagnostic_result(status,message);
@@ -240,7 +245,7 @@ uint32_t BC_CALL bc_program_entry_info(bc_handle engine,bc_handle program,bc_sli
 }
 
 static uint32_t create_instance(bc_handle engine,bc_handle program,uint32_t revision,uint64_t fuel,
-                                bc_slice config,bc_handle *out){
+                                bc_slice input,bc_slice config,bc_handle *out){
     bc_abi_registry_admission admission;
     uint32_t status=bc_abi_registry_enter(program,PROGRAM_HANDLE,engine,&admission);
     if(status!=BC_OK){return status;}
@@ -251,8 +256,8 @@ static uint32_t create_instance(bc_handle engine,bc_handle program,uint32_t revi
     if(!instance){leave_preview(&admission);return BC_ALLOCATION_ERROR;}
     uint8_t failure=0;
     if(revision==BC_ABI_REVISION){
-        __typeof__(P11(&owner->engine,code->id,config.data,config.len)) prepared=
-            P11(&owner->engine,code->id,config.data,config.len);
+        __typeof__(P11(&owner->engine,code->id,input.data,input.len,config.data,config.len)) prepared=
+            P11(&owner->engine,code->id,input.data,input.len,config.data,config.len);
         if(prepared.tag==FY_RESULT_OK){
             instance->child=(preview_child){.owner=owner,.id=prepared.p_0.f_0,.fuel=prepared.p_0.f_1};
             instance->peak=prepared.p_0.f_2;
@@ -278,7 +283,7 @@ static uint32_t create_instance(bc_handle engine,bc_handle program,uint32_t revi
 uint32_t BC_CALL bc_preview_instance_create(bc_handle engine,bc_handle program,uint64_t fuel,bc_handle *out){
     if(!out){return BC_BAD_ARGUMENT;}
     if(fuel>BC_PREVIEW_MAX_FUEL){return BC_RESOURCE_LIMIT;}
-    return create_instance(engine,program,BC_PREVIEW_REVISION,fuel,(bc_slice){0},out);
+    return create_instance(engine,program,BC_PREVIEW_REVISION,fuel,(bc_slice){0},(bc_slice){0},out);
 }
 
 uint32_t BC_CALL bc_instance_create(bc_handle engine,bc_handle program,bc_slice input,bc_slice config,
@@ -287,14 +292,14 @@ uint32_t BC_CALL bc_instance_create(bc_handle engine,bc_handle program,bc_slice 
     if(!diagnostic||diagnostic->struct_size!=sizeof(*diagnostic)){return BC_BAD_ARGUMENT;}
     uint32_t status;
     const char *message;
-    if(!out||input.len||!config.data||!config.len){
+    if(!out||(!input.data&&input.len)||!config.data||!config.len){
         status=BC_BAD_ARGUMENT;
-        message="Scalar Instance requires empty input and a run configuration";
+        message="Invalid input slice or run configuration";
     }else if(config.len>65536){
         status=BC_RESOURCE_LIMIT;
         message="Run configuration exceeds the byte limit";
     }else{
-        status=create_instance(engine,program,BC_ABI_REVISION,0,config,out);
+        status=create_instance(engine,program,BC_ABI_REVISION,0,input,config,out);
         message=status==BC_OK?"":"Instance preparation failed";
     }
     *diagnostic=diagnostic_result(status,message);

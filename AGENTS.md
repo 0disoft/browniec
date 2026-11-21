@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-21): [Revision-2 scalar stepping](docs/engineering/embed-preview.md#revision-2-scalar-stepping)
-  enforces the configured call-frame limit per Instance. Windows /Od and /O2
-  verified a one-frame trap and a two-frame success with the same Program.
+- Latest runtime checkpoint (2026-11-21): [Revision-2 byte input](docs/engineering/embed-preview.md#revision-2-scalar-instance-preparation)
+  binds an immutable snapshot per Instance. Windows /Od and /O2 verified
+  separate results, empty input, exact byte quota, and peak accounting.
 
 # Brownie C agent guidance
 

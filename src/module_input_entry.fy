@@ -71,6 +71,9 @@ fn Result<Checked,modules::Error> checked(ref modules::Index index,ref u8[] path
     let usize selected=modules::entry(index,path,name)?;
     return signature(index,selected);
 }
+pub fn bool has_i32_input(ref modules::Index index,ref u8[] path,ref u8[] name){
+    return checked(index,path,name).is_ok;
+}
 pub fn Result<InputEntry,modules::Error> select_i32_input(modules::Index index,ref u8[] path,ref u8[] name){
     let Checked proof=checked(ref index,path,name)?;
     return .ok(InputEntry{.index=index,.selected=proof.selected,.signature=proof.signature,

@@ -80,8 +80,9 @@ BC_BOOTSTRAP_QUERY_API uint32_t BC_CALL bc_get_abi_info_v2(uint32_t requested_re
 BC_API uint32_t BC_CALL bc_engine_create(uint32_t requested_revision,
     bc_slice policy_json, bc_handle *out_engine, bc_diagnostic *diagnostic);
 /* Scalar preview DLL: one source of 1..4096 UTF-8 bytes with module slice
-   "main", a matching module declaration and public fn i32 main(). The catalog
-   must be empty. Source storage can be reused after this call. */
+   "main", a matching module declaration and public fn i32 main() or
+   public fn i32 main(ref u8[] data). The catalog must be empty.
+   Source storage can be reused after this call. */
 BC_API uint32_t BC_CALL bc_compile(bc_handle engine,
     const bc_source *sources, uint32_t source_count, bc_slice catalog_json,
     bc_handle *out_program, bc_diagnostic *diagnostic);
@@ -89,9 +90,10 @@ BC_API uint32_t BC_CALL bc_compile(bc_handle engine,
    output sizes. The read-only JSON view is valid until Program release. */
 BC_API uint32_t BC_CALL bc_program_entry_info(bc_handle engine, bc_handle program,
     bc_slice module, bc_slice function, bc_entry_info *out_info, bc_diagnostic *diagnostic);
-/* Scalar preview DLL: empty input and a brownie.run/0.3 configuration for
-   main::main with empty requires and grants. The Engine checks its policy
-   before preparing and pinning the Program. */
+/* Scalar preview DLL: a brownie.run/0.3 configuration for main::main with
+   empty requires and grants. BC_INPUT_NONE requires empty input.
+   BC_INPUT_BYTES copies the slice during preparation, including empty input.
+   The Engine checks its policy before preparing and pinning the Program. */
 BC_API uint32_t BC_CALL bc_instance_create(bc_handle engine, bc_handle program,
     bc_slice input, bc_slice run_config_json, bc_handle *out_instance, bc_diagnostic *diagnostic);
 /* Work unit: dispatch, <=4096-byte bulk chunk or <=64-entry metadata chunk.

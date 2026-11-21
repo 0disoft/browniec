@@ -578,8 +578,9 @@ pub fn Result<bool,Error> host_program_emits(ref Engine e,usize id){
 }
 
 // Trusted embedding can reuse the output Machine for its resumable dispatcher.
-// Inspect the retained proof before offering that Program to a scalar caller.
-pub fn Result<bool,Error> scalar_preview_program(ref Engine e,usize id){
+// Read the input signature from the retained proof. Output authority is denied
+// for this embedding profile.
+pub fn Result<bool,Error> preview_accepts_input(ref Engine e,usize id){
     let u32 status=unsafe{control_access_raw(e as ptr void)};
     if(status!=0){return .err(error(status));}
     let usize pi=switch(program_index(ref e.programs,id,true)){
@@ -588,7 +589,8 @@ pub fn Result<bool,Error> scalar_preview_program(ref Engine e,usize id){
     let ref Program retained=vec::at<Program>(ref e.programs,pi);
     if(vec::len<output_programs::Program>(ref retained.output)!=1){return .err(error(1));}
     let ref output_programs::Program code=vec::at<output_programs::Program>(ref retained.output,0);
-    return .ok(!output_programs::accepts_input(code) && !output_programs::requires_emit(code));
+    if(output_programs::requires_emit(code)){return .err(error(5));}
+    return .ok(output_programs::accepts_input(code));
 }
 
 pub fn Result<usize,Error> prepare_scalar_host(ref mut Engine e,usize program,ref run_config::RunConfig run){
@@ -810,22 +812,39 @@ fn Result<run_config::RunConfig,Error> parse_scalar_run(ref Engine e,ref u8[] co
     return .ok(run);
 }
 
-pub fn Result<ScalarPreparation,Error> prepare_scalar_preview(ref mut Engine e,usize program,ref u8[] configuration){
-    if(!scalar_preview_program(e,program)?){return .err(error(5));}
+pub fn Result<ScalarPreparation,Error> prepare_scalar_preview(ref mut Engine e,usize program,ref u8[] input,ref u8[] configuration){
+    let bool accepts=preview_accepts_input(e,program)?;
+    if(!accepts && input.len!=0){return .err(error(1));}
     let run_config::RunConfig run=parse_scalar_run(e,configuration)?;
     if(!bytes::equal(run_config::module_name(ref run),b"main") ||
         !bytes::equal(run_config::function_name(ref run),b"main") ||
         run_config::requires_count(ref run)!=0 || run_config::grants_count(ref run)!=0){return .err(error(5));}
     let policy_limits::RunLimits limits=run_config::run_limits(ref run);
     let usize pending=required_pending_bytes(e,program,0)?;
-    if(limits.fuel>e.meta.limits.fuel || pending>limits.memory_bytes){return .err(error(8));}
+    if(limits.fuel>e.meta.limits.fuel || input.len>limits.input_bytes ||
+        pending>limits.memory_bytes || input.len>limits.memory_bytes-pending){return .err(error(8));}
     let usize deadline=deadline_after(limits.deadline_ms)?;
-    var vec::Vec<input_bytes::Snapshot> incoming=vec::empty<input_bytes::Snapshot>();
-    let u32 status=unsafe{instance_output_raw(e as ptr mut void,program,ref mut incoming as ptr mut void,
-        limits.fuel,0,2,deadline)};
-    let usize id=result(e,status)?;
+    var usize peak=pending;
+    let usize id=if(accepts){
+        var usize unused=0;
+        let input_bytes::Snapshot snapshot=switch(input_bytes::snapshot(input,limits.input_bytes,0,ref mut unused)){
+            case .ok(v):{v}
+            case .err(reason):{return .err(error(switch(reason){
+                case .Allocation:{6}case .Limit:{8}case .Fuel:{8}case .Bounds:{1}
+            }));}
+        };
+        let usize capacity=input_bytes::capacity(ref snapshot);
+        if(capacity>limits.memory_bytes-pending){return .err(error(8));}
+        peak+=capacity;
+        bind_input_output(e,program,snapshot,limits.fuel,0,2,deadline)?
+    }else{
+        var vec::Vec<input_bytes::Snapshot> incoming=vec::empty<input_bytes::Snapshot>();
+        let u32 status=unsafe{instance_output_raw(e as ptr mut void,program,ref mut incoming as ptr mut void,
+            limits.fuel,0,2,deadline)};
+        result(e,status)?
+    };
     let usize prepared=prepare_created_instance(e,id,limits.call_frames)?;
-    return .ok(ScalarPreparation{.instance=prepared,.fuel=limits.fuel,.peak=pending,
+    return .ok(ScalarPreparation{.instance=prepared,.fuel=limits.fuel,.peak=peak,
         .start=deadline-limits.deadline_ms*10000});
 }
 

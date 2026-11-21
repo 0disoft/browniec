@@ -88,12 +88,18 @@ static bc_event finish_revision_two(bc_handle instance,uint32_t quantum){
     return event;
 }
 
-static void revision_two_instances(bc_handle engine,bc_handle program){
-    uint8_t config[1024]={0};
+static size_t read_run_config(uint8_t *config,size_t capacity){
     FILE *run=NULL;
     assert(fopen_s(&run,"run.json","rb")==0);
-    const size_t length=fread(config,1,sizeof(config)-1,run);
+    const size_t length=fread(config,1,capacity-1,run);
     assert(length>0 && feof(run) && fclose(run)==0);
+    config[length]=0;
+    return length;
+}
+
+static void revision_two_instances(bc_handle engine,bc_handle program){
+    uint8_t config[1024];
+    const size_t length=read_run_config(config,sizeof(config));
     bc_slice json={config,length},empty={0};
     bc_handle first=UINT64_MAX,second=0;
     bc_diagnostic diagnostic={.struct_size=sizeof(diagnostic)};
@@ -161,6 +167,47 @@ static void revision_two_instances(bc_handle engine,bc_handle program){
     assert(bc_instance_destroy(limited)==BC_OK);
     assert(bc_instance_destroy(first)==BC_OK && bc_instance_destroy(first)==BC_INVALID_HANDLE);
     assert(bc_instance_destroy(second)==BC_OK);
+}
+
+static void revision_two_byte_inputs(bc_handle engine){
+    static const uint8_t main[]="main";
+    static const uint8_t text[]="module main; pub fn i32 main(ref u8[] data){"
+        "if(data.len==0){return -1;}if(data[0]!=0 || data[1]!=255){return -2;}"
+        "return data[data.len-1] as i32;}";
+    const bc_slice name={main,sizeof(main)-1},empty={0};
+    const bc_source source={name,{text,sizeof(text)-1}};
+    bc_diagnostic diagnostic={.struct_size=sizeof(diagnostic)};
+    bc_handle program=0,first=0,second=0,absent=0,refused=UINT64_MAX;
+    assert(bc_compile(engine,&source,1,empty,&program,&diagnostic)==BC_OK);
+    bc_entry_info info={.struct_size=sizeof(info)};
+    assert(bc_program_entry_info(engine,program,name,name,&info,&diagnostic)==BC_OK);
+    assert(info.input_kind==BC_INPUT_BYTES && info.required_capabilities_json.len==2);
+    assert(memcmp(info.required_capabilities_json.data,"[]",2)==0);
+
+    uint8_t config[1024];
+    const bc_slice run={config,read_run_config(config,sizeof(config))};
+    uint8_t *cap=(uint8_t *)strstr((const char *)config,"\"input_bytes\":1048576");
+    assert(cap);
+    memcpy(cap+sizeof("\"input_bytes\":")-1,"      3",7);
+    uint8_t bytes[]={0,255,42,99};
+    assert(bc_instance_create(engine,program,(bc_slice){NULL,1},run,&refused,&diagnostic)==BC_BAD_ARGUMENT);
+    assert(refused==0);
+    assert(bc_instance_create(engine,program,(bc_slice){bytes,sizeof(bytes)},run,&refused,&diagnostic)==BC_RESOURCE_LIMIT);
+    assert(refused==0);
+    assert(bc_instance_create(engine,program,(bc_slice){bytes,3},run,&first,&diagnostic)==BC_OK);
+    bytes[2]=77;
+    assert(bc_instance_create(engine,program,(bc_slice){bytes,3},run,&second,&diagnostic)==BC_OK);
+    assert(bc_instance_create(engine,program,empty,run,&absent,&diagnostic)==BC_OK);
+    memset(bytes,0,sizeof(bytes));
+    memset(config,0,sizeof(config));
+    assert(bc_program_release(engine,program)==BC_OK);
+    bc_event a=finish_revision_two(first,1),b=finish_revision_two(second,64),c=finish_revision_two(absent,64);
+    assert(a.kind==BC_DONE && a.return_i32==42 && b.kind==BC_DONE && b.return_i32==77);
+    assert(c.kind==BC_DONE && c.return_i32==-1);
+    assert(a.fuel_used==b.fuel_used && a.peak_accounted_bytes==b.peak_accounted_bytes);
+    assert(a.peak_accounted_bytes==c.peak_accounted_bytes+3);
+    assert(bc_instance_destroy(first)==BC_OK && bc_instance_destroy(second)==BC_OK);
+    assert(bc_instance_destroy(absent)==BC_OK);
 }
 
 static DWORD WINAPI foreign_entry_lookup(void *arg){
@@ -323,6 +370,7 @@ static void revision_two_engines(void){
     assert(handle!=0);
     expect_diagnostic(&diagnostic,BC_OK);
     revision_two_programs(handle,(bc_slice){policy,length});
+    revision_two_byte_inputs(handle);
     revision_two_source_limit(policy,length);
     memset(policy,0,sizeof(policy));
     HANDLE thread=CreateThread(NULL,0,foreign_engine_destroy,&handle,0,NULL);
@@ -401,5 +449,6 @@ int main(void){
     puts("PASS: revision-2 Instance policy admission, two Program pins, and destruction");
     puts("PASS: revision-2 quanta 1/64, independent cancellation, deadline precedence, and terminal snapshots");
     puts("PASS: call frame limit 1 traps and limit 2 returns 77 from the same Program");
+    puts("PASS: revision-2 byte input snapshots, empty input, exact byte quota, and peak accounting");
     return 0;
 }
