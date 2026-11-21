@@ -11,6 +11,7 @@ import declaration_skip_work as skipping;
 import locals as locals;
 import errors as errors;
 import host_source as host_source;
+import types as types;
 import metadata_budget as budget;
 
 // One untyped function signature. The owner pins source and private Table.
@@ -49,6 +50,8 @@ pub fn Result<bool,errors::Error> advance(ref u8[] source,ref mut functions::Tab
         let Result<bool,errors::Error> result=annotations::advance(source,ref table.context,ref mut w.annotation,meter);
         w.token=annotations::observed(ref w.annotation);let bool done=result?;
         if(done){let annotations::Annotation value=annotations::prepared(ref w.annotation)?;
+            if(table.semantic_depth<2 && (types::tagged(value.tag) || value.length!=0 || value.slice)){
+                return .err(errors::make(4,w.annotation.at));}
             if(w.phase==2){w.result=value;w.phase=3;}else{w.parameter=value;w.phase=9;}}
         return .ok(false);
     }
@@ -64,7 +67,8 @@ pub fn Result<bool,errors::Error> advance(ref u8[] source,ref mut functions::Tab
         w.function=table.count;next(w,1);return .ok(false);}
     if(w.phase==1){
         if(table.scalar_host_calls && w.token.kind==2 && lexer::equal(source[w.token.begin..w.token.end],b"Result")){
-            let u8 success=host_source::annotation(source,ref mut w.token)?;
+            let usize at=w.token.begin;let u8 success=host_source::annotation(source,ref mut w.token)?;
+            if(table.semantic_depth<2){return .err(errors::make(4,at));}
             w.result.tag=128+success;
             w.phase=3;return .ok(false);
         }

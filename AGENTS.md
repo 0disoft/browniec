@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-22): [Nominal record depth](docs/engineering/restricted-worker.md#nominal-record-depth)
-  applies the project policy during record layout validation. Both Windows
-  worker profiles admit the nested record at depth two and reject it at one.
+- Latest runtime checkpoint (2026-11-22): [Signature type depth](docs/engineering/restricted-worker.md#signature-type-depth)
+  applies the policy to compound parameter and return annotations. Windows
+  development and /O2 admit the tested annotations at depth two and reject them at one.
 
 # Brownie C agent guidance
 

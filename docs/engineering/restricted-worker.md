@@ -783,6 +783,24 @@ passes 52 configured, 22 catalog and five managed project cases plus nine
 native host transport cases. All 455 receipt input hashes matched.
 Local receipt: `build/restricted-worker/20261121T201053673711Z/receipt.json`.
 
+### Signature type depth
+
+The indexed signature scan applies `compile.depth` before recording compound
+return and parameter annotations. The admitted shallow Option, Result,
+scalar array, and slice each have one layer around a scalar leaf, for depth
+two. Catalog-specific Result returns go through the same depth gate after
+parsing their success and error types. Plain scalar and nominal names are
+leaves. A depth denial points to the first byte of the annotation.
+
+The preceding /O2 image ran each of the Option return, Result return and
+array parameter fixtures at depth one and returned 42. Both rebuilt Windows
+profiles admit them at two and reject them at one with `compile_limit`.
+The shared-byte entry also rejects at one in both worker routes, with the
+ordinary check pointing to `ref` in the entry source. Each profile passed
+59 configured, 23 catalog and five managed project cases plus nine native
+host transport cases. All 455 receipt input hashes matched.
+Local receipt: `build/restricted-worker/20261121T201938837937Z/receipt.json`.
+
 ## Windows verification
 
 Run `python -B tools/verify-restricted-worker.py`. The development and optimized

@@ -234,6 +234,25 @@ def verify_configured_project(run, need, image, folder, env):
     policy['compile'] = compile_defaults
     math_file.write_bytes(original_source)
 
+    compound_signatures = (
+        (b'fn Option<i32> helper(){return .none;}', b'Option'),
+        (b'fn Result<i32,bool> helper(){return .ok(42);}', b'Result'),
+        (b'fn i32 helper(i32[1] items){return items[0];}', b'i32[1]'),
+    )
+    for signature, start in compound_signatures:
+        typed_source = original_source + signature
+        math_file.write_bytes(typed_source)
+        policy['compile'] = dict(compile_defaults, source_bytes=4096, depth=2)
+        check()
+        policy['compile']['depth'] = 1
+        location = check(3, 'compile_limit', 'check')['error']['location']
+        offset = typed_source.index(start)
+        need(location['source_index'] == 1 and location['offset'] == offset and
+             location['end_offset'] == offset + 1,
+             f'Unexpected signature depth location: {location}')
+    policy['compile'] = compile_defaults
+    math_file.write_bytes(original_source)
+
     runtime = config['limits'].copy()
     config['limits'].update(memory_bytes=1, object_bytes=1, input_bytes=0, output_bytes=0,
                             host_request_bytes=1, host_response_bytes=1)
@@ -261,7 +280,16 @@ def verify_configured_project(run, need, image, folder, env):
     input_limit = config['limits']['input_bytes']
     policy['compile']['source_bytes'] = 4096
     config['limits']['input_bytes'] = 8193
+    depth = policy['compile']['depth']
+    policy['compile']['depth'] = 2
     check(payload=payload, value=255)
+    policy['compile']['depth'] = 1
+    location = check(3, 'compile_limit', 'check')['error']['location']
+    offset = entry.read_bytes().index(b'ref u8[]')
+    need(location['source_index'] == 0 and location['offset'] == offset and
+         location['end_offset'] == offset + 1,
+         f'Unexpected shared slice signature depth location: {location}')
+    policy['compile']['depth'] = depth
     config['limits']['input_bytes'] = 8192
     check(5, 'input_limit', payload=payload)
     config['limits']['input_bytes'] = input_limit
@@ -321,7 +349,7 @@ def verify_configured_project(run, need, image, folder, env):
     config['entry']['function'] = manifest['entry']['function']
     config['grants'] = ['brownie.output.emit']
     check(4, 'unavailable')
-    return 52
+    return 59
 
 
 def verify_project_host(run, need, image, folder, env):
@@ -457,9 +485,13 @@ def verify_project_host(run, need, image, folder, env):
     payload.write_bytes(b'before')
     source.write_bytes(b'module app; import host::example as api; pub fn i32 start(ref u8[] data){'
                        b'output::emit(ref data); let i32 a=api::check(41); return a+api::check(42);}')
+    policy['compile']['depth'] = 2
     check(payload=payload)
+    policy['compile']['depth'] = 1
+    check(expected_exit=3, kind='compile_limit', payload=payload)
+    policy['compile']['depth'] = original_depth
     check(expected_exit=4, kind='unavailable')
-    return 22
+    return 23
 
 
 def main():
