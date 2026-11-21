@@ -448,7 +448,7 @@ fn Result<engine::CompileStatus,u8> compile_status(Result<engine::CompileStatus,
     return switch(result){case .ok(v):{.ok(v)}case .err(_):{.err(1)}};
 }
 fn u8 compile_state(engine::CompileState state){
-    return switch(state){case .Preparing:{0}case .Prepared:{1}case .Lowered:{5}case .Completed:{2}case .Failed:{3}case .Cancelled:{4}};
+    return switch(state){case .Preparing:{0}case .Prepared:{1}case .Lowering:{6}case .Lowered:{5}case .Completed:{2}case .Failed:{3}case .Cancelled:{4}};
 }
 fn Result<engine::CompileStatus,u8> prepare_compile(ref mut engine::Engine e,usize job){
     var engine::CompileStatus progress=compile_status(engine::observe_compile(e,job))?;
@@ -460,7 +460,7 @@ fn Result<engine::CompileStatus,u8> prepare_compile(ref mut engine::Engine e,usi
     assert(compile_state(progress.state)==1 && progress.program==0 && progress.batches>1);
     return .ok(progress);
 }
-fn Result<engine::CompileStatus,u8> lower_compile(ref mut engine::Engine e,usize job,engine::CompileStatus previous){
+fn Result<engine::CompileStatus,u8> begin_lowering(ref mut engine::Engine e,usize job,engine::CompileStatus previous){
     var engine::CompileStatus progress=previous;
     while(compile_state(progress.state)==1){
         let usize prior=progress.batches;
@@ -468,7 +468,20 @@ fn Result<engine::CompileStatus,u8> lower_compile(ref mut engine::Engine e,usize
         assert(progress.batches<2048);
         assert(progress.batches==if(compile_state(progress.state)==1){prior+1}else{prior});
     }
-    assert(compile_state(progress.state)==5 && progress.program==0);
+    assert(compile_state(progress.state)==6 && progress.program==0);
+    return .ok(progress);
+}
+fn Result<engine::CompileStatus,u8> lower_compile(ref mut engine::Engine e,usize job,engine::CompileStatus previous){
+    var engine::CompileStatus progress=begin_lowering(e,job,previous)?;
+    let usize before=progress.batches;
+    var usize steps=0;
+    while(compile_state(progress.state)==6){
+        let usize prior=progress.batches;
+        progress=compile_status(engine::step_compile(e,job))?;
+        steps+=1;
+        assert(steps<4096 && progress.program==0 && progress.batches>=prior && progress.batches<=prior+1);
+    }
+    assert(compile_state(progress.state)==5 && progress.batches>before+1);
     return .ok(progress);
 }
 fn Result<usize,u8> pending_compile_lifecycle(){
@@ -562,16 +575,27 @@ fn Result<usize,u8> pending_compile_deadline(){
     let policy::Policy ceiling=output_policy(true)?;
     var engine::Engine e=configured_engine(ceiling)?;
     let Heap idle=heap();
-    let ref u8[] source=b"module app;pub fn i32 chosen(){return 77;}";
+    let ref u8[] source=b"module app;pub fn i32 chosen(){var i32 n=70;while(n<77){n+=1;}return n;}";
     var usize mode=0;
-    while(mode<2){
+    while(mode<3){
         let usize start=100+20000000*mode;
         unsafe{bc_runtime_engine_test_set_clock(start)};
         let usize job=id(engine::begin_compile(ref mut e,selected(source)?,65536));
         let engine::CompileStatus prepared=prepare_compile(ref mut e,job)?;
         let engine::CompileStatus signature=compile_status(engine::step_compile(ref mut e,job))?;
         assert(compile_state(signature.state)==1 && signature.batches==prepared.batches+1);
-        let engine::CompileStatus before_expiry=if(mode==0){signature}else{lower_compile(ref mut e,job,signature)?};
+        var engine::CompileStatus before_expiry=signature;
+        if(mode==1){before_expiry=lower_compile(ref mut e,job,signature)?;}
+        if(mode==2){
+            before_expiry=begin_lowering(ref mut e,job,signature)?;
+            let usize before=before_expiry.batches;
+            var usize steps=0;
+            while(before_expiry.batches==before){
+                before_expiry=compile_status(engine::step_compile(ref mut e,job))?;
+                steps+=1;assert(steps<16 && compile_state(before_expiry.state)==6 && before_expiry.program==0);
+            }
+            assert(before_expiry.batches==before+1);
+        }
         unsafe{bc_runtime_engine_test_set_clock(start+20000000)};
         let engine::CompileStatus expired=if(mode==0){compile_status(engine::step_compile(ref mut e,job))?}
             else{compile_status(engine::cancel_compile(ref mut e,job))?};

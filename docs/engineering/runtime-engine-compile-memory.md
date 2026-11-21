@@ -474,6 +474,30 @@ Both profiles ended with zero live SDK allocations. Local receipt:
 `build/runtime-engine/20261121T045048395849Z/receipt.json`.
 The locked /O2 CLI returned 77 in the quick start.
 
+## Resumable ordinary body control
+
+The private Engine reports Lowering after signatures finish. It preserves the
+current function, lexer, lexical bindings, loop state, body control cursor and
+partial IR across calls. Each call advances one control batch, completes one
+requested semantic child, or handles a setup or finalization stage. Control
+batches use the existing 4,096-unit allowance. Aggregate and origin preparation,
+first-token setup, semantic children and finalization still run synchronously
+at their respective boundaries. Lowered becomes visible after all bodies and
+reference metadata are complete; independent Program admission follows.
+
+The candidate uses one SDK allocation of 39,920 bytes. The default eight
+slots would require 319,360 bytes. Together with the 173,760-byte adopted Index
+and conservative scratch reservation, that would exceed the 64 MiB compile
+policy by 14,400 bytes. The Engine charges the exact backing before allocation
+and returns the charge together with the Index on a terminal transition.
+
+Windows development and /O2 verified multiple body control batches, expiry
+at the exact deadline while Lowering, stable terminal diagnostics, and full
+source and candidate refunds. Both profiles ended with zero live SDK
+allocations. Local receipt:
+`build/runtime-engine/20261121T051002326671Z/receipt.json`.
+The locked /O2 CLI returned 77 in the quick start.
+
 ## Executed verification and remaining work
 
 [Windows evidence](../evidence/runtime-engine-compile-memory-windows-20261107.json)

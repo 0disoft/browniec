@@ -50,6 +50,32 @@ uint32_t bc_runtime_engine_advance_compile_literals(void *meta,const void *selec
  bc_compile_work *job=raw;
  return B48(meta,selected,&job->f_9,&job->f_10,lowered,meter);
 }
+uint32_t bc_runtime_engine_advance_compile_body(void *meta,const void *selected,const void *raw,void *candidate,void *meter,uintptr_t deadline){
+ const bc_compile_work *job=raw;
+ bc_compile_candidate *work=candidate;
+ return B49(meta,selected,&job->f_9,&job->f_10,&work->f_3,&work->f_0,&work->f_4,&work->f_5,
+     &work->f_6,&work->f_7,&work->f_8,meter,deadline);
+}
+/* The SDK Vec owns the exact-size first block from this point onward.
+   Fairy still initializes the element through its checked push operation. */
+struct fy_std_system_heap_block_v0 {
+ void *data;
+ size_t size, alignment;
+};
+extern uint32_t fy_std_system_heap_allocate_v0(size_t,size_t,struct fy_std_system_heap_block_v0 *);
+uint32_t bc_runtime_engine_reserve_compile_candidate(void *raw){
+ bc_compile_candidates *storage=raw;
+ const size_t size=sizeof(bc_compile_candidate),align=_Alignof(bc_compile_candidate);
+ if(storage->f_0 || storage->f_1 || storage->f_2 || storage->f_3 ||
+     storage->f_4!=size || storage->f_5!=align)return 4;
+ struct fy_std_system_heap_block_v0 block={0};
+ const uint32_t status=fy_std_system_heap_allocate_v0(size,align,&block);
+ if(status)return status;
+ storage->f_0=block.data;
+ storage->f_1=block.size;
+ storage->f_2=block.alignment;
+ return 0;
+}
 uintptr_t bc_runtime_engine_compile_candidate_width(void){return sizeof(bc_compile_candidate);}
 void bc_runtime_engine_dispose_compile_candidate(void *raw){
  bc_compile_candidates *candidate=raw;*candidate=B47(*candidate);

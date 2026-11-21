@@ -44,6 +44,12 @@ import host_program as host_program;
 import ir as ir;
 import module_source_work as source_work;
 import literal_collection_work as literal_work;
+import function_scan_work as signature_scan;
+import static_call_ir as compile_ir;
+import lexer as lexer;
+import locals as locals;
+import loops as loops;
+import body_source_work as body_work;
 
 // Internal owning lifecycle, not public C handles/bc_step. IDs are scoped to
 // this exact Engine; the outer ABI registry must authenticate their association.
@@ -52,7 +58,7 @@ pub struct Error { u32 status; diagnostics::Error diagnostic; }
 pub struct Event { u8 kind; i64 value; diagnostics::Error diagnostic; usize remaining; bool fuel_known; }
 pub enum InstanceState { Ready; Running; WaitingHost; Stopping; Terminal; }
 pub struct InstanceStatus { InstanceState state; Event event; }
-pub enum CompileState { Preparing; Prepared; Lowered; Completed; Failed; Cancelled; }
+pub enum CompileState { Preparing; Prepared; Lowering; Lowered; Completed; Failed; Cancelled; }
 pub struct CompileStatus { usize id; CompileState state; usize program; Error failure; usize batches; }
 struct CompileWork {
     usize id; u8 state; usize program; Error failure; usize batches;
@@ -106,6 +112,8 @@ pub resource Engine {
 @link_name("bc_runtime_engine_end_compile") unsafe extern C fn u32 end_compile_raw(ptr mut void owner,usize id,u32 detach);
 @link_name("bc_runtime_engine_advance_compile_literals") unsafe extern C fn u32 advance_compile_literals_raw(ptr mut void meta,
     ptr void selected,ptr mut void job,ptr mut void lowered,ptr mut void meter);
+@link_name("bc_runtime_engine_advance_compile_body") unsafe extern C fn u32 advance_compile_body_raw(ptr mut void meta,
+    ptr void selected,ptr void job,ptr mut void lowered,ptr mut void meter,usize deadline);
 @link_name("bc_runtime_engine_compile_candidate_width") unsafe extern C fn usize compile_candidate_width_raw();
 @link_name("bc_runtime_engine_dispose_compile_candidate") unsafe extern C fn void dispose_compile_candidate_raw(ptr mut void candidate);
 @link_name("bc_runtime_engine_compile_input") unsafe extern C fn u32 compile_input_raw(ptr mut void owner,ptr mut void incoming,usize limit,usize deadline);
@@ -231,7 +239,7 @@ fn CompileWork empty_compile(usize next){
         .next=next,.deadline=0,.image_limit=0,.source_bytes=0,.source=source_work::begin(true),.literals=literal_work::empty()};
 }
 fn bool compile_live(CompileState state){
-    return switch(state){case .Preparing:{true}case .Prepared:{true}case .Lowered:{true}case .Completed:{false}case .Failed:{false}case .Cancelled:{false}};
+    return switch(state){case .Preparing:{true}case .Prepared:{true}case .Lowering:{true}case .Lowered:{true}case .Completed:{false}case .Failed:{false}case .Cancelled:{false}};
 }
 fn bool compile_attached(ref Engine e){return vec::at<CompileWork>(ref e.compile_work,0).id!=0;}
 pub fn Result<usize,Error> begin_compile(ref mut Engine e,entries::Entry selected,usize image_limit){
@@ -247,7 +255,7 @@ fn CompileStatus observed_compile(ref Engine e){
     let ref CompileWork job=vec::at<CompileWork>(ref e.compile_work,0);
     let u8 phase=job.state;
     let CompileState state=if(phase==0){.Preparing}else if(phase==1){.Prepared}
-        else if(phase==2){.Lowered}else if(phase==3){.Completed}else if(phase==4){.Failed}else{.Cancelled};
+        else if(phase==2){.Lowered}else if(phase==3){.Completed}else if(phase==4){.Failed}else if(phase==5){.Cancelled}else{.Lowering};
     return CompileStatus{.id=job.id,.state=state,.program=job.program,.failure=job.failure,.batches=job.batches};
 }
 pub fn Result<CompileStatus,Error> observe_compile(ref Engine e,usize id){
@@ -1204,12 +1212,11 @@ fn u32 stop_compile(ref mut Meta m,ref mut CompileWork job,ref mut vec::Vec<entr
 }
 fn u32 allocate_compile_candidate(ref mut Meta m,ref mut CompileWork job,ref entries::Entry entry,
     ref mut vec::Vec<programs::Lowered> candidate){
-    let usize width=unsafe{compile_candidate_width_raw()};
-    if(width==0 || width>18446744073709551615/8){return 7;}
-    let usize bytes=width*8;
+    let usize bytes=unsafe{compile_candidate_width_raw()};
+    if(bytes==0){return 7;}
     if(!memory::prepare_compile(ref mut m.programs,bytes).is_ok){return 8;}
     if(!programs::start_lowered(candidate,entries::selected(entry),job.source.syntax.result).is_ok){return 6;}
-    assert(vec::capacity<programs::Lowered>(candidate)==8);
+    assert(vec::capacity<programs::Lowered>(candidate)==1);
     assert(memory::hold_compile_candidate(ref mut m.programs,bytes).is_ok);
     job.source_bytes+=bytes;
     return 0;
@@ -1244,16 +1251,32 @@ fn u32 lower_pending_compile(ref mut Meta m,ref mut CompileWork job,ref mut vec:
         if(clock::expired(job.deadline)){return stop_compile(m,job,selected,candidate,compile_timeout());}
         return 0;
     }
-    let Result<usize,diagnostics::Error> result=programs::lower_prepared_until(
-        entry,ref job.source,ref job.literals,lowered,job.deadline);
-    return switch(result){
-        case .ok(_):{job.state=2;0}
-        case .err(e):{
-            let u32 status=compile_error(m,e);let Error cause=m.error;
-            stop_compile(m,job,selected,candidate,cause)
-        }
+    job.state=6;
+    return 0;
+}
+fn u32 advance_compile_body_inner(ref mut Meta m,ref entries::Entry selected,ref source_work::State source,
+    ref literal_work::State literals,ref mut signature_scan::State signatures,ref mut compile_ir::Program code,
+    ref mut compiler::BodyProgress progress,ref mut lexer::State token,ref mut locals::Table names,
+    ref mut loops::State flow,ref mut body_work::State cursor,ref mut metadata_budget::State meter,usize deadline){
+    return switch(compiler::advance_module_bodies(selected,source,literals,signatures,code,progress,token,names,flow,cursor,meter,deadline)){
+        case .ok(complete):{if(complete){1}else{0}}case .err(e):{compile_error(m,e)}
     };
 }
+fn u32 step_compile_body(ref mut Meta m,ref mut CompileWork job,ref mut vec::Vec<entries::Entry> selected,
+    ref mut vec::Vec<programs::Lowered> candidate){
+    let ref entries::Entry entry=vec::at<entries::Entry>(selected,0);
+    let ref mut programs::Lowered lowered=vec::at_mut<programs::Lowered>(candidate,0);
+    var metadata_budget::State meter=metadata_budget::empty();
+    let usize deadline=job.deadline;
+    let u32 status=unsafe{advance_compile_body_raw(m as ptr mut void,entry as ptr void,
+        job as ptr void,lowered as ptr mut void,ref mut meter as ptr mut void,deadline)};
+    job.batches+=meter.stages;
+    if(status>1){let Error cause=m.error;return stop_compile(m,job,selected,candidate,cause);}
+    if(clock::expired(deadline)){return stop_compile(m,job,selected,candidate,compile_timeout());}
+    if(status==1){job.state=2;}
+    return 0;
+}
+fn bool compile_terminal(u8 phase){return phase>=3 && phase<=5;}
 fn u32 finish_pending_compile(ref mut Meta m,ref mut vec::Vec<Program> programs,ref mut CompileWork job,
     ref mut vec::Vec<entries::Entry> selected,ref mut vec::Vec<programs::Lowered> candidate){
     if(vec::len<Program>(programs)>=m.limits.programs || m.next==0){return stop_compile(m,job,selected,candidate,error(8));}
@@ -1277,9 +1300,10 @@ fn u32 step_compile_inner(ref mut Meta m,ref mut vec::Vec<Program> programs,ref 
     if(vec::len<CompileWork>(jobs)!=1){return 7;}
     let ref mut CompileWork job=vec::at_mut<CompileWork>(jobs,0);
     if(id==0 || job.id!=id){return 2;}
-    if(job.state>=3){return 0;}
+    if(compile_terminal(job.state)){return 0;}
     if(clock::expired(job.deadline)){return stop_compile(m,job,selected,candidate,compile_timeout());}
     if(job.state==1){return lower_pending_compile(m,job,selected,candidate);}
+    if(job.state==6){return step_compile_body(m,job,selected,candidate);}
     if(job.state==2){return finish_pending_compile(m,programs,job,selected,candidate);}
     var metadata_budget::State meter=metadata_budget::empty();
     let bool ready=switch(source_work::advance(entries::index(vec::at<entries::Entry>(selected,0)),ref mut job.source,ref mut meter)){
@@ -1319,12 +1343,12 @@ fn u32 end_compile_inner(ref mut Meta m,ref mut vec::Vec<CompileWork> jobs,ref m
     let ref mut CompileWork job=vec::at_mut<CompileWork>(jobs,0);
     if(id!=job.id){return 2;}
     if(detach){
-        if(job.state<3){return 3;}
+        if(!compile_terminal(job.state)){return 3;}
         let CompileWork cleared=empty_compile(job.next);
         *job=cleared;
         return 0;
     }
-    if(job.state>=3){return 0;}
+    if(compile_terminal(job.state)){return 0;}
     if(m.poisoned){return stop_compile(m,job,selected,candidate,error(14));}
     if(clock::expired(job.deadline)){return stop_compile(m,job,selected,candidate,compile_timeout());}
     finish_compile_source(m,job,selected,candidate);
@@ -2267,6 +2291,17 @@ fn void retain_compile_literal_binding(ref mut Meta m,ref entries::Entry entry){
     let ref mut programs::Lowered lowered=vec::at_mut<programs::Lowered>(ref mut candidate,0);
     var metadata_budget::State meter=metadata_budget::empty();
     unsafe{binding_raw(48)};discard advance_compile_literals_inner(m,entry,ref source,ref mut literals,lowered,ref mut meter);
+    retain_compile_body_binding(m,entry,ref source,ref literals);
+}
+fn void retain_compile_body_binding(ref mut Meta m,ref entries::Entry entry,ref source_work::State source,ref literal_work::State literals){
+    var signature_scan::State signatures=signature_scan::indexed(0,false);
+    var compile_ir::Program code=compile_ir::Program{.body=ir::empty(),.parameters=[0;128],.results=[0;16],.origins=[0;16]};
+    var compiler::BodyProgress progress=compiler::begin_module_bodies();
+    var lexer::State token=lexer::empty();var locals::Table names=locals::empty();
+    var loops::State flow=loops::empty();var body_work::State cursor=body_work::begin(0,false);
+    var metadata_budget::State meter=metadata_budget::empty();
+    unsafe{binding_raw(49)};discard advance_compile_body_inner(m,entry,source,literals,ref mut signatures,ref mut code,
+        ref mut progress,ref mut token,ref mut names,ref mut flow,ref mut cursor,ref mut meter,0);
 }
 pub fn void retain_native_bindings(){
     let control::Budget storage=switch(control::create(1,0)){case .ok(v):{v}case .err(_):{assert(false);return;}};

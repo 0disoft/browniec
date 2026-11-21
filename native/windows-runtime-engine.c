@@ -75,6 +75,7 @@ typedef __typeof__(((bc_engine *)0)->f_6) bc_engine_outputs;
 #define B47 fy_private_fn_72756e74696d655f656e67696e653a3a72657365745f636f6d70696c655f63616e646964617465 /* runtime_engine::reset_compile_candidate */
 
 #define B48 fy_private_fn_72756e74696d655f656e67696e653a3a616476616e63655f636f6d70696c655f6c69746572616c735f696e6e6572 /* runtime_engine::advance_compile_literals_inner */
+#define B49 fy_private_fn_72756e74696d655f656e67696e653a3a616476616e63655f636f6d70696c655f626f64795f696e6e6572 /* runtime_engine::advance_compile_body_inner */
 
 #include "native/runtime-engine/bridge.inc"
 

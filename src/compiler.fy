@@ -3568,7 +3568,7 @@ pub fn Result<bool,source_errors::Error> advance_module_signatures(ref module_en
         case .ok(v):{.ok(v)}case .err(e):{.err(module_error(selected,e,16))}
     };
 }
-pub fn Result<bool,source_errors::Error> lower_modules_signatures_until(ref module_entries::Entry selected,
+fn Result<bool,source_errors::Error> lower_modules_signatures_until(ref module_entries::Entry selected,
     ref module_source::State work,ref literal_collection::Index literals,ref mut functions::Table signatures,
     ref mut reference_ir::Program code,bool output,usize deadline){
     let ref source_context::Input input=ref work.context.result;
@@ -3581,6 +3581,71 @@ pub fn Result<bool,source_errors::Error> lower_modules_signatures_until(ref modu
     };
     return .ok(references);
 }
+pub struct BodyProgress { usize function; usize active; u8 phase; }
+pub fn BodyProgress begin_module_bodies(){return BodyProgress{.function=0,.active=16,.phase=0};}
+
+pub fn Result<bool,source_errors::Error> advance_module_bodies(ref module_entries::Entry selected,
+    ref module_source::State work,ref literal_work::State collection,ref mut signature_scan::State scan,
+    ref mut reference_ir::Program code,ref mut BodyProgress progress,
+    ref mut lexer::State token,ref mut locals::Table names,ref mut loops::State flow,
+    ref mut body_work::State cursor,ref mut metadata_budget::State meter,usize deadline){
+    if(!work.done || !scan.done || (work.syntax.result && !collection.done)){
+        return .err(source_errors::absent(errors::absent(5,0)));
+    }
+    let ref source_context::Input input=ref work.context.result;
+    let ref u8[] source=ref input.data[..input.used];
+    let bool references=work.syntax.result;
+    let literal_collection::Index unused=literal_collection::empty();
+    let ref literal_collection::Index literals=if(references){ref collection.result}else{ref unused};
+    return switch(advance_module_body(source,references,literals,ref mut scan.result,code,progress,token,names,flow,cursor,meter,deadline)){
+        case .ok(v):{.ok(v)}case .err(e):{.err(module_error(selected,e,progress.active))}
+    };
+}
+
+// Semantic child calls return before another control advance. Preparation and
+// child internals retain their existing synchronous boundaries.
+fn Result<bool,errors::Error> advance_module_body(ref u8[] source,bool references,ref literal_collection::Index literals,
+    ref mut functions::Table signatures,ref mut reference_ir::Program code,ref mut BodyProgress progress,
+    ref mut lexer::State token,ref mut locals::Table names,ref mut loops::State flow,
+    ref mut body_work::State cursor,ref mut metadata_budget::State meter,usize deadline){
+    let usize f=progress.function;
+    if(progress.phase==0){
+        let usize ready=prepare_lowering(source,false,references,references,literals,signatures,ref mut code.body,0,deadline)?;
+        progress.phase=1;
+        return .ok(false);
+    }
+    if(f==signatures.count){
+        let usize done=finish_lowering(ref mut code.body,signatures,references,ref mut progress.active)?;
+        if(references){let usize bound=finish_reference_lowering(signatures,code);}
+        return .ok(true);
+    }
+    if(progress.phase==1){
+        let usize active=locate_body(source,signatures,f,ref mut progress.active)?;
+        *names=locals::empty();
+        let usize bound=bind_body(signatures,f,ref mut code.body,names)?;
+        *token=source_context::state(source,ref signatures.context,signatures.bodies[f])?;
+        let usize first=lexer::next(source,token)?;
+        *flow=loops::empty();
+        *cursor=body_work::begin(0,false);
+        progress.phase=2;
+        return .ok(false);
+    }
+    if(cursor.done){
+        let bool terminal=body_work::prepared(cursor)?;
+        let usize finished=finish_body(signatures,f,ref mut code.body,names,token,terminal)?;
+        progress.function=f+1;
+        progress.phase=1;
+        return .ok(false);
+    }
+    if(cursor.request!=0){
+        let u8 result=if(reference_calls::result(signatures,f)){12}else{record_results::context(ref code.body,f)};
+        let usize completed=complete_body_child(source,token,ref mut code.body,names,signatures,result,0,flow,cursor)?;
+        return .ok(false);
+    }
+    let bool advanced=body_work::advance(source,token,ref mut code.body,names,flow,cursor,meter)?;
+    return .ok(false);
+}
+
 fn Result<bool,source_errors::Error> lower_modules_mode(ref module_entries::Entry selected,
     ref mut static_images::Builder builder,ref mut reference_ir::Program code,bool output){
     let source_context::Input input=switch(collecting::collect(module_entries::index(selected))){
@@ -3722,7 +3787,7 @@ fn Result<usize,source_errors::Error> lower_input_collected(ref source_context::
     };
     return .ok(finish_reference_lowering(ref signatures,code));
 }
-pub fn usize finish_reference_lowering(ref functions::Table signatures,ref mut reference_ir::Program code){
+fn usize finish_reference_lowering(ref functions::Table signatures,ref mut reference_ir::Program code){
     code.origins=signatures.return_slice_inputs;var usize f=0;
     while(f<signatures.count){
         if(signatures.return_slice_elements[f]==10){code.results[f]=3;}

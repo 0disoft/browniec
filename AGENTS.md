@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-21): [Resumable ordinary indexed signatures](docs/engineering/runtime-engine-compile-memory.md#resumable-ordinary-indexed-signatures)
-  passes the completed table into lowering and refunds the candidate on
-  exact-deadline expiry. Windows development and /O2 passed with zero live SDK
+- Latest runtime checkpoint (2026-11-21): [Resumable ordinary body control](docs/engineering/runtime-engine-compile-memory.md#resumable-ordinary-body-control)
+  preserves partial IR across body advances and refunds the exact candidate
+  allocation on expiry. Windows development and /O2 passed with zero live SDK
   allocations. Locked /O2 CLI and quick-start result 77 passed.
 
 # Brownie C agent guidance

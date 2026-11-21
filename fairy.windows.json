@@ -54,6 +54,7 @@
     "runtime_engine::reset_compile_work",
     "runtime_engine::reset_compile_candidate",
     "runtime_engine::advance_compile_literals_inner",
+    "runtime_engine::advance_compile_body_inner",
     "windows_engine_bindings::incoming"
   ]
 }

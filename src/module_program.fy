@@ -13,10 +13,11 @@ import static_image as images;
 import std::vec as vec;
 import retention_plan as retention;
 import module_source_work as module_source;
-import literal_collection_work as literal_work;
-import literal_collection as literals;
 import function_scan_work as signature_scan;
-import functions as functions;
+import lexer as lexer;
+import locals as locals;
+import loops as loops;
+import body_source_work as body_work;
 
 // Only internally rebuilt source/context plus complete canonical admission can
 // create this resource. Compiler name tables are not retained at runtime.
@@ -25,7 +26,10 @@ resource Stored { sources::Snapshot sources; programs::PublicProgram code; clean
 pub resource Program { vec::Vec<Stored> stored; cleanup { } }
 // Unverified lowering output for the private Engine. Admission still proves
 // the complete candidate and associates it with the selected source.
-pub struct Lowered { candidate::Program code; images::Builder literals; bool references; signature_scan::State signatures; }
+pub struct Lowered {
+    candidate::Program code; images::Builder literals; bool references; signature_scan::State signatures;
+    compiler::BodyProgress progress; lexer::State token; locals::Table names; loops::State flow; body_work::State cursor;
+}
 pub fn Result<Program,diagnostics::Error> compile(entries::Entry selected,usize image_limit){
     var retention::Plan plan=retention::unlimited();return compile_with_retention(selected,image_limit,ref mut plan);
 }
@@ -58,27 +62,20 @@ pub fn Result<Program,diagnostics::Error> compile_prepared_until(ref entries::En
     if(references){return finish_references(selected,ref builder,ref code,image_limit,plan,deadline);}
     return finish_legacy(selected,ref code.body,plan,deadline);
 }
+@link_name("bc_runtime_engine_reserve_compile_candidate") unsafe extern C fn u32 reserve_candidate_raw(ptr mut void storage);
 pub fn Result<usize,diagnostics::Error> start_lowered(ref mut vec::Vec<Lowered> storage,usize entry,bool references){
-    assert(vec::len<Lowered>(storage)==0);
+    assert(vec::len<Lowered>(storage)==0 && vec::capacity<Lowered>(storage)==0);
+    if(unsafe{reserve_candidate_raw(storage as ptr mut void)}!=0){
+        return .err(diagnostics::absent(errors::make(15,0)));
+    }
     let Lowered empty=Lowered{
         .code=candidate::Program{.body=ir::empty(),.parameters=[0;128],.results=[0;16],.origins=[0;16]},
-        .literals=images::full_builder(),.references=false,.signatures=signature_scan::indexed(entry,references)};
+        .literals=images::full_builder(),.references=references,.signatures=signature_scan::indexed(entry,references),
+        .progress=compiler::begin_module_bodies(),.token=lexer::empty(),.names=locals::empty(),
+        .flow=loops::empty(),.cursor=body_work::begin(0,false)};
     return switch(vec::push<Lowered>(storage,empty)){
         case .ok(v):{.ok(v)}case .err(_):{.err(diagnostics::absent(errors::make(15,0)))}
     };
-}
-pub fn Result<usize,diagnostics::Error> lower_prepared_until(ref entries::Entry selected,
-    ref module_source::State source,ref literal_work::State collection,ref mut Lowered lowered,usize deadline){
-    let literals::Index index=if(source.syntax.result){collection.result}else{literals::empty()};
-    var functions::Table signatures=switch(signature_scan::prepared(ref lowered.signatures)){
-        case .ok(v):{v}case .err(e):{return .err(diagnostics::absent(e));}
-    };
-    let bool references=compiler::lower_modules_signatures_until(selected,source,ref index,
-        ref mut signatures,ref mut lowered.code,false,deadline)?;
-    if(references){let usize bound=compiler::finish_reference_lowering(ref signatures,ref mut lowered.code);}
-    if(clock::expired(deadline)){return .err(diagnostics::absent(errors::absent(errors::deadline_kind(),0)));}
-    lowered.references=references;
-    return .ok(0);
 }
 pub fn Result<Program,diagnostics::Error> admit_lowered_until(ref entries::Entry selected,
     ref Lowered lowered,usize image_limit,ref mut retention::Plan plan,usize deadline){
