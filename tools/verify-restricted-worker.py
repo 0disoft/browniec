@@ -104,6 +104,17 @@ def verify_configured_project(run, need, image, folder, env):
     policy['compile']['working_bytes'] = working
 
     compile_defaults = policy['compile'].copy()
+    # Indexing prepays each source byte and one unit per scanner advance,
+    # including each file's EOF. There are 44 non-EOF tokens in two files.
+    index_fuel = policy['compile']['source_bytes'] + 44 + len(manifest['sources'])
+    policy['compile']['fuel'] = index_fuel
+    check()
+    policy['compile']['fuel'] = index_fuel - 1
+    fuel_error = check(3, 'compile_limit', 'check')['error']
+    need(fuel_error['location']['source_index'] == 1,
+         f'Index Fuel reset between source members: {fuel_error}')
+    policy['compile']['fuel'] = compile_defaults['fuel']
+
     # The two original hello files have 27 and 17 lexer tokens, excluding EOF.
     policy['compile'].update(tokens=44, functions=2)
     check()
@@ -233,7 +244,7 @@ def verify_configured_project(run, need, image, folder, env):
     config['entry']['function'] = manifest['entry']['function']
     config['grants'] = ['brownie.output.emit']
     check(4, 'unavailable')
-    return 36
+    return 38
 
 
 def verify_project_host(run, need, image, folder, env):
@@ -326,13 +337,17 @@ def verify_project_host(run, need, image, folder, env):
     policy['compile']['instructions'] = 1
     check('check', expected_exit=3, kind='compile_limit')
     policy['compile']['instructions'] = 262144
+    original_compile_fuel = policy['compile']['fuel']
+    policy['compile']['fuel'] = 1
+    check('check', expected_exit=3, kind='compile_limit')
+    policy['compile']['fuel'] = original_compile_fuel
     payload = target / 'input.bin'
     payload.write_bytes(b'before')
     source.write_bytes(b'module app; import host::example as api; pub fn i32 start(ref u8[] data){'
                        b'output::emit(ref data); let i32 a=api::check(41); return a+api::check(42);}')
     check(payload=payload)
     check(expected_exit=4, kind='unavailable')
-    return 11
+    return 12
 
 
 def main():

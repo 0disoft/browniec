@@ -12,6 +12,7 @@ pub struct Error { Failure kind; sources::Span at; }
 pub struct Module { sources::Span path; usize begin; usize end; }
 pub struct Import { usize owner; usize target; sources::Span alias; sources::Span path; usize begin; usize end; }
 pub struct Symbol { usize owner; u8 kind; bool exported; sources::Span name; sources::Span definition; }
+struct ScanBudget { usize remaining; }
 struct Path { sources::Span at; usize begin; usize end; }
 struct Table {
     u8[4096] names; usize used;
@@ -33,16 +34,18 @@ fn Table empty(){
 fn sources::Span span(usize id,usize begin,usize end){return sources::Span{.source=id,.start=begin,.end=end};}
 fn sources::Span token(usize id,ref lexer::State s){return span(id,s.begin,s.end);}
 fn bool word(ref u8[] source,ref lexer::State s,ref u8[] value){return s.kind==2 && lexer::equal(source[s.begin..s.end],value);}
-fn Result<usize,Error> next(ref u8[] source,usize id,ref mut lexer::State s){
+fn Result<usize,Error> next(ref u8[] source,usize id,ref mut lexer::State s,ref mut ScanBudget fuel){
+    if(fuel.remaining==0){return .err(error(.Limit,span(id,s.cursor,s.cursor)));}
+    fuel.remaining-=1;
     return switch(lexer::next(source,s)){
         case .ok(v):{.ok(v)}case .err(e):{.err(error(if(e.kind==4){.Limit}else{.Lexical},
             span(id,e.offset,if(e.offset<source.len){e.offset+1}else{e.offset})))}
     };
 }
-fn Result<usize,Error> punctuation(ref u8[] source,usize id,ref mut lexer::State s,u8 expected){
-    if(s.kind!=expected){return .err(error(.Syntax,token(id,s)));}return next(source,id,s);
+fn Result<usize,Error> punctuation(ref u8[] source,usize id,ref mut lexer::State s,u8 expected,ref mut ScanBudget fuel){
+    if(s.kind!=expected){return .err(error(.Syntax,token(id,s)));}return next(source,id,s,fuel);
 }
-fn Result<Path,Error> path(ref u8[] source,usize id,ref mut lexer::State s,ref mut Table t){
+fn Result<Path,Error> path(ref u8[] source,usize id,ref mut lexer::State s,ref mut Table t,ref mut ScanBudget fuel){
     let usize begin=t.used;let usize start=s.begin;var usize end=start;var bool first=true;
     while(true){
         if(s.kind!=2 || locals::reserved(source[s.begin..s.end])){return .err(error(.Syntax,token(id,s)));}
@@ -54,69 +57,69 @@ fn Result<Path,Error> path(ref u8[] source,usize id,ref mut lexer::State s,ref m
         let usize start=at+separator;
         var usize i=0;while(i<size){t.names[start+i]=source[s.begin+i];i+=1;}
         t.used=start+size;end=s.end;first=false;
-        let usize advanced=next(source,id,s)?;
+        let usize advanced=next(source,id,s,fuel)?;
         if(s.kind!=58){break;}
-        let usize a=next(source,id,s)?;let usize b=punctuation(source,id,s,58)?;
+        let usize a=next(source,id,s,fuel)?;let usize b=punctuation(source,id,s,58,fuel)?;
     }
     return .ok(Path{.at=span(id,start,end),.begin=begin,.end=t.used});
 }
-fn Result<usize,Error> body(ref u8[] source,usize id,ref mut lexer::State s,usize nesting_limit){
+fn Result<usize,Error> body(ref u8[] source,usize id,ref mut lexer::State s,usize nesting_limit,ref mut ScanBudget fuel){
     var usize nesting=0;
-    let usize open=punctuation(source,id,s,123)?;var usize depth=1;
+    let usize open=punctuation(source,id,s,123,fuel)?;var usize depth=1;
     while(depth!=0){
         if(s.kind==0){return .err(error(.Syntax,token(id,s)));}
         if(s.kind==123){depth+=1;if(depth>33){return .err(error(.Limit,token(id,s)));}}
-        if(s.kind==125){depth-=1;if(depth==0){let usize end=s.end;let usize advanced=next(source,id,s)?;return .ok(end);}}
+        if(s.kind==125){depth-=1;if(depth==0){let usize end=s.end;let usize advanced=next(source,id,s,fuel)?;return .ok(end);}}
         if(s.kind==40 || s.kind==91 || s.kind==123){
             if(nesting==nesting_limit){return .err(error(.Limit,token(id,s)));}
             nesting+=1;
         }else if((s.kind==41 || s.kind==93 || s.kind==125) && nesting!=0){nesting-=1;}
-        let usize advanced=next(source,id,s)?;
+        let usize advanced=next(source,id,s,fuel)?;
     }
     return .err(error(.Syntax,token(id,s)));
 }
-fn Result<usize,Error> declaration(ref u8[] source,usize id,ref mut lexer::State s,ref mut Table t,usize nesting_limit){
+fn Result<usize,Error> declaration(ref u8[] source,usize id,ref mut lexer::State s,ref mut Table t,usize nesting_limit,ref mut ScanBudget fuel){
     let usize begin=s.begin;var bool exported=false;
-    if(word(source,s,b"pub")){exported=true;let usize advanced=next(source,id,s)?;}
+    if(word(source,s,b"pub")){exported=true;let usize advanced=next(source,id,s,fuel)?;}
     let bool function=word(source,s,b"fn");
     if(!function && !word(source,s,b"struct")){return .err(error(.Syntax,token(id,s)));}
     if(t.symbol_count==48 || (function && t.functions==16) || (!function && t.records==32)){return .err(error(.Limit,token(id,s)));}
-    let usize advanced=next(source,id,s)?;var sources::Span name=token(id,s);
+    let usize advanced=next(source,id,s,fuel)?;var sources::Span name=token(id,s);
     if(function){
         var u8 previous=0;
         while(s.kind!=40){
             if(s.kind==0 || s.kind==123 || s.kind==125 || s.kind==59){return .err(error(.Syntax,token(id,s)));}
-            if(s.kind==2){name=token(id,s);}previous=s.kind;let usize advanced=next(source,id,s)?;
+            if(s.kind==2){name=token(id,s);}previous=s.kind;let usize advanced=next(source,id,s,fuel)?;
         }
         if(previous!=2 || locals::reserved(source[name.start..name.end])){return .err(error(.Syntax,name));}
-        var usize depth=1;let usize advanced=next(source,id,s)?;
+        var usize depth=1;let usize advanced=next(source,id,s,fuel)?;
         while(depth!=0){
             if(s.kind==0 || s.kind==123 || s.kind==125 || s.kind==59){return .err(error(.Syntax,token(id,s)));}
             if(s.kind==40){depth+=1;if(depth>32){return .err(error(.Limit,token(id,s)));}}
             if(s.kind==41){depth-=1;}
-            let usize advanced=next(source,id,s)?;
+            let usize advanced=next(source,id,s,fuel)?;
         }
     }else{
         if(s.kind!=2 || locals::reserved(source[s.begin..s.end])){return .err(error(.Syntax,token(id,s)));}
-        let usize advanced=next(source,id,s)?;
+        let usize advanced=next(source,id,s,fuel)?;
     }
     if(name.end-name.start>64){return .err(error(.Limit,name));}
     var usize i=0;while(i<t.symbol_count){let Symbol prior=t.symbols[i];
         if(prior.owner==id && bytes::equal(source[name.start..name.end],source[prior.name.start..prior.name.end])){return .err(error(.Duplicate,name));}i+=1;
     }
-    let usize end=body(source,id,s,nesting_limit)?;
+    let usize end=body(source,id,s,nesting_limit,fuel)?;
     let usize at=t.symbol_count;t.symbols[at]=Symbol{.owner=id,.kind=if(function){1}else{2},.exported=exported,
         .name=name,.definition=span(id,begin,end)};t.symbol_count=at+1;
     if(function){t.functions+=1;}else{t.records+=1;}return .ok(at);
 }
-fn Result<usize,Error> file(ref u8[] source,usize id,ref mut Table t,bool host,usize nesting_limit){
-    var lexer::State s=lexer::empty();let usize first=next(source,id,ref mut s)?;
+fn Result<usize,Error> file(ref u8[] source,usize id,ref mut Table t,bool host,usize nesting_limit,ref mut ScanBudget fuel){
+    var lexer::State s=lexer::empty();let usize first=next(source,id,ref mut s,fuel)?;
     if(!word(source,ref s,b"module")){return .err(error(.Syntax,token(id,ref s)));}
-    let usize advanced=next(source,id,ref mut s)?;
+    let usize advanced=next(source,id,ref mut s,fuel)?;
     let bool reserved=word(source,ref s,b"std") || word(source,ref s,b"brownie") || (host && word(source,ref s,b"host"));
-    let Path name=path(source,id,ref mut s,t)?;
+    let Path name=path(source,id,ref mut s,t,fuel)?;
     if(reserved){return .err(error(.Reserved,name.at));}
-    let usize semicolon=punctuation(source,id,ref mut s,59)?;
+    let usize semicolon=punctuation(source,id,ref mut s,59,fuel)?;
     let ref u8[] names=ref t.names;
     var usize i=0;while(i<t.count){let Module prior=t.modules[i];
         if(bytes::equal(names[name.begin..name.end],names[prior.begin..prior.end])){return .err(error(.Duplicate,name.at));}i+=1;
@@ -126,28 +129,32 @@ fn Result<usize,Error> file(ref u8[] source,usize id,ref mut Table t,bool host,u
     while(s.kind!=0){
         if(word(source,ref s,b"import") && !declarations){
             if(t.import_count==64){return .err(error(.Limit,token(id,ref s)));}
-            let usize advance_1=next(source,id,ref mut s)?;let Path target=path(source,id,ref mut s,t)?;
+            let usize advance_1=next(source,id,ref mut s,fuel)?;let Path target=path(source,id,ref mut s,t,fuel)?;
             if(!word(source,ref s,b"as")){return .err(error(.Syntax,token(id,ref s)));}
-            let usize advance_2=next(source,id,ref mut s)?;
+            let usize advance_2=next(source,id,ref mut s,fuel)?;
             if(s.kind!=2 || locals::reserved(source[s.begin..s.end]) || (host && word(source,ref s,b"host"))){return .err(error(.Syntax,token(id,ref s)));}
             let sources::Span alias=token(id,ref s);if(alias.end-alias.start>64){return .err(error(.Limit,alias));}
             i=0;while(i<t.import_count){let Import prior=t.imports[i];
                 if(prior.owner==id && bytes::equal(source[alias.start..alias.end],source[prior.alias.start..prior.alias.end])){return .err(error(.Duplicate,alias));}i+=1;
             }
-            let usize advance_3=next(source,id,ref mut s)?;let usize semicolon=punctuation(source,id,ref mut s,59)?;
+            let usize advance_3=next(source,id,ref mut s,fuel)?;let usize semicolon=punctuation(source,id,ref mut s,59,fuel)?;
             let usize at=t.import_count;
             t.imports[at]=Import{.owner=id,.target=16,.alias=alias,.path=target.at,.begin=target.begin,.end=target.end};t.import_count=at+1;
-        }else{declarations=true;let usize added=declaration(source,id,ref mut s,t,nesting_limit)?;}
+        }else{declarations=true;let usize added=declaration(source,id,ref mut s,t,nesting_limit,fuel)?;}
     }
     return .ok(s.tokens);
 }
-fn Result<usize,Error> prepare(ref sources::Snapshot snapshot,ref mut Table t,bool host,usize token_limit,usize nesting_limit){
+fn Result<usize,Error> prepare(ref sources::Snapshot snapshot,ref mut Table t,bool host,usize token_limit,usize nesting_limit,usize budget){
+    var ScanBudget fuel=ScanBudget{.remaining=budget};
     let usize count=sources::count(snapshot);if(count==0){return .err(error(.Missing,sources::no_source()));}
     var usize id=0;var usize tokens=0;
     while(id<count){
         let sources::Span all=switch(sources::whole(snapshot,id)){case .ok(v):{v}case .err(_):{return .err(error(.Bounds,sources::no_source()));}};
         let ref u8[] source=switch(sources::view(snapshot,all)){case .ok(v):{v}case .err(_):{return .err(error(.Bounds,all));}};
-        let usize scanned=file(source,id,t,host,nesting_limit)?;
+        // Prepay the full member before scanning whitespace, comments or literals.
+        if(source.len>fuel.remaining){return .err(error(.Limit,span(id,0,0)));}
+        fuel.remaining-=source.len;
+        let usize scanned=file(source,id,t,host,nesting_limit,ref mut fuel)?;
         let usize used=scanned-1;
         if(used>token_limit-tokens || (!host && scanned>1024-tokens-id)){
             return .err(error(.Limit,span(id,source.len,source.len)));
@@ -168,19 +175,17 @@ fn Result<usize,Error> prepare(ref sources::Snapshot snapshot,ref mut Table t,bo
     return .ok(t.count);
 }
 pub fn Result<Index,Error> build(sources::Snapshot snapshot){
-    return build_mode(snapshot,false,1024,1024);
-}
-pub fn Result<Index,Error> build_limited(sources::Snapshot snapshot,usize token_limit,usize nesting_limit){
-    return build_mode(snapshot,false,if(token_limit<1024){token_limit}else{1024},nesting_limit);
+    return build_mode(snapshot,false,1024,1024,18446744073709551615);
 }
 pub fn Result<Index,Error> build_host(sources::Snapshot snapshot,usize token_limit){
-    return build_host_limited(snapshot,token_limit,1024);
+    return build_metered(snapshot,true,token_limit,1024,18446744073709551615);
 }
-pub fn Result<Index,Error> build_host_limited(sources::Snapshot snapshot,usize token_limit,usize nesting_limit){
-    return build_mode(snapshot,true,if(token_limit<1024){token_limit}else{1024},nesting_limit);
+pub fn Result<Index,Error> build_metered(sources::Snapshot snapshot,bool host,
+    usize token_limit,usize nesting_limit,usize fuel){
+    return build_mode(snapshot,host,if(token_limit<1024){token_limit}else{1024},nesting_limit,fuel);
 }
-fn Result<Index,Error> build_mode(sources::Snapshot snapshot,bool host,usize token_limit,usize nesting_limit){
-    var Table t=empty();let usize ready=prepare(ref snapshot,ref mut t,host,token_limit,nesting_limit)?;
+fn Result<Index,Error> build_mode(sources::Snapshot snapshot,bool host,usize token_limit,usize nesting_limit,usize fuel){
+    var Table t=empty();let usize ready=prepare(ref snapshot,ref mut t,host,token_limit,nesting_limit,fuel)?;
     var vec::Vec<Stored> stored=vec::empty<Stored>();
     let usize capacity=switch(vec::reserve<Stored>(ref mut stored,1)){
         case .ok(v):{v}case .err(_):{return .err(error(.Allocation,sources::no_source()));}

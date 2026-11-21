@@ -436,7 +436,8 @@ pub fn Result<usize,Error> compile_project_snapshot_output(ref mut Engine e,ref 
        sources::snapshot_bytes(ref snapshot)>source_byte_limit(e)){return .err(error(8));}
     let usize deadline=compile_deadline(e,0)?;
     let policy_limits::CompileLimits limits=configured_compile_limits(e)?;
-    let modules::Index index=switch(project_binding::index_limited(project,snapshot,limits.tokens,limits.functions,limits.types,limits.depth)){
+    let modules::Index index=switch(project_binding::index_limited(project,snapshot,false,
+        limits.tokens,limits.functions,limits.types,limits.depth,limits.fuel)){
         case .ok(v):{v}case .err(e):{return .err(host_binding_error(e));}
     };
     let ref u8[] module_name=projects::entry_module(project);
@@ -569,8 +570,8 @@ pub fn Result<usize,Error> compile_project_snapshot_host(ref mut Engine e,ref pr
     if(sources::count(ref snapshot)>limits.modules ||
         sources::snapshot_bytes(ref snapshot)>limits.source_bytes){return .err(error(8));}
     let usize deadline=deadline_after(limits.deadline_ms)?;
-    let modules::Index index=switch(project_binding::index_host_limited(project,snapshot,
-        limits.tokens,limits.functions,limits.types,limits.depth)){
+    let modules::Index index=switch(project_binding::index_limited(project,snapshot,true,
+        limits.tokens,limits.functions,limits.types,limits.depth,limits.fuel)){
         case .ok(v):{v}case .err(e):{return .err(host_binding_error(e));}
     };
     let usize selected=switch(modules::entry(ref index,projects::entry_module(project),projects::entry_function(project))){

@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-22): [Catalog-backed project execution](docs/engineering/restricted-worker.md#catalog-backed-project-execution)
-  routes verified Engine host calls through the AppContainer broker.
-  Development and /O2 each pass eleven catalog project cases.
+- Latest runtime checkpoint (2026-11-22): [Project index Fuel](docs/engineering/restricted-worker.md#project-index-fuel)
+  charges a shared compile balance for source bytes and lexer advances.
+  Development and /O2 pass the exact 179-unit and 178-unit rejection cases.
 
 # Brownie C agent guidance
 

@@ -397,9 +397,8 @@ outer braces. Comment and literal contents do not count. The first excess
 opener produces a source-local `compile_limit`. The existing parser still
 validates delimiter pairing and enforces its own grammar limits.
 
-Compile Fuel, semantic depth outside this delimiter check, and type accounting
-beyond declared records remain open. Host requests still need worker
-transport integration.
+Semantic depth outside this delimiter check and type accounting beyond
+declared records remain open.
 
 The nesting follow-up passed twenty configured project cases per Windows
 profile. A nested block and parenthesized value returned 42 at depth two,
@@ -567,7 +566,25 @@ output publication, and no output on a missing lookup or quota failure. Both
 profiles also passed nine native host transport cases, five managed project
 cases, and 36 configured project cases. Native fixtures cover correlation and
 cancellation while transferring a request or reply. Local receipt:
-\`build/restricted-worker/20261121T181726030809Z/receipt.json\`.
+`build/restricted-worker/20261121T181726030809Z/receipt.json`.
+
+## Project index Fuel
+
+The configured worker starts indexing with the policy's compile Fuel.
+It prepays one unit for each byte of a member before scanning the member,
+then charges one unit before each lexer advance, including EOF. Members
+share one balance. A deficit returns a source-local compile limit before
+the next scan and prevents the Index from being retained. The ordinary
+and catalog-backed Engine paths share this budget. The later lowering and
+proof stages still need to consume the same compile balance.
+
+Windows development and /O2 each accepted the two-file hello project at
+179 units (133 bytes plus 44 tokens and two EOF advances) and rejected
+178 at the second file. Both rejected a one-unit compile budget on the
+catalog-backed path. The complete focused run passed 38 configured cases,
+12 catalog project cases, five managed project cases and nine native host
+transport cases per profile. Local receipt:
+`build/restricted-worker/20261121T182525039194Z/receipt.json`.
 
 ## Windows verification
 

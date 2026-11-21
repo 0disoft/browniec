@@ -70,30 +70,20 @@ pub fn Result<entries::Entry,modules::Error> select(ref project::Project map,sou
 }
 
 pub fn Result<modules::Index,modules::Error> index_limited(ref project::Project map,sources::Snapshot snapshot,
-    usize tokens,usize functions,usize records,usize nesting_limit){
-    var usize[16] order=[32;16];let usize mapped=file_map(map,ref snapshot,ref mut order)?;
-    let modules::Index index=modules::build_limited(snapshot,tokens,nesting_limit)?;
+    bool host,usize tokens,usize functions,usize records,usize nesting_limit,usize fuel){
+    var usize[16] order=[32;16];
+    discard file_map(map,ref snapshot,ref mut order)?;
+    let modules::Index index=modules::build_metered(snapshot,host,tokens,nesting_limit,fuel)?;
     if(modules::function_count(ref index)>functions || modules::record_count(ref index)>records){
         return .err(error(.Limit,sources::no_source()));
     }
-    let usize checked=headers(map,ref index,ref order)?;
+    discard headers(map,ref index,ref order)?;
     return .ok(index);
 }
 pub fn Result<modules::Index,modules::Error> index_host(ref project::Project map,sources::Snapshot snapshot,usize token_limit){
     var usize[16] order=[32;16];let usize mapped=file_map(map,ref snapshot,ref mut order)?;
     let modules::Index index=modules::build_host(snapshot,token_limit)?;
     let usize checked=headers(map,ref index,ref order)?;
-    return .ok(index);
-}
-pub fn Result<modules::Index,modules::Error> index_host_limited(ref project::Project map,sources::Snapshot snapshot,
-    usize tokens,usize functions,usize records,usize nesting_limit){
-    var usize[16] order=[32;16];
-    discard file_map(map,ref snapshot,ref mut order)?;
-    let modules::Index index=modules::build_host_limited(snapshot,tokens,nesting_limit)?;
-    if(modules::function_count(ref index)>functions || modules::record_count(ref index)>records){
-        return .err(error(.Limit,sources::no_source()));
-    }
-    discard headers(map,ref index,ref order)?;
     return .ok(index);
 }
 pub fn Result<input_entries::InputEntry,modules::Error> select_input(ref project::Project map,sources::Snapshot snapshot){
