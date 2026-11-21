@@ -20,6 +20,7 @@ import loops as loops;
 import body_source_work as body_work;
 import metadata_budget as budget;
 import output_canonical_proof_work as proof_work;
+import output_proof_work as output_work;
 
 // Only internally rebuilt source/context plus complete canonical admission can
 // create this resource. Compiler name tables are not retained at runtime.
@@ -31,7 +32,8 @@ pub resource Program { vec::Vec<Stored> stored; cleanup { } }
 pub resource Lowered {
     candidate::Program code; images::Builder literals; bool references; signature_scan::State signatures;
     compiler::BodyProgress progress; lexer::State token; locals::Table names; loops::State flow; body_work::State cursor;
-    vec::Vec<proof_work::State> proof; vec::Vec<images::Image> image; cleanup { }
+    vec::Vec<proof_work::State> proof; vec::Vec<images::Image> image;
+    vec::Vec<output_work::Pending> output_proof; cleanup { }
 }
 pub fn Result<Program,diagnostics::Error> compile(entries::Entry selected,usize image_limit){
     var retention::Plan plan=retention::unlimited();return compile_with_retention(selected,image_limit,ref mut plan);
@@ -75,14 +77,13 @@ pub fn Result<usize,diagnostics::Error> start_lowered(ref mut vec::Vec<Lowered> 
         .code=candidate::Program{.body=ir::empty(),.parameters=[0;128],.results=[0;16],.origins=[0;16]},
         .literals=images::full_builder(),.references=references,.signatures=signature_scan::indexed(entry,references),
         .progress=compiler::begin_module_bodies(),.token=lexer::empty(),.names=locals::empty(),
-        .flow=loops::empty(),.cursor=body_work::begin(0,false),.proof=vec::empty<proof_work::State>(),.image=vec::empty<images::Image>()};
+        .flow=loops::empty(),.cursor=body_work::begin(0,false),.proof=vec::empty<proof_work::State>(),
+        .image=vec::empty<images::Image>(),.output_proof=vec::empty<output_work::Pending>()};
     return switch(vec::push<Lowered>(storage,empty)){
         case .ok(v):{.ok(v)}case .err(_):{.err(diagnostics::absent(errors::make(15,0)))}
     };
 }
 pub fn bool signatures_done(ref Lowered lowered){return lowered.signatures.done;}
-pub fn ref candidate::Program lowered_code(ref Lowered lowered){return ref lowered.code;}
-pub fn ref images::Builder lowered_literals(ref Lowered lowered){return ref lowered.literals;}
 @link_name("bc_runtime_engine_compile_proof_storage")
 unsafe extern C fn usize proof_storage_raw(ptr void candidate);
 pub fn usize proof_storage_bytes(ref Lowered lowered){return unsafe{proof_storage_raw(lowered as ptr void)};}

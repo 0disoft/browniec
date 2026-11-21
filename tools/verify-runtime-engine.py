@@ -549,6 +549,8 @@ def main():
         layout_types['compileProofType']=contract['compileProofType']
         layout_types['compileProofVectorType']=contract['compileProofVectorType']
         layout_types['compileProofImageType']=contract['compileProofImageType']
+        layout_types['compileOutputProofType']=contract['compileOutputProofType']
+        layout_types['compileOutputProofVectorType']=contract['compileOutputProofVectorType']
         layout_types['compileCandidateVectorType']=contract['compileCandidateVectorType']
         need(set(layout_types) == set(contract['reviewedLayouts']), 'Reviewed layout set changed')
         cached_field=re.search(r'\b(fy_struct_\d+) f_4;',contract['reviewedLayouts']['output_stored'])
@@ -627,6 +629,7 @@ def main():
         bindings += f'typedef {contract["compileWorkType"]} bc_compile_work;\n'
         bindings += f'typedef {contract["compileCandidateType"]} bc_compile_candidate;\n'
         bindings += f'typedef {contract["compileProofType"]} bc_compile_proof;\n'
+        bindings += f'typedef {contract["compileOutputProofType"]} bc_compile_output_proof;\n'
         bindings += f'typedef {contract["compileCandidateVectorType"]} bc_compile_candidates;\n'
         bindings += f'typedef {contract["hostProgramType"]} bc_host_program;\ntypedef {contract["hostIRType"]} bc_host_ir;\n'
         bindings += f'typedef {contract["hostExchangeType"]} bc_host_exchange;\n'

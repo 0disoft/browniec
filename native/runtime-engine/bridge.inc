@@ -102,6 +102,30 @@ uint32_t bc_runtime_engine_retain_proved_input(void *raw,const void *selected,vo
  bc_compile_candidate *work=raw;
  return B58(&work->f_0,&work->f_10,work->f_9.f_0,selected,outgoing,failure);
 }
+uintptr_t bc_runtime_engine_output_proof_storage(const void *raw){
+ const bc_compile_candidate *work=raw;
+ if(!work || work->f_10.f_4>(UINTPTR_MAX-sizeof(bc_compile_output_proof))/8)return 0;
+ return sizeof(bc_compile_output_proof)+work->f_10.f_4*8;
+}
+uint32_t bc_runtime_engine_begin_output_proof(void *raw,uintptr_t image_limit,uint32_t input,void *failure){
+ bc_compile_candidate *work=raw;
+ if(work->f_11.f_0 || work->f_11.f_1 || work->f_11.f_2 || work->f_11.f_3 ||
+     work->f_11.f_4!=sizeof(bc_compile_output_proof) || work->f_11.f_5!=_Alignof(bc_compile_output_proof))return 2;
+ uint32_t status=B59(&work->f_1,&work->f_10,image_limit,failure);
+ if(status)return status;
+ status=reserve_compile_slot(&work->f_11.f_0,&work->f_11.f_1,&work->f_11.f_2,
+     sizeof(bc_compile_output_proof),_Alignof(bc_compile_output_proof));
+ return status || !B60(&work->f_11,input!=0) ? 2 : 0;
+}
+uint32_t bc_runtime_engine_step_output_proof(void *raw,const void *snapshot,void *meter,void *failure){
+ bc_compile_candidate *work=raw;
+ bc_compile_output_proof *proof=work->f_11.f_0;
+ return B61(&work->f_0,&work->f_10,&proof->f_0,&proof->f_1,snapshot,meter,failure);
+}
+uint32_t bc_runtime_engine_finish_output_proof(void *raw,const void *snapshot,uintptr_t deadline,void *outgoing,void *failure){
+ bc_compile_candidate *work=raw;
+ return B62(&work->f_0,&work->f_10,work->f_11.f_0,snapshot,deadline,outgoing,failure);
+}
 uint32_t bc_runtime_engine_reserve_compile_candidate(void *raw){
  bc_compile_candidates *storage=raw;
  const size_t size=sizeof(bc_compile_candidate),align=_Alignof(bc_compile_candidate);

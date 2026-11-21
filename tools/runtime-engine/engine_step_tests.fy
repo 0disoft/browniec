@@ -673,13 +673,28 @@ fn Result<usize,u8> pending_output_compile_lifecycle(){
     assert(engine::detach_compile(ref mut e,cancelled).is_ok && retained(ref e).compile_source_bytes==0);
     same_heap(ref idle);
 
+    let usize interrupted=id(engine::begin_compile_output(ref mut e,selected(source)?,65536));
+    let engine::CompileStatus ready=prepare_compile(ref mut e,interrupted)?;
+    let engine::CompileStatus lowered=lower_compile(ref mut e,interrupted,ready)?;
+    let usize lower_bytes=retained(ref e).compile_source_bytes;
+    let engine::CompileStatus proving=start_proof(ref mut e,interrupted,lowered)?;
+    let usize proof_bytes=retained(ref e).compile_source_bytes;
+    assert(proof_bytes>lower_bytes && unsafe{probe_live_bytes()}==idle.bytes+proof_bytes);
+    let engine::CompileStatus partial=compile_status(engine::step_compile(ref mut e,interrupted))?;
+    assert(compile_state(partial.state)==7 && partial.program==0 && partial.batches==proving.batches+1);
+    assert(!engine::detach_compile(ref mut e,interrupted).is_ok);
+    let engine::CompileStatus stopped=compile_status(engine::cancel_compile(ref mut e,interrupted))?;
+    assert(compile_state(stopped.state)==4 && stopped.program==0 && stopped.batches==partial.batches);
+    assert(engine::detach_compile(ref mut e,interrupted).is_ok && retained(ref e).compile_source_bytes==0);
+    same_heap(ref idle);
+
     let usize job=id(engine::begin_compile_output(ref mut e,selected(source)?,65536));
-    let engine::CompileStatus ready=prepare_compile(ref mut e,job)?;
-    let engine::CompileStatus lowered=lower_compile(ref mut e,job,ready)?;
-    assert(lowered.program==0 && lowered.batches>ready.batches);
+    assert(job==interrupted+1 && !engine::step_compile(ref mut e,interrupted).is_ok);
+    let engine::CompileStatus prepared_again=prepare_compile(ref mut e,job)?;
+    let engine::CompileStatus candidate=lower_compile(ref mut e,job,prepared_again)?;
+    let engine::CompileStatus started=start_proof(ref mut e,job,candidate)?;
     counts(ref mut e,0,0,0);
-    let engine::CompileStatus admitted=compile_status(engine::step_compile(ref mut e,job))?;
-    assert(compile_state(admitted.state)==2 && admitted.program==1);
+    let engine::CompileStatus admitted=complete_proof(ref mut e,job,started)?;
     assert(engine::detach_compile(ref mut e,job).is_ok && retained(ref e).compile_source_bytes==0);
     let usize instance=id(engine::create_output_instance(ref mut e,admitted.program,16000000,2,true));
     let engine::Event done=event(engine::execute_once(ref mut e,instance));
@@ -697,10 +712,12 @@ fn Result<usize,u8> pending_compile_deadline(){
     let Heap idle=heap();
     let ref u8[] source=b"module app;pub fn i32 chosen(){var i32 n=70;while(n<77){n+=1;}return n;}";
     var usize mode=0;
-    while(mode<5){
+    while(mode<6){
         let usize start=100+20000000*mode;
         unsafe{bc_runtime_engine_test_set_clock(start)};
-        let usize job=if(mode>=3){
+        let usize job=if(mode==5){
+            id(engine::begin_compile_output(ref mut e,selected(source)?,65536))
+        }else if(mode>=3){
             id(engine::begin_compile_input(ref mut e,selected_input(
                 b"module app;pub fn i32 chosen(ref u8[] data){return data[0] as i32;}")?,65536))
         }else{id(engine::begin_compile(ref mut e,selected(source)?,65536))};
@@ -708,7 +725,7 @@ fn Result<usize,u8> pending_compile_deadline(){
         let engine::CompileStatus signature=compile_status(engine::step_compile(ref mut e,job))?;
         assert(compile_state(signature.state)==1 && signature.batches==prepared.batches+1);
         var engine::CompileStatus before_expiry=signature;
-        if(mode==1 || mode==4){
+        if(mode==1 || mode==4 || mode==5){
             let engine::CompileStatus lowered=lower_compile(ref mut e,job,signature)?;
             let engine::CompileStatus proving=start_proof(ref mut e,job,lowered)?;
             before_expiry=compile_status(engine::step_compile(ref mut e,job))?;

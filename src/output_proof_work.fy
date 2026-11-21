@@ -24,6 +24,7 @@ import ir as ir;
 import output_return_ir as returns;
 import slice_result_origins as grounded_origins;
 import struct_layout as layouts;
+import std::vec as std_vec;
 
 // Analysis work only. The owning adapter pins exact source and immutable image;
 // normalized is a distinct private scratch Program, never retained authority.
@@ -107,6 +108,16 @@ fn State seed(bool input){
     .places=place_work::empty(),.references=reference_work::empty(),.function=0,.pc=0,.phase=0,.input=input,.output=true,.done=false},.origins=origins::empty(),
     .borrowed=borrowed_calls::empty(),.phase=0,.input=input,.done=false};
 }
+// The Engine owns this scratch in one heap slot while the original is pinned.
+pub struct Pending { State state; programs::Program normalized; }
+
+pub fn bool seed_pending(ref mut std_vec::Vec<Pending> slot,bool input){
+    if(std_vec::len<Pending>(slot)!=0 || std_vec::capacity<Pending>(slot)!=1){return false;}
+    let Pending empty=Pending{.state=seed(input),.normalized=programs::Program{
+        .body=ir::empty(),.parameters=[0;128],.results=[0;16],.origins=[0;16]}};
+    return std_vec::push<Pending>(slot,empty).is_ok;
+}
+
 // The standalone proof can run without the Windows Engine clock.
 pub fn Result<raw::Proof,errors::Error> inspect(ref programs::Program unit,ref images::Image image,bool input){
     var State w=seed(input);

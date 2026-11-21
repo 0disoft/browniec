@@ -633,6 +633,21 @@ returning 77 and emitting two bytes, and zero live SDK allocations at
 teardown. The locked /O2 CLI quick start returned 77. Local receipt:
 `build/runtime-engine/20261121T073632686896Z/receipt.json`.
 
+## Engine-owned output-only proof
+
+Output-only compilation now freezes the literal image and charges the frozen
+payload, image vector and a single heap slot for the proof and normalized scratch.
+The Engine drives the existing output proof coordinator one stage per step under
+a fresh 4096-unit allowance. The Program ID becomes visible only after proof,
+execution preparation, retention and publication. Image freeze, final preparation
+and publication remain synchronous steps.
+
+The Windows native development and /O2 suite checked cancellation in lowering
+and partial proof, expiry before publication, stale job rejection, and exact
+refunds against the SDK heap. Successful execution returned 77 and emitted
+`ok`. Both process exits were 0 with zero live SDK allocations. Local receipt:
+`build/runtime-engine/20261121T075807085872Z/receipt.json`.
+
 ## Executed verification and remaining work
 
 [Windows evidence](../evidence/runtime-engine-compile-memory-windows-20261107.json)

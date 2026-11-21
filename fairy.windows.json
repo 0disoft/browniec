@@ -64,6 +64,10 @@
     "runtime_engine::end_compile_input_inner",
     "runtime_engine::reset_compile_input_storage",
     "module_input_program::finish_proof_inner",
+    "module_output_program::open_proof_inner",
+    "output_proof_work::seed_pending",
+    "module_output_program::advance_proof_inner",
+    "module_output_program::finish_proof_inner",
     "windows_engine_bindings::incoming"
   ]
 }

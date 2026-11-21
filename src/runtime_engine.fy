@@ -1306,16 +1306,18 @@ fn u32 begin_compile_proof(ref mut Meta m,ref mut CompileWork job,ref modules::I
     let usize payload=switch(programs::proof_payload(lowered)){
         case .ok(v):{v}case .err(e):{return compile_error(m,e);}
     };
-    var retention::Plan retained=switch(retention_plan(m,if(job.input){1}else{0})){
+    var retention::Plan retained=switch(retention_plan(m,if(job.output){2}else if(job.input){1}else{0})){
         case .ok(v):{v}case .err(status):{return failed(m,status);}
     };
     if(!retention::admit(ref mut retained,payload).is_ok){return failed(m,8);}
-    let usize storage=programs::proof_storage_bytes(lowered);
+    let usize storage=if(job.output){output_programs::proof_storage_bytes(lowered)}else{programs::proof_storage_bytes(lowered)};
     if(storage==0 || payload>18446744073709551615-storage){return failed(m,7);}
     let usize bytes=payload+storage;
     var memory::Budget charged=m.programs;
     if(!memory::hold_compile_candidate(ref mut charged,bytes).is_ok){return failed(m,8);}
-    switch(programs::begin_proof(index,lowered,job.image_limit,job.deadline,job.input)){
+    let Result<usize,diagnostics::Error> opened=if(job.output){output_programs::begin_proof(lowered,job.image_limit,job.input)}
+        else{programs::begin_proof(index,lowered,job.image_limit,job.deadline,job.input)};
+    switch(opened){
         case .ok(_):{}case .err(e):{return compile_error(m,e);}
     };
     m.programs=charged;
@@ -1334,8 +1336,9 @@ fn u32 step_pending_proof(ref mut Meta m,ref mut CompileWork job,ref mut vec::Ve
 fn u32 step_compile_proof(ref mut Meta m,ref mut CompileWork job,ref modules::Index index,
     ref mut vec::Vec<programs::Lowered> candidate){
     var metadata_budget::State meter=metadata_budget::empty();
-    let Result<bool,diagnostics::Error> advanced=programs::advance_proof(
-        index,vec::at_mut<programs::Lowered>(candidate,0),ref mut meter);
+    let ref mut programs::Lowered lowered=vec::at_mut<programs::Lowered>(candidate,0);
+    let Result<bool,diagnostics::Error> advanced=if(job.output){output_programs::advance_proof(
+        modules::snapshot(index),lowered,ref mut meter)}else{programs::advance_proof(index,lowered,ref mut meter)};
     job.batches+=meter.stages;
     switch(advanced){
         case .ok(done):{if(done){job.state=8;}}
@@ -1372,17 +1375,25 @@ fn u32 finish_pending_compile(ref mut Meta m,ref mut vec::Vec<Program> programs,
 fn u32 finish_pending_output_compile(ref mut Meta m,ref mut vec::Vec<Program> programs,ref mut CompileWork job,
     ref mut vec::Vec<entries::Entry> selected,ref mut vec::Vec<programs::Lowered> candidate){
     if(vec::len<Program>(programs)>=m.limits.programs || m.next==0){return stop_compile(m,job,selected,candidate,error(8));}
-    var retention::Plan plan=switch(retention_plan(m,2)){
-        case .ok(v):{v}case .err(status):{return stop_compile(m,job,selected,candidate,error(status));}
+    let ref mut programs::Lowered lowered=vec::at_mut<programs::Lowered>(candidate,0);
+    let usize payload=switch(programs::proof_payload(lowered)){
+        case .ok(v):{v}
+        case .err(e):{discard compile_error(m,e);let Error cause=m.error;return stop_compile(m,job,selected,candidate,cause);}
     };
-    let Result<output_programs::Program,diagnostics::Error> built=output_programs::admit_lowered_until(
-        vec::at<entries::Entry>(selected,0),vec::at<programs::Lowered>(candidate,0),job.image_limit,ref mut plan,job.deadline);
-    assert(memory::record(ref mut m.programs,ref plan).is_ok);
+    var retention::Plan plan=switch(memory::prepare_transfer(ref m.programs,2,payload)){
+        case .ok(v):{v}case .err(_):{return stop_compile(m,job,selected,candidate,error(8));}
+    };
+    if(!retention::admit(ref mut plan,payload).is_ok){return stop_compile(m,job,selected,candidate,error(8));}
+    let ref sources::Snapshot snapshot=modules::snapshot(entries::index(vec::at<entries::Entry>(selected,0)));
+    var vec::Vec<output_programs::Program> code=vec::empty<output_programs::Program>();
+    let Result<usize,diagnostics::Error> built=output_programs::finish_proof(snapshot,lowered,job.deadline,ref mut code);
+    assert(memory::record_transfer(ref mut m.programs,ref plan,payload).is_ok);
     finish_compile_source(m,job,selected,candidate);
-    let u32 status=switch(built){
-        case .ok(code):{publish_output_program(m,programs,code,plan.bytes,empty_entry(),0,job.deadline)}
-        case .err(e):{compile_error(m,e)}
+    switch(built){
+        case .ok(_):{}
+        case .err(e):{discard compile_error(m,e);job.state=4;job.failure=m.error;return 0;}
     };
+    let u32 status=publish_output_program_storage(m,programs,code,plan.bytes,empty_entry(),job.deadline);
     if(status==0){job.state=3;job.program=m.result;}
     else{job.state=4;job.failure=m.error;}
     return 0;
@@ -1394,12 +1405,12 @@ fn u32 step_compile_inner(ref mut Meta m,ref mut vec::Vec<Program> programs,ref 
     if(id==0 || job.id!=id){return 2;}
     if(compile_terminal(job.state)){return 0;}
     if(clock::expired(job.deadline)){return stop_compile(m,job,selected,candidate,compile_timeout());}
-    if(job.state==2){
-        if(job.output){return finish_pending_output_compile(m,programs,job,selected,candidate);}
-        return begin_pending_proof(m,job,selected,candidate);
-    }
+    if(job.state==2){return begin_pending_proof(m,job,selected,candidate);}
     if(job.state==7){return step_pending_proof(m,job,selected,candidate);}
-    if(job.state==8){return finish_pending_compile(m,programs,job,selected,candidate);}
+    if(job.state==8){
+        if(job.output){return finish_pending_output_compile(m,programs,job,selected,candidate);}
+        return finish_pending_compile(m,programs,job,selected,candidate);
+    }
     let ref entries::Entry entry=vec::at<entries::Entry>(selected,0);
     let ref modules::Index index=entries::index(entry);
     let bool references=job.output || job.source.syntax.result;
@@ -1680,11 +1691,16 @@ fn u32 publish_output_program(ref mut Meta m,ref mut vec::Vec<Program> v,output_
     if(entry.scope_len!=0){entry.emits=output_programs::requires_emit(ref code);}
     if(mode==2 && entry.emits){return failed(m,5);}
     entry.requires_output=mode==3;
-    let usize scratch=output_programs::preparation(ref code).scratch;
-    let usize id=m.next;var vec::Vec<output_programs::Program> retained=vec::empty<output_programs::Program>();
+    var vec::Vec<output_programs::Program> retained=vec::empty<output_programs::Program>();
     if(!vec::reserve<output_programs::Program>(ref mut retained,1).is_ok){return failed(m,6);}
     if(!vec::push<output_programs::Program>(ref mut retained,code).is_ok){return failed(m,6);}
+    return publish_output_program_storage(m,v,retained,bytes,entry,deadline);
+}
+fn u32 publish_output_program_storage(ref mut Meta m,ref mut vec::Vec<Program> v,
+    vec::Vec<output_programs::Program> retained,usize bytes,EntryBinding entry,usize deadline){
     if(clock::expired(deadline)){return compile_timed_out(m);}
+    let usize scratch=output_programs::preparation(vec::at<output_programs::Program>(ref retained,0)).scratch;
+    let usize id=m.next;
     if(!vec::push<Program>(v,Program{.id=id,.pins=0,.released=false,.code=vec::empty<programs::Program>(),
         .input=vec::empty<input_programs::Program>(),.output=retained,.bytes=bytes,.execution_scratch=scratch,.entry=entry,.host=vec::empty<host_program::Program>()}).is_ok){return failed(m,6);}
     assert(memory::publish(ref mut m.programs,bytes).is_ok);advance(m);return success(m,id);
@@ -2510,6 +2526,7 @@ fn void retain_compile_literal_binding(ref mut Meta m,ref entries::Entry entry){
         ref mut builder,ref mut signatures,ref mut meter,true);
     retain_compile_body_binding(m,entry,ref source,ref literals);
     programs::retain_proof_binding(entry);
+    output_programs::retain_proof_bindings(modules::snapshot(index));
 }
 fn void retain_compile_body_binding(ref mut Meta m,ref entries::Entry entry,ref source_work::State source,ref literal_work::State literals){
     var signature_scan::State signatures=signature_scan::indexed(0,false);

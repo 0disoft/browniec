@@ -100,6 +100,18 @@ c['compileProofVectorType']=field_type(c['compileCandidateType'],9)
 c['compileProofType']=arg(50,2)
 assert arg(53,0)==c['compileProofVectorType']
 c['compileProofImageType']=field_type(c['compileCandidateType'],10)
+c['compileOutputProofVectorType']=field_type(c['compileCandidateType'],11)
+c['compileOutputProofType']=vector_element(c['compileOutputProofVectorType'])
+assert arg(60,0)==c['compileOutputProofVectorType']
+assert arg(62,2)==c['compileOutputProofType']
+assert arg(61,2)==field_type(c['compileOutputProofType'],0)
+assert arg(61,3)==field_type(c['compileOutputProofType'],1)
+assert arg(59,1)==arg(61,1)==arg(62,1)==c['compileProofImageType']
+assert arg(62,5)==field_type(c['programType'],5)
+assert arg(59,0)==arg(51,1)==field_type(c['compileCandidateType'],1)
+assert arg(61,0)==arg(62,0)==arg(50,0)==field_type(c['compileCandidateType'],0)
+assert arg(61,4)==arg(62,3)==field_type(vector_element(c['sourceIndexVectorType']),0)
+assert arg(61,5)==arg(50,4)
 assert arg(50,2)==arg(52,2)==arg(58,2)==c['compileProofType']
 assert arg(50,1)==arg(51,2)==arg(52,1)==arg(58,1)==c['compileProofImageType']
 assert arg(42,4)==arg(45,3)==arg(47,0)==arg(55,4)==arg(56,3)==c['compileCandidateVectorType']
@@ -175,12 +187,12 @@ types['policyType']=c['policyType']
 types['capturePlanType']=c['capturePlanType']
 for key in ['hostProgramVectorType','hostProgramType','hostIRType','hostExchangeVectorType','hostExchangeType','hostRunConfigType','hostTransitionType']:types[key]=c[key]
 c['reviewedLayouts']={k:re.search(r'^typedef struct \{\n[^}]*\} '+re.escape(v)+';$',t,re.M).group() for k,v in types.items()}
-assert len(c['bindings'])==58 and len(c['reviewedLayouts'])==52
+assert len(c['bindings'])==62 and len(c['reviewedLayouts'])==52
 for key in ['lifecycleType','setupWorkType','preparationWorkType','cleanupWorkType','runtimeMetadataType','cleanupRuntimeType','inputWindowsType','storageBufferType']:
  c['reviewedLayouts'][key]=re.search(r'^typedef struct \{\n[^}]*\} '+re.escape(c[key])+';$',t,re.M).group()
-for key in ['compileWorkType','compileWorkVectorType','compileCandidateType','compileCandidateVectorType','compileProofType','compileProofVectorType','compileProofImageType']:
+for key in ['compileWorkType','compileWorkVectorType','compileCandidateType','compileCandidateVectorType','compileProofType','compileProofVectorType','compileProofImageType','compileOutputProofType','compileOutputProofVectorType']:
  c['reviewedLayouts'][key]=re.search(r'^typedef struct \{\n[^}]*\} '+re.escape(c[key])+';$',t,re.M).group()
-assert len(c['reviewedLayouts'])==67
+assert len(c['reviewedLayouts'])==69
 c['transportSha256']=hashlib.sha256(generated).hexdigest()
 c['compilerScratch']=reviewed_scratch(t)
 c['sourceInputs']=[dict(path=p.relative_to(root).as_posix(),sha256=hashlib.sha256(p.read_bytes()).hexdigest()) for p in sources]

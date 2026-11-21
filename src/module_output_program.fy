@@ -32,6 +32,7 @@ import slice_result_cursor as cursors;
 import static_ir as statics;
 import call_capture_plan as call_captures;
 import runtime_execution_memory as execution_heap;
+import metadata_budget as budget;
 
 pub struct Preparation { statics::Sites sites; u8[16] origins; lists::Requirement list; places::Requirement place; usize work; usize capacity; usize scratch; u8[16] parameters; call_captures::Plan calls; }
 resource Stored { sources::Snapshot sources; candidates::Program code; images::Image image; bool input; Preparation prepared; cleanup { } }
@@ -80,10 +81,91 @@ pub fn Result<Program,diagnostics::Error> compile_input_with_retention_until(inp
     let usize lowered=compiler::lower_input_modules_until(ref selected,ref mut builder,ref mut code,true,deadline)?;
     return finish_until(modules::snapshot(input_entries::index(ref selected)),ref builder,ref code,image_limit,true,plan,deadline);
 }
-pub fn Result<Program,diagnostics::Error> admit_lowered_until(ref entries::Entry selected,
-    ref ordinary::Lowered lowered,usize image_limit,ref mut retention::Plan plan,usize deadline){
-    return finish_until(modules::snapshot(entries::index(selected)),ordinary::lowered_literals(lowered),
-        ordinary::lowered_code(lowered),image_limit,false,plan,deadline);
+@link_name("bc_runtime_engine_output_proof_storage")
+unsafe extern C fn usize proof_storage_raw(ptr void candidate);
+@link_name("bc_runtime_engine_begin_output_proof")
+unsafe extern C fn u32 open_proof_raw(ptr mut void candidate,usize image_limit,u32 input,ptr mut void failure);
+@link_name("bc_runtime_engine_step_output_proof")
+unsafe extern C fn u32 step_proof_raw(ptr mut void candidate,ptr void snapshot,ptr mut void meter,ptr mut void failure);
+@link_name("bc_runtime_engine_finish_output_proof")
+unsafe extern C fn u32 finish_proof_raw(ptr mut void candidate,ptr void snapshot,usize deadline,ptr mut void outgoing,ptr mut void failure);
+@link_name("bc_runtime_engine_binding")
+unsafe extern C fn void binding_raw(u32 number);
+
+pub fn usize proof_storage_bytes(ref ordinary::Lowered lowered){return unsafe{proof_storage_raw(lowered as ptr void)};}
+pub fn Result<usize,diagnostics::Error> begin_proof(ref mut ordinary::Lowered lowered,usize image_limit,bool input){
+    var diagnostics::Error failure=absent(errors::absent(5,0));
+    let u32 status=unsafe{open_proof_raw(lowered as ptr mut void,image_limit,if(input){1}else{0},ref mut failure as ptr mut void)};
+    if(status==2){return .err(absent(errors::make(15,0)));}
+    return if(status==0){.ok(0)}else{.err(failure)};
+}
+pub fn Result<bool,diagnostics::Error> advance_proof(ref sources::Snapshot snapshot,ref mut ordinary::Lowered lowered,ref mut budget::State meter){
+    var diagnostics::Error failure=absent(errors::absent(5,0));
+    let u32 status=unsafe{step_proof_raw(lowered as ptr mut void,snapshot as ptr void,meter as ptr mut void,ref mut failure as ptr mut void)};
+    return if(status<=1){.ok(status==1)}else{.err(failure)};
+}
+pub fn Result<usize,diagnostics::Error> finish_proof(ref sources::Snapshot snapshot,ref mut ordinary::Lowered lowered,
+    usize deadline,ref mut vec::Vec<Program> outgoing){
+    var diagnostics::Error failure=absent(errors::absent(5,0));
+    let u32 status=unsafe{finish_proof_raw(lowered as ptr mut void,snapshot as ptr void,deadline,
+        outgoing as ptr mut void,ref mut failure as ptr mut void)};
+    return if(status==0){.ok(0)}else{.err(failure)};
+}
+fn u32 open_proof_inner(ref images::Builder builder,ref mut vec::Vec<images::Image> storage,
+    usize image_limit,ref mut diagnostics::Error failure){
+    let images::Image image=switch(images::freeze(builder,image_limit)){
+        case .ok(v):{v}case .err(e):{*failure=literal(e);return 1;}
+    };
+    if(!vec::push<images::Image>(storage,image).is_ok){*failure=literal(.Allocation);return 1;}
+    assert(vec::capacity<images::Image>(storage)==8);
+    return 0;
+}
+fn u32 advance_proof_inner(ref candidates::Program code,ref vec::Vec<images::Image> storage,
+    ref mut proof_work::State state,ref mut candidates::Program normalized,ref sources::Snapshot snapshot,
+    ref mut budget::State meter,ref mut diagnostics::Error failure){
+    if(vec::len<images::Image>(storage)!=1){*failure=absent(errors::absent(5,0));return 2;}
+    return switch(proof_work::advance(code,vec::at<images::Image>(storage,0),normalized,state,meter)){
+        case .ok(done):{if(done){1}else{0}}case .err(e):{*failure=proof_error(snapshot,code,e);2}
+    };
+}
+fn u32 finish_proof_inner(ref candidates::Program code,ref mut vec::Vec<images::Image> storage,
+    ref proof_work::Pending work,ref sources::Snapshot snapshot,usize deadline,
+    ref mut vec::Vec<Program> outgoing,ref mut diagnostics::Error failure){
+    let output_proof::Proof proof=switch(proof_work::prepared(ref work.state)){
+        case .ok(v):{v}case .err(e):{*failure=proof_error(snapshot,code,e);return 1;}
+    };
+    let Result<Program,diagnostics::Error> built=switch(vec::pop<images::Image>(storage)){
+        case .some(image):{finish_verified(snapshot,code,image,work.state.input,ref proof,deadline)}
+        case .none:{.err(absent(errors::absent(5,0)))}
+    };
+    let Program program=switch(built){case .ok(v):{v}case .err(e):{*failure=e;return 1;}};
+    if(!vec::push<Program>(outgoing,program).is_ok){*failure=absent(errors::make(15,0));return 1;}
+    return 0;
+}
+pub fn void retain_proof_bindings(ref sources::Snapshot snapshot){
+    let images::Builder builder=images::full_builder();
+    var vec::Vec<images::Image> storage=vec::empty<images::Image>();
+    var vec::Vec<proof_work::Pending> work=vec::empty<proof_work::Pending>();
+    var diagnostics::Error failure=absent(errors::absent(5,0));
+    unsafe{binding_raw(59)};discard open_proof_inner(ref builder,ref mut storage,0,ref mut failure);
+    unsafe{binding_raw(60)};discard proof_work::seed_pending(ref mut work,false);
+    var proof_work::State state=proof_work::empty(false);
+    var candidates::Program normalized=candidates::Program{.body=ir::empty(),.parameters=[0;128],.results=[0;16],.origins=[0;16]};
+    retain_proof_advance_binding(snapshot,ref storage,ref mut state,ref mut normalized);
+    if(vec::len<proof_work::Pending>(ref work)==1){retain_proof_finish_binding(snapshot,ref mut storage,vec::at<proof_work::Pending>(ref work,0));}
+}
+fn void retain_proof_advance_binding(ref sources::Snapshot snapshot,ref vec::Vec<images::Image> storage,
+    ref mut proof_work::State state,ref mut candidates::Program normalized){
+    let candidates::Program code=candidates::Program{.body=ir::empty(),.parameters=[0;128],.results=[0;16],.origins=[0;16]};
+    var budget::State meter=budget::empty();
+    var diagnostics::Error failure=absent(errors::absent(5,0));
+    unsafe{binding_raw(61)};discard advance_proof_inner(ref code,storage,state,normalized,snapshot,ref mut meter,ref mut failure);
+}
+fn void retain_proof_finish_binding(ref sources::Snapshot snapshot,ref mut vec::Vec<images::Image> storage,ref proof_work::Pending work){
+    let candidates::Program code=candidates::Program{.body=ir::empty(),.parameters=[0;128],.results=[0;16],.origins=[0;16]};
+    var vec::Vec<Program> outgoing=vec::empty<Program>();
+    var diagnostics::Error failure=absent(errors::absent(5,0));
+    unsafe{binding_raw(62)};discard finish_proof_inner(ref code,storage,work,snapshot,0,ref mut outgoing,ref mut failure);
 }
 fn Result<images::Image,diagnostics::Error> freeze(ref images::Builder builder,usize image_limit,ref mut retention::Plan plan){
     let usize payload=switch(images::planned_payload(builder)){case .ok(v):{v}case .err(_):{return .err(absent(errors::make(5,0)));}};
