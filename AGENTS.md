@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-22): [Statement control depth](docs/engineering/restricted-worker.md#statement-control-depth)
-  applies the policy to raw and staged control lowering.
-  Both Windows worker profiles accept an else-if chain at depth three and reject it at two.
+- Latest runtime checkpoint (2026-11-22): [Aggregate expression depth](docs/engineering/restricted-worker.md#aggregate-expression-depth)
+  applies the policy to grouped array and record expressions.
+  Both Windows worker profiles admit their projection fixtures at depth three and reject them at two.
 
 # Brownie C agent guidance
 

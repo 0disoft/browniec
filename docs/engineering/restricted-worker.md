@@ -397,10 +397,11 @@ outer braces. Comment and literal contents do not count. The first excess
 opener produces a source-local `compile_limit`. The existing parser still
 validates delimiter pairing and enforces its own grammar limits.
 
-[Scalar expression depth](#scalar-expression-depth) and
-[statement control depth](#statement-control-depth) also apply during
-lowering. Aggregate semantic depth and type accounting beyond declared
-records remain open.
+[Scalar expression depth](#scalar-expression-depth),
+[statement control depth](#statement-control-depth), and
+[aggregate expression depth](#aggregate-expression-depth) also apply
+during lowering. Type syntax depth and accounting beyond declared records
+remain open.
 
 The nesting follow-up passed twenty configured project cases per Windows
 profile. A nested block and parenthesized value returned 42 at depth two,
@@ -743,6 +744,26 @@ host transport cases. Local receipt: `build/restricted-worker/20261121T194032051
 An isolated Windows /O2 executable with the production clock shim
 passes five existing control regressions, including raw/staged IR
 parity, exact diagnostic offsets and the native 32/33 boundary.
+
+### Aggregate expression depth
+
+Grouped array and record lowering uses the indexed semantic depth limit
+when entering the operand and adding groups to its enclosing expression
+depth. The staged array projection and conditional arm paths use the same
+limit. Unconfigured compilation retains the compiler's native ceiling of
+32.
+
+A grouped array length and a grouped record field each occur beneath two
+unary operators. Both fixtures returned 42 at depth two before this
+change. Both Windows worker profiles now accept them at depth three and
+reject them at depth two, with `compile_limit` at the group's opening
+parenthesis in the second source and no guest result. Each profile passes
+50 configured, 20 catalog and five managed project cases plus nine native
+host transport cases. Local receipt: `build/restricted-worker/20261121T195339017629Z/receipt.json`.
+
+A separate /O2 aggregate test executable exited with assertion status 134
+on both the previous and current sources. That executable supplies no
+additional evidence for the native aggregate 32/33 boundary.
 
 ## Windows verification
 

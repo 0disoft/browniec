@@ -87,7 +87,7 @@ pub fn Result<bool,errors::Error> advance(ref u8[] source,ref mut lexer::State s
     if(f.phase==32){if(f.b!=256){let usize target=p.count;let usize patched=ir::patch(p,f.b,target,f.at)?;}w.frames[i].phase=33;return .ok(false);}
     if(f.phase==33){if(f.c!=256){let usize target=p.count;let usize patched=ir::patch(p,f.c,target,f.at)?;}return finish(w,f.b==256 && f.c==256,true);}
     // Actual arm body, with independent pending statements and scalar children.
-    if(f.phase==100){if(f.depth>32 || f.structure>32){return .err(errors::make(4,s.begin));}return take(w,s,123,101);}
+    if(f.phase==100){if(f.depth>signatures.semantic_depth || f.structure>signatures.semantic_depth){return .err(errors::make(4,s.begin));}return take(w,s,123,101);}
     if(f.phase==101){let usize count=w.names.count;w.frames[i].outer=count;w.frames[i].phase=102;return .ok(false);}
     if(f.phase==102){if(word(source,s,b"_")){w.frames[i].regular=true;w.frames[i].phase=104;}else{probe(w,*s,4,103);}return .ok(false);}
     if(f.phase==103){let bool regular=syntax::prepared(ref w.syntax)?;w.frames[i].regular=regular;
@@ -99,7 +99,7 @@ pub fn Result<bool,errors::Error> advance(ref u8[] source,ref mut lexer::State s
     if(f.phase==109){return finish(w,true,false);}
     if(f.phase==110){if(word(source,s,b"ref")){return .err(errors::make(3,f.inner));}
         if(syntax::prepared(ref w.syntax)? && w.syntax.suffix==125){let usize groups=w.syntax.groups;
-            if(f.depth>32 || groups>32-f.depth){return .err(errors::make(4,f.inner));}w.frames[i].groups=groups;w.frames[i].left=groups;w.frames[i].phase=111;return .ok(false);}
+            if(f.depth>signatures.semantic_depth || groups>signatures.semantic_depth-f.depth){return .err(errors::make(4,f.inner));}w.frames[i].groups=groups;w.frames[i].left=groups;w.frames[i].phase=111;return .ok(false);}
         if(join.kind<=1 && join.tag==0){probe(w,*s,12,114);}else{aggregate(w,*s,1,120);}return .ok(false);}
     if(f.phase==111){if(f.left!=0){w.frames[i].left=f.left-1;return take(w,s,0,111);}return push(w,f.depth+f.groups,f.structure,0,112);}
     if(f.phase==112){let bool stopped=w.stopped;w.frames[i].terminal=stopped;w.frames[i].left=f.groups;w.frames[i].phase=113;return .ok(false);}
@@ -111,7 +111,7 @@ pub fn Result<bool,errors::Error> advance(ref u8[] source,ref mut lexer::State s
         if(plan.kind!=0 && plan.suffix==125){return ask(w,3,159,f.depth,f.structure,0);}
         let u8 expected=if(join.kind==0 || join.kind==1){join.tag}else{0};return ask(w,4,150,f.depth,f.structure,expected);}
     // Untyped constructor tails retain the join's missing-domain constraints.
-    if(f.phase==140){if(s.kind==40){if(f.depth>32 || f.groups>=32-f.depth){return .err(errors::make(4,s.begin));}w.frames[i].groups=f.groups+1;return take(w,s,40,140);}return take(w,s,46,141);}
+    if(f.phase==140){if(s.kind==40){if(f.depth>signatures.semantic_depth || f.groups>=signatures.semantic_depth-f.depth){return .err(errors::make(4,s.begin));}w.frames[i].groups=f.groups+1;return take(w,s,40,140);}return take(w,s,46,141);}
     if(f.phase==141){let bool option=word(source,s,b"some") || word(source,s,b"none");let bool positive=word(source,s,b"some") || word(source,s,b"ok");
         if(!option && !word(source,s,b"ok") && !word(source,s,b"err")){return .err(errors::make(3,f.inner));}
         w.frames[i].option=option;w.frames[i].positive=positive;return take(w,s,0,142);}

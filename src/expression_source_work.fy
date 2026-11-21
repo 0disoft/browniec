@@ -185,7 +185,7 @@ pub fn Result<bool,errors::Error> advance(ref u8[] source,ref mut lexer::State s
     if(w.frames[caller].phase==72){let usize value=w.value;bank.arrays[caller].value=value;bank.arrays[caller].request=0;w.frames[caller].phase=70;return .ok(false);}
     if(w.frames[caller].phase==70){let usize environment=w.frames[caller].environment;var locals::Table active=locals::empty();
         if(environment==34){active=locals::snapshot(names);}else{let usize copied=names_into(bank,environment,ref mut active)?;}
-        var array_values::Frame a=bank.arrays[caller];let bool done=array_values::advance(source,s,p,ref active,ref mut a,ref mut bank.cells,ref mut w.cell_used,meter)?;
+        var array_values::Frame a=bank.arrays[caller];let bool done=array_values::advance_limited(source,s,p,ref active,ref mut a,ref mut bank.cells,ref mut w.cell_used,meter,signatures.semantic_depth)?;
         if(done){w.frames[caller].left=a.value;w.frames[caller].phase=13;}
         else if(a.request==1){a.request=0;w.token=tokens::begin(*s);w.lexing=true;}
         else if(a.request==4){a.request=0;bank.aggregate=aggregates::begin(*s,5);w.frames[caller].phase=71;}

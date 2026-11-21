@@ -201,6 +201,25 @@ def verify_configured_project(run, need, image, folder, env):
     policy['compile'] = compile_defaults
     math_file.write_bytes(original_source)
 
+    aggregate_projections = (
+        (b'module util::math;pub fn i32 answer(){let i32[1] a=[42];'
+         b'let usize n= ~ ~ (a).len;if(n==1){return 42;}return 0;}', b'(a).len'),
+        (b'module util::math;struct Box{i32 value;}pub fn i32 answer(){'
+         b'let Box r=Box{.value=42};return ~ ~ (r).value;}', b'(r).value'),
+    )
+    for aggregate_source, grouped in aggregate_projections:
+        math_file.write_bytes(aggregate_source)
+        policy['compile'] = dict(compile_defaults, source_bytes=4096, depth=3)
+        check()
+        policy['compile']['depth'] = 2
+        location = check(3, 'compile_limit', 'check')['error']['location']
+        offset = aggregate_source.index(grouped)
+        need(location['source_index'] == 1 and location['offset'] == offset and
+             location['end_offset'] == offset + 1,
+             f'Unexpected grouped aggregate depth location: {location}')
+    policy['compile'] = compile_defaults
+    math_file.write_bytes(original_source)
+
     runtime = config['limits'].copy()
     config['limits'].update(memory_bytes=1, object_bytes=1, input_bytes=0, output_bytes=0,
                             host_request_bytes=1, host_response_bytes=1)
@@ -288,7 +307,7 @@ def verify_configured_project(run, need, image, folder, env):
     config['entry']['function'] = manifest['entry']['function']
     config['grants'] = ['brownie.output.emit']
     check(4, 'unavailable')
-    return 46
+    return 50
 
 
 def verify_project_host(run, need, image, folder, env):

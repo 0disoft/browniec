@@ -26,10 +26,14 @@ fn Result<u8,errors::Error> register_byte(usize value,usize at){
 }
 pub fn Result<bool,errors::Error> advance(ref u8[] source,ref lexer::State s,ref mut ir::Program p,
     ref locals::Table names,ref mut Frame f,ref mut u8[] values,ref mut usize used,ref mut budget::State meter){
+    return advance_limited(source,s,p,names,f,values,used,meter,32);
+}
+pub fn Result<bool,errors::Error> advance_limited(ref u8[] source,ref lexer::State s,ref mut ir::Program p,
+    ref locals::Table names,ref mut Frame f,ref mut u8[] values,ref mut usize used,ref mut budget::State meter,usize limit){
     if(f.done){return .ok(true);}if(meter.last!=0 || f.request!=0){return .ok(false);}
     if(!budget::admit(meter,4096,s.begin)?){return .ok(false);}
-    if(f.phase==0){if(f.depth>32 || f.literal && f.groups>32-f.depth){return .err(errors::make(4,f.at));}
-        if(f.left<f.groups){if(!f.literal && f.left>=32-f.depth){return .err(errors::make(4,s.begin));}f.left+=1;return take(s,f,40,0);}
+    if(f.phase==0){if(f.depth>limit || f.literal && f.groups>limit-f.depth){return .err(errors::make(4,f.at));}
+        if(f.left<f.groups){if(!f.literal && f.left>=limit-f.depth){return .err(errors::make(4,s.begin));}f.left+=1;return take(s,f,40,0);}
         f.left=f.groups;f.phase=if(f.literal){1}else{20};return .ok(false);}
     if(f.phase==1){f.request=4;f.phase=2;return .ok(false);}
     if(f.phase==2){return take(s,f,91,3);}

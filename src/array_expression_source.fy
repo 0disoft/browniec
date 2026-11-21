@@ -48,9 +48,9 @@ pub fn Result<bool,errors::Error> projected(ref u8[] source,ref lexer::State s,
     let Plan plan=inspect(source,s,p,names,signatures)?;
     return .ok(plan.kind>1 && (plan.suffix==91 || plan.suffix==46));
 }
-pub fn Result<usize,errors::Error> open(ref u8[] source,ref mut lexer::State s,usize depth){
-    if(depth>32){return .err(errors::make(4,s.begin));}
-    var usize groups=0;while(s.kind==40){if(groups>=32-depth){return .err(errors::make(4,s.begin));}
+pub fn Result<usize,errors::Error> open(ref u8[] source,ref mut lexer::State s,usize depth,usize limit){
+    if(depth>limit){return .err(errors::make(4,s.begin));}
+    var usize groups=0;while(s.kind==40){if(groups>=limit-depth){return .err(errors::make(4,s.begin));}
         let usize next=lexer::next(source,s)?;groups+=1;}
     if(groups==0){return .err(errors::make(3,s.begin));}return .ok(groups);
 }

@@ -326,7 +326,7 @@ fn Result<usize,errors::Error> static_read(ref u8[] source,ref mut lexer::State 
 fn Result<static_source::View,errors::Error> static_view(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
     usize depth,u8 result_type,usize structure,ref mut loops::State loop_state){
-    if(depth>32){return .err(errors::make(4,s.begin));}
+    if(depth>signatures.semantic_depth){return .err(errors::make(4,s.begin));}
     let usize at=s.begin;var static_source::View value=static_source::View{.site=16,.kind=0,.owned=false};
     if(word_is(source,s,b"ref")){let usize prefix=lexer::next(source,s)?;}
     if(reference_calls::returned_atom(source,s,table,signatures)?){
@@ -639,8 +639,8 @@ fn Result<record_expressions::Value,errors::Error> record_value(ref u8[] source,
 fn Result<record_expressions::Value,errors::Error> record_value_into_staged(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref locals::Table names,ref functions::Table signatures,
     bool mutable,usize at,usize depth,u8 result_type,usize structure,ref mut loops::State loop_state,usize destination){
-    if(depth>32){return .err(errors::make(4,at));}
-    var usize groups=0;while(s.kind==40){if(groups>=32-depth){return .err(errors::make(4,s.begin));}
+    if(depth>signatures.semantic_depth){return .err(errors::make(4,at));}
+    var usize groups=0;while(s.kind==40){if(groups>=signatures.semantic_depth-depth){return .err(errors::make(4,s.begin));}
         let usize next=lexer::next(source,s)?;groups+=1;}
     if(arm_syntax::operand_kind(source,s)!=0){
         return record_conditional_value(source,s,p,names,signatures,mutable,at,depth,result_type,structure,loop_state,destination,groups);
@@ -676,8 +676,8 @@ fn Result<record_expressions::Value,errors::Error> record_value_into_staged(ref 
 fn Result<record_expressions::Value,errors::Error> record_value_into(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref locals::Table names,ref functions::Table signatures,
     bool mutable,usize at,usize depth,u8 result_type,usize structure,ref mut loops::State loop_state,usize destination){
-    if(depth>32){return .err(errors::make(4,at));}
-    var usize groups=0;while(s.kind==40){if(groups>=32-depth){return .err(errors::make(4,s.begin));}
+    if(depth>signatures.semantic_depth){return .err(errors::make(4,at));}
+    var usize groups=0;while(s.kind==40){if(groups>=signatures.semantic_depth-depth){return .err(errors::make(4,s.begin));}
         let usize next=lexer::next(source,s)?;groups+=1;}
     if(arm_syntax::operand_kind(source,s)!=0){
         return record_conditional_value(source,s,p,names,signatures,mutable,at,depth,result_type,structure,loop_state,destination,groups);
@@ -794,7 +794,7 @@ fn Result<usize,errors::Error> array_literal_projection(ref u8[] source,ref mut 
     ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
     array_locals::Projection view,usize at,usize depth,u8 expected,u8 result_type,
     usize structure,ref mut loops::State loop_state){
-    if(depth>32 || view.groups>32-depth){return .err(errors::make(4,at));}
+    if(depth>signatures.semantic_depth || view.groups>signatures.semantic_depth-depth){return .err(errors::make(4,at));}
     var usize i=0;while(i<view.groups){let usize open=lexer::punctuation(source,s,40)?;i+=1;}
     let u8 element=if(view.kind==91 && types::integer(expected)){expected}else{0};
     let usize id=array_literal_value(source,s,p,table,signatures,element,0,false,at,depth+view.groups+1,result_type,structure,loop_state)?;
@@ -859,8 +859,8 @@ fn Result<array_expressions::Value,errors::Error> array_grouped_value(ref u8[] s
 fn Result<array_expressions::Value,errors::Error> array_value_into(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref locals::Table names,ref functions::Table signatures,
     u8 expected,usize length,bool mutable,usize at,usize depth,u8 result_type,usize structure,ref mut loops::State loop_state,usize destination){
-    if(depth>32){return .err(errors::make(4,at));}
-    let usize groups=if(s.kind==40){array_expressions::open(source,s,depth)?}else{0};var usize id=16;var bool owned=false;
+    if(depth>signatures.semantic_depth){return .err(errors::make(4,at));}
+    let usize groups=if(s.kind==40){array_expressions::open(source,s,depth,signatures.semantic_depth)?}else{0};var usize id=16;var bool owned=false;
     if(arm_syntax::operand_kind(source,s)!=0){
         var joins::Join join=joins::array(expected,length,mutable);
         if(destination!=16){join.value=128+destination;}
@@ -1209,7 +1209,7 @@ pub fn Result<usize,errors::Error> acquire_argument(ref u8[] source,ref mut lexe
 fn Result<usize,errors::Error> call_value(ref u8[] source,ref mut lexer::State s,ref mut ir::Program p,
     ref locals::Table table,ref functions::Table signatures,usize target,usize destination,usize at,
     usize depth,u8 result_type,usize structure,ref mut loops::State loop_state) {
-    if(depth>32) {return .err(errors::make(4,at));}
+    if(depth>signatures.semantic_depth) {return .err(errors::make(4,at));}
     if(destination==16 && (signatures.return_lengths[target]!=0 || signatures.return_records[target]!=0)) {return .err(errors::make(3,at));}
     var bool plain=destination==16;var usize i=0;
     while(i<signatures.arities[target]){let usize parameter=target*8+i;
@@ -1239,7 +1239,7 @@ fn Result<usize,errors::Error> scalar_call(ref u8[] source,ref mut lexer::State 
 fn Result<usize,errors::Error> captured_call(ref u8[] source,ref mut lexer::State s,ref mut ir::Program p,
     ref locals::Table table,ref functions::Table signatures,usize target,usize destination,usize at,
     usize depth,u8 result_type,usize structure,ref mut loops::State flow){
-    if(depth>32){return .err(errors::make(4,at));}
+    if(depth>signatures.semantic_depth){return .err(errors::make(4,at));}
     if(destination==16 && (signatures.return_lengths[target]!=0 || signatures.return_records[target]!=0)){return .err(errors::make(3,at));}
     let usize zero=if(destination==176){ir::integer(p,0,12,at)?}else{128};
     var call_operand_work::State w=call_operand_work::begin(table,*s,target,at,depth);var metadata_budget::State meter=metadata_budget::empty();
@@ -1271,7 +1271,7 @@ pub fn Result<usize,errors::Error> specialized_call(ref u8[] source,ref mut lexe
 fn Result<usize,errors::Error> captured_call_raw(ref u8[] source,ref mut lexer::State s,ref mut ir::Program p,
     ref locals::Table table,ref functions::Table signatures,usize target,usize destination,usize at,
     usize depth,u8 result_type,usize structure,ref mut loops::State loop_state) {
-    if(depth>32) {return .err(errors::make(4,at));}
+    if(depth>signatures.semantic_depth) {return .err(errors::make(4,at));}
     if(destination==16 && (signatures.return_lengths[target]!=0 || signatures.return_records[target]!=0)) {return .err(errors::make(3,at));}
     let usize zero=if(destination==176){ir::integer(p,0,12,at)?}else{128};
     let usize open=lexer::punctuation(source,s,40)?;
@@ -1652,7 +1652,7 @@ fn Result<record_expressions::Staged,errors::Error> record_constructor_fields_st
 fn Result<record_expressions::Staged,errors::Error> record_constructor_fields(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
     usize record,usize at,u8 result_type,usize expr_depth,usize structure,ref mut loops::State loop_state){
-    if(expr_depth>32){return .err(errors::make(4,at));}
+    if(expr_depth>signatures.semantic_depth){return .err(errors::make(4,at));}
     let usize leaves = record_values::leaf_count(p,record,at)?;
     var usize[16] slots = [0; 16]; var usize i = 0;
     var record_values::Initializer state = record_values::initializer(record);
@@ -1857,7 +1857,7 @@ fn Result<usize,errors::Error> inferred_declaration(ref u8[] source,ref mut lexe
 fn Result<usize,errors::Error> conditional_initializer(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref mut locals::Table table,ref functions::Table signatures,
     inference::Header name,bool mutable,u8 terminator,u8 result_type,usize depth,usize structure,ref mut loops::State loop_state){
-    let usize groups=if(s.kind==40){array_expressions::open(source,s,depth)?}else{0};
+    let usize groups=if(s.kind==40){array_expressions::open(source,s,depth,signatures.semantic_depth)?}else{0};
     var joins::Join join=joins::empty(0,mutable);
     let bool terminal=value_join(source,s,p,table,signatures,ref mut join,depth+groups,result_type,structure,loop_state)?;
     if(terminal){return .err(errors::make(3,name.begin));}
@@ -1981,7 +1981,7 @@ fn Result<usize,errors::Error> array_grouped_literal_assignment(ref u8[] source,
     usize index,usize id,usize at,u8 terminator,u8 result_type,usize depth,
     usize structure,ref mut loops::State loop_state,usize place){
     if(terminator!=59){return .err(errors::make(3,at));}
-    let usize groups=if(s.kind==40){array_expressions::open(source,s,depth)?}else{0};
+    let usize groups=if(s.kind==40){array_expressions::open(source,s,depth,signatures.semantic_depth)?}else{0};
     if(!array_locals::is_repeated(source,s)?){
         return array_list_assignment(source,s,p,table,signatures,index,id,at,terminator,result_type,depth+groups,structure,loop_state,groups,place);
     }
@@ -2353,7 +2353,7 @@ fn Result<bool,errors::Error> conditional_tail(ref u8[] source,ref mut lexer::St
     let usize at=s.begin;let arm_syntax::Conditional atom=arm_syntax::conditional_atom(source,s)?;
     if(word_is(source,s,b"ref")){return .err(errors::make(3,at));}
     if(atom.valid && atom.suffix==125){
-        if(depth>32 || atom.groups>32-depth){return .err(errors::make(4,at));}
+        if(depth>signatures.semantic_depth || atom.groups>signatures.semantic_depth-depth){return .err(errors::make(4,at));}
         var usize i=0;while(i<atom.groups){let usize next=lexer::next(source,s)?;i+=1;}
         let bool terminal=value_join(source,s,p,table,signatures,join,depth+atom.groups,result_type,structure,loop_state)?;
         let usize close=array_expressions::close(source,s,atom.groups)?;return .ok(terminal);
@@ -2382,7 +2382,7 @@ fn Result<bool,errors::Error> constructor_tail(ref u8[] source,ref mut lexer::St
     ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
     ref mut joins::Join join,usize depth,u8 result_type,usize structure,ref mut loops::State loop_state){
     let usize at=s.begin;var usize groups=0;
-    while(s.kind==40){if(depth>32 || groups>=32-depth){return .err(errors::make(4,s.begin));}
+    while(s.kind==40){if(depth>signatures.semantic_depth || groups>=signatures.semantic_depth-depth){return .err(errors::make(4,s.begin));}
         let usize next=lexer::next(source,s)?;groups+=1;}
     let usize dot=lexer::punctuation(source,s,46)?;
     let bool option=word_is(source,s,b"some") || word_is(source,s,b"none");
@@ -2430,7 +2430,7 @@ fn Result<usize,errors::Error> conditional_operand_staged(ref u8[] source,ref mu
     ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
     usize depth,u8 expected,u8 result_type,usize structure,ref mut loops::State loop_state,ref mut expression_work::Bank bank,bool reuse){
     let usize at=s.begin;var usize groups=0;
-    while(s.kind==40){if(depth>32 || groups>=32-depth){return .err(errors::make(4,s.begin));}
+    while(s.kind==40){if(depth>signatures.semantic_depth || groups>=signatures.semantic_depth-depth){return .err(errors::make(4,s.begin));}
         let usize next=lexer::next(source,s)?;groups+=1;}
     let Yield result=if_value_staged(source,s,p,table,signatures,depth+groups,expected,result_type,structure,loop_state,bank,reuse)?;
     if(result.terminal){return .err(errors::make(3,at));}
@@ -2447,7 +2447,7 @@ fn Result<usize,errors::Error> conditional_operand(ref u8[] source,ref mut lexer
     ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
     usize depth,u8 expected,u8 result_type,usize structure,ref mut loops::State loop_state){
     let usize at=s.begin;var usize groups=0;
-    while(s.kind==40){if(depth>32 || groups>=32-depth){return .err(errors::make(4,s.begin));}
+    while(s.kind==40){if(depth>signatures.semantic_depth || groups>=signatures.semantic_depth-depth){return .err(errors::make(4,s.begin));}
         let usize next=lexer::next(source,s)?;groups+=1;}
     let Yield result=if_value(source,s,p,table,signatures,depth+groups,expected,result_type,structure,loop_state)?;
     if(result.terminal){return .err(errors::make(3,at));}
