@@ -302,6 +302,20 @@ def verify_configured_project(run, need, image, folder, env):
     policy['compile'] = compile_defaults
     math_file.write_bytes(original_source)
 
+    math_file.write_bytes(b'module util::math;struct Inner{i32 value;}'
+                          b'struct Outer{Inner child;i32 extra;}pub fn i32 answer(){'
+                          b'var Outer p=Outer{.child=Inner{.value=0},.extra=0};'
+                          b'p=Outer{.child=(Inner{.value=12+5}),.extra=4+3};'
+                          b'((p).child)=Inner{.value=p.child.value+18};'
+                          b'return p.child.value+p.extra;}')
+    record_assignment_fuel = 8692579 + 576
+    policy['compile'] = dict(compile_defaults, source_bytes=4096, fuel=record_assignment_fuel - 1)
+    check(3, 'compile_limit')
+    policy['compile']['fuel'] = record_assignment_fuel
+    check()
+    policy['compile'] = compile_defaults
+    math_file.write_bytes(original_source)
+
     aggregate_projections = (
         (b'module util::math;pub fn i32 answer(){let i32[1] a=[42];'
          b'let usize n= ~ ~ (a).len;if(n==1){return 42;}return 0;}', b'(a).len'),

@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-22): [Array literal assignment Fuel](docs/engineering/restricted-worker.md#array-literal-assignment-fuel)
-  meters literal classification, scalar operands and dense list-pool work for
-  array replacements.
+- Latest runtime checkpoint (2026-11-22): [Record constructor assignment Fuel](docs/engineering/restricted-worker.md#record-constructor-assignment-fuel)
+  meters initializer walks, scalar fields and final register preparation for
+  whole-record and subrecord constructor assignments.
 
 # Brownie C agent guidance
 

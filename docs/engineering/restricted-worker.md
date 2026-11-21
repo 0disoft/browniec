@@ -1111,6 +1111,25 @@ Windows development and /O2 each passed 96 configured, 32 catalog, five
 managed project and four compile-stop cases. All 456 input hashes matched.
 Local receipt: `build/restricted-worker/20261121T230144734151Z/receipt.json`.
 
+### Record constructor assignment Fuel
+
+Whole-record and subrecord assignments pass the same compile Fuel balance
+and deadline into constructor lowering. Each leaf-count, initializer,
+scalar Pratt or final register-copy advance costs one unit. Grouped
+constructor operands and nested constructor arguments share that balance.
+The selected destination stays staged until all fields validate and the
+final register sequence is ready. Record path resolution, aggregate call
+arguments and existing-owner staging still have their outer checkpoints.
+
+The configured fixture replaces a record with a nested constructor and
+then replaces its grouped child using the previously stored value. These
+operations add 576 units to the previous balance. At 8,693,155 compile
+Fuel the project returns 42. At 8,693,154 it fails compilation without
+publishing a result or output.
+Windows development and /O2 each passed 98 configured, 32 catalog, five
+managed project and four compile-stop cases. All 456 input hashes matched.
+Local receipt: `build/restricted-worker/20261121T231043943879Z/receipt.json`.
+
 ## Windows verification
 
 Run `python -B tools/verify-restricted-worker.py`. The development and optimized

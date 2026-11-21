@@ -439,9 +439,17 @@ pub fn Result<usize, errors::Error> assign_part(ref u8[] source, ref mut lexer::
 // Metadata children drain their own bounded protocols; the parent copy does
 // not account whole source/catalog scans as one scalar/owner transition.
 pub fn Result<usize,errors::Error> copy_work(ref mut ir::Program p,ref usize[] input,ref mut usize[] slots,ref mut copies::State w){
-    var budget::State meter=budget::empty();while(!w.done){let usize allowance=budget::reset(ref mut meter,w.at)?;
+    var usize fuel=budget::unlimited();
+    return copy_work_metered(p,input,slots,w,0,ref mut fuel);
+}
+pub fn Result<usize,errors::Error> copy_work_metered(ref mut ir::Program p,ref usize[] input,
+    ref mut usize[] slots,ref mut copies::State w,usize deadline,ref mut usize fuel){
+    var budget::State meter=budget::empty();
+    while(!w.done){
+        discard budget::visit(fuel,deadline,w.at)?;
+        let usize allowance=budget::reset(ref mut meter,w.at)?;
         let bool done=copies::advance(p,input,slots,w,ref mut meter)?;
-        if(w.request==1){let usize count=leaf_count(p,w.record,w.at)?;let usize resumed=copies::resume(w,count)?;}
+        if(w.request==1){let usize count=leaf_count_metered(p,w.record,w.at,deadline,fuel)?;let usize resumed=copies::resume(w,count)?;}
         else if(w.request==2){let usize source=w.source;let usize leaf=w.ordinal+w.row;let usize at=w.at;
             let usize value=ir::record_read(p,source,leaf,at)?;let usize resumed=copies::resume(w,value)?;}}
     return copies::prepared(w);
@@ -479,8 +487,16 @@ pub fn Result<usize,errors::Error> declaration_limit(ref ir::Program p,ref local
     if(w.plan.bytes[record]>128){return .err(errors::make(4,at));}return .ok(record);
 }
 pub fn Result<usize,errors::Error> leaf_count(ref ir::Program p,usize root,usize at){
+    var usize fuel=budget::unlimited();
+    return leaf_count_metered(p,root,at,0,ref mut fuel);
+}
+pub fn Result<usize,errors::Error> leaf_count_metered(ref ir::Program p,usize root,usize at,usize deadline,ref mut usize fuel){
     var leaf_work::State w=leaf_work::begin(root,at);var budget::State meter=budget::empty();
-    while(!w.done){let usize allowance=budget::reset(ref mut meter,at)?;let bool done=leaf_work::advance(p,ref mut w,ref mut meter)?;}
+    while(!w.done){
+        discard budget::visit(fuel,deadline,at)?;
+        let usize allowance=budget::reset(ref mut meter,at)?;
+        let bool done=leaf_work::advance(p,ref mut w,ref mut meter)?;
+    }
     return leaf_work::prepared(ref w);
 }
 pub fn Result<usize,errors::Error> field(ref u8[] source,ref ir::Program p,usize record,usize begin,usize end,ref context::Table scope){
@@ -511,13 +527,31 @@ pub fn Result<bool, errors::Error> constructor(ref u8[] source, ref mut lexer::S
 }
 pub fn Result<u8,errors::Error> next_leaf(ref u8[] source,ref mut lexer::State s,ref ir::Program p,
     ref mut Initializer init,usize at,ref context::Table scope){
-    var initializer_work::State w=initializer_work::begin_next(at);var budget::State meter=budget::empty();
-    while(!w.done){let usize allowance=budget::reset(ref mut meter,at)?;
-        let bool done=initializer_work::advance(source,s,p,init,scope,ref mut w,ref mut meter)?;}return initializer_work::prepared(ref w);
+    var usize fuel=budget::unlimited();
+    return next_leaf_metered(source,s,p,init,at,scope,0,ref mut fuel);
+}
+pub fn Result<u8,errors::Error> next_leaf_metered(ref u8[] source,ref mut lexer::State s,ref ir::Program p,
+    ref mut Initializer init,usize at,ref context::Table scope,usize deadline,ref mut usize fuel){
+    var initializer_work::State w=initializer_work::begin_next(at);
+    return drive_initializer(source,s,p,init,scope,ref mut w,deadline,fuel);
+}
+fn Result<u8,errors::Error> drive_initializer(ref u8[] source,ref mut lexer::State s,ref ir::Program p,
+    ref mut Initializer init,ref context::Table scope,ref mut initializer_work::State w,usize deadline,ref mut usize fuel){
+    var budget::State meter=budget::empty();
+    while(!w.done){
+        discard budget::visit(fuel,deadline,s.begin)?;
+        let usize allowance=budget::reset(ref mut meter,s.begin)?;
+        let bool done=initializer_work::advance(source,s,p,init,scope,w,ref mut meter)?;
+    }
+    return initializer_work::prepared(w);
 }
 pub fn Result<usize,errors::Error> advance(ref u8[] source,ref mut lexer::State s,ref ir::Program p,ref mut Initializer init){
-    let context::Table scope=context::empty();var initializer_work::State w=initializer_work::begin_advance();var budget::State meter=budget::empty();
-    while(!w.done){let usize allowance=budget::reset(ref mut meter,s.begin)?;
-        let bool done=initializer_work::advance(source,s,p,init,ref scope,ref mut w,ref mut meter)?;}
-    let u8 ready=initializer_work::prepared(ref w)?;return .ok(0);
+    var usize fuel=budget::unlimited();
+    return advance_metered(source,s,p,init,0,ref mut fuel);
+}
+pub fn Result<usize,errors::Error> advance_metered(ref u8[] source,ref mut lexer::State s,ref ir::Program p,
+    ref mut Initializer init,usize deadline,ref mut usize fuel){
+    let context::Table scope=context::empty();var initializer_work::State w=initializer_work::begin_advance();
+    let u8 ready=drive_initializer(source,s,p,init,ref scope,ref mut w,deadline,fuel)?;
+    return .ok(0);
 }

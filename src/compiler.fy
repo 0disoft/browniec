@@ -634,7 +634,8 @@ fn Result<usize,errors::Error> utf8_computed_range(ref u8[] source,ref mut lexer
 fn Result<record_expressions::Value,errors::Error> record_value(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref locals::Table names,ref functions::Table signatures,
     bool mutable,usize at,usize depth,u8 result_type,usize structure,ref mut loops::State loop_state){
-    return record_value_into(source,s,p,names,signatures,mutable,at,depth,result_type,structure,loop_state,16);
+    var usize fuel=metadata_budget::unlimited();
+    return record_value_into(source,s,p,names,signatures,mutable,at,depth,result_type,structure,loop_state,16,0,ref mut fuel);
 }
 fn Result<record_expressions::Value,errors::Error> record_value_into_staged(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref locals::Table names,ref functions::Table signatures,
@@ -675,9 +676,10 @@ fn Result<record_expressions::Value,errors::Error> record_value_into_staged(ref 
 }
 fn Result<record_expressions::Value,errors::Error> record_value_into(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref locals::Table names,ref functions::Table signatures,
-    bool mutable,usize at,usize depth,u8 result_type,usize structure,ref mut loops::State loop_state,usize destination){
+    bool mutable,usize at,usize depth,u8 result_type,usize structure,ref mut loops::State loop_state,usize destination,usize deadline,ref mut usize fuel){
     if(depth>signatures.semantic_depth){return .err(errors::make(4,at));}
     var usize groups=0;while(s.kind==40){if(groups>=signatures.semantic_depth-depth){return .err(errors::make(4,s.begin));}
+        discard metadata_budget::visit(fuel,deadline,s.begin)?;
         let usize next=lexer::next(source,s)?;groups+=1;}
     if(arm_syntax::operand_kind(source,s)!=0){
         return record_conditional_value(source,s,p,names,signatures,mutable,at,depth,result_type,structure,loop_state,destination,groups);
@@ -688,7 +690,7 @@ fn Result<record_expressions::Value,errors::Error> record_value_into(ref u8[] so
     var usize id=16;var bool owned=false;var usize record=32;var usize[16] slots=[0;16];
     if(look.kind==123){record=record_values::named(source,s,ref signatures.context)?;
         let bool opened=record_values::constructor(source,s,record,ref signatures.context)?;
-        let record_expressions::Staged staged=record_constructor_fields(source,s,p,names,signatures,record,at,result_type,depth+groups,structure,loop_state)?;
+        let record_expressions::Staged staged=record_constructor_fields(source,s,p,names,signatures,record,at,result_type,depth+groups,structure,loop_state,deadline,fuel)?;
         slots=staged.slots;
     }else if(look.kind==40){
         if(local!=64 || target>=signatures.count || signatures.return_records[target]==0){return .err(errors::make(3,s.begin));}
@@ -1626,10 +1628,10 @@ fn Result<usize, errors::Error> array_statement(ref u8[] source, ref mut lexer::
 fn Result<usize, errors::Error> record_child_call(ref u8[] source, ref mut lexer::State s,
     ref mut ir::Program p, ref locals::Table table, ref functions::Table signatures,
     ref mut record_values::Initializer state, ref mut usize[] slots, usize first,
-    usize at, u8 result_type, usize expr_depth, usize structure, ref mut loops::State loop_state) {
+    usize at, u8 result_type, usize expr_depth, usize structure, ref mut loops::State loop_state,usize deadline,ref mut usize fuel) {
     var lexer::State atom=lexer::snapshot(s);if(s.kind==2 || s.kind==5){let usize next=lexer::next(source,ref mut atom)?;}
     if(s.kind==40 || atom.kind==123 || arm_syntax::operand_kind(source,s)!=0){
-        let record_expressions::Value value=record_value(source,s,p,table,signatures,false,at,expr_depth+1,result_type,structure,loop_state)?;
+        let record_expressions::Value value=record_value_into(source,s,p,table,signatures,false,at,expr_depth+1,result_type,structure,loop_state,16,deadline,fuel)?;
         return record_expressions::stage(source,s,p,state,slots,first,ref value,at);
     }
 
@@ -1656,6 +1658,7 @@ fn Result<usize, errors::Error> record_child_call(ref u8[] source, ref mut lexer
 fn Result<record_expressions::Staged,errors::Error> record_constructor_fields_staged(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref locals::Table names,ref functions::Table signatures,
     usize record,usize at,u8 result_type,usize depth,usize structure,ref mut loops::State flow){
+    var usize fuel=metadata_budget::unlimited();
     var record_work::State w=record_work::begin(record,at,depth);var metadata_budget::State meter=metadata_budget::empty();
     while(!w.done){let usize allowance=metadata_budget::reset(ref mut meter,s.begin)?;let bool done=record_work::advance(p,ref mut w,ref mut meter)?;
         let u8 request=w.request;var usize value=0;var record_values::Initializer state=w.initializer;let usize row=w.row;
@@ -1663,7 +1666,7 @@ fn Result<record_expressions::Staged,errors::Error> record_constructor_fields_st
             if(w.phase==3 && record_values::shorthand(ref state)){record_values::rewind_shorthand(s,ref state);record_values::consumed_shorthand(ref mut state);}}
         else if(request==2){value=expression_staged(source,s,p,names,signatures,1,depth+2,w.tag,result_type,structure+1,flow)?;}
         else if(request==3){var usize[16] slots=w.slots;
-            value=record_child_call(source,s,p,names,signatures,ref mut state,ref mut slots,row,at,result_type,depth,structure,flow)?;
+            value=record_child_call(source,s,p,names,signatures,ref mut state,ref mut slots,row,at,result_type,depth,structure,flow,0,ref mut fuel)?;
             if(value==0){value=record_values::stage_child(source,s,p,names,ref mut state,ref mut slots,row,at,ref signatures.context)?;}w.slots=slots;}
         else if(request==4){value=record_values::leaf_count(p,record,at)?;}
         else if(request==5){value=record_values::advance(source,s,p,ref mut state)?;}
@@ -1672,20 +1675,20 @@ fn Result<record_expressions::Staged,errors::Error> record_constructor_fields_st
 }
 fn Result<record_expressions::Staged,errors::Error> record_constructor_fields(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
-    usize record,usize at,u8 result_type,usize expr_depth,usize structure,ref mut loops::State loop_state){
+    usize record,usize at,u8 result_type,usize expr_depth,usize structure,ref mut loops::State loop_state,usize deadline,ref mut usize fuel){
     if(expr_depth>signatures.semantic_depth){return .err(errors::make(4,at));}
-    let usize leaves = record_values::leaf_count(p,record,at)?;
+    let usize leaves = record_values::leaf_count_metered(p,record,at,deadline,fuel)?;
     var usize[16] slots = [0; 16]; var usize i = 0;
     var record_values::Initializer state = record_values::initializer(record);
     i = 0;
     while (i < leaves) {
-        let u8 tag = record_values::next_leaf(source,s,p,ref mut state,at,ref signatures.context)?;
+        let u8 tag = record_values::next_leaf_metered(source,s,p,ref mut state,at,ref signatures.context,deadline,fuel)?;
         if (tag == 255) {
             if (record_values::shorthand(ref state)) {
                 record_values::rewind_shorthand(s,ref state);
                 record_values::consumed_shorthand(ref mut state);
             }
-            let usize called=record_child_call(source,s,p,table,signatures,ref mut state,ref mut slots,i,at,result_type,expr_depth,structure,loop_state)?;
+            let usize called=record_child_call(source,s,p,table,signatures,ref mut state,ref mut slots,i,at,result_type,expr_depth,structure,loop_state,deadline,fuel)?;
             if(called!=0) {i+=called;continue;}
             let usize copied = record_values::stage_child(source,s,p,table,ref mut state,ref mut slots,i,at,ref signatures.context)?;
             i += copied; continue;
@@ -1695,12 +1698,12 @@ fn Result<record_expressions::Staged,errors::Error> record_constructor_fields(re
             record_values::consumed_shorthand(ref mut state);
         }
         slots[i] = ir::slot(p,tag,at)?;
-        let usize value = expression(source,s,p,table,signatures,1,expr_depth+2,tag,result_type,structure+1,loop_state)?;
+        let usize value = assignment_operand(source,s,p,table,signatures,expr_depth+2,tag,result_type,structure+1,loop_state,deadline,fuel)?;
         if (p.types[value] != tag) { return .err(errors::make(3,at)); }
         let usize store = ir::raw(p,18,slots[i],value,0,at)?; i += 1;
-        let usize member = record_values::advance(source,s,p,ref mut state)?;
+        let usize member = record_values::advance_metered(source,s,p,ref mut state,deadline,fuel)?;
     }
-    let u8 closed = record_values::next_leaf(source,s,p,ref mut state,at,ref signatures.context)?;
+    let u8 closed = record_values::next_leaf_metered(source,s,p,ref mut state,at,ref signatures.context,deadline,fuel)?;
     if (closed != 0) { return .err(errors::make(3,at)); }
     return .ok(record_expressions::Staged{.slots=slots,.count=leaves});
 }
@@ -2103,13 +2106,14 @@ fn Result<usize, errors::Error> declaration(ref u8[] source, ref mut lexer::Stat
 // evaluation. The anonymous result stays absent from locals until CALL completes.
 fn Result<usize,errors::Error> record_value_assignment(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
-    usize id,record_values::Leaf target,usize at,u8 result_type,usize depth,usize structure,ref mut loops::State loop_state){
+    usize id,record_values::Leaf target,usize at,u8 result_type,usize depth,usize structure,ref mut loops::State loop_state,usize deadline,ref mut usize fuel){
     var locals::Table names=locals::snapshot(table);
     let usize place=places::record_value(p,ref mut names,id,target.record,target.ordinal,at)?;
-    let record_expressions::Value value=record_value(source,s,p,ref names,signatures,false,at,depth,result_type,structure,loop_state)?;
+    let record_expressions::Value value=record_value_into(source,s,p,ref names,signatures,false,at,depth,result_type,structure,loop_state,16,deadline,fuel)?;
     if(value.tag!=0 || value.record!=target.record){return .err(errors::make(3,at));}
     let usize end=lexer::punctuation(source,s,59)?;
-    return aggregate_stores::record(p,ref mut names,place,id,target,ref value,at);
+    if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
+    return aggregate_stores::record(p,ref mut names,place,id,target,ref value,at,deadline,fuel);
 }
 fn Result<usize, errors::Error> record_write_statement(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p,
     ref locals::Table table, ref functions::Table signatures, usize index, usize at, u8 terminator,
@@ -2119,13 +2123,13 @@ fn Result<usize, errors::Error> record_write_statement(ref u8[] source, ref mut 
     let usize record = p.records.records[id] as usize;
     if(s.kind==61){let usize equals=lexer::next(source,s)?;
         let record_values::Leaf root=record_values::Leaf{.ordinal=0,.tag=0,.record=record};
-        let usize assigned=record_value_assignment(source,s,p,table,signatures,id,root,at,result_type,expr_depth,structure,loop_state)?;return .ok(index);}
+        let usize assigned=record_value_assignment(source,s,p,table,signatures,id,root,at,result_type,expr_depth,structure,loop_state,deadline,fuel)?;return .ok(index);}
     let record_values::Leaf leaf=record_values::writable(source,s,p,id,at,ref signatures.context)?;
     if(!lexer::assignment(s.kind)){return .err(errors::make(2,s.begin));}
     let usize operation_at=s.begin;let u8 operation=places::compound(s.kind);
     if(operation!=0 && !types::integer(leaf.tag)){return .err(errors::make(3,operation_at));}
     let usize equals=lexer::next(source,s)?;
-    if(leaf.tag==0){let usize assigned=record_value_assignment(source,s,p,table,signatures,id,leaf,at,result_type,expr_depth,structure,loop_state)?;return .ok(index);}
+    if(leaf.tag==0){let usize assigned=record_value_assignment(source,s,p,table,signatures,id,leaf,at,result_type,expr_depth,structure,loop_state,deadline,fuel)?;return .ok(index);}
     let u8 tag = leaf.tag;
     var locals::Table names=locals::snapshot(table);
     let usize place=places::record(p,ref mut names,id,leaf.ordinal,at)?;
@@ -2159,7 +2163,7 @@ fn Result<usize,errors::Error> grouped_assignment(ref u8[] source,ref mut lexer:
             leaf=record_values::project(source,p,leaf,plan.begins[i],plan.ends[i],ref signatures.context)?;i+=1;}
         if(leaf.tag==0){if(s.kind!=61){return .err(errors::make(3,s.begin));}
             let usize equals=lexer::next(source,s)?;
-            let usize assigned=record_value_assignment(source,s,p,table,signatures,site,leaf,at,result_type,depth,structure,loop_state)?;return .ok(index);}
+            let usize assigned=record_value_assignment(source,s,p,table,signatures,site,leaf,at,result_type,depth,structure,loop_state,deadline,fuel)?;return .ok(index);}
         return grouped_place_write(source,s,p,table,signatures,index,at,2,site,leaf.ordinal,leaf.tag,at,terminator,result_type,depth,structure,loop_state,deadline,fuel);
     }
     let bool array=arrays::binding(table,index);let bool slice=slices::binding(table,index);
@@ -2393,7 +2397,8 @@ fn Result<bool,errors::Error> conditional_tail(ref u8[] source,ref mut lexer::St
     let record_expressions::Plan record=record_expressions::inspect(source,s,p,table,signatures)?;
     if(record.kind!=0 && record.tag==0 && record.suffix==125){
         let usize destination=joins::record_target(join,record.record);
-        let record_expressions::Value value=record_value_into(source,s,p,table,signatures,join.mutable,at,depth,result_type,structure,loop_state,destination)?;
+        var usize fuel=metadata_budget::unlimited();
+        let record_expressions::Value value=record_value_into(source,s,p,table,signatures,join.mutable,at,depth,result_type,structure,loop_state,destination,0,ref mut fuel)?;
         let usize accepted=joins::accept_record(p,join,table.function,ref value,at)?;return .ok(false);
     }
     let array_expressions::Plan array=array_expressions::inspect(source,s,p,table,signatures)?;
