@@ -81,8 +81,6 @@ pub fn Result<usize,diagnostics::Error> start_lowered(ref mut vec::Vec<Lowered> 
     };
 }
 pub fn bool signatures_done(ref Lowered lowered){return lowered.signatures.done;}
-pub fn ref candidate::Program candidate_code(ref Lowered lowered){return ref lowered.code;}
-pub fn ref images::Builder candidate_literals(ref Lowered lowered){return ref lowered.literals;}
 @link_name("bc_runtime_engine_compile_proof_storage")
 unsafe extern C fn usize proof_storage_raw(ptr void candidate);
 pub fn usize proof_storage_bytes(ref Lowered lowered){return unsafe{proof_storage_raw(lowered as ptr void)};}
@@ -101,36 +99,36 @@ fn Result<usize,programs::Error> open_proof(ref candidate::Program code,ref imag
     return programs::begin_pending(storage,code,image,references,deadline);
 }
 @link_name("bc_runtime_engine_begin_compile_proof")
-unsafe extern C fn u32 open_proof_raw(ptr mut void candidate,ptr void selected,usize image_limit,usize deadline,ptr mut void failure);
-fn bool seed_proof(ref mut vec::Vec<proof_work::State> proof){
+unsafe extern C fn u32 open_proof_raw(ptr mut void candidate,ptr void index,usize image_limit,usize deadline,u32 input,ptr mut void failure);
+fn bool seed_proof(ref mut vec::Vec<proof_work::State> proof,bool input){
     if(vec::len<proof_work::State>(proof)!=0 || vec::capacity<proof_work::State>(proof)!=1){return false;}
-    return vec::push<proof_work::State>(proof,proof_work::empty_ordinary()).is_ok;
+    return vec::push<proof_work::State>(proof,if(input){proof_work::empty_input()}else{proof_work::empty_ordinary()}).is_ok;
 }
 fn u32 open_proof_inner(ref candidate::Program code,ref images::Builder builder,ref mut vec::Vec<images::Image> storage,
-    bool references,ref entries::Entry selected,usize image_limit,usize deadline,ref mut diagnostics::Error failure){
+    bool references,ref modules::Index index,usize image_limit,usize deadline,ref mut diagnostics::Error failure){
     return switch(open_proof(code,builder,storage,references,image_limit,deadline)){
-        case .ok(_):{0}case .err(e):{*failure=admission_error(selected,e,ref code.body);1}
+        case .ok(_):{0}case .err(e):{*failure=proof_error(index,e,ref code.body);1}
     };
 }
 fn diagnostics::Error missing_proof(){return diagnostics::absent(errors::absent(5,0));}
-pub fn Result<usize,diagnostics::Error> begin_proof(ref entries::Entry selected,ref mut Lowered lowered,
-    usize image_limit,usize deadline){
+pub fn Result<usize,diagnostics::Error> begin_proof(ref modules::Index index,ref mut Lowered lowered,
+    usize image_limit,usize deadline,bool input){
     var diagnostics::Error failure=missing_proof();
-    let u32 status=unsafe{open_proof_raw(lowered as ptr mut void,selected as ptr void,
-        image_limit,deadline,ref mut failure as ptr mut void)};
+    let u32 status=unsafe{open_proof_raw(lowered as ptr mut void,index as ptr void,
+        image_limit,deadline,if(input){1}else{0},ref mut failure as ptr mut void)};
     return if(status==0){.ok(0)}else{.err(if(status==2){diagnostics::absent(errors::make(15,0))}else{failure})};
 }
 @link_name("bc_runtime_engine_advance_compile_proof")
 unsafe extern C fn u32 advance_proof_raw(ptr mut void candidate,ptr void selected,ptr mut void meter,ptr mut void failure);
 fn u32 advance_proof_inner(ref candidate::Program code,ref vec::Vec<images::Image> storage,
-    ref mut proof_work::State proof,ref entries::Entry selected,ref mut budget::State meter,ref mut diagnostics::Error failure){
+    ref mut proof_work::State proof,ref modules::Index index,ref mut budget::State meter,ref mut diagnostics::Error failure){
     return switch(programs::advance_pending(code,storage,proof,meter)){
-        case .ok(done):{if(done){1}else{0}}case .err(e):{*failure=admission_error(selected,e,ref code.body);2}
+        case .ok(done):{if(done){1}else{0}}case .err(e):{*failure=proof_error(index,e,ref code.body);2}
     };
 }
-pub fn Result<bool,diagnostics::Error> advance_proof(ref entries::Entry selected,ref mut Lowered lowered,ref mut budget::State meter){
+pub fn Result<bool,diagnostics::Error> advance_proof(ref modules::Index index,ref mut Lowered lowered,ref mut budget::State meter){
     var diagnostics::Error failure=missing_proof();
-    let u32 status=unsafe{advance_proof_raw(lowered as ptr mut void,selected as ptr void,
+    let u32 status=unsafe{advance_proof_raw(lowered as ptr mut void,index as ptr void,
         meter as ptr mut void,ref mut failure as ptr mut void)};
     return if(status<=1){.ok(status==1)}else{.err(failure)};
 }
@@ -163,14 +161,15 @@ pub fn void retain_proof_binding(ref entries::Entry selected){
     var vec::Vec<Program> outgoing=vec::empty<Program>();
     var budget::State meter=budget::empty();
     var diagnostics::Error diagnostic=diagnostics::absent(errors::absent(5,0));
-    unsafe{binding_raw(50)};discard advance_proof_inner(ref code,ref storage,ref mut proof,selected,ref mut meter,ref mut diagnostic);
-    unsafe{binding_raw(51)};discard open_proof_inner(ref code,ref builder,ref mut storage,true,selected,0,0,ref mut diagnostic);
+    let ref modules::Index index=entries::index(selected);
+    unsafe{binding_raw(50)};discard advance_proof_inner(ref code,ref storage,ref mut proof,index,ref mut meter,ref mut diagnostic);
+    unsafe{binding_raw(51)};discard open_proof_inner(ref code,ref builder,ref mut storage,true,index,0,0,ref mut diagnostic);
     retain_seed_binding();
     unsafe{binding_raw(52)};discard finish_proof_inner(ref code,ref mut storage,ref proof,true,selected,ref mut outgoing,ref mut diagnostic);
 }
 fn void retain_seed_binding(){
     var vec::Vec<proof_work::State> storage=vec::empty<proof_work::State>();
-    unsafe{binding_raw(53)};discard seed_proof(ref mut storage);
+    unsafe{binding_raw(53)};discard seed_proof(ref mut storage,false);
 }
 fn diagnostics::Error error(ref entries::Entry selected,errors::Error e){
     return if(e.offset==0){diagnostics::absent(e)}else{diagnostics::map(modules::snapshot(entries::index(selected)),e,16)};
@@ -178,11 +177,15 @@ fn diagnostics::Error error(ref entries::Entry selected,errors::Error e){
 // Verifier offsets are instruction indices; source-lowering offsets are bytes.
 // Header-wide failures and image quotas have no authenticated source location.
 fn diagnostics::Error admission_error(ref entries::Entry selected,programs::Error failure,ref ir::Program code){
+    return proof_error(entries::index(selected),failure,code);
+}
+fn diagnostics::Error proof_error(ref modules::Index index,programs::Error failure,ref ir::Program code){
     let errors::Error e=compiler::public_error(failure);
     return switch(failure.kind){
         case .Literal:{diagnostics::absent(e)}
         case .Code:{if(e.offset==0 || e.offset>=code.count){diagnostics::absent(e)}
-            else{error(selected,errors::make(e.kind,code.offsets[e.offset]))}}
+            else{let errors::Error source=errors::make(e.kind,code.offsets[e.offset]);
+                if(source.offset==0){diagnostics::absent(source)}else{diagnostics::map(modules::snapshot(index),source,16)}}}
     };
 }
 fn Result<Program,diagnostics::Error> finish_legacy(ref entries::Entry selected,ref ir::Program code,ref mut retention::Plan plan,usize deadline){

@@ -64,7 +64,7 @@ pub struct CompileStatus { usize id; CompileState state; usize program; Error fa
 struct CompileWork {
     usize id; u8 state; usize program; Error failure; usize batches;
     usize next; usize deadline; usize image_limit;
-    usize source_bytes; source_work::State source; literal_work::State literals;
+    usize source_bytes; source_work::State source; literal_work::State literals; bool input;
 }
 // Request bytes are detached from the exchange.
 pub struct HostRequest { usize run; usize request; usize import_id; u8[14] payload; }
@@ -243,7 +243,7 @@ pub fn Result<usize,Error> compile(ref mut Engine e,entries::Entry selected,usiz
 }
 fn CompileWork empty_compile(usize next){
     return CompileWork{.id=0,.state=0,.program=0,.failure=error(0),.batches=0,
-        .next=next,.deadline=0,.image_limit=0,.source_bytes=0,.source=source_work::begin(true),.literals=literal_work::empty()};
+        .next=next,.deadline=0,.image_limit=0,.source_bytes=0,.source=source_work::begin(true),.literals=literal_work::empty(),.input=false};
 }
 fn bool compile_live(CompileState state){
     return switch(state){case .Preparing:{true}case .Prepared:{true}case .Lowering:{true}case .Lowered:{true}case .Proving:{true}case .Completed:{false}case .Failed:{false}case .Cancelled:{false}};
@@ -1289,41 +1289,53 @@ fn u32 step_compile_body(ref mut Meta m,ref mut CompileWork job,ref modules::Ind
 fn bool compile_terminal(u8 phase){return phase>=3 && phase<=5;}
 fn u32 begin_pending_proof(ref mut Meta m,ref mut CompileWork job,ref mut vec::Vec<entries::Entry> selected,
     ref mut vec::Vec<programs::Lowered> candidate){
+    let ref modules::Index index=entries::index(vec::at<entries::Entry>(selected,0));
+    let u32 status=begin_compile_proof(m,job,index,candidate);
+    if(status!=0){let Error cause=m.error;return stop_compile(m,job,selected,candidate,cause);}
+    return 0;
+}
+fn u32 begin_compile_proof(ref mut Meta m,ref mut CompileWork job,ref modules::Index index,
+    ref mut vec::Vec<programs::Lowered> candidate){
     let ref mut programs::Lowered lowered=vec::at_mut<programs::Lowered>(candidate,0);
     let usize payload=switch(programs::proof_payload(lowered)){
-        case .ok(v):{v}case .err(e):{let u32 status=compile_error(m,e);let Error cause=m.error;return stop_compile(m,job,selected,candidate,cause);}
+        case .ok(v):{v}case .err(e):{return compile_error(m,e);}
     };
-    var retention::Plan retained=switch(retention_plan(m,0)){
-        case .ok(v):{v}case .err(status):{return stop_compile(m,job,selected,candidate,error(status));}
+    var retention::Plan retained=switch(retention_plan(m,if(job.input){1}else{0})){
+        case .ok(v):{v}case .err(status):{return failed(m,status);}
     };
-    if(!retention::admit(ref mut retained,payload).is_ok){return stop_compile(m,job,selected,candidate,error(8));}
+    if(!retention::admit(ref mut retained,payload).is_ok){return failed(m,8);}
     let usize storage=programs::proof_storage_bytes(lowered);
-    if(storage==0 || payload>18446744073709551615-storage){return stop_compile(m,job,selected,candidate,error(7));}
+    if(storage==0 || payload>18446744073709551615-storage){return failed(m,7);}
     let usize bytes=payload+storage;
     var memory::Budget charged=m.programs;
-    if(!memory::hold_compile_candidate(ref mut charged,bytes).is_ok){return stop_compile(m,job,selected,candidate,error(8));}
-    let ref entries::Entry entry=vec::at<entries::Entry>(selected,0);
-    switch(programs::begin_proof(entry,lowered,job.image_limit,job.deadline)){
-        case .ok(_):{}
-        case .err(e):{let u32 status=compile_error(m,e);let Error cause=m.error;return stop_compile(m,job,selected,candidate,cause);}
+    if(!memory::hold_compile_candidate(ref mut charged,bytes).is_ok){return failed(m,8);}
+    switch(programs::begin_proof(index,lowered,job.image_limit,job.deadline,job.input)){
+        case .ok(_):{}case .err(e):{return compile_error(m,e);}
     };
     m.programs=charged;
     job.source_bytes+=bytes;
-    if(clock::expired(job.deadline)){return stop_compile(m,job,selected,candidate,compile_timeout());}
+    if(clock::expired(job.deadline)){return compile_timed_out(m);}
     job.state=7;
     return 0;
 }
 fn u32 step_pending_proof(ref mut Meta m,ref mut CompileWork job,ref mut vec::Vec<entries::Entry> selected,
     ref mut vec::Vec<programs::Lowered> candidate){
+    let ref modules::Index index=entries::index(vec::at<entries::Entry>(selected,0));
+    let u32 status=step_compile_proof(m,job,index,candidate);
+    if(status!=0){let Error cause=m.error;return stop_compile(m,job,selected,candidate,cause);}
+    return 0;
+}
+fn u32 step_compile_proof(ref mut Meta m,ref mut CompileWork job,ref modules::Index index,
+    ref mut vec::Vec<programs::Lowered> candidate){
     var metadata_budget::State meter=metadata_budget::empty();
     let Result<bool,diagnostics::Error> advanced=programs::advance_proof(
-        vec::at<entries::Entry>(selected,0),vec::at_mut<programs::Lowered>(candidate,0),ref mut meter);
+        index,vec::at_mut<programs::Lowered>(candidate,0),ref mut meter);
     job.batches+=meter.stages;
     switch(advanced){
         case .ok(done):{if(done){job.state=8;}}
-        case .err(e):{let u32 status=compile_error(m,e);let Error cause=m.error;return stop_compile(m,job,selected,candidate,cause);}
+        case .err(e):{return compile_error(m,e);}
     };
-    if(clock::expired(job.deadline)){return stop_compile(m,job,selected,candidate,compile_timeout());}
+    if(clock::expired(job.deadline)){return compile_timed_out(m);}
     return 0;
 }
 fn u32 finish_pending_compile(ref mut Meta m,ref mut vec::Vec<Program> programs,ref mut CompileWork job,
@@ -1419,6 +1431,7 @@ fn u32 begin_compile_input_inner(ref mut Meta m,ref mut vec::Vec<CompileWork> jo
         assert(memory::release_compile_source(ref mut m.programs,charge).is_ok);
         return failed(m,6);
     }
+    job.input=true;
     job.source.classify=false;
     return start_compile_job(m,job,charge,image_limit,deadline);
 }
@@ -1439,11 +1452,14 @@ fn u32 step_compile_input_inner(ref mut Meta m,ref mut vec::Vec<Program> program
     if(vec::len<CompileWork>(jobs)!=1){return 7;}
     let ref mut CompileWork job=vec::at_mut<CompileWork>(jobs,0);
     if(id==0 || job.id!=id){return 2;}
+    if(compile_terminal(job.state)){return 0;}
     if(clock::expired(job.deadline)){return stop_compile_input(m,job,selected,candidate,compile_timeout());}
-    if(job.state==2){return finish_pending_input_compile(m,programs,job,selected,candidate);}
+    if(job.state==8){return finish_pending_input_compile(m,programs,job,selected,candidate);}
     let ref input_entries::InputEntry entry=vec::at<input_entries::InputEntry>(selected,0);
     let ref modules::Index index=input_entries::index(entry);
-    let u32 status=if(job.state==1){lower_compile_metadata(m,job,index,input_entries::selected(entry),true,candidate)}
+    let u32 status=if(job.state==2){begin_compile_proof(m,job,index,candidate)}
+        else if(job.state==7){step_compile_proof(m,job,index,candidate)}
+        else if(job.state==1){lower_compile_metadata(m,job,index,input_entries::selected(entry),true,candidate)}
         else if(job.state==6){step_compile_body(m,job,index,candidate)}
         else{step_compile_source(m,job,index)};
     if(status!=0){let Error cause=m.error;return stop_compile_input(m,job,selected,candidate,cause);}
@@ -1454,17 +1470,25 @@ fn u32 finish_pending_input_compile(ref mut Meta m,ref mut vec::Vec<Program> pro
     if(vec::len<Program>(programs)>=m.limits.programs || m.next==0){
         return stop_compile_input(m,job,selected,candidate,error(8));
     }
-    var retention::Plan plan=switch(retention_plan(m,1)){
-        case .ok(p):{p}case .err(s):{return stop_compile_input(m,job,selected,candidate,error(s));}
+    let ref mut programs::Lowered lowered=vec::at_mut<programs::Lowered>(candidate,0);
+    let usize payload=switch(programs::proof_payload(lowered)){
+        case .ok(v):{v}
+        case .err(e):{discard compile_error(m,e);let Error cause=m.error;return stop_compile_input(m,job,selected,candidate,cause);}
     };
-    let Result<input_programs::Program,diagnostics::Error> built=input_programs::admit_lowered_until(
-        vec::at<input_entries::InputEntry>(selected,0),vec::at<programs::Lowered>(candidate,0),job.image_limit,ref mut plan,job.deadline);
-    assert(memory::record(ref mut m.programs,ref plan).is_ok);
+    var retention::Plan plan=switch(memory::prepare_transfer(ref m.programs,1,payload)){
+        case .ok(p):{p}case .err(_):{return stop_compile_input(m,job,selected,candidate,error(8));}
+    };
+    if(!retention::admit(ref mut plan,payload).is_ok){return stop_compile_input(m,job,selected,candidate,error(8));}
+    var vec::Vec<input_programs::Program> code=vec::empty<input_programs::Program>();
+    let Result<usize,diagnostics::Error> built=input_programs::finish_proof(
+        vec::at<input_entries::InputEntry>(selected,0),lowered,ref mut code);
+    assert(memory::record_transfer(ref mut m.programs,ref plan,payload).is_ok);
     finish_compile_input_source(m,job,selected,candidate);
-    let u32 status=switch(built){
-        case .ok(code):{publish_input_program(m,programs,code,plan.bytes,job.deadline)}
-        case .err(e):{compile_error(m,e)}
+    switch(built){
+        case .ok(_):{}
+        case .err(e):{discard compile_error(m,e);job.state=4;job.failure=m.error;return 0;}
     };
+    let u32 status=publish_input_program_storage(m,programs,code,plan.bytes,job.deadline);
     if(status==0){job.state=3;job.program=m.result;}
     else{job.state=4;job.failure=m.error;}
     return 0;
@@ -1474,7 +1498,9 @@ fn u32 end_compile_input_inner(ref mut Meta m,ref mut vec::Vec<CompileWork> jobs
     if(m.closed || id==0){return 2;}
     if(vec::len<CompileWork>(jobs)!=1){return 7;}
     let ref mut CompileWork job=vec::at_mut<CompileWork>(jobs,0);
-    if(id!=job.id){return 2;}if(detach){return 3;}
+    if(id!=job.id){return 2;}
+    if(detach){return detach_compile_job(job);}
+    if(compile_terminal(job.state)){return 0;}
     if(m.poisoned){return stop_compile_input(m,job,selected,candidate,error(14));}
     if(clock::expired(job.deadline)){return stop_compile_input(m,job,selected,candidate,compile_timeout());}
     finish_compile_input_source(m,job,selected,candidate);
@@ -1491,12 +1517,7 @@ fn u32 end_compile_inner(ref mut Meta m,ref mut vec::Vec<CompileWork> jobs,ref m
     if(vec::len<CompileWork>(jobs)!=1){return 7;}
     let ref mut CompileWork job=vec::at_mut<CompileWork>(jobs,0);
     if(id!=job.id){return 2;}
-    if(detach){
-        if(!compile_terminal(job.state)){return 3;}
-        let CompileWork cleared=empty_compile(job.next);
-        *job=cleared;
-        return 0;
-    }
+    if(detach){return detach_compile_job(job);}
     if(compile_terminal(job.state)){return 0;}
     if(m.poisoned){return stop_compile(m,job,selected,candidate,error(14));}
     if(clock::expired(job.deadline)){return stop_compile(m,job,selected,candidate,compile_timeout());}
@@ -1507,6 +1528,12 @@ fn u32 end_compile_inner(ref mut Meta m,ref mut vec::Vec<CompileWork> jobs,ref m
 fn vec::Vec<entries::Entry> reset_compile_storage(vec::Vec<entries::Entry> entry){
     assert(vec::len<entries::Entry>(ref entry)==0);
     return vec::empty<entries::Entry>();
+}
+fn u32 detach_compile_job(ref mut CompileWork job){
+    if(!compile_terminal(job.state)){return 3;}
+    let CompileWork cleared=empty_compile(job.next);
+    *job=cleared;
+    return 0;
 }
 fn vec::Vec<CompileWork> reset_compile_work(vec::Vec<CompileWork> work){return vec::empty<CompileWork>();}
 fn vec::Vec<programs::Lowered> reset_compile_candidate(vec::Vec<programs::Lowered> work){return vec::empty<programs::Lowered>();}
@@ -1548,15 +1575,21 @@ fn u32 compile_input_inner(ref mut Meta m,ref mut vec::Vec<Program> v,ref mut ve
     return switch(built){case .ok(code):{publish_input_program(m,v,code,plan.bytes,deadline)}case .err(e):{compile_error(m,e)}};
 }
 fn u32 publish_input_program(ref mut Meta m,ref mut vec::Vec<Program> v,input_programs::Program code,usize bytes,usize deadline){
-    let execution_heap::Plan heap=switch(execution_heap::prepare_until(ref input_programs::code(ref code).body,true,false,0,deadline)){
+    var vec::Vec<input_programs::Program> retained=vec::empty<input_programs::Program>();
+    if(!vec::reserve<input_programs::Program>(ref mut retained,1).is_ok){return failed(m,6);}
+    if(!vec::push<input_programs::Program>(ref mut retained,code).is_ok){return failed(m,6);}
+    return publish_input_program_storage(m,v,retained,bytes,deadline);
+}
+fn u32 publish_input_program_storage(ref mut Meta m,ref mut vec::Vec<Program> v,
+    vec::Vec<input_programs::Program> retained,usize bytes,usize deadline){
+    let ref input_programs::Program code=vec::at<input_programs::Program>(ref retained,0);
+    let execution_heap::Plan heap=switch(execution_heap::prepare_until(ref input_programs::code(code).body,true,false,0,deadline)){
         case .ok(v):{v}case .err(e):{
             if(e.kind==errors::deadline_kind()){return compile_timed_out(m);}
             return failed(m,7);
         }
     };
-    let usize id=m.next;var vec::Vec<input_programs::Program> retained=vec::empty<input_programs::Program>();
-    if(!vec::reserve<input_programs::Program>(ref mut retained,1).is_ok){return failed(m,6);}
-    if(!vec::push<input_programs::Program>(ref mut retained,code).is_ok){return failed(m,6);}
+    let usize id=m.next;
     if(clock::expired(deadline)){return compile_timed_out(m);}
     if(!vec::push<Program>(v,Program{.id=id,.pins=0,.released=false,.code=vec::empty<programs::Program>(),.input=retained,.output=vec::empty<output_programs::Program>(),.bytes=bytes,.execution_scratch=heap.scratch,.entry=empty_entry(),.host=vec::empty<host_program::Program>()}).is_ok){return failed(m,6);}
     assert(memory::publish(ref mut m.programs,bytes).is_ok);advance(m);return success(m,id);
@@ -2436,6 +2469,7 @@ fn void retain_input_binding(){
     let modules::Index index=switch(layout_index(b"module layout;pub fn i32 main(ref u8[] data){return 0;}")){case .ok(v):{v}case .err(_):{assert(false);return;}};
     let input_entries::InputEntry entry=switch(input_entries::select_i32_input(index,b"layout",b"main")){case .ok(v):{v}case .err(_):{assert(false);return;}};
     unsafe{binding_raw(20)};discard input_entry_heap(ref entry);
+    input_programs::retain_proof_binding(ref entry);
 }
 fn void retain_compile_literal_binding(ref mut Meta m,ref entries::Entry entry){
     let source_work::State source=source_work::begin(true);

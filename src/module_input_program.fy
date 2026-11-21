@@ -44,9 +44,44 @@ pub fn Result<Program,diagnostics::Error> compile_with_retention_until(entries::
         else{compiler::lower_input_modules_until(ref selected,ref mut builder,ref mut code,false,deadline)?};
     return finish(ref selected,ref builder,ref code,image_limit,plan,deadline);
 }
-pub fn Result<Program,diagnostics::Error> admit_lowered_until(ref entries::InputEntry selected,
-    ref ordinary::Lowered lowered,usize image_limit,ref mut retention::Plan plan,usize deadline){
-    return finish(selected,ordinary::candidate_literals(lowered),ordinary::candidate_code(lowered),image_limit,plan,deadline);
+@link_name("bc_runtime_engine_retain_proved_input")
+unsafe extern C fn u32 retain_proof_raw(ptr mut void candidate,ptr void entry,ptr mut void outgoing,ptr mut void failure);
+pub fn Result<usize,diagnostics::Error> finish_proof(ref entries::InputEntry selected,ref mut ordinary::Lowered lowered,
+    ref mut vec::Vec<Program> outgoing){
+    var diagnostics::Error failure=diagnostics::absent(errors::absent(5,0));
+    let u32 status=unsafe{retain_proof_raw(lowered as ptr mut void,selected as ptr void,
+        outgoing as ptr mut void,ref mut failure as ptr mut void)};
+    return if(status==0){.ok(0)}else{.err(failure)};
+}
+fn u32 finish_proof_inner(ref candidates::Program code,ref mut vec::Vec<images::Image> storage,
+    ref proof_work::State proof,ref entries::InputEntry selected,ref mut vec::Vec<Program> outgoing,
+    ref mut diagnostics::Error failure){
+    if(!proof.done || !proof.input || proof.output){
+        *failure=diagnostics::absent(errors::absent(5,0));return 1;
+    }
+    return switch(vec::pop<images::Image>(storage)){
+        case .some(image):{store_proved_input(selected,code,image,outgoing,failure)}
+        case .none:{*failure=diagnostics::absent(errors::absent(5,0));1}
+    };
+}
+fn u32 store_proved_input(ref entries::InputEntry selected,ref candidates::Program code,images::Image image,
+    ref mut vec::Vec<Program> outgoing,ref mut diagnostics::Error failure){
+    return switch(retain(selected,code,image)){
+        case .ok(p):{
+            if(vec::push<Program>(outgoing,p).is_ok){0}
+            else{*failure=diagnostics::absent(errors::make(15,0));1}
+        }
+        case .err(e):{*failure=e;1}
+    };
+}
+@link_name("bc_runtime_engine_binding") unsafe extern C fn void binding_raw(u32 number);
+pub fn void retain_proof_binding(ref entries::InputEntry selected){
+    let candidates::Program code=candidates::Program{.body=ir::empty(),.parameters=[0;128],.results=[0;16],.origins=[0;16]};
+    var vec::Vec<images::Image> storage=vec::empty<images::Image>();
+    let proof_work::State proof=proof_work::empty_input();
+    var vec::Vec<Program> outgoing=vec::empty<Program>();
+    var diagnostics::Error failure=diagnostics::absent(errors::absent(5,0));
+    unsafe{binding_raw(58)};discard finish_proof_inner(ref code,ref mut storage,ref proof,selected,ref mut outgoing,ref mut failure);
 }
 fn diagnostics::Error literal(images::Error e){
     return diagnostics::absent(compiler::public_error(program_images::Error{.kind=.Literal,.code=errors::make(0,0),.literal=e}));

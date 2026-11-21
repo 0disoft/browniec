@@ -1,7 +1,7 @@
-- Latest runtime checkpoint (2026-11-21): [Resumable input-only lowering](docs/engineering/runtime-engine-compile-memory.md#resumable-input-only-lowering)
-  yields between literal, signature, and body batches. Windows development and
-  /O2 verified candidate refunds on cancellation and expiry, with zero live SDK
-  allocations after teardown.
+- Latest runtime checkpoint (2026-11-21): [Resumable input-only canonical proof](docs/engineering/runtime-engine-compile-memory.md#resumable-input-only-canonical-proof)
+  advances one proof batch per step before input Program publication. Windows
+  development and /O2 passed cancellation and expiry during proof, execution
+  returning 77, and zero live SDK allocations after teardown.
 
 # Brownie C agent guidance
 

@@ -100,10 +100,12 @@ c['compileProofVectorType']=field_type(c['compileCandidateType'],9)
 c['compileProofType']=arg(50,2)
 assert arg(53,0)==c['compileProofVectorType']
 c['compileProofImageType']=field_type(c['compileCandidateType'],10)
-assert arg(50,2)==arg(52,2)==c['compileProofType']
-assert arg(50,1)==arg(51,2)==arg(52,1)==c['compileProofImageType']
+assert arg(50,2)==arg(52,2)==arg(58,2)==c['compileProofType']
+assert arg(50,1)==arg(51,2)==arg(52,1)==arg(58,1)==c['compileProofImageType']
 assert arg(42,4)==arg(45,3)==arg(47,0)==arg(55,4)==arg(56,3)==c['compileCandidateVectorType']
-assert arg(48,1)==arg(49,1)==c['sourceIndexType']
+assert arg(48,1)==arg(49,1)==arg(50,3)==arg(51,4)==c['sourceIndexType']
+assert arg(58,3)==c['entryTypes']['input']
+assert arg(58,4)==field_type(c['programType'],4)
 assert arg(42,3)==arg(43,0)==arg(44,2)==arg(44,3)==arg(45,2)==field_type(c['engineType'],10)==c['incomingType']
 assert arg(54,2)==arg(54,3)==arg(55,3)==arg(56,2)==arg(57,0)==field_type(c['engineType'],12)==c['inputEntryType']
 assert arg(54,1)==arg(55,2)==arg(56,1)==c['compileWorkVectorType']
@@ -173,7 +175,7 @@ types['policyType']=c['policyType']
 types['capturePlanType']=c['capturePlanType']
 for key in ['hostProgramVectorType','hostProgramType','hostIRType','hostExchangeVectorType','hostExchangeType','hostRunConfigType','hostTransitionType']:types[key]=c[key]
 c['reviewedLayouts']={k:re.search(r'^typedef struct \{\n[^}]*\} '+re.escape(v)+';$',t,re.M).group() for k,v in types.items()}
-assert len(c['bindings'])==57 and len(c['reviewedLayouts'])==52
+assert len(c['bindings'])==58 and len(c['reviewedLayouts'])==52
 for key in ['lifecycleType','setupWorkType','preparationWorkType','cleanupWorkType','runtimeMetadataType','cleanupRuntimeType','inputWindowsType','storageBufferType']:
  c['reviewedLayouts'][key]=re.search(r'^typedef struct \{\n[^}]*\} '+re.escape(c[key])+';$',t,re.M).group()
 for key in ['compileWorkType','compileWorkVectorType','compileCandidateType','compileCandidateVectorType','compileProofType','compileProofVectorType','compileProofImageType']:

@@ -3,21 +3,8 @@
   "packageInstanceAlgorithm": "fairyc.package-instance/v1",
   "sourceDigestAlgorithm": "fairyc.package-source/v1",
   "language": "fairyc-language/20",
-  "root": "fypi1-sha256-85fc3ebd24bffcf60f4a9f05b2db3b14c0a39e45214285f12a3b9315f8d82828",
+  "root": "fypi1-sha256-9d4ca4c0cec84eba7d86946f8ed329089bb0cbeea001b573565f23e84306529e",
   "packages": [
-    {
-      "id": "fypi1-sha256-85fc3ebd24bffcf60f4a9f05b2db3b14c0a39e45214285f12a3b9315f8d82828",
-      "role": "root",
-      "packageUid": "browniec.cli",
-      "sourceKind": "local",
-      "localPath": ".",
-      "sdkIdentity": "",
-      "runtimeAbi": "",
-      "sourceIdentity": "fysrc1-sha256-f5c507b4e10fda1693c5556ad23eb22f5d919eede89ac1d8f39b28cd93edc56d",
-      "sourceDigest": "fysrc1-sha256-f5c507b4e10fda1693c5556ad23eb22f5d919eede89ac1d8f39b28cd93edc56d",
-      "version": "0.1.0",
-      "features": []
-    },
     {
       "id": "fypi1-sha256-9c71d321b59a5dfbf3b20f6f1cea078dd323510565dd8f47d90ed99b4f63f1d7",
       "role": "standard-library",
@@ -30,11 +17,24 @@
       "sourceDigest": "fysrc1-sha256-9358b8ed205e6dc34dd58b7639b070a94b0aabd7a9636381b6d6bbb4b9d2897b",
       "version": "0.0.0-stage0.87",
       "features": []
+    },
+    {
+      "id": "fypi1-sha256-9d4ca4c0cec84eba7d86946f8ed329089bb0cbeea001b573565f23e84306529e",
+      "role": "root",
+      "packageUid": "browniec.cli",
+      "sourceKind": "local",
+      "localPath": ".",
+      "sdkIdentity": "",
+      "runtimeAbi": "",
+      "sourceIdentity": "fysrc1-sha256-22ffb8ce1434fa0abb98db69c23e7b5eb3795813f841bf4e6964bfd4da5e8205",
+      "sourceDigest": "fysrc1-sha256-22ffb8ce1434fa0abb98db69c23e7b5eb3795813f841bf4e6964bfd4da5e8205",
+      "version": "0.1.0",
+      "features": []
     }
   ],
   "dependencies": [
     {
-      "owner": "fypi1-sha256-85fc3ebd24bffcf60f4a9f05b2db3b14c0a39e45214285f12a3b9315f8d82828",
+      "owner": "fypi1-sha256-9d4ca4c0cec84eba7d86946f8ed329089bb0cbeea001b573565f23e84306529e",
       "binding": "stdlib",
       "target": "fypi1-sha256-9c71d321b59a5dfbf3b20f6f1cea078dd323510565dd8f47d90ed99b4f63f1d7"
     }

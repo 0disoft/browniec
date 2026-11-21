@@ -32,9 +32,13 @@ uint32_t bc_runtime_engine_compile(void *raw,void *incoming,uintptr_t limit,uint
  bc_engine *e=raw;bc_engine_ticket ticket;uint32_t s=admission(e,&ticket);if(s)return s;
  s=B4(&e->f_0,&e->f_1,(bc_engine_input *)incoming,limit,deadline);return finish(e,ticket,s);
 }
+static int compile_has_input(const bc_engine *e){
+ const bc_compile_work *job=e->f_9.f_0;
+ return e->f_9.f_3==1 && job->f_11;
+}
 uint32_t bc_runtime_engine_step_compile(void *raw,uintptr_t id){
  bc_engine *e=raw;bc_engine_ticket ticket;uint32_t s=admission(e,&ticket);if(s)return s;
- s=e->f_12.f_3 ? B55(&e->f_0,&e->f_1,&e->f_9,&e->f_12,&e->f_11,id)
+ s=compile_has_input(e) ? B55(&e->f_0,&e->f_1,&e->f_9,&e->f_12,&e->f_11,id)
                  : B42(&e->f_0,&e->f_1,&e->f_9,&e->f_10,&e->f_11,id);
  return finish(e,ticket,s);
 }
@@ -50,7 +54,7 @@ uint32_t bc_runtime_engine_begin_compile_input(void *raw,void *incoming,uintptr_
 uint32_t bc_runtime_engine_end_compile(void *raw,uintptr_t id,uint32_t detach){
  bc_engine *e=raw;bc_abi_thread_identity id_owner;uint32_t s=bc_abi_guard_enter(&id_owner);if(s)return s;
  s=B18(&e->f_0,id_owner.thread,id_owner.lifetime);
- if(!s)s=e->f_12.f_3 ? B56(&e->f_0,&e->f_9,&e->f_12,&e->f_11,id,detach!=0)
+ if(!s)s=compile_has_input(e) ? B56(&e->f_0,&e->f_9,&e->f_12,&e->f_11,id,detach!=0)
                      : B45(&e->f_0,&e->f_9,&e->f_10,&e->f_11,id,detach!=0);
  uint32_t end=bc_abi_guard_leave(id_owner);return end?end:s;
 }
@@ -89,7 +93,7 @@ uint32_t bc_runtime_engine_advance_compile_proof(void *raw,const void *selected,
  bc_compile_candidate *work=raw;
  return B50(&work->f_0,&work->f_10,work->f_9.f_0,selected,meter,failure);
 }
-uint32_t bc_runtime_engine_begin_compile_proof(void *raw,const void *selected,uintptr_t image_limit,uintptr_t deadline,void *failure){
+uint32_t bc_runtime_engine_begin_compile_proof(void *raw,const void *selected,uintptr_t image_limit,uintptr_t deadline,uint32_t input,void *failure){
  bc_compile_candidate *work=raw;
  uint32_t status=B51(&work->f_0,&work->f_1,&work->f_10,work->f_2,selected,image_limit,deadline,failure);
  if(status)return status;
@@ -97,11 +101,15 @@ uint32_t bc_runtime_engine_begin_compile_proof(void *raw,const void *selected,ui
      work->f_9.f_4!=sizeof(bc_compile_proof) || work->f_9.f_5!=_Alignof(bc_compile_proof))return 2;
  status=reserve_compile_slot(&work->f_9.f_0,&work->f_9.f_1,&work->f_9.f_2,
      sizeof(bc_compile_proof),_Alignof(bc_compile_proof));
- return status || !B53(&work->f_9) ? 2 : 0;
+ return status || !B53(&work->f_9,input!=0) ? 2 : 0;
 }
 uint32_t bc_runtime_engine_reserve_proved_program(void *raw,const void *selected,void *outgoing,void *failure){
  bc_compile_candidate *work=raw;
  return B52(&work->f_0,&work->f_10,work->f_9.f_0,work->f_2,selected,outgoing,failure);
+}
+uint32_t bc_runtime_engine_retain_proved_input(void *raw,const void *selected,void *outgoing,void *failure){
+ bc_compile_candidate *work=raw;
+ return B58(&work->f_0,&work->f_10,work->f_9.f_0,selected,outgoing,failure);
 }
 uint32_t bc_runtime_engine_reserve_compile_candidate(void *raw){
  bc_compile_candidates *storage=raw;

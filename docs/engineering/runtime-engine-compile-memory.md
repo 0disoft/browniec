@@ -580,6 +580,30 @@ guest input to return 77. Both profiles ended with zero live SDK allocations.
 The locked /O2 CLI quick start also returned 77. Local receipt:
 `build/runtime-engine/20261121T063323552300Z/receipt.json`.
 
+## Resumable input-only canonical proof
+
+After lowering, the input job freezes its literal image and opens the same
+heap-backed canonical coordinator used by ordinary compilation. Its proof mode
+accepts one read-only byte input and retains the input-only output gate.
+Caller steps advance at most one 4,096-unit proof batch; the Program ID stays
+zero until a separate step transfers the proved image into an input Program.
+Literal freezing, final retention, and execution-scratch planning are
+synchronous.
+
+The Engine checks both retained and working limits before opening proof.
+It accounts for the proof cursor, image descriptor backing and payload until
+publication or cleanup. The input job tag stays attached through terminal state
+and detach, so native dispatch does not infer a job's route from the remaining
+Entry owners. The extra tag adds 64 bytes to the eight-slot compile-work vector.
+
+Windows development and /O2 passed cancellation and expiry during proof,
+exact in-flight SDK byte accounting, stale job rejection, and input execution
+returning 77. Both native artifacts exited with zero live SDK allocations.
+The native profiles in local receipt
+`build/runtime-engine/20261121T065804242427Z/receipt.json` passed. Its final
+worktree hash check detected edits for the subsequent CI repair, so all 400
+receipt inputs were checked against this change's staged snapshot.
+
 ## Executed verification and remaining work
 
 [Windows evidence](../evidence/runtime-engine-compile-memory-windows-20261107.json)

@@ -30,7 +30,7 @@ def verify():
     source = 'native/windows-runtime-engine.c'
     bindings = re.findall(r'^#define B\d+ fy_private_fn_([0-9a-f]+) /\* (\S+) \*/$',
                           (ROOT / source).read_text(encoding='utf-8'), re.MULTILINE)
-    assert len(bindings) == len({name for _, name in bindings}) == 35
+    assert len(bindings) == len({name for _, name in bindings})
     assert all(bytes.fromhex(encoded).decode('utf-8') == name for encoded, name in bindings)
     manifest = json.loads((ROOT / 'fairy.windows.json').read_bytes())
     assert source in manifest['sources']

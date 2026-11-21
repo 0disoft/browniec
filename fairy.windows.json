@@ -63,6 +63,7 @@
     "runtime_engine::step_compile_input_inner",
     "runtime_engine::end_compile_input_inner",
     "runtime_engine::reset_compile_input_storage",
+    "module_input_program::finish_proof_inner",
     "windows_engine_bindings::incoming"
   ]
 }
