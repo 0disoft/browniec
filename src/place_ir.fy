@@ -1,6 +1,7 @@
 module place_ir;
 import ir as ir;
 import errors as errors;
+import runtime_clock as clock;
 import register_set as registers;
 import slice_verifier as slices;
 import slice_place_ir as slice_places;
@@ -103,11 +104,12 @@ fn Result<usize, errors::Error> merge(ref mut u8[] origins, ref mut usize[] phas
     if (!backedge) { phases[target] = state.phases; seen[target] = true; }
     return .ok(target);
 }
-fn Result<usize, errors::Error> function(ref ir::Program p, ref records::Prepared shapes, usize f) {
+fn Result<usize, errors::Error> function(ref ir::Program p, ref records::Prepared shapes, usize f,usize deadline) {
     var u8[4096] origins = [0;4096]; var usize[256] phases = [0;256];
     var bool[256] seen = [false;256]; seen[p.starts[f]] = true;
     var usize pc = p.starts[f]; var usize count = 0;
     while (pc < p.ends[f]) {
+        if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
         let usize at = pc*8; let u8 op = p.code[at];
         let usize dst = p.code[at+1] as usize; let usize a = p.code[at+2] as usize;
         let usize b = p.code[at+3] as usize;
@@ -178,14 +180,22 @@ fn Result<usize,errors::Error> inspect_records(ref ir::Program p){
 // The canonical caller reuses its independently prepared record catalog. This
 // graph is analysis only and cannot issue executable admission on its own.
 pub fn Result<usize, errors::Error> inspect_prepared(ref ir::Program p,ref records::Prepared shapes) {
-    if (!present(p)) { return .ok(0); }
+    return inspect_prepared_until(p,shapes,0);
+}
+
+pub fn Result<usize,errors::Error> inspect_prepared_until(ref ir::Program p,ref records::Prepared shapes,usize deadline) {
+    if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
+    let bool has_places=present(p);
+    if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
+    if(!has_places){return .ok(0);}
     if (p.count == 0 || p.count > 256 || p.function_count == 0 || p.function_count > 16 ||
         p.arrays.count > 16 || p.records.count>16 || p.registers > 128) { return .err(invalid(0)); }
     var usize f = 0; var usize count = 0;
     while (f < p.function_count) {
         if (p.starts[f] >= p.ends[f] || p.ends[f] > p.count || p.register_starts[f] > p.register_ends[f] ||
             p.register_ends[f] > p.registers) { return .err(invalid(0)); }
-        count += function(p,shapes,f)?; f += 1;
+        count += function(p,shapes,f,deadline)?; f += 1;
     }
+    if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
     return .ok(count);
 }

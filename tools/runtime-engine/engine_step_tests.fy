@@ -849,18 +849,18 @@ fn Result<usize,u8> compile_body_deadline(ref mut engine::Engine e,ref configs::
     return .ok(0);
 }
 fn Result<usize,u8> ordinary_proof_deadline(ref mut engine::Engine e){
-    let ref u8[] legacy=b"module app;pub fn i32 chosen(){let i32 x=20+22;return x;}";
-    let ref u8[] references=b"module app;pub fn i32 chosen(){let ref u8[] marker=b\"*\";return 42;}";
+    let ref u8[] legacy=b"module app;pub fn i32 chosen(){var a=[0,0];a[1]=42;return a[1];}";
+    let ref u8[] references=b"module app;pub fn i32 chosen(){let ref u8[] marker=b\"*\";var a=[0,0];a[1]=42;return a[1];}";
     let Heap idle=heap();
     var usize mode=0;
-    let u8[5] phases=[1,2,3,5,6];
-    while(mode<10){
-        let ref u8[] source=if(mode<5){legacy}else{references};
+    let u8[6] phases=[1,2,3,5,6,7];
+    while(mode<12){
+        let ref u8[] source=if(mode<6){legacy}else{references};
         let entries::Entry entry=selected(source)?;
         let usize start=100+mode*20000000;
         unsafe{bc_runtime_engine_test_set_clock(start)};
         unsafe{bc_runtime_engine_test_proof_begin()};
-        unsafe{bc_runtime_engine_test_expire_in_ordinary_proof(start+20000000,phases[mode%5])};
+        unsafe{bc_runtime_engine_test_expire_in_ordinary_proof(start+20000000,phases[mode%6])};
         rejected_compile_deadline(engine::compile(e,entry,65536));
         assert(unsafe{bc_runtime_engine_test_proof_count()}==1);
         counts(e,0,0,0);same_heap(ref idle);

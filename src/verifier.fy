@@ -470,7 +470,7 @@ fn Result<reborrows::Sites,errors::Error> validate_values_mode(ref ir::Program p
         f+=1;
     }
     if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
-    let usize selected_places=places::inspect_prepared(p,ref shapes)?;
+    let usize selected_places=places::inspect_prepared_until(p,ref shapes,deadline)?;
     var usize call = 0;
     while (call < p.call_count) { if (!used_calls[call]) { return .err(errors::absent(5,0)); } call += 1; }
     if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}

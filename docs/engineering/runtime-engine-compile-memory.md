@@ -150,8 +150,10 @@ Reference recipe definition scans sample before each instruction and each
 formal-coverage register. Timed ordinary verification also reuses staged
 reference root preparation, which samples before each site or round
 transition and before returning the complete plan. A site can scan up to
-256 call or return instructions. Other metadata and place-proof calls return
-to their surrounding checkpoint. The staged input and output proof drivers
+256 call or return instructions. The ordinary selected-place proof checks
+before and after its presence scan and before each graph instruction. This
+includes the structural checks for unreachable instructions. Other metadata
+calls return to their surrounding checkpoint. The staged input and output proof drivers
 sample once before each bounded proof advance. Input-only compilation uses its
 separate proof with the output gate closed and checks again before returning
 the completed proof. Expiry ends the compile with
@@ -293,6 +295,13 @@ source profiles. All four cases stopped before a second probe or a new SDK
 allocation and restored the ledger and heap without consuming a Program ID.
 Windows development and /O2 passed with zero live SDK allocations at exit.
 Local receipt: `build/runtime-engine/20261121T020446164516Z/receipt.json`.
+
+The Windows verifier advanced to the exact deadline on the first graph
+instruction for a source with selected-place assignment in each ordinary
+profile. Both cases stopped before another graph instruction or SDK allocation
+and restored the ledger and heap without consuming a Program ID. Windows
+development and /O2 passed with zero live SDK allocations at exit.
+Local receipt: `build/runtime-engine/20261121T021252854530Z/receipt.json`.
 
 Source lowering, work between checkpoints, and cleanup remain synchronous.
 Public Pending compilation, in-flight cancellation, and a latency bound for

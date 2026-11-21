@@ -81,6 +81,9 @@ def source_copy(path):
     if path == ROOT / 'src/output_static_sites_work.fy':
         text = path.read_text(encoding='utf-8')
         return path.name, ordinary_proof_probe(text, '    if(site==16){\n        w.round+=1;', 6)
+    if path == ROOT / 'src/place_ir.fy':
+        text = path.read_text(encoding='utf-8')
+        return path.name, ordinary_proof_probe(text, '        if (!seen[pc]) { pc += 1; continue; }', 7)
     if path == ROOT / 'src/reference_lifetimes.fy':
         return path.name, ordinary_proof_probe(path.read_text(encoding='utf-8'), '            if(!seen[pc])', 3)
     if path == ROOT / 'src/module_output_program.fy':
