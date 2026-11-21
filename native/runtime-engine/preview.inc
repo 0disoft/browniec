@@ -10,6 +10,8 @@
 #pragma comment(linker, "/EXPORT:bc_engine_destroy")
 #pragma comment(linker, "/EXPORT:bc_compile")
 #pragma comment(linker, "/EXPORT:bc_program_entry_info")
+#pragma comment(linker, "/EXPORT:bc_instance_create")
+#pragma comment(linker, "/EXPORT:bc_instance_destroy")
 #pragma comment(linker, "/EXPORT:bc_program_release")
 
 typedef struct preview_engine {
@@ -228,18 +230,18 @@ uint32_t BC_CALL bc_program_entry_info(bc_handle engine,bc_handle program,bc_sli
     return status;
 }
 
-uint32_t BC_CALL bc_preview_instance_create(bc_handle engine,bc_handle program,uint64_t fuel,bc_handle *out){
-    if(!out){return BC_BAD_ARGUMENT;}
-    if(fuel>BC_PREVIEW_MAX_FUEL){return BC_RESOURCE_LIMIT;}
+static uint32_t create_instance(bc_handle engine,bc_handle program,uint32_t revision,uint64_t fuel,
+                                bc_slice config,bc_handle *out){
     bc_abi_registry_admission admission;
     uint32_t status=bc_abi_registry_enter(program,PROGRAM_HANDLE,engine,&admission);
     if(status!=BC_OK){return status;}
     preview_child *code=(preview_child *)(uintptr_t)admission.object;
     preview_engine *owner=code->owner;
-    if(owner->revision!=BC_PREVIEW_REVISION){leave_preview(&admission);return BC_INVALID_HANDLE;}
+    if(owner->revision!=revision){leave_preview(&admission);return BC_INVALID_HANDLE;}
     preview_child *instance=HeapAlloc(GetProcessHeap(),0,sizeof(*instance));
     if(!instance){leave_preview(&admission);return BC_ALLOCATION_ERROR;}
-    __typeof__(P3(&owner->engine,code->id,fuel)) prepared=P3(&owner->engine,code->id,fuel);
+    __typeof__(P3(&owner->engine,code->id,fuel)) prepared=revision==BC_ABI_REVISION?
+        P11(&owner->engine,code->id,config.data,config.len):P3(&owner->engine,code->id,fuel);
     if(prepared.tag==FY_RESULT_OK){
         *instance=(preview_child){.owner=owner,.id=prepared.p_0,.fuel=fuel};
         status=bc_abi_registry_insert(&admission,INSTANCE_HANDLE,(uintptr_t)instance,out);
@@ -256,12 +258,39 @@ uint32_t BC_CALL bc_preview_instance_create(bc_handle engine,bc_handle program,u
     return preview_status(status);
 }
 
+uint32_t BC_CALL bc_preview_instance_create(bc_handle engine,bc_handle program,uint64_t fuel,bc_handle *out){
+    if(!out){return BC_BAD_ARGUMENT;}
+    if(fuel>BC_PREVIEW_MAX_FUEL){return BC_RESOURCE_LIMIT;}
+    return create_instance(engine,program,BC_PREVIEW_REVISION,fuel,(bc_slice){0},out);
+}
+
+uint32_t BC_CALL bc_instance_create(bc_handle engine,bc_handle program,bc_slice input,bc_slice config,
+                                    bc_handle *out,bc_diagnostic *diagnostic){
+    if(out){*out=0;}
+    if(!diagnostic||diagnostic->struct_size!=sizeof(*diagnostic)){return BC_BAD_ARGUMENT;}
+    uint32_t status;
+    const char *message;
+    if(!out||input.len||!config.data||!config.len){
+        status=BC_BAD_ARGUMENT;
+        message="Scalar Instance requires empty input and a run configuration";
+    }else if(config.len>65536){
+        status=BC_RESOURCE_LIMIT;
+        message="Run configuration exceeds the byte limit";
+    }else{
+        status=create_instance(engine,program,BC_ABI_REVISION,0,config,out);
+        message=status==BC_OK?"":"Instance preparation failed";
+    }
+    *diagnostic=diagnostic_result(status,message);
+    return status;
+}
+
 uint32_t BC_CALL bc_preview_step(bc_handle instance,uint32_t quantum,bc_preview_event *out){
     if(!out||out->struct_size!=sizeof(*out)||!quantum||quantum>4096){return BC_BAD_ARGUMENT;}
     bc_abi_registry_admission admission;
     uint32_t status=bc_abi_registry_enter_instance(instance,&admission);
     if(status!=BC_OK){return status;}
     preview_child *run=(preview_child *)(uintptr_t)admission.object;
+    if(run->owner->revision!=BC_PREVIEW_REVISION){leave_preview(&admission);return BC_INVALID_HANDLE;}
     __typeof__(P4(&run->owner->engine,run->id,quantum)) stepped=P4(&run->owner->engine,run->id,quantum);
     if(stepped.tag!=FY_RESULT_OK){status=stepped.p_1.f_0;}
     else{
@@ -287,6 +316,7 @@ uint32_t BC_CALL bc_preview_cancel(bc_handle instance){
     uint32_t status=bc_abi_registry_enter_instance(instance,&admission);
     if(status!=BC_OK){return status;}
     preview_child *run=(preview_child *)(uintptr_t)admission.object;
+    if(run->owner->revision!=BC_PREVIEW_REVISION){leave_preview(&admission);return BC_INVALID_HANDLE;}
     __typeof__(P5(&run->owner->engine,run->id)) cancelled=P5(&run->owner->engine,run->id);
     status=cancelled.tag==FY_RESULT_OK?BC_OK:cancelled.p_1.f_0;
     leave_preview(&admission);
@@ -312,6 +342,7 @@ static uint32_t release_child(bc_handle child,bc_handle engine,uint32_t kind,uin
 }
 
 uint32_t BC_CALL bc_preview_instance_destroy(bc_handle instance){return release_child(instance,0,INSTANCE_HANDLE,BC_PREVIEW_REVISION);}
+uint32_t BC_CALL bc_instance_destroy(bc_handle instance){return release_child(instance,0,INSTANCE_HANDLE,BC_ABI_REVISION);}
 uint32_t BC_CALL bc_preview_program_release(bc_handle engine,bc_handle program){return release_child(program,engine,PROGRAM_HANDLE,BC_PREVIEW_REVISION);}
 uint32_t BC_CALL bc_program_release(bc_handle engine,bc_handle program){return release_child(program,engine,PROGRAM_HANDLE,BC_ABI_REVISION);}
 

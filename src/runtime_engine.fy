@@ -781,10 +781,49 @@ pub fn Result<usize,Error> prepare_granted_instance(ref mut Engine e,usize progr
     if(pending>limits.memory_bytes-input_bytes::capacity(ref input)){return .err(error(8));}
     let usize deadline=deadline_after(limits.deadline_ms)?;
     let usize instance=bind_input_output(e,program,input,limits.fuel,max_output,if(emits){3}else{2},deadline)?;
+    return prepare_created_instance(e,instance);
+}
+
+fn Result<usize,Error> prepare_created_instance(ref mut Engine e,usize instance){
     return switch(prepare_instance(e,instance)){
         case .ok(_):{.ok(instance)}
         case .err(failure):{let usize disposed=destroy_instance(e,instance)?;.err(failure)}
     };
+}
+
+// The scalar embedding adapter has already authenticated the public handle.
+// Check the request against this Engine's policy before pinning the Program.
+fn Result<run_config::RunConfig,Error> parse_scalar_run(ref Engine e,ref u8[] configuration){
+    if(!e.meta.configured){return .err(error(5));}
+    let run_config::RunConfig run=switch(run_config::parse(configuration,vec::at<policy::Policy>(ref e.policy,0))){
+        case .ok(v):{v}
+        case .err(problem):{
+            let u32 status=switch(problem.kind){
+            case .Allocation:{6}case .Limit:{8}
+            case .Json:{5}case .Unknown:{5}case .Duplicate:{5}case .Missing:{5}
+            case .Value:{5}case .Relation:{5}case .Authority:{5}case .Bounds:{5}
+            };
+            return .err(error(status));
+        }
+    };
+    return .ok(run);
+}
+
+pub fn Result<usize,Error> prepare_scalar_preview(ref mut Engine e,usize program,ref u8[] configuration){
+    if(!scalar_preview_program(e,program)?){return .err(error(5));}
+    let run_config::RunConfig run=parse_scalar_run(e,configuration)?;
+    if(!bytes::equal(run_config::module_name(ref run),b"main") ||
+        !bytes::equal(run_config::function_name(ref run),b"main") ||
+        run_config::requires_count(ref run)!=0 || run_config::grants_count(ref run)!=0){return .err(error(5));}
+    let policy_limits::RunLimits limits=run_config::run_limits(ref run);
+    let usize pending=required_pending_bytes(e,program,0)?;
+    if(limits.fuel>e.meta.limits.fuel || pending>limits.memory_bytes){return .err(error(8));}
+    let usize deadline=deadline_after(limits.deadline_ms)?;
+    var vec::Vec<input_bytes::Snapshot> incoming=vec::empty<input_bytes::Snapshot>();
+    let u32 status=unsafe{instance_output_raw(e as ptr mut void,program,ref mut incoming as ptr mut void,
+        limits.fuel,0,2,deadline)};
+    let usize id=result(e,status)?;
+    return prepare_created_instance(e,id);
 }
 
 // Policy admits durations in 1..60000 ms; Windows interrupt time uses 100 ns ticks.

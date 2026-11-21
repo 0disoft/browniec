@@ -92,6 +92,12 @@ fn Result<engine::Event,engine::Error> step(ref mut engine::Engine owner,usize r
     };
 }
 
+fn Result<usize,engine::Error> instance_configured(ref mut engine::Engine owner,usize program,ptr u8 data,usize length){
+    let usize lifetime=length;
+    let ref u8[] configuration=unsafe{byte_slice::from_raw_parts(ref lifetime,data,length)};
+    return engine::prepare_scalar_preview(owner,program,configuration);
+}
+
 // Retain only the generated bindings. The DLL never invokes this root driver.
 fn i32 main(){
     engine::retain_native_bindings();
@@ -107,5 +113,6 @@ fn i32 main(){
     unsafe{bc_embed_binding(8)};discard engine::destroy(ref mut owner);
     unsafe{bc_embed_binding(9)};discard create_configured(source,1);
     unsafe{bc_embed_binding(10)};discard abi::validate(2,32,true);
+    unsafe{bc_embed_binding(11)};discard instance_configured(ref mut owner,1,source,1);
     return 0;
 }

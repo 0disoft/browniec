@@ -99,7 +99,7 @@ revision-2 Program handles use separate API entry points.
 Initialize both output structure sizes. The query returns ABI revision 2,
 `BC_INPUT_NONE`, and the Program-owned, two-byte JSON capability array `[]`.
 The slice is read-only and expires at Program release. Failed queries leave
-entry info storage unchanged. Revision-2 Instance execution is still pending.
+entry info storage unchanged.
 
 The native C host passed both Windows `/Od` and `/O2` builds. It verifies
 4096-byte admission and 4097-byte rejection, exact source diagnostics,
@@ -107,3 +107,22 @@ cross-Engine and cross-revision rejection, and stale Program handles.
 An Engine configured for 42 source bytes accepts exactly 42 and rejects 43.
 Both builds also verify the entry info fields, failure output preservation,
 and rejection across threads, Engines, ABI revisions and stale handles.
+
+## Revision-2 scalar Instance preparation
+
+`bc_instance_create` accepts empty guest input and an explicit
+`brownie.run/0.3` configuration. The entry must be `main::main` and `requires`
+and `grants` must be empty. The Engine validates the configuration against
+its own policy and reserves the prepared continuation under the requested
+memory and Fuel limits. It records the monotonic deadline before preparation.
+The caller can reuse the configuration buffer when the call returns.
+
+Creation zeros the output handle and issues a handle only after successful
+preparation and registration. Multiple Instances can pin one Program. The
+caller can release the Program handle while Instances still own their pins.
+`bc_instance_destroy` discards the continuation and releases its pin on the
+Engine's owner thread. Revision-2 stepping and terminal events remain pending.
+
+Both Windows builds verified rejected input and run configurations, setup
+Fuel exhaustion, two Program pins, and foreign-thread and stale-handle
+rejection during Instance destruction.

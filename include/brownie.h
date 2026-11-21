@@ -89,6 +89,9 @@ BC_API uint32_t BC_CALL bc_compile(bc_handle engine,
    output sizes. The read-only JSON view is valid until Program release. */
 BC_API uint32_t BC_CALL bc_program_entry_info(bc_handle engine, bc_handle program,
     bc_slice module, bc_slice function, bc_entry_info *out_info, bc_diagnostic *diagnostic);
+/* Scalar preview DLL: empty input and a brownie.run/0.3 configuration for
+   main::main with empty requires and grants. The Engine checks its policy
+   before preparing and pinning the Program. */
 BC_API uint32_t BC_CALL bc_instance_create(bc_handle engine, bc_handle program,
     bc_slice input, bc_slice run_config_json, bc_handle *out_instance, bc_diagnostic *diagnostic);
 /* Work unit: dispatch, <=4096-byte bulk chunk or <=64-entry metadata chunk.

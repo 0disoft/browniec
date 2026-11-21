@@ -72,6 +72,45 @@ static DWORD WINAPI foreign_engine_destroy(void *arg){
     return bc_engine_destroy(*(const bc_handle *)arg);
 }
 
+static DWORD WINAPI foreign_instance_destroy(void *arg){
+    return bc_instance_destroy(*(const bc_handle *)arg);
+}
+
+static void revision_two_instances(bc_handle engine,bc_handle program){
+    uint8_t config[1024]={0};
+    FILE *run=NULL;
+    assert(fopen_s(&run,"run.json","rb")==0);
+    const size_t length=fread(config,1,sizeof(config)-1,run);
+    assert(length>0 && feof(run) && fclose(run)==0);
+    bc_slice json={config,length},empty={0};
+    bc_handle first=UINT64_MAX,second=0;
+    bc_diagnostic diagnostic={.struct_size=sizeof(diagnostic)};
+    assert(bc_instance_create(engine,program,(bc_slice){config,1},json,&first,&diagnostic)==BC_BAD_ARGUMENT);
+    assert(first==0);
+    assert(bc_instance_create(engine,program,empty,(bc_slice){config,1},&first,&diagnostic)==BC_POLICY_ERROR);
+    assert(first==0);
+    uint8_t *fuel=(uint8_t *)strstr((const char *)config,"10000000");
+    assert(fuel);
+    memcpy(fuel,"10000001",8);
+    assert(bc_instance_create(engine,program,empty,json,&first,&diagnostic)==BC_POLICY_ERROR && first==0);
+    memcpy(fuel,"       1",8);
+    assert(bc_instance_create(engine,program,empty,json,&first,&diagnostic)==BC_RESOURCE_LIMIT && first==0);
+    memcpy(fuel,"10000000",8);
+    assert(bc_instance_create(engine,program,empty,json,&first,&diagnostic)==BC_OK);
+    assert(bc_instance_create(engine,program,empty,json,&second,&diagnostic)==BC_OK);
+    assert(first && second && first!=second);
+    expect_diagnostic(&diagnostic,BC_OK);
+    assert(bc_preview_instance_destroy(first)==BC_INVALID_HANDLE);
+    HANDLE thread=CreateThread(NULL,0,foreign_instance_destroy,&first,0,NULL);
+    DWORD status=0;
+    assert(thread && WaitForSingleObject(thread,5000)==WAIT_OBJECT_0);
+    assert(GetExitCodeThread(thread,&status) && status==BC_WRONG_THREAD && CloseHandle(thread));
+    assert(bc_program_release(engine,program)==BC_OK);
+    assert(bc_engine_destroy(engine)==BC_BUSY);
+    assert(bc_instance_destroy(first)==BC_OK && bc_instance_destroy(first)==BC_INVALID_HANDLE);
+    assert(bc_instance_destroy(second)==BC_OK);
+}
+
 static DWORD WINAPI foreign_entry_lookup(void *arg){
     const bc_handle *handles=arg;
     const bc_slice main_name={(const uint8_t *)"main",4};
@@ -180,7 +219,7 @@ static void revision_two_programs(bc_handle engine,bc_slice policy){
     assert(bc_program_release(other,wrong)==BC_INVALID_HANDLE);
     assert(bc_preview_program_release(other,wrong)==BC_OK);
     assert(bc_preview_engine_destroy(other)==BC_OK);
-    assert(bc_program_release(engine,program)==BC_OK);
+    revision_two_instances(engine,program);
     assert(bc_program_entry_info(engine,program,main_name,main_name,&info,&diagnostic)==BC_INVALID_HANDLE);
     assert(bc_program_release(engine,program)==BC_INVALID_HANDLE);
 }
@@ -307,5 +346,6 @@ int main(void){
     puts("PASS: revision-2 scalar compilation, source spans, size limits and Program ownership");
     puts("PASS: revision-2 Engine source policy rejects 43 bytes and accepts 42 bytes");
     puts("PASS: revision-2 entry info verifies layout, capabilities, and owner-thread admission");
+    puts("PASS: revision-2 Instance policy admission, two Program pins, and destruction");
     return 0;
 }

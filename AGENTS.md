@@ -1,7 +1,6 @@
-- Latest runtime checkpoint (2026-11-21): [Revision-2 scalar Programs](docs/engineering/embed-preview.md#revision-2-scalar-programs)
-  exports compilation, entry queries and release. Windows /Od and /O2 verified
-  source limits, Program-owned capability views, Engine and thread ownership,
-  and stale handle rejection.
+- Latest runtime checkpoint (2026-11-21): [Revision-2 scalar Instance preparation](docs/engineering/embed-preview.md#revision-2-scalar-instance-preparation)
+  exports creation and destruction. Windows /Od and /O2 verified policy
+  admission, two independent Program pins, and owner-thread cleanup.
 
 # Brownie C agent guidance
 

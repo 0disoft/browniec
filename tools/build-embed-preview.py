@@ -35,7 +35,7 @@ def emit(compiler, project, destination):
 def preview_bindings(source):
     markers = re.findall(r'bc_embed_binding\(UINT32_C\((\d+)\)\);\s+'
                          r'goto (fy_b_\d+);\s*\2:\n(?:    [^\n]+\n)*?    [^\n]*\b(fy_fn_\d+)\(', source)
-    if [int(number) for number, _, _ in markers] != list(range(1, 11)):
+    if [int(number) for number, _, _ in markers] != list(range(1, 12)):
         raise RuntimeError('Unrecognized scalar preview transport')
     return ''.join(f'#define P{number} {symbol}\n' for number, _, symbol in markers)
 
@@ -124,6 +124,7 @@ def main():
         native(*flags, '/W4', '/WX', ROOT/'tests/embed/preview_host.c', '/Fe' + str(host),
                '/link', folder/'brownie-preview.lib')
         shutil.copyfile(ROOT/'tools/runtime-policy/reference/policy.pure.json', folder/'policy.json')
+        shutil.copyfile(ROOT/'tools/runtime-policy/reference/run-base.json', folder/'run.json')
         subprocess.run([host], cwd=folder, check=True, timeout=30)
         results[profile] = hashlib.sha256(dll.read_bytes()).hexdigest()
     write(out / 'receipt.json', json.dumps({'compilerSha256': digest, 'dllSha256': results}, indent=2) + '\n')
