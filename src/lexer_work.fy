@@ -3,6 +3,7 @@ import lexer as raw;
 import literal_scan_work as literals;
 import cells as cells;
 import errors as errors;
+import runtime_clock as clock;
 import metadata_budget as budget;
 // Private token continuation for <=4096 immutable source bytes. At most sixteen
 // byte/scan transitions run in a fresh stage; literal decoding has its own leaf.
@@ -141,9 +142,20 @@ pub fn Result<raw::State,errors::Error> prepared(ref State w){if(!w.done){return
 // Compatibility adapter. The parser still drains each token synchronously;
 // this does not make semantic statement/expression traversal resumable.
 pub fn Result<usize,errors::Error> next(ref u8[] source,ref mut raw::State target){
+    return next_until(source,target,0);
+}
+pub fn Result<usize,errors::Error> next_until(ref u8[] source,ref mut raw::State target,usize deadline){
     var State w=begin(*target);var budget::State meter=budget::empty();
-    while(!w.done){let usize allowance=budget::reset(ref mut meter,0)?;
+    while(!w.done){
+        if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
+        let usize allowance=budget::reset(ref mut meter,0)?;
         switch(advance(source,ref mut w,ref mut meter)){
-            case .ok(_):{}case .err(e):{*target=observed(ref w);return .err(e);}};}
-    *target=prepared(ref w)?;return .ok(0);
+            case .ok(_):{}
+            case .err(e):{*target=observed(ref w);return .err(e);}
+        };
+    }
+    if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
+    let raw::State complete=prepared(ref w)?;
+    *target=complete;
+    return .ok(0);
 }

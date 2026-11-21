@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-22): [Call-capture preparation Fuel](docs/engineering/restricted-worker.md#call-capture-preparation-fuel)
-  charges nested recipe walks after scratch planning.
-  Windows development and /O2 pass the exact 3,535,039-unit project boundary.
+- Latest runtime checkpoint (2026-11-22): [Project indexing deadline](docs/engineering/restricted-worker.md#project-indexing-deadline)
+  covers manifest binding, token continuations and index retention.
+  Both Windows worker profiles pass the focused AppContainer matrix.
 
 # Brownie C agent guidance
 

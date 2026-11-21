@@ -1,6 +1,9 @@
 module module_index;
 import source_snapshot as sources;
 import lexer as lexer;
+import lexer_work as staged;
+import errors as errors;
+import runtime_clock as clock;
 import metadata_budget as budget;
 import locals as locals;
 import std::bytes as bytes;
@@ -8,12 +11,12 @@ import std::vec as vec;
 
 // Sealed header/name binding, not typed executable admission. Every span refers
 // to the exact Snapshot moved into Index. No filesystem or builtin fallback.
-pub enum Failure { Lexical; Syntax; Limit; Duplicate; Missing; Private; Reserved; Bounds; Kind; Allocation; }
+pub enum Failure { Lexical; Syntax; Limit; Duplicate; Missing; Private; Reserved; Bounds; Kind; Allocation; Deadline; }
 pub struct Error { Failure kind; sources::Span at; }
 pub struct Module { sources::Span path; usize begin; usize end; }
 pub struct Import { usize owner; usize target; sources::Span alias; sources::Span path; usize begin; usize end; }
 pub struct Symbol { usize owner; u8 kind; bool exported; sources::Span name; sources::Span definition; }
-struct ScanBudget { usize remaining; }
+struct ScanBudget { usize remaining; usize deadline; }
 struct Path { sources::Span at; usize begin; usize end; }
 struct Table {
     u8[4096] names; usize used;
@@ -24,6 +27,7 @@ struct Table {
 resource Stored { sources::Snapshot sources; Table table; usize fuel; cleanup { } }
 pub resource Index { vec::Vec<Stored> stored; cleanup { } }
 fn Error error(Failure kind,sources::Span at){return Error{.kind=kind,.at=at};}
+fn Error timed_out(){return error(.Deadline,sources::no_source());}
 fn Table empty(){
     let sources::Span none=sources::no_source();
     return Table{.names=[0;4096],.used=0,
@@ -36,11 +40,15 @@ fn sources::Span span(usize id,usize begin,usize end){return sources::Span{.sour
 fn sources::Span token(usize id,ref lexer::State s){return span(id,s.begin,s.end);}
 fn bool word(ref u8[] source,ref lexer::State s,ref u8[] value){return s.kind==2 && lexer::equal(source[s.begin..s.end],value);}
 fn Result<usize,Error> next(ref u8[] source,usize id,ref mut lexer::State s,ref mut ScanBudget fuel){
+    if(clock::expired(fuel.deadline)){return .err(timed_out());}
     if(fuel.remaining==0){return .err(error(.Limit,span(id,s.cursor,s.cursor)));}
     fuel.remaining-=1;
-    return switch(lexer::next(source,s)){
-        case .ok(v):{.ok(v)}case .err(e):{.err(error(if(e.kind==4){.Limit}else{.Lexical},
-            span(id,e.offset,if(e.offset<source.len){e.offset+1}else{e.offset})))}
+    return switch(staged::next_until(source,s,fuel.deadline)){
+        case .ok(v):{.ok(v)}
+        case .err(e):{
+            if(e.kind==errors::deadline_kind()){.err(timed_out())}
+            else{.err(error(if(e.kind==4){.Limit}else{.Lexical},span(id,e.offset,if(e.offset<source.len){e.offset+1}else{e.offset})))}
+        }
     };
 }
 fn Result<usize,Error> punctuation(ref u8[] source,usize id,ref mut lexer::State s,u8 expected,ref mut ScanBudget fuel){
@@ -145,11 +153,12 @@ fn Result<usize,Error> file(ref u8[] source,usize id,ref mut Table t,bool host,u
     }
     return .ok(s.tokens);
 }
-fn Result<usize,Error> prepare(ref sources::Snapshot snapshot,ref mut Table t,bool host,usize token_limit,usize nesting_limit,usize budget){
-    var ScanBudget fuel=ScanBudget{.remaining=budget};
+fn Result<usize,Error> prepare(ref sources::Snapshot snapshot,ref mut Table t,bool host,usize token_limit,usize nesting_limit,usize budget,usize deadline){
+    var ScanBudget fuel=ScanBudget{.remaining=budget,.deadline=deadline};
     let usize count=sources::count(snapshot);if(count==0){return .err(error(.Missing,sources::no_source()));}
     var usize id=0;var usize tokens=0;
     while(id<count){
+        if(clock::expired(deadline)){return .err(timed_out());}
         let sources::Span all=switch(sources::whole(snapshot,id)){case .ok(v):{v}case .err(_):{return .err(error(.Bounds,sources::no_source()));}};
         let ref u8[] source=switch(sources::view(snapshot,all)){case .ok(v):{v}case .err(_):{return .err(error(.Bounds,all));}};
         // Prepay the full member before scanning whitespace, comments or literals.
@@ -164,7 +173,9 @@ fn Result<usize,Error> prepare(ref sources::Snapshot snapshot,ref mut Table t,bo
     }
     var Import[64] bound=t.imports;
     let ref u8[] names=ref t.names;
-    var usize i=0;while(i<t.import_count){let Import candidate=t.imports[i];var usize target=16;id=0;
+    var usize i=0;while(i<t.import_count){
+        if(clock::expired(deadline)){return .err(timed_out());}
+        let Import candidate=t.imports[i];var usize target=16;id=0;
         while(id<t.count){let Module m=t.modules[id];if(bytes::equal(names[candidate.begin..candidate.end],names[m.begin..m.end])){target=id;break;}id+=1;}
         if(target==16 && !(host && candidate.end-candidate.begin>6 &&
             bytes::equal(names[candidate.begin..candidate.begin+6],b"host::"))){
@@ -176,17 +187,18 @@ fn Result<usize,Error> prepare(ref sources::Snapshot snapshot,ref mut Table t,bo
     return .ok(if(budget==budget::unlimited()){budget}else{fuel.remaining});
 }
 pub fn Result<Index,Error> build(sources::Snapshot snapshot){
-    return build_mode(snapshot,false,1024,1024,budget::unlimited());
+    return build_mode(snapshot,false,1024,1024,budget::unlimited(),0);
 }
 pub fn Result<Index,Error> build_host(sources::Snapshot snapshot,usize token_limit){
-    return build_metered(snapshot,true,token_limit,1024,budget::unlimited());
+    return build_metered(snapshot,true,token_limit,1024,budget::unlimited(),0);
 }
 pub fn Result<Index,Error> build_metered(sources::Snapshot snapshot,bool host,
-    usize token_limit,usize nesting_limit,usize fuel){
-    return build_mode(snapshot,host,if(token_limit<1024){token_limit}else{1024},nesting_limit,fuel);
+    usize token_limit,usize nesting_limit,usize fuel,usize deadline){
+    return build_mode(snapshot,host,if(token_limit<1024){token_limit}else{1024},nesting_limit,fuel,deadline);
 }
-fn Result<Index,Error> build_mode(sources::Snapshot snapshot,bool host,usize token_limit,usize nesting_limit,usize fuel){
-    var Table t=empty();let usize remaining=prepare(ref snapshot,ref mut t,host,token_limit,nesting_limit,fuel)?;
+fn Result<Index,Error> build_mode(sources::Snapshot snapshot,bool host,usize token_limit,usize nesting_limit,usize fuel,usize deadline){
+    var Table t=empty();let usize remaining=prepare(ref snapshot,ref mut t,host,token_limit,nesting_limit,fuel,deadline)?;
+    if(clock::expired(deadline)){return .err(timed_out());}
     var vec::Vec<Stored> stored=vec::empty<Stored>();
     let usize capacity=switch(vec::reserve<Stored>(ref mut stored,1)){
         case .ok(v):{v}case .err(_):{return .err(error(.Allocation,sources::no_source()));}
@@ -194,6 +206,7 @@ fn Result<Index,Error> build_mode(sources::Snapshot snapshot,bool host,usize tok
     let usize count=switch(vec::push<Stored>(ref mut stored,Stored{.sources=snapshot,.table=t,.fuel=remaining})){
         case .ok(v):{v}case .err(_):{return .err(error(.Allocation,sources::no_source()));}
     };
+    if(clock::expired(deadline)){return .err(timed_out());}
     return .ok(Index{.stored=stored});
 }
 fn ref Stored stored(ref Index p){return vec::at<Stored>(ref p.stored,0);}

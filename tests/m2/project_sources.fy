@@ -29,7 +29,7 @@ fn entries::Entry selected(ref project::Project p,sources::Snapshot snapshot){
 }
 fn u8 module_code(modules::Failure kind){return switch(kind){
     case .Lexical:{0}case .Syntax:{1}case .Limit:{2}case .Duplicate:{3}case .Missing:{4}
-    case .Private:{5}case .Reserved:{6}case .Bounds:{7}case .Kind:{8}case .Allocation:{9}
+    case .Private:{5}case .Reserved:{6}case .Bounds:{7}case .Kind:{8}case .Allocation:{9}case .Deadline:{10}
 };}
 fn modules::Error denied(ref project::Project p,sources::Snapshot snapshot,u8 kind){
     return switch(binding::select(p,snapshot)){

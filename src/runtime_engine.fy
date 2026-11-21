@@ -437,7 +437,7 @@ pub fn Result<usize,Error> compile_project_snapshot_output(ref mut Engine e,ref 
     let usize deadline=compile_deadline(e,0)?;
     let policy_limits::CompileLimits limits=configured_compile_limits(e)?;
     let modules::Index index=switch(project_binding::index_limited(project,snapshot,false,
-        limits.tokens,limits.functions,limits.types,limits.depth,limits.fuel)){
+        limits.tokens,limits.functions,limits.types,limits.depth,limits.fuel,deadline)){
         case .ok(v):{v}case .err(e):{return .err(host_binding_error(e));}
     };
     let ref u8[] module_name=projects::entry_module(project);
@@ -572,7 +572,7 @@ pub fn Result<usize,Error> compile_project_snapshot_host(ref mut Engine e,ref pr
         sources::snapshot_bytes(ref snapshot)>limits.source_bytes){return .err(error(8));}
     let usize deadline=deadline_after(limits.deadline_ms)?;
     let modules::Index index=switch(project_binding::index_limited(project,snapshot,true,
-        limits.tokens,limits.functions,limits.types,limits.depth,limits.fuel)){
+        limits.tokens,limits.functions,limits.types,limits.depth,limits.fuel,deadline)){
         case .ok(v):{v}case .err(e):{return .err(host_binding_error(e));}
     };
     let usize selected=switch(modules::entry(ref index,projects::entry_module(project),projects::entry_function(project))){
@@ -624,7 +624,9 @@ fn Result<host_program::Program,Error> verify_preview_host(ref Engine e,ref ir::
     return host_verification(checked);
 }
 fn Error host_binding_error(modules::Error e){
-    return Error{.status=4,.diagnostic=diagnostics::Error{.code=diagnostics::binding(e),.at=e.at}};
+    let errors::Error code=diagnostics::binding(e);
+    if(code.kind==errors::deadline_kind()){return compile_timeout();}
+    return Error{.status=4,.diagnostic=diagnostics::Error{.code=code,.at=e.at}};
 }
 fn Result<usize,Error> retain_project_host(ref mut Engine e,ref modules::Index index,usize selected,
     host_catalog::Catalog imports,ref u32[] digest,ref run_config::RunConfig run,policy_limits::CompileLimits limits,usize deadline){

@@ -12,7 +12,7 @@ fn Result<modules::Index,modules::Error> pair(ref u8[] a,ref u8[] b){
     return modules::build(snapshot);
 }
 fn modules::Index kept(ref u8[] a,ref u8[] b){return switch(pair(a,b)){case .ok(v):{v}case .err(_):{assert(false);kept(b"module main;",b"")}};}
-fn u8 kind(modules::Failure e){return switch(e){case .Lexical:{0}case .Syntax:{1}case .Limit:{2}case .Duplicate:{3}case .Missing:{4}case .Private:{5}case .Reserved:{6}case .Bounds:{7}case .Kind:{8}case .Allocation:{9}};}
+fn u8 kind(modules::Failure e){return switch(e){case .Lexical:{0}case .Syntax:{1}case .Limit:{2}case .Duplicate:{3}case .Missing:{4}case .Private:{5}case .Reserved:{6}case .Bounds:{7}case .Kind:{8}case .Allocation:{9}case .Deadline:{10}};}
 fn modules::Error rejected(ref u8[] a,ref u8[] b,u8 expected){
     return switch(pair(a,b)){case .ok(_):{assert(false);modules::Error{.kind=.Bounds,.at=sources::no_source()}}
         case .err(e):{assert(kind(e.kind)==expected);e}};
@@ -118,4 +118,16 @@ fn void symbol_limit(bool functions){
     assert(text(ref p,f.definition,source[9..]));
     switch(sources::name(modules::snapshot(ref p),0)){case .ok(v):{assert(bytes::equal(v,b"not/a/path"));}case .err(_):{assert(false);}};
     denied(modules::find(ref p,b"not/a/path"),4);
+}
+
+@test fn void expired_index_rejects_before_source_scan(){
+    var sources::Builder scratch=builder();
+    discard added(sources::add(ref mut scratch,b"first",b"module a;"));
+    let sources::Snapshot snapshot=switch(sources::freeze(ref scratch)){
+        case .ok(v):{v}case .err(_):{assert(false);return;}
+    };
+    switch(modules::build_metered(snapshot,false,1024,128,1,1)){
+        case .ok(_):{assert(false);}
+        case .err(e):{assert(kind(e.kind)==10 && e.at.source==sources::no_source().source);}
+    };
 }

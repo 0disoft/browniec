@@ -682,6 +682,27 @@ creator lookup, 29 fails on the last instruction, and 30 produces the same
 two-END recipe as the unmetered path. An expired deadline leaves all 30
 units available. This fixture uses the production Windows clock shim.
 
+### Project indexing deadline
+
+The configured ordinary and catalog-backed snapshot routes pass their
+existing absolute compile deadline into manifest path and header matching,
+index construction, and import binding. The staged scanner checks the same
+clock between its bounded continuations and before committing the token.
+The index also checks immediately before allocation and before returning
+its owner. Expiration returns the existing deadline diagnostic with no
+source location. Index Fuel charges keep the same accounting.
+
+Windows development and /O2 each pass 42 configured, 16 catalog and five
+managed project cases plus nine native host transport cases on the real
+monotonic clock. The development lexer fixture passes all three native
+groups. An isolated /O2 index fixture runs seven index tests and uses a
+controlled monotonic clock to expire inside a block comment and at the
+last check before returning an index. Both ordinary and host indexing
+return a deadline error at those boundaries, and an interrupted token
+leaves the caller's lexer state untouched. The configured worker matrix
+does not force a particular index phase to time out. Local worker receipt:
+`build/restricted-worker/20261121T192158299111Z/receipt.json`.
+
 ## Windows verification
 
 Run `python -B tools/verify-restricted-worker.py`. The development and optimized

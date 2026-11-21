@@ -24,7 +24,7 @@ fn entries::InputEntry kept(ref u8[] a,ref u8[] b,ref u8[] path,ref u8[] name){
 }
 fn u8 kind(modules::Failure e){return switch(e){
     case .Lexical:{0}case .Syntax:{1}case .Limit:{2}case .Duplicate:{3}case .Missing:{4}
-    case .Private:{5}case .Reserved:{6}case .Bounds:{7}case .Kind:{8}case .Allocation:{9}
+    case .Private:{5}case .Reserved:{6}case .Bounds:{7}case .Kind:{8}case .Allocation:{9}case .Deadline:{10}
 };}
 fn void wrong(ref u8[] source,ref u8[] spelling){
     let modules::Index candidate=index(source,b"");
