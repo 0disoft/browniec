@@ -978,6 +978,22 @@ passed 84 configured, 32 catalog and five managed project cases. All 456
 receipt input hashes matched.
 Local receipt: `build/restricted-worker/20261121T214911975597Z/receipt.json`.
 
+### Configured type quota Fuel
+
+The configured project compiler uses the same 4,096-unit batch for a type
+limit that needs an explicit count. Both scalar and shared-byte entry paths
+check this after independent proof and before retaining the Program. The scan
+covers verified registers, function returns, record fields, array identities
+and view sites. It checks the compile deadline before and after the batch.
+The conservative upper bound still allows a sufficiently high type limit to
+skip the count with zero Fuel debit.
+
+With a one-type quota, the two-module project returns 42 at 3,539,139
+compile Fuel. At 3,539,138 the compiler rejects the project before execution.
+Both Windows profiles passed 86 configured, 32 catalog and five managed
+project cases. All 456 input hashes matched.
+Local receipt: `build/restricted-worker/20261121T215712277486Z/receipt.json`.
+
 ## Windows verification
 
 Run `python -B tools/verify-restricted-worker.py`. The development and optimized

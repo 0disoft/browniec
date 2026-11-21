@@ -146,6 +146,12 @@ def verify_configured_project(run, need, image, folder, env):
     check(3, 'compile_limit')
     policy['compile']['fuel'] = full_fuel
     check()
+    policy['compile']['types'] = 1
+    policy['compile']['fuel'] = full_fuel + 4095
+    check(3, 'compile_limit')
+    policy['compile']['fuel'] = full_fuel + 4096
+    check()
+    policy['compile']['types'] = compile_defaults['types']
     policy['compile']['fuel'] = compile_defaults['fuel']
 
     # The two original hello files have 27 and 17 lexer tokens, excluding EOF.
@@ -434,7 +440,7 @@ def verify_configured_project(run, need, image, folder, env):
     config['entry']['function'] = manifest['entry']['function']
     config['grants'] = ['brownie.output.emit']
     check(4, 'unavailable')
-    return 84
+    return 86
 
 
 def verify_project_host(run, need, image, folder, env):

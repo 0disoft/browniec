@@ -653,10 +653,7 @@ fn Result<usize,Error> retain_limited_host(ref mut Engine e,ref ir::Program code
 }
 fn Result<usize,Error> check_output_compile_image(ref output_programs::Program code,policy_limits::CompileLimits limits){
     let ref compile_ir::Program image=output_programs::code(code);
-    let ref output_programs::Preparation prepared=output_programs::preparation(code);
-    discard check_compile_image(ref image.body,limits)?;
-    if(!compile_types::fits(ref image.body,ref image.results,ref prepared.sites.kinds,limits.types)){return .err(error(8));}
-    return .ok(image.body.count);
+    return check_compile_image(ref image.body,limits);
 }
 fn Result<usize,Error> check_compile_image(ref ir::Program code,policy_limits::CompileLimits limits){
     if(code.count>limits.instructions || code.function_count>limits.functions){return .err(error(8));}
@@ -2047,7 +2044,8 @@ fn u32 compile_output_inner(ref mut Meta m,ref mut vec::Vec<Program> v,ref mut v
     if(vec::len<entries::Entry>(incoming)!=1){return failed(m,1);}
     var retention::Plan plan=switch(retention_plan(m,2)){case .ok(p):{p}case .err(s):{return failed(m,s);}};
     var compilation::Plan work=switch(compile_work(m,unsafe{compile_fact_raw(incoming as ptr void,0,2)},entry_heap(vec::at<entries::Entry>(incoming,0)))){case .ok(p):{p}case .err(status):{return failed(m,status);}};
-    let Result<output_programs::Program,diagnostics::Error> built=bounded::compile_output_until(pop_entry(incoming),limit,ref mut plan,ref mut work,deadline);
+    let usize types=if(m.configured){policy::compile_limits(vec::at<policy::Policy>(policies,0)).types}else{4096};
+    let Result<output_programs::Program,diagnostics::Error> built=bounded::compile_output_until(pop_entry(incoming),limit,ref mut plan,ref mut work,deadline,types);
     assert(memory::record_compile(ref mut m.programs,ref work).is_ok);
     assert(memory::record(ref mut m.programs,ref plan).is_ok);
     return switch(built){
@@ -2071,7 +2069,8 @@ fn u32 compile_input_output_inner(ref mut Meta m,ref mut vec::Vec<Program> v,ref
     let EntryBinding entry=switch(bind_entry(m.configured,vec::at<input_entries::InputEntry>(incoming,0))){
         case .ok(v):{v}case .err(status):{return failed(m,status);}
     };
-    let Result<output_programs::Program,diagnostics::Error> built=bounded::compile_input_output_until(pop_input_entry(incoming),limit,ref mut plan,ref mut work,deadline);
+    let usize types=if(mode>=4){policy::compile_limits(vec::at<policy::Policy>(policies,0)).types}else{4096};
+    let Result<output_programs::Program,diagnostics::Error> built=bounded::compile_input_output_until(pop_input_entry(incoming),limit,ref mut plan,ref mut work,deadline,types);
     assert(memory::record_compile(ref mut m.programs,ref work).is_ok);
     assert(memory::record(ref mut m.programs,ref plan).is_ok);
     return switch(built){

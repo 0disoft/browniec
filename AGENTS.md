@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-22): [Catalog type quota Fuel](docs/engineering/restricted-worker.md#catalog-type-quota-fuel)
-  prepays the bounded type scan for a restrictive quota. Windows development
-  and /O2 verify exact and one-less compile Fuel before publication.
+- Latest runtime checkpoint (2026-11-22): [Configured type quota Fuel](docs/engineering/restricted-worker.md#configured-type-quota-fuel)
+  prepays restrictive type scans before retaining scalar and shared-byte
+  Programs. Windows development and /O2 verify exact and one-less Fuel.
 
 # Brownie C agent guidance
 

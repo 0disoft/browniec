@@ -33,6 +33,7 @@ import static_ir as statics;
 import call_capture_plan as call_captures;
 import runtime_execution_memory as execution_heap;
 import metadata_budget as budget;
+import compile_type_budget as types_budget;
 
 pub struct Preparation { statics::Sites sites; u8[16] origins; lists::Requirement list; places::Requirement place; usize work; usize capacity; usize scratch; u8[16] parameters; call_captures::Plan calls; }
 resource Stored { sources::Snapshot sources; candidates::Program code; images::Image image; bool input; bool emits; Preparation prepared; cleanup { } }
@@ -54,7 +55,7 @@ pub fn Result<Program,diagnostics::Error> compile_with_retention(entries::Entry 
     let usize lowered=compiler::lower_output_modules(ref selected,ref mut builder,ref mut code)?;
     return finish(modules::snapshot(entries::index(ref selected)),ref builder,ref code,image_limit,false,plan);
 }
-pub fn Result<Program,diagnostics::Error> compile_with_retention_until(entries::Entry selected,usize image_limit,ref mut retention::Plan plan,usize deadline){
+pub fn Result<Program,diagnostics::Error> compile_with_retention_until(entries::Entry selected,usize image_limit,ref mut retention::Plan plan,usize deadline,usize type_limit){
     var images::Builder builder=switch(images::builder(4096)){
         case .ok(v):{v}case .err(e):{return .err(literal(e));}
     };
@@ -62,7 +63,7 @@ pub fn Result<Program,diagnostics::Error> compile_with_retention_until(entries::
     let ref modules::Index index=entries::index(ref selected);
     var usize fuel=modules::compile_fuel(index);
     let usize lowered=compiler::lower_output_modules_until(ref selected,ref mut builder,ref mut code,deadline,ref mut fuel)?;
-    return finish_until(modules::snapshot(index),ref builder,ref code,image_limit,false,plan,deadline,ref mut fuel);
+    return finish_until(modules::snapshot(index),ref builder,ref code,image_limit,false,plan,deadline,ref mut fuel,type_limit);
 }
 pub fn Result<Program,diagnostics::Error> compile_input(input_entries::InputEntry selected,usize image_limit){
     var retention::Plan plan=retention::unlimited();return compile_input_with_retention(selected,image_limit,ref mut plan);
@@ -75,7 +76,7 @@ pub fn Result<Program,diagnostics::Error> compile_input_with_retention(input_ent
     let usize lowered=compiler::lower_input_output_modules(ref selected,ref mut builder,ref mut code)?;
     return finish(modules::snapshot(input_entries::index(ref selected)),ref builder,ref code,image_limit,true,plan);
 }
-pub fn Result<Program,diagnostics::Error> compile_input_with_retention_until(input_entries::InputEntry selected,usize image_limit,ref mut retention::Plan plan,usize deadline){
+pub fn Result<Program,diagnostics::Error> compile_input_with_retention_until(input_entries::InputEntry selected,usize image_limit,ref mut retention::Plan plan,usize deadline,usize type_limit){
     var images::Builder builder=switch(images::builder(4096)){
         case .ok(v):{v}case .err(e):{return .err(literal(e));}
     };
@@ -83,7 +84,7 @@ pub fn Result<Program,diagnostics::Error> compile_input_with_retention_until(inp
     let ref modules::Index index=input_entries::index(ref selected);
     var usize fuel=modules::compile_fuel(index);
     let usize lowered=compiler::lower_input_modules_metered(ref selected,ref mut builder,ref mut code,true,deadline,ref mut fuel)?;
-    return finish_until(modules::snapshot(index),ref builder,ref code,image_limit,true,plan,deadline,ref mut fuel);
+    return finish_until(modules::snapshot(index),ref builder,ref code,image_limit,true,plan,deadline,ref mut fuel,type_limit);
 }
 @link_name("bc_runtime_engine_output_proof_storage")
 unsafe extern C fn usize proof_storage_raw(ptr void candidate);
@@ -198,11 +199,15 @@ fn Result<Program,diagnostics::Error> finish(ref sources::Snapshot sources,ref i
     return finish_verified(sources,code,image,input,ref proof,0,ref mut fuel);
 }
 fn Result<Program,diagnostics::Error> finish_until(ref sources::Snapshot sources,ref images::Builder builder,
-    ref candidates::Program code,usize image_limit,bool input,ref mut retention::Plan plan,usize deadline,ref mut usize fuel){
+    ref candidates::Program code,usize image_limit,bool input,ref mut retention::Plan plan,usize deadline,ref mut usize fuel,usize type_limit){
     if(clock::expired(deadline)){return .err(absent(errors::absent(errors::deadline_kind(),0)));}
     let images::Image image=freeze(builder,image_limit,plan)?;
     let output_proof::Proof proof=switch(proof_work::inspect_until(code,ref image,input,deadline,fuel)){
         case .ok(v):{v}case .err(e):{return .err(proof_error(sources,code,e));}
+    };
+    switch(types_budget::fits(ref code.body,ref code.results,ref proof.ordinary.statics.kinds,type_limit,deadline,fuel)){
+        case .ok(allowed):{if(!allowed){return .err(absent(errors::absent(retention::quota_kind(),0)));}}
+        case .err(e):{return .err(absent(e));}
     };
     return finish_verified(sources,code,image,input,ref proof,deadline,fuel);
 }

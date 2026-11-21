@@ -79,10 +79,15 @@ fn usize upper_bound(ref ir::Program code){
     // 52 scalar/wrapper/nominal identities plus 12 scalar views and one text view.
     return 65+code.arrays.count;
 }
-pub fn bool fits(ref ir::Program code,ref u8[] reference_returns,ref u8[] static_kinds,usize limit){
-    if(limit>=upper_bound(code)){return true;}
+pub fn Result<bool,errors::Error> fits(ref ir::Program code,ref u8[] reference_returns,ref u8[] static_kinds,
+    usize limit,usize deadline,ref mut usize fuel){
+    if(limit>=upper_bound(code)){return .ok(true);}
+    if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
+    discard budget::prepay(fuel,0)?;
     var Count count=Count{.seen=[false;143],.used=code.records.layouts.count,.views=0};
-    return image_types(ref mut count,code,reference_returns,static_kinds) && count.used<=limit;
+    let bool allowed=image_types(ref mut count,code,reference_returns,static_kinds) && count.used<=limit;
+    if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
+    return .ok(allowed);
 }
 pub fn Result<bool,errors::Error> fits_host(ref host::Program program,usize limit,usize deadline,ref mut usize fuel){
     let ref ir::Program code=host::code(program);

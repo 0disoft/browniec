@@ -96,14 +96,14 @@ pub fn Result<outputs::Program,diagnostics::Error> compile_input_output(input_en
     return finish_output(built,retained,ref local,plan);
 }
 pub fn Result<outputs::Program,diagnostics::Error> compile_output_until(entries::Entry selected,usize image_limit,
-    ref mut retention::Plan retained,ref mut memory::Plan plan,usize deadline){
+    ref mut retention::Plan retained,ref mut memory::Plan plan,usize deadline,usize type_limit){
     var retention::Plan local=begin(retained,plan)?;
-    let Result<outputs::Program,diagnostics::Error> built=outputs::compile_with_retention_until(selected,image_limit,ref mut local,deadline);
+    let Result<outputs::Program,diagnostics::Error> built=outputs::compile_with_retention_until(selected,image_limit,ref mut local,deadline,type_limit);
     return finish_output(built,retained,ref local,plan);
 }
 pub fn Result<outputs::Program,diagnostics::Error> compile_input_output_until(input_entries::InputEntry selected,usize image_limit,
-    ref mut retention::Plan retained,ref mut memory::Plan plan,usize deadline){
+    ref mut retention::Plan retained,ref mut memory::Plan plan,usize deadline,usize type_limit){
     var retention::Plan local=begin(retained,plan)?;
-    let Result<outputs::Program,diagnostics::Error> built=outputs::compile_input_with_retention_until(selected,image_limit,ref mut local,deadline);
+    let Result<outputs::Program,diagnostics::Error> built=outputs::compile_input_with_retention_until(selected,image_limit,ref mut local,deadline,type_limit);
     return finish_output(built,retained,ref local,plan);
 }
