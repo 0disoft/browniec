@@ -34,16 +34,22 @@ Instances retain their pins and can continue. Destroy each Instance before
 destroying the Engine. The Engine rejects destruction while it has live public
 children. Handles are generation-checked integers in the shared 64-slot
 registry. The preview caps each Engine at eight Programs and sixteen Instances.
-Calls are serialized within the DLL. An overlapping caller receives `BC_BUSY`.
-The creating OS thread owns the Engine and its children for life. Retire all
-handles before unloading the DLL. Each handle and event output remains unchanged
-on API failure.
+The creating OS thread owns the Engine and its children for life. Separate
+owner threads can compile and step independent Engines concurrently. The
+registry guard protects handle and admission updates, and compilation and VM
+execution run outside the guard. Calls on a foreign Engine return
+`BC_WRONG_THREAD`. Retire all handles before unloading the DLL. Each handle
+and event output remains unchanged on API failure.
 
 The native test host compiles one Program, overwrites its original source
 buffer, and advances two Instances with quanta 1 and 64 to the same result and
 Fuel consumption. A third Instance is cancelled after its first step. The host
 also verifies exact terminal observation, exhausted Fuel, Program pins,
 wrong-thread access, cross-Engine handles, and stale generations.
+The concurrency check starts four owner threads together. Each compiles,
+steps, and destroys its own Engine without retrying calls.
 
 On Windows x64, the development and `/O2` hosts both returned 77 and consumed
-2,753,628 Fuel with either quantum. Both builds used the default MSVC stacks.
+2,753,628 Fuel with either quantum. All four owner threads also completed in
+both profiles. The previous DLL rejected creation in the concurrency check.
+Both builds used the default MSVC stacks.

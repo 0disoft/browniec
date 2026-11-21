@@ -6,8 +6,11 @@ current-thread identity. It does not implement a registry, Engine lifecycle or
 public DLL export. The [internal registry coordinator](abi-registry.md) now
 connects it to the compiled `abi_handles.fy` kernel.
 
-`bc_abi_guard_enter` uses `TryAcquireSRWLockExclusive`: contention or same-thread
-reentry returns Busy immediately. The first admitted call lazily allocates one
+`bc_abi_guard_enter` normally uses `TryAcquireSRWLockExclusive`. Contention or
+same-thread reentry returns Busy immediately. The Windows embedding build
+waits for the metadata guard and still rejects same-thread reentry. This lets
+an admitted call finish bookkeeping while other Engines are active. The first
+admitted call lazily allocates one
 Windows TLS slot under the guard. Every new thread lifetime receives a unique
 nonzero u64 ticket, stored as an opaque TLS value without allocating or following
 an object pointer. Calls on the same thread retain their ticket. New threads

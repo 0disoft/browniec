@@ -28,6 +28,38 @@ static DWORD WINAPI foreign_step(void *arg){
     return bc_preview_step(*(bc_handle *)arg,1,&event);
 }
 
+static DWORD WINAPI run_owned_engine(void *start){
+    static const uint8_t source[]="module main; pub fn i32 main(){var i32 n=0;while(n<77){n+=1;}return n;}";
+    bc_handle engine=0,program=0,instance=0;
+    assert(WaitForSingleObject(start,5000)==WAIT_OBJECT_0);
+    assert(bc_preview_engine_create(BC_PREVIEW_REVISION,&engine)==BC_OK);
+    assert(bc_preview_compile(engine,(bc_slice){source,sizeof(source)-1},&program)==BC_OK);
+    assert(bc_preview_instance_create(engine,program,4000000,&instance)==BC_OK);
+    bc_preview_event event=finish(instance,1);
+    assert(event.kind==BC_PREVIEW_DONE && event.return_i32==77 && event.fuel_used>0);
+    assert(bc_preview_instance_destroy(instance)==BC_OK);
+    assert(bc_preview_program_release(engine,program)==BC_OK);
+    assert(bc_preview_engine_destroy(engine)==BC_OK);
+    return 0;
+}
+
+static void independent_engine_threads(void){
+    HANDLE start=CreateEventW(NULL,TRUE,FALSE,NULL);
+    HANDLE owners[4];
+    assert(start);
+    for(unsigned i=0;i<4;++i){
+        owners[i]=CreateThread(NULL,0,run_owned_engine,start,0,NULL);
+        assert(owners[i]);
+    }
+    assert(SetEvent(start));
+    assert(WaitForMultipleObjects(4,owners,TRUE,10000)==WAIT_OBJECT_0);
+    for(unsigned i=0;i<4;++i){
+        DWORD status=1;
+        assert(GetExitCodeThread(owners[i],&status) && status==0 && CloseHandle(owners[i]));
+    }
+    assert(CloseHandle(start));
+}
+
 int main(void){
     uint8_t text[]="module main; fn i32 inc(i32 n){return n+1;} "
         "pub fn i32 main(){var i32 n=70;while(n<77){n=inc(n);}return n;}";
@@ -77,6 +109,8 @@ int main(void){
     assert(bc_preview_instance_destroy(short_fuel)==BC_OK);
     assert(bc_preview_engine_destroy(engine)==BC_OK);
     assert(bc_preview_engine_destroy(engine)==BC_INVALID_HANDLE);
+    independent_engine_threads();
     printf("PASS: quanta 1/64 return 77 and consume %" PRIu64 " fuel; cancellation and ownership verified\n",a.fuel_used);
+    puts("PASS: four owner threads independently compiled, stepped, and destroyed their Engines without retries");
     return 0;
 }

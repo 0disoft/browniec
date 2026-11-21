@@ -78,9 +78,11 @@ the kernel except for C null/reserved-field marshalling and an absent lazy table
 
 Results use the existing numeric meanings: OK=0, BadArgument=1,
 InvalidHandle=2, Busy=3, AllocationError=6, internal invariant=7,
-ResourceLimit=8, WrongThread=10. SRW contention and same-thread guard reentry
-return Busy immediately; wrappers never wait or retry. The test host alone
-retries contention outside the guard when it expects a non-Busy result.
+ResourceLimit=8, WrongThread=10. The standalone coordinator returns Busy
+immediately on SRW contention or same-thread guard reentry. The embedding
+build waits for the metadata guard so registry finalization can finish after
+native work commits. Same-thread reentry still returns Busy. The standalone
+test host retries contention outside the guard when it expects a non-Busy result.
 
 Trusted callers provide readable input receipts and writable output storage.
 Arbitrary C pointers cannot be made valid by this registry. Every ordinary

@@ -14,7 +14,15 @@ uint32_t bc_abi_guard_enter(bc_abi_thread_identity *identity) {
     bc_abi_thread_identity candidate;
     ULONG_PTR stored;
     if (identity == NULL) { return 1; }
+#ifdef BC_ABI_WAIT_FOR_METADATA
+    // Embedding must finish an admitted operation even if another Engine
+    // touches the registry. Reject recursive entry before taking the SRW lock.
+    DWORD thread = GetCurrentThreadId();
+    if ((DWORD)InterlockedCompareExchange(&owner_thread, 0, 0) == thread) { return 3; }
+    AcquireSRWLockExclusive(&registry_guard);
+#else
     if (!TryAcquireSRWLockExclusive(&registry_guard)) { return 3; }
+#endif
     if (identity_tls == TLS_OUT_OF_INDEXES) {
         identity_tls = TlsAlloc();
         if (identity_tls == TLS_OUT_OF_INDEXES) {

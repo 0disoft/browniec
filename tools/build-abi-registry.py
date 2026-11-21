@@ -18,7 +18,7 @@ REVISION = 'eb274643bfcfe746617121ddc6f130b018978b53'
 TRANSPORT = 'c424daab534cc50130704dc824970802915cded8265820403478b49a76e3a5bb'
 KERNEL = '6e40e0e4aa73ef1f63147774da917ca7e58ab077f9de89b4dec2142c1ebc21d4'
 RETENTION = '19e295a582ecaf048fe34c448247ab860c951a18b3d4ff157803160764ab1f54'
-HELPER = 'a81ff7c986ed7c2c1ade2e7506ed253bd5ec78602da53e5df92d4ffdb0953cad'
+HELPER = '5c562f408deb71cc2a73aeab46ed1d5c137ba2ae5f894b0c3ae96feb65c3a488'
 HELPER_HEADER = '982becbdcc9310ba557a6e8e52861ffd8e24de19a9ec8125786d4199fcb08e6a'
 FEATURES = ['src/abi_handles.fy', 'native/abi_registry.c', 'native/abi_registry.h',
             'native/abi_thread_identity.c', 'native/abi_thread_identity.h',

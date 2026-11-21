@@ -1,6 +1,6 @@
-- Latest runtime checkpoint (2026-11-21): [Windows scalar embedding preview](docs/engineering/embed-preview.md)
-  runs a shared Program through independently stepped Instances. Windows /Od
-  and /O2 returned 77 with identical Fuel for both tested quanta and verified cancellation.
+- Latest runtime checkpoint (2026-11-21): [Concurrent Windows embedding Engines](docs/engineering/embed-preview.md)
+  use per-Engine admissions. Four owner threads compiled, stepped, and tore
+  down independent Engines without retries in Windows /Od and /O2.
 
 # Brownie C agent guidance
 

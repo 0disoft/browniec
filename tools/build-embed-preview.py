@@ -99,7 +99,7 @@ def main():
     sources = [('preview', out/'preview.c', []), ('runtime', out/'runtime.c', []),
                ('registry', ROOT/'native/abi_registry.c', ['/Dfy_runtime_trap=bc_registry_trap',
                                                           '/Dfy_runtime_trap_at_v0=bc_registry_trap_at']),
-               ('thread', ROOT/'native/abi_thread_identity.c', []),
+               ('thread', ROOT/'native/abi_thread_identity.c', ['/DBC_ABI_WAIT_FOR_METADATA']),
                ('project', ROOT/'native/windows-project-cli.c', []),
                ('input', ROOT/'native/runtime_input_reader.c', []),
                ('adapter', ROOT/'native/host_adapter_process.c', [])]
