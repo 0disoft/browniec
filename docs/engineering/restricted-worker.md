@@ -188,6 +188,16 @@ development and /O2 each passed the native case with zero net handles and
 all 28 fixture input hashes matched.
 Local receipt: `build/restricted-worker/20261122T025725864286Z/receipt.json`.
 
+The process-backed reaping test runs two catalog workers and two real
+adapters under the same broker and adapter budgets. Both adapters hold
+their slots after sending a response header. The first worker is cancelled
+and the second expires with neither reply published. Collecting the expired
+worker and its adapter returns only their reservations. The cancelled
+worker still owns one adapter slot until its own close completes. Windows
+development and /O2 each passed with zero net handles and all 459 input
+hashes matched.
+Local receipt: `build/restricted-worker/20261122T025952686363Z/receipt.json`.
+
 ### Phase deadlines
 
 The broker starts the startup window before opening handles and requires

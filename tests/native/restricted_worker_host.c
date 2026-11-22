@@ -1445,6 +1445,57 @@ static bool catalog_process_result(const void *unused, const uint8_t *body, size
         !memcmp(body + 7, metadata, sizeof(metadata) - 1) && !memcmp(body + 3 + meta, "before", 6);
 }
 
+static void verify_shared_process_reaping(bc_worker_broker *first, const bc_worker_broker_run *run,
+    bc_worker_broker_amounts one) {
+    bc_worker_broker_budget *budget = run->budget;
+    const bc_worker_process_adapter *first_adapter = run->host.context;
+    bc_adapter_budget *processes = first_adapter->slot.budget;
+    const bc_worker_broker_amounts both = {
+        2, 2 * one.parent_bytes, 2 * one.child_commit_bytes, 2 * one.wire_bytes, 2, 6
+    };
+    budget->limit = both;
+    processes->live_limit = 2;
+    bc_worker_broker second = {0};
+    process_codec codec = {0};
+    bc_worker_process_adapter adapter = *first_adapter;
+    adapter.slot = (bc_adapter_slot){.budget = processes};
+    adapter.codec = &codec;
+    uint8_t result[512], request[18], reply[13];
+    bc_worker_broker_run next = *run;
+    next.result = result;
+    next.host = (bc_worker_broker_host){NULL, &adapter, request, reply, sizeof(request), sizeof(reply), 2};
+    next.deadline = clock_ticks() + 100000000ULL;
+    check(bc_worker_broker_start(&second, &next) == ERROR_SUCCESS &&
+        same_charge(budget->reserved, both), "admit both process-backed workers at exact capacity");
+    while (!codec.headers && second.gate.status == BC_WORKER_GATE_PENDING) {
+        bc_worker_broker_step(&second);
+        Sleep(1);
+    }
+    check(codec.headers == 1 && second.phase == BC_WORKER_BROKER_WAIT_HOST &&
+        processes->live == 2 && first_adapter->slot.process && adapter.slot.process,
+        "both real adapters hold their process slots while replying");
+    second.phase_deadline = clock_ticks();
+    check(bc_worker_broker_step(&second) == BC_WORKER_GATE_EXPIRED &&
+        bc_worker_broker_cancel(&second) == BC_WORKER_GATE_EXPIRED &&
+        first->gate.status == BC_WORKER_GATE_CANCELLED,
+        "settle independent outcomes for the two process-backed workers");
+    size_t length = 123;
+    check(!bc_worker_broker_take(&second, &length) && length == 123,
+        "the expired process-backed worker publishes nothing");
+
+    const uint64_t deadline = clock_ticks() + 50000000ULL;
+    while (!bc_worker_broker_close(&second)) {
+        check(clock_ticks() < deadline && same_charge(budget->reserved, both) &&
+            second.gate.status == BC_WORKER_GATE_EXPIRED,
+            "retain both broker charges while one process adapter is being collected");
+        Sleep(1);
+    }
+    check(same_charge(budget->reserved, one) && first_adapter->slot.process &&
+        !adapter.slot.process && processes->live == 1 && processes->launches == 2 &&
+        codec.requests == 1 && !codec.replies && first->gate.status == BC_WORKER_GATE_CANCELLED,
+        "collect only the expired worker and its adapter");
+}
+
 static void verify_catalog_process(const wchar_t *path, const wchar_t *directory,
     const wchar_t *adapter_image, bc_worker_gate_status expected) {
     uint8_t start[4096], result[512] = {0}, request[18], reply[13], executable[4096];
@@ -1520,6 +1571,8 @@ static void verify_catalog_process(const wchar_t *path, const wchar_t *directory
     check(broker.gate.status == expected &&
         (success ? published == result && catalog_process_result(NULL, result, length) :
             !published && length == 123), "publish only the completed process-backed guest");
+    const bool shared = expected == BC_WORKER_GATE_CANCELLED;
+    if (shared) verify_shared_process_reaping(&broker, &run, charge);
     const uint64_t reap_limit = clock_ticks() + 50000000ULL;
     while (!bc_worker_broker_close(&broker)) {
         check(clock_ticks() < reap_limit && broker.gate.status == expected &&
@@ -1529,7 +1582,8 @@ static void verify_catalog_process(const wchar_t *path, const wchar_t *directory
     check(SetEnvironmentVariableW(L"BC_TEST_RESTRICTED_PROCESS", NULL), "clear process adapter mode");
     const unsigned launches = success ? 2 : 1;
     check(codec.requests == launches && codec.headers == launches && codec.replies == (success ? 2u : 0u) &&
-        adapter_budget.launches == launches && adapter_budget.wire == launches * adapter_wire &&
+        adapter_budget.launches == launches + (size_t)shared &&
+        adapter_budget.wire == (launches + (size_t)shared) * adapter_wire &&
         !adapter_budget.live && !adapter.slot.process &&
         same_charge(budget.reserved, (bc_worker_broker_amounts){0}), "reap process and refund both live reservations");
 }
@@ -1763,8 +1817,10 @@ int wmain(int argc, wchar_t **argv) {
            "\"phaseDeadlines\":true,\"gracefulCancelCases\":2,\"handleDelta\":0,\"staging\":true,"
            "\"scalarSessions\":%d,\"parentBrokerCases\":%d,\"projectWireRejections\":%d,"
            "\"projectCompileStopCases\":%d,\"catalogHostStopCases\":%d,\"catalogProcessCases\":%d,"
+           "\"sharedProcessReapCases\":%d,"
            "\"parentColdHandleDelta\":%ld,\"coldHandleDelta\":%ld}\n",
            argc == 3 ? 5 : 0, argc == 3 ? 4 : 0, argc == 3 ? 2 : 0, argc == 3 ? 4 : 0,
-           argc == 3 ? 4 : 0, argc == 3 ? 4 : 0, parent_cold_delta, (long)final - (long)cold);
+           argc == 3 ? 4 : 0, argc == 3 ? 4 : 0, argc == 3 ? 1 : 0,
+           parent_cold_delta, (long)final - (long)cold);
     return 0;
 }
