@@ -18,8 +18,9 @@ def main():
          'Windows required with no compiler or linker overrides')
     out = ROOT/'build/host-adapter-process'/datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%fZ')
     out.mkdir(parents=True)
-    inputs = ['native/host_adapter_process.c', 'native/host_adapter_process.h',
-              'tests/native/host_adapter_process_host.c', 'tools/verify-host-adapter-process.py',
+    sources = ['native/host_adapter_process.c', 'tests/native/host_adapter_process_host.c']
+    inputs = [*sources, 'native/host_adapter_process.h', 'native/host_adapter_process_types.h',
+              'tools/verify-host-adapter-process.py',
               'tools/verify-runtime-store-probe.py']
     receipt = dict(status='incomplete', commands=[], profiles=[],
                    inputs=[dict(path=p, sha256=helper.sha((ROOT/p).read_bytes())) for p in inputs])
@@ -42,7 +43,7 @@ def main():
             folder.mkdir()
             exe = folder/'adapter fixture.exe'
             run([cl, '/nologo', '/std:c11', '/TC', '/MT', '/W4', '/WX', option,
-                 ROOT/inputs[0], ROOT/inputs[2], '/Fe'+str(exe),
+                 *(ROOT/path for path in sources), '/Fe'+str(exe),
                  '/link', 'bcrypt.lib', '/INCREMENTAL:NO', '/Brepro'], cwd=folder, env=env)
             runtime_env = {k: v for k, v in os.environ.items()
                            if k.upper() in {'SYSTEMROOT', 'WINDIR', 'TEMP', 'TMP'}}

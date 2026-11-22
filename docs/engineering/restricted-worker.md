@@ -219,6 +219,18 @@ opening handles, admitted the exact charge, and returned it on close. Both
 profiles reported zero net handles, and all 459 input hashes matched.
 Local receipt: `build/restricted-worker/20261122T031730614162Z/receipt.json`.
 
+The parent now initializes the process route in caller-owned storage,
+removing one route heap allocation per process-backed invocation. The
+broker charges the route, its codec state, and peak adapter launch heap
+together through close. Both Windows profiles rejected admission at one
+byte below the combined parent reservation and accepted the exact limit.
+Each passed ten process-command cases and concurrent adapter collection
+with zero net handles. All 460 restricted-worker input hashes matched.
+Local receipt: `build/restricted-worker/20261122T032731075176Z/receipt.json`.
+The standalone adapter verification passed eight process cases, three
+launch rejections, and one aggregate case per profile.
+Local receipt: `build/host-adapter-process/20261122T033031874368Z/receipt.json`.
+
 ### Phase deadlines
 
 The broker starts the startup window before opening handles and requires

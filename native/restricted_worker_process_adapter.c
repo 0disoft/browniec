@@ -1,26 +1,17 @@
-#include "restricted_worker_process_adapter.h"
+#include "restricted_worker_process_route.h"
+#include "host_adapter_process.h"
 
-typedef struct process_route {
-    bc_worker_process_adapter adapter;
-    bc_adapter_budget budget;
-} process_route;
-
-void *bc_worker_process_route_create(const uint8_t *path, size_t path_length, size_t reply_limit,
+bool bc_worker_process_route_init(bc_worker_process_route *owner,
+    const uint8_t *path, size_t path_length, size_t reply_limit,
     uint32_t launches, size_t wire_limit, void *codec, bc_worker_process_encode encode,
     bc_worker_process_reply_size reply_size, bc_worker_process_decode decode) {
-    if (!path || !path_length || path_length > 4096 || reply_limit > BC_ADAPTER_BODY_LIMIT ||
-        !launches || !encode || !reply_size || !decode) return NULL;
-    process_route *owner = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*owner));
-    if (!owner) return NULL;
+    if (!owner || !path || !path_length || path_length > 4096 || reply_limit > BC_ADAPTER_BODY_LIMIT ||
+        !launches || !encode || !reply_size || !decode) return false;
     owner->budget = (bc_adapter_budget){.live_limit = 1, .launch_limit = launches, .wire_limit = wire_limit};
     owner->adapter = (bc_worker_process_adapter){.slot = {.budget = &owner->budget},
         .path = path, .path_length = path_length, .reply_limit = reply_limit, .codec = codec,
         .encode = encode, .reply_size = reply_size, .decode = decode};
-    return &owner->adapter;
-}
-
-void bc_worker_process_route_release(void *owner) {
-    HeapFree(GetProcessHeap(), 0, owner);
+    return true;
 }
 
 static bool process_begin(void *context, uint64_t correlation, const uint8_t *request,

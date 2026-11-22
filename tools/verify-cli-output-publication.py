@@ -12,7 +12,7 @@ NATIVE = ('native/windows-project-cli.c', 'native/anchored_sources.c',
           'native/anchored_sources.h', 'native/anchored-source-loader/bridge.c',
           'native/anchored-source-loader/bridge.h', 'native/runtime_input_reader.c',
           'native/runtime_input_reader.h', 'native/host_adapter_process.c',
-          'native/host_adapter_process.h')
+          'native/host_adapter_process.h', 'native/host_adapter_process_types.h')
 EXPECTED = (b'PASS: short write, failed write and close status leave no output, '
             b'staging file or handle; retry publishes exact bytes')
 

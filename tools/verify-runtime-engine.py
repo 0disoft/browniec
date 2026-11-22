@@ -473,7 +473,8 @@ def main():
                       'native/runtime-input-adoption/bridge.c',
                       'native/anchored_sources.c', 'native/anchored_sources.h',
                       'native/anchored-source-loader/bridge.c', 'native/anchored-source-loader/bridge.h',
-                      'native/host_adapter_process.c', 'native/host_adapter_process.h']
+                      'native/host_adapter_process.c', 'native/host_adapter_process.h',
+                      'native/host_adapter_process_types.h']
         extras = ['fairy.toml', 'toolchain.json', 'tools/verify-runtime-engine.py',
                   'tools/verify-runtime-store-probe.py', 'tools/compiler_scratch_layouts.py',
                   'tools/runtime_engine_transport.py', 'tools/runtime-engine/test-host.inc',

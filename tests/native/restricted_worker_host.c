@@ -7,7 +7,8 @@
 #include <wchar.h>
 #include "../../native/restricted_worker.h"
 #include "../../native/restricted_worker_broker.h"
-#include "../../native/restricted_worker_process_adapter.h"
+#include "../../native/host_adapter_process.h"
+#include "../../native/restricted_worker_process_route.h"
 #include "../../native/restricted_worker_gate.h"
 #include "../../native/restricted_worker_io.h"
 #include "../../native/restricted_worker_pipes.h"
@@ -1526,18 +1527,17 @@ static void verify_catalog_process(const wchar_t *path, const wchar_t *directory
         bc_adapter_slot_heap_bytes((const uint8_t *)"e", 1) &&
         !bc_adapter_slot_heap_bytes((const uint8_t *)"\xff", 1),
         "size the retained frame and launch scratch using converted UTF-16 length");
-    bc_adapter_budget adapter_budget = {.live_limit = 1, .launch_limit = 2, .wire_limit = 2 * adapter_wire};
     process_codec codec = {0};
-    bc_worker_process_adapter adapter = {
-        .slot = {.budget = &adapter_budget}, .path = executable, .path_length = (size_t)path_size - 1,
-        .reply_limit = 12, .codec = &codec, .encode = process_fixture_encode,
-        .reply_size = process_fixture_header, .decode = process_fixture_decode
-    };
+    bc_worker_process_route route;
+    check(bc_worker_process_route_init(&route, executable, (size_t)path_size - 1, 12,
+        2, 2 * adapter_wire, &codec, process_fixture_encode, process_fixture_header,
+        process_fixture_decode), "initialize caller-owned process route");
+    const size_t adapter_parent = adapter_heap + sizeof(route) + sizeof(codec);
     bc_worker_broker broker = {0};
     const size_t wire = 5 * BC_WORKER_FRAME_BYTES + size + sizeof(result) + 1 +
         2 * (2 * BC_WORKER_FRAME_BYTES + sizeof(request) + sizeof(reply) + adapter_wire);
     const bc_worker_broker_amounts charge = {1,
-        sizeof(broker) + size + sizeof(result) + sizeof(request) + sizeof(reply) + worker_launch_heap + adapter_heap,
+        sizeof(broker) + size + sizeof(result) + sizeof(request) + sizeof(reply) + worker_launch_heap + adapter_parent,
         commit_limit, wire, 1, 3};
     bc_worker_broker_budget budget = {.limit = charge};
     wchar_t command[] = L"worker --internal-project-worker";
@@ -1548,9 +1548,9 @@ static void verify_catalog_process(const wchar_t *path, const wchar_t *directory
         .deadline = clock_ticks() + 100000000ULL, .wire_limit = wire,
         .request = start, .request_length = size, .result = result, .result_capacity = sizeof(result),
         .validate = success ? catalog_process_result : reject_callback,
-        .host = {NULL, &adapter, request, reply, sizeof(request), sizeof(reply), 2},
+        .host = {NULL, &route.adapter, request, reply, sizeof(request), sizeof(reply), 2},
         .adapter = &bc_worker_process_callbacks, .adapter_wire_bytes = 2 * adapter_wire,
-        .adapter_parent_bytes = adapter_heap
+        .adapter_parent_bytes = adapter_parent
     };
     --run.wire_limit;
     check(bc_worker_broker_start(&broker, &run) == ERROR_NOT_ENOUGH_QUOTA &&
@@ -1564,28 +1564,28 @@ static void verify_catalog_process(const wchar_t *path, const wchar_t *directory
     ++budget.limit.wire_bytes;
     --budget.limit.io_slots;
     check(bc_worker_broker_start(&broker, &run) == ERROR_NOT_ENOUGH_QUOTA &&
-        !broker.io.event && !broker.cancel_io.event && !adapter_budget.live &&
+        !broker.io.event && !broker.cancel_io.event && !route.budget.live &&
         same_charge(budget.reserved, (bc_worker_broker_amounts){0}),
         "reject a process-backed run without the third I/O slot");
     ++budget.limit.io_slots;
     --budget.limit.parent_bytes;
     check(bc_worker_broker_start(&broker, &run) == ERROR_NOT_ENOUGH_QUOTA &&
-        !broker.worker.process && !broker.io.event && !adapter_budget.launches &&
+        !broker.worker.process && !broker.io.event && !route.budget.launches &&
         same_charge(budget.reserved, (bc_worker_broker_amounts){0}),
-        "reject a parent limit one byte short of the process launch reservation");
+        "reject a parent limit one byte short of the route and launch reservation");
     ++budget.limit.parent_bytes;
     run.adapter_parent_bytes = SIZE_MAX;
     check(bc_worker_broker_start(&broker, &run) == ERROR_NOT_ENOUGH_QUOTA &&
         same_charge(budget.reserved, (bc_worker_broker_amounts){0}),
         "reject an overflowing parent charge");
-    run.adapter_parent_bytes = adapter_heap;
+    run.adapter_parent_bytes = adapter_parent;
     check(SetEnvironmentVariableW(L"BC_TEST_RESTRICTED_PROCESS", mode) &&
         !bc_worker_broker_start(&broker, &run) && same_charge(budget.reserved, charge),
         "launch catalog guest at the exact combined wire limit");
     while (broker.gate.status == BC_WORKER_GATE_PENDING && broker.phase != BC_WORKER_BROKER_FINISH) {
         bc_worker_broker_step(&broker);
         if (stop && codec.headers == 1 && broker.phase == BC_WORKER_BROKER_WAIT_HOST) {
-            check(adapter_budget.live == 1, "adapter process holds its slot during the reply");
+            check(route.budget.live == 1, "adapter process holds its slot during the reply");
             if (expected == BC_WORKER_GATE_CANCELLED)
                 check(bc_worker_broker_cancel(&broker) == expected, "cancel live adapter");
             broker.phase_deadline = clock_ticks();
@@ -1610,9 +1610,9 @@ static void verify_catalog_process(const wchar_t *path, const wchar_t *directory
     check(SetEnvironmentVariableW(L"BC_TEST_RESTRICTED_PROCESS", NULL), "clear process adapter mode");
     const unsigned launches = success ? 2 : 1;
     check(codec.requests == launches && codec.headers == launches && codec.replies == (success ? 2u : 0u) &&
-        adapter_budget.launches == launches + (size_t)shared &&
-        adapter_budget.wire == (launches + (size_t)shared) * adapter_wire &&
-        !adapter_budget.live && !adapter.slot.process &&
+        route.budget.launches == launches + (size_t)shared &&
+        route.budget.wire == (launches + (size_t)shared) * adapter_wire &&
+        !route.budget.live && !route.adapter.slot.process &&
         same_charge(budget.reserved, (bc_worker_broker_amounts){0}), "reap process and refund both live reservations");
 }
 

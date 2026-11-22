@@ -15,7 +15,6 @@
 
 extern uint32_t bc_cli_enable_cancel(void);
 extern uint32_t bc_cli_cancel_requested(void);
-extern size_t bc_adapter_slot_heap_bytes(const uint8_t *path, size_t path_len);
 
 typedef struct scalar_expectation {
     uint32_t run;
@@ -259,10 +258,12 @@ uint32_t bc_project_broker_invoke(const uint8_t *request, size_t request_length,
     const size_t reply_cap = (size_t)get_le(host_limits + 8, 4);
     if (calls > 65535 || request_cap < 4 || request_cap > 4100 || !reply_cap || reply_cap > 4097) return 0;
     project_process_codec codec = {.route = context};
-    void *adapter = NULL;
+    bc_worker_process_route route;
     if (path_length) {
-        exchange.adapter_parent_bytes = bc_adapter_slot_heap_bytes(path, path_length);
-        if (!exchange.adapter_parent_bytes) return 0;
+        const size_t launch_heap = bc_adapter_slot_heap_bytes(path, path_length);
+        const size_t route_bytes = sizeof(route) + sizeof(codec);
+        if (!launch_heap || launch_heap > SIZE_MAX - route_bytes) return 0;
+        exchange.adapter_parent_bytes = launch_heap + route_bytes;
         const size_t fixed = 5 * BC_WORKER_FRAME_BYTES + request_length + capacity + 1;
         const size_t per_call = 2 * BC_WORKER_FRAME_BYTES + request_cap + reply_cap;
         const size_t adapter_wire = 128 + request_cap - 4 + reply_cap;
@@ -271,20 +272,19 @@ uint32_t bc_project_broker_invoke(const uint8_t *request, size_t request_length,
             BCryptGenRandom(NULL, (uint8_t *)&codec.run, sizeof(codec.run),
                 BCRYPT_USE_SYSTEM_PREFERRED_RNG) < 0 || !codec.run) return 0;
         exchange.adapter_wire_bytes = calls * adapter_wire;
-        adapter = bc_worker_process_route_create(path, path_length, reply_cap - 1,
+        if (!bc_worker_process_route_init(&route, path, path_length, reply_cap - 1,
             calls, exchange.adapter_wire_bytes, &codec, encode_project_process, size_project_process_reply,
-            decode_project_process);
-        if (!adapter) return 0;
+            decode_project_process)) return 0;
         exchange.adapter = &bc_worker_process_callbacks;
     }
     uint8_t *staging = HeapAlloc(GetProcessHeap(), 0, request_cap + reply_cap);
     uint32_t status = 0;
     if (staging) {
-        exchange.host = (bc_worker_broker_host){adapter ? NULL : respond_project_host,
-            adapter ? adapter : (void *)context, staging, staging + request_cap, request_cap, reply_cap, calls};
+        exchange.host = (bc_worker_broker_host){path_length ? NULL : respond_project_host,
+            path_length ? (void *)&route.adapter : (void *)context,
+            staging, staging + request_cap, request_cap, reply_cap, calls};
         status = invoke_broker(NULL, 0, &exchange, &limits, reply, capacity, reply_length);
         HeapFree(GetProcessHeap(), 0, staging);
     }
-    if (adapter) bc_worker_process_route_release(adapter);
     return status;
 }

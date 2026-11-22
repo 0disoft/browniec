@@ -971,7 +971,7 @@ def main():
              'native/restricted_worker_stage.c', 'native/restricted_worker_stage.h',
              'native/restricted_worker_process_adapter.c', 'native/restricted_worker_process_adapter.h',
              'native/restricted_worker_process_route.h',
-             'native/host_adapter_process.c', 'native/host_adapter_process.h',
+             'native/host_adapter_process.c', 'native/host_adapter_process.h', 'native/host_adapter_process_types.h',
              'native/windows-scalar-worker.c', 'native/windows-scalar-worker.h',
              'native/runtime-engine/clock.inc',
              'native/restricted_worker_payload.h',

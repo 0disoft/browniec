@@ -25,6 +25,7 @@ on:
       - 'native/abi_thread_identity.h'
       - 'native/host_adapter_process.c'
       - 'native/host_adapter_process.h'
+      - 'native/host_adapter_process_types.h'
       - 'native/windows-host-adapter-process.c'
       - 'native/windows-project-cli.c'
       - 'native/windows-project-input-reader.c'
