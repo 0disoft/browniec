@@ -1317,6 +1317,22 @@ Windows development and /O2 each passed 110 configured, 36 catalog,
 five managed and four compile-stop cases. All 456 input hashes matched.
 Local receipt: `build/restricted-worker/20261122T005326875171Z/receipt.json`.
 
+### Catalog host invocation Fuel
+
+Call resolution, qualified name tokens, argument separators, scalar
+expression reads, byte operands and the register packing loop share the
+enclosing compile Fuel and deadline. Each binary search probe and argument
+packing visit is charged before accessing or emitting the corresponding entry.
+
+The two-call scalar project returns 77 and emits before at 1,757,522
+compile Fuel, up 54 units. The grouped Result fixture does so at 3,232,763
+units, up 55. At one unit below either limit the broker reports compile_limit
+and publishes neither result nor output.
+
+Windows development and /O2 each passed 110 configured, 36 catalog,
+five managed and four compile-stop cases. All 456 input hashes matched.
+Local receipt: `build/restricted-worker/20261122T010359723763Z/receipt.json`.
+
 ## Windows verification
 
 Run `python -B tools/verify-restricted-worker.py`. The development and optimized

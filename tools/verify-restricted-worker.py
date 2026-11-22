@@ -749,7 +749,8 @@ def verify_project_host(run, need, image, folder, env):
     # The 401 lowering batches leave no Fuel for the independent proof.
     # The literal emit spends 15 token stages and two IR emission units.
     # The raw declaration and return expressions spend another 12 units.
-    lowering_fuel = 255 + 401 * 4096 + 17 + 12
+    # Host names, scalar argument lowering and argument packing add 54 units.
+    lowering_fuel = 255 + 401 * 4096 + 17 + 12 + 54
     policy['compile']['fuel'] = lowering_fuel
     check('check', expected_exit=3, kind='compile_limit')
     # Verification itself needs 28 more batches from the same balance.
@@ -783,7 +784,7 @@ def verify_project_host(run, need, image, folder, env):
     source.write_bytes(b'module app; import host::example as api; pub fn i32 start(ref u8[] data){'
                        b'{output::emit(ref data);} let i32 a=api::check(41); return a+api::check(42);}')
     # The nested emit spends 14 token stages, two lookup stages and one IR unit.
-    nested_fuel = 1892630 + 17 + 12
+    nested_fuel = 1892630 + 17 + 12 + 55
     policy['compile']['fuel'] = nested_fuel - 1
     check(expected_exit=3, kind='compile_limit', payload=payload)
     policy['compile']['fuel'] = nested_fuel
@@ -792,7 +793,7 @@ def verify_project_host(run, need, image, folder, env):
                        b'output::emit(b"before");let Result<i32,u32> reply=api::check(41);'
                        b'let i32 a=(if(true){switch(reply){case .ok(v):{v}case .err(_):{0}}}else{0});'
                        b'return a+switch(api::check(42)){case .ok(v):{v}case .err(_):{0}};}')
-    arm_fuel = 3232221 + 487
+    arm_fuel = 3232221 + 487 + 55
     policy['compile']['fuel'] = arm_fuel - 1
     check(expected_exit=3, kind='compile_limit')
     policy['compile']['fuel'] = arm_fuel

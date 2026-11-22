@@ -146,7 +146,7 @@ fn Result<usize, errors::Error> operand(ref u8[] source, ref mut lexer::State s,
     if(depth>signatures.semantic_depth){return .err(errors::make(4,s.begin));}
     let u8 control=arm_syntax::operand_kind(source,s);
     if(control!=0){return conditional_operand(source,s,p,table,signatures,depth,expected,result_type,structure,loop_state,deadline,fuel);}
-    if(s.kind==2 || s.kind==5){return named_operand(source,s,p,table,signatures,depth,expected,result_type,structure,loop_state);}
+    if(s.kind==2 || s.kind==5){return named_operand(source,s,p,table,signatures,depth,expected,result_type,structure,loop_state,deadline,fuel);}
     return compound_operand(source,s,p,table,signatures,depth,expected,result_type,structure,loop_state,deadline,fuel);
 }
 fn Result<usize, errors::Error> compound_operand(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref locals::Table table, ref functions::Table signatures, usize depth, u8 expected, u8 result_type, usize structure, ref mut loops::State loop_state,usize deadline,ref mut usize fuel){
@@ -455,29 +455,30 @@ fn Result<usize,errors::Error> static_equal_right(ref u8[] source,ref mut lexer:
     if(right.owned){let usize closed=static_builders::close(p,right.site,at)?;}return .ok(value);
 }
 fn Result<host_source::Invocation,errors::Error> host_invocation(ref u8[] source,ref mut lexer::State s,ref mut ir::Program p,
-    ref locals::Table table,ref functions::Table signatures,usize depth,u8 result_type,usize structure,ref mut loops::State flow){
+    ref locals::Table table,ref functions::Table signatures,usize depth,u8 result_type,usize structure,ref mut loops::State flow,usize deadline,ref mut usize fuel){
     if(result_type==0){return .err(errors::make(3,s.begin));}
-    let host_source::Name item=host_source::name(source,s)?;
-    let host_source::Call call=host_source::signature(p,item.begin)?;
-    let usize open=lexer::punctuation(source,s,40)?;
+    let host_source::Name item=host_source::name(source,s,deadline,fuel)?;
+    let host_source::Call call=host_source::signature(p,item.begin,deadline,fuel)?;
+    let usize open=lexer::punctuation_with_budget(source,s,40,deadline,fuel)?;
     var usize[32] arguments=[0;32];
     var usize i=0;
     while(i<call.argc){
-        if(i!=0){let usize comma=lexer::punctuation(source,s,44)?;}
+        if(i!=0){let usize comma=lexer::punctuation_with_budget(source,s,44,deadline,fuel)?;}
+        discard metadata_budget::visit(fuel,deadline,s.begin)?;
         let u8 expected=p.list_operands[call.parameters+i];
-        let usize value=if(expected==14){host_source::byte_argument(source,s,p,table)?}else{
-            expression(source,s,p,table,signatures,1,depth+1,expected,result_type,structure,flow)?
+        let usize value=if(expected==14){host_source::byte_argument_metered(source,s,p,table,deadline,fuel)?}else{
+            raw_expression(source,s,p,table,signatures,1,depth+1,expected,result_type,structure,flow,deadline,fuel)?
         };
         if(p.types[value]!=expected){return .err(errors::make(3,item.begin));}
         arguments[i]=value;i+=1;
     }
-    let usize close=lexer::punctuation(source,s,41)?;
+    let usize close=lexer::punctuation_with_budget(source,s,41,deadline,fuel)?;
     let ref usize[] args=ref arguments;
-    return host_source::invoke(p,call,args,item.begin);
+    return host_source::invoke(p,call,args,item.begin,deadline,fuel);
 }
-fn Result<usize, errors::Error> named_operand(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref locals::Table table, ref functions::Table signatures, usize depth, u8 expected, u8 result_type, usize structure, ref mut loops::State loop_state) {
-    if(signatures.scalar_host_calls && host_source::qualified(source,s,p)?){
-        let host_source::Invocation call=host_invocation(source,s,p,table,signatures,depth,result_type,structure,loop_state)?;
+fn Result<usize, errors::Error> named_operand(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref locals::Table table, ref functions::Table signatures, usize depth, u8 expected, u8 result_type, usize structure, ref mut loops::State loop_state,usize deadline,ref mut usize fuel) {
+    if(signatures.scalar_host_calls && host_source::qualified(source,s,p,deadline,fuel)?){
+        let host_source::Invocation call=host_invocation(source,s,p,table,signatures,depth,result_type,structure,loop_state,deadline,fuel)?;
         if(s.kind==63 || types::host_result_type(expected)){
             if(types::host_result_type(expected) && expected!=128+call.call.result){return .err(errors::make(3,call.at));}
             return host_source::save(p,ref call);
@@ -517,8 +518,8 @@ fn Result<usize, errors::Error> named_operand(ref u8[] source, ref mut lexer::St
     if (locals::reserved(source[s.begin..s.end])) { return .err(errors::make(2, at)); }
     let usize begin = s.begin;
     let usize end = s.end;
-    let usize index = locals::find(source, table, begin, end);
-    let usize advanced = lexer::next(source, s)?;
+    let usize index=argument_names::local_metered(source,table,begin,end,deadline,fuel)?;
+    let usize advanced=lexer::next_with_budget(source,s,deadline,fuel)?;
     if (s.kind == 40) {
         if (index != 64) { return .err(errors::make(3, at)); }
         let usize target = functions::find(source, signatures, begin, end);
@@ -2572,7 +2573,7 @@ fn Result<bool,errors::Error> switch_join(ref u8[] source,ref mut lexer::State s
     if(result_type==0) {return .err(errors::make(3,at));}
     let usize keyword=lexer::next_with_budget(source,s,deadline,fuel)?;
     let usize open=lexer::punctuation_with_budget(source,s,40,deadline,fuel)?;
-    if(signatures.scalar_host_calls && host_source::qualified(source,s,p)?){
+    if(signatures.scalar_host_calls && host_source::qualified(source,s,p,deadline,fuel)?){
         var locals::Table names=locals::snapshot(table);
         return host_switch(source,s,p,ref mut names,signatures,join,true,result_type,structure,depth,loop_state,deadline,fuel);
     }
@@ -2703,7 +2704,7 @@ fn Result<bool, errors::Error> control_switch(ref u8[] source, ref mut lexer::St
     let usize at = s.begin;
     let usize keyword=lexer::next(source,s)?;
     let usize open=lexer::punctuation(source,s,40)?;
-    if(signatures.scalar_host_calls && host_source::qualified(source,s,p)?){
+    if(signatures.scalar_host_calls && host_source::qualified(source,s,p,deadline,fuel)?){
         var joins::Join unused=joins::empty(0,false);
         return host_switch(source,s,p,table,signatures,ref mut unused,false,result_type,depth,expr_depth,loop_state,deadline,fuel);
     }
@@ -2764,7 +2765,7 @@ fn Result<bool,errors::Error> host_switch(ref u8[] source,ref mut lexer::State s
     u8 result_type,usize structure,usize depth,ref mut loops::State flow,usize deadline,ref mut usize fuel){
     let usize at=s.begin;
     if(depth>30 || structure>30){return .err(errors::make(4,at));}
-    let host_source::Invocation call=host_invocation(source,s,p,table,signatures,depth+1,result_type,structure+1,flow)?;
+    let host_source::Invocation call=host_invocation(source,s,p,table,signatures,depth+1,result_type,structure+1,flow,deadline,fuel)?;
     let host_source::Branch route=host_source::branch(p,ref call)?;
     return host_switch_arms(source,s,p,table,signatures,join,value_mode,result_type,structure,depth,flow,ref route,deadline,fuel);
 }

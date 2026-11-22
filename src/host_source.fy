@@ -33,38 +33,41 @@ fn bool word(ref u8[] source,ref lexer::State s,ref u8[] text){
     return s.kind==2 && lexer::equal(source[s.begin..s.end],text);
 }
 
-pub fn Result<bool,errors::Error> qualified(ref u8[] source,ref lexer::State s,ref ir::Program code){
+pub fn Result<bool,errors::Error> qualified(ref u8[] source,ref lexer::State s,ref ir::Program code,usize deadline,ref mut usize fuel){
     if(s.kind!=2 && s.kind!=5){return .ok(false);}
-    if(lookup(code,s.begin).is_ok){return .ok(true);}
+    switch(lookup(code,s.begin,deadline,fuel)){
+    case .ok(_):{return .ok(true);}
+    case .err(e):{if(e.kind==4 || e.kind==errors::deadline_kind()){return .err(e);}}
+    };
     if(s.kind==5 || !word(source,s,b"host")){return .ok(false);}
     var lexer::State next=lexer::snapshot(s);
-    let usize read=lexer::next(source,ref mut next)?;
+    let usize read=lexer::next_with_budget(source,ref mut next,deadline,fuel)?;
     return .ok(next.kind==58);
 }
 
-pub fn Result<Name,errors::Error> name(ref u8[] source,ref mut lexer::State s){
-    if(s.kind!=5){return raw_name(source,s);}
+pub fn Result<Name,errors::Error> name(ref u8[] source,ref mut lexer::State s,usize deadline,ref mut usize fuel){
+    if(s.kind!=5){return raw_name(source,s,deadline,fuel);}
     var lexer::State raw=lexer::empty();raw.cursor=s.begin;
-    discard lexer::next(source,ref mut raw)?;
-    let Name item=raw_name(source,ref mut raw)?;
+    discard lexer::next_with_budget(source,ref mut raw,deadline,fuel)?;
+    let Name item=raw_name(source,ref mut raw,deadline,fuel)?;
     if(item.end!=s.end){return .err(errors::make(2,s.begin));}
-    discard lexer::next(source,s)?;
+    discard lexer::next_with_budget(source,s,deadline,fuel)?;
     if(s.kind!=40){return .err(errors::make(2,s.begin));}
     return .ok(item);
 }
-fn Result<Name,errors::Error> raw_name(ref u8[] source,ref mut lexer::State s){
+fn Result<Name,errors::Error> raw_name(ref u8[] source,ref mut lexer::State s,usize deadline,ref mut usize fuel){
     let usize begin=s.begin;
     let bool absolute=word(source,s,b"host");
-    let usize first=lexer::next(source,s)?;
+    let usize first=lexer::next_with_budget(source,s,deadline,fuel)?;
     var usize segments=0;
     while(s.kind==58){
         let usize scope_end=s.begin;
-        let usize colon=lexer::punctuation(source,s,58)?;
-        let usize separator=lexer::punctuation(source,s,58)?;
+        let usize colon=lexer::punctuation_with_budget(source,s,58,deadline,fuel)?;
+        let usize separator=lexer::punctuation_with_budget(source,s,58,deadline,fuel)?;
         if(s.kind!=2){return .err(errors::make(2,s.begin));}
         let usize symbol=s.begin;
         let usize end=s.end;
-        let usize next=lexer::next(source,s)?;
+        let usize next=lexer::next_with_budget(source,s,deadline,fuel)?;
         segments+=1;
         if(s.kind!=58){
             if((absolute && segments<2) || (!absolute && segments!=1) || s.kind!=40){
@@ -214,7 +217,8 @@ fn Result<usize,errors::Error> collect_calls(ref u8[] source,ref mut lexer::Stat
             let usize mask=alias_mask(source,aliases,aliases.len,s.begin,s.end);
             if(absolute || mask!=0){
                 var lexer::State look=lexer::snapshot(s);
-                switch(raw_name(source,ref mut look)){
+                var usize name_fuel=budget::unlimited();
+                switch(raw_name(source,ref mut look,0,ref mut name_fuel)){
                 case .ok(item):{
                     let u8 id=import_id(source,item,imports,absolute,mask)?;
                     if(id==64){return .err(errors::make(3,item.begin));}
@@ -314,12 +318,13 @@ fn usize alias_mask(ref u8[] source,ref Alias[] aliases,usize count,usize begin,
     return 0;
 }
 
-fn Result<u8,errors::Error> lookup(ref ir::Program code,usize at){
+fn Result<u8,errors::Error> lookup(ref ir::Program code,usize at,usize deadline,ref mut usize fuel){
     if(code.list_used<scratch_bytes()){return .err(errors::make(5,at));}
     var usize lo=0;
     var usize hi=code.list_operands[rows()] as usize+256*(code.list_operands[rows()+1] as usize);
     if(hi>256){return .err(errors::make(5,at));}
     while(lo<hi){
+        discard budget::visit(fuel,deadline,at)?;
         let usize mid=lo+(hi-lo)/2;let usize entry=rows()+2+3*mid;
         let usize begin=code.list_operands[entry] as usize+256*(code.list_operands[entry+1] as usize);
         if(begin==at){return .ok(code.list_operands[entry+2]);}
@@ -328,8 +333,8 @@ fn Result<u8,errors::Error> lookup(ref ir::Program code,usize at){
     return .err(errors::make(3,at));
 }
 
-pub fn Result<Call,errors::Error> signature(ref ir::Program code,usize at){
-    let u8 id=lookup(code,at)?;
+pub fn Result<Call,errors::Error> signature(ref ir::Program code,usize at,usize deadline,ref mut usize fuel){
+    let u8 id=lookup(code,at,deadline,fuel)?;
     if(id>=64){return .err(errors::make(5,at));}
     let usize row=(id as usize)*34;
     let usize argc=code.list_operands[row] as usize;
@@ -420,23 +425,11 @@ fn void copy_literal(ref mut ir::Program code,ref mut Finish w){
     w.pc+=1;w.phase=2;
 }
 
-pub fn Result<usize,errors::Error> byte_argument(ref u8[] source,ref mut lexer::State s,
-    ref mut ir::Program code,ref locals::Table names){
-    var usize fuel=budget::unlimited();
-    return byte_argument_metered(source,s,code,names,0,ref mut fuel);
-}
-
-fn Result<usize,errors::Error> byte_next(ref u8[] source,ref mut lexer::State s,
-    usize deadline,ref mut usize fuel){
-    if(deadline==0 && *fuel==budget::unlimited()){return lexer::next(source,s);}
-    return lexer::next_metered(source,s,deadline,fuel);
-}
-
 pub fn Result<usize,errors::Error> byte_argument_metered(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program code,ref locals::Table names,usize deadline,ref mut usize fuel){
     let usize at=s.begin;
     if(s.kind==3){
-        discard byte_next(source,s,deadline,fuel)?;
+        discard lexer::next_with_budget(source,s,deadline,fuel)?;
         if(code.registers>=128){return .err(errors::make(4,at));}
         discard budget::visit(fuel,deadline,at)?;
         let usize dst=code.registers;
@@ -445,13 +438,13 @@ pub fn Result<usize,errors::Error> byte_argument_metered(ref u8[] source,ref mut
         return .ok(dst);
     }
     if(!word(source,s,b"ref")){return .err(errors::make(2,at));}
-    discard byte_next(source,s,deadline,fuel)?;
+    discard lexer::next_with_budget(source,s,deadline,fuel)?;
     if(s.kind!=2){return .err(errors::make(3,s.begin));}
     let usize index=names_work::local_metered(source,names,s.begin,s.end,deadline,fuel)?;
     if(index==64){return .err(errors::make(3,s.begin));}
     let usize value=names.registers[index];
     if(value>=128 || code.types[value]!=14){return .err(errors::make(3,s.begin));}
-    discard byte_next(source,s,deadline,fuel)?;
+    discard lexer::next_with_budget(source,s,deadline,fuel)?;
     return .ok(value);
 }
 
@@ -464,14 +457,22 @@ pub fn bool fresh_bytes(ref ir::Program code,usize before,usize result){
         && code.code[at+1] as usize==result;
 }
 
-pub fn Result<Invocation,errors::Error> invoke(ref mut ir::Program code,Call call,ref usize[] args,usize at){
+pub fn Result<Invocation,errors::Error> invoke(ref mut ir::Program code,Call call,ref usize[] args,usize at,usize deadline,ref mut usize fuel){
     let usize start=if(call.argc==0){0}else{args[0]};
     var usize i=0;
-    while(i<call.argc && args[i]==start+i){i+=1;}
+    while(i<call.argc){
+        discard budget::visit(fuel,deadline,at)?;
+        if(args[i]!=start+i){break;}
+        i+=1;
+    }
     let usize first=if(i==call.argc){start}else{code.registers};
     if(i!=call.argc){
         i=0;
-        while(i<call.argc){let usize saved=ir::emit(code,programs::copy_opcode(),args[i],0,at)?;i+=1;}
+        while(i<call.argc){
+            discard budget::visit(fuel,deadline,at)?;
+            discard ir::emit(code,programs::copy_opcode(),args[i],0,at)?;
+            i+=1;
+        }
     }
     return .ok(Invocation{.call=call,.first=first,.at=at});
 }
