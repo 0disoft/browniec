@@ -941,8 +941,11 @@ fn Result<u32,Error> project_output_mode(ref mut Engine e,ref projects::Project 
 pub fn Result<usize,Error> compile_project_output(ref mut Engine e,ref projects::Project metadata,
     ref u8[] root,ref run_config::RunConfig run,usize image_limit){
     let u32 mode=project_output_mode(e,metadata,run)?;
+    let policy_limits::CompileLimits limits=configured_compile_limits(e)?;
+    if(projects::count(metadata)>limits.modules){return .err(error(8));}
     let usize deadline=compile_deadline(e,0)?;
-    let input_entries::InputEntry selected=project_input_entry(e,metadata,root,deadline)?;
+    let sources::Snapshot snapshot=load_project(e,metadata,root,deadline)?;
+    let input_entries::InputEntry selected=configured_project_input(metadata,snapshot,limits,deadline)?;
     return retain_input_entry(e,selected,image_limit,mode,deadline);
 }
 
@@ -960,9 +963,25 @@ pub fn Result<usize,Error> begin_compile_project_output(ref mut Engine e,ref pro
 pub fn Result<usize,Error> compile_anchored_project_output(ref mut Engine e,ref projects::Project metadata,
     ref mut anchored::Root root,ref run_config::RunConfig run,usize image_limit){
     let u32 mode=project_output_mode(e,metadata,run)?;
+    let policy_limits::CompileLimits limits=configured_compile_limits(e)?;
+    if(projects::count(metadata)>limits.modules){return .err(error(8));}
     let usize deadline=compile_deadline(e,0)?;
-    let input_entries::InputEntry selected=anchored_project_input_entry(e,metadata,root,deadline)?;
+    let sources::Snapshot snapshot=project_snapshot(project_loader::load_from_until(metadata,root,source_byte_limit(e),deadline))?;
+    let input_entries::InputEntry selected=configured_project_input(metadata,snapshot,limits,deadline)?;
     return retain_input_entry(e,selected,image_limit,mode,deadline);
+}
+
+fn Result<input_entries::InputEntry,Error> configured_project_input(ref projects::Project metadata,
+    sources::Snapshot snapshot,policy_limits::CompileLimits limits,usize deadline){
+    if(clock::expired(deadline)){return .err(compile_timeout());}
+    var usize symbol=0;
+    let modules::Index index=switch(project_binding::index_limited(metadata,snapshot,false,
+        limits.tokens,limits.functions,limits.types,limits.depth,limits.fuel,deadline,ref mut symbol)){
+        case .ok(v):{v}case .err(e):{return .err(host_binding_error(e));}
+    };
+    return switch(input_entries::select_i32_input_symbol(index,symbol)){
+        case .ok(v):{.ok(v)}case .err(e):{.err(host_binding_error(e))}
+    };
 }
 
 pub fn Result<usize,Error> begin_compile_anchored_project_output(ref mut Engine e,ref projects::Project metadata,

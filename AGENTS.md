@@ -1,5 +1,5 @@
-- Latest runtime checkpoint (2026-11-22): [Catalog-backed project execution](docs/cli/configuration.md#project-host-execution)
-  uses the same metered compiler after local source collection and restricted snapshot admission.
+- Latest runtime checkpoint (2026-11-22): [Configured project output](docs/cli/configuration.md#configured-project-output)
+  carries compile Fuel and the deadline from local project binding through Program publication.
 
 # Brownie C agent guidance
 

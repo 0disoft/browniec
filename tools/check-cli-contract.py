@@ -558,6 +558,24 @@ def check_configured_output(exe, folder):
     run_file = project / 'run.json'
     config = json.loads(run_file.read_bytes())
 
+    policy_file = project / 'policy.json'
+    policy_data = policy_file.read_bytes()
+    policy = json.loads(policy_data)
+    denied_output = project / 'compile-denied.bin'
+    try:
+        for bounds, location_kind in (({'fuel': 1}, 'source_byte'), ({'types': 1}, 'none')):
+            restricted = policy | {'compile': policy['compile'] | bounds}
+            policy_file.write_text(json.dumps(restricted), encoding='utf-8')
+            for command in (check, [*args, '--input', payload, '--output', denied_output]):
+                error = check_json(exe, command, 3, version=2)
+                assert error['kind'] == 'compile_limit', error
+                assert error['location']['kind'] == location_kind, error
+                if location_kind == 'source_byte':
+                    assert error['location']['path'] == source.name and error['location']['offset'] == 0, error
+            assert not denied_output.exists()
+    finally:
+        policy_file.write_bytes(policy_data)
+
     def update(**overrides):
         run_file.write_text(json.dumps(config | overrides), encoding='utf-8')
 

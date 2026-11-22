@@ -268,6 +268,10 @@ guest execution or output publication. Redirected disk reads stay synchronous.
 
 Use `check --project FILE --policy FILE --run FILE [--json|--json-v2]` to
 validate the same policy, grant, entry and source under the compile deadline.
+The deadline starts before source collection. The configured compile Fuel
+balance covers project binding, indexing, lowering, verification and Program
+retention. The Engine also checks source, module, token, depth, function, type,
+instruction and register limits before publishing the Program.
 Check accepts text and both JSON formats. It opens no guest input, creates no
 Instance and executes no guest code. `--fuel`, `--input` and `--stdin` are run-only.
 
