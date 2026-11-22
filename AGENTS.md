@@ -1,5 +1,5 @@
-- Latest delivery checkpoint (2026-11-22): [Local Windows candidate](docs/ops/release.md#local-windows-candidate)
-  verifies the archived CLI and optional embedding DLL before publishing the ZIP locally.
+- Latest runtime checkpoint (2026-11-22): [Scalar loop benchmark](docs/engineering/03-performance-budget.md#scalar-rule-loop-on-windows-2026-11-22)
+  verifies identical result, Fuel and accounted peak at quanta 1 and 64.
 
 # Brownie C agent guidance
 

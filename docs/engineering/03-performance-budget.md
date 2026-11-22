@@ -130,3 +130,24 @@ Engine and retained Program memory or process private bytes.
 Times are microseconds. First compile took 4,880.3–5,326.4 µs in development
 and 1,737.4–2,626.2 µs in /O2. The same harness still checks the original
 shared-byte rule when run without `--empty`.
+
+## Scalar rule loop on Windows (2026-11-22)
+
+On the same DLLs and host, `--loop` compiles a 129-byte scalar rule that
+sums 0 through 63. Each of three fresh processes per profile ran 201
+Instances from one Program, alternating between quanta of 64 (101 samples)
+and 1 (100 samples). All returned 2016, used 345,930 Fuel and reached
+187,688 peak accounted bytes. The two schedules took 309 and 1,137
+`bc_step` calls respectively, including setup and cleanup advances.
+
+| Phase | Development median | Development p95 | /O2 median | /O2 p95 |
+| --- | ---: | ---: | ---: | ---: |
+| Subsequent compile | 5,360.8–5,424.7 | 6,135.3–7,094.7 | 1,361.5–1,976.0 | 1,646.5–2,771.8 |
+| Reused Instance setup | 350.5–355.3 | 509.0–536.3 | 40.3–42.3 | 70.8–77.3 |
+| Step to done, quantum 64 | 7,225.8–7,319.0 | 9,274.8–9,887.3 | 1,098.4–1,115.4 | 1,576.9–1,605.5 |
+| Step to done, quantum 1 | 20,995.5–21,548.8 | 25,265.0–28,656.1 | 3,108.0–3,178.6 | 3,783.6–4,569.3 |
+| Destroy | 20.6–20.7 | 32.3–38.8 | 4.8–4.9 | 13.5–16.0 |
+
+Times are microseconds. First compile took 7,697.0–10,177.4 µs in development
+and 2,561.1–3,784.6 µs in /O2. The event reports reservation peaks.
+Allocation counts inside the warmed scalar loop still require a separate probe.
