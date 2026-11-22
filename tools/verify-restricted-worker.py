@@ -764,13 +764,21 @@ def verify_project_host(run, need, image, folder, env):
     check('check', expected_exit=3, kind='compile_limit')
     # Verification needs 28 more batches. Retention reserves three owners and
     # copies the short module and function names plus 199 blocks of Windows x64 IR.
-    retention_fuel = 3 + 1 + 1 + 199
+    # Final admission reserves one vector, copies the 118-block owner into it,
+    # and publishes one Engine row using that same allocation.
+    retention_fuel = (3 + 1 + 1 + 199) + (1 + 118 + 1)
     full_fuel = lowering_fuel + 28 * 4096 + retention_fuel
     policy['compile']['fuel'] = full_fuel - 1
     check(expected_exit=3, kind='compile_limit')
     policy['compile']['fuel'] = full_fuel
     check('check')
+    original_program_bytes = policy['engine']['program_bytes']
+    # One host owner vector plus its IR, catalog strings and entry names.
+    policy['engine']['program_bytes'] = 162_096
+    check(expected_exit=3, kind='compile_limit')
+    policy['engine']['program_bytes'] = 162_097
     check()
+    policy['engine']['program_bytes'] = original_program_bytes
     policy['compile']['types'] = 3
     # Seven registers, two returns, 16 slice sites, one import and one parameter.
     type_fuel = 7 + 2 + 16 + 1 + 1
@@ -842,7 +850,7 @@ def verify_project_host(run, need, image, folder, env):
     source.write_bytes(original_source)
     policy['compile']['fuel'] = original_compile_fuel
     policy_file.write_text(json.dumps(policy), encoding='utf-8')
-    return 43
+    return 44
 
 
 def verify_process_console_cancel(run, need, args, folder, env):

@@ -191,9 +191,14 @@ uint32_t bc_runtime_engine_call(void *raw,uint32_t operation,uintptr_t id,uintpt
 }
 
 #ifndef BC_ENGINE_SCALAR_PREVIEW
-uint32_t bc_runtime_engine_retain_host(void *raw,void *incoming,uintptr_t deadline){
+uint32_t bc_runtime_engine_retain_host(void *raw,void *incoming,const void *empty,uintptr_t deadline){
  bc_engine *e=raw;bc_engine_ticket ticket;uint32_t s=admission(e,&ticket);if(s)return s;
- s=B38(&e->f_0,&e->f_1,incoming,sizeof(bc_host_program),sizeof(bc_host_ir),deadline);return finish(e,ticket,s);
+ typedef __typeof__(((bc_engine_program *)0)->f_9) bc_host_programs;
+ bc_host_programs *source=incoming;
+ /* B38 consumes the vector even on denial. Restore the caller's empty owner. */
+ bc_host_programs owned=*source;
+ *source=*(const bc_host_programs *)empty;
+ s=B38(&e->f_0,&e->f_1,owned,sizeof(bc_host_program),sizeof(bc_host_ir),deadline);return finish(e,ticket,s);
 }
 #endif
 
@@ -245,6 +250,7 @@ uintptr_t bc_runtime_engine_program_layout(uint32_t kind){
  case 4:return sizeof(bc_output_stored);case 5:return sizeof(bc_output_program);
  case 6:return sizeof(bc_engine_snapshot);
  case 7:return sizeof(bc_host_ir);
+ case 8:return sizeof(bc_host_program);
  default:return 0;
  }
 }

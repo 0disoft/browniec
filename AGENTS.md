@@ -1,5 +1,5 @@
-- Latest runtime checkpoint (2026-11-22): [Catalog Program retention Fuel](docs/engineering/restricted-worker.md#catalog-program-retention-fuel)
-  prepays the entry name and IR owners before publishing the verified Program.
+- Latest runtime checkpoint (2026-11-22): [Catalog Engine publication](docs/engineering/restricted-worker.md#catalog-engine-publication)
+  prepays final admission and transfers the single host owner vector into the Engine.
 
 # Brownie C agent guidance
 

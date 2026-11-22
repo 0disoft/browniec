@@ -1720,6 +1720,24 @@ development and /O2 each passed 110 configured, 43 catalog and 17
 process-command cases with zero net handles. All 460 input hashes matched.
 Local receipt: `build/restricted-worker/20261122T050715605576Z/receipt.json`.
 
+### Catalog Engine publication
+
+Final Engine admission transfers the incoming host Program vector directly
+into the registry. The bridge restores a valid empty vector to the caller
+after entering the owner's admission guard. On denial the transferred vector
+is dropped without publishing a Program. The ledger uses the transferred
+vector's actual capacity.
+
+Publication now uses one vector allocation instead of two and prepays
+120 compile Fuel on Windows x64: one slot allocation, 118 blocks for the
+host owner copy into that slot, and one Engine registry entry. Both Windows
+development and /O2 returned 77 with sealed output at 1,753,940 compile Fuel
+and 162,097 retained Program bytes. One unit less on either boundary returned
+`compile_limit` without a guest result or output. Both profiles passed 110
+configured, 44 catalog and 17 process-command cases with zero net handles.
+All 460 input hashes matched.
+Local receipt: `build/restricted-worker/20261122T051821271447Z/receipt.json`.
+
 ## Windows verification
 
 Run `python -B tools/verify-restricted-worker.py`. The development and optimized
