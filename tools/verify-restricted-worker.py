@@ -1096,7 +1096,8 @@ def main():
                 shutil.copyfile(scalar_images / profile / scalar.name, scalar)
                 shutil.copyfile(ROOT / 'examples/answer.brc', folder / 'answer.brc')
                 (folder / 'bad-source.brc').write_bytes(b'\xff')
-                run([scalar, '--internal-scalar-worker'], cwd=folder, env=runtime_env,
+                run([scalar, 'worker'], cwd=folder, env=runtime_env, expected_exit=4, silent=True)
+                run([scalar, 'worker', 'answer.brc'], cwd=folder, env=runtime_env,
                     expected_exit=4, silent=True)
                 stage_temp = folder / 'stage temp'
                 stage_temp.mkdir()

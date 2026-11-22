@@ -40,7 +40,8 @@ fn i32 main() {
         case .ok(n): { n } case .err(_): { return fail(.Text, false, 10); }
     };
     let ref u8[] command_view = ref command;
-    if(argc==2 && lexer::equal(command_view[..command_length],b"--internal-scalar-worker")){
+    if(lexer::equal(command_view[..command_length],b"worker")){
+        if(argc!=2){return 4;}
         return worker::execute();
     }
     if((argc==4 || argc==5) && lexer::equal(command_view[..command_length],b"--internal-scalar-broker")){

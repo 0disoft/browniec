@@ -25,7 +25,7 @@
 | browniec run SOURCE --isolated | Use the restricted worker and parent broker | Designed; unavailable |
 | browniec inspect SOURCE --ir | Compile/verify and emit bounded private IR diagnostics without executing | Implemented for the same public M1/M2 admission as check; optional --json |
 | browniec inspect SOURCE --limits --json | Report consumed and remaining compile capacity without executing | Implemented for the same public M1/M2 admission as check |
-| browniec worker | Broker-only restricted IPC endpoint | Designed; unavailable |
+| browniec worker | Broker-only restricted IPC endpoint | Windows, scalar protocol, no arguments |
 
 The implemented grammar is `browniec check SOURCE [--json|--json-v2]` and
 `browniec run SOURCE [--input FILE or --stdin] [--fuel N] [--json|--json-v2]`, `browniec inspect SOURCE --ir [--json]`,
@@ -53,7 +53,7 @@ add precomputed replies, run deadlines and console cancellation. [Project host r
 apply the same reply contract to an anchored multi-module project.
 [Windows process adapters](configuration.md#windows-process-adapters) can supply
 replies for one explicitly selected import in either run mode. General Buffer
-delivery, workers and cancellation outside configured execution remain unavailable. `--isolated` returns an availability
+delivery, public restricted check/run and cancellation outside configured execution remain unavailable. `--isolated` returns an availability
 denial, with no unrestricted fallback. Ordinary check/run use zero-argument i32
 `main`. The separate eval-i32 command selects a single-i32 `evaluate` entry.
 With explicit guest input, Windows `run SOURCE` instead selects the public shared-byte
@@ -63,7 +63,8 @@ With explicit guest input, Windows `run SOURCE` instead selects the public share
 
 check and run read bounded source snapshots and invoke the native Brownie frontend
 directly. Neither may launch Go, MSVC, a C compiler, or another compiler child.
-Worker mode is not an interactive interpreter and rejects user-supplied handles.
+Worker mode reads framed IPC on inherited pipes after verifying AppContainer and
+Job membership. It takes no arguments and rejects direct invocations.
 
 Project members are explicit, root-relative paths. Glob expansion, ambient
 policy/catalog lookup, absolute or parent member paths, alternate streams, device

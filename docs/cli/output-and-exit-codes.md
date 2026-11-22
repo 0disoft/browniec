@@ -16,6 +16,9 @@
 | 7 | Worker, IPC, forced termination, or output-sink failure |
 
 The CLI uses these exit classes for its bounded scalar, array, record and scalar-slice subsets.
+The Windows scalar `worker` endpoint returns exit 4 with empty stdout and stderr
+when invoked directly or with arguments. An admitted worker writes protocol frames
+on its inherited pipe.
 A source-file read failure uses code 7. Invalid or missing source main declarations are compile/type errors
 (code 3); external entry binding in code 4 remains a future interface. Verification
 failure is an internal code 6, not a guest trap. The direct-call slice adds

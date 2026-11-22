@@ -53,6 +53,8 @@ Effective-config reporting remains pending.
 compile and execution deadlines and support console cancellation while executing. See the
 [complete remaining-work audit](../product/04-remaining-work.md) before treating any
 target configuration field or reference-package schema as accepted by this CLI.
+The Windows broker's scalar `worker` endpoint takes no command-line arguments.
+Its source snapshot, operation and Fuel arrive over the inherited protocol pipes.
 
 Version JSON exposes `fuel_default` and `fuel_limit` from the same schedule as argument
 validation. Existing lower budgets remain valid. See the

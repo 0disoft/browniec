@@ -420,6 +420,19 @@ expectation and rejected it before publication. Both profiles passed all
 five scalar sessions with zero net warm handles.
 Local receipt: `build/restricted-worker/20261121T161323928124Z/receipt.json`.
 
+### Broker-only scalar command
+
+The scalar broker launches `browniec worker`. The command takes no arguments
+and reaches the scalar frontend only after the existing Windows confinement,
+pipe and frame checks succeed. Project workers still use their own protocol
+and launch route.
+
+The locked Windows development and /O2 images passed five scalar broker
+sessions per profile, including the managed run returning 77. Direct shell
+invocations with and without a source argument returned exit 4 with empty
+stdout and stderr. Both profiles reported zero net handles. Local receipt:
+`build/restricted-worker/20261122T083142144577Z/receipt.json`.
+
 ### Scalar parent publication
 
 The [Windows parent bridge](../../native/windows-scalar-broker.c) launches its

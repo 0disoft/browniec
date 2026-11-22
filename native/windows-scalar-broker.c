@@ -169,7 +169,7 @@ static uint32_t run_broker(PSID sid, const wchar_t *image, const wchar_t *direct
         .host_reply_bytes = exchange->host.max_calls * exchange->host.reply_capacity,
         .handle_slots = BC_WORKER_BROKER_HANDLE_SLOTS + (adapter ? (size_t)adapter->handle_slots : 0)
     }};
-    wchar_t scalar_command[] = L"browniec --internal-scalar-worker";
+    wchar_t scalar_command[] = L"browniec worker";
     wchar_t project_command[] = L"browniec --internal-project-worker";
     const bc_worker_broker_run config = {
         .budget = &budget, .application = image, .directory = directory,

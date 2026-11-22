@@ -1227,7 +1227,7 @@ static void verify_guest_exchange(const wchar_t *path, const wchar_t *directory,
         commit_limit, wire, 0, 2, worker_pipe_buffers, 0, 0, 12
     };
     bc_worker_broker_budget budget = {.limit = charge};
-    wchar_t scalar_command[] = L"worker --internal-scalar-worker";
+    wchar_t scalar_command[] = L"browniec worker";
     wchar_t project_command[] = L"worker --internal-project-worker";
     const bc_worker_broker_run run = {
         .budget = &budget, .application = path, .directory = directory,

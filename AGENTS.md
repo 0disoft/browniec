@@ -1,5 +1,5 @@
-- Latest runtime checkpoint (2026-11-22): [Broker-owned host staging](docs/engineering/restricted-worker.md#broker-owned-host-staging)
-  reserves request and reply storage before allocation and releases it after reaping.
+- Latest runtime checkpoint (2026-11-22): [Broker-only scalar command](docs/engineering/restricted-worker.md#broker-only-scalar-command)
+  starts the scalar worker over confined IPC and rejects direct shell invocations.
 
 # Brownie C agent guidance
 
