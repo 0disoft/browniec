@@ -33,7 +33,7 @@ pub fn bool selected(){
     return size==9 && bytes::equal(ref flag,b"--project");
 }
 @effects(console,filesystem)
-pub fn i32 execute(render::Format format,bool run,usize fuel,binary::Selection selection){
+pub fn i32 execute(render::Format format,bool run,usize fuel,binary::Selection selection,bool entry_input){
     var u8[3072] path=[0;3072];
     let usize size=switch(process::arg(3,ref mut path)){
         case .ok(v):{v}case .err(_):{return failure(format,run,errors::absent(10,0),0);}
@@ -41,7 +41,9 @@ pub fn i32 execute(render::Format format,bool run,usize fuel,binary::Selection s
     let ProjectInput project=switch(acquire(ref path[..size])){
         case .ok(v):{v}case .err(e):{return failure(format,run,e,0);}
     };
-    if(selection.stdin || selection.argument!=0){return execute_with_input(ref project,format,fuel,selection);}
+    if(entry_input || selection.stdin || selection.argument!=0){
+        return execute_with_input(ref project,format,run,fuel,selection);
+    }
     return execute_project(ref project,format,run,fuel);
 }
 @effects(console,filesystem)
@@ -130,14 +132,15 @@ fn i32 binding_failure(render::Format format,bool run,ref sources::Snapshot snap
     return render::project_failure(format,run,diagnostics::binding(e),snapshot,e.at,0);
 }
 @effects(console,filesystem)
-fn i32 execute_with_input(ref ProjectInput project,render::Format format,usize fuel,binary::Selection selection){
+fn i32 execute_with_input(ref ProjectInput project,render::Format format,bool run,usize fuel,binary::Selection selection){
     let ref sources::Snapshot snapshot=ref project.snapshot;
     let input_entries::InputEntry entry=switch(binding::select_input(ref project.metadata,sources::duplicate(snapshot))){
-        case .ok(v):{v}case .err(e):{return binding_failure(format,true,snapshot,e);}
+        case .ok(v):{v}case .err(e):{return binding_failure(format,run,snapshot,e);}
     };
     let input_programs::Program program=switch(input_programs::compile(entry,images::metadata_charge()+images::byte_limit())){
-        case .ok(v):{v}case .err(e):{return render::project_failure(format,true,e.code,snapshot,e.at,0);}
+        case .ok(v):{v}case .err(e):{return render::project_failure(format,run,e.code,snapshot,e.at,0);}
     };
+    if(!run){return render::selected_outcome(format,false,false,0,errors::absent(0,0),8);}
     let input::Snapshot payload=switch(binary::read_with_limit(selection,input::hard_limit(),30000)){
         case .ok(v):{v}case .err(e):{return failure(format,true,e,8);}
     };

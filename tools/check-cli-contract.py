@@ -1049,6 +1049,40 @@ def check_project_input(exe, folder):
     print('PASS: project file/pipe input, disk stdin, 0/3/4097/1048576-byte boundaries, Fuel and denials')
 
 
+def check_project_input_entry(exe, folder):
+    manifest = folder / 'entry-input.json'
+    source = folder / 'entry-input.brc'
+    manifest.write_text(json.dumps({
+        'schema': 'brownie.project/0.3', 'name': 'binary',
+        'entry': {'module': 'app', 'function': 'chosen'},
+        'sources': [{'module': 'app', 'path': source.name}], 'requires': [],
+    }), encoding='utf-8')
+    ordinary = ['check', '--project', manifest]
+    entry_input = [*ordinary, '--entry-input']
+    profile = 'brownie.m2-reference/1'
+    assert b'check --project FILE [--entry-input]' in invoke(exe, ['--help'], 0).stdout
+    source.write_bytes(b'module app;pub fn i32 chosen(ref u8[] data){return data[0] as i32;}')
+    assert check_json(exe, entry_input, 0, version=2, profile=profile, stdin=subprocess.DEVNULL) is None
+    assert check_json(exe, entry_input, 0, profile=profile) is None
+    assert check_json(exe, ordinary, 3, version=2)['kind'] == 'type'
+    assert check_json(exe, ['run', '--project', manifest, '--stdin', '--fuel', 16000000],
+                      5, version=2, profile=profile, input_bytes=b'')['kind'] == 'bounds'
+    for rejected in ([*entry_input, '--entry-input'], [*entry_input, '--isolated'],
+                     [*entry_input, '--policy', 'missing.json'],
+                     [*entry_input, '--input', 'missing.bin'], [*entry_input, '--stdin'],
+                     ['check', source, '--entry-input'],
+                     ['run', '--project', manifest, '--entry-input']):
+        result = invoke(exe, rejected, 2)
+        assert not result.stdout and b'browniec: usage' in result.stderr, result
+
+    for signature in (b'()', b'(ref mut u8[] data)'):
+        source.write_bytes(b'module app;pub fn i32 chosen' + signature + b'{return 77;}')
+        assert check_json(exe, entry_input, 3, version=2)['kind'] == 'type'
+    source.write_bytes(b'module app;pub fn i32 chosen(){return 77;}')
+    assert check_json(exe, ordinary, 0) is None
+    print('PASS: project shared-byte entry compiled without input acquisition or guest execution')
+
+
 def inspect_json(exe, source, *options, exit_code=0, schema='browniec.limits/v1'):
     ran = invoke(exe, ['inspect', source, *options], exit_code)
     assert not ran.stderr and len(ran.stdout.splitlines()) == 1 and ran.stdout.endswith(b'\n'), ran
@@ -1206,6 +1240,7 @@ def main():
         check_host_project_output(exe, Path(temp) / 'host-output', adapter)
         check_project(exe, Path(temp))
         check_project_input(exe, Path(temp))
+        check_project_input_entry(exe, Path(temp))
         check_source_input(exe, Path(temp))
         check_configured_output(exe, Path(temp))
         check_unframe_example(exe, Path(temp))

@@ -229,7 +229,7 @@ schedule as ordinary project input below. Source diagnostics report offsets in
 
 ## Project selection
 
-On Windows use `browniec check --project FILE [--json|--json-v2]` or
+On Windows use `browniec check --project FILE [--entry-input] [--json|--json-v2]` or
 `browniec run --project FILE [--input FILE|--stdin] [--fuel N] [--json|--json-v2]`. The manifest
 may be selected by an absolute drive path or a path relative to the working
 directory. Its parent is the project root. The manifest and declared sources
@@ -240,6 +240,11 @@ bytes in total. The manifest selects a public, zero-argument i32 entry.
 Without policy and run files, the current run profile permits only an empty requirements array. Any declared
 requirement is rejected before project members are opened. Project execution
 uses the ordinary Fuel option and result formats.
+
+Use `--entry-input` on an ordinary project check to compile and verify a
+public `i32(ref u8[])` entry. Check returns immediately after compilation
+without opening guest input or executing the VM. Configured and isolated
+project checks accept their existing option sets.
 
 Select one of `--input FILE` or `--stdin` on project run to use a public
 `i32(ref u8[])` entry. Select a local file by its absolute drive path or a path
