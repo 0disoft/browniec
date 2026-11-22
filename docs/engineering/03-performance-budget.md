@@ -260,6 +260,41 @@ in accounted peak was exactly 1,096 bytes per frame. Local evidence:
 `build/embed-preview-6me9336n/receipt.json`, and
 `build/embed-allocations-rt666_xs`.
 
+## Function calls and byte scans on Windows
+
+In the same [revision-2 benchmark](../../tools/bench-embed-reuse.c), run
+`--calls` for 16 direct calls in a scalar loop or `--scan` to sum a
+64-byte input. The existing `--loop` mode sums the same 64 integers without
+input or calls. Each mode compiled once for first-compile timing and 201 times
+on the same Engine for subsequent-compile timing. Another 201 Instances
+reused the first Program, alternating step quanta of 64 and 1.
+
+Both Windows profiles returned 120 for calls and 2016 for the other two
+workloads. Fuel, accounted Instance peak and step counts matched between
+profiles. Each workload used the same Fuel and peak at both quanta.
+
+| Workload | Fuel | Instance peak (bytes) | Steps at 64 | Steps at 1 |
+| --- | ---: | ---: | ---: | ---: |
+| Scalar loop | 345,930 | 143,360 | 266 | 1,094 |
+| Direct calls | 5,850,394 | 186,440 | 1,384 | 1,601 |
+| Byte scan | 399,789 | 161,856 | 318 | 1,274 |
+
+The /O2 run measured these phases separately. Times are milliseconds.
+Step timing includes VM work and the maintenance performed by `bc_step`.
+
+| Workload | First compile | Subsequent compile median / p95 | Reused setup median / p95 | Step to done at 64 median / p95 |
+| --- | ---: | ---: | ---: | ---: |
+| Scalar loop | 2.648 | 1.777 / 2.586 | 0.072 / 0.104 | 1.870 / 2.679 |
+| Direct calls | 4.004 | 2.769 / 4.053 | 0.079 / 0.107 | 12.997 / 16.350 |
+| Byte scan | 6.322 | 2.752 / 4.503 | 0.089 / 0.151 | 2.449 / 3.120 |
+
+Separately, 41 fresh /O2 CLI processes running `--version --json` took
+51.208 ms median and 61.306 ms p95 from spawn through output capture and exit.
+This interval includes Windows process startup and version rendering. The
+OS file cache was warm, and a retained-build workload ran concurrently
+during both measurements. Use the timings as a baseline for this run.
+Local receipt: `build/embed-workloads-ze6dglcu/receipt.json`.
+
 ## Retained Windows CLI builds
 
 Run the retention check against an installed pinned compiler:
