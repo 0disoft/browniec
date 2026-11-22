@@ -1,6 +1,6 @@
 # Performance Budget
 
-- Status: Initial targets and one measured Windows embedding workload
+- Status: Initial targets and measured Windows embedding workloads
 - Scope: small reused runs, pure compilation, scalar loops, and retained builds
 
 ## Workloads
@@ -16,7 +16,7 @@ conditions and the build ID that produced each binary.
 | --- | --- | --- |
 | Reused small Instance setup | p95 at or below 1 ms | Met for one Windows embedding workload |
 | 10 KiB pure source compile plus verify | p95 at or below 10 ms | Unmeasured |
-| Empty Instance accounted memory | at or below 32 KiB | Unmeasured |
+| Empty Instance accounted memory | at or below 32 KiB | Missed: 187,688 bytes with no input or output |
 | Warm scalar loop heap allocation | zero | Unmeasured |
 | 100 retained edit builds | at or below 32 MiB project output, excluding explicit debug/toolchain artifacts | Unmeasured |
 
@@ -100,8 +100,8 @@ in /O2. Engine creation, DLL loading and file reads were outside the timed
 intervals. One QPC measurement pair had a 0.1 µs p95. The host ran Windows
 11 build 26100 on an Intel Core i5-8265U with MSVC 14.51.36231 and Windows
 SDK 10.0.26100.0. The setup result applies to this nonempty input and policy.
-The 10 KiB compile target, empty Instance memory target, process memory and
-worker startup require separate workloads.
+The 10 KiB compile target, process memory and worker startup require
+separate workloads.
 
 Build the preview with `python -B tools/build-embed-preview.py`. In either
 profile's artifact directory, use the x64 MSVC developer shell to compile
@@ -110,3 +110,23 @@ profile's artifact directory, use the x64 MSVC developer shell to compile
 `/O2` to the directory. Run `bench-embed-reuse.exe policy.json run.json`
 three times. Raw reports and DLL hashes are in the local
 `build/embed-preview-io6zkobo` artifact directory.
+
+## Empty Instance on Windows (2026-11-22)
+
+On the same DLLs and host, append `--empty` to run a 45-byte rule that returns
+77 with no input, output, or host calls. Each profile ran 201 executions in each
+of three fresh host processes. Every execution used 345,090 Fuel and reached
+187,688 peak accounted bytes. This exceeds the 32 KiB target by 154,920 bytes
+(5.73 times the target). This is the Instance ledger peak, separate from DLL,
+Engine and retained Program memory or process private bytes.
+
+| Phase | Development median | Development p95 | /O2 median | /O2 p95 |
+| --- | ---: | ---: | ---: | ---: |
+| Subsequent compile | 2,313.9–2,730.8 | 3,245.3–3,900.7 | 478.6–539.5 | 676.8–882.5 |
+| Reused Instance setup | 336.2–345.4 | 522.0–542.6 | 37.3–44.2 | 66.2–89.0 |
+| Step to done | 4,609.5–4,964.7 | 5,922.6–7,431.9 | 959.9–1,002.9 | 1,275.0–1,780.3 |
+| Destroy | 17.8–19.3 | 29.2–31.6 | 7.1–9.1 | 14.0–19.0 |
+
+Times are microseconds. First compile took 4,880.3–5,326.4 µs in development
+and 1,737.4–2,626.2 µs in /O2. The same harness still checks the original
+shared-byte rule when run without `--empty`.

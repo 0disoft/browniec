@@ -2,8 +2,10 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <inttypes.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "brownie.h"
 
 enum { samples = 201, quantum = 64 };
@@ -61,14 +63,19 @@ static uint64_t compile(bc_handle engine, const bc_source *source, bc_handle *pr
 }
 
 int main(int argc, char **argv) {
-    require(argc == 3, "usage: bench-embed-reuse POLICY RUN");
+    require(argc == 3 || (argc == 4 && strcmp(argv[3], "--empty") == 0),
+        "usage: bench-embed-reuse POLICY RUN [--empty]");
+    const bool empty = argc == 4;
     LARGE_INTEGER qpc;
     require(QueryPerformanceFrequency(&qpc) && qpc.QuadPart > 0, "QPC unavailable");
     frequency = (uint64_t)qpc.QuadPart;
     const uint8_t name[] = "main";
     const uint8_t text[] = "module main; pub fn i32 main(ref u8[] order) {"
         " if ((order[0] as i32) < 128) { return 3000; } return 0; }";
-    const bc_source source = {{name, sizeof(name) - 1}, {text, sizeof(text) - 1}};
+    const uint8_t no_input[] = "module main; pub fn i32 main() { return 77; }";
+    const bc_slice source_bytes = empty ? (bc_slice){no_input, sizeof(no_input) - 1} :
+        (bc_slice){text, sizeof(text) - 1};
+    const bc_source source = {{name, sizeof(name) - 1}, source_bytes};
     uint8_t policy_buffer[8192], config_buffer[8192];
     const bc_slice policy = read_config(argv[1], policy_buffer, sizeof(policy_buffer));
     const bc_slice config = read_config(argv[2], config_buffer, sizeof(config_buffer));
@@ -95,8 +102,9 @@ int main(int argc, char **argv) {
         uint8_t order = (uint8_t)(127 + variant);
         bc_handle instance = 0;
         uint64_t start = ticks();
-        const uint32_t prepared = bc_instance_create(engine, retained, (bc_slice){&order, 1},
-            config, &instance, &diagnostic);
+        const bc_slice input = empty ? (bc_slice){0} : (bc_slice){&order, 1};
+        const uint32_t prepared = bc_instance_create(engine, retained, input, config, &instance,
+            &diagnostic);
         setup[i] = ticks() - start;
         ok(prepared, "bc_instance_create", &diagnostic);
         bc_event event = {.struct_size = sizeof(event)};
@@ -106,7 +114,8 @@ int main(int argc, char **argv) {
             if (event.kind != BC_YIELD) break;
         }
         steps[i] = ticks() - start;
-        require(event.kind == BC_DONE && event.return_i32 == (variant ? 0 : 3000) &&
+        const int32_t expected = empty ? 77 : (variant ? 0 : 3000);
+        require(event.kind == BC_DONE && event.return_i32 == expected &&
             event.diagnostic.code == 0 && event.payload.len == 0 && event.fuel_used &&
             event.peak_accounted_bytes, "unexpected workload result");
         if (i < 2) fuel[variant] = event.fuel_used;
@@ -121,9 +130,11 @@ int main(int argc, char **argv) {
 
     ok(bc_program_release(engine, retained), "bc_program_release", NULL);
     ok(bc_engine_destroy(engine), "bc_engine_destroy", NULL);
-    printf("source=%zu input=1 iterations=%d quantum=%d first_compile_us=%.3f"
-           " fuel_127=%" PRIu64 " fuel_128=%" PRIu64 " instance_peak_bytes=%" PRIu64 "\n",
-        source.source_utf8.len, samples, quantum, us(first), fuel[0], fuel[1], peak);
+    printf("source=%zu input=%d iterations=%d quantum=%d first_compile_us=%.3f",
+        source.source_utf8.len, empty ? 0 : 1, samples, quantum, us(first));
+    if (empty) printf(" fuel=%" PRIu64, fuel[0]);
+    else printf(" fuel_127=%" PRIu64 " fuel_128=%" PRIu64, fuel[0], fuel[1]);
+    printf(" instance_peak_bytes=%" PRIu64 "\n", peak);
     puts("phase count median_us p95_us");
     report("timer_pair", timer, samples);
     report("compile", compilation, samples);

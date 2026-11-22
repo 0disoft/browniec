@@ -1,5 +1,5 @@
-- Latest runtime checkpoint (2026-11-22): [Isolated i32 rule evaluation](docs/engineering/restricted-worker.md#isolated-i32-rule-evaluation)
-  transports signed scalar input and preserves the ordinary eval contract.
+- Latest runtime checkpoint (2026-11-22): [Empty Instance baseline](docs/engineering/03-performance-budget.md#empty-instance-on-windows-2026-11-22)
+  measures 187,688 peak accounted bytes in Windows development and /O2.
 
 # Brownie C agent guidance
 
