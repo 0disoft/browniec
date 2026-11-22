@@ -70,9 +70,26 @@ static void permit_execute(wchar_t *path) {
     LocalFree(descriptor);
 }
 
+typedef struct stage_stop_fixture {
+    const bc_worker_stage *stage;
+    DWORD cause;
+    unsigned copy_checkpoints;
+} stage_stop_fixture;
+
+static DWORD interrupt_staging(void *context) {
+    const stage_stop_fixture *fixture = context;
+    return *fixture->stage->name ? fixture->cause : ERROR_SUCCESS;
+}
+
+static DWORD interrupt_stage_copy(void *context) {
+    stage_stop_fixture *fixture = context;
+    if (!fixture->stage->owns_image) return ERROR_SUCCESS;
+    return ++fixture->copy_checkpoints == 3 ? fixture->cause : ERROR_SUCCESS;
+}
+
 static void verify_stage(const wchar_t *application) {
     bc_worker_stage stage = {0};
-    check(bc_worker_stage_open(&stage, application) == ERROR_SUCCESS, "provision worker image and profile");
+    check(bc_worker_stage_open(&stage, application, NULL, NULL) == ERROR_SUCCESS, "provision worker image and profile");
     PACL acl = NULL;
     PSECURITY_DESCRIPTOR descriptor = NULL;
     check(GetSecurityInfo(stage.pinned_image, SE_FILE_OBJECT, DACL_SECURITY_INFORMATION,
@@ -97,10 +114,29 @@ static void verify_stage(const wchar_t *application) {
     FreeSid(reclaimed);
     check(SUCCEEDED(DeleteAppContainerProfile(stage.name)), "delete the profile reuse probe");
 
-    check(bc_worker_stage_open(&stage, L"empty-image.exe") == ERROR_FILE_TOO_LARGE &&
+    check(bc_worker_stage_open(&stage, L"empty-image.exe", NULL, NULL) == ERROR_FILE_TOO_LARGE &&
         stage.owns_image && stage.profile, "reject an empty image after acquiring stage resources");
     check(bc_worker_stage_close(&stage) && GetFileAttributesW(stage.directory) == INVALID_FILE_ATTRIBUTES,
         "remove partially prepared image and stage");
+    stage_stop_fixture fixture = {&stage, ERROR_TIMEOUT, 0};
+    stage = (bc_worker_stage){0};
+    check(bc_worker_stage_open(&stage, application, interrupt_staging, &fixture) == ERROR_TIMEOUT &&
+        stage.profile && !stage.owns_directory, "expire the stage after provisioning the profile");
+    check(bc_worker_stage_close(&stage), "reclaim the profile on expiry before copying");
+
+    for (unsigned i = 0; i < 2; ++i) {
+        stage = (bc_worker_stage){0};
+        fixture.cause = i ? ERROR_TIMEOUT : ERROR_CANCELLED;
+        fixture.copy_checkpoints = 0;
+        check(bc_worker_stage_open(&stage, application, interrupt_stage_copy, &fixture) == fixture.cause &&
+            stage.owns_image && !stage.pinned_image, "stop the stage before copying its second chunk");
+        WIN32_FILE_ATTRIBUTE_DATA partial;
+        check(GetFileAttributesExW(stage.image, GetFileExInfoStandard, &partial) &&
+            !partial.nFileSizeHigh && partial.nFileSizeLow == 16 * 1024,
+            "only one chunk was copied before the stop");
+        check(bc_worker_stage_close(&stage) && GetFileAttributesW(stage.directory) == INVALID_FILE_ATTRIBUTES,
+            "reclaim partial image, directory and profile after a staging stop");
+    }
 }
 
 static BOOL decoy_is_absent(HANDLE handle) {

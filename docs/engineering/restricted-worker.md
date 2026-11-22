@@ -455,6 +455,22 @@ deletion while the image was pinned, verified profile-name reuse after
 cleanup and removed the partial image after a rejected empty input image.
 Local receipt: `build/restricted-worker/20261121T163857490321Z/receipt.json`.
 
+### Stops during managed staging
+
+The managed broker samples the same session deadline and console cancellation
+before provisioning, before creating the stage, between every 16 KiB read
+and write, and before admitting the worker. A stop ends the copy and keeps
+its cause through cleanup. The staged file, directory and profile are released
+without launching the worker or publishing a result. A synchronous Windows
+call in progress can return before the next checkpoint observes the stop.
+
+Windows development and /O2 verified expiry just after profile provisioning.
+Injected cancellation and expiry between the first and second copy chunks
+each left exactly 16 KiB before cleanup removed the partial stage. Both
+profiles passed the managed broker and AppContainer cases with zero net
+handles and 460 matching inputs. Local receipt:
+`build/restricted-worker/20261122T081411659532Z/receipt.json`.
+
 ### Project source snapshots and entry selection
 
 The private `--internal-project-broker check|run MANIFEST` route uses the

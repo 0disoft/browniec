@@ -1,5 +1,5 @@
-- Latest runtime checkpoint (2026-11-22): [Parent handle reservations](docs/engineering/restricted-worker.md#parent-handle-reservations)
-  bound simultaneous worker and adapter handle slots through collection and reaping.
+- Latest runtime checkpoint (2026-11-22): [Managed staging stops](docs/engineering/restricted-worker.md#stops-during-managed-staging)
+  observe cancellation and session expiry during the image copy and reclaim partial staging.
 
 # Brownie C agent guidance
 

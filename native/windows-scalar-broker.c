@@ -206,12 +206,18 @@ static uint32_t run_broker(PSID sid, const wchar_t *image, const wchar_t *direct
     return 1;
 }
 
+static DWORD stage_stop(void *context) {
+    const uint64_t deadline = *(const uint64_t *)context;
+    if (now_ticks() >= deadline) return ERROR_TIMEOUT;
+    return bc_cli_cancel_requested() ? ERROR_CANCELLED : ERROR_SUCCESS;
+}
+
 static uint32_t invoke_broker(const uint8_t *profile, size_t profile_length,
     const worker_exchange *exchange, const worker_limits *limits, uint8_t *reply, size_t capacity, size_t *reply_length) {
     *reply_length = 0;
     wchar_t image[4096], directory[4096];
     if (!self_location(image, directory, _countof(image)) || !bc_cli_enable_cancel()) return 0;
-    const uint64_t deadline = now_ticks() + (uint64_t)limits->session_ms * 10000;
+    uint64_t deadline = now_ticks() + (uint64_t)limits->session_ms * 10000;
     if (profile) {
         PSID sid = resolve_profile(profile, profile_length);
         if (!sid) return 0;
@@ -220,12 +226,13 @@ static uint32_t invoke_broker(const uint8_t *profile, size_t profile_length,
         return status;
     }
     bc_worker_stage stage = {0};
-    const DWORD setup = bc_worker_stage_open(&stage, image);
+    const DWORD setup = bc_worker_stage_open(&stage, image, stage_stop, &deadline);
+    const DWORD stop = setup ? setup : stage_stop(&deadline);
     size_t pending_length = 0;
     uint32_t status = 0;
-    if (now_ticks() >= deadline) status = 2;
-    else if (bc_cli_cancel_requested()) status = 3;
-    else if (!setup) status = run_broker(stage.profile, stage.image, stage.directory,
+    if (stop == ERROR_TIMEOUT) status = 2;
+    else if (stop == ERROR_CANCELLED) status = 3;
+    else if (!stop) status = run_broker(stage.profile, stage.image, stage.directory,
         exchange, limits, deadline, reply, capacity, &pending_length);
     const BOOL cleaned = bc_worker_stage_close(&stage);
     if (status != 1) return status;

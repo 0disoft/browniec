@@ -13,9 +13,13 @@ typedef struct bc_worker_stage {
     BOOL owns_image;
 } bc_worker_stage;
 
+/* A trusted stop probe returns ERROR_SUCCESS, ERROR_TIMEOUT or ERROR_CANCELLED. */
+typedef DWORD (*bc_worker_stage_stop)(void *context);
+
 // Use a zero-initialized stage. Close it after the worker has been reaped,
 // including when setup returns an error after acquiring some resources.
-DWORD bc_worker_stage_open(bc_worker_stage *stage, const wchar_t *application);
+DWORD bc_worker_stage_open(bc_worker_stage *stage, const wchar_t *application,
+    bc_worker_stage_stop stop, void *context);
 BOOL bc_worker_stage_close(bc_worker_stage *stage);
 
 #endif

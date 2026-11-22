@@ -26,7 +26,11 @@ static DWORD create_profile(bc_worker_stage *stage) {
     return ERROR_SUCCESS;
 }
 
-static DWORD copy_worker_image(HANDLE input, HANDLE output) {
+static DWORD stopped(bc_worker_stage_stop stop, void *context) {
+    return stop ? stop(context) : ERROR_SUCCESS;
+}
+
+static DWORD copy_worker_image(HANDLE input, HANDLE output, bc_worker_stage_stop stop, void *context) {
     enum { image_limit = 64 * 1024 * 1024, copy_window = 16 * 1024 };
     BY_HANDLE_FILE_INFORMATION info;
     if (!GetFileInformationByHandle(input, &info)) return GetLastError();
@@ -38,10 +42,14 @@ static DWORD copy_worker_image(HANDLE input, HANDLE output) {
     BYTE window[copy_window];
     DWORD remaining = info.nFileSizeLow;
     while (remaining) {
+        DWORD status = stopped(stop, context);
+        if (status) return status;
         DWORD read = 0, written = 0;
         const DWORD request = remaining < copy_window ? remaining : copy_window;
         if (!ReadFile(input, window, request, &read, NULL)) return GetLastError();
         if (!read) return ERROR_HANDLE_EOF;
+        status = stopped(stop, context);
+        if (status) return status;
         if (!WriteFile(output, window, read, &written, NULL)) return GetLastError();
         if (written != read) return ERROR_WRITE_FAULT;
         remaining -= read;
@@ -49,7 +57,8 @@ static DWORD copy_worker_image(HANDLE input, HANDLE output) {
     return ERROR_SUCCESS;
 }
 
-static DWORD stage_image(bc_worker_stage *stage, HANDLE input, PSID user) {
+static DWORD stage_image(bc_worker_stage *stage, HANDLE input, PSID user,
+    bc_worker_stage_stop stop, void *context) {
     union {
         ACL acl;
         BYTE bytes[sizeof(ACL) + 3 * (sizeof(ACCESS_ALLOWED_ACE) + SECURITY_MAX_SID_SIZE)];
@@ -67,6 +76,8 @@ static DWORD stage_image(bc_worker_stage *stage, HANDLE input, PSID user) {
         !SetSecurityDescriptorDacl(&descriptor, TRUE, &access.acl, FALSE) ||
         !SetSecurityDescriptorControl(&descriptor, SE_DACL_PROTECTED, SE_DACL_PROTECTED))
         return GetLastError();
+    DWORD status = stopped(stop, context);
+    if (status) return status;
     SECURITY_ATTRIBUTES security = {sizeof(security), &descriptor, FALSE};
     if (!CreateDirectoryW(stage->directory, &security)) return GetLastError();
     stage->owns_directory = TRUE;
@@ -74,19 +85,23 @@ static DWORD stage_image(bc_worker_stage *stage, HANDLE input, PSID user) {
         CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
     if (output == INVALID_HANDLE_VALUE) return GetLastError();
     stage->owns_image = TRUE;
-    DWORD status = copy_worker_image(input, output);
+    status = copy_worker_image(input, output, stop, context);
     if (!CloseHandle(output) && !status) status = GetLastError();
+    if (!status) status = stopped(stop, context);
     if (status) return status;
     HANDLE pin = CreateFileW(stage->image, GENERIC_READ, FILE_SHARE_READ, NULL,
         OPEN_EXISTING, FILE_FLAG_OPEN_REPARSE_POINT, NULL);
     if (pin == INVALID_HANDLE_VALUE) return GetLastError();
     stage->pinned_image = pin;
-    return ERROR_SUCCESS;
+    return stopped(stop, context);
 }
 
-DWORD bc_worker_stage_open(bc_worker_stage *stage, const wchar_t *application) {
+DWORD bc_worker_stage_open(bc_worker_stage *stage, const wchar_t *application,
+    bc_worker_stage_stop stop, void *context) {
     if (!stage || stage->profile || stage->owns_directory || !application)
         return ERROR_INVALID_PARAMETER;
+    DWORD status = stopped(stop, context);
+    if (status) return status;
     const DWORD capacity = _countof(stage->directory);
     const DWORD root = GetTempPathW(capacity, stage->directory);
     if (!root || root >= capacity) return ERROR_BAD_PATHNAME;
@@ -102,11 +117,11 @@ DWORD bc_worker_stage_open(bc_worker_stage *stage, const wchar_t *application) {
         BYTE bytes[sizeof(TOKEN_USER) + SECURITY_MAX_SID_SIZE];
     } user = {0};
     DWORD used = 0;
-    DWORD status = ERROR_SUCCESS;
     if (!OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token) ||
         !GetTokenInformation(token, TokenUser, &user, sizeof(user), &used))
         status = GetLastError();
     if (token) CloseHandle(token);
+    if (!status) status = stopped(stop, context);
     if (!status) status = create_profile(stage);
     static const wchar_t leaf[] = L"\\browniec.exe";
     if (!status) {
@@ -118,7 +133,7 @@ DWORD bc_worker_stage_open(bc_worker_stage *stage, const wchar_t *application) {
             wmemcpy(stage->image + root + name_length, leaf, _countof(leaf));
         }
     }
-    if (!status) status = stage_image(stage, input, user.info.User.Sid);
+    if (!status) status = stage_image(stage, input, user.info.User.Sid, stop, context);
     CloseHandle(input);
     return status;
 }
