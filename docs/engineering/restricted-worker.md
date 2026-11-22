@@ -575,6 +575,25 @@ drained a late RESULT without validating or publishing it and retained
 the exact reservation after worker exit. Zero net handles remained.
 All 23 input hashes matched. Local receipt: `build/restricted-worker/20261122T014859499793Z/receipt.json`.
 
+### Broker-owned process adapters
+
+The deferred broker can drive a Windows adapter slot using a trusted
+executable path and a catalog codec. Complete guest requests are encoded
+before launch. A response header must pass the codec before the process
+transport reads its body, and the whole frame is decoded only after clean
+EOF and child exit. Closing the broker also closes the slot. The slot
+retains its live charge until its process and pending I/O are collected.
+
+The native harness runs an actual catalog guest and a separate adapter
+executable. Windows development and /O2 each passed two successful calls
+with result 77 and output before, cancellation and expiry with a partial
+reply, and rejection of a mismatched correlation. Both profiles reported
+zero net handles. The harness uses a fixture codec. The production
+restricted command still requires its catalog-backed route configuration.
+
+All 458 verification input hashes matched.
+Local receipt: `build/restricted-worker/20261122T020001685415Z/receipt.json`.
+
 ### Catalog guest host transfer stops
 
 A cancelled Engine Instance reports a run error with no source location.

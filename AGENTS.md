@@ -1,5 +1,5 @@
-- Latest runtime checkpoint (2026-11-22): [Deferred host adapters](docs/engineering/restricted-worker.md#deferred-host-adapters)
-  let the broker cancel a pending adapter and retain session reservations until adapter cleanup completes.
+- Latest runtime checkpoint (2026-11-22): [Broker-owned process adapters](docs/engineering/restricted-worker.md#broker-owned-process-adapters)
+  connect real Windows adapter processes to deferred catalog host exchanges in the native harness.
 
 # Brownie C agent guidance
 

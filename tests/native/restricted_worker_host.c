@@ -7,6 +7,7 @@
 #include <wchar.h>
 #include "../../native/restricted_worker.h"
 #include "../../native/restricted_worker_broker.h"
+#include "../../native/restricted_worker_process_adapter.h"
 #include "../../native/restricted_worker_gate.h"
 #include "../../native/restricted_worker_io.h"
 #include "../../native/restricted_worker_pipes.h"
@@ -1284,6 +1285,154 @@ static void verify_catalog_host_stop(const wchar_t *path, const wchar_t *directo
         "drain only the cancelled outcome and refund the catalog session");
 }
 
+typedef struct process_codec {
+    unsigned requests, headers, replies;
+    uint8_t expected[BC_ADAPTER_HEADER_BYTES];
+} process_codec;
+
+static bool process_fixture_encode(void *raw, uint64_t correlation, const uint8_t *request,
+    size_t length, uint8_t header[BC_ADAPTER_HEADER_BYTES]) {
+    process_codec *codec = raw;
+    static const uint8_t prefix[] = {0,0,0,0, 1,0, 3,0,0,0, 4,0,0,0};
+    if (length != 18 || correlation != codec->requests + 1u || correlation > 2 ||
+        memcmp(request, prefix, sizeof(prefix)) || request[14] != 40 + correlation ||
+        request[15] || request[16] || request[17]) return false;
+    ++codec->requests;
+    memcpy(header, "BCA1", 4);
+    header[8] = 1;
+    header[16] = (uint8_t)correlation;
+    header[28] = 14;
+    memcpy(codec->expected, header, BC_ADAPTER_HEADER_BYTES);
+    codec->expected[4] = 1;
+    codec->expected[28] = 12;
+    return true;
+}
+
+static bool process_fixture_header(void *raw, const uint8_t *header, size_t length,
+    size_t limit, size_t *body_length) {
+    process_codec *codec = raw;
+    ++codec->headers;
+    if (limit < 12 || length != BC_ADAPTER_HEADER_BYTES || memcmp(header, codec->expected, length))
+        return false;
+    *body_length = 12;
+    return true;
+}
+
+static size_t process_fixture_decode(void *raw, const uint8_t *frame, size_t length,
+    uint8_t *reply, size_t capacity) {
+    process_codec *codec = raw;
+    uint8_t expected[] = {3,0,0,0, 4,0,0,0, codec->requests == 1 ? 42 : 35,0,0,0};
+    if (length != BC_ADAPTER_HEADER_BYTES + sizeof(expected) || capacity < sizeof(expected) + 1 ||
+        memcmp(frame, codec->expected, BC_ADAPTER_HEADER_BYTES) ||
+        memcmp(frame + BC_ADAPTER_HEADER_BYTES, expected, sizeof(expected))) return 0;
+    ++codec->replies;
+    reply[0] = 0;
+    memcpy(reply + 1, expected, sizeof(expected));
+    return sizeof(expected) + 1;
+}
+
+static int process_fixture_child(wchar_t mode) {
+    HANDLE input = GetStdHandle(STD_INPUT_HANDLE), output = GetStdHandle(STD_OUTPUT_HANDLE);
+    uint8_t header[BC_ADAPTER_HEADER_BYTES], request[14], extra;
+    static const uint8_t prefix[] = {1,0, 3,0,0,0, 4,0,0,0};
+    DWORD count = 0;
+    if (!child_read(input, header, sizeof(header)) || memcmp(header, "BCA1", 4) ||
+        header[4] || header[8] != 1 || (header[16] != 1 && header[16] != 2) || header[28] != 14 ||
+        !child_read(input, request, sizeof(request)) || memcmp(request, prefix, sizeof(prefix)) ||
+        request[10] != 40 + header[16] ||
+        ReadFile(input, &extra, 1, &count, NULL) || GetLastError() != ERROR_BROKEN_PIPE) return 30;
+    header[4] = 1;
+    header[28] = 12;
+    if (mode == L'w') ++header[16];
+    if (!WriteFile(output, header, sizeof(header), &count, NULL) || count != sizeof(header)) return 31;
+    uint8_t body[] = {3,0,0,0, 4,0,0,0, header[16] == 1 ? 42 : 35,0,0,0};
+    const DWORD size = mode == L's' ? 3 : sizeof(body);
+    if (!WriteFile(output, body, size, &count, NULL) || count != size) return 32;
+    if (mode == L's') Sleep(INFINITE);
+    return 0;
+}
+
+static bool catalog_process_result(const void *unused, const uint8_t *body, size_t length) {
+    (void)unused;
+    static const char metadata[] = "{\"schema\":\"browniec.worker-result/v1\",\"status\":\"completed\",\"return_i32\":77}";
+    const size_t meta = 4 + sizeof(metadata) - 1;
+    return length == 3 + meta + 6 && body[0] == 128 && body[1] == meta && body[2] == 0 &&
+        !memcmp(body + 3, "\x08\x10\x00\x00", 4) &&
+        !memcmp(body + 7, metadata, sizeof(metadata) - 1) && !memcmp(body + 3 + meta, "before", 6);
+}
+
+static void verify_catalog_process(const wchar_t *path, const wchar_t *directory,
+    const wchar_t *adapter_image, bc_worker_gate_status expected) {
+    uint8_t start[4096], result[512] = {0}, request[18], reply[13], executable[4096];
+    FILE *file = NULL;
+    check(!fopen_s(&file, "catalog-compile.start", "rb"), "open process adapter START fixture");
+    const size_t size = fread(start, 1, sizeof(start), file);
+    check(size && feof(file) && !ferror(file) && !fclose(file), "read process adapter START fixture");
+    const int path_size = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, adapter_image, -1,
+        (char *)executable, sizeof(executable), NULL, NULL);
+    check(path_size > 1, "encode trusted adapter path");
+
+    const bool success = expected == BC_WORKER_GATE_DELIVERED;
+    const bool stop = expected == BC_WORKER_GATE_CANCELLED || expected == BC_WORKER_GATE_EXPIRED;
+    const wchar_t mode[] = {success ? L'o' : stop ? L's' : L'w', 0};
+    const size_t adapter_wire = 2 * BC_ADAPTER_HEADER_BYTES + 14 + 12 + 1;
+    bc_adapter_budget adapter_budget = {.live_limit = 1, .launch_limit = 2, .wire_limit = 2 * adapter_wire};
+    process_codec codec = {0};
+    bc_worker_process_adapter adapter = {
+        .slot = {.budget = &adapter_budget}, .path = executable, .path_length = (size_t)path_size - 1,
+        .reply_limit = 12, .codec = &codec, .encode = process_fixture_encode,
+        .reply_size = process_fixture_header, .decode = process_fixture_decode
+    };
+    bc_worker_broker broker = {0};
+    const size_t wire = 5 * BC_WORKER_FRAME_BYTES + size + sizeof(result) + 1 +
+        2 * (2 * BC_WORKER_FRAME_BYTES + sizeof(request) + sizeof(reply));
+    const bc_worker_broker_amounts charge = {1,
+        sizeof(broker) + size + sizeof(result) + sizeof(request) + sizeof(reply), commit_limit, wire};
+    bc_worker_broker_budget budget = {.limit = charge};
+    wchar_t command[] = L"worker --internal-project-worker";
+    const bc_worker_broker_run run = {
+        .budget = &budget, .application = path, .command_line = command, .directory = directory,
+        .profile = profile, .commit_bytes = commit_limit, .cpu_ms = 2000,
+        .startup_ms = 4000, .io_idle_ms = 4000, .shutdown_grace_ms = 2500,
+        .deadline = clock_ticks() + 100000000ULL, .wire_limit = wire,
+        .request = start, .request_length = size, .result = result, .result_capacity = sizeof(result),
+        .validate = success ? catalog_process_result : reject_callback,
+        .host = {NULL, &adapter, request, reply, sizeof(request), sizeof(reply), 2},
+        .adapter = &bc_worker_process_callbacks
+    };
+    check(SetEnvironmentVariableW(L"BC_TEST_RESTRICTED_PROCESS", mode) &&
+        !bc_worker_broker_start(&broker, &run), "launch catalog guest with process adapter");
+    while (broker.gate.status == BC_WORKER_GATE_PENDING && broker.phase != BC_WORKER_BROKER_FINISH) {
+        bc_worker_broker_step(&broker);
+        if (stop && codec.headers == 1 && broker.phase == BC_WORKER_BROKER_WAIT_HOST) {
+            check(adapter_budget.live == 1, "adapter process holds its slot during the reply");
+            if (expected == BC_WORKER_GATE_CANCELLED)
+                check(bc_worker_broker_cancel(&broker) == expected, "cancel live adapter");
+            broker.phase_deadline = clock_ticks();
+            check(bc_worker_broker_step(&broker) == expected &&
+                bc_worker_broker_cancel(&broker) == expected, "keep the first process stop cause");
+        }
+        Sleep(1);
+    }
+    size_t length = 123;
+    const uint8_t *published = bc_worker_broker_take(&broker, &length);
+    check(broker.gate.status == expected &&
+        (success ? published == result && catalog_process_result(NULL, result, length) :
+            !published && length == 123), "publish only the completed process-backed guest");
+    const uint64_t reap_limit = clock_ticks() + 50000000ULL;
+    while (!bc_worker_broker_close(&broker)) {
+        check(clock_ticks() < reap_limit && broker.gate.status == expected &&
+            same_charge(budget.reserved, charge), "keep the reservation during process adapter reaping");
+        Sleep(1);
+    }
+    check(SetEnvironmentVariableW(L"BC_TEST_RESTRICTED_PROCESS", NULL), "clear process adapter mode");
+    const unsigned launches = success ? 2 : 1;
+    check(codec.requests == launches && codec.headers == launches && codec.replies == (success ? 2u : 0u) &&
+        adapter_budget.launches == launches && adapter_budget.wire == launches * adapter_wire &&
+        !adapter_budget.live && !adapter.slot.process &&
+        same_charge(budget.reserved, (bc_worker_broker_amounts){0}), "reap process and refund both live reservations");
+}
+
 static void verify_parent_broker(const wchar_t *image, const wchar_t *directory,
     const wchar_t *name, const wchar_t *operation, const wchar_t *source,
     DWORD expected_exit, const char *expected_output) {
@@ -1326,6 +1475,9 @@ static void verify_parent_broker(const wchar_t *image, const wchar_t *directory,
 }
 
 int wmain(int argc, wchar_t **argv) {
+    wchar_t adapter_mode[2];
+    if (argc == 1 && GetEnvironmentVariableW(L"BC_TEST_RESTRICTED_PROCESS", adapter_mode, 2) == 1)
+        return process_fixture_child(adapter_mode[0]);
     if (argc == 3 && !wcscmp(argv[1], L"--child")) return child(argv[2], cpu);
     if (argc == 3 && !wcscmp(argv[1], L"--child-ok")) return child(argv[2], clean);
     if (argc == 3 && !wcscmp(argv[1], L"--child-early")) return child(argv[2], early);
@@ -1471,6 +1623,10 @@ int wmain(int argc, wchar_t **argv) {
         verify_catalog_host_stop(argv[2], directory, true, BC_WORKER_GATE_CANCELLED);
         verify_catalog_host_stop(argv[2], directory, false, BC_WORKER_GATE_EXPIRED);
         verify_catalog_host_stop(argv[2], directory, true, BC_WORKER_GATE_EXPIRED);
+        verify_catalog_process(argv[2], directory, argv[1], BC_WORKER_GATE_DELIVERED);
+        verify_catalog_process(argv[2], directory, argv[1], BC_WORKER_GATE_CANCELLED);
+        verify_catalog_process(argv[2], directory, argv[1], BC_WORKER_GATE_EXPIRED);
+        verify_catalog_process(argv[2], directory, argv[1], BC_WORKER_GATE_PROTOCOL);
     }
     check(CloseHandle(decoy), "close decoy");
     decoy = NULL;
@@ -1504,9 +1660,9 @@ int wmain(int argc, wchar_t **argv) {
            "\"ioLease\":true,\"brokerSessions\":6,\"hostBrokerCases\":11,\"deferredAdapterCases\":3,\"sharedBudget\":true,"
            "\"phaseDeadlines\":true,\"gracefulCancelCases\":2,\"handleDelta\":0,\"staging\":true,"
            "\"scalarSessions\":%d,\"parentBrokerCases\":%d,\"projectWireRejections\":%d,"
-           "\"projectCompileStopCases\":%d,\"catalogHostStopCases\":%d,"
+           "\"projectCompileStopCases\":%d,\"catalogHostStopCases\":%d,\"catalogProcessCases\":%d,"
            "\"parentColdHandleDelta\":%ld,\"coldHandleDelta\":%ld}\n",
            argc == 3 ? 5 : 0, argc == 3 ? 4 : 0, argc == 3 ? 2 : 0, argc == 3 ? 4 : 0,
-           argc == 3 ? 4 : 0, parent_cold_delta, (long)final - (long)cold);
+           argc == 3 ? 4 : 0, argc == 3 ? 4 : 0, parent_cold_delta, (long)final - (long)cold);
     return 0;
 }
