@@ -47,7 +47,8 @@ static bool reserve(bc_worker_broker_budget *budget, bc_worker_broker_amounts ch
         !fits(used->io_slots, limit.io_slots, charge.io_slots) ||
         !fits(used->pipe_buffer_bytes, limit.pipe_buffer_bytes, charge.pipe_buffer_bytes) ||
         !fits(used->host_request_bytes, limit.host_request_bytes, charge.host_request_bytes) ||
-        !fits(used->host_reply_bytes, limit.host_reply_bytes, charge.host_reply_bytes)) return false;
+        !fits(used->host_reply_bytes, limit.host_reply_bytes, charge.host_reply_bytes) ||
+        !fits(used->handle_slots, limit.handle_slots, charge.handle_slots)) return false;
     used->sessions += charge.sessions;
     used->parent_bytes += charge.parent_bytes;
     used->child_commit_bytes += charge.child_commit_bytes;
@@ -57,6 +58,7 @@ static bool reserve(bc_worker_broker_budget *budget, bc_worker_broker_amounts ch
     used->pipe_buffer_bytes += charge.pipe_buffer_bytes;
     used->host_request_bytes += charge.host_request_bytes;
     used->host_reply_bytes += charge.host_reply_bytes;
+    used->handle_slots += charge.handle_slots;
     return true;
 }
 
@@ -71,6 +73,7 @@ static void refund(bc_worker_broker *b) {
     used->pipe_buffer_bytes -= b->charge.pipe_buffer_bytes;
     used->host_request_bytes -= b->charge.host_request_bytes;
     used->host_reply_bytes -= b->charge.host_reply_bytes;
+    used->handle_slots -= b->charge.handle_slots;
 }
 
 DWORD bc_worker_broker_start(bc_worker_broker *b, const bc_worker_broker_run *run) {
@@ -119,7 +122,8 @@ DWORD bc_worker_broker_start(bc_worker_broker *b, const bc_worker_broker_run *ru
         .pipe_buffer_bytes = BC_WORKER_PIPE_BUFFER_RESERVATION +
             (adapter ? (size_t)adapter->pipe_buffer_bytes : 0),
         .host_request_bytes = host.max_calls * host.request_capacity,
-        .host_reply_bytes = host.max_calls * host.reply_capacity
+        .host_reply_bytes = host.max_calls * host.reply_capacity,
+        .handle_slots = BC_WORKER_BROKER_HANDLE_SLOTS + (adapter ? (size_t)adapter->handle_slots : 0)
     };
     if (!reserve(run->budget, charge)) return ERROR_NOT_ENOUGH_QUOTA;
 

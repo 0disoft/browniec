@@ -1,5 +1,5 @@
-- Latest runtime checkpoint (2026-11-22): [Policy declaration ceilings](docs/engineering/module-index.md#policy-declaration-ceilings)
-  stop an over-limit function or record before body scanning and Index allocation.
+- Latest runtime checkpoint (2026-11-22): [Parent handle reservations](docs/engineering/restricted-worker.md#parent-handle-reservations)
+  bound simultaneous worker and adapter handle slots through collection and reaping.
 
 # Brownie C agent guidance
 

@@ -260,6 +260,24 @@ closed, then returned to zero when the cancelled session closed. Both
 profiles reported zero net handles, and all 460 input hashes matched.
 Local receipt: `build/restricted-worker/20261122T034629076307Z/receipt.json`.
 
+### Parent handle reservations
+
+A worker reserves 12 parent handle slots for its two I/O events, six pipe
+endpoints, Job, process, thread and verification token. A process-backed route
+adds nine slots for its own event, Job, pipe endpoints, NUL endpoint, process
+and thread. This sums each owner's launch peak conservatively. Image staging
+and handles opened internally by Windows APIs are outside this reservation.
+
+The broker denies admission before opening handles when the shared ceiling
+cannot cover the new reservation. It holds all slots through cancellation,
+expiry, I/O collection and reaping. Windows development and /O2 admitted
+two workers at 24 slots and two process-backed sessions at 42 slots. Each
+one-slot-short case was rejected, and a third worker remained denied while
+two signaled reads awaited collection. Reaping one session released only its
+own reservation. Both profiles reported zero net handles and matched all
+460 inputs. Local receipt:
+`build/restricted-worker/20261122T080458759008Z/receipt.json`.
+
 ### Restricted adapter Job commit
 
 Private process-backed routes reserve a 64 MiB adapter Job commit ceiling

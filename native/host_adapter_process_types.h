@@ -10,7 +10,9 @@ enum {
     BC_ADAPTER_HEADER_BYTES = 64,
     BC_ADAPTER_BODY_LIMIT = 4096,
     BC_ADAPTER_PIPE_BUFFER_BYTES = 8192,
-    BC_ADAPTER_PIPE_BUFFER_RESERVATION = 2 * 2 * BC_ADAPTER_PIPE_BUFFER_BYTES
+    BC_ADAPTER_PIPE_BUFFER_RESERVATION = 2 * 2 * BC_ADAPTER_PIPE_BUFFER_BYTES,
+    /* Event, Job, four pipe ends, NUL, process and thread. */
+    BC_ADAPTER_HANDLE_SLOTS = 9
 };
 
 /* Initialize the ceilings before use. All other fields start at zero.

@@ -166,7 +166,8 @@ static uint32_t run_broker(PSID sid, const wchar_t *image, const wchar_t *direct
         .pipe_buffer_bytes = BC_WORKER_PIPE_BUFFER_RESERVATION +
             (adapter ? (size_t)adapter->pipe_buffer_bytes : 0),
         .host_request_bytes = exchange->host.max_calls * exchange->host.request_capacity,
-        .host_reply_bytes = exchange->host.max_calls * exchange->host.reply_capacity
+        .host_reply_bytes = exchange->host.max_calls * exchange->host.reply_capacity,
+        .handle_slots = BC_WORKER_BROKER_HANDLE_SLOTS + (adapter ? (size_t)adapter->handle_slots : 0)
     }};
     wchar_t scalar_command[] = L"browniec --internal-scalar-worker";
     wchar_t project_command[] = L"browniec --internal-project-worker";

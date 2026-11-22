@@ -36,10 +36,15 @@ typedef struct bc_worker_broker_amounts {
     size_t pipe_buffer_bytes;
     size_t host_request_bytes;
     size_t host_reply_bytes;
+    size_t handle_slots;
 } bc_worker_broker_amounts;
 
 /* The ordinary transfer and the graceful cancellation write each own a slot. */
-enum { BC_WORKER_BROKER_IO_SLOTS = 2 };
+enum {
+    BC_WORKER_BROKER_IO_SLOTS = 2,
+    /* Events, both ends of each pipe, then Job, process, thread and token. */
+    BC_WORKER_BROKER_HANDLE_SLOTS = BC_WORKER_BROKER_IO_SLOTS + 2 * BC_WORKER_PIPE_COUNT + 4
+};
 
 /* Initialize the limits and zero the reservations. The owner serializes
    all sessions using this budget and keeps it alive through their close. */
@@ -82,6 +87,8 @@ typedef struct bc_worker_host_adapter {
     uint32_t pipe_buffer_bytes;
     /* OS-enforced commit ceiling for the child Job owned by one slot. */
     size_t child_commit_bytes;
+    /* Peak parent handles owned by this route, including temporary launch handles. */
+    uint32_t handle_slots;
 } bc_worker_host_adapter;
 
 typedef struct bc_worker_broker {
@@ -142,6 +149,8 @@ typedef struct bc_worker_broker_run {
    stays reserved across sequential requests and through final cleanup.
    Each I/O slot covers one event and its outstanding overlapped operation.
    Pipe buffer reservations account for requested Win32 buffer sizes.
+   Parent handle reservations include worker and adapter launch peaks and
+   stay held until both owners have been reaped.
    The host payload allowances are reserved by direction for all allowed calls.
    The trusted route supplies its additional process transport envelope in
    adapter_wire_bytes. It shares the session wire limit and release condition.

@@ -54,5 +54,6 @@ static bool process_close(void *context) {
 const bc_worker_host_adapter bc_worker_process_callbacks = {
     .begin = process_begin, .poll = process_poll, .close = process_close, .io_slots = 1,
     .pipe_buffer_bytes = BC_ADAPTER_PIPE_BUFFER_RESERVATION,
-    .child_commit_bytes = BC_WORKER_ADAPTER_JOB_COMMIT_BYTES
+    .child_commit_bytes = BC_WORKER_ADAPTER_JOB_COMMIT_BYTES,
+    .handle_slots = BC_ADAPTER_HANDLE_SLOTS
 };
