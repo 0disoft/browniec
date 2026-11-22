@@ -519,15 +519,32 @@ static void revision_two_output(bc_handle pure_engine){
     puts("PASS: sealed output copy survives teardown; pending, failed, short, foreign and stale calls are rejected");
 }
 
-static DWORD WINAPI foreign_entry_lookup(void *arg){
-    const bc_handle *handles=arg;
+static void reject_program_association(bc_handle engine,bc_handle program,bc_slice config,uint32_t expected){
     const bc_slice main_name={(const uint8_t *)"main",4};
-    bc_entry_info info={.struct_size=sizeof(info),.abi_revision=UINT32_MAX};
+    const bc_entry_info sentinel={.struct_size=sizeof(sentinel),.abi_revision=UINT32_MAX};
+    bc_entry_info info;
+    memcpy(&info,&sentinel,sizeof(info));
     bc_diagnostic diagnostic={.struct_size=sizeof(diagnostic)};
-    uint32_t status=bc_program_entry_info(handles[0],handles[1],main_name,main_name,&info,&diagnostic);
-    assert(info.abi_revision==UINT32_MAX);
-    expect_diagnostic(&diagnostic,status);
-    return status;
+    assert(bc_program_entry_info(engine,program,main_name,main_name,&info,&diagnostic)==expected);
+    assert(memcmp(&info,&sentinel,sizeof(info))==0);
+    expect_diagnostic(&diagnostic,expected);
+    bc_handle instance=UINT64_MAX;
+    assert(bc_instance_create(engine,program,(bc_slice){0},config,&instance,&diagnostic)==expected);
+    assert(instance==0);
+    expect_diagnostic(&diagnostic,expected);
+    assert(bc_program_release(engine,program)==expected);
+}
+
+typedef struct program_association {
+    bc_handle engine;
+    bc_handle program;
+    bc_slice config;
+} program_association;
+
+static DWORD WINAPI reject_foreign_program(void *arg){
+    const program_association *owned=arg;
+    reject_program_association(owned->engine,owned->program,owned->config,BC_WRONG_THREAD);
+    return 0;
 }
 
 static void revision_two_source_limit(uint8_t *policy,size_t length){
@@ -772,13 +789,20 @@ static void revision_two_programs(bc_handle engine,bc_slice policy){
     assert(info.struct_size==sizeof(info) && info.abi_revision==2 && info.reserved==0);
     assert(info.input_kind==BC_INPUT_NONE && info.required_capabilities_json.len==2);
     assert(memcmp(info.required_capabilities_json.data,"[]",2)==0);
-    bc_handle handles[]={engine,program};
-    HANDLE thread=CreateThread(NULL,0,foreign_entry_lookup,handles,0,NULL);
-    DWORD status=0;
+    uint8_t run[1024];
+    const bc_slice config={run,read_fixture("run.json",run,sizeof(run))};
+    program_association association={engine,program,config};
+    HANDLE thread=CreateThread(NULL,0,reject_foreign_program,&association,0,NULL);
+    DWORD status=UINT32_MAX;
     assert(thread && WaitForSingleObject(thread,5000)==WAIT_OBJECT_0);
-    assert(GetExitCodeThread(thread,&status) && status==BC_WRONG_THREAD && CloseHandle(thread));
+    assert(GetExitCodeThread(thread,&status) && status==0 && CloseHandle(thread));
     assert(bc_engine_destroy(engine)==BC_BUSY);
-    assert(bc_program_release(engine,engine)==BC_INVALID_HANDLE);
+    const bc_handle invalid_owners[]={0,UINT64_MAX,program};
+    const bc_handle invalid_programs[]={0,UINT64_MAX,engine};
+    for(size_t i=0;i<sizeof(invalid_owners)/sizeof(invalid_owners[0]);++i){
+        reject_program_association(invalid_owners[i],program,config,BC_INVALID_HANDLE);
+        reject_program_association(engine,invalid_programs[i],config,BC_INVALID_HANDLE);
+    }
     assert(bc_preview_program_release(engine,program)==BC_INVALID_HANDLE);
     bc_handle instance=UINT64_MAX;
     assert(bc_preview_instance_create(engine,program,4000000,&instance)==BC_INVALID_HANDLE);
@@ -786,21 +810,20 @@ static void revision_two_programs(bc_handle engine,bc_slice policy){
 
     bc_handle other=0;
     assert(bc_engine_create(2,policy,&other,&diagnostic)==BC_OK);
-    assert(bc_program_entry_info(other,program,main_name,main_name,&info,&diagnostic)==BC_INVALID_HANDLE);
-    assert(bc_program_release(other,program)==BC_INVALID_HANDLE);
+    reject_program_association(other,program,config,BC_INVALID_HANDLE);
     assert(bc_engine_destroy(other)==BC_OK);
+    reject_program_association(other,program,config,BC_INVALID_HANDLE);
     assert(bc_preview_engine_create(BC_PREVIEW_REVISION,&other)==BC_OK);
     bc_handle wrong=UINT64_MAX;
     source.source_utf8=(bc_slice){valid,sizeof(valid)-1};
     assert(bc_compile(other,&source,1,empty,&wrong,&diagnostic)==BC_INVALID_HANDLE && wrong==0);
     assert(bc_preview_compile(other,(bc_slice){valid,sizeof(valid)-1},&wrong)==BC_OK);
-    assert(bc_program_entry_info(other,wrong,main_name,main_name,&info,&diagnostic)==BC_INVALID_HANDLE);
-    assert(bc_program_release(other,wrong)==BC_INVALID_HANDLE);
+    reject_program_association(other,wrong,config,BC_INVALID_HANDLE);
     assert(bc_preview_program_release(other,wrong)==BC_OK);
     assert(bc_preview_engine_destroy(other)==BC_OK);
     revision_two_instances(engine,program);
-    assert(bc_program_entry_info(engine,program,main_name,main_name,&info,&diagnostic)==BC_INVALID_HANDLE);
-    assert(bc_program_release(engine,program)==BC_INVALID_HANDLE);
+    reject_program_association(engine,program,config,BC_INVALID_HANDLE);
+    puts("PASS: invalid Program associations preserve entry info and expose no Instance");
 }
 
 static void set_control_budget(uint8_t *field,unsigned bytes){

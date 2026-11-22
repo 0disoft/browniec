@@ -182,6 +182,13 @@ and the shared 4096-byte source ceiling. Local receipt:
 `build/embed-preview-ow92mzge/receipt.json`.
 Both builds also verify the entry info fields, failure output preservation,
 and rejection across threads, Engines, ABI revisions and stale handles.
+The association regression exercises entry queries, Instance creation, and
+Program release with malformed handles, wrong handle kinds, a different
+Engine, stale Engine and Program handles, a different ABI revision, and a
+foreign thread. The entry info bytes are untouched and the Instance handle is
+zero on refusal. The valid owner then runs the original Program successfully.
+The C host passed against the same Windows development and optimized DLLs.
+Local receipt: `build/embed-associations-2rtkkah2/receipt.json`.
 
 The named-entry fixtures pass in both Windows profiles. A shared-byte rule
 returns 77 after the caller overwrites both name buffers and releases the
