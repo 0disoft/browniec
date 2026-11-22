@@ -228,7 +228,11 @@ Program to return 77. Local receipt: `build/embed-preview-nee8smeg/receipt.json`
 
 Both Windows builds verified rejected input and run configurations, setup
 Fuel exhaustion, two Program pins, and foreign-thread and stale-handle
-rejection during Instance destruction.
+rejection during Instance destruction. The C host also exercises zero,
+maximum, Engine, Program, and stale Instance handles across step, reply,
+cancel, and destroy. A rejected step leaves the event untouched and a
+rejected reply reports `BC_INVALID_HANDLE`. The stale handle's slot is already
+occupied by a new Instance that still completes with result 77.
 
 Both builds also verified that two Instances sharing a byte-input Program
 retain different snapshots of the same caller buffer. After the buffer was

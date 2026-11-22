@@ -111,6 +111,22 @@ static bc_slice named_run(const char *fixture,uint8_t *out,size_t capacity,
     return (bc_slice){out,(size_t)length};
 }
 
+static void reject_instance_handles(bc_handle engine,bc_handle program,bc_handle stale){
+    const bc_handle invalid[]={0,UINT64_MAX,engine,program,stale};
+    const bc_event sentinel={.struct_size=sizeof(sentinel),.kind=UINT32_MAX,.fuel_used=UINT64_MAX};
+    for(size_t i=0;i<sizeof(invalid)/sizeof(invalid[0]);++i){
+        bc_event event;
+        memcpy(&event,&sentinel,sizeof(event));
+        bc_diagnostic diagnostic={.struct_size=sizeof(diagnostic)};
+        assert(bc_step(invalid[i],64,&event)==BC_INVALID_HANDLE);
+        assert(memcmp(&event,&sentinel,sizeof(event))==0);
+        assert(bc_host_reply(invalid[i],1,BC_REPLY_FATAL,(bc_slice){0},&diagnostic)==BC_INVALID_HANDLE);
+        expect_diagnostic(&diagnostic,BC_INVALID_HANDLE);
+        assert(bc_cancel(invalid[i])==BC_INVALID_HANDLE);
+        assert(bc_instance_destroy(invalid[i])==BC_INVALID_HANDLE);
+    }
+}
+
 static void revision_two_instances(bc_handle engine,bc_handle program){
     uint8_t config[1024];
     const size_t length=read_fixture("run.json",config,sizeof(config));
@@ -128,7 +144,14 @@ static void revision_two_instances(bc_handle engine,bc_handle program){
     memcpy(fuel,"       1",8);
     assert(bc_instance_create(engine,program,empty,json,&first,&diagnostic)==BC_RESOURCE_LIMIT && first==0);
     memcpy(fuel,"10000000",8);
+    bc_handle stale=0;
+    assert(bc_instance_create(engine,program,empty,json,&stale,&diagnostic)==BC_OK);
+    assert(bc_instance_destroy(stale)==BC_OK);
     assert(bc_instance_create(engine,program,empty,json,&first,&diagnostic)==BC_OK);
+    assert((uint32_t)first==(uint32_t)stale && first!=stale);
+    reject_instance_handles(engine,program,stale);
+    assert(bc_program_release(engine,first)==BC_INVALID_HANDLE);
+    assert(bc_engine_destroy(first)==BC_INVALID_HANDLE);
     uint8_t *frames=(uint8_t *)strstr((const char *)config,"\"call_frames\":128");
     assert(frames);
     frames+=sizeof("\"call_frames\":")-1;
