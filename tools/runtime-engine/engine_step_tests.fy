@@ -1203,12 +1203,12 @@ fn Result<usize,u8> record_scan_publication_deadline(){
     let ref u8[] source=ref input.data[..input.used];
     let ref context::Table scope=ref input.context;
     unsafe{bc_runtime_engine_test_set_clock(199)};
-    switch(record_scan::scan_scoped_until(source,scope,200)){
+    switch(record_scan::scan_scoped_until(source,scope,200,16)){
         case .ok(table):{assert(table.layouts.count==1 && table.layouts.fields[0]==1);}
         case .err(_):{assert(false);}
     };
     unsafe{bc_runtime_engine_test_expire_in_record_scan(200,2)};
-    switch(record_scan::scan_scoped_until(source,scope,200)){
+    switch(record_scan::scan_scoped_until(source,scope,200,16)){
         case .ok(_):{assert(false);}
         case .err(e):{assert(e.kind==errors::deadline_kind() && e.location==errors::absent_location());}
     };
@@ -1361,8 +1361,9 @@ fn Result<usize,u8> place_plan_deadline(ref mut engine::Engine e,ref configs::Ru
     var usize mode=0;
     while(mode<4){
         var u8 scan=1;
-        while(scan<=if(mode<2){2}else{4}){
-            let usize start=100+(mode*4+(scan as usize)-1)*20000000;
+        // Output preparation reuses the aggregate and record scan results.
+        while(scan<=2){
+            let usize start=100+(mode*2+(scan as usize)-1)*20000000;
             unsafe{bc_runtime_engine_test_set_clock(start)};
             unsafe{bc_runtime_engine_test_expire_in_plan(start+20000000,scan,0)};
             let Result<usize,engine::Error> result=if(mode==0){engine::compile(e,selected(ordinary)?,65536)}
@@ -1388,21 +1389,17 @@ fn Result<usize,u8> list_plan_deadline(ref mut engine::Engine e,ref configs::Run
     let Heap idle=heap();
     var usize mode=0;
     while(mode<4){
-        var u8 scan=1;
-        while(scan<=if(mode<2){1}else{2}){
-            let usize start=100+(mode*2+(scan as usize)-1)*20000000;
-            unsafe{bc_runtime_engine_test_set_clock(start)};
-            unsafe{bc_runtime_engine_test_expire_in_plan(start+20000000,scan,1)};
-            let Result<usize,engine::Error> result=if(mode==0){engine::compile(e,selected(ordinary)?,65536)}
-                else if(mode==1){engine::compile_input(e,selected_input(input)?,65536)}
-                else if(mode==2){engine::compile_output(e,selected(output)?,65536)}
-                else{engine::compile_granted_output(e,indexed(both)?,run,65536)};
-            rejected_compile_deadline(result);
-            unsafe{bc_runtime_engine_test_plan_stopped()};
-            counts(e,0,0,0);same_heap(ref idle);
-            assert(retained(e).program_bytes==0);
-            scan+=1;
-        }
+        let usize start=100+mode*20000000;
+        unsafe{bc_runtime_engine_test_set_clock(start)};
+        unsafe{bc_runtime_engine_test_expire_in_plan(start+20000000,1,1)};
+        let Result<usize,engine::Error> result=if(mode==0){engine::compile(e,selected(ordinary)?,65536)}
+            else if(mode==1){engine::compile_input(e,selected_input(input)?,65536)}
+            else if(mode==2){engine::compile_output(e,selected(output)?,65536)}
+            else{engine::compile_granted_output(e,indexed(both)?,run,65536)};
+        rejected_compile_deadline(result);
+        unsafe{bc_runtime_engine_test_plan_stopped()};
+        counts(e,0,0,0);same_heap(ref idle);
+        assert(retained(e).program_bytes==0);
         mode+=1;
     }
     unsafe{bc_runtime_engine_test_use_os_clock()};

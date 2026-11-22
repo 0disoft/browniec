@@ -1,5 +1,5 @@
-- Latest runtime checkpoint (2026-11-22): [Catalog Engine publication](docs/engineering/restricted-worker.md#catalog-engine-publication)
-  prepays final admission and transfers the single host owner vector into the Engine.
+- Latest runtime checkpoint (2026-11-22): [Native Engine verification](docs/engineering/runtime-engine.md#focused-verification)
+  passes both Windows profiles with the reviewed current compiler transport.
 
 # Brownie C agent guidance
 

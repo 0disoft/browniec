@@ -135,6 +135,14 @@ Logs, complete commands, emitted C, runtime objects, binaries and receipt remain
 under `build/runtime-engine/<UTC-run>/`. Input hashes are checked before and after
 execution; the isolated lock and root lock are unchanged.
 
+The refreshed verification reviews 63 private bindings and 69 layouts,
+including the by-value catalog Program vector and the retained output flag
+before cached preparation. The deadline fixtures cover the single list scan
+and both place scans on each compile route. Windows /Od and /O2 matched all
+404 input fingerprints, exited successfully with the default stack, and
+reported zero live heap allocations. Local receipt:
+`build/runtime-engine/20261122T054429859886Z/receipt.json`.
+
 R01 remains partial: public generation-handle association, complete policy/run
 binding and the accepted runtime API remain open. R02-R05 still need complete
 reservation/accounting and OOM injection, bounded VM steps, OS deadlines,

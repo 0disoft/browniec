@@ -211,7 +211,7 @@ int main(void){
  int code=generated_main();if(code!=0||probe_live()!=0)return 99;
  FILE *metrics=fopen("preparation-metrics.json","wb");assert(metrics);
  assert(fprintf(metrics,"{\"cacheBytes\":%zu,\"storedBytes\":%zu,\"previousStoredBytes\":%zu,\"retainedVecExtraBytes\":%zu,\"capturePlanBytes\":%zu,\"previousCacheBytes\":%zu,\"capturePlanVecExtraBytes\":%zu}\n",
-  sizeof(bc_output_preparation),sizeof(bc_output_stored),offsetof(bc_output_stored,f_4),8*sizeof(bc_output_preparation),
+  sizeof(bc_output_preparation),sizeof(bc_output_stored),offsetof(bc_output_stored,BC_OUTPUT_PREPARATION_FIELD),8*sizeof(bc_output_preparation),
   sizeof(bc_call_capture_plan),offsetof(bc_output_preparation,f_8),8*(sizeof(bc_output_preparation)-offsetof(bc_output_preparation,f_8)))>0);
  assert(fclose(metrics)==0);
  FILE *fills=fopen("array-fill-metrics.json","wb");assert(fills);

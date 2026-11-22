@@ -1,7 +1,7 @@
 """Execute the private owning Engine/Program/Instance lifecycle on native Windows."""
 import argparse
 from compiler_scratch_layouts import reviewed_scratch
-from runtime_engine_transport import bindings_header
+from runtime_engine_transport import OUTPUT_PREPARATION_FIELD, bindings_header
 from datetime import datetime, timezone
 import importlib.util
 import json
@@ -151,18 +151,22 @@ def source_copy(path):
         declaration = 'fn Result<Program,diagnostics::Error> finish_verified('
         need(text.count(declaration) == 1, 'Output preparation deadline probe declaration changed')
         head, body = text.split(declaration)
+        retention = 'fn Result<Program,diagnostics::Error> retain('
+        need(body.count(retention) == 1, 'Output retention deadline probe declaration changed')
+        body, tail = body.split(retention)
         check = '    if(clock::expired(deadline)){return .err(absent(errors::absent(errors::deadline_kind(),0)));}'
-        need(body.count(check) == 6, 'Output preparation deadline probe anchors changed')
+        need(body.count(check) == 5 and tail.count(check) == 4, 'Output preparation deadline probe anchors changed')
         parts = body.split(check)
         body = parts[0]
         for stage, rest in enumerate(parts[1:], 1):
             body += f'    unsafe{{bc_runtime_engine_test_output_prepare_step({stage})}};\n' + check + rest
+        tail = tail.replace(check, '    unsafe{bc_runtime_engine_test_output_prepare_step(6)};\n' + check, 1)
         probe = 'unsafe extern C fn void bc_runtime_engine_test_output_prepare_step(u8 stage);\n'
-        return path.name, (head + probe + declaration + body).encode('utf-8')
+        return path.name, (head + probe + declaration + body + retention + tail).encode('utf-8')
     if path.name in ('aggregate_place_vm.fy', 'record_place_vm.fy', 'array_list_vm.fy') and path.parent == ROOT / 'src':
         plan_kind = 1 if path.name == 'array_list_vm.fy' else 0
         text = path.read_text(encoding='utf-8')
-        signature = 'pub fn Result<Requirement,errors::Error> requirement_until('
+        signature = 'pub fn Result<Requirement,errors::Error> requirement_with_compile_fuel('
         anchor = '        if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}'
         need(text.count(signature) == text.count(anchor) == 1, 'Execution planning deadline probe anchors changed')
         declaration = 'unsafe extern C fn void bc_runtime_engine_test_plan_visit(usize pc,u8 kind);\n'
@@ -216,8 +220,8 @@ def source_copy(path):
         return path.name, text.encode('utf-8')
     if path == ROOT / 'src/function_scan_work.fy':
         text = path.read_text(encoding='utf-8')
-        declaration = 'pub fn Result<raw::Table,errors::Error> scan_indexed_until('
-        begin = '    var State w=indexed(selected,returns);var budget::State meter=budget::empty();'
+        declaration = 'pub fn Result<raw::Table,errors::Error> scan_indexed_metered('
+        begin = '    w.result.scalar_host_calls=host;var budget::State meter=budget::empty();'
         step = '        let bool done=advance_indexed(source,scope,index,ref mut w,ref mut meter)?;'
         need(text.count(declaration) == 1, 'Signature deadline probe declaration changed')
         head, timed = text.split(declaration)
@@ -557,7 +561,7 @@ def main():
         layout_types['compileOutputProofVectorType']=contract['compileOutputProofVectorType']
         layout_types['compileCandidateVectorType']=contract['compileCandidateVectorType']
         need(set(layout_types) == set(contract['reviewedLayouts']), 'Reviewed layout set changed')
-        cached_field=re.search(r'\b(fy_struct_\d+) f_4;',contract['reviewedLayouts']['output_stored'])
+        cached_field=re.search(rf'\b(fy_struct_\d+) f_{OUTPUT_PREPARATION_FIELD};',contract['reviewedLayouts']['output_stored'])
         need(cached_field is not None and cached_field.group(1)==contract['preparationType'],
              'Output Program preparation projection differs')
         for owner,field,key in [('programType',9,'hostProgramVectorType'),('outputType',3,'hostExchangeVectorType'),('outputType',1,'executionType'),('outputType',2,'pendingVectorType'),

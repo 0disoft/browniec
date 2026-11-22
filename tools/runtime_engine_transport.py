@@ -2,6 +2,9 @@
 
 import re
 
+# The retained emit flag precedes the cached preparation data.
+OUTPUT_PREPARATION_FIELD = 5
+
 def project_layouts(t, c, *, host_compile=True):
     c['bindings']={}
     for number,tail in re.findall(r'bc_runtime_engine_binding\(UINT32_C\((\d+)\)\);(.*?)(?=bc_runtime_engine_binding|\Z)',t,re.S):
@@ -134,8 +137,7 @@ def project_layouts(t, c, *, host_compile=True):
     assert arg(26,10)==c['callMetadataType']
     assert re.fullmatch(r'\s*'+re.escape(c['callMetadataType'])+r'\s*\*\s*fy_l_\d+\s*',decl(26).split('(',1)[1].split(',')[10])
     c['transactionType']=field_type(c['machineType'],6)
-    # The retained emit flag precedes the cached preparation data.
-    c['preparationType']=field_type(c['programVariants']['output']['stored'],5)
+    c['preparationType']=field_type(c['programVariants']['output']['stored'],OUTPUT_PREPARATION_FIELD)
     c['capturePlanType']=field_type(c['preparationType'],8)
     types={k:c[k] for k in ['engineType','programType','instanceType','boundInputType','outputType','sourceIndexType','sourceIndexVectorType','programVectorType','snapshotType','snapshotVectorType','machineType','coreType','executionType','pendingVectorType','completionType','publishedVectorType','pendingMetaType','cursorType','outputCopyType','transactionType']}
     for variant,rows in c['programVariants'].items():types.update({variant+'_'+k:v for k,v in rows.items()})
@@ -170,6 +172,7 @@ def bindings_header(contract):
     bindings += f'typedef {contract["outputVectorType"]} bc_engine_outputs;\n'
     bindings+=f'typedef {contract["machineType"]} bc_pending_machine;\ntypedef {contract["coreType"]} bc_pending_core;\n'
     bindings+=f'typedef {contract["preparationType"]} bc_output_preparation;\n'
+    bindings+=f'#define BC_OUTPUT_PREPARATION_FIELD f_{OUTPUT_PREPARATION_FIELD}\n'
     bindings+=f'typedef {contract["arrayFillType"]} bc_array_fill_work;\ntypedef {contract["cursorType"]} bc_dispatch_cursor;\n'
     bindings += f'typedef {contract["callCopyType"]} bc_call_copy_work;\n'
     bindings += f'typedef {contract["returnWorkType"]} bc_return_work;\n'

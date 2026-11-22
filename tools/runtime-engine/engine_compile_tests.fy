@@ -151,7 +151,8 @@ fn i64 fault_at(usize ordinal){
 pub fn void requirements_follow_typed_layouts_and_default_working_cap(){
     clean();let usize ordinary=required(0);let usize input=required(1);
     assert(bounded::working_bound()==66630144);
-    assert(ordinary==66804544 && input==66804928 && input-ordinary==384);
+    // Eight Index slots also retain the Fuel and semantic depth words.
+    assert(ordinary==66804672 && input==66805056 && input-ordinary==384);
     assert(required(2)==ordinary && required(3)==input);clean();
     {
         var engine::Engine e=switch(engine::create(count_limits())){
