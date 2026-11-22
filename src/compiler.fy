@@ -3030,7 +3030,12 @@ fn Result<bool, errors::Error> control_return(ref u8[] source, ref mut lexer::St
     let bool matches=if(types::host_result_type(result_type)){
         host_source::is_saved(p,value) && p.types[value+1]==result_type
     }else{p.types[value]==result_type};
-    if(!matches){return .err(errors::make(3,at));}
+    if(!matches){
+        if(types::scalar(result_type) && types::scalar(p.types[value])){
+            return .err(errors::return_type(at,result_type,p.types[value],signatures.begins[table.function]));
+        }
+        return .err(errors::make(3,at));
+    }
     let usize end = lexer::punctuation(source, s, 59)?;
     let usize dropped = arrays::release_visible(table, p, at)?;
     let usize returned = ir::emit(p, 8, value, 0, at)?;

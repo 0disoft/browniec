@@ -84,7 +84,14 @@ pub fn Result<bool,errors::Error> advance(ref u8[] source,ref mut lexer::State s
     if(phase==17){w.value=locals::declare(names,w.begin,w.end,w.target,w.mutable)?;w.done=true;return .ok(true);}
     if(phase==30){if(w.kind==3){if(s.kind!=59){return .err(errors::make(3,s.begin));}return take(w,s,0,34);}
         evaluate(w,31);return .ok(false);}
-    if(phase==31){if(p.types[value]!=w.tag){return .err(errors::make(3,w.at));}return take(w,s,59,34);}
+    if(phase==31){
+        let u8 actual=p.types[value];
+        if(actual!=w.tag){
+            if(types::scalar(actual)){return .err(errors::return_type(w.at,w.tag,actual,signatures.begins[names.function]));}
+            return .err(errors::make(3,w.at));
+        }
+        return take(w,s,59,34);
+    }
     if(phase==34){if(names.pending_places>65535){return .err(errors::make(3,w.at));}w.pending=names.pending_places;w.row=16;w.phase=35;return .ok(false);}
     if(phase==35){if(w.row==0){w.row=names.count;w.phase=36;return .ok(false);}
         let usize row=w.row-1;let usize one=1;if((w.pending&(one<<row))!=0){let usize ended=ir::place_end(p,row,w.at)?;}w.row=row;return .ok(false);}

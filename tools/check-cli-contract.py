@@ -57,6 +57,30 @@ def check_diagnostic(exe, path, code, kind, location, text):
         assert type(v2['location']['offset']) is int, v2
 
 
+def check_scalar_mismatch(exe, args, source, at, related, declaration, actual='u32'):
+    def position(offset):
+        return {
+            'line': source.count(b'\n', 0, offset) + 1,
+            'byte_column': offset - source.rfind(b'\n', 0, offset),
+        }
+
+    def described(offset):
+        point = position(offset)
+        return f"byte {offset} (line {point['line']}, byte column {point['byte_column']})"
+
+    ran = invoke(exe, args, 3)
+    assert not ran.stdout and ran.stderr.splitlines() == [
+        (f'browniec: type at {described(at)}, expected i32, got {actual}, '
+         f'{declaration} declared at {described(related)}').encode()
+    ], ran
+    assert check_json(exe, args, 3) == {'kind': 'type', 'byte_offset': at}
+    assert check_json(exe, args, 3, version=2) == {
+        'kind': 'type', 'location': {'kind': 'source_byte', 'offset': at, **position(at)},
+        'expected_type': 'i32', 'actual_type': actual,
+        'related_location': {'kind': 'source_byte', 'offset': related, **position(related)},
+    }
+
+
 def check_argument_types(exe, directory):
     path = directory / 'argument-types.brc'
     declaration = b'module main;\nfn i32 price(i32 cents) { return cents; }\n'
@@ -69,33 +93,28 @@ def check_argument_types(exe, directory):
         path.write_bytes(source)
         call = source.index(b'price(cost)')
         formal = source.index(b'cents')
-        def position(offset):
-            return {
-                'line': source.count(b'\n', 0, offset) + 1,
-                'byte_column': offset - source.rfind(b'\n', 0, offset),
-            }
-
-        def described(offset):
-            point = position(offset)
-            return f"byte {offset} (line {point['line']}, byte column {point['byte_column']})"
-
-        ran = invoke(exe, args, 3)
-        assert not ran.stdout and ran.stderr.splitlines() == [
-            (f'browniec: type at {described(call)}, expected i32, got u32, '
-             f'parameter declared at {described(formal)}').encode()
-        ], ran
-        assert check_json(exe, args, 3) == {'kind': 'type', 'byte_offset': call}
-        assert check_json(exe, args, 3, version=2) == {
-            'kind': 'type', 'location': {'kind': 'source_byte', 'offset': call, **position(call)},
-            'expected_type': 'i32', 'actual_type': 'u32',
-            'related_location': {'kind': 'source_byte', 'offset': formal, **position(formal)},
-        }
+        check_scalar_mismatch(exe, args, source, call, formal, 'parameter')
 
     source = declaration + b'fn i32 main() { return price(); }\n'
     path.write_bytes(source)
     error = check_json(exe, ['check', path], 3, version=2)
     assert error == {'kind': 'type', 'location': {'kind': 'source_byte', 'offset': source.index(b'price()')}}
     print('PASS: scalar call argument types and declaration in text and JSON v2 with JSON v1 compatibility')
+
+
+def check_return_types(exe, directory):
+    path = directory / 'return-types.brc'
+    source = ('module main;\nfn i32 price() { let u32 cost = 1; /* 배송 */ return cost; }\n'
+              'fn i32 main() { return price(); }\n').encode()
+    path.write_bytes(source)
+    for command in ('check', 'run'):
+        check_scalar_mismatch(exe, [command, path], source, source.index(b'return cost'),
+                              source.index(b'price()'), 'function')
+    source = 'module main;\r\nfn i32 evaluate(i32 cents) { /* 배송 */ return cents < 30000; }\r\n'.encode()
+    path.write_bytes(source)
+    check_scalar_mismatch(exe, ['eval-i32', path, 0], source, source.index(b'return cents'),
+                          source.index(b'evaluate'), 'function', actual='bool')
+    print('PASS: scalar return types and function declaration in text and JSON v2 with JSON v1 compatibility')
 
 
 def check_output_table(exe, identity, host_check, host_run, project_host_check, project_host_run,
@@ -1181,6 +1200,7 @@ def main():
                          {'kind': 'none'}, b'browniec: input_io')
         print('PASS: source byte zero and absent location in text, JSON v1 and JSON v2')
         check_argument_types(exe, Path(temp))
+        check_return_types(exe, Path(temp))
 
         for source, number, expected in (
             (shipping, 29999, 3000), (shipping, 30000, 0),
