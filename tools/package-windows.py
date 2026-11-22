@@ -1,10 +1,12 @@
-"""Assemble and smoke-test a local Windows x64 Brownie C candidate."""
+"""Assemble or verify a Windows x64 Brownie C candidate."""
 
 import argparse
 import hashlib
+from io import BytesIO
 import json
 import os
 from pathlib import Path
+import re
 import shutil
 import struct
 import subprocess
@@ -14,6 +16,10 @@ from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
 
 ROOT = Path(__file__).resolve().parents[1]
 CHECKSUMS = "SHA256SUMS.txt"
+CLI_FILES = {"browniec.exe", "examples/answer.brc"}
+EMBED_HEADERS = ("brownie.h", "brownie_preview.h")
+EMBED_FILES = {"embed/brownie-preview.dll", "embed/brownie-preview.lib",
+               *(f"embed/include/{name}" for name in EMBED_HEADERS)}
 
 
 def sha256(data):
@@ -44,17 +50,27 @@ def write_archive(archive, files):
             bundle.writestr(member, data, compress_type=ZIP_DEFLATED, compresslevel=9)
 
 
-def unpack_verified(archive, names, destination):
+def unpack_verified(archive, destination, expected_embed):
     with ZipFile(archive) as bundle:
-        if sorted(bundle.namelist()) != sorted([*names, CHECKSUMS]):
+        members = bundle.namelist()
+        names = set(members) - {CHECKSUMS}
+        if (len(members) != len(names) + 1 or CHECKSUMS not in members or
+                names not in (CLI_FILES, CLI_FILES | EMBED_FILES)):
             raise ValueError("Unexpected Windows candidate ZIP entries")
         files = {name: bundle.read(name) for name in names}
         if checksums(files) != bundle.read(CHECKSUMS):
             raise ValueError("Windows candidate ZIP checksum mismatch")
+    require_windows_x64(files["browniec.exe"])
+    embedded = names & EMBED_FILES
+    if embedded:
+        require_windows_x64(files["embed/brownie-preview.dll"], dll=True)
+    if expected_embed and {name: files[name] for name in embedded} != expected_embed:
+        raise ValueError("Packaged embedding payload does not match the selected build")
     for name, data in files.items():
         path = destination / name
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_bytes(data)
+    return bool(embedded)
 
 
 def runtime_environment(directory):
@@ -100,7 +116,7 @@ def embed_files(profile):
     if receipt["importLibrarySha256"].get(profile.name) != sha256(library):
         raise ValueError("Embedding import library does not match its build receipt")
     files = {"embed/brownie-preview.dll": dll, "embed/brownie-preview.lib": library}
-    for name in ("brownie.h", "brownie_preview.h"):
+    for name in EMBED_HEADERS:
         header = (profile.parent / "include" / name).read_bytes()
         if receipt["headerSha256"].get(name) != sha256(header):
             raise ValueError(f"Embedding header {name} does not match its build receipt")
@@ -122,41 +138,73 @@ def smoke_embed(profile, directory):
         raise ValueError(f"Packaged embedding DLL failed: {result}")
 
 
-def main():
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--exe", type=Path, required=True)
-    parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--embed", type=Path, metavar="PROFILE_DIR",
-                        help="include a profile from tools/build-embed-preview.py")
-    args = parser.parse_args()
-    if os.name != "nt":
-        parser.error("Windows is required to verify the candidate")
-    output = args.output.absolute()
-    if output.exists():
-        parser.error(f"Output already exists: {output}")
+def verify_candidate(archive, destination, profile, expected_embed):
+    embedded = unpack_verified(archive, destination, expected_embed)
+    smoke(destination)
+    if profile:
+        smoke_embed(profile, destination / "embed")
+    return embedded
+
+
+def assemble(exe, output, profile, expected_embed):
     files = {
-        "browniec.exe": args.exe.read_bytes(),
+        "browniec.exe": exe.read_bytes(),
         "examples/answer.brc": (ROOT / "examples/answer.brc").read_bytes(),
+        **expected_embed,
     }
-    require_windows_x64(files["browniec.exe"])
-    if args.embed:
-        files.update(embed_files(args.embed))
     output.parent.mkdir(parents=True, exist_ok=True)
     with TemporaryDirectory(prefix="browniec-candidate-", dir=output.parent) as temporary:
         directory = Path(temporary)
         archive = directory / "candidate.zip"
         write_archive(archive, {**files, CHECKSUMS: checksums(files)})
-        installed = directory / "installed"
-        unpack_verified(archive, files, installed)
-        smoke(installed)
-        if args.embed:
-            smoke_embed(args.embed, installed / "embed")
+        embedded = verify_candidate(archive, directory / "installed", profile, expected_embed)
         digest = sha256(archive.read_bytes())
         archive.rename(output)
+    return digest, embedded
+
+
+def verify_existing(archive, digest, profile, expected_embed):
+    snapshot = archive.read_bytes()
+    if sha256(snapshot) != digest:
+        raise ValueError("Windows candidate ZIP differs from the expected SHA-256")
+    with BytesIO(snapshot) as stream, TemporaryDirectory(prefix="browniec-candidate-") as temporary:
+        return verify_candidate(stream, Path(temporary), profile, expected_embed)
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    source = parser.add_mutually_exclusive_group(required=True)
+    source.add_argument("--exe", type=Path, help="assemble a ZIP from a local executable")
+    source.add_argument("--verify", type=Path, metavar="ZIP", help="verify an existing ZIP")
+    parser.add_argument("--output", type=Path, help="destination for assembly")
+    parser.add_argument("--sha256", help="expected ZIP SHA-256 for verification")
+    parser.add_argument("--embed", type=Path, metavar="PROFILE_DIR",
+                        help="include or verify a profile from tools/build-embed-preview.py")
+    args = parser.parse_args()
+    if os.name != "nt":
+        parser.error("Windows is required to verify the candidate")
+    if args.verify:
+        if args.output or not re.fullmatch("[0-9a-fA-F]{64}", args.sha256 or ""):
+            parser.error("--verify requires --sha256 with 64 hex digits and takes no --output")
+        archive = args.verify.resolve(strict=True)
+        digest = args.sha256.lower()
+    else:
+        if not args.output or args.sha256:
+            parser.error("--exe requires --output and takes no --sha256")
+        archive = args.output.absolute()
+        if archive.exists():
+            parser.error(f"Output already exists: {archive}")
+    expected_embed = embed_files(args.embed) if args.embed else {}
+    if args.verify:
+        embedded = verify_existing(archive, digest, args.embed, expected_embed)
+    else:
+        digest, embedded = assemble(args.exe, archive, args.embed, expected_embed)
     print("PASS Windows CLI candidate: check and run (77), exit 0, empty stderr")
     if args.embed:
         print("PASS Windows embedding candidate: extracted DLL passed its C host")
-    print(f"{digest}  {output}")
+    elif embedded:
+        print("PASS Windows embedding payload: verified archive entries, checksums and DLL architecture")
+    print(f"{digest}  {archive}")
 
 
 if __name__ == "__main__":

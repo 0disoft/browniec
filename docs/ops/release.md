@@ -35,9 +35,43 @@ This checks local execution on the packaging machine. Clean-machine
 verification and the license/dependency notices are separate delivery
 requirements. Candidate assembly uploads nothing.
 
+## Verify an existing candidate
+
+Use the ZIP digest recorded at candidate assembly or in the approved release
+record. Verify the candidate before selecting it for promotion or rollback:
+
+```powershell
+python -B tools/package-windows.py --verify $candidateZip --sha256 $recordedZipSha256
+```
+
+Verification checks the exact ZIP digest, the expected member names and each
+member digest. It runs the same quickstart from a fresh temporary extraction
+and leaves the ZIP untouched. For candidates with embedding, pass the matching
+build profile directory via `--embed` to verify and run its C host. The
+profile receipt must match the DLL, import library and both headers in the ZIP.
+Without the profile directory, verification covers the embedded files'
+integrity and the DLL architecture.
+
+Keep each candidate in its own directory and record its source revision, ZIP
+digest, and whether it contains the embedding preview. The CLI delivery unit
+includes the executable, example and checksum manifest. The embedding preview
+adds one DLL, its matching import library and both headers as a single payload.
+Keep the previous verified ZIP and its record until the updated candidate
+passes the consumer's smoke checks. To restore the previous version, verify
+that ZIP with its recorded digest, extract it to a fresh directory, and point
+the consumer to the previous executable or matching set of embedding files.
+For embedding, stop processes using the current DLL before switching the set.
+
+The local Windows rehearsal verified the new optimized candidate and then the
+previous one. Each ZIP passed the CLI quickstart and its matching embedding C
+host, and both ZIP digests were unchanged by verification. A CLI-only ZIP also
+passed. Six rejection cases covered the wrong ZIP digest, wrong or absent
+embedding payload, changed member content, duplicate members and unexpected
+members. Evidence: `build/package-recheck-blwf0uqu/receipt.json`.
+
 ## Required Decisions
 
-- Release unit: UNDECIDED. Define the version, artifact identity, included changes, destination, and owner of the promotion decision.
+- Public promotion: UNDECIDED. Define the version, destination, and owner of the promotion decision.
 - Compatibility and ordering: UNDECIDED. Identify consumer, configuration, and data compatibility requirements and dependencies that constrain the release sequence.
 - Promotion evidence: UNDECIDED. Name required checks, artifact validation, and user-visible acceptance criteria tied to the exact candidate.
 - Activation and observation: UNDECIDED. Define rollout stages, health windows, stop conditions, communication, and how published artifacts differ from active runtime state.
