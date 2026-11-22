@@ -260,6 +260,30 @@ in accounted peak was exactly 1,096 bytes per frame. Local evidence:
 `build/embed-preview-6me9336n/receipt.json`, and
 `build/embed-allocations-rt666_xs`.
 
+## Retained Windows CLI builds
+
+Run the retention check against an installed pinned compiler:
+
+```powershell
+python -B tools/verify-retained-builds.py
+```
+
+The default workload is 100 locked release builds in one isolated copy of the
+project. Each edit changes the CLI version text, refreshes the lock, and checks
+that the executable reports that edit and returns 77 on the quickstart example.
+After each build the check accounts for the retained project output and looks
+for leftover files in the invocation scratch directory. A deliberate C
+compilation failure must leave the previous executable's digest intact and
+reclaim its scratch. Another scratch owner's sentinel stays intact.
+
+The two-edit development smoke retained exactly one 11,008,000-byte executable
+after each successful build. The failed build exited 6 and preserved the second
+executable. The pinned compiler itself occupied 18,591,232 bytes and is accounted
+separately. Local evidence: `build/retained-builds-6c9xrfxy/receipt.json`.
+The 100-edit run, machine-wide compiler cache size and cache eviction remain
+unverified. The check measures project file lengths and scratch remaining at
+command exit, excluding in-flight scratch peak and toolchain installation.
+
 ## Configured byte transform on Windows (2026-11-22)
 
 The [unframe project](../cli/configuration.md#validate-and-unwrap-a-binary-payload)
