@@ -15,6 +15,9 @@ The public CLI checks and runs one source file at a time. `check` verifies witho
 | `browniec check SOURCE` | — | `stderr` | — |
 | `browniec check SOURCE` | `--json` | `stdout` | `browniec.result/v1` |
 | `browniec check SOURCE` | `--json-v2` | `stdout` | `browniec.result/v2` |
+| `browniec check SOURCE --isolated` | — | `stderr` | — |
+| `browniec check SOURCE --isolated` | `--json` | `stdout` | `browniec.result/v1` |
+| `browniec check SOURCE --isolated` | `--json-v2` | `stdout` | `browniec.result/v2` |
 | `browniec check SOURCE --catalog FILE --policy FILE --run FILE` | — | `stderr` | — |
 | `browniec check SOURCE --catalog FILE --policy FILE --run FILE` | `--json` | `stdout` | `browniec.result/v1` |
 | `browniec check SOURCE --catalog FILE --policy FILE --run FILE` | `--json-v2` | `stdout` | `browniec.result/v2` |
@@ -24,6 +27,9 @@ The public CLI checks and runs one source file at a time. `check` verifies witho
 | `browniec run SOURCE --catalog FILE --policy FILE --run FILE --host-replies FILE` | — | `stderr` | — |
 | `browniec run SOURCE --catalog FILE --policy FILE --run FILE --host-replies FILE` | `--json` | `stdout` | `browniec.result/v1` |
 | `browniec run SOURCE --catalog FILE --policy FILE --run FILE --host-replies FILE` | `--json-v2` | `stdout` | `browniec.result/v2` |
+| `browniec run SOURCE --isolated [--fuel N]` | — | `stderr` | — |
+| `browniec run SOURCE --isolated [--fuel N]` | `--json` | `stdout` | `browniec.result/v1` |
+| `browniec run SOURCE --isolated [--fuel N]` | `--json-v2` | `stdout` | `browniec.result/v2` |
 | `browniec run SOURCE --catalog FILE --policy FILE --run FILE --host-adapter ID REVISION EXE` | — | `stderr` | — |
 | `browniec run SOURCE --catalog FILE --policy FILE --run FILE --host-adapter ID REVISION EXE` | `--json` | `stdout` | `browniec.result/v1` |
 | `browniec run SOURCE --catalog FILE --policy FILE --run FILE --host-adapter ID REVISION EXE` | `--json-v2` | `stdout` | `browniec.result/v2` |
@@ -62,7 +68,7 @@ The table shows successful output. A dash in the option column means the default
 - **`0`**: Completed cleanly (even when guest `return_i32` is non-zero)
 - **`2`**: Bad CLI flags or `--fuel` out of `0..16000000`
 - **`3`**: Compile/type/borrow failure or `compile_limit` exceeded
-- **`4`**: Unimplemented flag (`--isolated` → `unavailable`)
+- **`4`** — Policy, unsupported mode, or isolation setup rejection (`unavailable`)
 - **`5`**: Runtime trap or quota (`fuel`, `overflow`, `zero_divisor`, `bounds`, `frame_limit`)
 - **`6`**: Internal compiler/VM invariant error
 - **`7`**: Source file IO failure (`input_io`)
@@ -70,6 +76,6 @@ The table shows successful output. A dash in the option column means the default
 ## Common Errors and Fixes
 
 1. **`fuel` error (exit `5`) on loops or arrays**: Remember that array initialization costs `65,537` Fuel before `main()` runs. Pass `--fuel 100000` or `--fuel 1000000`.
-2. **`unavailable` (exit `4`) with `--isolated`**: Expected today—OS worker isolation is not enabled yet (`restricted: false`).
+2. **`unavailable` (exit `4`) with `--isolated`**: Windows supports single-file scalar `check` and `run`. Setup failures and unsupported combinations stop the command.
 3. **`compile_limit` (exit `3`) on larger files**: Public CLI input is capped at `4096` UTF-8 bytes, `1024` tokens, `16` functions, and `256` instructions.
 4. **Runtime trap (exit `5`)**: Check `error.kind` and `byte_offset` with `--json` to spot `overflow`, `zero_divisor`, or out-of-range `bounds`.

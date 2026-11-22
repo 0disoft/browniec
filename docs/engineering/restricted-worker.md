@@ -387,7 +387,7 @@ reports: `build/worker-result-thda5j4j/development.stdout`,
 
 ### Scalar source in the actual worker
 
-The Windows CLI image contains a private one-shot worker entry. The
+The Windows CLI image contains a broker-only one-shot worker entry. The
 [Windows shim](../../native/windows-scalar-worker.c) checks Job membership,
 the AppContainer token and byte-pipe client endpoints from the same server
 process before accepting HELLO. It validates the START header and length
@@ -487,8 +487,7 @@ keeps the image pinned through process reaping. It attempts deletion of the
 image, directory and profile after reaping, including on setup or execution
 failure. A successful worker result is delivered only after cleanup succeeds.
 Abrupt termination of the parent can leave its uniquely named stage and
-profile behind. The public restricted option is still gated on the broader
-authority and broker integration.
+profile behind. The public single-file scalar option uses this managed setup.
 
 Locked Windows development and /O2 each returned 77 with exit 0 and empty
 stderr using a fresh staging root. Both returned unavailable with exit 4 when
@@ -496,6 +495,23 @@ the root was absent. Native checks inspected the protected image DACL, rejected
 deletion while the image was pinned, verified profile-name reuse after
 cleanup and removed the partial image after a rejected empty input image.
 Local receipt: `build/restricted-worker/20261121T163857490321Z/receipt.json`.
+
+### Public scalar isolation
+
+Windows `check SOURCE --isolated` and `run SOURCE --isolated` select the
+managed scalar broker. The worker identifies retained syntax and denies it,
+compiles the scalar source, and rejects array and record programs before
+execution. The parent applies the requested CLI format to the broker result.
+Run passes the selected Fuel through START. Version JSON adds
+`restricted_scalar: true` for this single-file route.
+
+The locked development and /O2 images passed 11 public checks each, including
+a check in JSON v1, a run returning 77 in JSON v2 and text, zero Fuel,
+invalid UTF-8, duplicate options, unsupported input and aggregate and retained
+sources. A missing Windows staging directory returned exit 4 without a guest
+result. Both broker suites reported zero net handles. The /O2 CLI contract
+also verified the text and JSON output channels against all four language
+tables. Local receipt: `build/restricted-worker/20261122T085247354244Z/receipt.json`.
 
 ### Stops during managed staging
 
@@ -911,8 +927,8 @@ path govern guest resumption and publication.
 The private adapter caps each payload at 4096 bytes in addition to the run
 policy. The broker reserves both staging spans and the worst-case wire bytes
 for the configured call count. The current adapter serves explicit in-memory
-replies. Trusted process dispatch from the broker and public restricted
-admission are still open.
+replies. The process-backed successor is described above. Public restricted
+project admission is still open.
 
 Locked Windows development and /O2 builds each passed eleven catalog
 project cases, including two calls yielding 77, explicit input, successful
@@ -1857,4 +1873,4 @@ all three pipes and the repeat launch again had zero net handle growth.
 Local receipt: `build/restricted-worker/20261121T152431466055Z/receipt.json`.
 
 Broader Engine policy enforcement, broker phases and aggregate budgets are
-still required for the public restricted CLI.
+still required for the broader restricted CLI.

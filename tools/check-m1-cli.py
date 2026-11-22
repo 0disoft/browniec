@@ -407,7 +407,7 @@ for name, argv, code, error in [
     ("negative-fuel", ["run", fixture, "--json", "--fuel", "-1"], 2, "usage"),
     ("large-fuel", ["run", fixture, "--json", "--fuel", "16000001"], 2, "usage"),
     ("check-fuel", ["check", fixture, "--json", "--fuel", "1"], 2, "usage"),
-    ("isolated-unavailable", ["run", fixture, "--json", "--isolated"], 4, "unavailable"),
+    ("isolated-stdin-unavailable", ["run", fixture, "--json", "--isolated", "--stdin"], 4, "unavailable"),
     ("missing-file", ["run", output / "missing.brc", "--json"], 7, "input_io"),
 ]:
     ran = invoke(argv, code)

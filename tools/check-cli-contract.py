@@ -88,6 +88,8 @@ def check_output_table(exe, identity, host_check, host_run, project_host_check, 
             args = configured_arguments(CONFIGURED)[1:]
         elif row['arguments'].startswith('--project '):
             args = ['--project', project]
+        elif '--isolated' in row['arguments']:
+            args = [answer, '--isolated']
         else:
             args = sources.get(command, [])
         for mode in row['formats']:

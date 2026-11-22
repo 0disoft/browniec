@@ -26,5 +26,5 @@ In `browniec --version --json`, `"core": true` reflects the active public experi
 
 - **Windows 11 x64 (`MSVC`)**: Primary development and execution environment.
 - **Linux**: Pinned cross-build metadata exists in `toolchain.json`, but native Linux builds and execution remain unverified.
-- **Pending**: `--isolated` OS workers (`restricted: false`), C embedding (`embed: false`), `--project`, guest `--input`/output sinks, and CLI exposure for internal `Engine`/`Buffer` work.
+- Windows supports AppContainer/Job isolation for single-file scalar `check` and `run`. Broader isolation and C embedding are tracked by `restricted: false` and `embed: false`.
 - **Out of scope**: JIT, GC, floating point (`f32`/`f64`), raw pointers (`ptr`), arbitrary C FFI, and threads.

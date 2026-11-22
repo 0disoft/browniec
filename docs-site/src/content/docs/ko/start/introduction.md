@@ -27,4 +27,4 @@ Brownie C는 바로 이런 용도를 위해 **기능을 의도적으로 좁히�
 
 현재 공개 `browniec` CLI에서는 단일 `.brc` 파일(최대 4096바이트)에 대해 `check`, `run [--fuel N]`, `inspect --ir` 명령을 바로 실행할 수 있습니다. 스칼라 연산, `Option`/`Result` 분기와 `?` 전파, 고정 배열(`T[N]`), 평범한 `struct`, 바이트·텍스트 리터럴, 슬라이스(`ref u8[]`, `ref mut T[]`) 문법을 다룰 수 있습니다.
 
-반면 저장소 내부 코드나 설계 문서에 나오는 `Engine` 단계 실행, 게스트 `Buffer`, `--isolated` OS 격리 워커, C 임베딩 API는 아직 공개 CLI에 열려 있지 않거나 계획 단계입니다. 또한 **Fuel은 연산 횟수 카운터일 뿐 실제 시간 제한이나 OS 보안 격리를 대신하지는 않습니다.**
+Windows에서는 단일 파일 스칼라 `check`와 `run`을 AppContainer/Job으로 격리할 수 있습니다. 격리 지원 범위 확대와 C 임베딩은 각각 `restricted: false`, `embed: false`로 표시합니다.

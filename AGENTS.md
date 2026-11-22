@@ -1,5 +1,5 @@
-- Latest runtime checkpoint (2026-11-22): [Scalar source acquisition](docs/engineering/restricted-worker.md#scalar-source-acquisition)
-  snapshots a single regular local file before managed worker launch.
+- Latest runtime checkpoint (2026-11-22): [Public scalar isolation](docs/engineering/restricted-worker.md#public-scalar-isolation)
+  routes single-file check and run through the Windows worker and broker.
 
 # Brownie C agent guidance
 

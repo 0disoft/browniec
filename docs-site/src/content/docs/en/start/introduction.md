@@ -21,10 +21,10 @@ While Lua and Python are also used to run embedded scripts inside a host applica
 - **Static checking before anything runs**: Lua and Python check types dynamically at runtime, whereas Brownie C rejects mismatched integer types, missing `switch` cases, and conflicting `ref`/`ref mut` slice borrows before execution starts.
 - **No GC, no floats, and no ambient I/O**: General-purpose scripting languages include garbage collection, floating-point math, and standard OS/file modules. Brownie C leaves those out so small integer and byte checks stay deterministic.
 - **Built-in Fuel metering**: Instead of wiring custom interpreter hooks or watchdogs for infinite loops, Brownie C deducts `--fuel` on every VM operation and stops cleanly when the budget hits zero (while keeping in mind that Fuel is an operation counter, not a wall-clock timeout or OS sandbox).
-- **Scope and maturity**: Lua and Python are mature ecosystems with rich libraries and host APIs, while Brownie C is an early single-file (up to 4096-byte) rule/byte-checking language whose C embedding ABI and OS isolation are still planned.
+- **Scope and maturity**: Lua and Python are mature ecosystems with rich libraries and host APIs, while Brownie C is an early single-file (up to 4096-byte) rule/byte-checking language with Windows single-file scalar isolation.
 
 ## Public CLI vs. What Is Still Internal or Planned
 
 Today's public `browniec` CLI works on single `.brc` files (up to 4096 UTF-8 bytes) via `check`, `run [--fuel N]`, and `inspect --ir`, supporting scalars, `Option`/`Result` with `?`, fixed arrays, plain structs, byte/text literals, and slices (`ref u8[]`, `ref mut T[]`).
 
-Internal `Engine`/`Instance` APIs, guest `Buffer`, `--isolated` AppContainer/Job workers, `--project`/`--input` flags, and the C embedding ABI (`embed: false`, `restricted: false`) are either internal repo components or planned milestones. Keep in mind that **Fuel counts VM operations—it is not a wall-clock timeout or an OS security sandbox.**
+Windows supports AppContainer/Job isolation for single-file scalar `check` and `run`. Broader isolation and C embedding are tracked by `restricted: false` and `embed: false`.

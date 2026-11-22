@@ -40,4 +40,4 @@ python3 tools/setup-toolchain.py
 ./build/browniec.exe --version --json
 ```
 
-在 `--version --json` 的输出中，你会看到 `"fuel_default": 256`、`"fuel_limit": 16000000`、`"core": true`，以及 `"restricted": false` / `"embed": false`（表示操作系统级工作进程隔离和 C 嵌入功能尚未启用）。
+`restricted_scalar: true` 表示 Windows 单文件标量隔离。更广泛的受限执行和 C 嵌入仍待实现。 版本 JSON 还会报告 `"fuel_default": 256` 和 `"fuel_limit": 16000000`。

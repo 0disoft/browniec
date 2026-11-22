@@ -76,4 +76,4 @@ El presupuesto de Fuel predeterminado es `256`. Ejecutar un bucle como `examples
 
 - **Esperar que `return 77;` sea el código de salida del proceso**: Los retornos del programa huésped son datos (`return_i32`); los códigos de salida del proceso distintos de cero (`2`..`7`) indican errores.
 - **Olvidar `--fuel` con arrays**: La inicialización de arrays consume `65 537` de Fuel antes de que se ejecute `main()`, así que pasa `--fuel 100000` o un valor mayor.
-- **Superar los 4096 bytes o pasar `--isolated`**: La CLI pública rechaza los archivos que exceden el tamaño y las flags no implementadas en lugar de ignorarlos en silencio.
+- **Superar los 4096 bytes**: La CLI rechaza archivos individuales mayores.

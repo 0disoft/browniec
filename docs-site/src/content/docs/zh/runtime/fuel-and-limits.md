@@ -9,7 +9,7 @@ description: 了解 Fuel 的计量对象、为何数组与结构体程序需要�
 
 - <strong>确定性的操作预算</strong>：相同的程序在相同的 `--fuel` 下，始终执行完全相同的工作量，并在完全相同的位置停止。
 - <strong>不是真实时间计时器</strong>：Fuel 统计的是逻辑上的 VM 工作单元，而不是毫秒时间。
-- <strong>不是操作系统级安全沙箱</strong>：Fuel 用于防止失控循环；操作系统级工作进程隔离（`--isolated`）属于另一个规划中的层级（目前 `restricted: false`）。
+- <strong>Windows 进程隔离</strong>：使用 `--isolated` 运行标量代码时，还会应用 AppContainer 和 Job 限制。
 
 ## 默认值（`256`）与数组/记录预算
 

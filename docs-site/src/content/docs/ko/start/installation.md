@@ -40,4 +40,4 @@ python3 tools/setup-toolchain.py
 ./build/browniec.exe --version --json
 ```
 
-`--version`을 실행하면 현재 지원하는 프로파일 이름이 출력됩니다. `--version --json`에서는 `"fuel_default": 256`, `"fuel_limit": 16000000`, 그리고 아직 미구현인 `"restricted": false`, `"embed": false` 상태를 함께 확인할 수 있습니다.
+`restricted_scalar: true`는 Windows 단일 파일 스칼라 격리를 뜻합니다. 더 넓은 격리 프로파일과 C 임베딩은 준비 중입니다. 버전 JSON에서는 `"fuel_default": 256`, `"fuel_limit": 16000000`도 확인할 수 있습니다.

@@ -94,7 +94,7 @@ for record construction/parameters/results, UTF-8 and typed mutable/reborrow/ran
 temporary CALL slices. `core: true` does not certify full safe/0.3 completion:
 
 ```json
-{"schema":"browniec.version/v1","profile":"brownie.m1-scalar/1","array_profile":"brownie.m2-array-read/1","array_write_profile":"brownie.m2-array-write/1","array_copy_profile":"brownie.m2-array-copy/1","core":true,"restricted":false,"embed":false,"fuel_default":256,"fuel_limit":16000000}
+{"schema":"browniec.version/v1","profile":"brownie.m1-scalar/1","array_profile":"brownie.m2-array-read/1","array_write_profile":"brownie.m2-array-write/1","array_copy_profile":"brownie.m2-array-copy/1","core":true,"restricted":false,"restricted_scalar":true,"embed":false,"fuel_default":256,"fuel_limit":16000000}
 ```
 
 The CLI Fuel default remains 256 for scalar compatibility. A Program with an array

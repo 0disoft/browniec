@@ -40,4 +40,4 @@ This prepares `build/toolchain/fairyc.exe` and compiles `./build/browniec.exe`.
 ./build/browniec.exe --version --json
 ```
 
-In `--version --json`, you will see `"fuel_default": 256`, `"fuel_limit": 16000000`, `"core": true`, and `"restricted": false` / `"embed": false` (reflecting that OS worker isolation and C embedding are not enabled yet).
+`restricted_scalar: true` identifies Windows single-file scalar isolation. The broader restricted profile and C embedding are still pending. Version JSON also reports `"fuel_default": 256` and `"fuel_limit": 16000000`.

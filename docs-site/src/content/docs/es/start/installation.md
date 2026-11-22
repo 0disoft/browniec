@@ -40,4 +40,4 @@ Esto prepara `build/toolchain/fairyc.exe` y compila `./build/browniec.exe`.
 ./build/browniec.exe --version --json
 ```
 
-En la salida de `--version --json`, verás `"fuel_default": 256`, `"fuel_limit": 16000000`, `"core": true` y `"restricted": false` / `"embed": false` (lo que refleja que el aislamiento de trabajadores del sistema operativo y la incrustación en C todavía no están habilitados).
+`restricted_scalar: true` identifica el aislamiento escalar de un solo archivo en Windows. El perfil restringido ampliado y la incrustación en C están pendientes. La versión JSON también indica `"fuel_default": 256` y `"fuel_limit": 16000000`.

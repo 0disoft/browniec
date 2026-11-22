@@ -76,4 +76,4 @@ The default Fuel budget is `256`. Running a loop like `examples/loops.brc` with 
 
 - **Expecting `return 77;` to be the process exit code**: Guest returns are data (`return_i32`); non-zero process exit codes (`2`..`7`) indicate errors.
 - **Forgetting `--fuel` on arrays**: Array initialization costs `65,537` Fuel before `main()` runs, so pass `--fuel 100000` or higher.
-- **Exceeding 4096 bytes or passing `--isolated`**: Public CLI rejects oversized files and unimplemented flags instead of silently ignoring them.
+- **Exceeding 4,096 bytes**: The CLI rejects larger single-file sources.

@@ -21,10 +21,10 @@ Aunque Lua y Python también se utilizan para ejecutar scripts embebidos dentro 
 - **Comprobación estática antes de ejecutar**: Lua y Python validan tipos dinámicamente en tiempo de ejecución, mientras que Brownie C rechaza mezclas implícitas de enteros, casos faltantes en `switch` y conflictos de préstamos `ref`/`ref mut` antes de arrancar la VM.
 - **Sin GC, sin flotantes ni E/S ambiental**: Los lenguajes de scripting generales incluyen recolector de basura, aritmética de punto flotante y módulos del sistema operativo; Brownie C los omite para que las reglas sobre enteros y bytes sean deterministas.
 - **Medición de Fuel integrada**: En lugar de montar hooks o temporizadores externos para cortar bucles infinitos, la VM de Brownie C descuenta `--fuel` en cada operación y se detiene limpiamente al agotarse el presupuesto (recordando que Fuel es un contador de operaciones, no un timeout de reloj ni un sandbox del SO).
-- **Alcance y madurez**: Lua y Python cuentan con ecosistemas maduros y amplias bibliotecas, mientras que Brownie C es hoy una implementación temprana centrada en archivos `.brc` individuales (de hasta 4096 bytes), con la ABI de incrustación en C y el aislamiento de SO aún planificados.
+- **Alcance y madurez**: Lua y Python cuentan con ecosistemas maduros y amplias bibliotecas, mientras que Brownie C es hoy una implementación temprana centrada en archivos `.brc` individuales (de hasta 4096 bytes), con aislamiento escalar de un solo archivo en Windows.
 
 ## CLI pública frente a lo que sigue siendo interno o planificado
 
 La CLI pública actual de `browniec` trabaja sobre archivos `.brc` individuales (de hasta 4096 bytes en UTF-8) mediante `check`, `run [--fuel N]` e `inspect --ir`, con soporte para escalares, `Option`/`Result` con `?`, arrays de tamaño fijo, structs simples, literales de bytes y texto, y slices (`ref u8[]`, `ref mut T[]`).
 
-Las API internas `Engine`/`Instance`, el tipo `Buffer` para el huésped, los trabajadores con `--isolated` (AppContainer/Job), las flags `--project`/`--input` y la ABI de incrustación en C (`embed: false`, `restricted: false`) son componentes internos del repositorio o hitos planificados. Ten en cuenta que **Fuel cuenta operaciones de la VM: no es un límite de tiempo real (wall-clock) ni un entorno de aislamiento de seguridad del sistema operativo**.
+Windows admite el aislamiento con AppContainer y Job para `check` y `run` escalares de un solo archivo. `restricted: false` y `embed: false` indican que el perfil restringido ampliado y la incrustación en C están pendientes.

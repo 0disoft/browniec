@@ -21,8 +21,8 @@
 | browniec run --project FILE --catalog FILE --policy FILE --run FILE --host-adapter ID REVISION EXE | Run a project using an explicitly registered executable | Windows, one catalog route, existing project I/O and result formats |
 | browniec check --project FILE --policy FILE --run FILE | Verify source, entry and grants under an explicit policy without running guest code | Windows, shared-byte i32 entry, text or JSON |
 | browniec run --project FILE --policy FILE --run FILE [--output FILE or --output-text FILE] | Run the checked entry under explicit policy | Windows, shared-byte i32 entry, JSON result required, optional binary input and binary or UTF-8 output file |
-| browniec check SOURCE --isolated | Use a restricted compile-only worker | Designed; unavailable |
-| browniec run SOURCE --isolated | Use the restricted worker and parent broker | Designed; unavailable |
+| browniec check SOURCE --isolated | Compile and verify in an AppContainer/Job worker | Windows, one scalar source file |
+| browniec run SOURCE --isolated | Compile, verify and execute in an AppContainer/Job worker | Windows, one scalar source file |
 | browniec inspect SOURCE --ir | Compile/verify and emit bounded private IR diagnostics without executing | Implemented for the same public M1/M2 admission as check; optional --json |
 | browniec inspect SOURCE --limits --json | Report consumed and remaining compile capacity without executing | Implemented for the same public M1/M2 admission as check |
 | browniec worker | Broker-only restricted IPC endpoint | Windows, scalar protocol, no arguments |
@@ -53,8 +53,9 @@ add precomputed replies, run deadlines and console cancellation. [Project host r
 apply the same reply contract to an anchored multi-module project.
 [Windows process adapters](configuration.md#windows-process-adapters) can supply
 replies for one explicitly selected import in either run mode. General Buffer
-delivery, public restricted check/run and cancellation outside configured execution remain unavailable. `--isolated` returns an availability
-denial, with no unrestricted fallback. Ordinary check/run use zero-argument i32
+delivery remains pending. Windows scalar isolation is described in
+[restricted single-file execution](configuration.md#restricted-single-file-execution).
+Ordinary check/run use zero-argument i32
 `main`. The separate eval-i32 command selects a single-i32 `evaluate` entry.
 With explicit guest input, Windows `run SOURCE` instead selects the public shared-byte
 `main` entry in `module main`.

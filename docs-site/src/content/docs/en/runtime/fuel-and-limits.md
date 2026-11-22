@@ -9,7 +9,7 @@ Think of **Fuel** (`--fuel N` on `browniec run`) as prepaid tokens spent by the 
 
 - **A deterministic operation budget**: The same program with the same `--fuel` always executes the same amount of work and stops at the same point.
 - **Not a wall-clock timer**: Fuel counts logical VM work units, not milliseconds.
-- **Not an OS security sandbox**: Fuel prevents runaway loops; OS-level worker isolation (`--isolated`) is a separate planned layer (`restricted: false` today).
+- **Windows process isolation**: AppContainer and Job limits apply separately when running scalar code with `--isolated`.
 
 ## Default (`256`) vs. Array & Record Budgets
 

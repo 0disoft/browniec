@@ -1,6 +1,8 @@
 module worker_scalar_command;
 
 import compiler as compiler;
+import errors as errors;
+import source_features as features;
 import fuel as meter;
 import ir as ir;
 import verifier as verifier;
@@ -30,9 +32,16 @@ pub fn i32 execute(){
 }
 
 fn result::Outcome compute(ref u8[] source,bool run,usize fuel){
+    let bool retained=switch(features::retained(source)){
+        case .ok(v):{v}case .err(e):{return result::failed(e);}
+    };
+    if(retained){return result::failed(errors::absent(11,0));}
     let ir::Program program=switch(compiler::compile(source)){
         case .ok(v):{v}case .err(e):{return result::failed(e);}
     };
+    if(program.arrays.count!=0 || program.records.count!=0){
+        return result::failed(errors::absent(11,0));
+    }
     if(!run){
         return switch(verifier::verify(ref program)){
             case .ok(_):{result::checked()}case .err(e):{result::failed(e)}

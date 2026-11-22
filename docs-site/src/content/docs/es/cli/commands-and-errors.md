@@ -15,6 +15,9 @@ La CLI pública procesa un archivo fuente a la vez. `check` verifica sin ejecuta
 | `browniec check SOURCE` | — | `stderr` | — |
 | `browniec check SOURCE` | `--json` | `stdout` | `browniec.result/v1` |
 | `browniec check SOURCE` | `--json-v2` | `stdout` | `browniec.result/v2` |
+| `browniec check SOURCE --isolated` | — | `stderr` | — |
+| `browniec check SOURCE --isolated` | `--json` | `stdout` | `browniec.result/v1` |
+| `browniec check SOURCE --isolated` | `--json-v2` | `stdout` | `browniec.result/v2` |
 | `browniec check SOURCE --catalog FILE --policy FILE --run FILE` | — | `stderr` | — |
 | `browniec check SOURCE --catalog FILE --policy FILE --run FILE` | `--json` | `stdout` | `browniec.result/v1` |
 | `browniec check SOURCE --catalog FILE --policy FILE --run FILE` | `--json-v2` | `stdout` | `browniec.result/v2` |
@@ -24,6 +27,9 @@ La CLI pública procesa un archivo fuente a la vez. `check` verifica sin ejecuta
 | `browniec run SOURCE --catalog FILE --policy FILE --run FILE --host-replies FILE` | — | `stderr` | — |
 | `browniec run SOURCE --catalog FILE --policy FILE --run FILE --host-replies FILE` | `--json` | `stdout` | `browniec.result/v1` |
 | `browniec run SOURCE --catalog FILE --policy FILE --run FILE --host-replies FILE` | `--json-v2` | `stdout` | `browniec.result/v2` |
+| `browniec run SOURCE --isolated [--fuel N]` | — | `stderr` | — |
+| `browniec run SOURCE --isolated [--fuel N]` | `--json` | `stdout` | `browniec.result/v1` |
+| `browniec run SOURCE --isolated [--fuel N]` | `--json-v2` | `stdout` | `browniec.result/v2` |
 | `browniec run SOURCE --catalog FILE --policy FILE --run FILE --host-adapter ID REVISION EXE` | — | `stderr` | — |
 | `browniec run SOURCE --catalog FILE --policy FILE --run FILE --host-adapter ID REVISION EXE` | `--json` | `stdout` | `browniec.result/v1` |
 | `browniec run SOURCE --catalog FILE --policy FILE --run FILE --host-adapter ID REVISION EXE` | `--json-v2` | `stdout` | `browniec.result/v2` |
@@ -62,7 +68,7 @@ La tabla muestra la salida en caso de éxito. Un guion en la columna de opciones
 - **`0`**: Completado limpiamente (incluso cuando `return_i32` del huésped es distinto de cero)
 - **`2`**: Flags de CLI incorrectas o `--fuel` fuera de `0..16000000`
 - **`3`**: Error de compilación/tipos/préstamos o `compile_limit` superado
-- **`4`**: Flag no implementada (`--isolated` → `unavailable`)
+- **`4`** — Rechazo de política, modo no admitido o fallo al preparar el aislamiento (`unavailable`)
 - **`5`**: Trampa en tiempo de ejecución o cuota agotada (`fuel`, `overflow`, `zero_divisor`, `bounds`, `frame_limit`)
 - **`6`**: Error interno de invariante del compilador o de la VM
 - **`7`**: Error de E/S al leer el archivo fuente (`input_io`)
@@ -70,6 +76,6 @@ La tabla muestra la salida en caso de éxito. Un guion en la columna de opciones
 ## Errores frecuentes y soluciones
 
 1. **Error `fuel` (salida `5`) en bucles o arrays**: Recuerda que la inicialización de arrays cuesta `65 537` de Fuel antes de que se ejecute `main()`. Pasa `--fuel 100000` o `--fuel 1000000`.
-2. **`unavailable` (salida `4`) con `--isolated`**: Es el comportamiento esperado hoy: el aislamiento de trabajadores del sistema operativo aún no está habilitado (`restricted: false`).
+2. **`unavailable` (salida `4`) con `--isolated`**: Windows admite `check` y `run` escalares de un solo archivo. Los fallos de preparación y las combinaciones incompatibles detienen el comando.
 3. **`compile_limit` (salida `3`) en archivos grandes**: La entrada de la CLI pública está limitada a `4096` bytes en UTF-8, `1024` tokens, `16` funciones y `256` instrucciones.
 4. **Trampa en tiempo de ejecución (salida `5`)**: Revisa `error.kind` y `byte_offset` con `--json` para localizar `overflow`, `zero_divisor` o `bounds` fuera de rango.

@@ -15,6 +15,9 @@ description: browniec 공개 명령어 사용법, 종료 코드, 그리고 자�
 | `browniec check SOURCE` | — | `stderr` | — |
 | `browniec check SOURCE` | `--json` | `stdout` | `browniec.result/v1` |
 | `browniec check SOURCE` | `--json-v2` | `stdout` | `browniec.result/v2` |
+| `browniec check SOURCE --isolated` | — | `stderr` | — |
+| `browniec check SOURCE --isolated` | `--json` | `stdout` | `browniec.result/v1` |
+| `browniec check SOURCE --isolated` | `--json-v2` | `stdout` | `browniec.result/v2` |
 | `browniec check SOURCE --catalog FILE --policy FILE --run FILE` | — | `stderr` | — |
 | `browniec check SOURCE --catalog FILE --policy FILE --run FILE` | `--json` | `stdout` | `browniec.result/v1` |
 | `browniec check SOURCE --catalog FILE --policy FILE --run FILE` | `--json-v2` | `stdout` | `browniec.result/v2` |
@@ -24,6 +27,9 @@ description: browniec 공개 명령어 사용법, 종료 코드, 그리고 자�
 | `browniec run SOURCE --catalog FILE --policy FILE --run FILE --host-replies FILE` | — | `stderr` | — |
 | `browniec run SOURCE --catalog FILE --policy FILE --run FILE --host-replies FILE` | `--json` | `stdout` | `browniec.result/v1` |
 | `browniec run SOURCE --catalog FILE --policy FILE --run FILE --host-replies FILE` | `--json-v2` | `stdout` | `browniec.result/v2` |
+| `browniec run SOURCE --isolated [--fuel N]` | — | `stderr` | — |
+| `browniec run SOURCE --isolated [--fuel N]` | `--json` | `stdout` | `browniec.result/v1` |
+| `browniec run SOURCE --isolated [--fuel N]` | `--json-v2` | `stdout` | `browniec.result/v2` |
 | `browniec run SOURCE --catalog FILE --policy FILE --run FILE --host-adapter ID REVISION EXE` | — | `stderr` | — |
 | `browniec run SOURCE --catalog FILE --policy FILE --run FILE --host-adapter ID REVISION EXE` | `--json` | `stdout` | `browniec.result/v1` |
 | `browniec run SOURCE --catalog FILE --policy FILE --run FILE --host-adapter ID REVISION EXE` | `--json-v2` | `stdout` | `browniec.result/v2` |
@@ -62,7 +68,7 @@ description: browniec 공개 명령어 사용법, 종료 코드, 그리고 자�
 - **`0`**: 정상 완료 (게스트 `main()`이 `77`처럼 0이 아닌 값을 돌려줘도 정상 실행이면 `0`)
 - **`2`**: CLI 플래그를 잘못 적음 (`--fuel` 범위 초과 등)
 - **`3`**: 소스 문법·타입·빌림 오류 또는 `4096`바이트 크기 제한 초과
-- **`4`**: 아직 공개되지 않은 기능 호출(`--isolated` → `unavailable`)
+- **`4`** — 정책 거부, 미지원 모드 또는 격리 준비 실패(`unavailable`)
 - **`5`**: 실행 도중 멈춤 (`fuel` 부족, `overflow`, `zero_divisor`, `bounds`, `frame_limit`)
 - **`6`**: 내부 컴파일러/VM 불변식 오류
 - **`7`**: 소스 파일을 못 읽는 등 파일 입출력 오류
@@ -70,6 +76,6 @@ description: browniec 공개 명령어 사용법, 종료 코드, 그리고 자�
 ## 자주 만나는 오류 해결하기
 
 1. **배열 코드인데 `fuel` 에러(종료 코드 `5`)가 뜰 때**: 기본 예산 `256`으로는 배열 64 KiB 아레나도 준비할 수 없습니다(`65,537` 필요). `--fuel 100000` 또는 `--fuel 1000000`을 함께 주세요.
-2. **`--isolated`를 붙였는데 `unavailable`(종료 코드 `4`)가 뜰 때**: 아직 OS 워커 격리가 공개되지 않았다는 뜻이므로 정상입니다. 현재는 일반 `browniec run`으로만 테스트할 수 있습니다.
+2. **`--isolated`에서 `unavailable`(종료 코드 `4`)이 나올 때**: Windows는 단일 파일 스칼라 `check`와 `run`을 지원합니다. 격리 준비에 실패하거나 미지원 옵션을 조합하면 실행을 중단합니다.
 3. **큰 예제를 붙여 넣었더니 `compile_limit`(종료 코드 `3`)이 뜰 때**: 공개 단일 파일은 UTF-8 기준 `4096`바이트(토큰 `1024`, 함수 `16`, 명령 `256`)까지만 받습니다. 규칙 단위를 작게 쪼개 보세요.
 4. **숫자 계산이나 배열 접근에서 멈출 때(종료 코드 `5`)**: 오버플로(`overflow`), `0`으로 나누기(`zero_divisor`), 배열 인덱스 초과(`bounds`) 중 하나입니다. `--json` 결과의 `error.kind`와 `byte_offset`을 보면 정확한 지점을 바로 찾을 수 있습니다.

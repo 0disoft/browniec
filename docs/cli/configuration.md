@@ -49,7 +49,7 @@ SOURCE selects one UTF-8 code file up to 4,096 bytes with a zero-argument
 i32 `main`. Run-only `--fuel` defaults to 256 and accepts 0..16000000.
 Effective-config reporting remains pending.
 
-`--isolated` reports unavailable without fallback. Configured project runs enforce
+Configured project runs enforce
 compile and execution deadlines and support console cancellation while executing. See the
 [complete remaining-work audit](../product/04-remaining-work.md) before treating any
 target configuration field or reference-package schema as accepted by this CLI.
@@ -69,6 +69,21 @@ bytes.
 The [native project input primitives](../engineering/project-input.md) now supply
 bounded JSON tokens and canonical spelling checks. The [typed native project format](project-format.md) now admits a complete owning
 source map, entry and declared requirements.
+
+## Restricted single-file execution
+
+On Windows, use an AppContainer/Job worker to check or run a scalar source file:
+
+    browniec check SOURCE --isolated --json-v2
+    browniec run SOURCE --isolated --fuel 256 --json
+
+The parent snapshots up to 4096 bytes from an explicit regular local NTFS file.
+The worker compiles and verifies the snapshot. Run also executes it with the
+selected Fuel. Text, JSON v1 and JSON v2 keep the ordinary scalar result contract.
+Project, input, host, policy and eval-i32 combinations are unavailable in this
+profile. Scalar isolation is reported as `restricted_scalar: true` in version JSON.
+Unsupported combinations and isolation setup failure return exit 4. The broker
+publishes only after a validated result, clean EOF, process exit and cleanup.
 
 ## Single-source host check
 

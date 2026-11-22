@@ -76,4 +76,4 @@ entry=0 instructions=4 registers=3 literal_bytes=0
 
 - <strong>误以为 `return 77;` 是进程退出码</strong>：Guest 代码的返回值是数据（`return_i32`）；非零进程退出码（`2`..`7`）表示发生了错误。
 - <strong>使用数组时忘记调整 `--fuel`</strong>：在 `main()` 运行之前，数组初始化会消耗 `65,537` Fuel，因此请至少传入 `--fuel 100000`。
-- <strong>源码超过 4096 字节或传入 `--isolated`</strong>：公开 CLI 会直接拒绝超大文件与尚未实现的参数，而不会静默忽略它们。
+- <strong>源码超过 4096 字节</strong>：CLI 拒绝超出上限的单文件源码。

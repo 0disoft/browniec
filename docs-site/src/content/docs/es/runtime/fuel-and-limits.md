@@ -9,7 +9,7 @@ Piensa en **Fuel** (`--fuel N` en `browniec run`) como fichas prepagadas que la 
 
 - **Un presupuesto determinista de operaciones**: El mismo programa con el mismo `--fuel` siempre ejecuta la misma cantidad de trabajo y se detiene en el mismo punto.
 - **No es un temporizador de reloj real (wall-clock)**: Fuel cuenta unidades lógicas de trabajo de la VM, no milisegundos.
-- **No es un sandbox de seguridad del sistema operativo**: Fuel evita bucles desbocados; el aislamiento de trabajadores a nivel de sistema operativo (`--isolated`) es una capa separada y planificada (`restricted: false` hoy).
+- **Aislamiento de procesos en Windows**: AppContainer y los límites de Job se aplican al ejecutar código escalar con `--isolated`.
 
 ## Valor predeterminado (`256`) frente a presupuestos para arrays y registros
 

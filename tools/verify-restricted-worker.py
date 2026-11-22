@@ -58,6 +58,53 @@ def verify_scalar_source_admission(run, need, image, folder, env):
     return 7
 
 
+def verify_public_scalar(run, need, image, folder, env):
+    stage = Path(env['TEMP'])
+    answer = folder / 'answer.brc'
+    common = dict(cwd=folder, env=env, no_stderr=True)
+    for op, option, schema, status, expected in [
+        ('check', '--json', 'browniec.result/v1', 'checked', None),
+        ('run', '--json-v2', 'browniec.result/v2', 'completed', 77),
+    ]:
+        result = json.loads(run([image, op, answer, '--isolated', option], **common))
+        need(result == dict(schema=schema, profile='brownie.m1-scalar/1', command=op,
+                            status=status, return_i32=expected, error=None),
+             f'Unexpected isolated {op} result: {result}')
+    text = subprocess.run([image, 'run', answer, '--isolated'], cwd=folder, env=env,
+                          capture_output=True, timeout=30)
+    need(text.returncode == 0 and not text.stdout and text.stderr == b'return_i32=77\n',
+         f'Unexpected isolated text result: {text}')
+
+    array = folder / 'scalar-aggregate-denied.brc'
+    array.write_bytes(b'module main; fn i32 main() { let i32[2] a = [21; 2]; return a[0]; }')
+    literal = folder / 'scalar-literal-denied.brc'
+    literal.write_bytes(b'module main; fn i32 main() { let ref u8[] x = b"x"; return 77; }')
+    cases = [
+        ('run', answer, ['--fuel', '0'], 5, 'fuel'),
+        ('check', folder / 'bad-source.brc', [], 3, 'lexical'),
+        ('run', array, [], 4, 'unavailable'),
+        ('run', literal, [], 4, 'unavailable'),
+        ('run', answer, ['--stdin'], 4, 'unavailable'),
+        ('run', answer, ['--isolated'], 2, 'usage'),
+    ]
+    for op, source, flags, code, kind in cases:
+        result = json.loads(run([image, op, source, '--json-v2', '--isolated', *flags],
+                                expected_exit=code, **common))
+        need(result['return_i32'] is None and result['error']['kind'] == kind,
+             f'Unexpected isolated rejection: {op} {source.name} {flags}: {result}')
+
+    unavailable_env = dict(env, TEMP=str(stage / 'missing'), TMP=str(stage / 'missing'))
+    result = json.loads(run([image, 'run', answer, '--isolated', '--json'], cwd=folder,
+                            env=unavailable_env, expected_exit=4, no_stderr=True))
+    need(result['return_i32'] is None and result['error']['kind'] == 'unavailable',
+         f'Failed isolation setup did not close publication: {result}')
+    version = json.loads(run([image, '--version', '--json'], **common))
+    need(version['restricted_scalar'] is True and version['restricted'] is False,
+         f'Unexpected restricted availability: {version}')
+    need(not list(stage.iterdir()), 'isolated scalar runs left staged resources')
+    return 3 + len(cases) + 2
+
+
 def verify_managed_project(run, need, image, folder, env):
     target = folder / 'hello'
     shutil.copytree(HELLO_PROJECT, target)
@@ -1142,6 +1189,7 @@ def main():
                 helper.need(json.loads(data).get('error', {}).get('kind') == 'unavailable'
                             and not list(stage_temp.iterdir()), 'staging failure fell back or left files')
                 scalar_source_cases = verify_scalar_source_admission(run, helper.need, scalar, folder, stage_env)
+                public_scalar_cases = verify_public_scalar(run, helper.need, scalar, folder, stage_env)
                 managed_project_cases = verify_managed_project(run, helper.need, scalar, folder, stage_env)
                 configured_project_cases = verify_configured_project(run, helper.need, scalar, folder, stage_env)
                 project_host_cases = verify_project_host(run, helper.need, scalar, folder, stage_env)
@@ -1170,6 +1218,7 @@ def main():
             if scalar:
                 receipt['profiles'][-1]['scalarWorker'] = helper.image(scalar)
                 receipt['profiles'][-1]['scalarSourceCases'] = scalar_source_cases
+                receipt['profiles'][-1]['publicScalarCases'] = public_scalar_cases
                 receipt['profiles'][-1]['managedProjectCases'] = managed_project_cases
                 receipt['profiles'][-1]['configuredProjectCases'] = configured_project_cases
                 receipt['profiles'][-1]['projectHostCases'] = project_host_cases

@@ -26,5 +26,5 @@ Brownie C는 가볍고 예측 가능한 임베디드 규칙 실행을 위해 크
 
 - **Windows 11 x64 (`MSVC`)**: 주 개발·실행 환경입니다.
 - **Linux**: `toolchain.json`에 크로스 빌드된 `fairyc` 정보가 들어 있지만, 실제 Linux 호스트에서의 빌드와 `browniec` 실행은 아직 검증되지 않았습니다.
-- **미구현 상태**: `--isolated` OS 워커 격리(`restricted: false`), C 임베딩 SDK(`embed: false`), 다중 파일 `--project`, 게스트 `--input`/`output_b64`, 내부 `Engine`/`Buffer` CLI 호출은 아직 준비 중입니다.
+- Windows에서는 단일 파일 스칼라 `check`와 `run`을 AppContainer/Job으로 격리할 수 있습니다. 격리 지원 범위 확대와 C 임베딩은 각각 `restricted: false`, `embed: false`로 표시합니다.
 - **영구 제외 기능**: JIT, 가비지 컬렉션, 부동소수점(`f32`/`f64`), 원시 포인터(`ptr`), 임의 C FFI, 스레드는 설계상 포함하지 않습니다.

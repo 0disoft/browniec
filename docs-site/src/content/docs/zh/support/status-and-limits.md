@@ -26,5 +26,5 @@ Brownie C 刻意保持严格的编译期与运行期边界，使 Guest 代码的
 
 - <strong>Windows 11 x64（`MSVC`）</strong>：主要开发与运行环境。
 - <strong>Linux</strong>：`toolchain.json` 中包含锁定的交叉构建元数据，但原生 Linux 下的构建与运行尚未经过验证。
-- <strong>待开放特性</strong>：`--isolated` OS 工作进程（`restricted: false`）、C 嵌入（`embed: false`）、`--project`、Guest `--input`/输出接收器，以及内部 `Engine`/`Buffer` 功能的 CLI 暴露。
+- Windows 支持对单文件标量 `check` 和 `run` 使用 AppContainer/Job 隔离。 `restricted: false` 和 `embed: false` 分别表示更广泛的受限执行和 C 嵌入仍待实现。
 - <strong>不在规划范围内</strong>：JIT、GC、浮点数（`f32`/`f64`）、原始指针（`ptr`）、任意 C FFI 以及线程。

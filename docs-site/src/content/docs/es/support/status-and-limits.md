@@ -26,5 +26,5 @@ En `browniec --version --json`, `"core": true` refleja los subconjuntos experime
 
 - **Windows 11 x64 (`MSVC`)**: Entorno principal de desarrollo y ejecución.
 - **Linux**: Existen metadatos de compilación cruzada fijados en `toolchain.json`, pero la compilación y ejecución nativas en Linux siguen sin estar verificadas.
-- **Pendiente**: Trabajadores del SO con `--isolated` (`restricted: false`), incrustación en C (`embed: false`), `--project`, `--input` / sumideros de salida para el huésped y exposición en la CLI del trabajo interno de `Engine`/`Buffer`.
+- Windows admite el aislamiento con AppContainer y Job para `check` y `run` escalares de un solo archivo. `restricted: false` y `embed: false` indican que el perfil restringido ampliado y la incrustación en C están pendientes.
 - **Fuera de alcance**: JIT, GC, punto flotante (`f32`/`f64`), punteros sin procesar (`ptr`), FFI arbitraria de C e hilos.

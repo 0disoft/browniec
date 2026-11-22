@@ -57,14 +57,13 @@ runtime/delivery gaps.
 Windows project execution and explicit binary project input are described in
 [project selection](configuration.md#project-selection). [Configured runs](configuration.md#configured-project-output)
 also support the output capability, compile/run deadlines and console cancellation during execution. [Single-source host checks](configuration.md#single-source-host-check)
-verify typed host calls using an explicit catalog and grants. Workers, other cancellation controls,
-public host suspension and the public DLL
-remain pending. `--isolated` reports unavailable.
+verify typed host calls using an explicit catalog and grants. Windows also supports
+[scalar check and run in a restricted worker](configuration.md#restricted-single-file-execution).
+Public host suspension and the broader DLL and restricted profiles remain pending.
 
 `core: true` in version JSON means this experimental native CLI exists; it does
-not certify full `brownie.safe/0.3`. Restricted/embed remain false. Check/run use
-the native frontend directly and do not launch Go, MSVC or a compiler subprocess.
-The broad restricted path is a later delivery with its own actual OS evidence.
+not certify full `brownie.safe/0.3`. `restricted_scalar: true` identifies the
+Windows single-file mode. Both local and worker execution use the native frontend.
 
 ## Observable contract
 
