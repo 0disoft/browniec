@@ -96,6 +96,6 @@ The table shows successful output. A dash in the option column means the default
 ## Common Errors and Fixes
 
 1. **`fuel` error (exit `5`) on loops or arrays**: Remember that array initialization costs `65,537` Fuel before `main()` runs. Pass `--fuel 100000` or `--fuel 1000000`.
-2. **`unavailable` (exit `4`) with `--isolated`**: Windows supports single-file `check` and `run` for scalar, fixed-array and plain-record programs. Setup failures and unsupported combinations stop the command.
+2. **`unavailable` (exit `4`) with `--isolated`**: Windows supports single-file `check` and `run` for scalar, fixed-array, plain-record and retained byte/text programs. Setup failures and unsupported combinations stop the command.
 3. **`compile_limit` (exit `3`) on larger files**: Public CLI input is capped at `4096` UTF-8 bytes, `1024` tokens, `16` functions, and `256` instructions.
 4. **Runtime trap (exit `5`)**: Check `error.kind` and `byte_offset` with `--json` to spot `overflow`, `zero_divisor`, or out-of-range `bounds`.

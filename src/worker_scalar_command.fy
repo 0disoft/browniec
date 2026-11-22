@@ -6,6 +6,8 @@ import errors as errors;
 import source_features as features;
 import fuel as meter;
 import ir as ir;
+import program_image as programs;
+import static_image as images;
 import verifier as verifier;
 import vm as vm;
 import worker_scalar_result as result;
@@ -40,7 +42,25 @@ fn result::Profiled compute(ref u8[] source,bool run,usize fuel){
     let bool retained=switch(features::retained(source)){
         case .ok(v):{v}case .err(e):{return uncompiled(e);}
     };
-    if(retained){return uncompiled(errors::absent(11,0));}
+    if(retained){return compute_retained(source,run,fuel);}
+    return compute_ordinary(source,run,fuel);
+}
+
+// Keep the owning image and the ordinary compiler's IR in separate call frames.
+fn result::Profiled compute_retained(ref u8[] source,bool run,usize fuel){
+    let programs::ReferenceReturnProgram program=switch(compiler::compile_reference_returns(
+        source,images::metadata_charge()+images::byte_limit())){
+        case .ok(v):{v}case .err(e):{return uncompiled(compiler::public_error(e));}
+    };
+    let result::Outcome outcome=if(run){
+        switch(programs::run_public_references(ref program,fuel)){
+            case .ok(value):{result::completed(value)}case .err(e):{result::failed(e)}
+        }
+    }else{result::checked()};
+    return result::Profiled{.outcome=outcome,.profile=8};
+}
+
+fn result::Profiled compute_ordinary(ref u8[] source,bool run,usize fuel){
     let ir::Program program=switch(compiler::compile(source)){
         case .ok(v):{v}case .err(e):{return uncompiled(e);}
     };

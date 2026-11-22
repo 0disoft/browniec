@@ -120,7 +120,7 @@ pub fn Result<bytes::Buffer,json::Error> encode(Outcome out,Expected expected){
 
 // The single-file worker prepends one public profile byte to the shared JSON.
 pub fn Result<Profiled,json::Error> parse_profiled(ref u8[] source,Expected expected){
-    if(source.len<2 || source.len>byte_limit() || source[0]>7){
+    if(source.len<2 || source.len>byte_limit() || source[0]>8){
         return .err(json::error(.Relation,0));
     }
     let Outcome outcome=parse(source[1..source.len],expected)?;
@@ -128,7 +128,7 @@ pub fn Result<Profiled,json::Error> parse_profiled(ref u8[] source,Expected expe
 }
 
 pub fn Result<bytes::Buffer,json::Error> encode_profiled(Profiled result,Expected expected){
-    if(result.profile>7 || !valid(result.outcome,expected)){return .err(json::error(.Relation,0));}
+    if(result.profile>8 || !valid(result.outcome,expected)){return .err(json::error(.Relation,0));}
     return encode_payload(result.outcome,.some(result.profile));
 }
 

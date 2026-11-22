@@ -21,8 +21,8 @@
 | browniec run --project FILE --catalog FILE --policy FILE --run FILE --host-adapter ID REVISION EXE | Run a project using an explicitly registered executable | Windows, one catalog route, existing project I/O and result formats |
 | browniec check --project FILE --policy FILE --run FILE | Verify source, entry and grants under an explicit policy without running guest code | Windows, shared-byte i32 entry, text or JSON |
 | browniec run --project FILE --policy FILE --run FILE [--output FILE or --output-text FILE] | Run the checked entry under explicit policy | Windows, shared-byte i32 entry, JSON result required, optional binary input and binary or UTF-8 output file |
-| browniec check SOURCE --isolated | Compile and verify in an AppContainer/Job worker | Windows, one scalar, fixed-array or plain-record source file |
-| browniec run SOURCE --isolated | Compile, verify and execute in an AppContainer/Job worker | Windows, one scalar, fixed-array or plain-record source file |
+| browniec check SOURCE --isolated | Compile and verify in an AppContainer/Job worker | Windows, one source file with a zero-argument i32 entry |
+| browniec run SOURCE --isolated | Compile, verify and execute in an AppContainer/Job worker | Windows, one source file with a zero-argument i32 entry |
 | browniec check --project FILE --isolated | Compile and verify the selected project in an AppContainer/Job worker | Windows, zero-argument i32 entry, empty requirements |
 | browniec run --project FILE --isolated | Execute the selected project in an AppContainer/Job worker | Windows, zero-argument i32 entry, empty requirements |
 | browniec check --project FILE --isolated --policy FILE --run FILE | Verify the project under explicit policy in a worker | Windows, zero-argument or shared-byte i32 entry |

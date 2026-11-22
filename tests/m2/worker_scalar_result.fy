@@ -53,15 +53,15 @@ fn void strict_scalar_result_contract(){
     assert(!accepts(ref oversized,check_case));
     assert(!worker::parse_profiled(ref oversized,check_case).is_ok);
     assert(!worker::parse_profiled(b"\x07",check_case).is_ok);
-    assert(!worker::parse_profiled(b"\x08{\"schema\":\"browniec.worker-result/v1\",\"status\":\"checked\"}",check_case).is_ok);
-    let worker::Profiled record=worker::Profiled{.outcome=worker::checked(),.profile=7};
-    let bytes::Buffer framed=switch(worker::encode_profiled(record,check_case)){
+    assert(!worker::parse_profiled(b"\x09{\"schema\":\"browniec.worker-result/v1\",\"status\":\"checked\"}",check_case).is_ok);
+    let worker::Profiled retained=worker::Profiled{.outcome=worker::checked(),.profile=8};
+    let bytes::Buffer framed=switch(worker::encode_profiled(retained,check_case)){
         case .ok(buffer):{buffer}case .err(_):{assert(false);bytes::empty()}
     };
     let worker::Profiled parsed=switch(worker::parse_profiled(bytes::view(ref framed),check_case)){
-        case .ok(value):{value}case .err(_):{assert(false);record}
+        case .ok(value):{value}case .err(_):{assert(false);retained}
     };
-    assert(parsed.profile==7);
+    assert(parsed.profile==8);
     assert(!worker::parse_profiled(bytes::view(ref framed),run_case).is_ok);
 }
 

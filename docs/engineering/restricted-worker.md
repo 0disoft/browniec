@@ -533,6 +533,23 @@ out-of-range profile, truncation, and a checked result in a run. Local receipts:
 `build/restricted-worker/20261122T095251734346Z/receipt.json` and
 `build/worker-aggregate-codec/{development,release}/receipt.json`.
 
+### Isolated single-file byte and text views
+
+The worker uses the public retained-source compiler and verified image path
+for byte/text literals and shared-byte return syntax. The image keeps the
+ordinary metadata and byte limits. A check finishes after admission. A run
+uses the existing retained-reference VM with the selected Fuel. The worker
+keeps retained and ordinary compiler state in separate native call frames.
+The broker accepts reference profile 8 under the existing 256-byte RESULT
+limit and applies the same publication gate and public diagnostic rendering.
+
+The Windows development and /O2 runs each matched 12 ordinary CLI outcomes.
+Byte and UTF-8 literals and a shared view returned from a function backed by
+a 4096-byte array returned the expected values. Insufficient Fuel, an
+out-of-bounds trap and a return of a local borrow preserved the ordinary
+diagnostics. Both broker suites reported zero net handles. Local receipt:
+`build/restricted-worker/20261122T100529046885Z/receipt.json`.
+
 ### Stops during managed staging
 
 The managed broker samples the same session deadline and console cancellation

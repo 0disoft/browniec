@@ -1,5 +1,5 @@
-- Latest runtime checkpoint (2026-11-22): [Isolated single-file aggregates](docs/engineering/restricted-worker.md#isolated-single-file-aggregates)
-  preserve public profiles, diagnostics and Fuel for fixed arrays, mutable slices and plain records.
+- Latest runtime checkpoint (2026-11-22): [Isolated single-file byte and text views](docs/engineering/restricted-worker.md#isolated-single-file-byte-and-text-views)
+  connect verified retained images and shared-byte results to the managed worker.
 
 # Brownie C agent guidance
 

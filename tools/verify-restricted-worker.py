@@ -75,12 +75,9 @@ def verify_public_scalar(run, need, image, folder, env):
     need(text.returncode == 0 and not text.stdout and text.stderr == b'return_i32=77\n',
          f'Unexpected isolated text result: {text}')
 
-    literal = folder / 'scalar-literal-denied.brc'
-    literal.write_bytes(b'module main; fn i32 main() { let ref u8[] x = b"x"; return 77; }')
     cases = [
         ('run', answer, ['--fuel', '0'], 5, 'fuel'),
         ('check', folder / 'bad-source.brc', [], 3, 'lexical'),
-        ('run', literal, [], 4, 'unavailable'),
         ('run', answer, ['--stdin'], 4, 'unavailable'),
         ('run', answer, ['--isolated'], 2, 'usage'),
     ]
@@ -127,6 +124,44 @@ def verify_public_aggregates(run, need, image, folder, env):
                  f'Isolated aggregate differs for {name}, {op}, {flags}: {isolated} vs {ordinary}')
     need(not list(Path(env['TEMP']).iterdir()), 'isolated aggregate runs left staged resources')
     return 3 * len(cases)
+
+
+def verify_public_retained(run, need, image, folder, env):
+    cases = [
+        ('literal', b'module main;fn i32 main(){return b"*"[0] as i32;}', 42),
+        ('utf8', 'module main;fn i32 main(){return text::bytes("한")[0] as i32;}'.encode(), 237),
+        ('returned', b'module main;fn ref u8[] same(ref u8[] p){return ref p;}'
+                     b'fn i32 main(){var u8[4096] a=[42;4096];return same(ref a)[4095] as i32;}', 42),
+        ('trap', b'module main;fn i32 main(){let ref u8[] value=b"*";return value[2] as i32;}', None),
+        ('invalid', b'module main;fn ref u8[] leak(){let u8[1] a=[42;1];return ref a;}'
+                    b'fn i32 main(){return 0;}', None),
+    ]
+    checked = 0
+    for name, data, expected in cases:
+        source = folder / f'retained-{name}.brc'
+        source.write_bytes(data)
+        operations = [('check', '--json', [], None, None),
+                      ('run', '--json-v2', ['--fuel', '16000000'], expected, None)]
+        if name == 'invalid':
+            operations = [('check', '--json-v2', [], None, 'type')]
+        elif name == 'trap':
+            operations[-1] = ('run', '--json-v2', ['--fuel', '16000000'], None, 'bounds')
+        else:
+            operations.append(('run', '--json-v2', ['--fuel', '0'], None, 'fuel'))
+        for op, schema, flags, value, kind in operations:
+            command = [image, op, source, schema, *flags]
+            code = 3 if kind == 'type' else 5 if kind else 0
+            common = dict(cwd=folder, env=env, expected_exit=code, no_stderr=True)
+            isolated = json.loads(run([*command, '--isolated'], **common))
+            ordinary = json.loads(run(command, **common))
+            profile = 'brownie.m1-scalar/1' if name == 'invalid' else 'brownie.m2-reference/1'
+            need(isolated == ordinary and isolated['profile'] == profile
+                 and isolated['return_i32'] == value
+                 and (isolated['error']['kind'] if isolated['error'] else None) == kind,
+                 f'Isolated retained source differs for {name}, {op}, {flags}: {isolated} vs {ordinary}')
+            checked += 1
+    need(not list(Path(env['TEMP']).iterdir()), 'isolated retained runs left staged resources')
+    return checked
 
 
 def verify_managed_project(run, need, image, folder, env):
@@ -1279,6 +1314,7 @@ def main():
                 scalar_source_cases = verify_scalar_source_admission(run, helper.need, scalar, folder, stage_env)
                 public_scalar_cases = verify_public_scalar(run, helper.need, scalar, folder, stage_env)
                 aggregate_cases = verify_public_aggregates(run, helper.need, scalar, folder, stage_env)
+                retained_cases = verify_public_retained(run, helper.need, scalar, folder, stage_env)
                 managed_project_cases = verify_managed_project(run, helper.need, scalar, folder, stage_env)
                 configured_project_cases = verify_configured_project(run, helper.need, scalar, folder, stage_env)
                 project_host_cases = verify_project_host(run, helper.need, scalar, folder, stage_env)
@@ -1309,6 +1345,7 @@ def main():
                 receipt['profiles'][-1]['scalarSourceCases'] = scalar_source_cases
                 receipt['profiles'][-1]['publicScalarCases'] = public_scalar_cases
                 receipt['profiles'][-1]['publicAggregateCases'] = aggregate_cases
+                receipt['profiles'][-1]['publicRetainedCases'] = retained_cases
                 receipt['profiles'][-1]['managedProjectCases'] = managed_project_cases
                 receipt['profiles'][-1]['configuredProjectCases'] = configured_project_cases
                 receipt['profiles'][-1]['projectHostCases'] = project_host_cases

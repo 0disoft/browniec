@@ -72,7 +72,9 @@ source map, entry and declared requirements.
 
 ## Restricted single-file execution
 
-On Windows, use an AppContainer/Job worker to check or run a source file in the scalar, fixed-array or plain-record profiles:
+On Windows, use an AppContainer/Job worker to check or run a single source
+file with a zero-argument i32 entry. Supported profiles cover scalars, fixed
+arrays, plain records and retained byte/text views:
 
     browniec check SOURCE --isolated --json-v2
     browniec run SOURCE --isolated --fuel 256 --json
@@ -80,8 +82,8 @@ On Windows, use an AppContainer/Job worker to check or run a source file in the 
 The parent snapshots up to 4096 bytes from an explicit regular local NTFS file.
 The worker compiles and verifies the snapshot. Run also executes it with the
 selected Fuel. Text, JSON v1 and JSON v2 preserve the ordinary result contract,
-including the array or record profile and its Fuel costs. Retained byte/text
-syntax, input, host, policy and eval-i32 combinations are unavailable here.
+including the selected profile and its Fuel costs. Input, host, policy and
+eval-i32 combinations are unavailable here.
 Scalar isolation is reported as `restricted_scalar: true` in version JSON.
 Unsupported combinations and isolation setup failure return exit 4. The broker
 publishes only after a validated result, clean EOF, process exit and cleanup.
