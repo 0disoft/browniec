@@ -439,21 +439,21 @@ pub fn Result<usize,Error> compile_preview_output(ref mut Engine e,sources::Snap
     if(sources::count(ref snapshot)>limits.modules ||
         sources::snapshot_bytes(ref snapshot)>limits.source_bytes){return .err(error(8));}
     let usize deadline=deadline_after(limits.deadline_ms)?;
-    let modules::Index index=switch(modules::build_metered(snapshot,false,limits.tokens,limits.depth,limits.fuel,deadline)){
+    var modules::Index index=switch(modules::build_metered(snapshot,false,limits.tokens,limits.depth,limits.fuel,deadline)){
         case .ok(v):{v}case .err(e):{return .err(preview_binding_error(e));}
-    };
-    switch(modules::match_source_names_until(ref index,deadline)){
-        case .ok(_):{}case .err(e):{return .err(preview_binding_error(e));}
     };
     if(modules::function_count(ref index)>limits.functions ||
         modules::record_count(ref index)>limits.types){return .err(error(8));}
-    if(input_entries::has_i32_input(ref index,module_name,function_name)){
-        let input_entries::InputEntry selected=switch(input_entries::select_i32_input(index,module_name,function_name)){
+    let usize symbol=switch(modules::bind_preview_entry(ref mut index,module_name,function_name,deadline)){
+        case .ok(v):{v}case .err(e):{return .err(preview_binding_error(e));}
+    };
+    if(input_entries::has_i32_input_symbol(ref index,symbol)){
+        let input_entries::InputEntry selected=switch(input_entries::select_i32_input_symbol(index,symbol)){
             case .ok(v):{v}case .err(e):{return .err(preview_binding_error(e));}
         };
         return retain_input_entry(e,selected,image_limit,1,deadline);
     }
-    let entries::Entry selected=switch(entries::select_i32(index,module_name,function_name)){
+    let entries::Entry selected=switch(entries::select_i32_symbol(index,symbol)){
         case .ok(v):{v}case .err(e):{return .err(preview_binding_error(e));}
     };
     return retain_entry(e,selected,image_limit,2,deadline);
@@ -636,14 +636,11 @@ pub fn Result<usize,Error> compile_preview_host(ref mut Engine e,sources::Snapsh
     if(count==0){return .err(error(1));}
     if(count>limits.modules || sources::snapshot_bytes(ref snapshot)>limits.source_bytes){return .err(error(8));}
     let usize deadline=deadline_after(limits.deadline_ms)?;
-    let modules::Index index=switch(modules::build_metered(snapshot,true,limits.tokens,limits.depth,limits.fuel,deadline)){
+    var modules::Index index=switch(modules::build_metered(snapshot,true,limits.tokens,limits.depth,limits.fuel,deadline)){
         case .ok(v):{v}case .err(e):{return .err(host_binding_error(e));}
     };
     if(modules::function_count(ref index)>limits.functions || modules::record_count(ref index)>limits.types){return .err(error(8));}
-    switch(modules::match_source_names_until(ref index,deadline)){
-        case .ok(_):{}case .err(e):{return .err(host_binding_error(e));}
-    };
-    let usize selected=switch(modules::entry(ref index,module_name,function_name)){
+    let usize selected=switch(modules::bind_preview_entry(ref mut index,module_name,function_name,deadline)){
         case .ok(v):{v}case .err(e):{return .err(host_binding_error(e));}
     };
     var ir::Program code=ir::empty();

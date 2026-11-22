@@ -24,6 +24,7 @@ import runtime_program_memory as program_memory;
 import module_entry as entries;
 import module_index as modules;
 import source_snapshot as sources;
+import source_error as diagnostics;
 
 unsafe extern C fn usize bc_runtime_engine_monotonic_ticks();
 unsafe extern C fn void bc_runtime_engine_test_set_clock(usize ticks);
@@ -248,6 +249,55 @@ fn Result<sources::Snapshot,u8> preview_snapshot(ref u8[] source){
     assert(sources::add(ref mut builder,b"main",source).is_ok);
     return switch(sources::freeze(ref builder)){case .ok(v):{.ok(v)}case .err(_):{.err(2)}};
 }
+fn Result<modules::Index,modules::Error> preview_index(usize fuel){
+    var sources::Builder scratch=switch(sources::builder(4096,16)){
+        case .ok(v):{v}
+        case .err(_):{assert(false);return .err(modules::Error{.kind=.Allocation,.at=sources::no_source()});}
+    };
+    assert(sources::add(ref mut scratch,b"first",b"module first; fn i32 helper(){return 0;}").is_ok);
+    assert(sources::add(ref mut scratch,b"second",
+        b"module second; fn i32 helper(){return 1;} pub fn i32 chosen(){return 77;}").is_ok);
+    let sources::Snapshot snapshot=switch(sources::freeze(ref scratch)){
+        case .ok(v):{v}
+        case .err(_):{assert(false);return .err(modules::Error{.kind=.Bounds,.at=sources::no_source()});}
+    };
+    return modules::build_metered(snapshot,false,1024,128,fuel,0);
+}
+fn modules::Index preview(usize fuel){
+    return switch(preview_index(fuel)){case .ok(v):{v}case .err(_):{assert(false);preview(1000)}};
+}
+
+fn void preview_entry_binding_budget(){
+    let modules::Index probe=preview(1000);
+    let usize index_cost=1000-modules::compile_fuel(ref probe);
+    // Two source rows, two module candidates, then three symbol candidates.
+    var modules::Index exact=preview(index_cost+7);
+    switch(modules::bind_preview_entry(ref mut exact,b"second",b"chosen",1)){
+        case .ok(_):{assert(false);}
+        case .err(e):{assert(diagnostics::binding(e).kind==errors::deadline_kind());}
+    };
+    assert(modules::compile_fuel(ref exact)==7);
+    switch(modules::bind_preview_entry(ref mut exact,b"second",b"chosen",0)){
+        case .ok(v):{assert(v==2);}
+        case .err(_):{assert(false);}
+    };
+    assert(modules::compile_fuel(ref exact)==0);
+
+    var modules::Index short=preview(index_cost+6);
+    switch(modules::bind_preview_entry(ref mut short,b"second",b"chosen",0)){
+        case .ok(_):{assert(false);}
+        case .err(e):{
+            assert(diagnostics::binding(e).kind==4);
+            assert(e.at.source==1);
+            switch(sources::view(modules::snapshot(ref short),e.at)){
+                case .ok(v):{assert(bytes::equal(v,b"chosen"));}
+                case .err(_):{assert(false);}
+            };
+        }
+    };
+    assert(modules::compile_fuel(ref short)==6);
+}
+
 fn Result<usize,u8> preview_compile_authority(){
     let ref u8[] source=b"module main; import host::example as api; pub fn i32 main(){ return api::check(41) + 35; }";
     let ref u8[] private=b"module main; fn i32 main(){ return 77; }";
@@ -1722,6 +1772,7 @@ pub fn void run(){
     assert(host_fault_quarantines_engine(2).is_ok);
     assert(host_fault_quarantines_engine(3).is_ok);
     assert(source_round_trip().is_ok);
+    preview_entry_binding_budget();
     assert(preview_compile_authority().is_ok);
     assert(helper_host_calls().is_ok);
     assert(typed_source_round_trip().is_ok);

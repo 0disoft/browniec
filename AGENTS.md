@@ -1,5 +1,5 @@
-- Latest runtime checkpoint (2026-11-22): [Scalar embedding](docs/engineering/embed-preview.md#revision-2-scalar-programs)
-  applies Engine compile policy to catalog-free zero-argument and shared-byte Programs.
+- Latest runtime checkpoint (2026-11-22): [Embedding entry binding](docs/engineering/module-index.md#lookup-and-visibility)
+  charges Engine compile Fuel for source, module and symbol lookups before lowering.
 
 # Brownie C agent guidance
 

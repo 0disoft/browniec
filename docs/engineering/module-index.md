@@ -45,6 +45,21 @@ connect that exact selection to complete body/type/ownership and IR admission.
 `module_at`, `symbol`, `module_name` and the retained Snapshot expose shared views
 or value metadata; no mutable Index field or source borrow escapes its owner.
 
+Both embedding compile paths bind the public entry against the same Index
+before inspecting its signature. The binding charges one unit of compile Fuel
+per source identity, module candidate and symbol candidate visited. Each visit
+checks the original compile deadline and the completed lookup checks it again
+before updating the Index's remaining Fuel. On success, lowering starts with
+that balance and reuses the selected symbol.
+
+On Windows development and /O2, the native Engine verifier accepted a lookup
+with seven Fuel for two source rows, two module candidates and three symbol
+candidates. Six Fuel rejected the final candidate at its original source
+span. An expired deadline rejected the lookup before any Fuel was committed.
+Both profiles exited with zero live SDK allocations. Local receipts:
+`build/runtime-engine/20261122T062300869307Z/receipt.json` and
+`build/embed-preview-_6qs6pcx/receipt.json`.
+
 Errors carry a checked original source-local span. Missing imports point to their
 actual path; duplicate names point to the later declaration; visibility failures
 point to the selected private definition. Missing external queries use explicit

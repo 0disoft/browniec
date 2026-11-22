@@ -24,8 +24,8 @@ struct Table {
     usize count; usize import_count; usize symbol_count; usize functions; usize records;
 }
 // Large immutable binding data stays behind one private typed owner.
-resource Stored { sources::Snapshot sources; Table table; usize fuel; usize semantic_depth; cleanup { } }
-pub resource Index { vec::Vec<Stored> stored; cleanup { } }
+resource Stored { sources::Snapshot sources; Table table; usize semantic_depth; cleanup { } }
+pub resource Index { vec::Vec<Stored> stored; usize fuel; cleanup { } }
 fn Error error(Failure kind,sources::Span at){return Error{.kind=kind,.at=at};}
 fn Error timed_out(){return error(.Deadline,sources::no_source());}
 fn Table empty(){
@@ -203,15 +203,15 @@ fn Result<Index,Error> build_mode(sources::Snapshot snapshot,bool host,usize tok
     let usize capacity=switch(vec::reserve<Stored>(ref mut stored,1)){
         case .ok(v):{v}case .err(_):{return .err(error(.Allocation,sources::no_source()));}
     };
-    let usize count=switch(vec::push<Stored>(ref mut stored,Stored{.sources=snapshot,.table=t,.fuel=remaining,
+    let usize count=switch(vec::push<Stored>(ref mut stored,Stored{.sources=snapshot,.table=t,
         .semantic_depth=if(nesting_limit<32){nesting_limit}else{32}})){
         case .ok(v):{v}case .err(_):{return .err(error(.Allocation,sources::no_source()));}
     };
     if(clock::expired(deadline)){return .err(timed_out());}
-    return .ok(Index{.stored=stored});
+    return .ok(Index{.stored=stored,.fuel=remaining});
 }
 fn ref Stored stored(ref Index p){return vec::at<Stored>(ref p.stored,0);}
-pub fn usize compile_fuel(ref Index p){return stored(p).fuel;}
+pub fn usize compile_fuel(ref Index p){return p.fuel;}
 pub fn usize semantic_depth(ref Index p){return stored(p).semantic_depth;}
 pub fn ref sources::Snapshot snapshot(ref Index p){return ref stored(p).sources;}
 fn ref Table table(ref Index p){return ref stored(p).table;}
@@ -238,15 +238,22 @@ pub fn Result<ref u8[],Error> module_name(ref Index p,usize id){
 }
 // Embedding source identities are canonical module names in caller order.
 pub fn Result<usize,Error> match_source_names(ref Index p){
-    return match_source_names_until(p,0);
+    var usize fuel=budget::unlimited();
+    return match_source_names_metered(p,0,ref mut fuel);
 }
-pub fn Result<usize,Error> match_source_names_until(ref Index p,usize deadline){
+fn Result<usize,Error> binding_visit(ref mut usize fuel,usize deadline,sources::Span at){
+    return switch(budget::visit(fuel,deadline,at.start)){
+        case .ok(v):{.ok(v)}
+        case .err(e):{.err(if(e.kind==errors::deadline_kind()){timed_out()}else{error(.Limit,at)})}
+    };
+}
+fn Result<usize,Error> match_source_names_metered(ref Index p,usize deadline,ref mut usize fuel){
     let ref sources::Snapshot input=snapshot(p);
     let usize count=count(p);
     var usize row=0;
     while(row<count){
-        if(clock::expired(deadline)){return .err(timed_out());}
         let Module declared=module_at(p,row)?;
+        discard binding_visit(fuel,deadline,declared.path)?;
         let ref u8[] actual=module_name(p,row)?;
         let ref u8[] supplied=switch(sources::name(input,row)){
             case .ok(v):{v}case .err(_):{return .err(error(.Bounds,declared.path));}
@@ -258,23 +265,39 @@ pub fn Result<usize,Error> match_source_names_until(ref Index p,usize deadline){
     return .ok(count);
 }
 pub fn Result<usize,Error> find(ref Index p,ref u8[] path){
+    var usize fuel=budget::unlimited();
+    return find_metered(p,path,0,ref mut fuel);
+}
+fn Result<usize,Error> find_metered(ref Index p,ref u8[] path,usize deadline,ref mut usize fuel){
     let ref Table t=table(p);let ref u8[] names=ref t.names;var usize i=0;
-    while(i<t.count){let Module m=t.modules[i];if(bytes::equal(path,names[m.begin..m.end])){return .ok(i);}i+=1;}
+    while(i<t.count){
+        let Module m=t.modules[i];
+        discard binding_visit(fuel,deadline,m.path)?;
+        if(bytes::equal(path,names[m.begin..m.end])){return .ok(i);}
+        i+=1;
+    }
     return .err(error(.Missing,sources::no_source()));
 }
 fn bool matches(ref Index p,sources::Span span,ref u8[] name){
     return switch(sources::view(snapshot(p),span)){case .ok(v):{bytes::equal(v,name)}case .err(_):{false}};
 }
 pub fn Result<usize,Error> resolve(ref Index p,usize caller,ref u8[] qualifier,ref u8[] name){
+    var usize fuel=budget::unlimited();
+    return resolve_metered(p,caller,qualifier,name,0,ref mut fuel);
+}
+fn Result<usize,Error> resolve_metered(ref Index p,usize caller,ref u8[] qualifier,ref u8[] name,
+    usize deadline,ref mut usize fuel){
     let ref Table t=table(p);if(caller>=t.count){return .err(error(.Bounds,sources::no_source()));}
     var usize target=caller;var usize i=0;
     if(qualifier.len!=0){target=16;
         while(i<t.import_count){let Import candidate=t.imports[i];
+            discard binding_visit(fuel,deadline,candidate.alias)?;
             if(candidate.owner==caller && matches(p,candidate.alias,qualifier)){target=candidate.target;break;}i+=1;
         }
         if(target==16){return .err(error(.Missing,t.modules[caller].path));}
     }
     i=0;while(i<t.symbol_count){let Symbol candidate=t.symbols[i];
+        discard binding_visit(fuel,deadline,candidate.name)?;
         if(candidate.owner==target && matches(p,candidate.name,name)){
             if(target!=caller && !candidate.exported){return .err(error(.Private,candidate.name));}return .ok(i);
         }i+=1;
@@ -283,7 +306,22 @@ pub fn Result<usize,Error> resolve(ref Index p,usize caller,ref u8[] qualifier,r
 }
 // Binding only: the full compiler must still check entry parameter/result types.
 pub fn Result<usize,Error> entry(ref Index p,ref u8[] path,ref u8[] name){
-    let usize owner=find(p,path)?;let usize id=resolve(p,owner,b"",name)?;let Symbol selected=symbol(p,id)?;
+    var usize fuel=budget::unlimited();
+    return entry_metered(p,path,name,0,ref mut fuel);
+}
+fn Result<usize,Error> entry_metered(ref Index p,ref u8[] path,ref u8[] name,usize deadline,ref mut usize fuel){
+    let usize owner=find_metered(p,path,deadline,fuel)?;
+    let usize id=resolve_metered(p,owner,b"",name,deadline,fuel)?;
+    let Symbol selected=symbol(p,id)?;
     if(selected.kind!=1){return .err(error(.Kind,selected.name));}
     if(!selected.exported){return .err(error(.Private,selected.name));}return .ok(id);
+}
+
+pub fn Result<usize,Error> bind_preview_entry(ref mut Index p,ref u8[] path,ref u8[] name,usize deadline){
+    var usize remaining=compile_fuel(p);
+    discard match_source_names_metered(p,deadline,ref mut remaining)?;
+    let usize selected=entry_metered(p,path,name,deadline,ref mut remaining)?;
+    if(clock::expired(deadline)){return .err(timed_out());}
+    p.fuel=remaining;
+    return .ok(selected);
 }
