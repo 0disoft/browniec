@@ -588,14 +588,7 @@ pub fn Result<usize,Error> compile_anchored_project_host(ref mut Engine e,ref pr
     if(projects::count(project)>limits.modules){return .err(error(8));}
     let usize deadline=deadline_after(limits.deadline_ms)?;
     let sources::Snapshot snapshot=project_snapshot(project_loader::load_from_until(project,root,source_byte_limit(e),deadline))?;
-    if(clock::expired(deadline)){return .err(compile_timeout());}
-    let modules::Index index=switch(project_binding::index_host(project,snapshot,limits.tokens)){
-        case .ok(v):{v}case .err(e):{return .err(host_binding_error(e));}
-    };
-    let usize selected=switch(modules::entry(ref index,projects::entry_module(project),projects::entry_function(project))){
-        case .ok(v):{v}case .err(e):{return .err(host_binding_error(e));}
-    };
-    return retain_project_host(e,ref index,selected,imports,digest,run,limits,deadline);
+    return compile_project_host_until(e,project,snapshot,imports,digest,run,limits,deadline);
 }
 
 // The broker supplies an owning snapshot and an explicitly selected catalog.
@@ -604,9 +597,16 @@ pub fn Result<usize,Error> compile_project_snapshot_host(ref mut Engine e,ref pr
     discard check_run_policy(e,run)?;
     if(!project_host_authority(project,run)){return .err(error(5));}
     let policy_limits::CompileLimits limits=configured_compile_limits(e)?;
+    let usize deadline=deadline_after(limits.deadline_ms)?;
+    return compile_project_host_until(e,project,snapshot,imports,digest,run,limits,deadline);
+}
+
+fn Result<usize,Error> compile_project_host_until(ref mut Engine e,ref projects::Project project,
+    sources::Snapshot snapshot,host_catalog::Catalog imports,ref u32[] digest,ref run_config::RunConfig run,
+    policy_limits::CompileLimits limits,usize deadline){
+    if(clock::expired(deadline)){return .err(compile_timeout());}
     if(sources::count(ref snapshot)>limits.modules ||
         sources::snapshot_bytes(ref snapshot)>limits.source_bytes){return .err(error(8));}
-    let usize deadline=deadline_after(limits.deadline_ms)?;
     var usize selected=0;
     let modules::Index index=switch(project_binding::index_limited(project,snapshot,true,
         limits.tokens,limits.functions,limits.types,limits.depth,limits.fuel,deadline,ref mut selected)){

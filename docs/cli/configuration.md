@@ -215,9 +215,14 @@ verifier checks the catalog digest and grants for every compiled host call.
 
 Check accepts text and both result schemas without creating an Instance or
 reading a reply file. Run accepts the same output formats and requires a reply
-file or an [explicit process adapter](#windows-process-adapters). The policy bounds source bytes, module count, tokens, functions,
-instructions, per-function registers and the compilation deadline within the
-host dialect's native limits. Supply `--input FILE` or `--stdin` to a shared byte
+file or an [explicit process adapter](#windows-process-adapters). The policy
+bounds source bytes, modules, tokens, nesting depth, functions, types,
+instructions and registers per function within the host dialect's native
+limits. The compile deadline starts before collecting source members. The
+same deadline and compile Fuel balance cover project binding, indexing,
+lowering, verification and Program publication.
+
+Supply `--input FILE` or `--stdin` to a shared byte
 slice entry, or omit both for empty input. Zero-argument entries reject either
 input flag. The CLI acquires input after compilation. Instance admission checks
 the input length and charges the retained copy and temporary Snapshot overlap.

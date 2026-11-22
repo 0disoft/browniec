@@ -92,13 +92,6 @@ pub fn Result<modules::Index,modules::Error> index_limited(ref project::Project 
     *selected=symbol;
     return .ok(index);
 }
-pub fn Result<modules::Index,modules::Error> index_host(ref project::Project map,sources::Snapshot snapshot,usize token_limit){
-    var usize fuel=budget::unlimited();
-    var usize[16] order=[32;16];let usize mapped=file_map(map,ref snapshot,ref mut order,0,ref mut fuel)?;
-    let modules::Index index=modules::build_host(snapshot,token_limit)?;
-    let usize checked=headers(map,ref index,ref order,0,ref mut fuel)?;
-    return .ok(index);
-}
 pub fn Result<input_entries::InputEntry,modules::Error> select_input(ref project::Project map,sources::Snapshot snapshot){
     let modules::Index index=build_index(map,snapshot)?;
     return input_entries::select_i32_input(index,project::entry_module(map),project::entry_function(map));

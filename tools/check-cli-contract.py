@@ -278,6 +278,24 @@ def check_host_project(exe, check_args, run_args):
     run_file = check_args[8]
     assert check_json(exe, check_args, 0, version=2) is None
     assert check_json(exe, run_args, 0, version=2, value=77) is None
+    policy_file = check_args[6]
+    original_policy = policy_file.read_bytes()
+    policy = json.loads(original_policy)
+    try:
+        # Two Fuel cover the app match and the first candidate for helper.brc.
+        for limit, expected_path in (({'fuel': 2}, helper.name), ({'functions': 1}, None)):
+            policy_file.write_text(json.dumps(policy | {'compile': policy['compile'] | limit}),
+                                   encoding='utf-8')
+            for args in (check_args, run_args):
+                error = check_json(exe, args, 3, version=2)
+                assert error['kind'] == 'compile_limit', error
+                if expected_path:
+                    assert error['location']['path'] == expected_path, error
+                    assert error['location']['source_index'] == 1, error
+                else:
+                    assert error['location'] == {'kind': 'none'}, error
+    finally:
+        policy_file.write_bytes(original_policy)
     config = json.loads(run_file.read_bytes())
     for change in ({'requires': []}, {'entry': {'module': 'app', 'function': 'wrong'}}):
         run_file.write_text(json.dumps(config | change), encoding='utf-8')
@@ -313,7 +331,7 @@ def check_host_project(exe, check_args, run_args):
     project.write_text(json.dumps(manifest), encoding='utf-8')
     assert check_json(exe, check_args, 7, version=2)['kind'] == 'input_io'
     helper.write_bytes(original)
-    print('PASS: catalog-backed project calls, compile and runtime locations, and authority-before-file-read')
+    print('PASS: catalog-backed project calls, compile Fuel and function limits, locations, and authority-before-file-read')
 
 
 def check_host_project_input(exe, check_args, run_args):

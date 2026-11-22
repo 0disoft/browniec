@@ -189,9 +189,6 @@ fn Result<usize,Error> prepare(ref sources::Snapshot snapshot,ref mut Table t,bo
 pub fn Result<Index,Error> build(sources::Snapshot snapshot){
     return build_mode(snapshot,false,1024,1024,budget::unlimited(),0);
 }
-pub fn Result<Index,Error> build_host(sources::Snapshot snapshot,usize token_limit){
-    return build_metered(snapshot,true,token_limit,1024,budget::unlimited(),0);
-}
 pub fn Result<Index,Error> build_metered(sources::Snapshot snapshot,bool host,
     usize token_limit,usize nesting_limit,usize fuel,usize deadline){
     return build_mode(snapshot,host,if(token_limit<1024){token_limit}else{1024},nesting_limit,fuel,deadline);
