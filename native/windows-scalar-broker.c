@@ -129,14 +129,21 @@ static uint32_t run_broker(PSID sid, const wchar_t *image, const wchar_t *direct
     bc_worker_broker broker = {0};
     const size_t wire = exchange->host.max_calls ? limits->transport_bytes :
         5 * BC_WORKER_FRAME_BYTES + exchange->request_length + result_capacity + 1;
-    bc_worker_broker_budget budget = {.limit = {1, sizeof(broker) + exchange->request_length + result_capacity,
-        limits->commit_bytes, limits->transport_bytes, exchange->adapter ? 1 : 0,
-        BC_WORKER_BROKER_IO_SLOTS + (exchange->adapter ? (size_t)exchange->adapter->io_slots : 0),
-        BC_WORKER_PIPE_BUFFER_RESERVATION + (exchange->adapter ? (size_t)exchange->adapter->pipe_buffer_bytes : 0),
-        exchange->host.max_calls * exchange->host.request_capacity,
-        exchange->host.max_calls * exchange->host.reply_capacity}};
-    budget.limit.parent_bytes += exchange->host.request_capacity + exchange->host.reply_capacity +
-        exchange->adapter_parent_bytes + bc_restricted_worker_launch_heap_bytes();
+    const bc_worker_host_adapter *adapter = exchange->adapter;
+    bc_worker_broker_budget budget = {.limit = {
+        .sessions = 1,
+        .parent_bytes = sizeof(broker) + exchange->request_length + result_capacity +
+            exchange->host.request_capacity + exchange->host.reply_capacity +
+            exchange->adapter_parent_bytes + bc_restricted_worker_launch_heap_bytes(),
+        .child_commit_bytes = limits->commit_bytes + (adapter ? adapter->child_commit_bytes : 0),
+        .wire_bytes = limits->transport_bytes,
+        .adapter_slots = adapter ? 1 : 0,
+        .io_slots = BC_WORKER_BROKER_IO_SLOTS + (adapter ? (size_t)adapter->io_slots : 0),
+        .pipe_buffer_bytes = BC_WORKER_PIPE_BUFFER_RESERVATION +
+            (adapter ? (size_t)adapter->pipe_buffer_bytes : 0),
+        .host_request_bytes = exchange->host.max_calls * exchange->host.request_capacity,
+        .host_reply_bytes = exchange->host.max_calls * exchange->host.reply_capacity
+    }};
     wchar_t scalar_command[] = L"browniec --internal-scalar-worker";
     wchar_t project_command[] = L"browniec --internal-project-worker";
     const bc_worker_broker_run config = {

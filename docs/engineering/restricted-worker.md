@@ -260,6 +260,24 @@ closed, then returned to zero when the cancelled session closed. Both
 profiles reported zero net handles, and all 460 input hashes matched.
 Local receipt: `build/restricted-worker/20261122T034629076307Z/receipt.json`.
 
+### Restricted adapter Job commit
+
+Private process-backed routes reserve a 64 MiB adapter Job commit ceiling
+in addition to the worker Job ceiling. The adapter configures that limit
+before starting the trusted executable. A route dispatches sequentially, so
+one adapter ceiling covers all of its calls. The combined charge stays
+reserved through process exit and I/O collection. Public host-process routes
+keep their existing Job configuration.
+
+Windows development and /O2 verified the Job limit from the child and
+observed Windows reject a commit request that exceeded the remaining
+allowance. A 128 MiB worker plus its adapter reserved 192 MiB. Two
+overlapping sessions fit at exactly 384 MiB and the second was denied one
+byte below that limit before launch. Closing the expired session refunded
+192 MiB while the cancelled session held its reservation until reaping.
+Both profiles reported zero net handles, and all 460 input hashes matched.
+Local receipt: `build/restricted-worker/20261122T040236759030Z/receipt.json`.
+
 ### Phase deadlines
 
 The broker starts the startup window before opening handles and requires

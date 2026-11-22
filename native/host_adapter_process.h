@@ -18,7 +18,8 @@ typedef enum bc_adapter_state {
    Engine. All calls are serialized.
    Start copies the request before returning and never retries a launch. */
 bc_adapter_process *bc_adapter_process_start(const wchar_t *path, size_t path_len,
-    const uint8_t *header, const uint8_t *body, size_t body_len, uint64_t deadline);
+    const uint8_t *header, const uint8_t *body, size_t body_len, uint64_t deadline,
+    size_t job_commit_bytes);
 bc_adapter_state bc_adapter_process_step(bc_adapter_process *session);
 /* In HEADER, only the 64-byte header is visible. In READY, frame() returns
    the entire response after exact EOF and child exit 0. The span is borrowed

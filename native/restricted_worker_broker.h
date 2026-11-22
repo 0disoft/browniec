@@ -80,6 +80,8 @@ typedef struct bc_worker_host_adapter {
     uint32_t io_slots;
     /* Sum of buffer sizes requested for all pipes in one adapter slot. */
     uint32_t pipe_buffer_bytes;
+    /* OS-enforced commit ceiling for the child Job owned by one slot. */
+    size_t child_commit_bytes;
 } bc_worker_host_adapter;
 
 typedef struct bc_worker_broker {
@@ -134,7 +136,8 @@ typedef struct bc_worker_broker_run {
    at a stable address. Request and result spans must be disjoint and remain
    valid through close, along with the immutable validator expectation.
    Admission reserves a session, its control and span
-   bytes, Job commit ceiling and wire envelope against the shared budget.
+   bytes, combined worker and adapter Job commit and wire envelopes against
+   the shared budget.
    A deferred route also reserves one adapter slot before launch. The slot
    stays reserved across sequential requests and through final cleanup.
    Each I/O slot covers one event and its outstanding overlapped operation.

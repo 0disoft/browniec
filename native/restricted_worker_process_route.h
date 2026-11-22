@@ -4,6 +4,7 @@
 #include "restricted_worker_process_adapter.h"
 
 extern const bc_worker_host_adapter bc_worker_process_callbacks;
+enum { BC_WORKER_ADAPTER_JOB_COMMIT_BYTES = 64 * 1024 * 1024 };
 
 typedef struct bc_worker_process_route {
     bc_worker_process_adapter adapter;

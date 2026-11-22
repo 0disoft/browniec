@@ -1016,7 +1016,9 @@ static void verify_deferred_adapter(const wchar_t *path, const wchar_t *director
     const bc_worker_broker_amounts charge = {1, sizeof(broker) + 3 + sizeof(reply) + worker_launch_heap,
         commit_limit, wire, 1, 2, worker_pipe_buffers, calls * sizeof(request), calls * sizeof(reply)};
     bc_worker_broker_budget budget = {.limit = charge};
-    const bc_worker_host_adapter adapter = {deferred_begin, deferred_poll, deferred_close, 0, 0};
+    const bc_worker_host_adapter adapter = {
+        .begin = deferred_begin, .poll = deferred_poll, .close = deferred_close
+    };
     wchar_t command[256];
     check(swprintf_s(command, _countof(command), L"worker %ls %llx",
         success ? L"--child-host-ok" : L"--child-host-cancel-rx",
@@ -1443,6 +1445,16 @@ static size_t process_fixture_decode(void *raw, const uint8_t *frame, size_t len
 }
 
 static int process_fixture_child(wchar_t mode) {
+    JOBOBJECT_EXTENDED_LIMIT_INFORMATION limits = {0};
+    if (!QueryInformationJobObject(NULL, JobObjectExtendedLimitInformation, &limits, sizeof(limits), NULL) ||
+        !(limits.BasicLimitInformation.LimitFlags & JOB_OBJECT_LIMIT_JOB_MEMORY) ||
+        limits.JobMemoryLimit != BC_WORKER_ADAPTER_JOB_COMMIT_BYTES) return 35;
+    void *oversized = VirtualAlloc(NULL, BC_WORKER_ADAPTER_JOB_COMMIT_BYTES, MEM_COMMIT | MEM_RESERVE,
+        PAGE_READWRITE);
+    if (oversized) {
+        VirtualFree(oversized, 0, MEM_RELEASE);
+        return 36;
+    }
     HANDLE input = GetStdHandle(STD_INPUT_HANDLE), output = GetStdHandle(STD_OUTPUT_HANDLE);
     uint8_t header[BC_ADAPTER_HEADER_BYTES], request[14], extra;
     static const uint8_t prefix[] = {1,0, 3,0,0,0, 4,0,0,0};
@@ -1496,13 +1508,18 @@ static void verify_shared_process_reaping(bc_worker_broker *first, const bc_work
     bc_worker_broker second = {0};
     process_codec codec = {0};
     bc_worker_process_adapter adapter = *first_adapter;
-    adapter.slot = (bc_adapter_slot){.budget = processes};
+    adapter.slot = (bc_adapter_slot){.budget = processes, .job_commit_bytes = adapter.slot.job_commit_bytes};
     adapter.codec = &codec;
     uint8_t result[512], request[18], reply[13];
     bc_worker_broker_run next = *run;
     next.result = result;
     next.host = (bc_worker_broker_host){NULL, &adapter, request, reply, sizeof(request), sizeof(reply), 2};
     next.deadline = clock_ticks() + 100000000ULL;
+    --budget->limit.child_commit_bytes;
+    check(bc_worker_broker_start(&second, &next) == ERROR_NOT_ENOUGH_QUOTA &&
+        !second.worker.process && !second.io.event && processes->live == 1 &&
+        same_charge(budget->reserved, one), "deny a second worker one byte below combined Job capacity");
+    ++budget->limit.child_commit_bytes;
     --budget->limit.host_request_bytes;
     check(bc_worker_broker_start(&second, &next) == ERROR_NOT_ENOUGH_QUOTA &&
         !second.worker.process && !second.io.event && same_charge(budget->reserved, one),
@@ -1576,7 +1593,8 @@ static void verify_catalog_process(const wchar_t *path, const wchar_t *directory
         2 * (2 * BC_WORKER_FRAME_BYTES + sizeof(request) + sizeof(reply) + adapter_wire);
     const bc_worker_broker_amounts charge = {1,
         sizeof(broker) + size + sizeof(result) + sizeof(request) + sizeof(reply) + worker_launch_heap + adapter_parent,
-        commit_limit, wire, 1, 3, process_pipe_buffers, 2 * sizeof(request), 2 * sizeof(reply)};
+        commit_limit + BC_WORKER_ADAPTER_JOB_COMMIT_BYTES, wire, 1, 3, process_pipe_buffers,
+        2 * sizeof(request), 2 * sizeof(reply)};
     bc_worker_broker_budget budget = {.limit = charge};
     wchar_t command[] = L"worker --internal-project-worker";
     bc_worker_broker_run run = {
@@ -1623,6 +1641,11 @@ static void verify_catalog_process(const wchar_t *path, const wchar_t *directory
         same_charge(budget.reserved, (bc_worker_broker_amounts){0}),
         "reject an overflowing parent charge");
     run.adapter_parent_bytes = adapter_parent;
+    run.commit_bytes = SIZE_MAX;
+    check(bc_worker_broker_start(&broker, &run) == ERROR_NOT_ENOUGH_QUOTA &&
+        !broker.io.event && same_charge(budget.reserved, (bc_worker_broker_amounts){0}),
+        "reject overflowing combined Job commit before opening handles");
+    run.commit_bytes = commit_limit;
     check(SetEnvironmentVariableW(L"BC_TEST_RESTRICTED_PROCESS", mode) &&
         !bc_worker_broker_start(&broker, &run) && same_charge(budget.reserved, charge),
         "launch catalog guest at the exact combined wire limit");

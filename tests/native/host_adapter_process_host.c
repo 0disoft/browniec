@@ -75,7 +75,7 @@ static bc_adapter_process *start(const wchar_t *path, wchar_t mode, uint64_t dea
     uint8_t body[BC_ADAPTER_BODY_LIMIT];
     make_request(header, body);
     bc_adapter_process *session = bc_adapter_process_start(path, wcslen(path),
-        header, body, sizeof(body), deadline);
+        header, body, sizeof(body), deadline, 0);
     fixture_mode(0);
     return session;
 }

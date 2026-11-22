@@ -1,5 +1,5 @@
-- Latest runtime checkpoint (2026-11-22): [Restricted process adapter command](docs/engineering/restricted-worker.md#restricted-process-adapter-command)
-  connects a parent-owned, catalog-validated process route to the confined project run.
+- Latest runtime checkpoint (2026-11-22): [Restricted adapter Job commit](docs/engineering/restricted-worker.md#restricted-adapter-job-commit)
+  is enforced by Windows and reserved alongside the worker Job through teardown.
 
 # Brownie C agent guidance
 

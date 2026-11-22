@@ -27,6 +27,8 @@ typedef struct bc_adapter_slot {
     const void *engine;
     uintptr_t generation;
     bc_adapter_budget *budget;
+    /* Zero leaves the Job commit limit unset for this route. */
+    size_t job_commit_bytes;
 } bc_adapter_slot;
 
 /* Peak requested heap bytes for a slot launch with this UTF-8 path.

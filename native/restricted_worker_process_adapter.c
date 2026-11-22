@@ -8,7 +8,8 @@ bool bc_worker_process_route_init(bc_worker_process_route *owner,
     if (!owner || !path || !path_length || path_length > 4096 || reply_limit > BC_ADAPTER_BODY_LIMIT ||
         !launches || !encode || !reply_size || !decode) return false;
     owner->budget = (bc_adapter_budget){.live_limit = 1, .launch_limit = launches, .wire_limit = wire_limit};
-    owner->adapter = (bc_worker_process_adapter){.slot = {.budget = &owner->budget},
+    owner->adapter = (bc_worker_process_adapter){.slot = {.budget = &owner->budget,
+        .job_commit_bytes = bc_worker_process_callbacks.child_commit_bytes},
         .path = path, .path_length = path_length, .reply_limit = reply_limit, .codec = codec,
         .encode = encode, .reply_size = reply_size, .decode = decode};
     return true;
@@ -51,5 +52,7 @@ static bool process_close(void *context) {
 }
 
 const bc_worker_host_adapter bc_worker_process_callbacks = {
-    process_begin, process_poll, process_close, 1, BC_ADAPTER_PIPE_BUFFER_RESERVATION
+    .begin = process_begin, .poll = process_poll, .close = process_close, .io_slots = 1,
+    .pipe_buffer_bytes = BC_ADAPTER_PIPE_BUFFER_RESERVATION,
+    .child_commit_bytes = BC_WORKER_ADAPTER_JOB_COMMIT_BYTES
 };

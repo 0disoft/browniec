@@ -79,13 +79,17 @@ static int pipe_pair(HANDLE *server, HANDLE *client, int send, HANDLE event) {
     return 0;
 }
 
-static HANDLE make_job(void) {
+static HANDLE make_job(size_t commit_bytes) {
     HANDLE job = CreateJobObjectW(NULL, NULL);
     if (!job) return NULL;
     JOBOBJECT_EXTENDED_LIMIT_INFORMATION limits = {0};
     limits.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE |
         JOB_OBJECT_LIMIT_ACTIVE_PROCESS;
     limits.BasicLimitInformation.ActiveProcessLimit = 1;
+    if (commit_bytes) {
+        limits.BasicLimitInformation.LimitFlags |= JOB_OBJECT_LIMIT_JOB_MEMORY;
+        limits.JobMemoryLimit = commit_bytes;
+    }
     if (!SetInformationJobObject(job, JobObjectExtendedLimitInformation, &limits, sizeof(limits)))
         close_handle(&job);
     return job;
@@ -150,7 +154,8 @@ static int valid_path(const wchar_t *path, size_t n) {
 }
 
 bc_adapter_process *bc_adapter_process_start(const wchar_t *path, size_t path_len,
-    const uint8_t *header, const uint8_t *body, size_t body_len, uint64_t deadline) {
+    const uint8_t *header, const uint8_t *body, size_t body_len, uint64_t deadline,
+    size_t job_commit_bytes) {
     if (!valid_path(path, path_len) || !header || (body_len && !body) ||
         body_len > BC_ADAPTER_BODY_LIMIT || now_ticks() >= deadline) return NULL;
     bc_adapter_process *s = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*s));
@@ -160,7 +165,7 @@ bc_adapter_process *bc_adapter_process_start(const wchar_t *path, size_t path_le
     memcpy(application, path, path_len*sizeof(*path));
     application[path_len] = 0;
     s->event = CreateEventW(NULL, TRUE, FALSE, NULL);
-    s->job = make_job();
+    s->job = make_job(job_commit_bytes);
     s->deadline = deadline;
     s->phase = SEND;
     s->target = BC_ADAPTER_HEADER_BYTES + body_len;
@@ -329,7 +334,8 @@ uintptr_t bc_adapter_slot_start(void *owner, const void *engine, const uint8_t *
     int units = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, (const char *)path,
         (int)path_len, wide, _countof(wide));
     if (!units) return 0;
-    slot->process = bc_adapter_process_start(wide, (size_t)units, header, body, body_len, deadline);
+    slot->process = bc_adapter_process_start(wide, (size_t)units, header, body, body_len, deadline,
+        slot->job_commit_bytes);
     if (!slot->process) return 0;
     slot->process->reply_limit = reply_limit;
     ++budget->live;
