@@ -726,7 +726,8 @@ def verify_project_host(run, need, image, folder, env):
     policy['compile']['fuel'] = 1
     check('check', expected_exit=3, kind='compile_limit')
     # The 401 lowering batches leave no Fuel for the independent proof.
-    lowering_fuel = 255 + 401 * 4096
+    # The literal emit spends 15 token stages and two IR emission units.
+    lowering_fuel = 255 + 401 * 4096 + 17
     policy['compile']['fuel'] = lowering_fuel
     check('check', expected_exit=3, kind='compile_limit')
     # Verification itself needs 28 more batches from the same balance.
@@ -757,7 +758,15 @@ def verify_project_host(run, need, image, folder, env):
     check(expected_exit=3, kind='compile_limit', payload=payload)
     policy['compile']['depth'] = original_depth
     check(expected_exit=4, kind='unavailable')
-    return 32
+    source.write_bytes(b'module app; import host::example as api; pub fn i32 start(ref u8[] data){'
+                       b'{output::emit(ref data);} let i32 a=api::check(41); return a+api::check(42);}')
+    # The nested emit spends 14 token stages, two lookup stages and one IR unit.
+    nested_fuel = 1892630 + 17
+    policy['compile']['fuel'] = nested_fuel - 1
+    check(expected_exit=3, kind='compile_limit', payload=payload)
+    policy['compile']['fuel'] = nested_fuel
+    check(payload=payload)
+    return 34
 
 
 def main():

@@ -1243,6 +1243,24 @@ Windows development and /O2 each passed 106 configured, 32 catalog,
 five managed project and four compile-stop cases. All 456 input hashes
 matched. Local receipt: `build/restricted-worker/20261122T001044778738Z/receipt.json`.
 
+### Catalog output statement Fuel
+
+The catalog project's control dispatcher passes compile Fuel and its
+deadline into statements and statement blocks, including statement-style
+Result arms. Catalog emit consumes the call tokens against that budget
+and checks it before creating the byte-literal placeholder and emit IR.
+Named byte arguments use the existing bounded local-name lookup. Legacy
+value-expression arms keep their existing outer checks.
+
+The literal fixture emits before and returns 77 at 1,757,456 compile
+Fuel. A byte input borrowed in a nested block does the same at 1,892,647
+compile Fuel. Each takes 17 more units than before. One unit less
+returns compile_limit without publishing a result or output.
+
+Windows development and /O2 each passed 106 configured, 34 catalog,
+five managed project and four compile-stop cases. All 456 verification
+input hashes matched. Local receipt: `build/restricted-worker/20261122T002345974063Z/receipt.json`.
+
 ## Windows verification
 
 Run `python -B tools/verify-restricted-worker.py`. The development and optimized

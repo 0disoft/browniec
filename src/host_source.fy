@@ -11,6 +11,7 @@ import literal_source_work as decoding;
 import metadata_budget as budget;
 import runtime_clock as clock;
 import locals as locals;
+import argument_name_work as names_work;
 import array_source as arrays;
 import host_wire as wire;
 import std::num as num;
@@ -419,23 +420,38 @@ fn void copy_literal(ref mut ir::Program code,ref mut Finish w){
     w.pc+=1;w.phase=2;
 }
 
-pub fn Result<usize,errors::Error> byte_argument(ref u8[] source,ref mut lexer::State s,ref mut ir::Program code,ref locals::Table names){
+pub fn Result<usize,errors::Error> byte_argument(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program code,ref locals::Table names){
+    var usize fuel=budget::unlimited();
+    return byte_argument_metered(source,s,code,names,0,ref mut fuel);
+}
+
+fn Result<usize,errors::Error> byte_next(ref u8[] source,ref mut lexer::State s,
+    usize deadline,ref mut usize fuel){
+    if(deadline==0 && *fuel==budget::unlimited()){return lexer::next(source,s);}
+    return lexer::next_metered(source,s,deadline,fuel);
+}
+
+pub fn Result<usize,errors::Error> byte_argument_metered(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program code,ref locals::Table names,usize deadline,ref mut usize fuel){
     let usize at=s.begin;
     if(s.kind==3){
-        let usize next=lexer::next(source,s)?;
+        discard byte_next(source,s,deadline,fuel)?;
         if(code.registers>=128){return .err(errors::make(4,at));}
+        discard budget::visit(fuel,deadline,at)?;
         let usize dst=code.registers;
-        let usize pc=ir::raw(code,119,dst,0,0,at)?;
+        discard ir::raw(code,119,dst,0,0,at)?;
         code.types[dst]=14;code.registers+=1;
         return .ok(dst);
     }
-    let usize borrow=lexer::word(source,s,b"ref")?;
+    if(!word(source,s,b"ref")){return .err(errors::make(2,at));}
+    discard byte_next(source,s,deadline,fuel)?;
     if(s.kind!=2){return .err(errors::make(3,s.begin));}
-    let usize index=locals::find(source,names,s.begin,s.end);
+    let usize index=names_work::local_metered(source,names,s.begin,s.end,deadline,fuel)?;
     if(index==64){return .err(errors::make(3,s.begin));}
     let usize value=names.registers[index];
     if(value>=128 || code.types[value]!=14){return .err(errors::make(3,s.begin));}
-    let usize next=lexer::next(source,s)?;
+    discard byte_next(source,s,deadline,fuel)?;
     return .ok(value);
 }
 

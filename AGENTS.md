@@ -1,5 +1,5 @@
-- Latest runtime checkpoint (2026-11-22): [Configured output statement Fuel](docs/engineering/restricted-worker.md#configured-output-statement-fuel)
-  shares the enclosing compile budget across token advances and slice endpoints.
+- Latest runtime checkpoint (2026-11-22): [Catalog output statement Fuel](docs/engineering/restricted-worker.md#catalog-output-statement-fuel)
+  passes the enclosing compile budget through statement blocks and byte emit operands.
 
 # Brownie C agent guidance
 
