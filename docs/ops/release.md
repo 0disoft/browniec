@@ -23,6 +23,25 @@ must exit 0 with empty stderr, and the run must return 77. The subprocesses
 receive only Windows system directories on PATH. The assembler prints the
 ZIP SHA-256 after the checks pass.
 
+For a two-file deployment rehearsal, copy `browniec.exe` and a trusted
+single-file rule to a fresh directory. The archive's example can be copied as
+`app.brc`. In PowerShell on the target machine, run:
+
+```powershell
+.\browniec.exe check .\app.brc --json
+.\browniec.exe run .\app.brc --json
+```
+
+Check that both commands exit 0 with empty stderr and that the run emits one
+JSON object containing `return_i32: 77`. Record the exact ZIP digest and byte
+length and time the first run on the target machine.
+
+The local rehearsal on `f179c086` extracted a 3,568,640-byte /O2 executable
+from a 1,523,063-byte ZIP. The two-file run returned 77 in 159.8 ms from
+launch through output capture and process exit, with a system-only PATH.
+Local receipt: `build/cli-two-file-5h8g1gl8/receipt.json`. A disconnected
+Windows VM without developer tools remains a separate verification target.
+
 To include the embedding preview, pass `--embed` with a profile directory
 produced by `python -B tools/build-embed-preview.py`. The candidate adds the DLL,
 MSVC import library and the exact header copies used to compile the DLL and
