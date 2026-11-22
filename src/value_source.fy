@@ -898,8 +898,9 @@ fn Result<usize,errors::Error> evaluation_ownership(ref u8[] source,ref mut lexe
                     let usize freed=looping::release(paths,flow,w.pending.pool,w.at)?;
                     ir::emit(ref mut unit.body,17,w.pending.slot,0,w.at)?}
                 else if(request==13){if(view_source::range_ahead(source,s)?){1}else{0}}
-                else if(request==16){let usize f=function_id(state);let usize result=if(plan.results[f]==0){64}else{plan.results[f]-1};
-                    w.expanded=propagation::lower(unit,state,paths,w.a,result,w.at)?;0}
+                else if(request==16 || request==20){let usize f=function_id(state);let usize result=if(plan.results[f]==0){64}else{plan.results[f]-1};
+                    if(request==20){propagation::terminal(unit,result,w.at)?}
+                    else{w.expanded=propagation::lower(unit,state,paths,w.a,result,w.at)?;0}}
                 else if(request==17){context::as_value(unit,state,w.left,w.at)?}
                 else if(request==18){ops::scalar_read(unit,state,w.expanded.payload,w.at)?}
                 else{bindings::drop(unit,state,w.expanded.payload,w.at)?};
@@ -968,6 +969,13 @@ fn Result<context::Value,errors::Error> raw_postfix_suffix(ref u8[] source,ref m
         if(s.kind==46 && view_source::range_ahead_raw(source,s)?){break;}
         if(value.bottom){
             let usize at=s.begin;
+            if(s.kind==63){
+                let usize f=function_id(state);
+                let usize result=if(plan.results[f]==0){64}else{plan.results[f]-1};
+                discard propagation::terminal(unit,result,at)?;
+                discard lexer::punctuation(source,s,63)?;
+                return .ok(value);
+            }
             if(s.kind!=46){return .err(wrong(at));}
             let usize dot=lexer::punctuation(source,s,46)?;
             discard context::terminal_property(source,s,at)?;

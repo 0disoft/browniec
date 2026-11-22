@@ -759,6 +759,9 @@ Private [terminal receiver properties](../engineering/value-bottom.md#supported-
 accept final length and tag tests through both lowerers. Both Windows
 profiles verified the original return and cleanup counts with zero length
 reads or tag tests for these terminal receivers.
+The same lowerers accept a final `?` on a terminal receiver in an Option or
+Result function, with no added CASE, return or drop instructions. Both Windows
+profiles verified the new behavior and existing propagation and depth cases.
 
 Private [final Buffer/view operands](../engineering/value-terminal-operands.md)
 now propagate terminal sole len/copy/view receivers, final byte operation operands,

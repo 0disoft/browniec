@@ -49,13 +49,19 @@ result slot or extra cleanup is emitted. Ordinary void calls keep their existing
 type error. Unknown properties, method-call spelling and chained postfixes
 after the terminal property still reject.
 
+A final `?` also propagates the terminal edge in a function declared to
+return Option or Result. The operand supplies no wrapper or failure payload,
+so the compiler emits no additional CASE, return, or cleanup instructions.
+Scalar and void enclosing functions, ordinary void receivers, and repeated
+postfix propagation on a terminal receiver still reject.
+
 ## Deliberate remaining limits
 
 This is a bounded bottom-expression increment. The
 [terminal-operand successor](value-terminal-operands.md) now propagates final
 Buffer/view operands, including sole len/copy/view receivers, final byte arguments,
 view indices and range upper endpoints. Bottom in control conditions or switch
-subjects, index and propagation receivers, nonfinal byte operands/range lower endpoints, a
+subjects, index receivers, nonfinal byte operands/range lower endpoints, a
 binary left operand followed by more operators and non-final CALL arguments
 still rejects. Classic for headers retain their existing pure-expression restriction.
 The [void-bottom successor](value-void-bottom.md) now admits private
@@ -96,6 +102,14 @@ It also rejects seven invalid forms. The other groups cover terminal operands,
 unreachable source rejection and the combined 32/33 conditional-depth fixture.
 The fixtures use locked mirrors and the production Windows clock companion.
 Local receipts: `build/value-bottom-properties-7ug15y53/{development,release}/receipt.json`.
+
+For terminal `?`, both locked Windows profiles ran five groups in fresh
+processes on the default stack. The new group checks Option and Result through
+both lowerers, with the same instruction, register, CASE, return and drop
+counts as the corresponding sources without `?`. Both programs execute to
+42. Four groups cover receiver properties, propagation rejection, regular
+chained propagation and the 32/33 depth fixture.
+Local receipts: `build/terminal-propagation-amhzd0w2/{development,release}/receipt.json`.
 
 This increment does not establish full bottom syntax, public CLI admission,
 Linux/macOS, restricted execution, embedding or the remaining runtime/host work.

@@ -12,6 +12,15 @@ import value_view_bindings as views;
 pub struct Expanded { usize payload; usize exact; }
 fn usize function(ref bindings::State state){let ref locals::Table names=ref state.names;return names.function;}
 
+// A terminal operand has no wrapper value or failure payload. The enclosing
+// declaration still has to permit the propagation suffix.
+pub fn Result<usize,errors::Error> terminal(ref values::Program unit,usize result_type,usize at){
+    if(result_type>=unit.catalog.count){return .err(errors::make(3,at));}
+    let u8 kind=unit.catalog.nodes[result_type].kind;
+    if(kind!=5 && kind!=6){return .err(errors::make(3,at));}
+    return .ok(0);
+}
+
 // Return cleanup includes anonymous captures/constructor children, not just
 // lexical bindings. RETURN consumes even a copyable keep; 16 means no value.
 // Admit all cleanup before recording exit effects or emitting any DROP.

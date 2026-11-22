@@ -104,6 +104,47 @@ fn void terminal_property(ref u8[] input,bool raw,usize expected_drops){
     value(b"module main;fn i32 main(){let c=true && if(true){return 42;}else{return 0;};return 0;}");
     value(b"module main;fn i32 main(){let c=false || if(false){return 0;}else{return 42;};return 0;}");
 }
+
+fn values::Program lowered(ref u8[] input,bool raw){
+    return switch(if(raw){source::compile_raw(input)}else{source::compile(input)}){
+        case .ok(p):{p}case .err(_):{assert(false);compiled(input)}
+    };
+}
+
+fn void terminal_propagation(ref u8[] input,ref u8[] baseline,bool raw){
+    let values::Program p=lowered(input,raw);
+    let values::Program q=lowered(baseline,raw);
+    assert(p.body.count==q.body.count && p.body.registers==q.body.registers);
+    assert(count(ref p,92)==count(ref q,92) && count(ref p,94)==count(ref q,94));
+    assert(count(ref p,90)==count(ref q,90));
+    assert(verifier::inspect_values(ref p).is_ok);
+    let growth::Limits limits=growth::Limits{.object=4096,.instance=1048576,.engine=1048576};
+    assert(switch(vm::run_values(ref p,10000000,0,limits)){case .ok(v):{v==42}case .err(_):{false}});
+}
+
+fn void propagation_rejected(ref u8[] input,bool raw){
+    assert(switch(if(raw){source::compile_raw(input)}else{source::compile(input)}){
+        case .ok(_):{false}case .err(e):{e.kind==3 && e.offset<input.len}
+    });
+}
+
+@test fn void final_propagation_of_terminal_receivers_uses_existing_exit(){
+    var usize i=0;
+    while(i<2){
+        let bool raw=i==0;
+        terminal_propagation(
+            b"module main;fn Option<i32> f(){let b=bytes::empty();return (if(true){return .some(42);}else{return .none;})?;}fn i32 main(){switch(f()){case .some(n):{return n;}case .none:{return 0;}}}",
+            b"module main;fn Option<i32> f(){let b=bytes::empty();return (if(true){return .some(42);}else{return .none;});}fn i32 main(){switch(f()){case .some(n):{return n;}case .none:{return 0;}}}",raw);
+        terminal_propagation(
+            b"module main;fn Result<i32,u32> f(){return (if(false){return .ok(0);}else{return .err(42);})?;}fn i32 main(){switch(f()){case .ok(n):{return n;}case .err(e):{if(e==42){return 42;}return 0;}}}",
+            b"module main;fn Result<i32,u32> f(){return (if(false){return .ok(0);}else{return .err(42);});}fn i32 main(){switch(f()){case .ok(n):{return n;}case .err(e):{if(e==42){return 42;}return 0;}}}",raw);
+        propagation_rejected(b"module main;fn i32 main(){return (if(true){return 42;}else{return 0;})?;}",raw);
+        propagation_rejected(b"module main;fn void f(){return (if(true){return;}else{return;})?;}fn i32 main(){return 42;}",raw);
+        propagation_rejected(b"module main;fn void f(){}fn Option<i32> g(){return .some(f()?);}fn i32 main(){return 42;}",raw);
+        i+=1;
+    }
+    rejected(b"module main;fn Option<i32> f(){return (if(true){return .some(42);}else{return .none;})??;}fn i32 main(){return 42;}");
+}
 @test fn void all_terminal_loop_value_arms_retain_break_continue_and_outer_mutations(){
     value(b"module main;fn i32 main(){var n=0;while(n<2){let dead=if(n==0){n+=1;continue;}else{n+=41;break;};}return n;}");
     value(b"module main;fn i32 main(){var b=bytes::empty();_ = bytes::push(ref mut b,7);var n=0;while(n<2){let v=bytes::view(ref b);let dead=if(n==0){n+=1;continue;}else{break;};}bytes::write(ref mut b,0,42);if(bytes::read(ref b,0)==42){return 42;}return 0;}");
