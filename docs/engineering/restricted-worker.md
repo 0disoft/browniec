@@ -1365,6 +1365,21 @@ Windows development and /O2 each passed 110 configured, 41 catalog,
 five managed and four compile-stop cases. All 456 input hashes matched.
 Local receipt: `build/restricted-worker/20261122T012019812286Z/receipt.json`.
 
+### Catalog host binding Fuel
+
+Host call index preparation checks the compile deadline and charges the
+shared Fuel for each indexed import, alias candidate and catalog candidate.
+Spelling comparison checks at most 64 bytes per charged chunk. Absolute
+paths with trivia reuse metered token advances to match the canonical scope.
+
+A fixture calls the same import through a 64-byte alias and an absolute path
+with a comment. It returns 77 and emits before at 1,794,758 compile Fuel,
+up 44 units. At 1,794,757 it returns compile_limit with no result or output.
+
+Windows development and /O2 each passed 110 configured, 43 catalog,
+five managed and four compile-stop cases. All 456 input hashes matched.
+Local receipt: `build/restricted-worker/20261122T012924043548Z/receipt.json`.
+
 ## Windows verification
 
 Run `python -B tools/verify-restricted-worker.py`. The development and optimized

@@ -79,26 +79,39 @@ fn Result<Name,errors::Error> raw_name(ref u8[] source,ref mut lexer::State s,us
     return .err(errors::make(2,s.begin));
 }
 
+fn Result<bool,errors::Error> binding_equal(ref u8[] left,ref u8[] right,
+    usize at,usize deadline,ref mut usize fuel){
+    if(left.len!=right.len){return .ok(false);}
+    var usize begin=0;
+    while(begin<left.len){
+        discard budget::visit(fuel,deadline,at)?;
+        let usize end=begin+if(left.len-begin<64){left.len-begin}else{64};
+        if(!lexer::equal(left[begin..end],right[begin..end])){return .ok(false);}
+        begin=end;
+    }
+    return .ok(true);
+}
+
 // Compare the canonical catalog spelling to lexer tokens from the original
 // source, keeping byte offsets and ignoring trivia between path components.
-fn Result<bool,errors::Error> scope_matches(ref u8[] source,usize begin,usize end,ref u8[] scope){
-    if(lexer::equal(source[begin..end],scope)){return .ok(true);}
+fn Result<bool,errors::Error> scope_matches(ref u8[] source,usize begin,usize end,ref u8[] scope,usize deadline,ref mut usize fuel){
+    if(binding_equal(source[begin..end],scope,begin,deadline,fuel)?){return .ok(true);}
     if(end-begin<=scope.len){return .ok(false);}
     var lexer::State part=lexer::empty();part.cursor=begin;
-    let usize first=lexer::next(source,ref mut part)?;
+    let usize first=lexer::next_with_budget(source,ref mut part,deadline,fuel)?;
     var usize i=0;
     while(part.begin<end){
         let usize size=part.end-part.begin;
-        if(size>scope.len-i || !lexer::equal(source[part.begin..part.end],scope[i..i+size])){
+        if(size>scope.len-i || !binding_equal(source[part.begin..part.end],scope[i..i+size],part.begin,deadline,fuel)?){
             return .ok(false);
         }
         i+=size;
-        let usize next=lexer::next(source,ref mut part)?;
+        let usize next=lexer::next_with_budget(source,ref mut part,deadline,fuel)?;
     }
     return .ok(i==scope.len);
 }
 
-fn Result<Alias,errors::Error> read_alias(ref u8[] source,ref mut lexer::State s,ref catalog::Catalog imports){
+fn Result<Alias,errors::Error> read_alias(ref u8[] source,ref mut lexer::State s,ref catalog::Catalog imports,ref mut usize fuel){
     let usize keyword=lexer::word(source,s,b"import")?;
     let usize start=s.begin;
     let usize root_end=s.end;
@@ -125,23 +138,24 @@ fn Result<Alias,errors::Error> read_alias(ref u8[] source,ref mut lexer::State s
     let usize one=1;
     while(i<catalog::count(imports)){
         let ref u8[] scope=switch(catalog::module_name(imports,i)){case .ok(v):{v}case .err(_):{assert(false);b""}};
-        if(scope_matches(source,start,end,scope)?){mask|=one<<i;}
+        if(scope_matches(source,start,end,scope,0,fuel)?){mask|=one<<i;}
         i+=1;
     }
     if(mask==0){return .err(errors::make(3,start));}
     return .ok(Alias{.begin=alias,.end=alias_end,.imports=mask});
 }
 
-fn Result<u8,errors::Error> import_id(ref u8[] source,Name item,ref catalog::Catalog imports,bool absolute,usize mask){
+fn Result<u8,errors::Error> import_id(ref u8[] source,Name item,ref catalog::Catalog imports,bool absolute,usize mask,usize deadline,ref mut usize fuel){
     var u8 id=0;
     let usize one=1;
     while((id as usize)<catalog::count(imports)){
+        discard budget::visit(fuel,deadline,item.symbol)?;
         let usize i=id as usize;
         let ref u8[] symbol=switch(catalog::symbol(imports,i)){case .ok(v):{v}case .err(_):{assert(false);b""}};
-        if(lexer::equal(symbol,source[item.symbol..item.end])){
+        if(binding_equal(symbol,source[item.symbol..item.end],item.symbol,deadline,fuel)?){
             if(absolute){
                 let ref u8[] scope=switch(catalog::module_name(imports,i)){case .ok(v):{v}case .err(_):{assert(false);b""}};
-                if(scope_matches(source,item.begin,item.scope_end,scope)?){return .ok(id);}
+                if(scope_matches(source,item.begin,item.scope_end,scope,deadline,fuel)?){return .ok(id);}
             }else if((mask&(one<<i))!=0){return .ok(id);}
         }
         id+=1;
@@ -183,17 +197,17 @@ pub fn Result<usize,errors::Error> prepare(ref u8[] source,ref mut ir::Program c
     let usize module_end=lexer::punctuation(source,ref mut s,59)?;
     var Alias[64] aliases=[Alias{.begin=0,.end=0,.imports=0};64];
     var usize aliases_used=0;
+    var usize fuel=budget::unlimited();
     while(word(source,ref s,b"import")){
         if(aliases_used==64){return .err(errors::make(4,s.begin));}
-        let Alias item=read_alias(source,ref mut s,imports)?;
-        if(alias_mask(source,ref aliases,aliases_used,item.begin,item.end)!=0){
+        let Alias item=read_alias(source,ref mut s,imports,ref mut fuel)?;
+        if(alias_mask(source,ref aliases[..aliases_used],item.begin,item.end,0,ref mut fuel)?!=0){
             return .err(errors::make(3,item.begin));
         }
         aliases[aliases_used]=item;
         aliases_used+=1;
     }
     let usize declarations=s.begin;
-    var usize fuel=budget::unlimited();
     let usize count=collect_calls(source,ref mut s,code,imports,ref aliases[..aliases_used],0,0,0,ref mut fuel)?;
     // The lexer also counts its end-of-file marker. Policy counts source tokens.
     if(s.tokens-1>token_limit){return .err(errors::make(4,s.begin));}
@@ -214,12 +228,12 @@ fn Result<usize,errors::Error> collect_calls(ref u8[] source,ref mut lexer::Stat
         discard budget::prepay(fuel,s.begin)?;
         if(s.kind==2){
             let bool absolute=word(source,s,b"host");
-            let usize mask=alias_mask(source,aliases,aliases.len,s.begin,s.end);
+            let usize mask=alias_mask(source,aliases,s.begin,s.end,deadline,fuel)?;
             if(absolute || mask!=0){
                 var lexer::State look=lexer::snapshot(s);
                 switch(raw_name(source,ref mut look,deadline,fuel)){
                 case .ok(item):{
-                    let u8 id=import_id(source,item,imports,absolute,mask)?;
+                    let u8 id=import_id(source,item,imports,absolute,mask,deadline,fuel)?;
                     if(id==64){return .err(errors::make(3,item.begin));}
                     if(count==256){return .err(errors::make(4,item.begin));}
                     let usize at=rows()+2+3*count;
@@ -248,6 +262,7 @@ fn Result<usize,errors::Error> module_calls(ref u8[] source,ref modules::Index i
     var usize used=0;
     var usize row=0;
     while(row<modules::import_count(index)){
+        discard budget::visit(fuel,deadline,0)?;
         let modules::Import item=switch(modules::import_at(index,row)){
             case .ok(v):{v}case .err(e):{return .err(binding_error(e));}
         };
@@ -255,7 +270,7 @@ fn Result<usize,errors::Error> module_calls(ref u8[] source,ref modules::Index i
             let ref u8[] path=switch(modules::import_path(index,row)){
                 case .ok(v):{v}case .err(e):{return .err(binding_error(e));}
             };
-            let usize mask=scope_mask(imports,path);
+            let usize mask=scope_mask(imports,path,item.path.start,deadline,fuel)?;
             if(mask==0){return .err(errors::make(3,item.path.start));}
             aliases[used]=Alias{.begin=item.alias.start,.end=item.alias.end,.imports=mask};
             used+=1;
@@ -267,16 +282,17 @@ fn Result<usize,errors::Error> module_calls(ref u8[] source,ref modules::Index i
     return collect_calls(source,ref mut s,code,imports,ref aliases[..used],base,calls,deadline,fuel);
 }
 
-fn usize scope_mask(ref catalog::Catalog imports,ref u8[] path){
+fn Result<usize,errors::Error> scope_mask(ref catalog::Catalog imports,ref u8[] path,usize at,usize deadline,ref mut usize fuel){
     var usize mask=0;var usize i=0;let usize one=1;
     while(i<catalog::count(imports)){
+        discard budget::visit(fuel,deadline,at)?;
         let ref u8[] scope=switch(catalog::module_name(imports,i)){
             case .ok(v):{v}case .err(_):{assert(false);b""}
         };
-        if(lexer::equal(path,scope)){mask|=one<<i;}
+        if(binding_equal(path,scope,at,deadline,fuel)?){mask|=one<<i;}
         i+=1;
     }
-    return mask;
+    return .ok(mask);
 }
 
 pub fn Result<usize,errors::Error> prepare_project(ref modules::Index index,ref mut ir::Program code,
@@ -307,14 +323,15 @@ pub fn Result<usize,errors::Error> prepare_project(ref modules::Index index,ref 
     return .ok(count);
 }
 
-fn usize alias_mask(ref u8[] source,ref Alias[] aliases,usize count,usize begin,usize end){
+fn Result<usize,errors::Error> alias_mask(ref u8[] source,ref Alias[] aliases,usize begin,usize end,usize deadline,ref mut usize fuel){
     var usize i=0;
-    while(i<count){
+    while(i<aliases.len){
+        discard budget::visit(fuel,deadline,begin)?;
         let Alias item=aliases[i];
-        if(lexer::equal(source[item.begin..item.end],source[begin..end])){return item.imports;}
+        if(binding_equal(source[item.begin..item.end],source[begin..end],begin,deadline,fuel)?){return .ok(item.imports);}
         i+=1;
     }
-    return 0;
+    return .ok(0);
 }
 
 fn Result<u8,errors::Error> lookup(ref ir::Program code,usize at,usize deadline,ref mut usize fuel){
