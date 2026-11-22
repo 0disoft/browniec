@@ -267,6 +267,24 @@ fn modules::Index preview(usize fuel){
     return switch(preview_index(fuel)){case .ok(v):{v}case .err(_):{assert(false);preview(1000)}};
 }
 
+fn Result<usize,u8> declaration_quota_precedes_body(){
+    var usize mode=0;
+    while(mode<2){
+        let ref u8[] source=if(mode==0){b"module main;fn i32 a(){return 1;}fn i32 b(){"}
+            else{b"module main;struct A { i32 value; }struct B {"};
+        let sources::Snapshot snapshot=preview_snapshot(source)?;
+        let usize attempts=unsafe{probe_attempts()};
+        switch(modules::build_limited(snapshot,false,1024,32,10000,0,
+            if(mode==0){1}else{16},if(mode==1){1}else{32})){
+            case .ok(_):{assert(false);}
+            case .err(e):{assert(modules::declaration_limit(e.kind) && e.at.source==sources::no_source().source);}
+        };
+        assert(unsafe{probe_attempts()}==attempts);
+        mode+=1;
+    }
+    return .ok(0);
+}
+
 fn void preview_entry_binding_budget(){
     let modules::Index probe=preview(1000);
     let usize index_cost=1000-modules::compile_fuel(ref probe);
@@ -1772,6 +1790,7 @@ pub fn void run(){
     assert(host_fault_quarantines_engine(2).is_ok);
     assert(host_fault_quarantines_engine(3).is_ok);
     assert(source_round_trip().is_ok);
+    assert(declaration_quota_precedes_body().is_ok);
     preview_entry_binding_budget();
     assert(preview_compile_authority().is_ok);
     assert(helper_host_calls().is_ok);

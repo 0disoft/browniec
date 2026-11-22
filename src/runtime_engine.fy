@@ -439,11 +439,9 @@ pub fn Result<usize,Error> compile_preview_output(ref mut Engine e,sources::Snap
     if(sources::count(ref snapshot)>limits.modules ||
         sources::snapshot_bytes(ref snapshot)>limits.source_bytes){return .err(error(8));}
     let usize deadline=deadline_after(limits.deadline_ms)?;
-    var modules::Index index=switch(modules::build_metered(snapshot,false,limits.tokens,limits.depth,limits.fuel,deadline)){
+    var modules::Index index=switch(modules::build_limited(snapshot,false,limits.tokens,limits.depth,limits.fuel,deadline,limits.functions,limits.types)){
         case .ok(v):{v}case .err(e):{return .err(preview_binding_error(e));}
     };
-    if(modules::function_count(ref index)>limits.functions ||
-        modules::record_count(ref index)>limits.types){return .err(error(8));}
     let usize symbol=switch(modules::bind_preview_entry(ref mut index,module_name,function_name,deadline)){
         case .ok(v):{v}case .err(e):{return .err(preview_binding_error(e));}
     };
@@ -633,10 +631,10 @@ pub fn Result<usize,Error> compile_preview_host(ref mut Engine e,sources::Snapsh
     if(count==0){return .err(error(1));}
     if(count>limits.modules || sources::snapshot_bytes(ref snapshot)>limits.source_bytes){return .err(error(8));}
     let usize deadline=deadline_after(limits.deadline_ms)?;
-    var modules::Index index=switch(modules::build_metered(snapshot,true,limits.tokens,limits.depth,limits.fuel,deadline)){
-        case .ok(v):{v}case .err(e):{return .err(host_binding_error(e));}
+    var modules::Index index=switch(modules::build_limited(snapshot,true,limits.tokens,limits.depth,limits.fuel,deadline,limits.functions,limits.types)){
+        case .ok(v):{v}
+        case .err(e):{return .err(if(modules::declaration_limit(e.kind)){error(8)}else{host_binding_error(e)});}
     };
-    if(modules::function_count(ref index)>limits.functions || modules::record_count(ref index)>limits.types){return .err(error(8));}
     let usize selected=switch(modules::bind_preview_entry(ref mut index,module_name,function_name,deadline)){
         case .ok(v):{v}case .err(e):{return .err(host_binding_error(e));}
     };

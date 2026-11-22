@@ -25,6 +25,23 @@ A function/struct name collision within one module fails; the same name in diffe
 modules is distinct. Literals/comments inside balanced bodies do not create symbols.
 The existing source lexer preserves original BOM/CRLF/NUL diagnostics.
 
+## Policy declaration ceilings
+
+Configured project and embedding compilers pass their function and type
+ceilings into the header scan. An excess function or nominal record declaration
+stops processing at its keyword, before scanning its signature or body and
+before allocating the Index. The compile-limit diagnostic keeps its absent
+location. Full image type counting still includes the other type identities.
+
+The Windows development and /O2 Engine tests use incomplete bodies for both
+excess declaration kinds and confirm that no SDK allocation is attempted.
+Both restricted-worker profiles pass the existing compile-limit and broker
+checks with zero net handles. Both embedding profiles pass the existing
+catalog-backed and catalog-free policy tests. Local receipts:
+`build/runtime-engine/20261122T074700277471Z/receipt.json`,
+`build/restricted-worker/20261122T075344189987Z/receipt.json`, and
+`build/embed-preview-c13nibhl/receipt.json`.
+
 ## Lookup and visibility
 
 An empty qualifier selects the caller's own module, including its private symbols.

@@ -1,5 +1,5 @@
-- Latest runtime checkpoint (2026-11-22): [Project working allowance](docs/engineering/runtime-engine-compile-memory.md#project-working-allowance-before-source-collection)
-  preflights resumable lowering before collecting rooted or anchored project sources.
+- Latest runtime checkpoint (2026-11-22): [Policy declaration ceilings](docs/engineering/module-index.md#policy-declaration-ceilings)
+  stop an over-limit function or record before body scanning and Index allocation.
 
 # Brownie C agent guidance
 

@@ -81,10 +81,7 @@ pub fn Result<modules::Index,modules::Error> index_limited(ref project::Project 
     var usize[16] order=[32;16];
     var usize remaining=fuel;
     discard file_map(map,ref snapshot,ref mut order,deadline,ref mut remaining)?;
-    var modules::Index index=modules::build_metered(snapshot,host,tokens,nesting_limit,remaining,deadline)?;
-    if(modules::function_count(ref index)>functions || modules::record_count(ref index)>records){
-        return .err(error(.Limit,sources::no_source()));
-    }
+    var modules::Index index=modules::build_limited(snapshot,host,tokens,nesting_limit,remaining,deadline,functions,records)?;
     remaining=modules::compile_fuel(ref index);
     discard headers(map,ref index,ref order,deadline,ref mut remaining)?;
     let usize symbol=modules::bind_entry(ref mut index,project::entry_module(map),
