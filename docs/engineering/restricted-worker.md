@@ -637,6 +637,14 @@ admit the exact charge, and refund after worker and adapter collection.
 All 459 input hashes matched, with zero net handles in both profiles.
 Local receipt: `build/restricted-worker/20261122T023158358295Z/receipt.json`.
 
+The private command also passed console cancellation in both Windows
+profiles. The fixture writes a partial adapter reply and signals its PID.
+The driver observes the adapter live, sends CTRL_BREAK to the CLI process
+group, and checks exit 5 with a cancelled diagnostic, no result or output,
+an exited adapter, and an empty staging directory. Both profiles passed
+all ten command cases and matched all 459 verification input hashes.
+Local receipt: `build/restricted-worker/20261122T023548867526Z/receipt.json`.
+
 ### Catalog guest host transfer stops
 
 A cancelled Engine Instance reports a run error with no source location.

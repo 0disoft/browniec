@@ -10,6 +10,7 @@ import os
 from pathlib import Path
 import shutil
 import subprocess
+import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 HELLO_PROJECT = ROOT / 'examples/projects/hello'
@@ -834,6 +835,55 @@ def verify_project_host(run, need, image, folder, env):
     return 43
 
 
+def verify_process_console_cancel(run, need, args, folder, env):
+    driver = r"""
+import _winapi
+import signal
+import subprocess
+import sys
+import time
+from pathlib import Path
+
+marker = Path('process-adapter.pid')
+with subprocess.Popen(sys.argv[1:], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                      creationflags=subprocess.CREATE_NEW_PROCESS_GROUP) as cli:
+    process = None
+    try:
+        deadline = time.monotonic() + 8
+        while True:
+            try:
+                data = marker.read_bytes()
+            except (FileNotFoundError, PermissionError):
+                data = b''
+            if len(data) == 4:
+                break
+            assert cli.poll() is None, cli.communicate()
+            assert time.monotonic() < deadline, 'Adapter did not start its partial reply'
+            time.sleep(0.01)
+        process = _winapi.OpenProcess(_winapi.SYNCHRONIZE, False, int.from_bytes(data, 'little'))
+        assert _winapi.WaitForSingleObject(process, 0) == _winapi.WAIT_TIMEOUT
+        cli.send_signal(signal.CTRL_BREAK_EVENT)
+        stdout, stderr = cli.communicate(timeout=5)
+        assert cli.returncode == 5 and not stderr, (cli.returncode, stdout, stderr)
+        assert _winapi.WaitForSingleObject(process, 0) == _winapi.WAIT_OBJECT_0, 'Adapter survived the CLI'
+    finally:
+        if cli.poll() is None:
+            cli.kill()
+        if process is not None:
+            _winapi.CloseHandle(process)
+    sys.stdout.buffer.write(stdout)
+"""
+    output = run([sys.executable, '-B', '-c', driver, *args], cwd=folder,
+                 env=dict(env, BC_TEST_RESTRICTED_PROCESS='c'), no_stderr=True,
+                 hidden_console=True, timeout=15)
+    result = json.loads(output)
+    need(result['schema'] == 'browniec.result/v2' and result['command'] == 'run' and
+         result['status'] == 'error' and result['return_i32'] is None and
+         result['error'] == {'kind': 'cancelled', 'location': {'kind': 'none'}} and
+         'output_b64' not in result, f'Console cancellation published an invalid outcome: {result}')
+    need(not list(Path(env['TEMP']).iterdir()), 'console cancellation left staged resources')
+
+
 def verify_project_process_command(run, need, image, adapter, folder, env):
     target = folder / 'catalog-project'
     manifest = target / 'project.json'
@@ -875,6 +925,11 @@ def verify_project_process_command(run, need, image, adapter, folder, env):
     policy['worker']['io_idle_ms'] = 1500
     policy_file.write_text(json.dumps(policy), encoding='utf-8')
     check(5, 'deadline', mode='s')
+    policy['worker']['io_idle_ms'] = 8000
+    policy['run']['deadline_ms'] = config['limits']['deadline_ms'] = 8000
+    policy_file.write_text(json.dumps(policy), encoding='utf-8')
+    config_file.write_text(json.dumps(config), encoding='utf-8')
+    verify_process_console_cancel(run, need, [*args, '0', 'v1', adapter], folder, env)
 
     source = target / 'src/main.brc'
     original_source = source.read_bytes()
@@ -890,7 +945,7 @@ def verify_project_process_command(run, need, image, adapter, folder, env):
     config_file.write_text(json.dumps(config), encoding='utf-8')
     check(5, 'input_limit', payload=payload)
     source.write_bytes(original_source)
-    return 9
+    return 10
 
 
 def main():
@@ -936,9 +991,16 @@ def main():
                    inputs=[dict(path=p, sha256=helper.sha((ROOT / p).read_bytes())) for p in paths],
                    profiles=[], commands=[])
 
-    def run(args, cwd=out, env=None, timeout=30, expected_exit=0, silent=False, no_stderr=False):
+    def run(args, cwd=out, env=None, timeout=30, expected_exit=0, silent=False, no_stderr=False,
+            hidden_console=False):
         command = list(map(str, args))
-        result = subprocess.run(command, cwd=cwd, env=env, capture_output=True, timeout=timeout)
+        options = {}
+        if hidden_console:
+            startup = subprocess.STARTUPINFO()
+            startup.dwFlags = subprocess.STARTF_USESHOWWINDOW
+            startup.wShowWindow = subprocess.SW_HIDE
+            options = dict(creationflags=subprocess.CREATE_NEW_CONSOLE, startupinfo=startup)
+        result = subprocess.run(command, cwd=cwd, env=env, capture_output=True, timeout=timeout, **options)
         index = len(receipt['commands'])
         stdout, stderr = f'logs/{index}.stdout', f'logs/{index}.stderr'
         helper.write(out / stdout, result.stdout)

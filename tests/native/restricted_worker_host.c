@@ -1347,9 +1347,18 @@ static int process_fixture_child(wchar_t mode) {
     if (mode == L'w') ++header[16];
     if (!WriteFile(output, header, sizeof(header), &count, NULL) || count != sizeof(header)) return 31;
     uint8_t body[] = {3,0,0,0, 4,0,0,0, header[16] == 1 ? 42 : 35,0,0,0};
-    const DWORD size = mode == L's' ? 3 : sizeof(body);
+    const bool partial = mode == L's' || mode == L'c';
+    const DWORD size = partial ? 3 : sizeof(body);
     if (!WriteFile(output, body, size, &count, NULL) || count != size) return 32;
-    if (mode == L's') Sleep(INFINITE);
+    if (mode == L'c') {
+        HANDLE marker = CreateFileW(L"process-adapter.pid", GENERIC_WRITE, FILE_SHARE_READ,
+            NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
+        if (marker == INVALID_HANDLE_VALUE) return 33;
+        const DWORD pid = GetCurrentProcessId();
+        const BOOL marked = WriteFile(marker, &pid, sizeof(pid), &count, NULL) && count == sizeof(pid);
+        if (!CloseHandle(marker) || !marked) return 34;
+    }
+    if (partial) Sleep(INFINITE);
     return 0;
 }
 
