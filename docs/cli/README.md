@@ -58,7 +58,8 @@ Windows project execution and explicit binary project input are described in
 [project selection](configuration.md#project-selection). [Configured runs](configuration.md#configured-project-output)
 also support the output capability, compile/run deadlines and console cancellation during execution. [Single-source host checks](configuration.md#single-source-host-check)
 verify typed host calls using an explicit catalog and grants. Windows also supports
-[scalar check and run in a restricted worker](configuration.md#restricted-single-file-execution).
+restricted check and run for [scalar source](configuration.md#restricted-single-file-execution)
+and [projects with empty requirements](configuration.md#restricted-project-execution).
 Public host suspension and the broader DLL and restricted profiles remain pending.
 
 `core: true` in version JSON means this experimental native CLI exists; it does

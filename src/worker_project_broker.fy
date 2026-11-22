@@ -99,7 +99,7 @@ fn usize process_reply(ref procs::Route route,usize run,usize request,ptr u8 dat
     return length-63;
 }
 
-struct Selection { bool run; usize fuel; usize source_bytes; usize modules; bool input_file; usize input_limit; bool output; usize output_limit; }
+struct Selection { render::Format format; bool run; usize fuel; usize source_bytes; usize modules; bool input_file; usize input_limit; bool output; usize output_limit; }
 
 fn u32 validate_result(ptr u8 data,usize length,u32 run,ptr u8 bounds,usize count,u32 output,usize output_limit){
     if(data==null || length==0 || length>wire::reply_capacity(output==1,output_limit) || run>1 || output>1 ||
@@ -118,6 +118,7 @@ pub fn i32 execute(bool configured,bool input_file,bool host,bool external){
     let ref u8[] op=ref operation[..size];
     let bool run=bytes::equal(op,b"run");
     if(!run && (input_file || !bytes::equal(op,b"check"))){return failure(false,errors::absent(10,0));}
+    if(!configured){return execute_managed(.JsonV2,run,meter::cli_default());}
     var u8[3072] path=[0;3072];
     let usize length=switch(process::arg(3,ref mut path)){
         case .ok(v):{v}case .err(_):{return failure(run,errors::absent(10,0));}
@@ -127,9 +128,19 @@ pub fn i32 execute(bool configured,bool input_file,bool host,bool external){
     if(external && (!run || argc>200 || (argc-7)%3>1) || (host && !external && argc!=host_args)){
         return failure(run,errors::absent(10,0));
     }
-    if(configured){return configured_project(ref path[..length],run,input_file,host,external);}
-    return acquire(ref path[..length],Selection{.run=run,.fuel=if(run){meter::cli_default()}else{0},
-        .source_bytes=sources::source_limit(),.modules=sources::file_limit(),.input_file=false,.input_limit=0,.output=false,.output_limit=0},b"",b"",b"",b"",b"",b"",.none,null,null,0);
+    return configured_project(ref path[..length],run,input_file,host,external);
+}
+
+@effects(console,filesystem)
+pub fn i32 execute_managed(render::Format format,bool run,usize fuel){
+    var u8[3072] path=[0;3072];
+    let usize length=switch(process::arg(3,ref mut path)){
+        case .ok(v):{v}case .err(_):{return render::selected_outcome(format,run,true,0,errors::absent(10,0),0);}
+    };
+    let Selection selection=Selection{.format=format,.run=run,.fuel=if(run){fuel}else{0},
+        .source_bytes=sources::source_limit(),.modules=sources::file_limit(),.input_file=false,.input_limit=0,
+        .output=false,.output_limit=0};
+    return acquire(ref path[..length],selection,b"",b"",b"",b"",b"",b"",.none,null,null,0);
 }
 
 @effects(console,filesystem)
@@ -160,7 +171,7 @@ fn i32 configured_project(ref u8[] path,bool run,bool input_file,bool host,bool 
     let usize count=if(compile.modules<sources::file_limit()){compile.modules}else{sources::file_limit()};
     let u8[28] worker=worker_configuration(policy::worker_limits(ref ceiling));
     let usize input_limit=if(runtime.input_bytes<runtime.memory_bytes){runtime.input_bytes}else{runtime.memory_bytes};
-    let Selection selected=Selection{.run=run,.fuel=if(run){fuel}else{0},.source_bytes=source,.modules=count,
+    let Selection selected=Selection{.format=.JsonV2,.run=run,.fuel=if(run){fuel}else{0},.source_bytes=source,.modules=count,
         .input_file=input_file,.input_limit=input_limit,.output=output,.output_limit=if(run && output){runtime.output_bytes}else{0}};
     if(host){
         if(run && runtime.fuel!=fuel){return failure(run,errors::absent(11,0));}
@@ -254,11 +265,11 @@ fn i32 acquire(ref u8[] path,Selection selected,ref u8[] module_name,ref u8[] fu
     let bool run=selected.run;
     var bytes::Buffer data=bytes::empty();
     var anchored::Root root=switch(cli::open_manifest(path,ref mut data)){
-        case .ok(v):{v}case .err(e):{return failure(run,e);}
+        case .ok(v):{v}case .err(e):{return selected_failure(selected,e);}
     };
     let ref u8[] raw=bytes::view(ref data);
     let manifest::Project project=switch(cli::parse_manifest(ref root,raw)){
-        case .ok(v):{v}case .err(e):{return failure(run,e);}
+        case .ok(v):{v}case .err(e):{return selected_failure(selected,e);}
     };
     let bool authorized=switch(host){
         case .some(route):{engine::project_host_authority(ref project,route)}
@@ -267,12 +278,12 @@ fn i32 acquire(ref u8[] path,Selection selected,ref u8[] module_name,ref u8[] fu
     if(!authorized || (worker.len!=0 &&
        (!bytes::equal(manifest::entry_module(ref project),module_name) ||
         !bytes::equal(manifest::entry_function(ref project),function_name)))){
-        return failure(run,errors::absent(11,0));
+        return selected_failure(selected,errors::absent(11,0));
     }
-    if(manifest::count(ref project)>selected.modules){return failure(run,errors::absent(4,0));}
+    if(manifest::count(ref project)>selected.modules){return selected_failure(selected,errors::absent(4,0));}
     let sources::Snapshot snapshot=switch(loader::load_from(ref project,ref mut root,selected.source_bytes)){
         case .ok(v):{v}
-        case .err(e):{return failure(run,errors::absent(cli::acquisition_kind(e),0));}
+        case .err(e):{return selected_failure(selected,errors::absent(cli::acquisition_kind(e),0));}
     };
     let ref u8[] project_bytes=raw[..anchored::manifest_bytes(ref root)];
     if(!selected.input_file){
@@ -280,7 +291,7 @@ fn i32 acquire(ref u8[] path,Selection selected,ref u8[] module_name,ref u8[] fu
     }
     let usize limit=if(selected.input_limit<input::hard_limit()){selected.input_limit}else{input::hard_limit()};
     let files::File file=switch(files::open(process::arg_count()-1,limit,render::input_limit_kind())){
-        case .ok(v):{v}case .err(e):{return failure(run,e);}
+        case .ok(v):{v}case .err(e):{return selected_failure(selected,e);}
     };
     return invoke(project_bytes,ref project,ref snapshot,selected,worker,policy_bytes,run_bytes,imports,host,context,bindings,route_slots,files::view(ref file));
 }
@@ -295,16 +306,16 @@ fn i32 invoke(ref u8[] manifest_bytes,ref manifest::Project project,ref sources:
     let bytes::Buffer request=switch(wire::pack(manifest_bytes,project,snapshot,run,
         selected.fuel,policy_bytes,run_bytes,imports,selected.input_file,payload,ref mut limits[..limit_bytes])){
         case .ok(v):{v}
-        case .err(e):{return failure(run,errors::absent(switch(e){case .Shape:{11}case .Limit:{4}case .Allocation:{15}},0));}
+        case .err(e):{return selected_failure(selected,errors::absent(switch(e){case .Shape:{11}case .Limit:{4}case .Allocation:{15}},0));}
     };
     let ref u8[] input=bytes::view(ref request);
     let ref u8[] bounds=ref limits[..limit_bytes];
     let bool output=run && selected.output;
     let usize capacity=wire::reply_capacity(output,selected.output_limit);
     var bytes::Buffer reply=switch(bytes::with_capacity(capacity)){
-        case .ok(v):{v}case .err(_):{return failure(run,errors::absent(15,0));}
+        case .ok(v):{v}case .err(_):{return selected_failure(selected,errors::absent(15,0));}
     };
-    if(!bytes::resize_zeroed(ref mut reply,capacity).is_ok){return failure(run,errors::absent(15,0));}
+    if(!bytes::resize_zeroed(ref mut reply,capacity).is_ok){return selected_failure(selected,errors::absent(15,0));}
     var usize length=0;
     var u8[12] host=[0;12];
     switch(host_run){
@@ -323,21 +334,26 @@ fn i32 invoke(ref u8[] manifest_bytes,ref manifest::Project project,ref sources:
         bytes::view_mut(ref mut reply) as ptr mut u8,capacity,ref mut length as ptr mut usize)};
     if(status!=1 || length==0 || length>capacity){
         let u8 kind=if(status==2){errors::deadline_kind()}else if(status==3){errors::cancelled_kind()}else{11};
-        return failure(run,errors::absent(kind,0));
+        return selected_failure(selected,errors::absent(kind,0));
     }
     let ref u8[] result=bytes::view(ref reply)[..length];
     let wire::ResultFrame frame=switch(wire::parse_frame(result,run,bounds,output,selected.output_limit)){
-        case .ok(v):{v}case .err(_):{return failure(run,errors::absent(11,0));}
+        case .ok(v):{v}case .err(_):{return selected_failure(selected,errors::absent(11,0));}
     };
     let wire::Outcome outcome=frame.outcome;
     if(frame.has_output){
-        return render::published_output_profile(.JsonV2,outcome.value.value,result[frame.output_start..],outcome.profile);
+        return render::published_output_profile(selected.format,outcome.value.value,result[frame.output_start..],outcome.profile);
     }
     return switch(outcome.value.status){
-        case .Checked:{render::selected_outcome(.JsonV2,false,false,0,errors::absent(0,0),outcome.profile)}
-        case .Completed:{render::selected_outcome(.JsonV2,true,false,outcome.value.value,errors::absent(0,0),outcome.profile)}
-        case .Failed:{render::project_failure(.JsonV2,run,outcome.value.error,snapshot,outcome.span,outcome.profile)}
+        case .Checked:{render::selected_outcome(selected.format,false,false,0,errors::absent(0,0),outcome.profile)}
+        case .Completed:{render::selected_outcome(selected.format,true,false,outcome.value.value,errors::absent(0,0),outcome.profile)}
+        case .Failed:{render::project_failure(selected.format,run,outcome.value.error,snapshot,outcome.span,outcome.profile)}
     };
+}
+
+@effects(console)
+fn i32 selected_failure(Selection selected,errors::Error error){
+    return render::selected_outcome(selected.format,selected.run,true,0,error,0);
 }
 
 @effects(console)

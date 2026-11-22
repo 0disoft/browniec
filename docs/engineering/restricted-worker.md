@@ -562,6 +562,22 @@ dropped two malformed member length tables without a RESULT. The managed
 staging directory was empty after each profile. Local receipt:
 `build/restricted-worker/20261121T164903771680Z/receipt.json`.
 
+### Public project isolation
+
+Windows `check --project FILE --isolated` and `run --project FILE --isolated`
+use the managed project worker for zero-argument i32 entries with empty
+requirements. The parent anchors the project files and applies the chosen
+text or JSON format to the validated worker result. A project with requirements
+is rejected before member acquisition.
+
+Windows development and /O2 passed six additional public command checks each.
+The example returned 42, zero Fuel returned exit 5, and isolation setup failure
+returned exit 4. A second-member diagnostic matched ordinary project check,
+and a denied requirement prevented opening a missing member. The native
+broker had zero net handles in each profile. The /O2 CLI contract also checked
+the documented output channels and schemas. Local receipt:
+`build/restricted-worker/20261122T090218714377Z/receipt.json`.
+
 ### Project policy and worker limits
 
 The private project broker accepts an explicit `POLICY RUN` pair after

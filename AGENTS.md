@@ -1,5 +1,5 @@
-- Latest runtime checkpoint (2026-11-22): [Public scalar isolation](docs/engineering/restricted-worker.md#public-scalar-isolation)
-  routes single-file check and run through the Windows worker and broker.
+- Latest runtime checkpoint (2026-11-22): [Public project isolation](docs/engineering/restricted-worker.md#public-project-isolation)
+  routes projects with empty requirements through the managed Windows worker.
 
 # Brownie C agent guidance
 

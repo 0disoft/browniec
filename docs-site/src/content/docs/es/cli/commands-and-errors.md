@@ -18,6 +18,9 @@ La CLI pública procesa un archivo fuente a la vez. `check` verifica sin ejecuta
 | `browniec check SOURCE --isolated` | — | `stderr` | — |
 | `browniec check SOURCE --isolated` | `--json` | `stdout` | `browniec.result/v1` |
 | `browniec check SOURCE --isolated` | `--json-v2` | `stdout` | `browniec.result/v2` |
+| `browniec check --project FILE --isolated` | — | `stderr` | — |
+| `browniec check --project FILE --isolated` | `--json` | `stdout` | `browniec.result/v1` |
+| `browniec check --project FILE --isolated` | `--json-v2` | `stdout` | `browniec.result/v2` |
 | `browniec check SOURCE --catalog FILE --policy FILE --run FILE` | — | `stderr` | — |
 | `browniec check SOURCE --catalog FILE --policy FILE --run FILE` | `--json` | `stdout` | `browniec.result/v1` |
 | `browniec check SOURCE --catalog FILE --policy FILE --run FILE` | `--json-v2` | `stdout` | `browniec.result/v2` |
@@ -30,6 +33,9 @@ La CLI pública procesa un archivo fuente a la vez. `check` verifica sin ejecuta
 | `browniec run SOURCE --isolated [--fuel N]` | — | `stderr` | — |
 | `browniec run SOURCE --isolated [--fuel N]` | `--json` | `stdout` | `browniec.result/v1` |
 | `browniec run SOURCE --isolated [--fuel N]` | `--json-v2` | `stdout` | `browniec.result/v2` |
+| `browniec run --project FILE --isolated [--fuel N]` | — | `stderr` | — |
+| `browniec run --project FILE --isolated [--fuel N]` | `--json` | `stdout` | `browniec.result/v1` |
+| `browniec run --project FILE --isolated [--fuel N]` | `--json-v2` | `stdout` | `browniec.result/v2` |
 | `browniec run SOURCE --catalog FILE --policy FILE --run FILE --host-adapter ID REVISION EXE` | — | `stderr` | — |
 | `browniec run SOURCE --catalog FILE --policy FILE --run FILE --host-adapter ID REVISION EXE` | `--json` | `stdout` | `browniec.result/v1` |
 | `browniec run SOURCE --catalog FILE --policy FILE --run FILE --host-adapter ID REVISION EXE` | `--json-v2` | `stdout` | `browniec.result/v2` |

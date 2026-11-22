@@ -80,10 +80,24 @@ On Windows, use an AppContainer/Job worker to check or run a scalar source file:
 The parent snapshots up to 4096 bytes from an explicit regular local NTFS file.
 The worker compiles and verifies the snapshot. Run also executes it with the
 selected Fuel. Text, JSON v1 and JSON v2 keep the ordinary scalar result contract.
-Project, input, host, policy and eval-i32 combinations are unavailable in this
-profile. Scalar isolation is reported as `restricted_scalar: true` in version JSON.
+Input, host, policy and eval-i32 combinations are unavailable in this profile. Scalar isolation is reported as `restricted_scalar: true` in version JSON.
 Unsupported combinations and isolation setup failure return exit 4. The broker
 publishes only after a validated result, clean EOF, process exit and cleanup.
+
+## Restricted project execution
+
+On Windows, a project with an explicit zero-argument i32 entry and an empty
+requirements list can run in a managed AppContainer/Job worker:
+
+    browniec check --project FILE --isolated --json-v2
+    browniec run --project FILE --isolated --fuel 256 --json
+
+The parent anchors the manifest and member reads at the selected directory.
+The worker compiles the snapshots and returns source-local diagnostics.
+Text, JSON v1 and JSON v2 use the ordinary project result contract. The worker
+uses the selected Fuel when running. Explicit policy, catalogs, input and
+output flags remain outside this route. If worker setup fails, the command
+returns exit 4.
 
 ## Single-source host check
 

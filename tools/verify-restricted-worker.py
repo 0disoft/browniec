@@ -121,6 +121,26 @@ def verify_managed_project(run, need, image, folder, env):
                             command=op, status=status, return_i32=value, error=None),
              f'Unexpected isolated project outcome: {result}')
 
+    for op, flag, schema, value in [
+        ('check', '--json-v2', 'browniec.result/v2', None),
+        ('run', '--json', 'browniec.result/v1', 42),
+    ]:
+        result = json.loads(run([image, op, '--project', project_arg, flag, '--isolated'],
+                                cwd=folder, env=env, no_stderr=True))
+        need(result == dict(schema=schema, profile='brownie.m1-scalar/1', command=op,
+                            status='completed' if op == 'run' else 'checked', return_i32=value, error=None),
+             f'Unexpected public isolated project outcome: {result}')
+    stopped = json.loads(run([image, 'run', '--project', project_arg, '--isolated',
+                              '--fuel', '0', '--json-v2'], cwd=folder, env=env,
+                             expected_exit=5, no_stderr=True))
+    need(stopped['error']['kind'] == 'fuel' and stopped['return_i32'] is None,
+         f'Public isolated project ignored Fuel: {stopped}')
+    no_stage = dict(env, TEMP=str(Path(env['TEMP']) / 'missing'), TMP=str(Path(env['TEMP']) / 'missing'))
+    rejected = json.loads(run([image, 'run', '--project', project_arg, '--isolated', '--json-v2'],
+                              cwd=folder, env=no_stage, expected_exit=4, no_stderr=True))
+    need(rejected['error']['kind'] == 'unavailable' and rejected['return_i32'] is None,
+         f'Public isolated project fell back after setup failed: {rejected}')
+
     math = target / 'src/math.brc'
     math.write_bytes(math.read_bytes().replace(b'return 42;', b'return missing;'))
     fixture = [image, 'check', '--project', project_arg, '--json-v2']
@@ -131,6 +151,10 @@ def verify_managed_project(run, need, image, folder, env):
     need(observed == expected and location['source_index'] == 1 and location['path'] == 'src/math.brc',
          f'Isolated project diagnostic did not preserve the second source: {observed}')
 
+    public = json.loads(run([*fixture, '--isolated'], cwd=folder, env=env,
+                            expected_exit=3, no_stderr=True))
+    need(public == expected, f'Public isolated project changed the source diagnostic: {public}')
+
     manifest = json.loads(original)
     manifest['requires'] = ['quote.lookup']
     project.write_text(json.dumps(manifest), encoding='utf-8')
@@ -139,9 +163,12 @@ def verify_managed_project(run, need, image, folder, env):
                             cwd=folder, env=env, expected_exit=4, no_stderr=True))
     need(denied['error']['kind'] == 'unavailable' and denied['return_i32'] is None,
          f'An ungranted requirement reached project source acquisition or execution: {denied}')
+    public = json.loads(run([image, 'run', '--project', project_arg, '--isolated', '--json-v2'],
+                            cwd=folder, env=env, expected_exit=4, no_stderr=True))
+    need(public == denied, f'Public isolated project opened a denied member: {public}')
     run([image, '--internal-project-worker'], cwd=folder, env=env, expected_exit=4, silent=True)
     need(not list(Path(env['TEMP']).iterdir()), 'project runs left staged resources')
-    return 5
+    return 11
 
 
 def verify_configured_project(run, need, image, folder, env):
