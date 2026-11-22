@@ -517,7 +517,7 @@ def main():
                        ('21', 1, 'programVectorType'), ('22', 0, 'instanceType'),
                        ('23', 1, 'programVectorType'), ('23', 5, 'snapshotType'),
                        ('24', 2, 'outputVectorType'), ('25', 0, 'programType'),
-                       ('28',0,'machineType'),('28',1,'coreType'),
+                       ('28',0,'machineType'),('28',1,'coreType'),('28',2,'callCopyPlanType'),
                        ('29',0,'machineType'),('29',1,'coreType'),('26',8,'callMetadataType')]
         projections.extend([('30',0,'outputType'),('38',2,'hostProgramVectorType'),('39',3,'outputVectorType'),('39',4,'policyVectorType'),('39',5,'hostRunConfigType'),
                             ('40',1,'programVectorType'),('40',3,'outputVectorType'),('40',4,'outputVectorType'),
@@ -569,14 +569,14 @@ def main():
                                 ('executionType',0,'completionType'),('executionType',1,'publishedVectorType'),
                                 ('machineType',0,'storageBufferType'),('machineType',5,'inputWindowsType'),('inputWindowsType',0,'storageBufferType'),('machineType',6,'transactionType'),('machineType',7,'pendingMetaType'),
                                 ('pendingMetaType',6,'lifecycleType'),('lifecycleType',0,'setupWorkType'),('lifecycleType',1,'preparationWorkType'),('lifecycleType',2,'cleanupWorkType'),('callMetadataType',1,'runtimeMetadataType'),('runtimeMetadataType',0,'cleanupRuntimeType'),('pendingMetaType',0,'cursorType'),('cursorType',2,'outputCopyType'),('cursorType',3,'arrayFillType'),('cursorType',4,'callCopyType'),('cursorType',5,'returnWorkType'),
-                                ('cursorType',6,'metadataBudgetType'),('coreType',4,'callMetadataType'),('coreType',5,'callCopyPlanType'),('callMetadataType',8,'callContextWorkType'),('callContextWorkType',0,'callArgumentWorkType'),('callContextWorkType',1,'callOwnedWorkType'),('callMetadataType',9,'returnPreparationType'),('returnPreparationType',0,'returnRecordPlanType'),('returnRecordPlanType',0,'returnCatalogWorkType'),('cursorType',9,'returnMetadataType')]:
+                                ('cursorType',6,'metadataBudgetType'),('coreType',4,'callMetadataType'),('callMetadataType',8,'callContextWorkType'),('callContextWorkType',0,'callArgumentWorkType'),('callContextWorkType',1,'callOwnedWorkType'),('callMetadataType',9,'returnPreparationType'),('returnPreparationType',0,'returnRecordPlanType'),('returnRecordPlanType',0,'returnCatalogWorkType'),('cursorType',9,'returnMetadataType')]:
             member=re.search(r'\b(fy_(?:struct|resource)_\d+) f_'+str(field)+r';',contract['reviewedLayouts'][owner])
             need(member is not None and member.group(1)==contract[key],f'Output field projection differs: {owner}/{field}')
         advance_args=contract['reviewedDeclarations']['26'].split('(',1)[1].split(',')
         need(re.fullmatch(r'\s*'+re.escape(contract['callMetadataType'])+r'\s*\*\s*fy_l_\d+\s*',advance_args[8]) is not None,
              'Pending CALL metadata argument must be a mutable pointer')
-        need(re.fullmatch(r'\s*'+re.escape(contract['callCopyPlanType'])+r'\s*\*\s*fy_l_\d+\s*',advance_args[9]) is not None,
-             'Pending CALL copy plan argument must be a mutable pointer')
+        need(re.fullmatch(r'\s*fy_mut_struct_slice\s+fy_l_\d+\s*',advance_args[9]) is not None,
+             'Pending CALL copy plan argument must be a mutable optional slice')
         for binding,argument,key in [('27',7,'runtimeMetadataType'),('34',2,'pendingMetaType'),('35',1,'coreType')]:
             declaration=contract['reviewedDeclarations'][binding].split('(',1)[1].split(')',1)[0].split(',')[argument]
             need(re.fullmatch(r'\s*'+re.escape(contract[key])+r'\s*\*\s*fy_l_\d+\s*',declaration) is not None,

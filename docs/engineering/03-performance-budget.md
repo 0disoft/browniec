@@ -16,7 +16,7 @@ conditions and the build ID that produced each binary.
 | --- | --- | --- |
 | Reused small Instance setup | p95 at or below 1 ms | Met for one Windows embedding workload |
 | 10 KiB pure source compile plus verify | p95 at or below 10 ms | Unmeasured |
-| Empty Instance accounted memory | at or below 32 KiB | Missed: 155,720 bytes with no input or output |
+| Empty Instance accounted memory | at or below 32 KiB | Missed: 145,520 bytes with no input or output |
 | Warm scalar loop heap allocation | zero | Met for SDK heap across steps of the measured Windows loop |
 | 100 retained edit builds | at or below 32 MiB project output, excluding explicit debug/toolchain artifacts | Unmeasured |
 
@@ -214,6 +214,29 @@ one-byte-short rejection, rollback, and teardown tests. Local evidence:
 `build/runtime-engine/20261122T121824410399Z/receipt.json`,
 `build/embed-preview-mw87c0c3/receipt.json`, and
 `build/embed-allocations-57f229k3`.
+
+## Optional CALL copy plan on Windows
+
+A verified Program with an empty call table skips the 10,200-byte CALL copy
+plan. Pending Instances with calls reserve it alongside registers in the
+same allocation. The dispatcher checks the plan is present before it starts
+or resumes a call. Return and cleanup state remain in the fixed Core.
+Allocation, setup and the Engine ledger share the same size calculation.
+
+In each Windows profile, 201 empty Instances and 201 scalar-loop Instances
+peaked at 145,520 accounted bytes, down from 155,720 in the preceding
+measurements. The empty Instance still exceeds the 32 KiB target by
+112,752 bytes. Results remained 77 and 2016, with 345,090 and 345,930 Fuel,
+respectively. The loop used 268 steps at quantum 64 and 1,096 at quantum 1,
+saving ten setup batches at each quantum. Both workloads allocated zero SDK
+blocks during steps and left zero live SDK allocations after teardown.
+
+The native Engine and embedding checks passed in development and optimized
+builds, including CALL/return, cancellation, memory limits and teardown.
+The official locked release build returned 77 on the quickstart example.
+Local evidence: `build/runtime-engine/20261122T123209603132Z/receipt.json`,
+`build/embed-preview-sbng5haj/receipt.json`, and
+`build/embed-allocations-ptdbgy8e`.
 
 ## Configured byte transform on Windows (2026-11-22)
 

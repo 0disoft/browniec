@@ -1,5 +1,5 @@
-- Latest runtime checkpoint (2026-11-22): [Pending register storage](docs/engineering/03-performance-budget.md#pending-register-storage-on-windows)
-  saves 30,720 accounted bytes per Instance on the two measured Windows workloads without calls.
+- Latest runtime checkpoint (2026-11-22): [Optional CALL copy plan](docs/engineering/03-performance-budget.md#optional-call-copy-plan-on-windows)
+  saves 10,200 more accounted bytes per Instance on both profiles for the measured workloads without calls.
 
 # Brownie C agent guidance
 

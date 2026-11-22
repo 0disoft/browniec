@@ -30,7 +30,7 @@ import std::vec as vec;
 // Owning VM continuation prerequisite. The caller pins this exact immutable
 // Program and Snapshot until the machine is terminal/dropped. This low-level
 // trusted interface is not yet the Instance ID/owner-thread step API.
-@link_name("bc_runtime_pending_advance") unsafe extern C fn u32 pending_advance_raw(ptr mut void owner,ptr void program,ptr void input,u32 operation,usize quantum);
+@link_name("bc_runtime_pending_advance") unsafe extern C fn u32 pending_advance_raw(ptr mut void owner,ptr void program,ptr void input,u32 operation,usize quantum,u32 has_calls);
 @link_name("bc_runtime_pending_maintenance") unsafe extern C fn u32 pending_maintenance_raw(ptr mut void owner,u32 operation,ptr mut void outgoing);
 @link_name("bc_runtime_pending_core_stride") unsafe extern C fn usize pending_core_stride_raw();
 pub fn usize pending_core_stride(){return unsafe{pending_core_stride_raw()};}
@@ -50,7 +50,8 @@ pub fn Result<machines::Machine,diagnostics::Error> prepare_with_limits(ref outp
 }
 pub fn Result<machines::Meta,errors::Error> advance_pending_output(ref mut machines::Machine machine,ref output_programs::Program p,ref input_bytes::Snapshot input,usize quantum){
     if(!pending_cursors::valid_quantum(quantum)){return .err(errors::make(5,0));}
-    let u32 status=unsafe{pending_advance_raw(machine as ptr mut void,p as ptr void,input as ptr void,1,quantum)};
+    let bool has_calls=output_programs::code(p).body.call_count!=0;
+    let u32 status=unsafe{pending_advance_raw(machine as ptr mut void,p as ptr void,input as ptr void,1,quantum,if(has_calls){1}else{0})};
     if(status!=0){return .err(errors::make(5,0));}return .ok(machines::observe(machine));
 }
 pub fn Result<machines::Meta,errors::Error> cancel_pending_output(ref mut machines::Machine machine){
@@ -81,14 +82,14 @@ pub fn Result<pending_output::Published,errors::Error> seal_pending_output(ref m
 }
 fn u32 pending_advance_inner(ref output_programs::Program p,ref input_bytes::Snapshot input,
     ref mut machines::Meta m,ref mut pending_frames::Frames bindings,ref mut pending_runtime::State state,
-    ref mut usize[] live,ref mut u32[] words,ref mut i64[] registers,ref mut pending_call_metadata::State call_metadata,ref mut copy_plans::State copy_plan,
+    ref mut usize[] live,ref mut u32[] words,ref mut i64[] registers,ref mut pending_call_metadata::State call_metadata,ref mut copy_plans::State[] copy_plan,
     ref mut pending_bytes::Buffer payload,ref mut vec::Vec<i64> cells,ref mut pending_bytes::Buffer scratch,
     ref mut vec::Vec<usize> places,ref mut pending_windows::State windows,ref mut pending_output::Transaction staged,u32 operation,usize quantum){
     return switch(pending_advance_impl(p,input,m,bindings,state,live,words,registers,call_metadata,copy_plan,payload,cells,scratch,places,windows,staged,operation,quantum)){case .ok(_):{0}case .err(_):{5}};
 }
 fn Result<usize,errors::Error> pending_advance_impl(ref output_programs::Program p,ref input_bytes::Snapshot input,
     ref mut machines::Meta m,ref mut pending_frames::Frames bindings,ref mut pending_runtime::State state,
-    ref mut usize[] live,ref mut u32[] words,ref mut i64[] registers,ref mut pending_call_metadata::State call_metadata,ref mut copy_plans::State copy_plan,
+    ref mut usize[] live,ref mut u32[] words,ref mut i64[] registers,ref mut pending_call_metadata::State call_metadata,ref mut copy_plans::State[] copy_plan,
     ref mut pending_bytes::Buffer payload,ref mut vec::Vec<i64> cells,ref mut pending_bytes::Buffer scratch,
     ref mut vec::Vec<usize> places,ref mut pending_windows::State windows,ref mut pending_output::Transaction staged,u32 operation,usize quantum){
     if(operation>1 || (operation==0 && m.phase!=0) || (operation==1 && (m.phase!=1 || !pending_cursors::valid_quantum(quantum)))){return .err(errors::make(5,0));}
@@ -257,7 +258,7 @@ fn void retain_advance_types(ref output_programs::Program p,ref input_bytes::Sna
     var machines::Meta m=machines::observe(ref owner);m.phase=0;m.remaining=0;m.cursor=pending_cursors::empty();
     var pending_runtime::State state=pending_runtime::empty(0);var pending_frames::Frames bindings=pending_frames::empty(ref state);
     var usize[32] live=[0;32];var u32[512] words=[0;512];var i64[4096] registers=[0;4096];
-    var pending_call_metadata::State call_metadata=pending_call_metadata::empty();var copy_plans::State copy_plan=copy_plans::empty();
+    var pending_call_metadata::State call_metadata=pending_call_metadata::empty();var copy_plans::State[1] copy_plan=[copy_plans::empty()];
     var pending_bytes::Buffer payload=pending_bytes::empty();var vec::Vec<i64> cells=vec::empty<i64>();
     var pending_bytes::Buffer scratch=pending_bytes::empty();var vec::Vec<usize> places=vec::empty<usize>();
     var pending_windows::State windows=pending_windows::disabled();var pending_output::Transaction staged=pending_output::disabled();
@@ -265,7 +266,7 @@ fn void retain_advance_types(ref output_programs::Program p,ref input_bytes::Sna
     unsafe{binding_raw(34)};discard pending_setup_inner(p,input,ref mut m,ref mut core_storage,ref mut payload,
         ref mut cells,ref mut scratch,ref mut places,ref mut windows,ref mut staged,1);
     unsafe{binding_raw(26)};discard pending_advance_inner(p,input,ref mut m,ref mut bindings,ref mut state,
-        ref mut live,ref mut words,ref mut registers,ref mut call_metadata,ref mut copy_plan,ref mut payload,ref mut cells,ref mut scratch,ref mut places,ref mut windows,ref mut staged,0,0);
+        ref mut live,ref mut words,ref mut registers,ref mut call_metadata,ref mut copy_plan[..],ref mut payload,ref mut cells,ref mut scratch,ref mut places,ref mut windows,ref mut staged,0,0);
     var vec::Vec<pending_output::Published> outgoing=vec::empty<pending_output::Published>();
     unsafe{binding_raw(27)};discard pending_maintenance_inner(ref mut m,ref mut state,ref payload,ref mut places,ref mut staged,ref mut outgoing,0,ref mut call_metadata.metadata);
 }

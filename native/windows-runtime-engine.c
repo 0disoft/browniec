@@ -15,6 +15,7 @@ typedef fy_private_type_72756e74696d655f656e67696e653a3a4f7574707574 bc_engine_o
 typedef fy_private_type_72756e74696d655f696e7075743a3a536e617073686f74 bc_engine_snapshot; /* runtime_input::Snapshot */
 typedef fy_private_type_72756e74696d655f706f6c6963793a3a506f6c696379 bc_engine_policy; /* runtime_policy::Policy */
 typedef fy_private_type_736c6963655f726573756c745f6d616368696e653a3a436f7265 bc_pending_core; /* slice_result_machine::Core */
+typedef fy_private_type_63616c6c5f636f70795f706c616e5f776f726b3a3a5374617465 bc_call_copy_plan; /* call_copy_plan_work::State */
 typedef fy_private_type_736c6963655f726573756c745f6d616368696e653a3a4d616368696e65 bc_pending_machine; /* slice_result_machine::Machine */
 typedef fy_private_type_686f73745f70726f6772616d3a3a50726f6772616d bc_host_program; /* host_program::Program */
 typedef fy_private_type_69723a3a50726f6772616d bc_host_ir; /* ir::Program */

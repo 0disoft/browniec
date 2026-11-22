@@ -124,8 +124,7 @@ def project_layouts(t, c, *, host_compile=True):
     c['returnPreparationType']=field_type(c['callMetadataType'],9)
     c['returnRecordPlanType']=field_type(c['returnPreparationType'],0)
     c['returnCatalogWorkType']=field_type(c['returnRecordPlanType'],0)
-    c['callCopyPlanType']=field_type(c['coreType'],5)
-    assert arg(26,9)==c['callCopyPlanType']
+    c['callCopyPlanType']=arg(28,2)
     c['returnMetadataType']=field_type(c['cursorType'],9)
     c['lifecycleType']=field_type(c['pendingMetaType'],6)
     c['setupWorkType']=field_type(c['lifecycleType'],0)
@@ -175,6 +174,7 @@ def bindings_header(contract):
     bindings += f'typedef {contract["snapshotVectorType"]} bc_engine_snapshots;\n'
     bindings += f'typedef {contract["outputVectorType"]} bc_engine_outputs;\n'
     bindings+=f'typedef {contract["machineType"]} bc_pending_machine;\ntypedef {contract["coreType"]} bc_pending_core;\n'
+    bindings+=f'typedef {contract["callCopyPlanType"]} bc_call_copy_plan;\n'
     bindings+=f'typedef {contract["preparationType"]} bc_output_preparation;\n'
     bindings+=f'#define BC_OUTPUT_PREPARATION_FIELD f_{OUTPUT_PREPARATION_FIELD}\n'
     bindings+=f'typedef {contract["arrayFillType"]} bc_array_fill_work;\ntypedef {contract["cursorType"]} bc_dispatch_cursor;\n'

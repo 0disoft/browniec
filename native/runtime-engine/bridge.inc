@@ -300,23 +300,29 @@ uint32_t bc_runtime_engine_output_preflight(void *raw,uintptr_t instance){
  uint32_t end=bc_abi_guard_leave(id);return end?end:s;
 }
 
-/* Core and the register tail share one aligned SDK allocation. */
+/* Core, optional CALL plan and registers share one aligned SDK allocation. */
 _Static_assert(sizeof(bc_pending_core)%_Alignof(int64_t)==0, "aligned register tail");
+_Static_assert(sizeof(bc_pending_core)%_Alignof(bc_call_copy_plan)==0, "aligned CALL plan");
+_Static_assert(sizeof(bc_call_copy_plan)%_Alignof(int64_t)==0, "aligned registers after CALL plan");
+uintptr_t bc_runtime_pending_copy_plan_stride(void){return sizeof(bc_call_copy_plan);}
 uintptr_t bc_runtime_pending_core_stride(void){return sizeof(bc_pending_core);}
 uintptr_t bc_runtime_pending_machine_stride(void){return sizeof(bc_pending_machine);}
-uint32_t bc_runtime_pending_advance(void *raw,const void *program,const void *input,uint32_t operation,uintptr_t quantum){
+uint32_t bc_runtime_pending_advance(void *raw,const void *program,const void *input,uint32_t operation,uintptr_t quantum,uint32_t has_calls){
  bc_pending_machine *owner=raw;
  if(operation==1 && owner->f_7.f_6.f_3<=2)
   return B34(program,input,&owner->f_7,&owner->f_0,&owner->f_1,&owner->f_2,&owner->f_3,&owner->f_4,&owner->f_5,&owner->f_6,quantum);
  bc_pending_core *c=owner->f_0.f_0;
  const uintptr_t length=owner->f_0.f_3;
- if(!c || length<sizeof(*c)+2048 || length>sizeof(*c)+32768 || length!=owner->f_0.f_1 ||
-    (length-sizeof(*c))%1024!=0)return 5;
+ const size_t prefix=sizeof(*c)+(has_calls?sizeof(bc_call_copy_plan):0);
+ if(!c || has_calls>1 || length<prefix+2048 || length>prefix+32768 ||
+    length!=owner->f_0.f_1 || (length-prefix)%1024!=0)return 5;
  if(operation==1 && owner->f_7.f_6.f_3==3)return B35(&owner->f_7,c,quantum);
- int64_t *registers=(int64_t *)((uint8_t *)owner->f_0.f_0+sizeof(*c));
+ uint8_t *storage=owner->f_0.f_0;
+ int64_t *registers=(int64_t *)(storage+prefix);
+ fy_mut_struct_slice copy_plan={has_calls?storage+sizeof(*c):NULL,has_calls};
  return B26(program,input,&owner->f_7,&c->f_0,&c->f_1,
   (fy_mut_usize_slice){c->f_2.data,32},(fy_mut_u32_slice){c->f_3.data,512},
-  (fy_mut_i64_slice){registers,(length-sizeof(*c))/sizeof(*registers)},&c->f_4,&c->f_5,
+  (fy_mut_i64_slice){registers,(length-prefix)/sizeof(*registers)},&c->f_4,copy_plan,
   &owner->f_1,&owner->f_2,&owner->f_3,&owner->f_4,&owner->f_5,&owner->f_6,operation,quantum);
 }
 uint32_t bc_runtime_pending_maintenance(void *raw,uint32_t operation,void *outgoing){
@@ -324,9 +330,11 @@ uint32_t bc_runtime_pending_maintenance(void *raw,uint32_t operation,void *outgo
  return B27(&owner->f_7,&c->f_1,&owner->f_1,&owner->f_4,&owner->f_6,outgoing,operation,&c->f_4.f_1);
 }
 
-uint32_t bc_runtime_pending_initialize(void *raw,const void *state){
+uint32_t bc_runtime_pending_initialize(void *raw,const void *state,uint32_t has_calls){
  bc_pending_machine *owner=raw;bc_pending_core *c=owner->f_0.f_0;
- B29(owner,c,state);return 0;
+ uint8_t *storage=owner->f_0.f_0;
+ fy_mut_struct_slice copy_plan={has_calls?storage+sizeof(*c):NULL,has_calls};
+ B29(owner,c,state,copy_plan);return 0;
 }
 uint32_t bc_runtime_engine_step_output(void *raw,const void *program,const void *input,uintptr_t quantum,uintptr_t deadline){
  bc_engine_output *owner=raw;

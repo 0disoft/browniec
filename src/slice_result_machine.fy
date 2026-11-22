@@ -43,7 +43,6 @@ pub struct Core {
     usize[32] static_live;
     u32[512] static_words;
     call_metadata::State call_metadata;
-    copy_plans::State copy_plan;
 }
 pub resource Machine {
     bytes::Buffer core;
@@ -128,7 +127,8 @@ fn Result<Machine,errors::Error> open_selected(ref ir::Program body,ref static_i
     // Exact-sized, aligned native storage avoids constructing/moving a huge
     // Core value and avoids the SDK generic Vec's eight-element minimum.
     // This backing is private typed VM storage, never guest input/output bytes.
-    let usize stride=native_size()+32768;
+    let bool has_calls=body.call_count!=0;
+    let usize stride=native_size()+32768+copy_plan_bytes(has_calls);
     var bytes::Buffer core=switch(bytes::with_capacity(stride)){
         case .ok(v):{v}case .err(_):{return .err(errors::make(15,0));}
     };
@@ -140,16 +140,18 @@ fn Result<Machine,errors::Error> open_selected(ref ir::Program body,ref static_i
         .list_scratch=list_scratch,.place_state=place_state,.windows=windows,.staged=staged,
         .meta=Meta{.cursor=slice_result_cursor::empty(),.stats=slice_result_cursor::stats(),
             .remaining=remaining,.phase=0,.value=0,.failure=errors::make(0,0),.lifecycle=lifecycle::empty()}};
-    let u32 initialized_core=unsafe{initialize_raw(ref mut machine as ptr mut void,ref state as ptr void)};
+    let u32 initialized_core=unsafe{initialize_raw(ref mut machine as ptr mut void,ref state as ptr void,if(has_calls){1}else{0})};
     assert(initialized_core==0);return .ok(machine);
 }
-@link_name("bc_runtime_pending_initialize") unsafe extern C fn u32 initialize_raw(ptr mut void owner,ptr void state);
+@link_name("bc_runtime_pending_initialize") unsafe extern C fn u32 initialize_raw(ptr mut void owner,ptr void state,u32 has_calls);
 @link_name("bc_runtime_pending_core_stride") unsafe extern C fn usize native_size_raw();
 fn usize native_size(){return unsafe{native_size_raw()};}
+@link_name("bc_runtime_pending_copy_plan_stride") unsafe extern C fn usize copy_plan_stride_raw();
+pub fn usize copy_plan_bytes(bool has_calls){return if(has_calls){unsafe{copy_plan_stride_raw()}}else{0};}
 // The verified call table is empty only for code with no CALL instructions.
 pub fn usize core_bytes(ref ir::Program body,slice_result_cursor::Limits limits){
     let usize frames=if(body.call_count==0){1}else{limits.frames as usize};
-    return native_size()+(1+frames)*1024;
+    return native_size()+(1+frames)*1024+copy_plan_bytes(body.call_count!=0);
 }
 pub fn Meta observe(ref Machine machine){return machine.meta;}
 
@@ -166,13 +168,13 @@ pub fn usize core_heap_bytes(ref Machine machine){
 }
 // Typed private transport helpers. The C shim only projects live addresses;
 // initialization and metadata decisions remain here in Fairy.
-pub fn void initialize_native(ref Machine owner,ref mut Core core,ref slice_result_runtime::State state){
+pub fn void initialize_native(ref Machine owner,ref mut Core core,ref slice_result_runtime::State state,ref mut copy_plans::State[] copy_plan){
     unsafe{binding_raw(29)};
     core.runtime=*state;slice_result_frames::initialize(ref mut core.bindings,state);
-    core.call_metadata=call_metadata::empty();core.copy_plan=copy_plans::empty();
-    unsafe{binding_raw(28)};discard storage_identity(owner,core);
+    core.call_metadata=call_metadata::empty();
+    if(copy_plan.len==1){copy_plan[0]=copy_plans::empty();}
 }
-fn usize storage_identity(ref Machine owner,ref Core core){return bytes::capacity(ref owner.core);}
+fn usize storage_identity(ref Machine owner,ref Core core,ref copy_plans::State plan){return bytes::capacity(ref owner.core);}
 @link_name("bc_runtime_engine_binding") unsafe extern C fn void binding_raw(u32 number);
 
 // The pinned MIR builder discovers native typed helpers through source calls.
@@ -182,12 +184,14 @@ pub fn void retain_native_initialization(){if(native_size()==0){retain_core_type
 fn void retain_core_types(){
     let slice_result_runtime::State state=slice_result_runtime::empty(0);
     var Core core=Core{.bindings=slice_result_frames::empty(ref state),.runtime=state,
-        .static_live=[0;32],.static_words=[0;512],.call_metadata=call_metadata::empty(),.copy_plan=copy_plans::empty()};
+        .static_live=[0;32],.static_words=[0;512],.call_metadata=call_metadata::empty()};
     let Machine owner=Machine{.core=bytes::empty(),.payload=bytes::empty(),.list_cells=vec::empty<i64>(),
         .list_scratch=bytes::empty(),.place_state=vec::empty<usize>(),.windows=input_reference_views::disabled(),
         .staged=runtime_output::disabled(),.meta=Meta{.cursor=slice_result_cursor::empty(),.stats=slice_result_cursor::stats(),
         .remaining=0,.phase=0,.value=0,.failure=errors::make(0,0),.lifecycle=lifecycle::empty()}};
-    initialize_native(ref owner,ref mut core,ref state);
+    var copy_plans::State[1] plan=[copy_plans::empty()];
+    initialize_native(ref owner,ref mut core,ref state,ref mut plan[..]);
+    unsafe{binding_raw(28)};discard storage_identity(ref owner,ref core,ref plan[0]);
 }
 
 // Reserve storage during admission; every linear initialization loop is resumed.
@@ -234,5 +238,5 @@ pub fn Core cold_core(){
     let slice_result_runtime::State state=slice_result_runtime::empty(0);
     return Core{.bindings=slice_result_frames::empty(ref state),.runtime=state,
         .static_live=[0;32],.static_words=[0;512],
-        .call_metadata=call_metadata::empty(),.copy_plan=copy_plans::empty()};
+        .call_metadata=call_metadata::empty()};
 }
