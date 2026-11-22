@@ -315,9 +315,20 @@ The two-edit development smoke retained exactly one 11,008,000-byte executable
 after each successful build. The failed build exited 6 and preserved the second
 executable. The pinned compiler itself occupied 18,591,232 bytes and is accounted
 separately. Local evidence: `build/retained-builds-6c9xrfxy/receipt.json`.
-The 100-edit run, machine-wide compiler cache size and cache eviction remain
-unverified. The check measures project file lengths and scratch remaining at
-command exit, excluding in-flight scratch peak and toolchain installation.
+Subsequent runs sample invocation scratch every 250 ms during both successful
+and failed builds. The receipt records the largest observed total file length
+and symbol or incremental-link file length, excluding the other owner's
+directory. Brief peaks can fall between samples. The receipt is updated after
+each verified edit so a partial run preserves its evidence.
+
+On a one-edit Windows development run, 593 samples observed up to
+69,701,868 bytes of invocation scratch and zero bytes of symbol or
+incremental-link files. The retained executable occupied 11,158,528 bytes.
+The deliberate compile failure exited 6, reclaimed its scratch and preserved
+that executable. Its 930 samples observed up to 47,795,251 scratch bytes.
+Local evidence: `build/retained-builds-uatqzqer/receipt.json`.
+The 100-edit run, machine-wide compiler cache size and eviction, and full
+toolchain installation size remain unverified.
 
 ## Configured byte transform on Windows (2026-11-22)
 
