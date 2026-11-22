@@ -117,6 +117,22 @@ def check_return_types(exe, directory):
     print('PASS: scalar return types and function declaration in text and JSON v2 with JSON v1 compatibility')
 
 
+def check_initializer_types(exe, directory):
+    path = directory / 'initializer-types.brc'
+    source = ('module main;\nfn i32 main() { let u32 cost = 1; '
+              'let /* 배송 */ i32 fee = cost; return fee; }\n').encode()
+    path.write_bytes(source)
+    for command in ('check', 'run'):
+        check_scalar_mismatch(exe, [command, path], source, source.index(b'fee'),
+                              source.index(b'i32 fee'), 'local type')
+    source = ('module main;\r\nfn i32 evaluate(i32 cents) { '
+              'var /* 배송 */ i32 fee = cents < 30000; return fee; }\r\n').encode()
+    path.write_bytes(source)
+    check_scalar_mismatch(exe, ['eval-i32', path, 0], source, source.index(b'fee'),
+                          source.index(b'i32 fee'), 'local type', actual='bool')
+    print('PASS: scalar initializer types and local type annotation with JSON v1 compatibility')
+
+
 def check_output_table(exe, identity, host_check, host_run, project_host_check, project_host_run,
                        adapter):
     subprocess.run([sys.executable, '-B', str(ROOT / 'tools/sync-cli-output.py'), '--check'],
@@ -1201,6 +1217,7 @@ def main():
         print('PASS: source byte zero and absent location in text, JSON v1 and JSON v2')
         check_argument_types(exe, Path(temp))
         check_return_types(exe, Path(temp))
+        check_initializer_types(exe, Path(temp))
 
         for source, number, expected in (
             (shipping, 29999, 3000), (shipping, 30000, 0),

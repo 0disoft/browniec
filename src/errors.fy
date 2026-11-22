@@ -15,17 +15,23 @@ pub fn u8 output_encoding_kind(){return 35;}
 pub fn u8 engine_poisoned_kind(){return 36;}
 pub fn u8 host_failure_kind(){return 37;}
 // Detail fills part of the alignment padding before offset on the native targets.
-pub struct Error { u8 kind; u8 location; u8 expected; u8 actual; u8 related_low; u8 related_high; bool return_mismatch; usize offset; }
+pub struct Error { u8 kind; u8 location; u8 expected; u8 actual; u8 related_low; u8 related_high; u8 declaration; usize offset; }
+pub fn u8 parameter_declaration(){return 0;}
+pub fn u8 function_declaration(){return 1;}
+pub fn u8 local_type_declaration(){return 2;}
 pub fn Error make(u8 kind, usize offset) {
-    return Error{.kind=kind,.location=0,.expected=0,.actual=0,.related_low=0,.related_high=0,.return_mismatch=false,.offset=offset};
+    return Error{.kind=kind,.location=0,.expected=0,.actual=0,.related_low=0,.related_high=0,.declaration=parameter_declaration(),.offset=offset};
 }
 pub fn Error argument_type(usize at,u8 expected,u8 actual,usize declaration){
-    return scalar_type(at,expected,actual,declaration,false);
+    return scalar_type(at,expected,actual,declaration,parameter_declaration());
 }
 pub fn Error return_type(usize at,u8 expected,u8 actual,usize declaration){
-    return scalar_type(at,expected,actual,declaration,true);
+    return scalar_type(at,expected,actual,declaration,function_declaration());
 }
-fn Error scalar_type(usize at,u8 expected,u8 actual,usize declaration,bool returning){
+pub fn Error initializer_type(usize at,u8 expected,u8 actual,usize declaration){
+    return scalar_type(at,expected,actual,declaration,local_type_declaration());
+}
+fn Error scalar_type(usize at,u8 expected,u8 actual,usize declaration,u8 role){
     var Error error=make(3,at);
     let i64 wide=switch(num::i64_from_usize(declaration)){case .ok(n):{n} case .err(_):{return error;}};
     let u8 low=switch(num::u8_from_i64(wide%256)){case .ok(n):{n} case .err(_):{return error;}};
@@ -34,7 +40,7 @@ fn Error scalar_type(usize at,u8 expected,u8 actual,usize declaration,bool retur
     error.actual=actual;
     error.related_low=low;
     error.related_high=high;
-    error.return_mismatch=returning;
+    error.declaration=role;
     return error;
 }
 pub fn usize related_offset(Error error){

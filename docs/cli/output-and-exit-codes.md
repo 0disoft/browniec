@@ -102,6 +102,10 @@ type fields. Its primary location points to `return`, and the related
 location points to the function name in the declaration. JSON v1 retains
 the original return statement byte offset.
 
+For a typed scalar local initializer, the primary location points to the
+binding name and the related location points to its type annotation.
+JSON v1 retains the original binding name byte offset.
+
 For check/run/eval-i32, text mode leaves stdout empty and writes checked status, return_i32, or diagnostics
 to stderr. Configured project runs require JSON. Version JSON uses
 `browniec.version/v1`, preserves `profile` as `brownie.m1-scalar/1`, adds the

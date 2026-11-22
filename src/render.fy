@@ -208,7 +208,13 @@ fn i32 command_outcome(Format format,bool run,bool eval,bool failed,i64 value,er
             if(!io::write_stderr(label).is_ok || !io::write_stderr_usize(error.offset).is_ok ||
                 !write_position(positions.primary)){return 7;}
         }
-        let ref str declaration=if(error.return_mismatch){", function declared at byte "}else{", parameter declared at byte "};
+        let ref str declaration=if(error.declaration==errors::function_declaration()){
+            ", function declared at byte "
+        }else if(error.declaration==errors::local_type_declaration()){
+            ", local type declared at byte "
+        }else{
+            ", parameter declared at byte "
+        };
         if(error.expected!=0 &&
             (!io::write_stderr(", expected ").is_ok ||
              !io::write_stderr(scalar_type_name(error.expected)).is_ok ||

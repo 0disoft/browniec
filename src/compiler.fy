@@ -2148,7 +2148,12 @@ fn Result<usize, errors::Error> declaration(ref u8[] source, ref mut lexer::Stat
         // The new name is not visible until its initializer has been checked.
         let usize value = if(signatures.scalar_host_calls){raw_expression(source,s,p,table,signatures,1,expr_depth,tag,result_type,structure,loop_state,deadline,fuel)?}
             else{expression(source,s,p,table,signatures,1,expr_depth,tag,result_type,structure,loop_state)?};
-        if (p.types[value] != tag) { return .err(errors::make(3, begin)); }
+        if(p.types[value]!=tag){
+            if(types::scalar(tag) && types::scalar(p.types[value])){
+                return .err(errors::initializer_type(begin,tag,p.types[value],type_at));
+            }
+            return .err(errors::make(3,begin));
+        }
         let usize end_statement = lexer::punctuation(source, s, terminator)?;
         var usize binding = value;
         if (mutable) {
