@@ -244,6 +244,7 @@ uintptr_t bc_runtime_engine_program_layout(uint32_t kind){
  case 2:return sizeof(bc_input_stored);case 3:return sizeof(bc_input_program);
  case 4:return sizeof(bc_output_stored);case 5:return sizeof(bc_output_program);
  case 6:return sizeof(bc_engine_snapshot);
+ case 7:return sizeof(bc_host_ir);
  default:return 0;
  }
 }

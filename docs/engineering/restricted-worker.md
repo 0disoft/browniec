@@ -1704,6 +1704,22 @@ Windows development and /O2 each passed 110 configured, 43 catalog, and
 input hashes matched.
 Local receipt: `build/restricted-worker/20261122T044713062925Z/receipt.json`.
 
+### Catalog Program retention Fuel
+
+The catalog-backed worker prepays three retained allocations and one unit
+per 64-byte block of each entry name and the verified IR. The native layout
+query supplies the fixed IR width. Compilation checks for a stop before
+allocating and after each ownership operation, dropping unpublished owners
+if compilation stops.
+
+On Windows x64, `app::start` spends 204 units for retention: three
+allocations, two name blocks and 199 IR blocks. The two-call example
+returned 77 and sealed its output at 1,753,820 compile Fuel. At 1,753,819 it
+returned `compile_limit` without a guest result or output. Windows
+development and /O2 each passed 110 configured, 43 catalog and 17
+process-command cases with zero net handles. All 460 input hashes matched.
+Local receipt: `build/restricted-worker/20261122T050715605576Z/receipt.json`.
+
 ## Windows verification
 
 Run `python -B tools/verify-restricted-worker.py`. The development and optimized

@@ -14,6 +14,8 @@ import types as types;
 import host_wire as wire;
 import source_snapshot as sources;
 
+@link_name("bc_runtime_engine_program_layout") unsafe extern C fn usize retention_layout_raw(u32 kind);
+
 // Private scalar host dialect. The ordinary verifier still rejects opcode 117.
 pub enum Error { Code; Catalog; Binding; Authority; Allocation; Fuel; Deadline; }
 struct Digest { u32[8] words; }
@@ -209,7 +211,19 @@ pub fn Result<Program,Error> retain_metered(ref ir::Program code,catalog::Catalo
         (authority.emits && !allows_output(run))){
         return .err(.Authority);
     }
-    return publish(code,imports,digest,authority,runs::module_name(run),runs::function_name(run),map);
+    let ref u8[] module_name=runs::module_name(run);
+    let ref u8[] function_name=runs::function_name(run);
+    discard prepay_retention(module_name.len,function_name.len,deadline,fuel)?;
+    return publish(code,imports,digest,authority,module_name,function_name,map,deadline);
+}
+
+fn Result<usize,Error> prepay_retention(usize scope,usize name,usize deadline,ref mut usize fuel){
+    if(clock::expired(deadline)){return .err(.Deadline);}
+    let usize width=unsafe{retention_layout_raw(7)};
+    // Two name buffers and one IR slot, plus one unit per 64 copied bytes.
+    let usize work=3+(scope+63)/64+(name+63)/64+(width+63)/64;
+    if(!budget::charge(fuel,work,0).is_ok){return .err(.Fuel);}
+    return .ok(work);
 }
 
 // Compilation binds the Engine ceiling and verified import set. Each Instance
@@ -233,22 +247,33 @@ pub fn Result<Program,Error> retain_for_entry(ref ir::Program code,catalog::Cata
     let u32[8] digest=switch(catalog::digest(ref imports)){
         case .ok(v):{v}case .err(_):{return .err(.Catalog);}
     };
-    return publish(code,imports,digest,authority,module_name,function_name,map);
+    return publish(code,imports,digest,authority,module_name,function_name,map,0);
 }
 
 fn Result<Program,Error> publish(ref ir::Program code,catalog::Catalog imports,u32[8] digest,
-    Authority authority,ref u8[] module_name,ref u8[] function_name,SourceMap map){
-    let bytes::Buffer scope=switch(bytes::copy(module_name)){
-        case .ok(v):{v}case .err(_):{return .err(.Allocation);}
-    };
-    let bytes::Buffer name=switch(bytes::copy(function_name)){
-        case .ok(v):{v}case .err(_):{return .err(.Allocation);}
-    };
-    var vec::Vec<ir::Program> retained=vec::empty<ir::Program>();
-    if(!vec::reserve<ir::Program>(ref mut retained,1).is_ok){return .err(.Allocation);}
-    if(!vec::push<ir::Program>(ref mut retained,*code).is_ok){return .err(.Allocation);}
+    Authority authority,ref u8[] module_name,ref u8[] function_name,SourceMap map,usize deadline){
+    let bytes::Buffer scope=copy_name(module_name,deadline)?;
+    let bytes::Buffer name=copy_name(function_name,deadline)?;
+    let vec::Vec<ir::Program> retained=copy_ir(code,deadline)?;
     return .ok(Program{.code=retained,.catalog=imports,.digest=Digest{.words=digest},.authority=authority,
         .module_name=scope,.function_name=name,.sources=map});
+}
+
+fn Result<bytes::Buffer,Error> copy_name(ref u8[] value,usize deadline){
+    let bytes::Buffer name=switch(bytes::copy(value)){
+        case .ok(v):{v}case .err(_):{return .err(.Allocation);}
+    };
+    if(clock::expired(deadline)){return .err(.Deadline);}
+    return .ok(name);
+}
+
+fn Result<vec::Vec<ir::Program>,Error> copy_ir(ref ir::Program code,usize deadline){
+    var vec::Vec<ir::Program> retained=vec::empty<ir::Program>();
+    if(!vec::reserve<ir::Program>(ref mut retained,1).is_ok){return .err(.Allocation);}
+    if(clock::expired(deadline)){return .err(.Deadline);}
+    if(!vec::push<ir::Program>(ref mut retained,*code).is_ok){return .err(.Allocation);}
+    if(clock::expired(deadline)){return .err(.Deadline);}
+    return .ok(retained);
 }
 
 // The compiler assigns instruction offsets in concatenated source order.

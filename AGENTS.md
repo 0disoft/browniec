@@ -1,5 +1,5 @@
-- Latest runtime checkpoint (2026-11-22): [Configured Program retention Fuel](docs/engineering/restricted-worker.md#configured-program-retention-fuel)
-  prepays the retained allocation and copies before publishing the Program.
+- Latest runtime checkpoint (2026-11-22): [Catalog Program retention Fuel](docs/engineering/restricted-worker.md#catalog-program-retention-fuel)
+  prepays the entry name and IR owners before publishing the verified Program.
 
 # Brownie C agent guidance
 
