@@ -1,6 +1,7 @@
 /* Measure an admitted Program through the Windows revision-2 ABI. */
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include <psapi.h>
 #include <inttypes.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -33,6 +34,13 @@ static uint64_t ticks(void) {
     LARGE_INTEGER value;
     require(QueryPerformanceCounter(&value), "QueryPerformanceCounter failed");
     return (uint64_t)value.QuadPart;
+}
+
+static PROCESS_MEMORY_COUNTERS_EX process_memory(void) {
+    PROCESS_MEMORY_COUNTERS_EX memory = {.cb = sizeof(memory)};
+    require(K32GetProcessMemoryInfo(GetCurrentProcess(), (PROCESS_MEMORY_COUNTERS *)&memory,
+        sizeof(memory)), "GetProcessMemoryInfo failed");
+    return memory;
 }
 
 static bc_slice read_config(const char *path, uint8_t *bytes, size_t capacity) {
@@ -102,8 +110,12 @@ int main(int argc, char **argv) {
     const bc_slice config = read_config(argv[2], config_buffer, sizeof(config_buffer));
     bc_handle engine = 0, retained = 0;
     bc_diagnostic diagnostic = {.struct_size = sizeof(diagnostic)};
+    const PROCESS_MEMORY_COUNTERS_EX startup_memory = process_memory();
     ok(bc_engine_create(BC_ABI_REVISION, policy, &engine, &diagnostic), "bc_engine_create", &diagnostic);
+    const PROCESS_MEMORY_COUNTERS_EX engine_memory = process_memory();
     const uint64_t first = compile(engine, &source, &retained);
+    const PROCESS_MEMORY_COUNTERS_EX program_memory = process_memory();
+    PROCESS_MEMORY_COUNTERS_EX instance_memory = {0};
     uint64_t compilation[samples], setup[samples], steps[2][samples], destroy[samples];
     unsigned calls_per_quantum[2] = {0};
     uint64_t timer[samples];
@@ -135,6 +147,7 @@ int main(int argc, char **argv) {
             &diagnostic);
         setup[i] = ticks() - start;
         ok(prepared, "bc_instance_create", &diagnostic);
+        if (i == 0) instance_memory = process_memory();
         bc_event event = {.struct_size = sizeof(event)};
 #ifdef BC_BENCH_ALLOCATIONS
         const size_t before_step = probe_attempts();
@@ -176,6 +189,7 @@ int main(int argc, char **argv) {
 
     ok(bc_program_release(engine, retained), "bc_program_release", NULL);
     ok(bc_engine_destroy(engine), "bc_engine_destroy", NULL);
+    const PROCESS_MEMORY_COUNTERS_EX final_memory = process_memory();
 #ifdef BC_BENCH_ALLOCATIONS
     require(probe_live() == 0, "live SDK allocations after Engine destruction");
     puts("step_sdk_allocations=0 final_live_sdk_allocations=0");
@@ -197,5 +211,9 @@ int main(int argc, char **argv) {
         report("step_to_done_q1", steps[1], samples / 2);
     } else report("step_to_done", steps[0], samples);
     report("destroy", destroy, samples);
+    printf("process_private_commit_bytes startup=%zu engine=%zu program=%zu warm_instance=%zu final=%zu\n",
+        startup_memory.PrivateUsage, engine_memory.PrivateUsage, program_memory.PrivateUsage,
+        instance_memory.PrivateUsage, final_memory.PrivateUsage);
+    printf("process_peak_working_set_bytes=%zu\n", final_memory.PeakWorkingSetSize);
     return 0;
 }

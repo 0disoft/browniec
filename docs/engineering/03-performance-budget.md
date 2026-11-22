@@ -295,6 +295,30 @@ OS file cache was warm, and a retained-build workload ran concurrently
 during both measurements. Use the timings as a baseline for this run.
 Local receipt: `build/embed-workloads-ze6dglcu/receipt.json`.
 
+### Windows process memory
+
+The same benchmark reports Windows private commit before Engine creation,
+after Engine creation, after the first Program compile, with the first
+Instance live after the warm compilation series, and after Engine destruction.
+It also reports the peak working set across the host process lifetime.
+The snapshots include the host, DLL and native allocator. The Instance ledger
+above measures the runtime's accounting separately.
+
+The optimized benchmark returned 77, 120 and 2016 for the empty, direct-call
+and byte-scan workloads. Process memory in bytes was:
+
+| Workload | Startup commit | Engine commit | First Program commit | Warm Instance commit | Final commit | Peak working set |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Empty | 692,224 | 995,328 | 1,708,032 | 1,769,472 | 1,527,808 | 6,643,712 |
+| Direct calls | 692,224 | 995,328 | 1,982,464 | 1,757,184 | 1,826,816 | 6,815,744 |
+| Byte scan | 716,800 | 1,032,192 | 2,072,576 | 2,023,424 | 1,351,680 | 6,795,264 |
+
+The development and optimized samples use the same DLLs as the previous
+workload measurements. Windows can retain committed heap pages after release,
+so final process commit cannot establish the number of live SDK allocations.
+Both profiles and all six reports are in
+`build/embed-memory-4t2_vl9u/receipt.json`.
+
 ## Retained Windows CLI builds
 
 Run the retention check against an installed pinned compiler:
