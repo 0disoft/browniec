@@ -3759,7 +3759,7 @@ pub fn Result<bool,source_errors::Error> advance_module_bodies(ref module_index:
     ref module_source::State work,bool references,bool output,ref literal_work::State collection,ref mut signature_scan::State scan,
     ref mut reference_ir::Program code,ref mut BodyProgress progress,
     ref mut lexer::State token,ref mut locals::Table names,ref mut loops::State flow,
-    ref mut body_work::State cursor,ref mut metadata_budget::State meter,usize deadline){
+    ref mut body_work::State cursor,ref mut metadata_budget::State meter,usize deadline,ref mut usize fuel){
     if(!work.done || !scan.done || (references && !collection.done)){
         return .err(source_errors::absent(errors::absent(5,0)));
     }
@@ -3768,8 +3768,7 @@ pub fn Result<bool,source_errors::Error> advance_module_bodies(ref module_index:
     let literal_collection::Index unused=literal_collection::empty();
     let ref literal_collection::Index literals=if(references){ref collection.result}else{ref unused};
     if(progress.phase==0){scan.result.output=output;}
-    var usize fuel=metadata_budget::unlimited();
-    return switch(advance_module_body(source,references,literals,ref mut scan.result,code,progress,token,names,flow,cursor,meter,deadline,ref mut fuel)){
+    return switch(advance_module_body(source,references,literals,ref mut scan.result,code,progress,token,names,flow,cursor,meter,deadline,fuel)){
         case .ok(v):{.ok(v)}case .err(e):{.err(input_module_error(index,e,progress.active))}
     };
 }

@@ -686,6 +686,19 @@ rejects reachable emit without a matching declaration and preserves an explicit
 declaration even when the selected entry does not emit. A busy job is rejected
 before consuming an anchor. File acquisition and entry selection are synchronous.
 
+Rooted and anchored jobs use the configured project binder and keep its
+remaining compile Fuel. Each source, literal, signature, body and proof
+advance prepays the existing 4096-unit allowance. Metered body children,
+literal freezing, final preparation and retention draw from that same
+balance under the original deadline.
+
+At 5000 compile Fuel, the two-profile native test completed one source batch.
+The next step returned `compile_limit` before advancing, left the Program ID at
+zero and released the exact source charge. Both profiles also passed the
+configured execution, deadline and cancellation fixtures and terminated with
+zero live SDK allocations. Local receipt:
+`build/runtime-engine/20261122T070532767757Z/receipt.json`.
+
 The development suite reproduced Windows exit `0xC00000FD` at output proof
 initialization. Initializing the proof and normalized scratch fields directly
 in the reserved heap slot removes the whole-value stack construction and Vec

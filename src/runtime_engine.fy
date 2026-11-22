@@ -67,7 +67,7 @@ pub struct CompileStatus { usize id; CompileState state; usize program; Error fa
 struct CompileWork {
     usize id; u8 state; usize program; Error failure; usize batches;
     usize next; usize deadline; usize image_limit;
-    usize source_bytes; source_work::State source; literal_work::State literals; bool input; u32 output_mode;
+    usize source_bytes; source_work::State source; literal_work::State literals; bool input; u32 output_mode; usize fuel;
 }
 // Request bytes are detached from the exchange.
 pub struct HostRequest { usize run; usize request; usize import_id; u8[14] payload; }
@@ -122,7 +122,7 @@ unsafe extern C fn u32 begin_compile_input_raw(ptr mut void owner,ptr mut void i
 @link_name("bc_runtime_engine_advance_compile_literals") unsafe extern C fn u32 advance_compile_literals_raw(ptr mut void meta,
     ptr void index,ptr mut void job,ptr mut void lowered,ptr mut void meter,u32 collecting);
 @link_name("bc_runtime_engine_advance_compile_body") unsafe extern C fn u32 advance_compile_body_raw(ptr mut void meta,
-    ptr void index,ptr void job,ptr mut void lowered,ptr mut void meter,usize deadline);
+    ptr void index,ptr mut void job,ptr mut void lowered,ptr mut void meter,usize deadline);
 @link_name("bc_runtime_engine_compile_candidate_width") unsafe extern C fn usize compile_candidate_width_raw();
 @link_name("bc_runtime_engine_dispose_compile_candidate") unsafe extern C fn void dispose_compile_candidate_raw(ptr mut void candidate);
 @link_name("bc_runtime_engine_compile_input") unsafe extern C fn u32 compile_input_raw(ptr mut void owner,ptr mut void incoming,usize limit,usize deadline);
@@ -260,7 +260,7 @@ pub fn Result<usize,Error> compile(ref mut Engine e,entries::Entry selected,usiz
 }
 fn CompileWork empty_compile(usize next){
     return CompileWork{.id=0,.state=0,.program=0,.failure=error(0),.batches=0,
-        .next=next,.deadline=0,.image_limit=0,.source_bytes=0,.source=source_work::begin(true),.literals=literal_work::empty(),.input=false,.output_mode=0};
+        .next=next,.deadline=0,.image_limit=0,.source_bytes=0,.source=source_work::begin(true),.literals=literal_work::empty(),.input=false,.output_mode=0,.fuel=metadata_budget::unlimited()};
 }
 fn bool compile_live(CompileState state){
     return switch(state){case .Preparing:{true}case .Prepared:{true}case .Lowering:{true}case .Lowered:{true}case .Proving:{true}case .Completed:{false}case .Failed:{false}case .Cancelled:{false}};
@@ -953,8 +953,11 @@ pub fn Result<usize,Error> begin_compile_project_output(ref mut Engine e,ref pro
     ref u8[] root,ref run_config::RunConfig run,usize image_limit){
     let u32 mode=project_output_mode(e,metadata,run)?;
     if(compile_attached(e)){return .err(error(3));}
+    let policy_limits::CompileLimits limits=configured_compile_limits(e)?;
+    if(projects::count(metadata)>limits.modules){return .err(error(8));}
     let usize deadline=compile_deadline(e,0)?;
-    let input_entries::InputEntry selected=project_input_entry(e,metadata,root,deadline)?;
+    let sources::Snapshot snapshot=load_project(e,metadata,root,deadline)?;
+    let input_entries::InputEntry selected=configured_project_input(metadata,snapshot,limits,deadline)?;
     return begin_selected_input_compile(e,selected,image_limit,mode,deadline);
 }
 
@@ -988,14 +991,12 @@ pub fn Result<usize,Error> begin_compile_anchored_project_output(ref mut Engine 
     ref mut anchored::Root root,ref run_config::RunConfig run,usize image_limit){
     let u32 mode=project_output_mode(e,metadata,run)?;
     if(compile_attached(e)){return .err(error(3));}
+    let policy_limits::CompileLimits limits=configured_compile_limits(e)?;
+    if(projects::count(metadata)>limits.modules){return .err(error(8));}
     let usize deadline=compile_deadline(e,0)?;
-    let input_entries::InputEntry selected=anchored_project_input_entry(e,metadata,root,deadline)?;
-    return begin_selected_input_compile(e,selected,image_limit,mode,deadline);
-}
-fn Result<input_entries::InputEntry,Error> anchored_project_input_entry(ref Engine e,ref projects::Project metadata,
-    ref mut anchored::Root root,usize deadline){
     let sources::Snapshot snapshot=project_snapshot(project_loader::load_from_until(metadata,root,source_byte_limit(e),deadline))?;
-    return select_project_input(metadata,snapshot,deadline);
+    let input_entries::InputEntry selected=configured_project_input(metadata,snapshot,limits,deadline)?;
+    return begin_selected_input_compile(e,selected,image_limit,mode,deadline);
 }
 
 pub fn Result<usize,Error> compile_granted_output(ref mut Engine e,modules::Index index,
@@ -1150,6 +1151,7 @@ fn Error compile_timeout(){
     return Error{.status=4,.diagnostic=diagnostics::absent(errors::absent(errors::deadline_kind(),0))};
 }
 fn u32 compile_timed_out(ref mut Meta m){m.error=compile_timeout();return 4;}
+fn u32 compile_fuel_exhausted(ref mut Meta m){return compile_error(m,diagnostics::absent(errors::absent(4,0)));}
 
 fn Result<policy_limits::RunLimits,Error> check_run_input(ref Engine e,ref run_config::RunConfig run,
     ref input_bytes::Snapshot input){
@@ -1692,6 +1694,7 @@ fn u32 lower_compile_metadata(ref mut Meta m,ref mut CompileWork job,ref modules
         job.state=6;
         return 0;
     }
+    if(!metadata_budget::prepay(ref mut job.fuel,0).is_ok){return compile_fuel_exhausted(m);}
     var metadata_budget::State meter=metadata_budget::empty();
     let u32 status=unsafe{advance_compile_literals_raw(m as ptr mut void,index as ptr void,
         job as ptr mut void,lowered as ptr mut void,ref mut meter as ptr mut void,if(collecting_literals){1}else{0})};
@@ -1703,18 +1706,19 @@ fn u32 lower_compile_metadata(ref mut Meta m,ref mut CompileWork job,ref modules
 fn u32 advance_compile_body_inner(ref mut Meta m,ref modules::Index index,ref source_work::State source,
     bool references,bool output,ref literal_work::State literals,ref mut signature_scan::State signatures,ref mut compile_ir::Program code,
     ref mut compiler::BodyProgress progress,ref mut lexer::State token,ref mut locals::Table names,
-    ref mut loops::State flow,ref mut body_work::State cursor,ref mut metadata_budget::State meter,usize deadline){
+    ref mut loops::State flow,ref mut body_work::State cursor,ref mut metadata_budget::State meter,usize deadline,ref mut usize fuel){
     let Result<bool,diagnostics::Error> step=compiler::advance_module_bodies(index,source,references,output,literals,
-        signatures,code,progress,token,names,flow,cursor,meter,deadline);
+        signatures,code,progress,token,names,flow,cursor,meter,deadline,fuel);
     return switch(step){case .ok(complete):{if(complete){1}else{0}}case .err(e):{compile_error(m,e)}};
 }
 fn u32 step_compile_body(ref mut Meta m,ref mut CompileWork job,ref modules::Index index,
     ref mut vec::Vec<programs::Lowered> candidate){
+    if(!metadata_budget::prepay(ref mut job.fuel,0).is_ok){return compile_fuel_exhausted(m);}
     let ref mut programs::Lowered lowered=vec::at_mut<programs::Lowered>(candidate,0);
     var metadata_budget::State meter=metadata_budget::empty();
     let usize deadline=job.deadline;
     let u32 status=unsafe{advance_compile_body_raw(m as ptr mut void,index as ptr void,
-        job as ptr void,lowered as ptr mut void,ref mut meter as ptr mut void,deadline)};
+        job as ptr mut void,lowered as ptr mut void,ref mut meter as ptr mut void,deadline)};
     job.batches+=meter.stages;
     if(status>1){return status;}
     if(clock::expired(deadline)){return compile_timed_out(m);}
@@ -1744,7 +1748,9 @@ fn u32 begin_compile_proof(ref mut Meta m,ref mut CompileWork job,ref modules::I
     let usize bytes=payload+storage;
     var memory::Budget charged=m.programs;
     if(!memory::hold_compile_candidate(ref mut charged,bytes).is_ok){return failed(m,8);}
-    let Result<usize,diagnostics::Error> opened=if(job.output_mode!=0){output_programs::begin_proof(lowered,job.image_limit,job.input)}
+    let Result<usize,diagnostics::Error> opened=if(job.output_mode!=0){
+        output_programs::begin_proof(lowered,job.image_limit,job.input,job.deadline,ref mut job.fuel)
+    }
         else{programs::begin_proof(index,lowered,job.image_limit,job.deadline,job.input)};
     switch(opened){
         case .ok(_):{}case .err(e):{return compile_error(m,e);}
@@ -1764,6 +1770,7 @@ fn u32 step_pending_proof(ref mut Meta m,ref mut CompileWork job,ref mut vec::Ve
 }
 fn u32 step_compile_proof(ref mut Meta m,ref mut CompileWork job,ref modules::Index index,
     ref mut vec::Vec<programs::Lowered> candidate){
+    if(!metadata_budget::prepay(ref mut job.fuel,0).is_ok){return compile_fuel_exhausted(m);}
     var metadata_budget::State meter=metadata_budget::empty();
     let ref mut programs::Lowered lowered=vec::at_mut<programs::Lowered>(candidate,0);
     let Result<bool,diagnostics::Error> advanced=if(job.output_mode!=0){output_programs::advance_proof(
@@ -1806,14 +1813,14 @@ fn u32 finish_pending_output_compile(ref mut Meta m,ref mut vec::Vec<Program> pr
     if(vec::len<Program>(programs)>=m.limits.programs || m.next==0){return stop_compile(m,job,selected,candidate,error(8));}
     let ref sources::Snapshot snapshot=modules::snapshot(entries::index(vec::at<entries::Entry>(selected,0)));
     var vec::Vec<output_programs::Program> code=vec::empty<output_programs::Program>();
-    let usize bytes=switch(retain_pending_output(m,snapshot,candidate,job.deadline,ref mut code)){
+    let usize bytes=switch(retain_pending_output(m,snapshot,candidate,job.deadline,ref mut job.fuel,ref mut code)){
         case .ok(v):{v}case .err(cause):{return stop_compile(m,job,selected,candidate,cause);}
     };
     finish_compile_source(m,job,selected,candidate);
     return publish_pending_output(m,programs,job,code,bytes,empty_entry());
 }
 fn Result<usize,Error> retain_pending_output(ref mut Meta m,ref sources::Snapshot snapshot,
-    ref mut vec::Vec<programs::Lowered> candidate,usize deadline,ref mut vec::Vec<output_programs::Program> code){
+    ref mut vec::Vec<programs::Lowered> candidate,usize deadline,ref mut usize fuel,ref mut vec::Vec<output_programs::Program> code){
     let ref mut programs::Lowered lowered=vec::at_mut<programs::Lowered>(candidate,0);
     let usize payload=switch(programs::proof_payload(lowered)){
         case .ok(v):{v}case .err(e):{discard compile_error(m,e);return .err(m.error);}
@@ -1822,7 +1829,7 @@ fn Result<usize,Error> retain_pending_output(ref mut Meta m,ref sources::Snapsho
         case .ok(v):{v}case .err(_):{return .err(error(8));}
     };
     if(!retention::admit(ref mut plan,payload).is_ok){return .err(error(8));}
-    let Result<usize,diagnostics::Error> built=output_programs::finish_proof(snapshot,lowered,deadline,code);
+    let Result<usize,diagnostics::Error> built=output_programs::finish_proof(snapshot,lowered,deadline,fuel,code);
     assert(memory::record_transfer(ref mut m.programs,ref plan,payload).is_ok);
     return switch(built){
         case .ok(_):{.ok(plan.bytes)}case .err(e):{discard compile_error(m,e);.err(m.error)}
@@ -1861,6 +1868,7 @@ fn u32 step_compile_inner(ref mut Meta m,ref mut vec::Vec<Program> programs,ref 
     return 0;
 }
 fn u32 step_compile_source(ref mut Meta m,ref mut CompileWork job,ref modules::Index index){
+    if(!metadata_budget::prepay(ref mut job.fuel,0).is_ok){return compile_fuel_exhausted(m);}
     var metadata_budget::State meter=metadata_budget::empty();
     let bool ready=switch(source_work::advance(index,ref mut job.source,ref mut meter)){
         case .ok(v):{v}case .err(e):{return compile_error(m,e);}
@@ -1905,7 +1913,9 @@ fn u32 begin_compile_input_inner(ref mut Meta m,ref mut vec::Vec<CompileWork> jo
     if(job.next==0){return failed(m,8);}
     if(clock::expired(deadline)){return compile_timed_out(m);}
     if(vec::len<input_entries::InputEntry>(incoming)!=1 || vec::len<input_entries::InputEntry>(selected)!=0){return failed(m,7);}
-    let usize charge=input_entry_heap(vec::at<input_entries::InputEntry>(incoming,0));
+    let ref input_entries::InputEntry entry=vec::at<input_entries::InputEntry>(incoming,0);
+    let usize fuel=if(mode>=2){modules::compile_fuel(input_entries::index(entry))}else{metadata_budget::unlimited()};
+    let usize charge=input_entry_heap(entry);
     if(!memory::hold_compile_source(ref mut m.programs,charge).is_ok){return failed(m,8);}
     if(!vec::push<input_entries::InputEntry>(selected,pop_input_entry(incoming)).is_ok){
         assert(memory::release_compile_source(ref mut m.programs,charge).is_ok);
@@ -1913,6 +1923,7 @@ fn u32 begin_compile_input_inner(ref mut Meta m,ref mut vec::Vec<CompileWork> jo
     }
     job.input=true;
     job.output_mode=mode;
+    job.fuel=fuel;
     job.source.classify=false;
     return start_compile_job(m,job,charge,image_limit,deadline);
 }
@@ -1960,7 +1971,7 @@ fn u32 finish_pending_input_output_compile(ref mut Meta m,ref mut vec::Vec<Progr
     };
     let ref sources::Snapshot snapshot=modules::snapshot(input_entries::index(source));
     var vec::Vec<output_programs::Program> code=vec::empty<output_programs::Program>();
-    let usize bytes=switch(retain_pending_output(m,snapshot,candidate,job.deadline,ref mut code)){
+    let usize bytes=switch(retain_pending_output(m,snapshot,candidate,job.deadline,ref mut job.fuel,ref mut code)){
         case .ok(v):{v}case .err(cause):{return stop_compile_input(m,job,selected,candidate,cause);}
     };
     finish_compile_input_source(m,job,selected,candidate);
@@ -3086,8 +3097,9 @@ fn void retain_compile_body_binding(ref mut Meta m,ref entries::Entry entry,ref 
     var loops::State flow=loops::empty();var body_work::State cursor=body_work::begin(0,false);
     var metadata_budget::State meter=metadata_budget::empty();
     let ref modules::Index index=entries::index(entry);
+    var usize fuel=metadata_budget::unlimited();
     unsafe{binding_raw(49)};discard advance_compile_body_inner(m,index,source,false,false,literals,ref mut signatures,ref mut code,
-        ref mut progress,ref mut token,ref mut names,ref mut flow,ref mut cursor,ref mut meter,0);
+        ref mut progress,ref mut token,ref mut names,ref mut flow,ref mut cursor,ref mut meter,0,ref mut fuel);
 }
 fn void retain_compile_input_bindings(ref mut Meta m){
     var vec::Vec<CompileWork> jobs=vec::empty<CompileWork>();

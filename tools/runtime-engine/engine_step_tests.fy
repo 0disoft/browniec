@@ -426,7 +426,19 @@ fn Result<usize,u8> empty_output_and_running_drop(){
 }
 
 fn Result<policy::Policy,u8> output_policy(bool allow){
-    return switch(policy::parse(if(allow){b"{\"schema\":\"brownie.policy/0.3\",\"compile\":{\"source_bytes\":262144,\"modules\":32,\"depth\":128,\"tokens\":131072,\"functions\":4096,\"types\":4096,\"instructions\":262144,\"registers_per_function\":1024,\"working_bytes\":67108864,\"fuel\":10000000,\"deadline_ms\":2000,\"diagnostics\":32},\"engine\":{\"memory_bytes\":134217728,\"control_bytes\":1048576,\"program_bytes\":8388608,\"total_program_bytes\":67108864,\"instances_bytes\":67108864,\"max_programs\":64,\"max_instances\":64,\"max_compiles\":1},\"run\":{\"memory_bytes\":16777216,\"object_bytes\":4194304,\"call_frames\":128,\"input_bytes\":1048576,\"output_bytes\":1048576,\"host_request_bytes\":1048576,\"host_response_bytes\":1048576,\"host_calls\":256,\"owner_entries\":16384,\"descriptor_entries\":16384,\"fuel\":10000000,\"deadline_ms\":1000},\"worker\":{\"memory_bytes\":201326592,\"user_cpu_time_ms\":5000,\"max_processes\":1,\"transport_bytes\":4194304,\"startup_ms\":2000,\"io_idle_ms\":1000,\"shutdown_grace_ms\":250,\"session_ms\":10000},\"capabilities\":[\"brownie.output.emit\"]}"}else{b"{\"schema\":\"brownie.policy/0.3\",\"compile\":{\"source_bytes\":262144,\"modules\":32,\"depth\":128,\"tokens\":131072,\"functions\":4096,\"types\":4096,\"instructions\":262144,\"registers_per_function\":1024,\"working_bytes\":67108864,\"fuel\":10000000,\"deadline_ms\":2000,\"diagnostics\":32},\"engine\":{\"memory_bytes\":134217728,\"control_bytes\":1048576,\"program_bytes\":8388608,\"total_program_bytes\":67108864,\"instances_bytes\":67108864,\"max_programs\":64,\"max_instances\":64,\"max_compiles\":1},\"run\":{\"memory_bytes\":16777216,\"object_bytes\":4194304,\"call_frames\":128,\"input_bytes\":1048576,\"output_bytes\":1048576,\"host_request_bytes\":1048576,\"host_response_bytes\":1048576,\"host_calls\":256,\"owner_entries\":16384,\"descriptor_entries\":16384,\"fuel\":10000000,\"deadline_ms\":1000},\"worker\":{\"memory_bytes\":201326592,\"user_cpu_time_ms\":5000,\"max_processes\":1,\"transport_bytes\":4194304,\"startup_ms\":2000,\"io_idle_ms\":1000,\"shutdown_grace_ms\":250,\"session_ms\":10000},\"capabilities\":[]}"})){
+    return output_policy_with_fuel(allow,b"\"fuel\":10000000");
+}
+fn Result<policy::Policy,u8> output_policy_with_fuel(bool allow,ref u8[] field_prefix){
+    let ref u8[] original=if(allow){b"{\"schema\":\"brownie.policy/0.3\",\"compile\":{\"source_bytes\":262144,\"modules\":32,\"depth\":128,\"tokens\":131072,\"functions\":4096,\"types\":4096,\"instructions\":262144,\"registers_per_function\":1024,\"working_bytes\":67108864,\"fuel\":10000000,\"deadline_ms\":2000,\"diagnostics\":32},\"engine\":{\"memory_bytes\":134217728,\"control_bytes\":1048576,\"program_bytes\":8388608,\"total_program_bytes\":67108864,\"instances_bytes\":67108864,\"max_programs\":64,\"max_instances\":64,\"max_compiles\":1},\"run\":{\"memory_bytes\":16777216,\"object_bytes\":4194304,\"call_frames\":128,\"input_bytes\":1048576,\"output_bytes\":1048576,\"host_request_bytes\":1048576,\"host_response_bytes\":1048576,\"host_calls\":256,\"owner_entries\":16384,\"descriptor_entries\":16384,\"fuel\":10000000,\"deadline_ms\":1000},\"worker\":{\"memory_bytes\":201326592,\"user_cpu_time_ms\":5000,\"max_processes\":1,\"transport_bytes\":4194304,\"startup_ms\":2000,\"io_idle_ms\":1000,\"shutdown_grace_ms\":250,\"session_ms\":10000},\"capabilities\":[\"brownie.output.emit\"]}"}else{b"{\"schema\":\"brownie.policy/0.3\",\"compile\":{\"source_bytes\":262144,\"modules\":32,\"depth\":128,\"tokens\":131072,\"functions\":4096,\"types\":4096,\"instructions\":262144,\"registers_per_function\":1024,\"working_bytes\":67108864,\"fuel\":10000000,\"deadline_ms\":2000,\"diagnostics\":32},\"engine\":{\"memory_bytes\":134217728,\"control_bytes\":1048576,\"program_bytes\":8388608,\"total_program_bytes\":67108864,\"instances_bytes\":67108864,\"max_programs\":64,\"max_instances\":64,\"max_compiles\":1},\"run\":{\"memory_bytes\":16777216,\"object_bytes\":4194304,\"call_frames\":128,\"input_bytes\":1048576,\"output_bytes\":1048576,\"host_request_bytes\":1048576,\"host_response_bytes\":1048576,\"host_calls\":256,\"owner_entries\":16384,\"descriptor_entries\":16384,\"fuel\":10000000,\"deadline_ms\":1000},\"worker\":{\"memory_bytes\":201326592,\"user_cpu_time_ms\":5000,\"max_processes\":1,\"transport_bytes\":4194304,\"startup_ms\":2000,\"io_idle_ms\":1000,\"shutdown_grace_ms\":250,\"session_ms\":10000},\"capabilities\":[]}"};
+    let ref u8[] field=b"\"fuel\":10000000";
+    var usize at=0;
+    while(at+field.len<=original.len && !bytes::equal(original[at..at+field.len],field)){at+=1;}
+    assert(at+field.len<=original.len);
+    var bytes::Buffer json=bytes::empty();
+    assert(bytes::append(ref mut json,original[..at]).is_ok);
+    assert(bytes::append(ref mut json,field_prefix).is_ok);
+    assert(bytes::append(ref mut json,original[at+field.len..]).is_ok);
+    return switch(policy::parse(bytes::view(ref json))){
         case .ok(v):{.ok(v)}case .err(_):{.err(1)}
     };
 }
@@ -894,6 +906,7 @@ fn Result<usize,u8> project_output(){
     var u8[3072] path=[0;3072];
     let usize length=unsafe{bc_runtime_engine_test_project_path(ref mut path[..] as ptr mut u8,3072)};
     let ref u8[] root=ref path[..length];
+    discard project_output_fuel(ref manifest,root)?;
     rejected_id(engine::compile_project_output(ref mut e,ref manifest,b"",ref omitted,65536),5);
     rejected_id(engine::compile_project_output(ref mut e,ref manifest,b"",ref wrong_entry,65536),5);
     rejected_id(engine::compile_project_output(ref mut e,ref manifest,b"",ref granted,65536),1);
@@ -948,6 +961,23 @@ fn Result<usize,u8> project_output(){
     counts(ref mut e,0,0,0);
     same_heap(ref idle);
     close(ref mut e);
+    return .ok(0);
+}
+fn Result<usize,u8> project_output_fuel(ref projects::Project manifest,ref u8[] root){
+    let policy::Policy ceiling=output_policy_with_fuel(true,b"\"fuel\":5000")?;
+    let configs::RunConfig granted=run_config(ref ceiling,0)?;
+    var engine::Engine owner=configured_engine(ceiling)?;
+    let Heap idle=heap();
+    let usize job=id(engine::begin_compile_project_output(ref mut owner,manifest,root,ref granted,65536));
+    let engine::CompileStatus first=compile_status(engine::step_compile(ref mut owner,job))?;
+    assert(compile_state(first.state)==0 && first.batches==1 && first.program==0);
+    let engine::CompileStatus stopped=compile_status(engine::step_compile(ref mut owner,job))?;
+    assert(compile_state(stopped.state)==3 && stopped.batches==1 && stopped.program==0);
+    assert(stopped.failure.status==4 && stopped.failure.diagnostic.code.kind==4);
+    assert(engine::detach_compile(ref mut owner,job).is_ok && retained(ref owner).compile_source_bytes==0);
+    same_heap(ref idle);
+    counts(ref mut owner,0,0,0);
+    close(ref mut owner);
     return .ok(0);
 }
 fn void rejected_compile_deadline(Result<usize,engine::Error> r){

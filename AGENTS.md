@@ -1,5 +1,5 @@
-- Latest runtime checkpoint (2026-11-22): [Configured project output](docs/cli/configuration.md#configured-project-output)
-  carries compile Fuel and the deadline from local project binding through Program publication.
+- Latest runtime checkpoint (2026-11-22): [Resumable project output compilation](docs/engineering/runtime-engine-compile-memory.md#engine-owned-project-output-compile)
+  carries the remaining compile Fuel through lowering, proof and Program retention.
 
 # Brownie C agent guidance
 

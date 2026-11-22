@@ -54,11 +54,11 @@ uint32_t bc_runtime_engine_advance_compile_literals(void *meta,const void *selec
  bc_compile_candidate *work=candidate;
  return B48(meta,selected,&job->f_9,&job->f_10,&work->f_1,&work->f_3,meter,collecting!=0);
 }
-uint32_t bc_runtime_engine_advance_compile_body(void *meta,const void *selected,const void *raw,void *candidate,void *meter,uintptr_t deadline){
- const bc_compile_work *job=raw;
+uint32_t bc_runtime_engine_advance_compile_body(void *meta,const void *selected,void *raw,void *candidate,void *meter,uintptr_t deadline){
+ bc_compile_work *job=raw;
  bc_compile_candidate *work=candidate;
  return B49(meta,selected,&job->f_9,work->f_2,job->f_12!=0,&job->f_10,&work->f_3,&work->f_0,&work->f_4,&work->f_5,
-     &work->f_6,&work->f_7,&work->f_8,meter,deadline);
+     &work->f_6,&work->f_7,&work->f_8,meter,deadline,&job->f_13);
 }
 /* Reserve a single SDK-owned slot before Fairy initializes its value. */
 struct fy_std_system_heap_block_v0 {
@@ -107,11 +107,11 @@ uintptr_t bc_runtime_engine_output_proof_storage(const void *raw){
  if(!work || work->f_10.f_4>(UINTPTR_MAX-sizeof(bc_compile_output_proof))/8)return 0;
  return sizeof(bc_compile_output_proof)+work->f_10.f_4*8;
 }
-uint32_t bc_runtime_engine_begin_output_proof(void *raw,uintptr_t image_limit,uint32_t input,void *failure){
+uint32_t bc_runtime_engine_begin_output_proof(void *raw,uintptr_t image_limit,uint32_t input,uintptr_t deadline,uintptr_t *fuel,void *failure){
  bc_compile_candidate *work=raw;
  if(work->f_11.f_0 || work->f_11.f_1 || work->f_11.f_2 || work->f_11.f_3 ||
      work->f_11.f_4!=sizeof(bc_compile_output_proof) || work->f_11.f_5!=_Alignof(bc_compile_output_proof))return 2;
- uint32_t status=B59(&work->f_1,&work->f_10,image_limit,failure);
+ uint32_t status=B59(&work->f_1,&work->f_10,image_limit,deadline,fuel,failure);
  if(status)return status;
  status=reserve_compile_slot(&work->f_11.f_0,&work->f_11.f_1,&work->f_11.f_2,
      sizeof(bc_compile_output_proof),_Alignof(bc_compile_output_proof));
@@ -127,9 +127,9 @@ uint32_t bc_runtime_engine_step_output_proof(void *raw,const void *snapshot,void
  bc_compile_output_proof *proof=work->f_11.f_0;
  return B61(&work->f_0,&work->f_10,&proof->f_0,&proof->f_1,snapshot,meter,failure);
 }
-uint32_t bc_runtime_engine_finish_output_proof(void *raw,const void *snapshot,uintptr_t deadline,void *outgoing,void *failure){
+uint32_t bc_runtime_engine_finish_output_proof(void *raw,const void *snapshot,uintptr_t deadline,uintptr_t *fuel,void *outgoing,void *failure){
  bc_compile_candidate *work=raw;
- return B62(&work->f_0,&work->f_10,work->f_11.f_0,snapshot,deadline,outgoing,failure);
+ return B62(&work->f_0,&work->f_10,work->f_11.f_0,snapshot,deadline,fuel,outgoing,failure);
 }
 uint32_t bc_runtime_engine_reserve_compile_candidate(void *raw){
  bc_compile_candidates *storage=raw;

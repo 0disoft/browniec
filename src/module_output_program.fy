@@ -89,20 +89,22 @@ pub fn Result<Program,diagnostics::Error> compile_input_with_retention_until(inp
 @link_name("bc_runtime_engine_output_proof_storage")
 unsafe extern C fn usize proof_storage_raw(ptr void candidate);
 @link_name("bc_runtime_engine_begin_output_proof")
-unsafe extern C fn u32 open_proof_raw(ptr mut void candidate,usize image_limit,u32 input,ptr mut void failure);
+unsafe extern C fn u32 open_proof_raw(ptr mut void candidate,usize image_limit,u32 input,usize deadline,ptr mut usize fuel,ptr mut void failure);
 @link_name("bc_runtime_engine_step_output_proof")
 unsafe extern C fn u32 step_proof_raw(ptr mut void candidate,ptr void snapshot,ptr mut void meter,ptr mut void failure);
 @link_name("bc_runtime_engine_finish_output_proof")
-unsafe extern C fn u32 finish_proof_raw(ptr mut void candidate,ptr void snapshot,usize deadline,ptr mut void outgoing,ptr mut void failure);
+unsafe extern C fn u32 finish_proof_raw(ptr mut void candidate,ptr void snapshot,usize deadline,ptr mut usize fuel,ptr mut void outgoing,ptr mut void failure);
 @link_name("bc_runtime_engine_binding")
 unsafe extern C fn void binding_raw(u32 number);
 @link_name("bc_runtime_engine_program_layout")
 unsafe extern C fn usize retention_layout_raw(u32 kind);
 
 pub fn usize proof_storage_bytes(ref ordinary::Lowered lowered){return unsafe{proof_storage_raw(lowered as ptr void)};}
-pub fn Result<usize,diagnostics::Error> begin_proof(ref mut ordinary::Lowered lowered,usize image_limit,bool input){
+pub fn Result<usize,diagnostics::Error> begin_proof(ref mut ordinary::Lowered lowered,usize image_limit,bool input,
+    usize deadline,ref mut usize fuel){
     var diagnostics::Error failure=absent(errors::absent(5,0));
-    let u32 status=unsafe{open_proof_raw(lowered as ptr mut void,image_limit,if(input){1}else{0},ref mut failure as ptr mut void)};
+    let u32 status=unsafe{open_proof_raw(lowered as ptr mut void,image_limit,if(input){1}else{0},
+        deadline,fuel as ptr mut usize,ref mut failure as ptr mut void)};
     if(status==2){return .err(absent(errors::make(15,0)));}
     return if(status==0){.ok(0)}else{.err(failure)};
 }
@@ -112,16 +114,16 @@ pub fn Result<bool,diagnostics::Error> advance_proof(ref sources::Snapshot snaps
     return if(status<=1){.ok(status==1)}else{.err(failure)};
 }
 pub fn Result<usize,diagnostics::Error> finish_proof(ref sources::Snapshot snapshot,ref mut ordinary::Lowered lowered,
-    usize deadline,ref mut vec::Vec<Program> outgoing){
+    usize deadline,ref mut usize fuel,ref mut vec::Vec<Program> outgoing){
     var diagnostics::Error failure=absent(errors::absent(5,0));
     let u32 status=unsafe{finish_proof_raw(lowered as ptr mut void,snapshot as ptr void,deadline,
-        outgoing as ptr mut void,ref mut failure as ptr mut void)};
+        fuel as ptr mut usize,outgoing as ptr mut void,ref mut failure as ptr mut void)};
     return if(status==0){.ok(0)}else{.err(failure)};
 }
 fn u32 open_proof_inner(ref images::Builder builder,ref mut vec::Vec<images::Image> storage,
-    usize image_limit,ref mut diagnostics::Error failure){
-    let images::Image image=switch(images::freeze(builder,image_limit)){
-        case .ok(v):{v}case .err(e):{*failure=literal(e);return 1;}
+    usize image_limit,usize deadline,ref mut usize fuel,ref mut diagnostics::Error failure){
+    let images::Image image=switch(images::freeze_metered(builder,image_limit,deadline,fuel)){
+        case .ok(v):{v}case .err(e):{*failure=absent(e);return 1;}
     };
     if(!vec::push<images::Image>(storage,image).is_ok){*failure=literal(.Allocation);return 1;}
     assert(vec::capacity<images::Image>(storage)==8);
@@ -136,14 +138,13 @@ fn u32 advance_proof_inner(ref candidates::Program code,ref vec::Vec<images::Ima
     };
 }
 fn u32 finish_proof_inner(ref candidates::Program code,ref mut vec::Vec<images::Image> storage,
-    ref proof_work::Pending work,ref sources::Snapshot snapshot,usize deadline,
+    ref proof_work::Pending work,ref sources::Snapshot snapshot,usize deadline,ref mut usize fuel,
     ref mut vec::Vec<Program> outgoing,ref mut diagnostics::Error failure){
     let output_proof::Proof proof=switch(proof_work::prepared(ref work.state)){
         case .ok(v):{v}case .err(e):{*failure=proof_error(snapshot,code,e);return 1;}
     };
-    var usize fuel=budget::unlimited();
     let Result<Program,diagnostics::Error> built=switch(vec::pop<images::Image>(storage)){
-        case .some(image):{finish_verified(snapshot,code,image,work.state.input,ref proof,deadline,ref mut fuel)}
+        case .some(image):{finish_verified(snapshot,code,image,work.state.input,ref proof,deadline,fuel)}
         case .none:{.err(absent(errors::absent(5,0)))}
     };
     let Program program=switch(built){case .ok(v):{v}case .err(e):{*failure=e;return 1;}};
@@ -155,7 +156,8 @@ pub fn void retain_proof_bindings(ref sources::Snapshot snapshot){
     var vec::Vec<images::Image> storage=vec::empty<images::Image>();
     let vec::Vec<proof_work::Pending> work=vec::empty<proof_work::Pending>();
     var diagnostics::Error failure=absent(errors::absent(5,0));
-    unsafe{binding_raw(59)};discard open_proof_inner(ref builder,ref mut storage,0,ref mut failure);
+    var usize fuel=budget::unlimited();
+    unsafe{binding_raw(59)};discard open_proof_inner(ref builder,ref mut storage,0,0,ref mut fuel,ref mut failure);
     var proof_work::State state=proof_work::empty(false);
     var candidates::Program normalized=candidates::Program{.body=ir::empty(),.parameters=[0;128],.results=[0;16],.origins=[0;16]};
     if(vec::len<proof_work::Pending>(ref work)==1){
@@ -178,7 +180,8 @@ fn void retain_proof_finish_binding(ref sources::Snapshot snapshot,ref mut vec::
     let candidates::Program code=candidates::Program{.body=ir::empty(),.parameters=[0;128],.results=[0;16],.origins=[0;16]};
     var vec::Vec<Program> outgoing=vec::empty<Program>();
     var diagnostics::Error failure=absent(errors::absent(5,0));
-    unsafe{binding_raw(62)};discard finish_proof_inner(ref code,storage,work,snapshot,0,ref mut outgoing,ref mut failure);
+    var usize fuel=budget::unlimited();
+    unsafe{binding_raw(62)};discard finish_proof_inner(ref code,storage,work,snapshot,0,ref mut fuel,ref mut outgoing,ref mut failure);
 }
 fn Result<usize,diagnostics::Error> admit_image(ref images::Builder builder,ref mut retention::Plan plan){
     let usize payload=switch(images::planned_payload(builder)){case .ok(v):{v}case .err(_):{return .err(absent(errors::make(5,0)));}};

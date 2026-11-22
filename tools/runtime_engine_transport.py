@@ -71,7 +71,10 @@ def project_layouts(t, c, *, host_compile=True):
     assert arg(61,2)==field_type(c['compileOutputProofType'],0)
     assert arg(61,3)==field_type(c['compileOutputProofType'],1)
     assert arg(59,1)==arg(61,1)==arg(62,1)==c['compileProofImageType']
-    assert arg(62,5)==field_type(c['programType'],5)
+    assert arg(62,6)==field_type(c['programType'],5)
+    for binding, index in [(49,15),(59,4),(62,5)]:
+        parameter=decl(binding).split('(',1)[1].split(')',1)[0].split(',')[index]
+        assert re.fullmatch(r'\s*uintptr_t\s*\*\s*fy_l_\d+\s*',parameter), parameter
     assert arg(59,0)==arg(51,1)==field_type(c['compileCandidateType'],1)
     assert arg(61,0)==arg(62,0)==arg(50,0)==field_type(c['compileCandidateType'],0)
     assert arg(61,4)==arg(62,3)==field_type(vector_element(c['sourceIndexVectorType']),0)
