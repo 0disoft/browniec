@@ -840,8 +840,9 @@ static void verify_broker(const wchar_t *path, const wchar_t *directory,
         (unsigned long long)(ULONG_PTR)decoy) > 0, "format broker fixture command");
     const uint8_t request = 41;
     uint8_t result = 0;
+    const uint8_t result_value = 42;
     const size_t wire = 5 * BC_WORKER_FRAME_BYTES + 3;
-    const bc_worker_broker_amounts charge = {1, sizeof(broker) + 2 + worker_launch_heap,
+    const bc_worker_broker_amounts charge = {1, sizeof(broker) + 2 + worker_launch_heap + sizeof(result_value),
         commit_limit, wire, 0, 2, worker_pipe_buffers, 0, 0, 12};
     bc_worker_broker_budget budget = {.limit = charge};
     const bool idle_expiry = !wcscmp(mode, L"--child-stalled-result");
@@ -857,8 +858,18 @@ static void verify_broker(const wchar_t *path, const wchar_t *directory,
         .shutdown_grace_ms = 500,
         .deadline = clock_ticks() + 100000000ULL, .wire_limit = wire - 1,
         .request = &request, .request_length = 1, .result = &result, .result_capacity = 1,
-        .validate = fixture_result
+        .validate = fixture_result, .expectation = &result_value, .expectation_bytes = sizeof(result_value)
     };
+    bc_worker_broker_run invalid = run;
+    invalid.wire_limit = wire;
+    invalid.expectation_bytes = 0;
+    check(bc_worker_broker_start(&broker, &invalid) == ERROR_INVALID_PARAMETER,
+        "reject a validator context without its storage size");
+    invalid.expectation_bytes = SIZE_MAX;
+    check(bc_worker_broker_start(&broker, &invalid) == ERROR_NOT_ENOUGH_QUOTA &&
+        !broker.worker.process && !broker.io.event && !broker.cancel_io.event &&
+        same_charge(budget.reserved, (bc_worker_broker_amounts){0}),
+        "reject validator storage overflow without reserving memory or opening handles");
     check(bc_worker_broker_start(&broker, &run) == ERROR_NOT_ENOUGH_QUOTA &&
         !broker.worker.process && !broker.io.event, "wire capacity one byte short rejects before launch");
     run.wire_limit = wire;
@@ -866,7 +877,7 @@ static void verify_broker(const wchar_t *path, const wchar_t *directory,
     check(bc_worker_broker_start(&broker, &run) == ERROR_NOT_ENOUGH_QUOTA &&
         !broker.worker.process && !broker.io.event && !broker.cancel_io.event &&
         same_charge(budget.reserved, (bc_worker_broker_amounts){0}),
-        "short worker launch heap quota denies admission before opening handles");
+        "one byte short of validator storage denies admission before opening handles");
     ++budget.limit.parent_bytes;
     const DWORD status = bc_worker_broker_start(&broker, &run);
     SetLastError(status);
@@ -1269,9 +1280,10 @@ static void verify_guest_exchange(const wchar_t *path, const wchar_t *directory,
     const uint8_t *request, size_t request_length, const char *expected, bool accept) {
     bc_worker_broker broker = {0};
     uint8_t result[256];
+    const size_t expectation_bytes = expected ? strlen(expected) + 1 : 0;
     const size_t wire = 5 * BC_WORKER_FRAME_BYTES + request_length + sizeof(result) + 1;
     const bc_worker_broker_amounts charge = {
-        1, sizeof(broker) + request_length + sizeof(result) + worker_launch_heap,
+        1, sizeof(broker) + request_length + sizeof(result) + worker_launch_heap + expectation_bytes,
         commit_limit, wire, 0, 2, worker_pipe_buffers, 0, 0, 12
     };
     bc_worker_broker_budget budget = {.limit = charge};
@@ -1284,7 +1296,8 @@ static void verify_guest_exchange(const wchar_t *path, const wchar_t *directory,
         .startup_ms = 4000, .io_idle_ms = 4000, .shutdown_grace_ms = 500,
         .deadline = clock_ticks() + 100000000ULL, .wire_limit = wire,
         .request = request, .request_length = request_length, .result = result,
-        .result_capacity = sizeof(result), .validate = scalar_payload, .expectation = expected
+        .result_capacity = sizeof(result), .validate = scalar_payload, .expectation = expected,
+        .expectation_bytes = expectation_bytes
     };
     DWORD status = bc_worker_broker_start(&broker, &run);
     SetLastError(status);

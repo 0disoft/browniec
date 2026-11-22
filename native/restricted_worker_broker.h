@@ -137,6 +137,7 @@ typedef struct bc_worker_broker_run {
     size_t result_capacity;
     bc_worker_result_validator validate;
     const void *expectation;
+    size_t expectation_bytes;
     bc_worker_broker_host host;
     const bc_worker_host_adapter *adapter;
 } bc_worker_broker_run;
@@ -144,6 +145,8 @@ typedef struct bc_worker_broker_run {
 /* One START/RESULT session with optional sequential host exchanges. Serialize calls and start from a zeroed owner
    at a stable address. Request and result spans must be disjoint and remain
    valid through close, along with the immutable validator expectation.
+   Set expectation_bytes to the validator context size plus any additional
+   spans it borrows. Use zero with a NULL expectation.
    Admission reserves a session, its control and span
    bytes, combined worker and adapter Job commit and wire envelopes against
    the shared budget.

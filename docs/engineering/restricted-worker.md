@@ -309,6 +309,23 @@ success, cancellation and expiry. Each profile also passed 47 catalog and
 20 process-adapter cases with zero net handles. Local receipt:
 `build/restricted-worker/20261122T102756639677Z/receipt.json`.
 
+### Result validator context reservation
+
+The parent memory budget includes the immutable result validator context.
+Scalar sessions reserve 16 bytes for the context on Windows x64. Project
+sessions reserve 40 bytes for the context and the borrowed source-length
+span, which is two bytes per selected source. The reservation stays in the
+shared parent ledger until the session is reaped.
+
+Both native Windows profiles admitted the exact ceiling and rejected one byte
+less before opening worker handles. A size of `SIZE_MAX` was rejected without
+reserving memory. The concurrent worker tests retained both reservations
+while their completed reads awaited collection and refunded each reservation
+after reaping. In both profiles the locked CLI also passed the scalar worker,
+119 configured project, 47 catalog and 20 process-adapter command cases.
+Both profiles reported zero net handles and all 465 inputs matched. Local
+receipt: `build/restricted-worker/20261122T131722025776Z/receipt.json`.
+
 ### Restricted adapter Job commit
 
 Private process-backed routes reserve a 64 MiB adapter Job commit ceiling

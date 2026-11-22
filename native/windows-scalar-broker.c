@@ -133,6 +133,7 @@ typedef struct worker_exchange {
     size_t request_length;
     bc_worker_result_validator validate;
     const void *expectation;
+    size_t expectation_bytes;
     bool project;
     bc_worker_broker_host host;
     const bc_worker_host_adapter *adapter;
@@ -160,7 +161,7 @@ static uint32_t run_broker(PSID sid, const wchar_t *image, const wchar_t *direct
         .sessions = 1,
         .parent_bytes = sizeof(broker) + exchange->request_length + result_capacity +
             exchange->host.request_capacity + exchange->host.reply_capacity +
-            exchange->host_parent_bytes + bc_restricted_worker_launch_heap_bytes(),
+            exchange->expectation_bytes + exchange->host_parent_bytes + bc_restricted_worker_launch_heap_bytes(),
         .child_commit_bytes = limits->commit_bytes + (adapter ? adapter->child_commit_bytes : 0),
         .wire_bytes = limits->transport_bytes,
         .adapter_slots = adapter ? 1 : 0,
@@ -183,6 +184,7 @@ static uint32_t run_broker(PSID sid, const wchar_t *image, const wchar_t *direct
         .host_parent_bytes = exchange->host_parent_bytes,
         .request = exchange->request, .request_length = exchange->request_length, .result = reply,
         .result_capacity = result_capacity, .validate = exchange->validate, .expectation = exchange->expectation,
+        .expectation_bytes = exchange->expectation_bytes,
         .host = exchange->host, .adapter = exchange->adapter
     };
     const DWORD started = bc_worker_broker_start(&broker, &config);
@@ -261,7 +263,10 @@ uint32_t bc_scalar_broker_invoke(const uint8_t *profile, size_t profile_length,
     if (operation == 2) put_le(request + 5, 4, (uint32_t)argument);
     memcpy(request + header, source, source_length);
     const scalar_expectation expected = {operation, source_length};
-    const worker_exchange exchange = {request, source_length + header, validate_scalar, &expected, false, {0}, NULL, 0, 0};
+    const worker_exchange exchange = {
+        .request = request, .request_length = source_length + header,
+        .validate = validate_scalar, .expectation = &expected, .expectation_bytes = sizeof(expected)
+    };
     return invoke_broker(profile, profile_length, &exchange, &default_limits, reply, BC_SCALAR_RESULT_MAX, reply_length);
 }
 
@@ -327,7 +332,10 @@ uint32_t bc_project_broker_invoke(const uint8_t *request, size_t request_length,
         return 0;
     }
     const project_expectation expected = {run, lengths, count, output, output_limit};
-    worker_exchange exchange = {request, request_length, validate_project, &expected, true, {0}, NULL, 0, 0};
+    worker_exchange exchange = {
+        .request = request, .request_length = request_length, .project = true,
+        .validate = validate_project, .expectation = &expected, .expectation_bytes = sizeof(expected) + count
+    };
     worker_limits limits = default_limits;
     if (config_size && !read_worker_limits(configuration, config_size, &limits)) return 0;
     if (!dispatch) return invoke_broker(NULL, 0, &exchange, &limits, reply, capacity, reply_length);

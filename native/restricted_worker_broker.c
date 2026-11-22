@@ -82,7 +82,8 @@ DWORD bc_worker_broker_start(bc_worker_broker *b, const bc_worker_broker_run *ru
         !run->shutdown_grace_ms || run->shutdown_grace_ms > 5000 ||
         (run->request_length && !run->request) ||
         !run->result || !run->result_capacity ||
-        !run->validate || run->request_length > BC_WORKER_FRAME_PAYLOAD_MAX ||
+        !run->validate || (!run->expectation) != (!run->expectation_bytes) ||
+        run->request_length > BC_WORKER_FRAME_PAYLOAD_MAX ||
         run->result_capacity > BC_WORKER_FRAME_PAYLOAD_MAX) return ERROR_INVALID_PARAMETER;
     const bc_worker_broker_host host = run->host;
     const bc_worker_host_adapter *adapter = run->adapter;
@@ -107,7 +108,9 @@ DWORD bc_worker_broker_start(bc_worker_broker *b, const bc_worker_broker_run *ru
         host.request_capacity + host.reply_capacity;
     const size_t launch_heap = bc_restricted_worker_launch_heap_bytes();
     if (!launch_heap) return ERROR_INVALID_DATA;
-    if (launch_heap > SIZE_MAX - parent || run->host_parent_bytes > SIZE_MAX - parent - launch_heap)
+    if (launch_heap > SIZE_MAX - parent ||
+        run->expectation_bytes > SIZE_MAX - parent - launch_heap ||
+        run->host_parent_bytes > SIZE_MAX - parent - launch_heap - run->expectation_bytes)
         return ERROR_NOT_ENOUGH_QUOTA;
     const size_t adapter_commit = adapter ? adapter->child_commit_bytes : 0;
     if (adapter_commit > SIZE_MAX - run->commit_bytes) return ERROR_NOT_ENOUGH_QUOTA;
@@ -115,7 +118,7 @@ DWORD bc_worker_broker_start(bc_worker_broker *b, const bc_worker_broker_run *ru
     if (now >= run->deadline) return ERROR_TIMEOUT;
     const bc_worker_broker_amounts charge = {
         .sessions = 1,
-        .parent_bytes = parent + launch_heap + run->host_parent_bytes,
+        .parent_bytes = parent + launch_heap + run->expectation_bytes + run->host_parent_bytes,
         .child_commit_bytes = run->commit_bytes + adapter_commit,
         .wire_bytes = wire,
         .adapter_slots = adapter ? 1 : 0,
