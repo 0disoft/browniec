@@ -1,5 +1,5 @@
-- Latest runtime checkpoint (2026-11-22): [Catalog host binding Fuel](docs/engineering/restricted-worker.md#catalog-host-binding-fuel)
-  meters import rows, alias lookup and catalog spelling comparisons while preparing the host call index.
+- Latest runtime checkpoint (2026-11-22): [Host transfer expiry](docs/engineering/restricted-worker.md#host-transfer-expiry)
+  verifies cancellation ordering and first-cause retention across live Windows request and reply frames.
 
 # Brownie C agent guidance
 

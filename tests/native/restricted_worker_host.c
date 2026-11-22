@@ -852,7 +852,17 @@ static void verify_host_broker(const wchar_t *path, const wchar_t *directory,
              broker.rx.status == BC_WORKER_RX_BODY) ||
             (cancel_tx && broker.phase == BC_WORKER_BROKER_SEND_HOST_REPLY &&
              broker.tx.sent == BC_WORKER_FRAME_BYTES)) {
-            check(bc_worker_broker_cancel(&broker) == expected, "cancel with host transfer unfinished");
+            if (expected == BC_WORKER_GATE_EXPIRED) {
+                broker.phase_deadline = clock_ticks();
+                check(bc_worker_broker_step(&broker) == BC_WORKER_GATE_EXPIRED,
+                    "phase expiry settles an unfinished host transfer");
+            } else {
+                check(bc_worker_broker_cancel(&broker) == BC_WORKER_GATE_CANCELLED,
+                    "cancel with host transfer unfinished");
+                broker.phase_deadline = clock_ticks();
+            }
+            check(bc_worker_broker_cancel(&broker) == expected,
+                "later stop preserves the first host transfer outcome");
             break;
         }
         if (broker.io.pipe || broker.phase == BC_WORKER_BROKER_WAIT_EXIT) Sleep(1);
@@ -1251,6 +1261,8 @@ int wmain(int argc, wchar_t **argv) {
     verify_host_broker(argv[1], directory, L"--child-host-invalid", 2, BC_WORKER_GATE_PROTOCOL, 1);
     verify_host_broker(argv[1], directory, L"--child-host-cancel-rx", 2, BC_WORKER_GATE_CANCELLED, 0);
     verify_host_broker(argv[1], directory, L"--child-host-cancel-tx", 2, BC_WORKER_GATE_CANCELLED, 1);
+    verify_host_broker(argv[1], directory, L"--child-host-cancel-rx", 2, BC_WORKER_GATE_EXPIRED, 0);
+    verify_host_broker(argv[1], directory, L"--child-host-cancel-tx", 2, BC_WORKER_GATE_EXPIRED, 1);
     verify_host_broker(argv[1], directory, L"--child-peer-ok", 2, BC_WORKER_GATE_DELIVERED, 2);
     verify_host_broker(argv[1], directory, L"--child-peer-cancel", 2, BC_WORKER_GATE_CANCELLED, 0);
     verify_graceful_cancel(argv[1], directory, false);
@@ -1292,7 +1304,7 @@ int wmain(int argc, wchar_t **argv) {
            "\"commitDenied\":true,\"cpuTermination\":true,\"privatePipeAcl\":true,"
            "\"framedExchange\":true,\"headerMutationsRejected\":48,"
            "\"boundedStream\":true,\"pipeEof\":true,\"publicationGate\":true,"
-           "\"ioLease\":true,\"brokerSessions\":6,\"hostBrokerCases\":9,\"sharedBudget\":true,"
+           "\"ioLease\":true,\"brokerSessions\":6,\"hostBrokerCases\":11,\"sharedBudget\":true,"
            "\"phaseDeadlines\":true,\"gracefulCancelCases\":2,\"handleDelta\":0,\"staging\":true,"
            "\"scalarSessions\":%d,\"parentBrokerCases\":%d,\"projectWireRejections\":%d,"
            "\"projectCompileStopCases\":%d,"

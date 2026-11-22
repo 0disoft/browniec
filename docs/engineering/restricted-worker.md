@@ -518,6 +518,23 @@ after a reply header is sent. Both cancellation cases receive a late RESULT
 without publishing it. Local receipt:
 `build/restricted-worker/20261121T175242080375Z/receipt.json`.
 
+### Host transfer expiry
+
+The native fixture sets the phase deadline to the current monotonic tick
+after the request header has been read or the reply header has been sent.
+With expiry first, a subsequent cancel preserves expiry. With cancellation
+first, a subsequent expiry preserves cancellation.
+
+The AppContainer child checks the CANCEL sequence. When a reply header
+has already been sent, it also verifies the complete reply body before
+accepting CANCEL. The broker dispatches zero callbacks during the request
+case and one in the reply case. It drains the late RESULT without
+validation or publication and holds the reservation through reaping.
+
+Windows development and /O2 passed all 11 host broker cases. The fixture
+reported zero net handles in both profiles. All 456 input hashes matched.
+Local receipt: `build/restricted-worker/20261122T013254720219Z/receipt.json`.
+
 ### Project worker host exchange
 
 The native project worker keeps the inherited input pipe after consuming
