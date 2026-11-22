@@ -150,3 +150,11 @@ BOOL bc_worker_stage_close(bc_worker_stage *stage) {
     }
     return !stage->owns_directory && !stage->profile;
 }
+
+DWORD bc_worker_stage_finish(bc_worker_stage *stage, bc_worker_stage_stop stop, void *context) {
+    const DWORD earlier = stopped(stop, context);
+    const BOOL cleaned = bc_worker_stage_close(stage);
+    if (earlier) return earlier;
+    if (!cleaned) return ERROR_GEN_FAILURE;
+    return stopped(stop, context);
+}

@@ -334,6 +334,23 @@ deadline. The earlier cancellation survives a later expiry during cleanup.
 Development and /O2 passed those cases and the parent publication checks.
 Local receipt: `build/restricted-worker/20261121T162851207548Z/receipt.json`.
 
+### Stops during managed publication cleanup
+
+The managed parent treats a validated, reaped worker RESULT as a candidate
+until it finishes staging cleanup. It checks the absolute session deadline
+and console cancellation before and after closing the staged image,
+directory and profile. Cleanup still runs when a stop is already observed.
+An earlier stop takes precedence over a later expiry, and a cleanup failure
+prevents publication. The caller-visible result length is assigned only
+after successful cleanup and the final stop check.
+
+Windows development and /O2 each staged and reclaimed real AppContainer
+resources in four cases with controlled stop observations. Both profiles
+accepted uninterrupted completion, rejected cancellation and expiry observed
+after cleanup, and retained cancellation first observed before cleanup.
+Both broker suites reported zero net handles. Local receipt:
+`build/restricted-worker/20261122T101629091877Z/receipt.json`.
+
 ### Graceful cancellation
 
 Cancellation freezes the result gate immediately. If START is in flight,

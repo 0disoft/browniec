@@ -234,9 +234,14 @@ static uint32_t invoke_broker(const uint8_t *profile, size_t profile_length,
     else if (stop == ERROR_CANCELLED) status = 3;
     else if (!stop) status = run_broker(stage.profile, stage.image, stage.directory,
         exchange, limits, deadline, reply, capacity, &pending_length);
-    const BOOL cleaned = bc_worker_stage_close(&stage);
-    if (status != 1) return status;
-    if (!cleaned) return 0;
+    if (status != 1) {
+        bc_worker_stage_close(&stage);
+        return status;
+    }
+    const DWORD finished = bc_worker_stage_finish(&stage, stage_stop, &deadline);
+    if (finished == ERROR_TIMEOUT) return 2;
+    if (finished == ERROR_CANCELLED) return 3;
+    if (finished) return 0;
     *reply_length = pending_length;
     return 1;
 }

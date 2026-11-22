@@ -1,5 +1,5 @@
-- Latest runtime checkpoint (2026-11-22): [Isolated single-file byte and text views](docs/engineering/restricted-worker.md#isolated-single-file-byte-and-text-views)
-  connect verified retained images and shared-byte results to the managed worker.
+- Latest runtime checkpoint (2026-11-22): [Stops during managed publication cleanup](docs/engineering/restricted-worker.md#stops-during-managed-publication-cleanup)
+  keep a reaped result private until staging cleanup and the final stop check succeed.
 
 # Brownie C agent guidance
 

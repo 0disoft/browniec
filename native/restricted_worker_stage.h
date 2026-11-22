@@ -22,4 +22,8 @@ DWORD bc_worker_stage_open(bc_worker_stage *stage, const wchar_t *application,
     bc_worker_stage_stop stop, void *context);
 BOOL bc_worker_stage_close(bc_worker_stage *stage);
 
+/* Reclaim a successful session's stage before publishing its result.
+   Preserve a stop observed before cleanup and sample again on clean close. */
+DWORD bc_worker_stage_finish(bc_worker_stage *stage, bc_worker_stage_stop stop, void *context);
+
 #endif

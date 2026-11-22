@@ -87,6 +87,28 @@ static DWORD interrupt_stage_copy(void *context) {
     return ++fixture->copy_checkpoints == 3 ? fixture->cause : ERROR_SUCCESS;
 }
 
+typedef struct stage_finish_fixture {
+    const bc_worker_stage *stage;
+    DWORD before_cleanup;
+    DWORD after_cleanup;
+    unsigned calls;
+} stage_finish_fixture;
+
+static DWORD observe_stage_finish(void *context) {
+    stage_finish_fixture *fixture = context;
+    const bc_worker_stage *stage = fixture->stage;
+    if (++fixture->calls == 1) {
+        check(stage->owns_directory && stage->pinned_image && stage->profile,
+            "first stop sample precedes cleanup");
+        return fixture->before_cleanup;
+    }
+    check(fixture->calls == 2 && !stage->owns_image && !stage->owns_directory &&
+        !stage->pinned_image && !stage->profile &&
+        GetFileAttributesW(stage->directory) == INVALID_FILE_ATTRIBUTES,
+        "second stop sample follows stage reclamation");
+    return fixture->after_cleanup;
+}
+
 static void verify_stage(const wchar_t *application) {
     bc_worker_stage stage = {0};
     check(bc_worker_stage_open(&stage, application, NULL, NULL) == ERROR_SUCCESS, "provision worker image and profile");
@@ -136,6 +158,23 @@ static void verify_stage(const wchar_t *application) {
             "only one chunk was copied before the stop");
         check(bc_worker_stage_close(&stage) && GetFileAttributesW(stage.directory) == INVALID_FILE_ATTRIBUTES,
             "reclaim partial image, directory and profile after a staging stop");
+    }
+
+    const struct { DWORD before, after, result; unsigned calls; } finish_cases[] = {
+        {ERROR_SUCCESS, ERROR_SUCCESS, ERROR_SUCCESS, 2},
+        {ERROR_SUCCESS, ERROR_CANCELLED, ERROR_CANCELLED, 2},
+        {ERROR_SUCCESS, ERROR_TIMEOUT, ERROR_TIMEOUT, 2},
+        {ERROR_CANCELLED, ERROR_TIMEOUT, ERROR_CANCELLED, 1},
+    };
+    for (size_t i = 0; i < _countof(finish_cases); ++i) {
+        stage = (bc_worker_stage){0};
+        check(bc_worker_stage_open(&stage, application, NULL, NULL) == ERROR_SUCCESS,
+            "stage a worker image for publication checks");
+        stage_finish_fixture finish = {&stage, finish_cases[i].before, finish_cases[i].after, 0};
+        check(bc_worker_stage_finish(&stage, observe_stage_finish, &finish) == finish_cases[i].result &&
+            finish.calls == finish_cases[i].calls && !stage.profile &&
+            GetFileAttributesW(stage.directory) == INVALID_FILE_ATTRIBUTES,
+            "settle publication after cleanup without replacing an earlier stop");
     }
 }
 
