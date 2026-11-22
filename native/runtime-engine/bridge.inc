@@ -300,6 +300,8 @@ uint32_t bc_runtime_engine_output_preflight(void *raw,uintptr_t instance){
  uint32_t end=bc_abi_guard_leave(id);return end?end:s;
 }
 
+/* Core and the register tail share one aligned SDK allocation. */
+_Static_assert(sizeof(bc_pending_core)%_Alignof(int64_t)==0, "aligned register tail");
 uintptr_t bc_runtime_pending_core_stride(void){return sizeof(bc_pending_core);}
 uintptr_t bc_runtime_pending_machine_stride(void){return sizeof(bc_pending_machine);}
 uint32_t bc_runtime_pending_advance(void *raw,const void *program,const void *input,uint32_t operation,uintptr_t quantum){
@@ -307,15 +309,19 @@ uint32_t bc_runtime_pending_advance(void *raw,const void *program,const void *in
  if(operation==1 && owner->f_7.f_6.f_3<=2)
   return B34(program,input,&owner->f_7,&owner->f_0,&owner->f_1,&owner->f_2,&owner->f_3,&owner->f_4,&owner->f_5,&owner->f_6,quantum);
  bc_pending_core *c=owner->f_0.f_0;
+ const uintptr_t length=owner->f_0.f_3;
+ if(!c || length<sizeof(*c)+2048 || length>sizeof(*c)+32768 || length!=owner->f_0.f_1 ||
+    (length-sizeof(*c))%1024!=0)return 5;
  if(operation==1 && owner->f_7.f_6.f_3==3)return B35(&owner->f_7,c,quantum);
+ int64_t *registers=(int64_t *)((uint8_t *)owner->f_0.f_0+sizeof(*c));
  return B26(program,input,&owner->f_7,&c->f_0,&c->f_1,
   (fy_mut_usize_slice){c->f_2.data,32},(fy_mut_u32_slice){c->f_3.data,512},
-  (fy_mut_i64_slice){c->f_4.data,4096},&c->f_5,&c->f_6,
+  (fy_mut_i64_slice){registers,(length-sizeof(*c))/sizeof(*registers)},&c->f_4,&c->f_5,
   &owner->f_1,&owner->f_2,&owner->f_3,&owner->f_4,&owner->f_5,&owner->f_6,operation,quantum);
 }
 uint32_t bc_runtime_pending_maintenance(void *raw,uint32_t operation,void *outgoing){
  bc_pending_machine *owner=raw;bc_pending_core *c=owner->f_0.f_0;
- return B27(&owner->f_7,&c->f_1,&owner->f_1,&owner->f_4,&owner->f_6,outgoing,operation,&c->f_5.f_1);
+ return B27(&owner->f_7,&c->f_1,&owner->f_1,&owner->f_4,&owner->f_6,outgoing,operation,&c->f_4.f_1);
 }
 
 uint32_t bc_runtime_pending_initialize(void *raw,const void *state){

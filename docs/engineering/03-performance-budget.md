@@ -16,7 +16,7 @@ conditions and the build ID that produced each binary.
 | --- | --- | --- |
 | Reused small Instance setup | p95 at or below 1 ms | Met for one Windows embedding workload |
 | 10 KiB pure source compile plus verify | p95 at or below 10 ms | Unmeasured |
-| Empty Instance accounted memory | at or below 32 KiB | Missed: 186,440 bytes with no input or output |
+| Empty Instance accounted memory | at or below 32 KiB | Missed: 155,720 bytes with no input or output |
 | Warm scalar loop heap allocation | zero | Met for SDK heap across steps of the measured Windows loop |
 | 100 retained edit builds | at or below 32 MiB project output, excluding explicit debug/toolchain artifacts | Unmeasured |
 
@@ -187,6 +187,33 @@ both profiles. Local evidence is in
 `build/runtime-engine/20261122T120431926885Z/receipt.json`,
 `build/embed-preview-cdl9wkrx/receipt.json`, and
 `build/embed-allocations-0u99y3ad`.
+
+## Pending register storage on Windows
+
+The pending VM allocates its fixed 138,400-byte Core and register rows in one
+buffer. A verified Program with an empty call table needs two rows, including
+the reserved row zero. A Program with calls reserves one row per allowed call
+frame plus row zero. Each row occupies 1,024 bytes. The Engine accounts for
+the same buffer size used at allocation and the VM checks each live or
+destination frame before accessing its register row.
+
+Both Windows profiles ran 201 empty Instances and 201 scalar-loop Instances
+with the SDK heap observer. Peak accounted memory fell from 186,440 to
+155,720 bytes for both workloads, saving 30,720 bytes per Instance. The empty
+rule still exceeds the 32 KiB target by 122,952 bytes. The results remained
+77 and 2016, with 345,090 and 345,930 Fuel respectively. The loop used 278
+steps at quantum 64 and 1,106 at quantum 1, 30 fewer setup batches in each
+case. Both workloads allocated zero SDK blocks during steps and left zero
+live SDK allocations after Engine destruction.
+
+The same calling Program returned 77 with a two-frame quota and trapped
+with a one-frame quota. The reported peak differed by exactly 1,024 bytes
+between those runs and by 29,696 bytes between the two-frame and default
+31-frame runs. Both native Engine profiles also passed memory admission,
+one-byte-short rejection, rollback, and teardown tests. Local evidence:
+`build/runtime-engine/20261122T121824410399Z/receipt.json`,
+`build/embed-preview-mw87c0c3/receipt.json`, and
+`build/embed-allocations-57f229k3`.
 
 ## Configured byte transform on Windows (2026-11-22)
 

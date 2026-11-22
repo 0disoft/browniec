@@ -1619,7 +1619,7 @@ fn Result<usize,Error> pending_bytes(ref Program program,usize limit,pending_cur
     let usize capacity=output_programs::preparation(retained).capacity;
     if(program.execution_scratch<capacity){return .err(error(8));}
     let usize scratch=program.execution_scratch-capacity+pending_cursors::aggregate_capacity(selected,capacity);
-    return switch(pending_heap::prepare(scratch,limit,pending_vm::pending_core_stride(),pending_vm::pending_machine_stride())){
+    return switch(pending_heap::prepare(scratch,limit,machines::core_bytes(ref output_programs::code(retained).body,selected),pending_vm::pending_machine_stride())){
         case .ok(v):{.ok(v.retained)}case .err(_):{.err(error(8))}
     };
 }

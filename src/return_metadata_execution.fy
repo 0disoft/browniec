@@ -58,9 +58,10 @@ pub fn Result<usize,errors::Error> begin(ref mut State s,ref ir::Program p,ref s
     ref frames::Frames bindings,ref runtime::State state,ref u8[] data,usize payload,
     ref inputs::State windows,ref u8[] origins,ref usize[] live,ref u32[] current,ref i64[] registers,
     ref mut usize remaining){
-    if(s.pending || !operation(p,pc) || live.len!=32 || current.len!=512 || registers.len!=4096 || origins.len!=16){return .err(invalid(0));}
     let usize frame=bindings.frame;
-    if(frame==0 || frame>=32){return .err(invalid(0));}let usize f=bindings.functions[frame];
+    if(s.pending || !operation(p,pc) || live.len!=32 || current.len!=512 ||
+        !frames::has_register_frame(registers.len,frame) || origins.len!=16){return .err(invalid(0));}
+    let usize f=bindings.functions[frame];
     if(f>=p.function_count || f>=16){return .err(invalid(0));}
     let usize offset=p.offsets[pc];let u8 op=p.code[pc*8];let usize a=p.code[pc*8+2] as usize;
     let usize input_work=if(inputs::enabled(windows)){meter::input_frame()}else{0};
@@ -228,7 +229,7 @@ fn Result<bool,errors::Error> progress(ref mut State s,ref mut metadata::State w
     ref mut inputs::State windows,ref u8[] origins,ref mut usize[] live,ref mut u32[] current,ref mut i64[] registers,
     ref mut usize remaining,usize byte_allowance,ref captures::Plan plans){
     if(!s.pending || s.done || !operation(p,s.pc) || s.phase<1 || s.phase>3 || s.frame==0 || s.frame>=32 ||
-        s.frame!=bindings.frame || p.code[s.pc*8]!=s.op || live.len!=32 || current.len!=512 || registers.len!=4096 || origins.len!=16){return .err(invalid(0));}
+        s.frame!=bindings.frame || p.code[s.pc*8]!=s.op || live.len!=32 || current.len!=512 || !frames::has_register_frame(registers.len,s.frame) || origins.len!=16){return .err(invalid(0));}
     let usize offset=p.offsets[s.pc];
     if(*remaining!=s.fuel_pinned || byte_allowance>4096 || allowance.last>4096 || allowance.last>allowance.total || allowance.stages>allowance.total){return .err(invalid(offset));}
     if(byte_allowance<4096 || allowance.last!=0){return .ok(false);}

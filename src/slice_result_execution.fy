@@ -372,7 +372,7 @@ fn Result<Outcome,errors::Error> run(ref body_ir::Program body,ref u8[] paramete
 fn Result<usize,errors::Error> begin_saved(ref body_ir::Program body,usize function,ref runtime::Entered first,
     ref i64[] values,ref mut frames::Frames bindings,ref statics::Sites sites,ref mut input_views::State windows,
     usize guest_length,ref mut cursors::Cursor cursor,ref mut u32[] static_words,ref mut i64[] registers){
-    if(cursor.active || bindings.frame!=0 || static_words.len!=512 || registers.len!=4096){return .err(errors::make(5,0));}
+    if(cursor.active || bindings.frame!=0 || static_words.len!=512 || !frames::has_register_frame(registers.len,1)){return .err(errors::make(5,0));}
     let usize entered=frames::push(body,bindings,first.call,function,128,32,0)?;
     entry::bind(body,function,ref first.copies,bindings);
     if(input_views::enabled(windows)){
@@ -416,7 +416,7 @@ fn Result<usize,errors::Error> start_output_impl(ref body_ir::Program body,ref s
     ref mut runtime::State state,ref mut u8[] data,ref mut frames::Frames bindings,ref mut input_views::State windows,ref mut usize remaining,
     ref mut cursors::Cursor cursor,ref mut usize[] static_live,ref mut u32[] static_words,ref mut i64[] registers,Option<usize> prepared_work){
     if(guest_length>1048576 || (!input && guest_length!=0) || input!=input_views::enabled(windows) ||
-        parameters.len!=16 || static_live.len!=32 || static_words.len!=512 || registers.len!=4096 || cursor.active || bindings.frame!=0){return .err(errors::make(5,0));}
+        parameters.len!=16 || static_live.len!=32 || static_words.len!=512 || !frames::has_register_frame(registers.len,1) || cursor.active || bindings.frame!=0){return .err(errors::make(5,0));}
     let usize arity=if(input){1}else{0};
     let u8[16] none=[0;16];let runtime::Capture[1] captures=[runtime::capture(frames::none(),false,false)];
     let i64[1] values=[0];let owners::Token[1] inputs=[owners::Token{.slot=0,.generation=0}];
@@ -471,7 +471,7 @@ pub fn Result<Option<Scalar>,errors::Error> step_output_cached_staged(ref body_i
     ref mut input_views::State windows,ref u8[] guest,ref u8[] origins,ref mut usize remaining,ref mut output::Transaction staged,
     ref mut cursors::Cursor cursor,ref mut usize[] static_live,ref mut u32[] static_words,ref mut i64[] registers,
     usize quantum,ref mut cursors::Stats stats,ref capture_plans::Plan plans,ref mut call_metadata::State metadata,ref mut call_copy_plan::State copy_plan){
-    if(parameters.len!=16 || static_live.len!=32 || static_words.len!=512 || registers.len!=4096 || origins.len!=16 || !cursor.active){return .err(errors::make(5,0));}
+    if(parameters.len!=16 || static_live.len!=32 || static_words.len!=512 || !frames::has_register_frame(registers.len,bindings.frame) || origins.len!=16 || !cursor.active){return .err(errors::make(5,0));}
     let usize admitted=cursors::begin(stats,quantum)?;
     cursor.output.last=0;cursor.array.last=0;cursor.call.last=0;cursor.returned.last=0;
     let usize reset=metadata_budget::reset(ref mut cursor.metadata,0)?;metadata.copy.last=0;
@@ -514,7 +514,7 @@ fn Result<Option<Outcome>,errors::Error> dispatch_staged(ref body_ir::Program bo
     usize quantum,ref mut usize visited,ref capture_plans::Plan plans,ref mut call_metadata::State metadata,ref mut call_copy_plan::State copy_plan){
     while(cursor.pc<body.count){
         let usize room=dispatch_room(cursor)?;if(*visited==quantum || room==0){return .ok(.none);}
-        let usize frame=bindings.frame;if(frame==0 || frame>=32){return .err(errors::make(5,0));}
+        let usize frame=bindings.frame;if(!frames::has_register_frame(registers.len,frame)){return .err(errors::make(5,0));}
         let usize f=bindings.functions[frame];if(f>=body.function_count || cursor.pc<body.starts[f] || cursor.pc>=body.ends[f]){return .err(errors::make(5,0));}
         let usize offset=body.offsets[cursor.pc];
         if(cursor.return_metadata.pending){
@@ -557,6 +557,7 @@ fn Result<Option<Outcome>,errors::Error> dispatch_staged(ref body_ir::Program bo
             if(room!=4096){return .ok(.none);};
             *remaining-=1;*visited+=1;
             if(frame>=cursor.limits.frames as usize){return .err(errors::make(12,offset));}
+            if(!frames::has_register_frame(registers.len,frame+1)){return .err(errors::make(5,offset));}
             let usize begun=call_steps::begin_staged(metadata,body,parameters,sites,cursor.pc,bindings,state,data.len,literals.len,
                 static_words[frame*16..frame*16+16],static_live[frame],windows,place_state,remaining,plans)?;
             let bool finished=call_steps::advance_staged(metadata,copy_plan,ref mut cursor.metadata,body,sites,bindings,state,data,

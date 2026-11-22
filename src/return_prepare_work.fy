@@ -183,7 +183,7 @@ pub fn Result<bool,errors::Error> advance(ref mut State w,ref mut returned::Stat
     ref mut usize remaining,ref mut payload_work::State counter,ref mut budget::State allowance,usize room){
     if(room!=4096 || allowance.last!=0){return .ok(false);}
     if(!w.active || w.done || !s.pending || s.phase!=0 || !returned::operation(p,s.pc) ||
-        bindings.frame!=s.frame || live.len!=32 || current.len!=512 || registers.len!=4096 || origins.len!=16 ||
+        bindings.frame!=s.frame || live.len!=32 || current.len!=512 || !frames::has_register_frame(registers.len,s.frame) || origins.len!=16 ||
         s.frame==0 || s.frame>=32 || bindings.functions[s.frame]>=p.function_count || bindings.functions[s.frame]>=16 ||
         w.phase>8 || *remaining!=w.remaining){return .err(invalid(0));}
     let usize offset=p.offsets[s.pc];

@@ -23,6 +23,10 @@ pub struct Frames {
     usize[32] destinations; usize[32] identities; bool[32] prepared;
     usize frame;
 }
+// Row zero is reserved for the parent of the entry frame.
+pub fn bool has_register_frame(usize cells,usize frame){
+    return cells<=4096 && cells%128==0 && frame!=0 && frame<cells/128;
+}
 pub fn slices::Ticket none(){return slices::Ticket{.slot=16,.generation=0};}
 pub fn Frames empty(ref runtime::State state){
     let ref slices::Pool pool=ref state.runtime.pool;

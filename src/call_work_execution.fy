@@ -122,7 +122,7 @@ pub fn Result<bool,errors::Error> advance(ref mut cursor::State work,ref ir::Pro
     usize payload,ref mut inputs::State windows,ref mut usize[] live,ref mut u32[] words,
     ref mut i64[] registers,ref mut usize remaining,usize allowance,ref capture_plans::Plan plans){
     if(!work.pending || !operation(p,work.pc) || work.frame!=bindings.frame || work.offset!=p.offsets[work.pc] ||
-        work.target!=p.code[work.pc*8+2] as usize || work.frame==0 || work.frame>=31 || live.len!=32 || words.len!=512 || registers.len!=4096){return .err(invalid(work.offset));}
+        work.target!=p.code[work.pc*8+2] as usize || work.frame==0 || work.frame>=31 || live.len!=32 || words.len!=512 || !frames::has_register_frame(registers.len,work.frame+1)){return .err(invalid(work.offset));}
     if(allowance==0 || allowance>4096 || work.last>4096 || allowance>4096-work.last){return .err(invalid(work.offset));}
     if(*remaining!=if(work.charged){work.remaining}else{work.captured}){return .err(invalid(work.offset));}
     let usize parent=work.frame;var usize replay=work.fuel_before;
@@ -247,7 +247,7 @@ fn Result<bool,errors::Error> advance_staged_inner(ref mut staged_call::State wo
     let cursor::State saved=work.copy;let usize offset=saved.offset;
     if(!work.active || work.done || !saved.pending || !operation(p,saved.pc) || saved.frame!=bindings.frame ||
         saved.offset!=p.offsets[saved.pc] || saved.target!=p.code[saved.pc*8+2] as usize || saved.frame==0 || saved.frame>=31 ||
-        live.len!=32 || words.len!=512 || registers.len!=4096 || byte_allowance>4096 || saved.last>4096 ||
+        live.len!=32 || words.len!=512 || !frames::has_register_frame(registers.len,saved.frame+1) || byte_allowance>4096 || saved.last>4096 ||
         byte_allowance>4096-saved.last){return .err(invalid(offset));}
     if(*remaining!=if(saved.charged){saved.remaining}else{saved.captured}){return .err(invalid(offset));}
     let staged_call::Context c=work.context;

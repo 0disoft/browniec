@@ -42,7 +42,6 @@ pub struct Core {
     slice_result_runtime::State runtime;
     usize[32] static_live;
     u32[512] static_words;
-    i64[4096] registers;
     call_metadata::State call_metadata;
     copy_plans::State copy_plan;
 }
@@ -114,7 +113,7 @@ fn Result<Machine,errors::Error> open_selected(ref ir::Program body,ref static_i
     if(remaining<preparation+input_cost+slice_result_runtime::cost()+work+list_plan.cost+place_plan.cost){
         return .err(errors::make(8,0));
     }
-    if(cached){return reserve_prepared(ref list_plan,ref place_plan,capacity,input,input_length,remaining,staged,limits);}
+    if(cached){return reserve_prepared(core_bytes(body,limits),ref list_plan,ref place_plan,capacity,input,input_length,remaining,staged,limits);}
     var bytes::Buffer payload=if(capacity==0){bytes::empty()}else{backing::prepare(capacity)?};
     remaining-=preparation;
     let slice_result_runtime::State state=slice_result_runtime::empty(capacity);
@@ -129,7 +128,7 @@ fn Result<Machine,errors::Error> open_selected(ref ir::Program body,ref static_i
     // Exact-sized, aligned native storage avoids constructing/moving a huge
     // Core value and avoids the SDK generic Vec's eight-element minimum.
     // This backing is private typed VM storage, never guest input/output bytes.
-    let usize stride=native_size();
+    let usize stride=native_size()+32768;
     var bytes::Buffer core=switch(bytes::with_capacity(stride)){
         case .ok(v):{v}case .err(_):{return .err(errors::make(15,0));}
     };
@@ -147,6 +146,11 @@ fn Result<Machine,errors::Error> open_selected(ref ir::Program body,ref static_i
 @link_name("bc_runtime_pending_initialize") unsafe extern C fn u32 initialize_raw(ptr mut void owner,ptr void state);
 @link_name("bc_runtime_pending_core_stride") unsafe extern C fn usize native_size_raw();
 fn usize native_size(){return unsafe{native_size_raw()};}
+// The verified call table is empty only for code with no CALL instructions.
+pub fn usize core_bytes(ref ir::Program body,slice_result_cursor::Limits limits){
+    let usize frames=if(body.call_count==0){1}else{limits.frames as usize};
+    return native_size()+(1+frames)*1024;
+}
 pub fn Meta observe(ref Machine machine){return machine.meta;}
 
 
@@ -157,8 +161,7 @@ pub fn Option<Stop> stopping(ref Machine machine){
     return .some(Stop{.cancelled=meta.lifecycle.terminal==4,.remaining=meta.remaining,.failure=meta.failure});
 }
 pub fn usize staged_emits(ref Machine machine){return runtime_output::observe(ref machine.staged).emits;}
-pub fn usize core_heap_bytes(ref Machine machine,usize stride){
-    assert(stride==native_size() && bytes::view(ref machine.core).len<=stride);
+pub fn usize core_heap_bytes(ref Machine machine){
     return bytes::capacity(ref machine.core);
 }
 // Typed private transport helpers. The C shim only projects live addresses;
@@ -179,7 +182,7 @@ pub fn void retain_native_initialization(){if(native_size()==0){retain_core_type
 fn void retain_core_types(){
     let slice_result_runtime::State state=slice_result_runtime::empty(0);
     var Core core=Core{.bindings=slice_result_frames::empty(ref state),.runtime=state,
-        .static_live=[0;32],.static_words=[0;512],.registers=[0;4096],.call_metadata=call_metadata::empty(),.copy_plan=copy_plans::empty()};
+        .static_live=[0;32],.static_words=[0;512],.call_metadata=call_metadata::empty(),.copy_plan=copy_plans::empty()};
     let Machine owner=Machine{.core=bytes::empty(),.payload=bytes::empty(),.list_cells=vec::empty<i64>(),
         .list_scratch=bytes::empty(),.place_state=vec::empty<usize>(),.windows=input_reference_views::disabled(),
         .staged=runtime_output::disabled(),.meta=Meta{.cursor=slice_result_cursor::empty(),.stats=slice_result_cursor::stats(),
@@ -188,10 +191,9 @@ fn void retain_core_types(){
 }
 
 // Reserve storage during admission; every linear initialization loop is resumed.
-fn Result<Machine,errors::Error> reserve_prepared(ref lists::Requirement list,ref places::Requirement place,
+fn Result<Machine,errors::Error> reserve_prepared(usize stride,ref lists::Requirement list,ref places::Requirement place,
     usize capacity,bool input,usize input_length,usize remaining,runtime_output::Transaction staged,slice_result_cursor::Limits limits){
     if(limits.frames==0 || limits.owners==0 || limits.descriptors==0 || limits.object_bytes==0){return .err(errors::make(5,0));}
-    let usize stride=native_size();
     let u8 kind=if(place.width==0){0}else if(place.aggregate){3}else if(place.records){2}else if(place.slices){1}else{0};
     let usize prefix=if(kind==3){3}else if(kind==2){2}else if(kind==1){1}else{0};
     let usize row=if(kind==3){18}else if(kind==0){9}else{14};
@@ -231,6 +233,6 @@ pub fn bool initialize_staged(ref mut Core core,usize index,usize capacity,slice
 pub fn Core cold_core(){
     let slice_result_runtime::State state=slice_result_runtime::empty(0);
     return Core{.bindings=slice_result_frames::empty(ref state),.runtime=state,
-        .static_live=[0;32],.static_words=[0;512],.registers=[0;4096],
+        .static_live=[0;32],.static_words=[0;512],
         .call_metadata=call_metadata::empty(),.copy_plan=copy_plans::empty()};
 }

@@ -78,7 +78,8 @@ fn Result<machine::Machine,u8> prepared(ref programs::Program p,ref inputs::Snap
     assert(initial.value==0 && initial.failure.kind==0 && initial.failure.offset==0);
     assert(initial.stats.calls==0 && initial.stats.yields==0 && initial.stats.dispatched==0);
     assert(initial.stats.last==0 && initial.stats.maximum==0);
-    assert(machine::core_heap_bytes(ref m,engine::pending_core_stride())==engine::pending_core_stride());
+    let usize register_bytes=if(programs::code(p).body.call_count==0){2048}else{32768};
+    assert(machine::core_heap_bytes(ref m)==engine::pending_core_stride()+register_bytes);
     rejected_seal(ref mut m);
     var usize setup_calls=0;while(machine::observe(ref m).lifecycle.phase<5){assert(setup_calls<2048);
         let machine::Meta step=tick(ref mut m,p,input,1)?;assert(step.phase==1);setup_calls+=1;}
