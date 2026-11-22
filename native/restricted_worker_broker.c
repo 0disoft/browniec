@@ -42,11 +42,13 @@ static bool reserve(bc_worker_broker_budget *budget, bc_worker_broker_amounts ch
     if (!fits(used->sessions, limit.sessions, charge.sessions) ||
         !fits(used->parent_bytes, limit.parent_bytes, charge.parent_bytes) ||
         !fits(used->child_commit_bytes, limit.child_commit_bytes, charge.child_commit_bytes) ||
-        !fits(used->wire_bytes, limit.wire_bytes, charge.wire_bytes)) return false;
+        !fits(used->wire_bytes, limit.wire_bytes, charge.wire_bytes) ||
+        !fits(used->adapter_slots, limit.adapter_slots, charge.adapter_slots)) return false;
     used->sessions += charge.sessions;
     used->parent_bytes += charge.parent_bytes;
     used->child_commit_bytes += charge.child_commit_bytes;
     used->wire_bytes += charge.wire_bytes;
+    used->adapter_slots += charge.adapter_slots;
     return true;
 }
 
@@ -56,6 +58,7 @@ static void refund(bc_worker_broker *b) {
     used->parent_bytes -= b->charge.parent_bytes;
     used->child_commit_bytes -= b->charge.child_commit_bytes;
     used->wire_bytes -= b->charge.wire_bytes;
+    used->adapter_slots -= b->charge.adapter_slots;
 }
 
 DWORD bc_worker_broker_start(bc_worker_broker *b, const bc_worker_broker_run *run) {
@@ -91,7 +94,8 @@ DWORD bc_worker_broker_start(bc_worker_broker *b, const bc_worker_broker_run *ru
         .parent_bytes = sizeof(*b) + run->request_length + run->result_capacity +
             host.request_capacity + host.reply_capacity,
         .child_commit_bytes = run->commit_bytes,
-        .wire_bytes = wire
+        .wire_bytes = wire,
+        .adapter_slots = adapter ? 1 : 0
     };
     if (!reserve(run->budget, charge)) return ERROR_NOT_ENOUGH_QUOTA;
 

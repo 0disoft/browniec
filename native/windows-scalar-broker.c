@@ -129,7 +129,7 @@ static uint32_t run_broker(PSID sid, const wchar_t *image, const wchar_t *direct
     const size_t wire = exchange->host.max_calls ? limits->transport_bytes :
         5 * BC_WORKER_FRAME_BYTES + exchange->request_length + result_capacity + 1;
     bc_worker_broker_budget budget = {.limit = {1, sizeof(broker) + exchange->request_length + result_capacity,
-        limits->commit_bytes, limits->transport_bytes}};
+        limits->commit_bytes, limits->transport_bytes, exchange->adapter ? 1 : 0}};
     budget.limit.parent_bytes += exchange->host.request_capacity + exchange->host.reply_capacity;
     wchar_t scalar_command[] = L"browniec --internal-scalar-worker";
     wchar_t project_command[] = L"browniec --internal-project-worker";

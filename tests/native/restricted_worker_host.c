@@ -643,7 +643,8 @@ static void verify_clean_publication(const wchar_t *path, const wchar_t *directo
 
 static bool same_charge(bc_worker_broker_amounts a, bc_worker_broker_amounts b) {
     return a.sessions == b.sessions && a.parent_bytes == b.parent_bytes &&
-        a.child_commit_bytes == b.child_commit_bytes && a.wire_bytes == b.wire_bytes;
+        a.child_commit_bytes == b.child_commit_bytes && a.wire_bytes == b.wire_bytes &&
+        a.adapter_slots == b.adapter_slots;
 }
 
 static void verify_shared_budget(bc_worker_broker_budget *budget, const bc_worker_broker_run *run,
@@ -934,7 +935,7 @@ static void verify_deferred_adapter(const wchar_t *path, const wchar_t *director
         calls * (2 * BC_WORKER_FRAME_BYTES + sizeof(request) + sizeof(reply));
     bc_worker_broker broker = {0};
     deferred_fixture fixture = {.hold_close = !success};
-    const bc_worker_broker_amounts charge = {1, sizeof(broker) + 3 + sizeof(reply), commit_limit, wire};
+    const bc_worker_broker_amounts charge = {1, sizeof(broker) + 3 + sizeof(reply), commit_limit, wire, 1};
     bc_worker_broker_budget budget = {.limit = charge};
     const bc_worker_host_adapter adapter = {deferred_begin, deferred_poll, deferred_close};
     wchar_t command[256];
@@ -984,7 +985,35 @@ static void verify_deferred_adapter(const wchar_t *path, const wchar_t *director
             broker.phase != BC_WORKER_BROKER_REAPING);
         check(result == 42 && fixture.closes == 0 && fixture.polls == (expires ? 2u : 1u),
             "drain late RESULT without any more adapter polls");
+        bc_worker_broker next = {0};
+        bc_worker_broker_run next_run = run;
+        deferred_fixture next_fixture = {0};
+        uint8_t next_request = 0, next_result = 0, next_reply[long_request_bytes];
+        next_run.result = &next_result;
+        next_run.host.context = &next_fixture;
+        next_run.host.request = &next_request;
+        next_run.host.reply = next_reply;
+        next_run.deadline = clock_ticks() + 100000000ULL;
+        budget.limit = (bc_worker_broker_amounts){
+            2, 2 * charge.parent_bytes, 2 * charge.child_commit_bytes, 2 * charge.wire_bytes, 1
+        };
+        check(bc_worker_broker_start(&next, &next_run) == ERROR_NOT_ENOUGH_QUOTA &&
+            !next.worker.process && !next.io.event && same_charge(budget.reserved, charge),
+            "deny another deferred session while only the adapter is still reaping");
         fixture.hold_close = false;
+        check(bc_worker_broker_close(&broker) && fixture.closes == calls &&
+            same_charge(budget.reserved, (bc_worker_broker_amounts){0}), "refund after adapter cleanup");
+        check(bc_worker_broker_start(&next, &next_run) == ERROR_SUCCESS &&
+            same_charge(budget.reserved, charge), "reuse the adapter slot after cleanup");
+        const uint64_t next_limit = clock_ticks() + 50000000ULL;
+        while (!bc_worker_broker_close(&next)) {
+            check(clock_ticks() < next_limit && same_charge(budget.reserved, charge),
+                "keep the reused slot through worker close");
+            Sleep(1);
+        }
+        check(same_charge(budget.reserved, (bc_worker_broker_amounts){0}),
+            "refund the reused adapter slot");
+        return;
     }
     check(bc_worker_broker_close(&broker) && fixture.closes == calls &&
         same_charge(budget.reserved, (bc_worker_broker_amounts){0}), "refund after adapter cleanup");
@@ -1397,7 +1426,7 @@ static void verify_catalog_process(const wchar_t *path, const wchar_t *directory
     const size_t wire = 5 * BC_WORKER_FRAME_BYTES + size + sizeof(result) + 1 +
         2 * (2 * BC_WORKER_FRAME_BYTES + sizeof(request) + sizeof(reply) + adapter_wire);
     const bc_worker_broker_amounts charge = {1,
-        sizeof(broker) + size + sizeof(result) + sizeof(request) + sizeof(reply), commit_limit, wire};
+        sizeof(broker) + size + sizeof(result) + sizeof(request) + sizeof(reply), commit_limit, wire, 1};
     bc_worker_broker_budget budget = {.limit = charge};
     wchar_t command[] = L"worker --internal-project-worker";
     bc_worker_broker_run run = {

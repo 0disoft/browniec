@@ -31,6 +31,7 @@ typedef struct bc_worker_broker_amounts {
     size_t parent_bytes;
     size_t child_commit_bytes;
     size_t wire_bytes;
+    size_t adapter_slots;
 } bc_worker_broker_amounts;
 
 /* Initialize the limits and zero the reservations. The owner serializes
@@ -122,6 +123,8 @@ typedef struct bc_worker_broker_run {
    valid through close, along with the immutable validator expectation.
    Admission reserves a session, its control and span
    bytes, Job commit ceiling and wire envelope against the shared budget.
+   A deferred route also reserves one adapter slot before launch. The slot
+   stays reserved across sequential requests and through final cleanup.
    The trusted route supplies its additional process transport envelope in
    adapter_wire_bytes. It shares the session wire limit and release condition.
    The absolute session deadline uses QueryInterruptTimePrecise ticks.

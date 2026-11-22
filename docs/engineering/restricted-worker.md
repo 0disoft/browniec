@@ -155,6 +155,17 @@ without returning the first session's charge. Startup rollback restored the
 same counters, all reservations returned to zero, and warm handle delta was
 zero. Local receipt: `build/restricted-worker/20261121T154433211461Z/receipt.json`.
 
+Each session with a deferred adapter also reserves one slot from the shared
+adapter ceiling before opening handles. The route keeps the slot across
+sequential calls and through reaping. In the cancellation and expiry cases,
+the worker had exited while the adapter still held its request. With room
+for two sessions in all other dimensions, the one-slot adapter ceiling
+rejected a second deferred session before launch. The same budget admitted
+it after cleanup and returned to zero on close. Windows development and
+/O2 each passed all three deferred adapter cases with zero net handles.
+All 459 input hashes matched.
+Local receipt: `build/restricted-worker/20261122T024426011213Z/receipt.json`.
+
 ### Phase deadlines
 
 The broker starts the startup window before opening handles and requires
