@@ -20,6 +20,11 @@ typedef enum bc_adapter_state {
     BC_ADAPTER_FAILED
 } bc_adapter_state;
 
+/* Peak requested heap bytes for a slot launch with this UTF-8 path.
+   Includes the retained process owner and its temporary launch allocations.
+   Zero means the path or Windows attribute list could not be sized. */
+size_t bc_adapter_slot_heap_bytes(const uint8_t *path, size_t path_len);
+
 /* A trusted host selects an absolute drive path. The Windows adapter runs
    with host authority. It inherits only the private pipes and a NUL stderr.
    Deadline is absolute QueryInterruptTimePrecise ticks (100 ns), as in the

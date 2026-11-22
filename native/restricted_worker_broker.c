@@ -82,7 +82,7 @@ DWORD bc_worker_broker_start(bc_worker_broker *b, const bc_worker_broker_run *ru
             host.reply_capacity > BC_WORKER_FRAME_PAYLOAD_MAX) return ERROR_INVALID_PARAMETER;
     } else if (host.respond || adapter || host.request || host.reply || host.request_capacity ||
         host.reply_capacity) return ERROR_INVALID_PARAMETER;
-    if (!adapter && run->adapter_wire_bytes) return ERROR_INVALID_PARAMETER;
+    if (!adapter && (run->adapter_wire_bytes || run->adapter_parent_bytes)) return ERROR_INVALID_PARAMETER;
     size_t wire = 5 * BC_WORKER_FRAME_BYTES + run->request_length + run->result_capacity + 1;
     const size_t per_call = 2 * BC_WORKER_FRAME_BYTES + host.request_capacity + host.reply_capacity;
     if (wire > run->wire_limit || host.max_calls > (run->wire_limit - wire) / per_call)
@@ -90,12 +90,14 @@ DWORD bc_worker_broker_start(bc_worker_broker *b, const bc_worker_broker_run *ru
     wire += host.max_calls * per_call;
     if (run->adapter_wire_bytes > run->wire_limit - wire) return ERROR_NOT_ENOUGH_QUOTA;
     wire += run->adapter_wire_bytes;
+    const size_t parent = sizeof(*b) + run->request_length + run->result_capacity +
+        host.request_capacity + host.reply_capacity;
+    if (run->adapter_parent_bytes > SIZE_MAX - parent) return ERROR_NOT_ENOUGH_QUOTA;
     const uint64_t now = now_ticks();
     if (now >= run->deadline) return ERROR_TIMEOUT;
     const bc_worker_broker_amounts charge = {
         .sessions = 1,
-        .parent_bytes = sizeof(*b) + run->request_length + run->result_capacity +
-            host.request_capacity + host.reply_capacity,
+        .parent_bytes = parent + run->adapter_parent_bytes,
         .child_commit_bytes = run->commit_bytes,
         .wire_bytes = wire,
         .adapter_slots = adapter ? 1 : 0,

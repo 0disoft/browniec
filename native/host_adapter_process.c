@@ -91,9 +91,24 @@ static HANDLE make_job(void) {
     return job;
 }
 
-static int launch(bc_adapter_process *s, const wchar_t *path, HANDLE child[3]) {
+static SIZE_T attribute_list_bytes(void) {
     SIZE_T size = 0;
     InitializeProcThreadAttributeList(NULL, 2, 0, &size);
+    return size;
+}
+
+size_t bc_adapter_slot_heap_bytes(const uint8_t *path, size_t path_len) {
+    if (!path || !path_len || path_len > 4096) return 0;
+    const int units = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, (const char *)path,
+        (int)path_len, NULL, 0);
+    if (!units) return 0;
+    const SIZE_T attrs = attribute_list_bytes();
+    const size_t fixed = sizeof(bc_adapter_process) + ((size_t)units + 1) * sizeof(wchar_t);
+    return attrs && attrs <= SIZE_MAX - fixed ? fixed + attrs : 0;
+}
+
+static int launch(bc_adapter_process *s, const wchar_t *path, HANDLE child[3]) {
+    SIZE_T size = attribute_list_bytes();
     if (!size) return 0;
     LPPROC_THREAD_ATTRIBUTE_LIST attrs = HeapAlloc(GetProcessHeap(), 0, size);
     if (!attrs) return 0;

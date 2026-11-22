@@ -114,6 +114,7 @@ typedef struct bc_worker_broker_run {
     uint64_t deadline;
     size_t wire_limit;
     size_t adapter_wire_bytes;
+    size_t adapter_parent_bytes;
     const uint8_t *request;
     size_t request_length;
     uint8_t *result;
@@ -134,6 +135,7 @@ typedef struct bc_worker_broker_run {
    Each I/O slot covers one event and its outstanding overlapped operation.
    The trusted route supplies its additional process transport envelope in
    adapter_wire_bytes. It shares the session wire limit and release condition.
+   adapter_parent_bytes reserves the route's peak launch heap until close.
    The absolute session deadline uses QueryInterruptTimePrecise ticks.
    Startup covers launch through READY; after READY each completed transfer
    renews the idle window within the session deadline.

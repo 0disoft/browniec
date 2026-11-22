@@ -1511,6 +1511,12 @@ static void verify_catalog_process(const wchar_t *path, const wchar_t *directory
     const bool stop = expected == BC_WORKER_GATE_CANCELLED || expected == BC_WORKER_GATE_EXPIRED;
     const wchar_t mode[] = {success ? L'o' : stop ? L's' : L'w', 0};
     const size_t adapter_wire = 2 * BC_ADAPTER_HEADER_BYTES + 14 + 12 + 1;
+    const size_t adapter_heap = bc_adapter_slot_heap_bytes(executable, (size_t)path_size - 1);
+    check(adapter_heap > BC_ADAPTER_HEADER_BYTES + BC_ADAPTER_BODY_LIMIT &&
+        bc_adapter_slot_heap_bytes((const uint8_t *)"\xc3\xa9", 2) ==
+        bc_adapter_slot_heap_bytes((const uint8_t *)"e", 1) &&
+        !bc_adapter_slot_heap_bytes((const uint8_t *)"\xff", 1),
+        "size the retained frame and launch scratch using converted UTF-16 length");
     bc_adapter_budget adapter_budget = {.live_limit = 1, .launch_limit = 2, .wire_limit = 2 * adapter_wire};
     process_codec codec = {0};
     bc_worker_process_adapter adapter = {
@@ -1522,7 +1528,8 @@ static void verify_catalog_process(const wchar_t *path, const wchar_t *directory
     const size_t wire = 5 * BC_WORKER_FRAME_BYTES + size + sizeof(result) + 1 +
         2 * (2 * BC_WORKER_FRAME_BYTES + sizeof(request) + sizeof(reply) + adapter_wire);
     const bc_worker_broker_amounts charge = {1,
-        sizeof(broker) + size + sizeof(result) + sizeof(request) + sizeof(reply), commit_limit, wire, 1, 3};
+        sizeof(broker) + size + sizeof(result) + sizeof(request) + sizeof(reply) + adapter_heap,
+        commit_limit, wire, 1, 3};
     bc_worker_broker_budget budget = {.limit = charge};
     wchar_t command[] = L"worker --internal-project-worker";
     bc_worker_broker_run run = {
@@ -1533,7 +1540,8 @@ static void verify_catalog_process(const wchar_t *path, const wchar_t *directory
         .request = start, .request_length = size, .result = result, .result_capacity = sizeof(result),
         .validate = success ? catalog_process_result : reject_callback,
         .host = {NULL, &adapter, request, reply, sizeof(request), sizeof(reply), 2},
-        .adapter = &bc_worker_process_callbacks, .adapter_wire_bytes = 2 * adapter_wire
+        .adapter = &bc_worker_process_callbacks, .adapter_wire_bytes = 2 * adapter_wire,
+        .adapter_parent_bytes = adapter_heap
     };
     --run.wire_limit;
     check(bc_worker_broker_start(&broker, &run) == ERROR_NOT_ENOUGH_QUOTA &&
@@ -1551,6 +1559,17 @@ static void verify_catalog_process(const wchar_t *path, const wchar_t *directory
         same_charge(budget.reserved, (bc_worker_broker_amounts){0}),
         "reject a process-backed run without the third I/O slot");
     ++budget.limit.io_slots;
+    --budget.limit.parent_bytes;
+    check(bc_worker_broker_start(&broker, &run) == ERROR_NOT_ENOUGH_QUOTA &&
+        !broker.worker.process && !broker.io.event && !adapter_budget.launches &&
+        same_charge(budget.reserved, (bc_worker_broker_amounts){0}),
+        "reject a parent limit one byte short of the process launch reservation");
+    ++budget.limit.parent_bytes;
+    run.adapter_parent_bytes = SIZE_MAX;
+    check(bc_worker_broker_start(&broker, &run) == ERROR_NOT_ENOUGH_QUOTA &&
+        same_charge(budget.reserved, (bc_worker_broker_amounts){0}),
+        "reject an overflowing parent charge");
+    run.adapter_parent_bytes = adapter_heap;
     check(SetEnvironmentVariableW(L"BC_TEST_RESTRICTED_PROCESS", mode) &&
         !bc_worker_broker_start(&broker, &run) && same_charge(budget.reserved, charge),
         "launch catalog guest at the exact combined wire limit");

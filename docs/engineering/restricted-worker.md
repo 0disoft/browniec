@@ -198,6 +198,18 @@ development and /O2 each passed with zero net handles and all 459 input
 hashes matched.
 Local receipt: `build/restricted-worker/20261122T025952686363Z/receipt.json`.
 
+Process-backed sessions also reserve the peak adapter launch heap: the
+process owner with its frame buffer, the NUL-terminated UTF-16 executable
+path, and the Windows process attribute list. The same Windows sizing
+query is used for the reservation and the attribute list allocation.
+One launch reservation covers the serial adapter slot and stays charged
+through reaping. Route setup allocations and kernel overhead are outside
+this charge. Both Windows profiles rejected a parent limit one byte
+short and an overflowing charge before launch. The exact limit admitted
+the session, and the concurrent case returned the two charges independently.
+All 459 input hashes matched, with zero net handles in both profiles.
+Local receipt: `build/restricted-worker/20261122T030843004759Z/receipt.json`.
+
 ### Phase deadlines
 
 The broker starts the startup window before opening handles and requires
