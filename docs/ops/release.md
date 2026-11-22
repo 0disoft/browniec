@@ -8,7 +8,7 @@ Promote a known artifact through a deliberate release sequence and report what w
 
 Project-wide decisions: docs/ops/00-operational-contract.md
 
-## Local Windows CLI candidate
+## Local Windows candidate
 
 Build the locked Windows release first. Assemble a candidate from that binary:
 
@@ -22,6 +22,14 @@ digest, and runs `check` and `run` from a fresh extraction. Both commands
 must exit 0 with empty stderr, and the run must return 77. The subprocesses
 receive only Windows system directories on PATH. The assembler prints the
 ZIP SHA-256 after the checks pass.
+
+To include the embedding preview, pass `--embed` with a profile directory
+produced by `python -B tools/build-embed-preview.py`. Use the matching local
+checkout for the C headers. The candidate adds the DLL, MSVC import library
+and both headers under `embed/`. The assembler checks the DLL against the
+build receipt and runs the profile's C host against the extracted DLL with
+the same system-only PATH. The host and its test configurations are local
+test inputs and stay outside the ZIP.
 
 This checks local execution on the packaging machine. Clean-machine
 verification and the license/dependency notices are separate delivery

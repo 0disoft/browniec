@@ -1,10 +1,11 @@
-"""Assemble and smoke-test a local Windows x64 Brownie C CLI candidate."""
+"""Assemble and smoke-test a local Windows x64 Brownie C candidate."""
 
 import argparse
 import hashlib
 import json
 import os
 from pathlib import Path
+import shutil
 import struct
 import subprocess
 from tempfile import TemporaryDirectory
@@ -19,7 +20,7 @@ def sha256(data):
     return hashlib.sha256(data).hexdigest()
 
 
-def require_windows_x64_exe(data):
+def require_windows_x64(data, *, dll=False):
     if len(data) < 64 or data[:2] != b"MZ":
         raise ValueError("Expected a Windows PE image")
     offset = struct.unpack_from("<I", data, 0x3C)[0]
@@ -27,8 +28,8 @@ def require_windows_x64_exe(data):
         raise ValueError("Invalid Windows PE header")
     machine = struct.unpack_from("<H", data, offset + 4)[0]
     flags, magic = struct.unpack_from("<HH", data, offset + 22)
-    if machine != 0x8664 or magic != 0x20B or flags & 0x2000:
-        raise ValueError("Expected a Windows x64 executable")
+    if machine != 0x8664 or magic != 0x20B or bool(flags & 0x2000) != dll:
+        raise ValueError("Unexpected Windows x64 PE image kind")
 
 
 def checksums(files):
@@ -87,10 +88,40 @@ def smoke(directory):
             raise ValueError(f"Unexpected packaged {command}: {payload}")
 
 
+def embed_files(profile):
+    receipt = json.loads((profile.parent / "receipt.json").read_bytes())
+    dll = (profile / "brownie-preview.dll").read_bytes()
+    require_windows_x64(dll, dll=True)
+    if receipt["dllSha256"].get(profile.name) != sha256(dll):
+        raise ValueError("Embedding DLL does not match its build receipt")
+    return {
+        "embed/brownie-preview.dll": dll,
+        "embed/brownie-preview.lib": (profile / "brownie-preview.lib").read_bytes(),
+        "embed/include/brownie.h": (ROOT / "include/brownie.h").read_bytes(),
+        "embed/include/brownie_preview.h": (ROOT / "include/brownie_preview.h").read_bytes(),
+    }
+
+
+def smoke_embed(profile, directory):
+    # The x64 host built and linked for this profile loads the extracted DLL
+    # from its own directory. Its executable and fixtures are local test inputs.
+    for name in ("preview-host.exe", "policy.json", "run.json", "policy-output.json",
+                 "run-output.json", "policy-host.json", "run-host.json"):
+        shutil.copyfile(profile / name, directory / name)
+    result = subprocess.run(
+        [directory / "preview-host.exe"], cwd=directory, env=runtime_environment(directory),
+        capture_output=True, timeout=30,
+    )
+    if result.returncode != 0 or result.stderr:
+        raise ValueError(f"Packaged embedding DLL failed: {result}")
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--exe", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--embed", type=Path, metavar="PROFILE_DIR",
+                        help="include a profile from tools/build-embed-preview.py")
     args = parser.parse_args()
     if os.name != "nt":
         parser.error("Windows is required to verify the candidate")
@@ -101,7 +132,9 @@ def main():
         "browniec.exe": args.exe.read_bytes(),
         "examples/answer.brc": (ROOT / "examples/answer.brc").read_bytes(),
     }
-    require_windows_x64_exe(files["browniec.exe"])
+    require_windows_x64(files["browniec.exe"])
+    if args.embed:
+        files.update(embed_files(args.embed))
     output.parent.mkdir(parents=True, exist_ok=True)
     with TemporaryDirectory(prefix="browniec-candidate-", dir=output.parent) as temporary:
         directory = Path(temporary)
@@ -110,9 +143,13 @@ def main():
         installed = directory / "installed"
         unpack_verified(archive, files, installed)
         smoke(installed)
+        if args.embed:
+            smoke_embed(args.embed, installed / "embed")
         digest = sha256(archive.read_bytes())
         archive.rename(output)
     print("PASS Windows CLI candidate: check and run (77), exit 0, empty stderr")
+    if args.embed:
+        print("PASS Windows embedding candidate: extracted DLL passed its C host")
     print(f"{digest}  {output}")
 
 

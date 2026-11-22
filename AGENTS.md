@@ -1,5 +1,5 @@
-- Latest delivery checkpoint (2026-11-22): [Local Windows CLI candidate](docs/ops/release.md#local-windows-cli-candidate)
-  verifies the archived executable and quickstart result before publishing the ZIP locally.
+- Latest delivery checkpoint (2026-11-22): [Local Windows candidate](docs/ops/release.md#local-windows-candidate)
+  verifies the archived CLI and optional embedding DLL before publishing the ZIP locally.
 
 # Brownie C agent guidance
 
