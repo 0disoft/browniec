@@ -300,7 +300,13 @@ uint32_t bc_runtime_engine_output_preflight(void *raw,uintptr_t instance){
  uint32_t end=bc_abi_guard_leave(id);return end?end:s;
 }
 
-/* Core, optional CALL plan and registers share one aligned SDK allocation. */
+/* The optional CALL plan and three frame banks share the Core allocation. */
+enum { BC_REGISTERS_PER_FRAME = 128, BC_STATIC_WORDS_PER_FRAME = 16,
+       BC_PENDING_FRAME_BYTES = BC_REGISTERS_PER_FRAME * sizeof(int64_t) +
+          sizeof(uintptr_t) + BC_STATIC_WORDS_PER_FRAME * sizeof(uint32_t) };
+_Static_assert(BC_PENDING_FRAME_BYTES==1096, "reviewed Windows x64 frame size");
+_Static_assert(_Alignof(int64_t)>=_Alignof(uintptr_t) &&
+               _Alignof(uintptr_t)>=_Alignof(uint32_t), "aligned frame banks");
 _Static_assert(sizeof(bc_pending_core)%_Alignof(int64_t)==0, "aligned register tail");
 _Static_assert(sizeof(bc_pending_core)%_Alignof(bc_call_copy_plan)==0, "aligned CALL plan");
 _Static_assert(sizeof(bc_call_copy_plan)%_Alignof(int64_t)==0, "aligned registers after CALL plan");
@@ -314,20 +320,24 @@ uint32_t bc_runtime_pending_advance(void *raw,const void *program,const void *in
  bc_pending_core *c=owner->f_0.f_0;
  const uintptr_t length=owner->f_0.f_3;
  const size_t prefix=sizeof(*c)+(has_calls?sizeof(bc_call_copy_plan):0);
- if(!c || has_calls>1 || length<prefix+2048 || length>prefix+32768 ||
-    length!=owner->f_0.f_1 || (length-prefix)%1024!=0)return 5;
+ if(!c || has_calls>1 || length<prefix+2*BC_PENDING_FRAME_BYTES || length>prefix+32*BC_PENDING_FRAME_BYTES ||
+    length!=owner->f_0.f_1 || (length-prefix)%BC_PENDING_FRAME_BYTES!=0)return 5;
  if(operation==1 && owner->f_7.f_6.f_3==3)return B35(&owner->f_7,c,quantum);
  uint8_t *storage=owner->f_0.f_0;
  int64_t *registers=(int64_t *)(storage+prefix);
  fy_mut_struct_slice copy_plan={has_calls?storage+sizeof(*c):NULL,has_calls};
+ const uintptr_t rows=(length-prefix)/BC_PENDING_FRAME_BYTES;
+ const uintptr_t register_count=rows*BC_REGISTERS_PER_FRAME;
+ uintptr_t *live=(uintptr_t *)(registers+register_count);
+ uint32_t *words=(uint32_t *)(live+rows);
  return B26(program,input,&owner->f_7,&c->f_0,&c->f_1,
-  (fy_mut_usize_slice){c->f_2.data,32},(fy_mut_u32_slice){c->f_3.data,512},
-  (fy_mut_i64_slice){registers,(length-prefix)/sizeof(*registers)},&c->f_4,copy_plan,
+  (fy_mut_usize_slice){live,rows},(fy_mut_u32_slice){words,rows*BC_STATIC_WORDS_PER_FRAME},
+  (fy_mut_i64_slice){registers,register_count},&c->f_2,copy_plan,
   &owner->f_1,&owner->f_2,&owner->f_3,&owner->f_4,&owner->f_5,&owner->f_6,operation,quantum);
 }
 uint32_t bc_runtime_pending_maintenance(void *raw,uint32_t operation,void *outgoing){
  bc_pending_machine *owner=raw;bc_pending_core *c=owner->f_0.f_0;
- return B27(&owner->f_7,&c->f_1,&owner->f_1,&owner->f_4,&owner->f_6,outgoing,operation,&c->f_4.f_1);
+ return B27(&owner->f_7,&c->f_1,&owner->f_1,&owner->f_4,&owner->f_6,outgoing,operation,&c->f_2.f_1);
 }
 
 uint32_t bc_runtime_pending_initialize(void *raw,const void *state,uint32_t has_calls){

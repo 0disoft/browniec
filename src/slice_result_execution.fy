@@ -372,7 +372,7 @@ fn Result<Outcome,errors::Error> run(ref body_ir::Program body,ref u8[] paramete
 fn Result<usize,errors::Error> begin_saved(ref body_ir::Program body,usize function,ref runtime::Entered first,
     ref i64[] values,ref mut frames::Frames bindings,ref statics::Sites sites,ref mut input_views::State windows,
     usize guest_length,ref mut cursors::Cursor cursor,ref mut u32[] static_words,ref mut i64[] registers){
-    if(cursor.active || bindings.frame!=0 || static_words.len!=512 || !frames::has_register_frame(registers.len,1)){return .err(errors::make(5,0));}
+    if(cursor.active || bindings.frame!=0 || static_words.len<32 || !frames::has_register_frame(registers.len,1)){return .err(errors::make(5,0));}
     let usize entered=frames::push(body,bindings,first.call,function,128,32,0)?;
     entry::bind(body,function,ref first.copies,bindings);
     if(input_views::enabled(windows)){
@@ -416,7 +416,7 @@ fn Result<usize,errors::Error> start_output_impl(ref body_ir::Program body,ref s
     ref mut runtime::State state,ref mut u8[] data,ref mut frames::Frames bindings,ref mut input_views::State windows,ref mut usize remaining,
     ref mut cursors::Cursor cursor,ref mut usize[] static_live,ref mut u32[] static_words,ref mut i64[] registers,Option<usize> prepared_work){
     if(guest_length>1048576 || (!input && guest_length!=0) || input!=input_views::enabled(windows) ||
-        parameters.len!=16 || static_live.len!=32 || static_words.len!=512 || !frames::has_register_frame(registers.len,1) || cursor.active || bindings.frame!=0){return .err(errors::make(5,0));}
+        parameters.len!=16 || !frames::has_saved_frame(static_live.len,static_words.len,registers.len,1) || cursor.active || bindings.frame!=0){return .err(errors::make(5,0));}
     let usize arity=if(input){1}else{0};
     let u8[16] none=[0;16];let runtime::Capture[1] captures=[runtime::capture(frames::none(),false,false)];
     let i64[1] values=[0];let owners::Token[1] inputs=[owners::Token{.slot=0,.generation=0}];
@@ -471,7 +471,7 @@ pub fn Result<Option<Scalar>,errors::Error> step_output_cached_staged(ref body_i
     ref mut input_views::State windows,ref u8[] guest,ref u8[] origins,ref mut usize remaining,ref mut output::Transaction staged,
     ref mut cursors::Cursor cursor,ref mut usize[] static_live,ref mut u32[] static_words,ref mut i64[] registers,
     usize quantum,ref mut cursors::Stats stats,ref capture_plans::Plan plans,ref mut call_metadata::State metadata,ref mut call_copy_plan::State[] copy_plan){
-    if(parameters.len!=16 || static_live.len!=32 || static_words.len!=512 || !frames::has_register_frame(registers.len,bindings.frame) || origins.len!=16 || !cursor.active){return .err(errors::make(5,0));}
+    if(parameters.len!=16 || !frames::has_saved_frame(static_live.len,static_words.len,registers.len,bindings.frame) || origins.len!=16 || !cursor.active){return .err(errors::make(5,0));}
     if(copy_plan.len!=if(body.call_count==0){0}else{1}){return .err(errors::make(5,0));}
     let usize admitted=cursors::begin(stats,quantum)?;
     cursor.output.last=0;cursor.array.last=0;cursor.call.last=0;cursor.returned.last=0;

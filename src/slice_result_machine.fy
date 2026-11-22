@@ -40,8 +40,6 @@ pub struct Meta {
 pub struct Core {
     slice_result_frames::Frames bindings;
     slice_result_runtime::State runtime;
-    usize[32] static_live;
-    u32[512] static_words;
     call_metadata::State call_metadata;
 }
 pub resource Machine {
@@ -128,7 +126,7 @@ fn Result<Machine,errors::Error> open_selected(ref ir::Program body,ref static_i
     // Core value and avoids the SDK generic Vec's eight-element minimum.
     // This backing is private typed VM storage, never guest input/output bytes.
     let bool has_calls=body.call_count!=0;
-    let usize stride=native_size()+32768+copy_plan_bytes(has_calls);
+    let usize stride=native_size()+frame_bytes(32)+copy_plan_bytes(has_calls);
     var bytes::Buffer core=switch(bytes::with_capacity(stride)){
         case .ok(v):{v}case .err(_):{return .err(errors::make(15,0));}
     };
@@ -148,10 +146,12 @@ fn Result<Machine,errors::Error> open_selected(ref ir::Program body,ref static_i
 fn usize native_size(){return unsafe{native_size_raw()};}
 @link_name("bc_runtime_pending_copy_plan_stride") unsafe extern C fn usize copy_plan_stride_raw();
 pub fn usize copy_plan_bytes(bool has_calls){return if(has_calls){unsafe{copy_plan_stride_raw()}}else{0};}
+// Each frame has 128 i64 registers, a live mask and 16 u32 static words.
+pub fn usize frame_bytes(usize rows){return rows*(1024+8+64);}
 // The verified call table is empty only for code with no CALL instructions.
 pub fn usize core_bytes(ref ir::Program body,slice_result_cursor::Limits limits){
     let usize frames=if(body.call_count==0){1}else{limits.frames as usize};
-    return native_size()+(1+frames)*1024+copy_plan_bytes(body.call_count!=0);
+    return native_size()+frame_bytes(1+frames)+copy_plan_bytes(body.call_count!=0);
 }
 pub fn Meta observe(ref Machine machine){return machine.meta;}
 
@@ -184,7 +184,7 @@ pub fn void retain_native_initialization(){if(native_size()==0){retain_core_type
 fn void retain_core_types(){
     let slice_result_runtime::State state=slice_result_runtime::empty(0);
     var Core core=Core{.bindings=slice_result_frames::empty(ref state),.runtime=state,
-        .static_live=[0;32],.static_words=[0;512],.call_metadata=call_metadata::empty()};
+        .call_metadata=call_metadata::empty()};
     let Machine owner=Machine{.core=bytes::empty(),.payload=bytes::empty(),.list_cells=vec::empty<i64>(),
         .list_scratch=bytes::empty(),.place_state=vec::empty<usize>(),.windows=input_reference_views::disabled(),
         .staged=runtime_output::disabled(),.meta=Meta{.cursor=slice_result_cursor::empty(),.stats=slice_result_cursor::stats(),
@@ -237,6 +237,5 @@ pub fn bool initialize_staged(ref mut Core core,usize index,usize capacity,slice
 pub fn Core cold_core(){
     let slice_result_runtime::State state=slice_result_runtime::empty(0);
     return Core{.bindings=slice_result_frames::empty(ref state),.runtime=state,
-        .static_live=[0;32],.static_words=[0;512],
         .call_metadata=call_metadata::empty()};
 }

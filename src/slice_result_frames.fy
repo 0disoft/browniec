@@ -27,6 +27,12 @@ pub struct Frames {
 pub fn bool has_register_frame(usize cells,usize frame){
     return cells<=4096 && cells%128==0 && frame!=0 && frame<cells/128;
 }
+pub fn bool has_static_frame(usize live,usize words,usize frame){
+    return live<=32 && frame!=0 && frame<live && words==live*16;
+}
+pub fn bool has_saved_frame(usize live,usize words,usize registers,usize frame){
+    return has_register_frame(registers,frame) && live==registers/128 && has_static_frame(live,words,frame);
+}
 pub fn slices::Ticket none(){return slices::Ticket{.slot=16,.generation=0};}
 pub fn Frames empty(ref runtime::State state){
     let ref slices::Pool pool=ref state.runtime.pool;

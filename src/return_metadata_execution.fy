@@ -229,7 +229,7 @@ fn Result<bool,errors::Error> progress(ref mut State s,ref mut metadata::State w
     ref mut inputs::State windows,ref u8[] origins,ref mut usize[] live,ref mut u32[] current,ref mut i64[] registers,
     ref mut usize remaining,usize byte_allowance,ref captures::Plan plans){
     if(!s.pending || s.done || !operation(p,s.pc) || s.phase<1 || s.phase>3 || s.frame==0 || s.frame>=32 ||
-        s.frame!=bindings.frame || p.code[s.pc*8]!=s.op || live.len!=32 || current.len!=512 || !frames::has_register_frame(registers.len,s.frame) || origins.len!=16){return .err(invalid(0));}
+        s.frame!=bindings.frame || p.code[s.pc*8]!=s.op || !frames::has_saved_frame(live.len,current.len,registers.len,s.frame) || origins.len!=16){return .err(invalid(0));}
     let usize offset=p.offsets[s.pc];
     if(*remaining!=s.fuel_pinned || byte_allowance>4096 || allowance.last>4096 || allowance.last>allowance.total || allowance.stages>allowance.total){return .err(invalid(offset));}
     if(byte_allowance<4096 || allowance.last!=0){return .ok(false);}

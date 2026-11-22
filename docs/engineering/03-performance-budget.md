@@ -238,6 +238,28 @@ Local evidence: `build/runtime-engine/20261122T123209603132Z/receipt.json`,
 `build/embed-preview-sbng5haj/receipt.json`, and
 `build/embed-allocations-ptdbgy8e`.
 
+## Pending static slots on Windows
+
+Pending execution now reserves its per-frame static liveness mask and 16 static
+words alongside the 128 scalar registers. The typed bridge checks the complete
+buffer size before exposing the three slices. CALL and RET validate the rows
+they use, including the child row before publishing a CALL frame.
+
+Both Windows profiles ran 201 empty Instances and 201 scalar-loop Instances.
+Each workload peaked at 143,360 accounted bytes, down from 145,520. The
+2,160-byte saving is 30 rows at 72 bytes each. The empty Instance exceeds the
+32 KiB target by 110,592 bytes. Results and Fuel remained 77 and 345,090 for
+the empty workload, and 2016 and 345,930 for the loop. The loop ran in 266 steps
+at quantum 64 and 1,094 at quantum 1. Both workloads had zero SDK allocations
+during steps and zero live SDK allocations after Engine destruction.
+
+The native Engine and C embedding suites passed in both profiles. The same
+calling Program returned 77 with two frames and trapped with one. The difference
+in accounted peak was exactly 1,096 bytes per frame. Local evidence:
+`build/runtime-engine/20261122T124923630620Z/receipt.json`,
+`build/embed-preview-6me9336n/receipt.json`, and
+`build/embed-allocations-rt666_xs`.
+
 ## Configured byte transform on Windows (2026-11-22)
 
 The [unframe project](../cli/configuration.md#validate-and-unwrap-a-binary-payload)

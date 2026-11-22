@@ -185,10 +185,10 @@ static void revision_two_instances(bc_handle engine,bc_handle program){
     expect_diagnostic(&one.diagnostic,BC_OK);
     assert(one.fuel_used>0 && one.fuel_used==many.fuel_used && one.trap_code==0);
     /* The default frame quota is capped at 31 by the pending VM. */
-    assert(many.peak_accounted_bytes>0 && one.peak_accounted_bytes==many.peak_accounted_bytes+(31-2)*1024);
+    assert(many.peak_accounted_bytes>0 && one.peak_accounted_bytes==many.peak_accounted_bytes+(31-2)*1096);
     bc_event limit=finish_revision_two(limited,64);
     assert(limit.kind==BC_TRAP && limit.trap_code==12 && limit.diagnostic.code==12);
-    assert(many.peak_accounted_bytes==limit.peak_accounted_bytes+1024);
+    assert(many.peak_accounted_bytes==limit.peak_accounted_bytes+1096);
     assert(limit.diagnostic.source_index==0 && limit.return_i32==0);
     bc_event stopped=finish_revision_two(cancelled,64);
     assert(stopped.kind==BC_FAILED && stopped.diagnostic.code==33 && stopped.trap_code==0 && stopped.return_i32==0);

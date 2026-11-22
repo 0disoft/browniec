@@ -223,7 +223,7 @@ fn Result<bool,errors::Error> advance_context(ref mut staged_call::State work,re
     ref usize[] live,ref u32[] words,ref mut usize remaining,ref capture_plans::Plan plans){
     let ref cursor::State saved=ref work.copy;let usize pc=saved.pc;let usize frame=saved.frame;
     if(!work.active || work.done || !saved.pending || !operation(p,pc) || frame!=bindings.frame ||
-        frame==0 || frame>=32 || live.len!=32 || words.len!=512){return .err(invalid(0));}
+        !frames::has_static_frame(live.len,words.len,frame)){return .err(invalid(0));}
     let ref contexts::State pending=ref work.preparing;
     if(capacity!=pending.capacity || payload!=pending.payload){return .err(invalid(p.offsets[pc]));}
     let bool done=contexts::advance(ref mut work.preparing,p,parameters,sites,pc,bindings,state,
@@ -247,7 +247,7 @@ fn Result<bool,errors::Error> advance_staged_inner(ref mut staged_call::State wo
     let cursor::State saved=work.copy;let usize offset=saved.offset;
     if(!work.active || work.done || !saved.pending || !operation(p,saved.pc) || saved.frame!=bindings.frame ||
         saved.offset!=p.offsets[saved.pc] || saved.target!=p.code[saved.pc*8+2] as usize || saved.frame==0 || saved.frame>=31 ||
-        live.len!=32 || words.len!=512 || !frames::has_register_frame(registers.len,saved.frame+1) || byte_allowance>4096 || saved.last>4096 ||
+        !frames::has_saved_frame(live.len,words.len,registers.len,saved.frame+1) || byte_allowance>4096 || saved.last>4096 ||
         byte_allowance>4096-saved.last){return .err(invalid(offset));}
     if(*remaining!=if(saved.charged){saved.remaining}else{saved.captured}){return .err(invalid(offset));}
     let staged_call::Context c=work.context;
