@@ -1,5 +1,5 @@
-- Latest runtime checkpoint (2026-11-22): [Catalog signature preparation Fuel](docs/engineering/restricted-worker.md#catalog-signature-preparation-fuel)
-  charges and checks for a stop at each signature row and parameter.
+- Latest runtime checkpoint (2026-11-22): [Type quota scan Fuel](docs/engineering/restricted-worker.md#type-quota-scan-fuel)
+  charges and checks for a stop at each visited type metadata row.
 
 # Brownie C agent guidance
 

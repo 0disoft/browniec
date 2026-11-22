@@ -1667,6 +1667,24 @@ compile Fuel and returned 77 with sealed output. One unit less returned
 All 460 verification input hashes matched.
 Local receipt: `build/restricted-worker/20261122T042756517801Z/receipt.json`.
 
+### Type quota scan Fuel
+
+When the configured type limit requires an explicit count, both project
+compilers charge one unit and check the compile stop before visiting each
+register, function return, record layout or field, array row or comparison,
+view slot, import row, and used import parameter. They keep the existing
+distinct-type rules and the zero-charge fast path above the conservative
+upper bound.
+
+The configured two-module example needed 36 units for this scan. It
+returned 42 at 3,535,262 total compile Fuel. The one-import catalog example
+needed 27 units and returned 77 with sealed output at 1,753,643 total
+compile Fuel. One unit less in either case returned `compile_limit`
+without guest result or output. Windows development and /O2 each passed
+110 configured, 43 catalog, and 17 process-command cases with zero net
+handles. All 460 verification input hashes matched.
+Local receipt: `build/restricted-worker/20261122T043706149659Z/receipt.json`.
+
 ## Windows verification
 
 Run `python -B tools/verify-restricted-worker.py`. The development and optimized

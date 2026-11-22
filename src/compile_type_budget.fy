@@ -31,19 +31,24 @@ fn void value(ref mut Count count,u8 tag){
     }
 }
 
-fn void array_types(ref mut Count count,ref arrays::Catalog catalog){
+fn Result<usize,errors::Error> array_types(ref mut Count count,ref arrays::Catalog catalog,
+    usize deadline,ref mut usize fuel){
     var usize i=0;
     while(i<catalog.count){
+        discard budget::visit(fuel,deadline,0)?;
         let u8 element=catalog.elements[i];
         let usize length=catalog.lengths[i];
         add(count,element);
         var usize prior=0;
-        while(prior<i && (catalog.elements[prior]!=element || catalog.lengths[prior]!=length)){
+        while(prior<i){
+            discard budget::visit(fuel,deadline,0)?;
+            if(catalog.elements[prior]==element && catalog.lengths[prior]==length){break;}
             prior+=1;
         }
         if(prior==i){count.used+=1;}
         i+=1;
     }
+    return .ok(i);
 }
 
 fn void view(ref mut Count count,usize key){
@@ -54,12 +59,14 @@ fn void slice_type(ref mut Count count,u8 element,bool exclusive){
     add(count,element);
     view(count,element as usize+if(exclusive){16}else{0});
 }
-fn bool view_types(ref mut Count count,ref ir::Program code,ref u8[] static_kinds){
+fn Result<bool,errors::Error> view_types(ref mut Count count,ref ir::Program code,ref u8[] static_kinds,
+    usize deadline,ref mut usize fuel){
     var usize site=0;
     while(site<16){
+        discard budget::visit(fuel,deadline,0)?;
         if(code.slice_roots[site]!=0 || code.slice_origins[site]!=0){
             let u8 element=switch(ir::slice_element(code,site,0)){
-                case .ok(v):{v}case .err(_):{return false;}
+                case .ok(v):{v}case .err(_):{return .ok(false);}
             };
             slice_type(count,element,ir::exclusive(code,site));
         }
@@ -67,12 +74,13 @@ fn bool view_types(ref mut Count count,ref ir::Program code,ref u8[] static_kind
     }
     site=0;
     while(site<static_kinds.len){
+        discard budget::visit(fuel,deadline,0)?;
         let u8 kind=static_kinds[site];
         if(kind==1 || kind==3){slice_type(count,10,false);}
         else if(kind==2){view(count,32);}
         site+=1;
     }
-    return true;
+    return .ok(true);
 }
 
 fn usize upper_bound(ref ir::Program code){
@@ -83,74 +91,81 @@ pub fn Result<bool,errors::Error> fits(ref ir::Program code,ref u8[] reference_r
     usize limit,usize deadline,ref mut usize fuel){
     if(limit>=upper_bound(code)){return .ok(true);}
     if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
-    discard budget::prepay(fuel,0)?;
-    var Count count=Count{.seen=[false;143],.used=code.records.layouts.count,.views=0};
-    let bool allowed=image_types(ref mut count,code,reference_returns,static_kinds) && count.used<=limit;
+    var Count count=Count{.seen=[false;143],.used=0,.views=0};
+    let bool valid=image_types(ref mut count,code,reference_returns,static_kinds,deadline,fuel)?;
     if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
-    return .ok(allowed);
+    return .ok(valid && count.used<=limit);
 }
 pub fn Result<bool,errors::Error> fits_host(ref host::Program program,usize limit,usize deadline,ref mut usize fuel){
     let ref ir::Program code=host::code(program);
     if(limit>=upper_bound(code)){return .ok(true);}
     if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
-    // Host proof excludes arrays and records. At most 128 registers, 16
-    // returns, 17 view sites and 64 rows with one result and 32 parameters
-    // each enter this bounded scan.
-    discard budget::prepay(fuel,0)?;
-    var Count count=Count{.seen=[false;143],.used=code.records.layouts.count,.views=0};
+    var Count count=Count{.seen=[false;143],.used=0,.views=0};
     let ref u8[] input=if(host::accepts_input(program)){b"\x03"}else{b""};
-    if(!image_types(ref mut count,code,b"",input)){return .ok(false);}
+    if(!(image_types(ref mut count,code,b"",input,deadline,fuel)?)){return .ok(false);}
     let ref catalog::Catalog imports=host::imports(program);
     let usize used=host::requirements(program);
     let usize one=1;
     var usize id=0;
     while(id<catalog::count(imports)){
-        if((used&(one<<id))!=0 && !host_signature(ref mut count,imports,id)){return .ok(false);}
+        discard budget::visit(fuel,deadline,0)?;
+        if((used&(one<<id))!=0 && !(host_signature(ref mut count,imports,id,deadline,fuel)?)){return .ok(false);}
         id+=1;
     }
     if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
     return .ok(count.used<=limit);
 }
-fn bool host_signature(ref mut Count count,ref catalog::Catalog imports,usize id){
+fn Result<bool,errors::Error> host_signature(ref mut Count count,ref catalog::Catalog imports,usize id,
+    usize deadline,ref mut usize fuel){
     let u8 result=switch(catalog::result_tag(imports,id)){
-        case .ok(v):{v}case .err(_):{return false;}
+        case .ok(v):{v}case .err(_):{return .ok(false);}
     };
     value(count,128+wire::register_tag(result));
     let usize argc=switch(catalog::parameter_count(imports,id)){
-        case .ok(v):{v}case .err(_):{return false;}
+        case .ok(v):{v}case .err(_):{return .ok(false);}
     };
     var usize i=0;
     while(i<argc){
+        discard budget::visit(fuel,deadline,0)?;
         let u8 tag=switch(catalog::parameter_tag(imports,id,i)){
-            case .ok(v):{v}case .err(_):{return false;}
+            case .ok(v):{v}case .err(_):{return .ok(false);}
         };
         if(tag==7){slice_type(count,10,false);}
         else{value(count,wire::scalar_tag(tag));}
         i+=1;
     }
-    return true;
+    return .ok(true);
 }
 
 // Nominal declarations have separate identities even with identical fields.
-fn bool image_types(ref mut Count count,ref ir::Program code,ref u8[] reference_returns,ref u8[] static_kinds){
+fn Result<bool,errors::Error> image_types(ref mut Count count,ref ir::Program code,
+    ref u8[] reference_returns,ref u8[] static_kinds,usize deadline,ref mut usize fuel){
     let ref records::Catalog layouts=ref code.records.layouts;
     var usize r=0;
-    while(r<code.registers){value(count,code.types[r]);r+=1;}
+    while(r<code.registers){
+        discard budget::visit(fuel,deadline,0)?;
+        value(count,code.types[r]);
+        r+=1;
+    }
     var usize f=0;
     while(f<code.function_count){
+        discard budget::visit(fuel,deadline,0)?;
         if(reference_returns.len==0 || reference_returns[f]==0){value(count,code.return_types[f]);}
         f+=1;
     }
     r=0;
     while(r<layouts.count){
+        discard budget::visit(fuel,deadline,0)?;
+        count.used+=1;
         var usize i=0;
         while(i<layouts.fields[r] as usize){
+            discard budget::visit(fuel,deadline,0)?;
             let usize field=r*16+i;
             if(layouts.kinds[field]==0){value(count,layouts.types[field]);}
             i+=1;
         }
         r+=1;
     }
-    array_types(count,ref code.arrays);
-    return view_types(count,code,static_kinds);
+    discard array_types(count,ref code.arrays,deadline,fuel)?;
+    return view_types(count,code,static_kinds,deadline,fuel);
 }

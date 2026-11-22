@@ -157,9 +157,11 @@ def verify_configured_project(run, need, image, folder, env):
     policy['compile']['fuel'] = full_fuel
     check()
     policy['compile']['types'] = 1
-    policy['compile']['fuel'] = full_fuel + 4095
+    # Two registers, two function returns, and 16 slots in each view table.
+    type_fuel = 2 + 2 + 16 + 16
+    policy['compile']['fuel'] = full_fuel + type_fuel - 1
     check(3, 'compile_limit')
-    policy['compile']['fuel'] = full_fuel + 4096
+    policy['compile']['fuel'] = full_fuel + type_fuel
     check()
     policy['compile']['types'] = compile_defaults['types']
     policy['compile']['fuel'] = compile_defaults['fuel']
@@ -766,9 +768,11 @@ def verify_project_host(run, need, image, folder, env):
     check('check')
     check()
     policy['compile']['types'] = 3
-    policy['compile']['fuel'] = full_fuel + 4095
+    # Seven registers, two returns, 16 slice sites, one import and one parameter.
+    type_fuel = 7 + 2 + 16 + 1 + 1
+    policy['compile']['fuel'] = full_fuel + type_fuel - 1
     check(expected_exit=3, kind='compile_limit')
-    policy['compile']['fuel'] = full_fuel + 4096
+    policy['compile']['fuel'] = full_fuel + type_fuel
     check()
     policy['compile']['types'] = 4096
     policy['compile']['fuel'] = original_compile_fuel
