@@ -246,6 +246,20 @@ Closing one worker made its reservation available to the replacement.
 All 460 input hashes matched, with zero net handles in both profiles.
 Local receipt: `build/restricted-worker/20261122T033733298329Z/receipt.json`.
 
+The broker also reserves guest-facing host payload allowances by direction.
+Each allowance multiplies the per-frame payload capacity by the maximum
+number of calls. The request and reply allowances have independent shared
+ceilings and stay reserved through close. Frame headers and process adapter
+traffic remain covered by the total wire reservation.
+
+Windows development and /O2 each denied admission one byte below either
+directional ceiling before opening handles or dispatching a call. Two
+process-backed sessions fit at exactly 72 request bytes and 52 reply bytes.
+The shared budget returned only the expired session's reservation when it
+closed, then returned to zero when the cancelled session closed. Both
+profiles reported zero net handles, and all 460 input hashes matched.
+Local receipt: `build/restricted-worker/20261122T034629076307Z/receipt.json`.
+
 ### Phase deadlines
 
 The broker starts the startup window before opening handles and requires
