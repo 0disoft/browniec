@@ -584,6 +584,23 @@ out-of-bounds trap and a return of a local borrow preserved the ordinary
 diagnostics. Both broker suites reported zero net handles. Local receipt:
 `build/restricted-worker/20261122T100529046885Z/receipt.json`.
 
+### Isolated i32 rule evaluation
+
+Windows `eval-i32 SOURCE N --isolated` validates the decimal i32 before
+acquiring the source. The parent extends the single-file START header for
+operation 2 with four little-endian bytes for the signed argument. The
+worker verifies the operation and enforces the same 4096-byte source
+ceiling before using the ordinary eval compiler and VM. The broker accepts
+only the scalar profile for this operation and renders the standard
+eval text, JSON v1, or JSON v2 result after the publication gate.
+
+Windows development and /O2 each matched nine ordinary eval outcomes:
+the shipping threshold, signed i32 extrema, three malformed arguments,
+Fuel exhaustion and invalid UTF-8 source. Both broker profiles had zero
+net handles. The same /O2 binary passed the public CLI output table and
+contract checks. Local receipt:
+`build/restricted-worker/20261122T104554561349Z/receipt.json`.
+
 ### Stops during managed staging
 
 The managed broker samples the same session deadline and console cancellation

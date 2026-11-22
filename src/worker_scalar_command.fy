@@ -5,6 +5,7 @@ import compiler as compiler;
 import errors as errors;
 import source_features as features;
 import fuel as meter;
+import scalar_codec as scalar;
 import ir as ir;
 import program_image as programs;
 import static_image as images;
@@ -18,20 +19,30 @@ unsafe extern C fn u32 bc_scalar_worker_finish(ptr u8 result,usize length);
 
 // Private worker route. Native admission must succeed before a source byte is compiled.
 pub fn i32 execute(){
-    var bytes::Buffer request=switch(bytes::with_capacity(4101)){
+    var bytes::Buffer request=switch(bytes::with_capacity(4105)){
         case .ok(v):{v}case .err(_):{return 4;}
     };
-    if(!bytes::resize_zeroed(ref mut request,4101).is_ok){return 4;}
-    let usize size=unsafe{bc_scalar_worker_start(bytes::view_mut(ref mut request) as ptr mut u8,4101)};
-    if(size<5 || size>4101){return 4;}
+    if(!bytes::resize_zeroed(ref mut request,4105).is_ok){return 4;}
+    let usize size=unsafe{bc_scalar_worker_start(bytes::view_mut(ref mut request) as ptr mut u8,4105)};
+    if(size<5 || size>4105){return 4;}
     let ref u8[] wire=bytes::view(ref request);
-    if(wire[0]>1){return 4;}
-    let bool run=wire[0]==1;
+    if(wire[0]>2){return 4;}
+    let bool eval=wire[0]==2;
+    let usize header=if(eval){9}else{5};
+    if(size<header || size-header>4096){return 4;}
+    let bool run=wire[0]!=0;
     var usize fuel=0;
     var usize i=5;
     while(i>1){i-=1;fuel=fuel*256+wire[i] as usize;}
     if(fuel>meter::cli_limit() || (!run && fuel!=0)){return 4;}
-    return respond(wire[5..size],run,fuel);
+    let ref u8[] source=wire[header..size];
+    if(eval){
+        let i64 argument=switch(scalar::decode(1,wire[5..9])){
+            case .ok(v):{v}case .err(_):{return 4;}
+        };
+        return respond(source,true,compute_eval(source,argument,fuel));
+    }
+    return respond(source,run,compute(source,run,fuel));
 }
 
 fn result::Profiled uncompiled(errors::Error error){
@@ -77,9 +88,18 @@ fn result::Profiled compute_ordinary(ref u8[] source,bool run,usize fuel){
     return result::Profiled{.outcome=outcome,.profile=profile};
 }
 
-fn i32 respond(ref u8[] source,bool run,usize fuel){
+fn result::Profiled compute_eval(ref u8[] source,i64 argument,usize fuel){
+    let ir::Program program=switch(compiler::compile_eval_i32(source)){
+        case .ok(v):{v}case .err(e):{return uncompiled(e);}
+    };
+    let result::Outcome outcome=switch(vm::eval_i32(ref program,argument,fuel)){
+        case .ok(value):{result::completed(value)}case .err(e):{result::failed(e)}
+    };
+    return result::Profiled{.outcome=outcome,.profile=0};
+}
+
+fn i32 respond(ref u8[] source,bool run,result::Profiled outcome){
     let result::Expected expected=result::Expected{.run=run,.output=false,.source_bytes=source.len,.instructions=256};
-    let result::Profiled outcome=compute(source,run,fuel);
     let bytes::Buffer payload=switch(result::encode_profiled(outcome,expected)){
         case .ok(v):{v}case .err(_):{return 4;}
     };

@@ -89,8 +89,7 @@ def check_output_table(exe, identity, host_check, host_run, project_host_check, 
             if '--isolated' in row['arguments'] and command == 'run':
                 args.extend(['--input', answer])
         elif '--isolated' in row['arguments']:
-            source = ['--project', project] if row['arguments'].startswith('--project ') else [answer]
-            args = source
+            args = ['--project', project] if row['arguments'].startswith('--project ') else sources[command]
         elif row['arguments'].startswith('--project '):
             args = ['--project', project]
         else:

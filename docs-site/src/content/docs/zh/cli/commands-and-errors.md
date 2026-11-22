@@ -76,6 +76,9 @@ description: 公开 browniec 命令、退出码以及常见错误的快速排查
 | `browniec eval-i32 SOURCE N [--fuel N]` | — | `stderr` | — |
 | `browniec eval-i32 SOURCE N [--fuel N]` | `--json` | `stdout` | `browniec.result/v1` |
 | `browniec eval-i32 SOURCE N [--fuel N]` | `--json-v2` | `stdout` | `browniec.result/v2` |
+| `browniec eval-i32 SOURCE N [--fuel N] --isolated` | — | `stderr` | — |
+| `browniec eval-i32 SOURCE N [--fuel N] --isolated` | `--json` | `stdout` | `browniec.result/v1` |
+| `browniec eval-i32 SOURCE N [--fuel N] --isolated` | `--json-v2` | `stdout` | `browniec.result/v2` |
 | `browniec inspect SOURCE --ir` | — | `stdout` | — |
 | `browniec inspect SOURCE --ir` | `--json` | `stdout` | `browniec.ir/v1` |
 | `browniec inspect SOURCE --limits` | `--json` | `stdout` | `browniec.limits/v1` |

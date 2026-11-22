@@ -468,6 +468,27 @@
     ]
   },
   {
+    "command": "eval-i32",
+    "arguments": "SOURCE N [--fuel N] --isolated",
+    "formats": [
+      {
+        "option": "",
+        "channel": "stderr",
+        "schema": null
+      },
+      {
+        "option": "--json",
+        "channel": "stdout",
+        "schema": "browniec.result/v1"
+      },
+      {
+        "option": "--json-v2",
+        "channel": "stdout",
+        "schema": "browniec.result/v2"
+      }
+    ]
+  },
+  {
     "command": "inspect",
     "arguments": "SOURCE --ir",
     "formats": [

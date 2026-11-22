@@ -82,8 +82,9 @@ arrays, plain records and retained byte/text views:
 The parent snapshots up to 4096 bytes from an explicit regular local NTFS file.
 The worker compiles and verifies the snapshot. Run also executes it with the
 selected Fuel. Text, JSON v1 and JSON v2 preserve the ordinary result contract,
-including the selected profile and its Fuel costs. Input, host, policy and
-eval-i32 combinations are unavailable here.
+including the selected profile and its Fuel costs. File or stdin input and
+host or policy combinations are unavailable here. For a rule with a signed i32
+parameter, use `browniec eval-i32 SOURCE N --isolated --json-v2`.
 Scalar isolation is reported as `restricted_scalar: true` in version JSON.
 Unsupported combinations and isolation setup failure return exit 4. The broker
 publishes only after a validated result, clean EOF, process exit and cleanup.

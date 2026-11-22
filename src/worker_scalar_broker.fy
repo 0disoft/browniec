@@ -10,14 +10,17 @@ import std::bytes as bytes;
 import std::process as process;
 
 unsafe extern C fn u32 bc_scalar_broker_invoke(ptr u8 profile,usize profile_length,
-    ptr u8 source,usize source_length,u32 run,usize fuel,ptr mut u8 reply,ptr mut usize reply_length);
+    ptr u8 source,usize source_length,u32 operation,usize fuel,i64 argument,ptr mut u8 reply,ptr mut usize reply_length);
 
 // The C gate calls this only with its complete, bounded RESULT span.
-fn u32 validate_result(ptr u8 data,usize length,u32 run,usize source_length){
-    if(data==null || length==0 || length>result::byte_limit() || run>1 || source_length>4096){return 0;}
-    let result::Expected expected=result::Expected{.run=run==1,.output=false,.source_bytes=source_length,.instructions=256};
+fn u32 validate_result(ptr u8 data,usize length,u32 operation,usize source_length){
+    if(data==null || length==0 || length>result::byte_limit() || operation>2 || source_length>4096){return 0;}
+    let result::Expected expected=result::Expected{.run=operation!=0,.output=false,.source_bytes=source_length,.instructions=256};
     let ref u8[] payload=unsafe{byte_slice::from_raw_parts(ref expected,data,length)};
-    return if(result::parse_profiled(payload,expected).is_ok){1}else{0};
+    return switch(result::parse_profiled(payload,expected)){
+        case .ok(value):{if(operation==2 && value.profile!=0){0}else{1}}
+        case .err(_):{0}
+    };
 }
 
 @effects(console,filesystem)
@@ -38,20 +41,25 @@ pub fn i32 execute(bool external_profile){
         };
         if(profile_length==0){return report(.Json,run,errors::absent(11,0));}
     }
-    return acquire(ref profile[..profile_length],operation_at+1,.Json,run,fuel::cli_default());
+    return acquire(ref profile[..profile_length],operation_at+1,.Json,run,fuel::cli_default(),.none);
 }
 
 @effects(console,filesystem)
 pub fn i32 execute_managed(render::Format format,bool run,usize fuel){
-    return acquire(b"",2,format,run,fuel);
+    return acquire(b"",2,format,run,fuel,.none);
+}
+
+@effects(console,filesystem)
+pub fn i32 execute_eval(render::Format format,usize fuel,i64 argument){
+    return acquire(b"",2,format,true,fuel,.some(argument));
 }
 
 @effects(console)
-fn i32 acquire(ref u8[] profile,usize argument,render::Format format,bool run,usize fuel){
+fn i32 acquire(ref u8[] profile,usize argument,render::Format format,bool run,usize fuel,Option<i64> evaluation){
     let input::Source source=switch(read_source(argument)){
-        case .ok(v):{v}case .err(e):{return report(format,run,e);}
+        case .ok(v):{v}case .err(e):{return failure(format,run,evaluation,e);}
     };
-    return invoke(profile,ref source,format,run,fuel);
+    return invoke(profile,ref source,format,run,fuel,evaluation);
 }
 
 // Use the same explicit local-file acquisition as project manifests.
@@ -76,27 +84,44 @@ fn Result<input::Source,errors::Error> read_source(usize argument){
 }
 
 @effects(console)
-fn i32 invoke(ref u8[] profile,ref input::Source snapshot,render::Format format,bool run,usize fuel){
+fn i32 invoke(ref u8[] profile,ref input::Source snapshot,render::Format format,bool run,usize fuel,Option<i64> evaluation){
     let ref u8[] source=ref snapshot.data[..snapshot.length];
     var u8[256] reply=[0;256];
     var usize length=0;
     let ptr u8 profile_name=if(profile.len==0){null}else{unsafe{profile as ptr u8}};
+    let u32 operation=switch(evaluation){case .some(_):{2}case .none:{if(run){1}else{0}}};
+    let i64 argument=switch(evaluation){case .some(v):{v}case .none:{0}};
     let u32 status=unsafe{bc_scalar_broker_invoke(profile_name,profile.len,
-        source as ptr u8,source.len,if(run){1}else{0},if(run){fuel}else{0},
+        source as ptr u8,source.len,operation,if(run){fuel}else{0},argument,
         ref mut reply[..] as ptr mut u8,ref mut length as ptr mut usize)};
     if(status!=1 || length==0 || length>result::byte_limit()){
         let u8 kind=if(status==2){errors::deadline_kind()}else if(status==3){errors::cancelled_kind()}else{11};
-        return report(format,run,errors::absent(kind,0));
+        return failure(format,run,evaluation,errors::absent(kind,0));
     }
     let result::Expected expected=result::Expected{.run=run,.output=false,.source_bytes=source.len,.instructions=256};
     let result::Profiled profiled=switch(result::parse_profiled(ref reply[..length],expected)){
-        case .ok(v):{v}case .err(_):{return report(format,run,errors::absent(11,0));}
+        case .ok(v):{v}case .err(_):{return failure(format,run,evaluation,errors::absent(11,0));}
     };
     let result::Outcome outcome=profiled.outcome;
+    if(operation==2){
+        return switch(outcome.status){
+            case .Completed:{render::eval_outcome(format,false,outcome.value,errors::absent(0,0))}
+            case .Failed:{render::eval_outcome(format,true,0,outcome.error)}
+            case .Checked:{render::eval_outcome(format,true,0,errors::absent(11,0))}
+        };
+    }
     return switch(outcome.status){
         case .Checked:{render::selected_outcome(format,false,false,0,errors::absent(0,0),profiled.profile)}
         case .Completed:{render::selected_outcome(format,true,false,outcome.value,errors::absent(0,0),profiled.profile)}
         case .Failed:{render::selected_outcome(format,run,true,0,outcome.error,profiled.profile)}
+    };
+}
+
+@effects(console)
+fn i32 failure(render::Format format,bool run,Option<i64> evaluation,errors::Error error){
+    return switch(evaluation){
+        case .some(_):{render::eval_outcome(format,true,0,error)}
+        case .none:{report(format,run,error)}
     };
 }
 

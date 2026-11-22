@@ -249,15 +249,19 @@ static uint32_t invoke_broker(const uint8_t *profile, size_t profile_length,
 }
 
 uint32_t bc_scalar_broker_invoke(const uint8_t *profile, size_t profile_length,
-    const uint8_t *source, size_t source_length, uint32_t run, size_t fuel,
+    const uint8_t *source, size_t source_length, uint32_t operation, size_t fuel, int64_t argument,
     uint8_t *reply, size_t *reply_length) {
-    if (!source || source_length > BC_SCALAR_START_MAX - 5 || run > 1 ||
-        (!run && fuel) || fuel > UINT32_MAX || !reply || !reply_length) return 0;
-    uint8_t request[BC_SCALAR_START_MAX] = {(uint8_t)run};
+    if (!source || source_length > BC_SCALAR_SOURCE_MAX || operation > 2 ||
+        (!operation && fuel) || (operation != 2 && argument) ||
+        argument < INT32_MIN || argument > INT32_MAX ||
+        fuel > UINT32_MAX || !reply || !reply_length) return 0;
+    uint8_t request[BC_SCALAR_START_MAX] = {(uint8_t)operation};
     put_le(request + 1, 4, fuel);
-    memcpy(request + 5, source, source_length);
-    const scalar_expectation expected = {run, source_length};
-    const worker_exchange exchange = {request, source_length + 5, validate_scalar, &expected, false, {0}, NULL, 0, 0};
+    const size_t header = operation == 2 ? 9 : 5;
+    if (operation == 2) put_le(request + 5, 4, (uint32_t)argument);
+    memcpy(request + header, source, source_length);
+    const scalar_expectation expected = {operation, source_length};
+    const worker_exchange exchange = {request, source_length + header, validate_scalar, &expected, false, {0}, NULL, 0, 0};
     return invoke_broker(profile, profile_length, &exchange, &default_limits, reply, BC_SCALAR_RESULT_MAX, reply_length);
 }
 

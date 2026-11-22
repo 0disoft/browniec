@@ -99,6 +99,35 @@ def verify_public_scalar(run, need, image, folder, env):
     return 3 + len(cases) + 2
 
 
+def verify_public_eval(run, need, image, folder, env):
+    common = dict(cwd=folder, env=env, no_stderr=True)
+    identity = folder / 'identity.brc'
+    identity.write_bytes(b'module main; fn i32 evaluate(i32 value) { return value; }')
+    shipping = ROOT / 'examples/shipping-fee.brc'
+    missing = folder / 'missing-eval.brc'
+    cases = [
+        (shipping, '29999', [], 0, 3000, None),
+        (shipping, '30000', [], 0, 0, None),
+        (identity, '-2147483648', [], 0, -2147483648, None),
+        (identity, '2147483647', [], 0, 2147483647, None),
+        (missing, '-2147483649', [], 2, None, 'usage'),
+        (missing, '2147483648', [], 2, None, 'usage'),
+        (missing, 'number', [], 2, None, 'usage'),
+        (shipping, '29999', ['--fuel', '0'], 5, None, 'fuel'),
+        (folder / 'bad-source.brc', '0', [], 3, None, 'lexical'),
+    ]
+    for source, value, flags, code, expected, kind in cases:
+        command = [image, 'eval-i32', source, value, '--json-v2', *flags]
+        isolated = json.loads(run([*command, '--isolated'], expected_exit=code, **common))
+        ordinary = json.loads(run(command, expected_exit=code, **common))
+        need(isolated == ordinary and isolated['command'] == 'eval-i32'
+             and isolated['return_i32'] == expected
+             and (isolated['error']['kind'] if isolated['error'] else None) == kind,
+             f'Isolated eval differs for {source}, {value}, {flags}: {isolated} vs {ordinary}')
+    need(not list(Path(env['TEMP']).iterdir()), 'isolated eval left staged resources')
+    return len(cases)
+
+
 def verify_public_aggregates(run, need, image, folder, env):
     common = dict(cwd=folder, env=env, no_stderr=True)
     cases = [
@@ -1238,7 +1267,7 @@ def main():
     if scalar_images:
         paths.extend(['fairy.windows.json', 'fairy.toml', 'fairy.lock', 'examples/answer.brc',
                       'examples/array-read.brc', 'examples/array-copy.brc',
-                      'examples/mutable-slices.brc', 'examples/helper-records.brc',
+                      'examples/mutable-slices.brc', 'examples/helper-records.brc', 'examples/shipping-fee.brc',
                       POLICY_EXAMPLE.relative_to(ROOT).as_posix()])
         paths.extend(path.relative_to(ROOT).as_posix() for path in sorted(HELLO_PROJECT.rglob('*'))
                      if path.is_file())
@@ -1313,6 +1342,7 @@ def main():
                             and not list(stage_temp.iterdir()), 'staging failure fell back or left files')
                 scalar_source_cases = verify_scalar_source_admission(run, helper.need, scalar, folder, stage_env)
                 public_scalar_cases = verify_public_scalar(run, helper.need, scalar, folder, stage_env)
+                eval_cases = verify_public_eval(run, helper.need, scalar, folder, stage_env)
                 aggregate_cases = verify_public_aggregates(run, helper.need, scalar, folder, stage_env)
                 retained_cases = verify_public_retained(run, helper.need, scalar, folder, stage_env)
                 managed_project_cases = verify_managed_project(run, helper.need, scalar, folder, stage_env)
@@ -1344,6 +1374,7 @@ def main():
                 receipt['profiles'][-1]['scalarWorker'] = helper.image(scalar)
                 receipt['profiles'][-1]['scalarSourceCases'] = scalar_source_cases
                 receipt['profiles'][-1]['publicScalarCases'] = public_scalar_cases
+                receipt['profiles'][-1]['publicEvalCases'] = eval_cases
                 receipt['profiles'][-1]['publicAggregateCases'] = aggregate_cases
                 receipt['profiles'][-1]['publicRetainedCases'] = retained_cases
                 receipt['profiles'][-1]['managedProjectCases'] = managed_project_cases

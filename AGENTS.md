@@ -1,5 +1,5 @@
-- Latest runtime checkpoint (2026-11-22): [Oversized reply validation](docs/engineering/embed-preview.md#oversized-reply-validation)
-  preserves the live request and Fuel on malformed oversized replies.
+- Latest runtime checkpoint (2026-11-22): [Isolated i32 rule evaluation](docs/engineering/restricted-worker.md#isolated-i32-rule-evaluation)
+  transports signed scalar input and preserves the ordinary eval contract.
 
 # Brownie C agent guidance
 

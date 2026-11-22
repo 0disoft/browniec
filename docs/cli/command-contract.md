@@ -14,6 +14,7 @@
 | browniec run SOURCE --catalog FILE --policy FILE --run FILE --host-replies FILE | Execute typed host calls with explicit authority and precomputed replies | Windows, single-source host dialect, text or JSON |
 | browniec run SOURCE --catalog FILE --policy FILE --run FILE --host-adapter ID REVISION EXE | Execute typed host calls using an explicitly registered executable | Windows, one catalog route, text or JSON |
 | browniec eval-i32 SOURCE N | Evaluate a scalar rule with one signed decimal i32 input | Implemented for `module main` sources with `fn i32 evaluate(i32 ...)` |
+| browniec eval-i32 SOURCE N --isolated | Evaluate a scalar rule in an AppContainer/Job worker | Windows, signed i32 input and return |
 | browniec check --project FILE | Check an explicit source map and its named entry | Windows, zero-argument i32 entry, empty requirements |
 | browniec run --project FILE [--input FILE or --stdin] | Run the checked named entry | Windows, zero-argument i32 entry or one shared-byte parameter with explicit input, empty requirements |
 | browniec check --project FILE --catalog FILE --policy FILE --run FILE | Verify a project and its typed host imports | Windows, public i32 entry, text or JSON |
@@ -37,7 +38,7 @@
 The implemented grammar is `browniec check SOURCE [--json|--json-v2]` and
 `browniec run SOURCE [--input FILE or --stdin] [--fuel N] [--json|--json-v2]`, `browniec inspect SOURCE --ir [--json]`,
 `browniec inspect SOURCE --limits --json`, plus `--version [--json]` and `--help`.
-Scalar evaluation uses `browniec eval-i32 SOURCE N [--fuel N] [--json|--json-v2]`.
+Scalar evaluation uses `browniec eval-i32 SOURCE N [--isolated] [--fuel N] [--json|--json-v2]`.
 On Windows, check and run also accept `--project FILE` in place of `SOURCE`.
 Fuel defaults to 256 and accepts 0..16000000; duplicate/unknown options are errors.
 Unconfigured run grants no guest host capability. SOURCE selects one local disk file with a
