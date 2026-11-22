@@ -11,6 +11,11 @@
 enum { samples = 201, batch_quantum = 64 };
 static uint64_t frequency;
 
+#ifdef BC_BENCH_ALLOCATIONS
+__declspec(dllimport) size_t probe_attempts(void);
+__declspec(dllimport) size_t probe_live(void);
+#endif
+
 static void require(int condition, const char *message) {
     if (condition) return;
     fprintf(stderr, "%s\n", message);
@@ -115,6 +120,9 @@ int main(int argc, char **argv) {
         setup[i] = ticks() - start;
         ok(prepared, "bc_instance_create", &diagnostic);
         bc_event event = {.struct_size = sizeof(event)};
+#ifdef BC_BENCH_ALLOCATIONS
+        const size_t before_step = probe_attempts();
+#endif
         start = ticks();
         unsigned calls = 0;
         while (calls < 4096) {
@@ -123,6 +131,9 @@ int main(int argc, char **argv) {
             if (event.kind != BC_YIELD) break;
         }
         steps[schedule][loop ? i / 2 : i] = ticks() - start;
+#ifdef BC_BENCH_ALLOCATIONS
+        require(probe_attempts() == before_step, "SDK allocation during stepping");
+#endif
         const int32_t expected = loop ? 2016 : (empty ? 77 : (variant ? 0 : 3000));
         require(event.kind == BC_DONE && event.return_i32 == expected &&
             event.diagnostic.code == 0 && event.payload.len == 0 && event.fuel_used &&
@@ -142,6 +153,10 @@ int main(int argc, char **argv) {
 
     ok(bc_program_release(engine, retained), "bc_program_release", NULL);
     ok(bc_engine_destroy(engine), "bc_engine_destroy", NULL);
+#ifdef BC_BENCH_ALLOCATIONS
+    require(probe_live() == 0, "live SDK allocations after Engine destruction");
+    puts("step_sdk_allocations=0 final_live_sdk_allocations=0");
+#endif
     printf("source=%zu input=%d iterations=%d", source.source_utf8.len, input_bytes ? 1 : 0, samples);
     if (loop) printf(" quantum=%d,1 calls=%u,%u", batch_quantum, calls_per_quantum[0], calls_per_quantum[1]);
     else printf(" quantum=%d", batch_quantum);

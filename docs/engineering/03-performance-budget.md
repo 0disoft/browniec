@@ -17,7 +17,7 @@ conditions and the build ID that produced each binary.
 | Reused small Instance setup | p95 at or below 1 ms | Met for one Windows embedding workload |
 | 10 KiB pure source compile plus verify | p95 at or below 10 ms | Unmeasured |
 | Empty Instance accounted memory | at or below 32 KiB | Missed: 187,688 bytes with no input or output |
-| Warm scalar loop heap allocation | zero | Unmeasured |
+| Warm scalar loop heap allocation | zero | Met for SDK heap across steps of the measured Windows loop |
 | 100 retained edit builds | at or below 32 MiB project output, excluding explicit debug/toolchain artifacts | Unmeasured |
 
 A tuned low p95 is not a guarantee for allocator, kernel, or process-startup delay.
@@ -150,4 +150,15 @@ and 1 (100 samples). All returned 2016, used 345,930 Fuel and reached
 
 Times are microseconds. First compile took 7,697.0–10,177.4 µs in development
 and 2,561.1–3,784.6 µs in /O2. The event reports reservation peaks.
-Allocation counts inside the warmed scalar loop still require a separate probe.
+The same hosts also ran against the original DLL objects relinked with the
+SDK heap observer. Each profile completed 201 more Instances with zero SDK
+allocation attempts from the first step through the terminal event at both
+quanta. Engine destruction left zero live SDK allocations. The probe starts
+after Instance creation and covers SDK heap calls. It excludes OS allocations
+and the host C runtime. Timing above uses the original DLLs.
+
+```powershell
+python -B tools/verify-embed-loop-allocations.py build/embed-preview-io6zkobo
+```
+
+The local allocation reports are in `build/embed-allocations-ofhf_qw8`.
