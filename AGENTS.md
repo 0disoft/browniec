@@ -1,5 +1,5 @@
-- Latest runtime checkpoint (2026-11-22): [Configured project isolation](docs/engineering/restricted-worker.md#configured-project-isolation)
-  applies explicit Engine policy, file input and validated JSON output in the Windows worker route.
+- Latest runtime checkpoint (2026-11-22): [Isolated project stdin](docs/engineering/restricted-worker.md#isolated-project-stdin)
+  bounds pipe input before worker launch and preserves cancellation and timeout.
 
 # Brownie C agent guidance
 

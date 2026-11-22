@@ -591,25 +591,30 @@ def check_configured_output(exe, folder):
         assert check_json(exe, check, 0, version=version, profile=profile) is None
         assert check_json(exe, [*args, '--input', payload], 0, value=77, version=version,
                           profile=profile, output_b64='QQA=') is None
-    assert check_json(exe, [*args, '--stdin'], 0, value=77, version=2, profile=profile,
-                      input_bytes=b'A\x00', output_b64='QQA=') is None
     stalled = project / 'stalled-stdin.bin'
-    pipe_command = [str(exe), *map(str, [*args, '--stdin', '--output', stalled, '--json-v2'])]
-    with subprocess.Popen(pipe_command, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                          stderr=subprocess.PIPE) as guest:
-        try:
-            guest.stdin.write(b'A\x00')
-            guest.stdin.flush()
-            assert guest.wait(timeout=5) == 5
-            assert not guest.stderr.read()
-            result = json.loads(guest.stdout.read())
-            assert result['return_i32'] is None and 'output_b64' not in result, result
-            assert result['error'] == {'kind': 'deadline', 'location': {'kind': 'none'}}, result
-        finally:
-            if guest.poll() is None:
-                guest.kill()
-    assert not stalled.exists()
-    check_console_cancellation(exe, [*args, '--stdin', '--output', stalled], None, stalled, profile)
+    for flags, failure_profile in [([], profile), (['--isolated'], 'brownie.m1-scalar/1')]:
+        stdin_args = [*args, *flags, '--stdin']
+        assert check_json(exe, stdin_args, 0, value=77, version=2, profile=profile,
+                          input_bytes=b'A\x00', output_b64='QQA=') is None
+        # The unrestricted path also exercises suppression of a requested file sink.
+        if not flags:
+            stdin_args.extend(['--output', stalled])
+        pipe_command = [str(exe), *map(str, [*stdin_args, '--json-v2'])]
+        with subprocess.Popen(pipe_command, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                              stderr=subprocess.PIPE) as guest:
+            try:
+                guest.stdin.write(b'A\x00')
+                guest.stdin.flush()
+                assert guest.wait(timeout=5) == 5
+                assert not guest.stderr.read()
+                result = json.loads(guest.stdout.read())
+                assert result['return_i32'] is None and 'output_b64' not in result, result
+                assert result['error'] == {'kind': 'deadline', 'location': {'kind': 'none'}}, result
+            finally:
+                if guest.poll() is None:
+                    guest.kill()
+        assert not stalled.exists()
+        check_console_cancellation(exe, stdin_args, None, stalled, failure_profile)
     assert check_json(exe, args, 0, value=77, version=2, profile=profile, output_b64='') is None
     empty_sink = project / 'empty.bin'
     assert check_json(exe, [*args, '--output', empty_sink], 0, value=77, profile=profile) is None

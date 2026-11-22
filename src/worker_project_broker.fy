@@ -5,6 +5,7 @@ import cli_local_file as files;
 import cli_host_process as child;
 import host_process_adapter as procs;
 import cli_project as cli;
+import cli_project_input as binary;
 import cli_configured_project as configured;
 import cli_run_configuration as configuration;
 import errors as errors;
@@ -100,7 +101,7 @@ fn usize process_reply(ref procs::Route route,usize run,usize request,ptr u8 dat
     return length-63;
 }
 
-struct Selection { render::Format format; bool run; usize fuel; usize source_bytes; usize modules; usize input_arg; usize input_limit; bool output; usize output_limit; }
+struct Selection { render::Format format; bool run; usize fuel; usize source_bytes; usize modules; binary::Selection input; usize input_limit; usize input_deadline_ms; bool output; usize output_limit; }
 
 fn u32 validate_result(ptr u8 data,usize length,u32 run,ptr u8 bounds,usize count,u32 output,usize output_limit){
     if(data==null || length==0 || length>wire::reply_capacity(output==1,output_limit) || run>1 || output>1 ||
@@ -129,7 +130,8 @@ pub fn i32 execute(bool configured,bool input_file,bool host,bool external){
     if(external && (!run || argc>200 || (argc-7)%3>1) || (host && !external && argc!=host_args)){
         return failure(run,errors::absent(10,0));
     }
-    return configured_project(ref path[..length],.JsonV2,run,if(input_file){argc-1}else{0},4,5,host,external);
+    let binary::Selection input=binary::Selection{.argument=if(input_file){argc-1}else{0},.stdin=false};
+    return configured_project(ref path[..length],.JsonV2,run,input,4,5,host,external);
 }
 
 @effects(console,filesystem)
@@ -139,22 +141,22 @@ pub fn i32 execute_managed(render::Format format,bool run,usize fuel){
         case .ok(v):{v}case .err(_):{return render::selected_outcome(format,run,true,0,errors::absent(10,0),0);}
     };
     let Selection selection=Selection{.format=format,.run=run,.fuel=if(run){fuel}else{0},
-        .source_bytes=sources::source_limit(),.modules=sources::file_limit(),.input_arg=0,.input_limit=0,
+        .source_bytes=sources::source_limit(),.modules=sources::file_limit(),.input=binary::Selection{.argument=0,.stdin=false},.input_limit=0,.input_deadline_ms=0,
         .output=false,.output_limit=0};
     return acquire(ref path[..length],selection,b"",b"",b"",b"",b"",b"",.none,null,null,0);
 }
 
 @effects(console,filesystem)
-pub fn i32 execute_configured(render::Format format,bool run,configured::Selection settings,usize input_arg){
+pub fn i32 execute_configured(render::Format format,bool run,configured::Selection settings,binary::Selection input){
     var u8[3072] path=[0;3072];
     let usize length=switch(process::arg(3,ref mut path)){
         case .ok(v):{v}case .err(_):{return render::selected_outcome(format,run,true,0,errors::absent(10,0),0);}
     };
-    return configured_project(ref path[..length],format,run,input_arg,settings.policy_file,settings.run_file,false,false);
+    return configured_project(ref path[..length],format,run,input,settings.policy_file,settings.run_file,false,false);
 }
 
 @effects(console,filesystem)
-fn i32 configured_project(ref u8[] path,render::Format format,bool run,usize input_arg,
+fn i32 configured_project(ref u8[] path,render::Format format,bool run,binary::Selection input,
     usize policy_arg,usize run_arg,bool host,bool external){
     let files::File policy_file=switch(files::open(policy_arg,json::byte_limit(),10)){
         case .ok(v):{v}case .err(e):{return render::selected_outcome(format,run,true,0,e,0);}
@@ -183,7 +185,7 @@ fn i32 configured_project(ref u8[] path,render::Format format,bool run,usize inp
     let u8[28] worker=worker_configuration(policy::worker_limits(ref ceiling));
     let usize input_limit=if(runtime.input_bytes<runtime.memory_bytes){runtime.input_bytes}else{runtime.memory_bytes};
     let Selection selected=Selection{.format=format,.run=run,.fuel=if(run){fuel}else{0},.source_bytes=source,.modules=count,
-        .input_arg=input_arg,.input_limit=input_limit,.output=output,.output_limit=if(run && output){runtime.output_bytes}else{0}};
+        .input=input,.input_limit=input_limit,.input_deadline_ms=runtime.deadline_ms,.output=output,.output_limit=if(run && output){runtime.output_bytes}else{0}};
     if(host){
         if(run && runtime.fuel!=fuel){return render::selected_outcome(format,run,true,0,errors::absent(11,0),0);}
         return catalog_project(path,selected,ref worker,policy_bytes,run_bytes,request,external);
@@ -297,11 +299,15 @@ fn i32 acquire(ref u8[] path,Selection selected,ref u8[] module_name,ref u8[] fu
         case .err(e):{return selected_failure(selected,errors::absent(cli::acquisition_kind(e),0));}
     };
     let ref u8[] project_bytes=raw[..anchored::manifest_bytes(ref root)];
-    if(selected.input_arg==0){
+    if(!selected.input.stdin && selected.input.argument==0){
         return invoke(project_bytes,ref project,ref snapshot,selected,worker,policy_bytes,run_bytes,imports,host,context,bindings,route_slots,b"");
     }
     let usize limit=if(selected.input_limit<input::hard_limit()){selected.input_limit}else{input::hard_limit()};
-    let files::File file=switch(files::open(selected.input_arg,limit,render::input_limit_kind())){
+    let files::File file=switch(if(selected.input.stdin){
+        files::open_stdin(limit,render::input_limit_kind(),selected.input_deadline_ms)
+    }else{
+        files::open(selected.input.argument,limit,render::input_limit_kind())
+    }){
         case .ok(v):{v}case .err(e):{return selected_failure(selected,e);}
     };
     return invoke(project_bytes,ref project,ref snapshot,selected,worker,policy_bytes,run_bytes,imports,host,context,bindings,route_slots,files::view(ref file));
@@ -315,7 +321,7 @@ fn i32 invoke(ref u8[] manifest_bytes,ref manifest::Project project,ref sources:
     var u8[32] limits=[0;32];
     let usize limit_bytes=2*sources::count(snapshot);
     let bytes::Buffer request=switch(wire::pack(manifest_bytes,project,snapshot,run,
-        selected.fuel,policy_bytes,run_bytes,imports,selected.input_arg!=0,payload,ref mut limits[..limit_bytes])){
+        selected.fuel,policy_bytes,run_bytes,imports,selected.input.stdin || selected.input.argument!=0,payload,ref mut limits[..limit_bytes])){
         case .ok(v):{v}
         case .err(e):{return selected_failure(selected,errors::absent(switch(e){case .Shape:{11}case .Limit:{4}case .Allocation:{15}},0));}
     };

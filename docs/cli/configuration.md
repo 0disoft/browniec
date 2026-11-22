@@ -103,12 +103,13 @@ A project can also supply explicit policy and run files:
     browniec check --project FILE --isolated --policy POLICY --run RUN --json-v2
     browniec run --project FILE --isolated --policy POLICY --run RUN --input INPUT --json
 
-Configured runs require JSON and take Fuel from the run file. Supply a binary
-input file when the entry has a shared-byte parameter. The worker checks the
-policy and run configuration and can emit bytes when explicitly granted
-the output capability. Successful output is included as Base64 in the JSON
-result. The configured isolated route currently accepts file input and JSON
-output. Catalog adapters, stdin, and file output sinks remain unavailable.
+Configured runs require JSON and take Fuel from the run file. Use a binary file
+or redirected stdin for an entry with a shared-byte parameter. A pipe must send
+EOF within the run file's deadline for the input phase. Timeout or cancellation
+during input ends the command before the worker starts. The worker applies the
+policy and run configuration and can emit bytes when explicitly granted the
+output capability. Successful output is included as Base64 in the JSON result.
+Catalog adapters and file output sinks remain unavailable in this route.
 
 ## Single-source host check
 

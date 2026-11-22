@@ -686,6 +686,18 @@ without publishing a guest result. The temp staging root was empty after
 every case. Local receipt:
 `build/restricted-worker/20261121T165734114642Z/receipt.json`.
 
+### Isolated project stdin
+
+Configured isolated projects accept redirected stdin through the existing
+bounded Windows input reader. Its input phase uses the selected run deadline.
+An input error, expiry or console cancellation returns before staging the
+worker image. Normal EOF supplies the exact captured bytes to the worker.
+
+Windows development and /O2 CLI checks passed normal EOF with binary output,
+deadline with an open pipe, and CTRL+BREAK with the writer still open. The
+stopped runs published neither guest value nor output. Both native broker
+suites passed with zero net handles. Local receipt: `build/restricted-worker/20261122T092042629699Z/receipt.json`.
+
 ### Configured binary input
 
 The private broker accepts `--internal-project-broker run MANIFEST POLICY
