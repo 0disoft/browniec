@@ -21,6 +21,7 @@ pub resource Session { adapter::Dispatch request; ptr mut void slot; usize gener
 
 pub fn ref adapter::Route signature(ref Route route){return ref route.signature;}
 pub fn ref u8[] executable(ref Route route){return bytes::view(ref route.executable);}
+pub fn usize executable_capacity(ref Route route){return bytes::capacity(ref route.executable);}
 
 pub fn Result<Route,adapter::Error> register(ref catalog::Catalog imports,usize import_id,
     ref u8[] revision,ref u8[] executable){

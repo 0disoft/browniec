@@ -35,5 +35,6 @@ typedef struct bc_adapter_slot {
    Includes the retained process owner and its temporary launch allocations.
    Zero means the path or Windows attribute list could not be sized. */
 size_t bc_adapter_slot_heap_bytes(const uint8_t *path, size_t path_len);
+int bc_adapter_path_valid(const uint8_t *path, size_t path_len);
 
 #endif

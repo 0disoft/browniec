@@ -895,9 +895,9 @@ def verify_project_process_command(run, need, image, adapter, folder, env):
     args = [image, '--internal-project-process-broker', 'run', manifest, policy_file, config_file, catalog]
 
     def check(expected_exit=0, kind=None, mode='o', import_id='0', revision='v1', path=adapter,
-              payload=None, output=b'before'):
+              payload=None, output=b'before', routes=None):
         runtime = dict(env, BC_TEST_RESTRICTED_PROCESS=mode)
-        command = [*args, import_id, revision, path]
+        command = [*args, *(routes if routes is not None else [import_id, revision, path])]
         if payload is not None:
             command.append(payload)
         data = json.loads(run(command, cwd=folder, env=runtime,
@@ -945,7 +945,40 @@ def verify_project_process_command(run, need, image, adapter, folder, env):
     config_file.write_text(json.dumps(config), encoding='utf-8')
     check(5, 'input_limit', payload=payload)
     source.write_bytes(original_source)
-    return 10
+
+    original_catalog = json.loads(catalog.read_bytes())
+    first = original_catalog['imports'][0]
+    second = dict(first, id=1, symbol='measure', capability='host.example.measure',
+                  adapter_revision='v2')
+    catalog.write_text(json.dumps(dict(original_catalog, imports=[first, second])), encoding='utf-8')
+    project = json.loads(manifest.read_bytes())
+    project['requires'].append(second['capability'])
+    policy['capabilities'] = project['requires']
+    config['requires'] = config['grants'] = project['requires']
+    manifest.write_text(json.dumps(project), encoding='utf-8')
+    policy_file.write_text(json.dumps(policy), encoding='utf-8')
+    config_file.write_text(json.dumps(config), encoding='utf-8')
+    multi_source = original_source.replace(b'api::check(42)', b'api::measure(42)')
+    need(multi_source != original_source, 'Expected two distinct catalog call sites')
+    source.write_bytes(multi_source)
+    route_zero = folder / 'route zero.exe'
+    route_one = folder / 'route one.exe'
+    shutil.copyfile(adapter, route_zero)
+    shutil.copyfile(adapter, route_one)
+    zero = ['0', 'v1', route_zero]
+    one = ['1', 'v2', route_one]
+    check(mode='m', routes=one + zero)
+    check(4, 'unavailable', mode='x', routes=zero + one)
+    check(4, 'unavailable', mode='m', routes=zero + zero)
+    check(4, 'unavailable', mode='m', routes=one)
+    check(4, 'unavailable', mode='m', routes=zero + ['1', 'v1', route_one])
+    check(4, 'unavailable', mode='m', routes=zero + ['1', 'v2', route_one.name])
+    source.write_bytes(multi_source.replace(b'start(){output::emit(b"before");',
+                                            b'start(ref u8[] data){output::emit(ref data);'))
+    config['limits']['input_bytes'] = len(binary_input)
+    config_file.write_text(json.dumps(config), encoding='utf-8')
+    check(mode='m', routes=zero + one, payload=payload, output=binary_input)
+    return 17
 
 
 def main():

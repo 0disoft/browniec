@@ -1,5 +1,5 @@
-- Latest runtime checkpoint (2026-11-22): [Restricted adapter Job commit](docs/engineering/restricted-worker.md#restricted-adapter-job-commit)
-  is enforced by Windows and reserved alongside the worker Job through teardown.
+- Latest runtime checkpoint (2026-11-22): [Multiple process routes](docs/engineering/restricted-worker.md#multiple-process-routes)
+  select registered catalog imports within one private broker session.
 
 # Brownie C agent guidance
 

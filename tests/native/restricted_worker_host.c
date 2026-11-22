@@ -1467,6 +1467,16 @@ static int process_fixture_child(wchar_t mode) {
         ReadFile(input, &extra, 1, &count, NULL) || GetLastError() != ERROR_BROKEN_PIPE) return 30;
     header[4] = 1;
     header[28] = 12;
+    if (mode == L'm' || mode == L'x') {
+        wchar_t image[MAX_PATH];
+        const DWORD n = GetModuleFileNameW(NULL, image, _countof(image));
+        if (!n || n >= _countof(image)) return 37;
+        const wchar_t *name = wcsrchr(image, L'\\');
+        const bool first = header[16] == 1;
+        if (!name || header[24] != (first ? 0 : 1) ||
+            wcscmp(name + 1, first ? L"route zero.exe" : L"route one.exe")) return 38;
+        if (!first && mode == L'x') header[24] = 0;
+    }
     if (mode == L'w') ++header[16];
     if (!WriteFile(output, header, sizeof(header), &count, NULL) || count != sizeof(header)) return 31;
     uint8_t body[] = {3,0,0,0, 4,0,0,0, header[16] == 1 ? 42 : 35,0,0,0};

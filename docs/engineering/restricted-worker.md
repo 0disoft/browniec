@@ -719,10 +719,11 @@ Local receipt: `build/restricted-worker/20261122T020001685415Z/receipt.json`.
 
 ### Restricted process adapter command
 
-The private parent command accepts one trusted Windows executable and
-explicit catalog import and revision.
+The private parent command accepts one or more triples of catalog import
+ID, revision, and trusted Windows executable. An optional input file
+follows the last triple.
 
-`browniec --internal-project-process-broker run PROJECT POLICY RUN CATALOG ID REVISION EXE [INPUT]`
+`browniec --internal-project-process-broker run PROJECT POLICY RUN CATALOG ID REVISION EXE [ID REVISION EXE ...] [INPUT]`
 
 The parent loads the shared catalog and run configuration, checks the
 revision and declared grant, and matches manifest authority before
@@ -767,6 +768,31 @@ group, and checks exit 5 with a cancelled diagnostic, no result or output,
 an exited adapter, and an empty staging directory. Both profiles passed
 all ten command cases and matched all 459 verification input hashes.
 Local receipt: `build/restricted-worker/20261122T023548867526Z/receipt.json`.
+
+#### Multiple process routes
+
+The parent registers up to 64 routes by catalog ID, rejects duplicate IDs,
+and checks each registered revision and capability grant. The broker
+selects a route from the import ID in a complete request and validates its
+typed payload before launching the selected executable. The active route
+and correlation bind both reply checks. Registration order has no effect
+on dispatch, and an unregistered import fails the session.
+
+The previous process and its I/O are collected before the worker receives
+its reply. The next call can then use the same native slot. The parent
+reservation includes the route table, retained route and path storage,
+and the largest launch heap across registered paths. The slot's Job,
+pipe buffers, I/O event, and session-wide launch and wire allowances are
+shared across calls.
+
+Windows development and /O2 each passed 17 private command cases. Two
+distinct adapter images returned 77 together, including with a 14-byte
+binary input. Reversing registration order preserved dispatch. Duplicate,
+unregistered, wrong-revision and relative-path registrations or requests
+failed, and a crossed import ID on the second reply prevented output
+publication. The full worker fixture reported zero net handles in each
+profile. All 460 verification input hashes matched.
+Local receipt: `build/restricted-worker/20261122T041751972209Z/receipt.json`.
 
 ### Catalog guest host transfer stops
 

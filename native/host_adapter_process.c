@@ -153,6 +153,14 @@ static int valid_path(const wchar_t *path, size_t n) {
         (path[n-2] | 32) == L'x' && (path[n-1] | 32) == L'e';
 }
 
+int bc_adapter_path_valid(const uint8_t *path, size_t path_len) {
+    if (!path || !path_len || path_len > 4096) return 0;
+    wchar_t wide[4096];
+    const int units = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, (const char *)path,
+        (int)path_len, wide, _countof(wide));
+    return units && valid_path(wide, (size_t)units);
+}
+
 bc_adapter_process *bc_adapter_process_start(const wchar_t *path, size_t path_len,
     const uint8_t *header, const uint8_t *body, size_t body_len, uint64_t deadline,
     size_t job_commit_bytes) {

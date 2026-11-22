@@ -47,17 +47,41 @@ static size_t respond_project_host(void *context, uint64_t correlation,
     return fy_private_fn_776f726b65725f70726f6a6563745f62726f6b65723a3a726573706f6e645f686f7374(context, request, length, reply, capacity);
 }
 
+enum { PROJECT_ROUTE_COUNT = 64, PROJECT_ROUTE_WORDS = 4 };
+typedef fy_private_type_686f73745f70726f636573735f616461707465723a3a526f757465 project_route; /* host_process_adapter::Route */
+
+void bc_project_broker_store_route(void *table, size_t id, const void *route, const uint8_t *path,
+    size_t length, size_t capacity) {
+    uintptr_t *row = (uintptr_t *)table + id * PROJECT_ROUTE_WORDS;
+    row[0] = (uintptr_t)route;
+    row[1] = (uintptr_t)path;
+    row[2] = length;
+    row[3] = capacity;
+}
+
 typedef struct project_process_codec {
-    const void *route;
+    const uintptr_t *routes;
+    bc_worker_process_adapter *adapter;
+    const project_route *route;
     uint64_t run, correlation;
 } project_process_codec;
 
 static bool encode_project_process(void *raw, uint64_t correlation, const uint8_t *request,
     size_t length, uint8_t *header) {
     project_process_codec *codec = raw;
+    if (length < 4) return false;
+    const uint64_t id = get_le(request, 4);
+    if (id >= PROJECT_ROUTE_COUNT) return false;
+    const uintptr_t *row = codec->routes + id * PROJECT_ROUTE_WORDS;
+    const project_route *selected = (const project_route *)row[0];
+    if (!selected ||
+        !fy_private_fn_776f726b65725f70726f6a6563745f62726f6b65723a3a70726f636573735f686561646572(
+            selected, codec->run, correlation, request, length, header)) return false;
+    codec->route = selected;
     codec->correlation = correlation;
-    return fy_private_fn_776f726b65725f70726f6a6563745f62726f6b65723a3a70726f636573735f686561646572(
-        codec->route, codec->run, correlation, request, length, header) != 0;
+    codec->adapter->path = (const uint8_t *)row[1];
+    codec->adapter->path_length = row[2];
+    return true;
 }
 
 static bool size_project_process_reply(void *raw, const uint8_t *header, size_t length,
@@ -238,42 +262,69 @@ static bool read_worker_limits(const uint8_t *raw, size_t length, worker_limits 
         limits->session_ms && limits->session_ms <= 120000 && limits->transport_bytes == 4194304;
 }
 
+/* All route descriptors and path buffers stay live. Only one launch can be
+   active, so reserve the largest launch heap rather than their sum. */
+static size_t process_parent_bytes(const uintptr_t *routes, size_t route_slots,
+    const uint8_t **first, size_t *first_length) {
+    const size_t table_bytes = PROJECT_ROUTE_COUNT * PROJECT_ROUTE_WORDS * sizeof(*routes);
+    if (!route_slots || route_slots > PROJECT_ROUTE_COUNT) return 0;
+    size_t bytes = table_bytes + route_slots * sizeof(project_route) +
+        sizeof(bc_worker_process_route) + sizeof(project_process_codec);
+    size_t peak = 0, count = 0;
+    for (size_t id = 0; id < PROJECT_ROUTE_COUNT; ++id) {
+        const uintptr_t *row = routes + id * PROJECT_ROUTE_WORDS;
+        if (!row[0]) continue;
+        const uint8_t *path = (const uint8_t *)row[1];
+        if (++count > route_slots || row[3] < row[2] || row[3] > SIZE_MAX - bytes ||
+            !bc_adapter_path_valid(path, row[2])) return 0;
+        const size_t launch = bc_adapter_slot_heap_bytes(path, row[2]);
+        if (!launch) return 0;
+        if (launch > peak) peak = launch;
+        bytes += row[3];
+        *first = path;
+        *first_length = row[2];
+    }
+    return peak && peak <= SIZE_MAX - bytes ? bytes + peak : 0;
+}
+
 uint32_t bc_project_broker_invoke(const uint8_t *request, size_t request_length, uint32_t run,
     const uint8_t *lengths, size_t count, const uint8_t *configuration, size_t config_size,
     uint32_t output, size_t output_limit, const uint8_t *host_limits, const void *context,
-    const uint8_t *path, size_t path_length,
+    const void *route_table, size_t route_slots,
     uint8_t *reply, size_t capacity, size_t *reply_length) {
+    const uintptr_t *routes = route_table;
     if (!request || request_length < 9 || request_length > BC_PROJECT_START_MAX ||
         run > 1 || !lengths || !count || count > 32 || count % 2 || !reply || !reply_length ||
         output > 1 || (output && (!config_size || !run)) ||
         (!output && output_limit) || output_limit > BC_PROJECT_OUTPUT_MAX ||
         capacity != BC_PROJECT_RESULT_BASE + (output ? 3 + output_limit : 0)) return 0;
-    if (path_length && (!path || !context || !run)) return 0;
+    if ((routes != NULL) != (route_slots != 0) || (routes && (context || !run))) return 0;
+    const bool dispatch = routes || context;
     const bool host = config_size && request_length >= 25 && request[0] >= 7 && request[0] <= 9;
     const bool input_run = config_size && run && request[0] == 6 && request_length >= 21;
     if (host) {
-        if ((run != 0) != (request[0] != 7) || (context != NULL) != (run != 0)) return 0;
-    } else if (context || (!input_run && request[0] != (config_size ? 4u : 2u) + run)) {
+        if ((run != 0) != (request[0] != 7) || dispatch != (run != 0)) return 0;
+    } else if (dispatch || (!input_run && request[0] != (config_size ? 4u : 2u) + run)) {
         return 0;
     }
     const project_expectation expected = {run, lengths, count, output, output_limit};
     worker_exchange exchange = {request, request_length, validate_project, &expected, true, {0}, NULL, 0, 0};
     worker_limits limits = default_limits;
     if (config_size && !read_worker_limits(configuration, config_size, &limits)) return 0;
-    if (!context) return invoke_broker(NULL, 0, &exchange, &limits, reply, capacity, reply_length);
+    if (!dispatch) return invoke_broker(NULL, 0, &exchange, &limits, reply, capacity, reply_length);
     if (!host_limits) return 0;
     const uint32_t calls = (uint32_t)get_le(host_limits, 4);
     if (!calls) return invoke_broker(NULL, 0, &exchange, &limits, reply, capacity, reply_length);
     const size_t request_cap = (size_t)get_le(host_limits + 4, 4);
     const size_t reply_cap = (size_t)get_le(host_limits + 8, 4);
     if (calls > 65535 || request_cap < 4 || request_cap > 4100 || !reply_cap || reply_cap > 4097) return 0;
-    project_process_codec codec = {.route = context};
     bc_worker_process_route route;
-    if (path_length) {
-        const size_t launch_heap = bc_adapter_slot_heap_bytes(path, path_length);
-        const size_t route_bytes = sizeof(route) + sizeof(codec);
-        if (!launch_heap || launch_heap > SIZE_MAX - route_bytes) return 0;
-        exchange.adapter_parent_bytes = launch_heap + route_bytes;
+    project_process_codec codec = {.routes = routes, .adapter = &route.adapter};
+    if (routes) {
+        const uint8_t *path = NULL;
+        size_t path_length = 0;
+        exchange.adapter_parent_bytes = process_parent_bytes(routes, route_slots, &path, &path_length);
+        if (!exchange.adapter_parent_bytes) return 0;
         const size_t fixed = 5 * BC_WORKER_FRAME_BYTES + request_length + capacity + 1;
         const size_t per_call = 2 * BC_WORKER_FRAME_BYTES + request_cap + reply_cap;
         const size_t adapter_wire = 128 + request_cap - 4 + reply_cap;
@@ -290,8 +341,8 @@ uint32_t bc_project_broker_invoke(const uint8_t *request, size_t request_length,
     uint8_t *staging = HeapAlloc(GetProcessHeap(), 0, request_cap + reply_cap);
     uint32_t status = 0;
     if (staging) {
-        exchange.host = (bc_worker_broker_host){path_length ? NULL : respond_project_host,
-            path_length ? (void *)&route.adapter : (void *)context,
+        exchange.host = (bc_worker_broker_host){routes ? NULL : respond_project_host,
+            routes ? (void *)&route.adapter : (void *)context,
             staging, staging + request_cap, request_cap, reply_cap, calls};
         status = invoke_broker(NULL, 0, &exchange, &limits, reply, capacity, reply_length);
         HeapFree(GetProcessHeap(), 0, staging);
