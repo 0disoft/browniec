@@ -86,17 +86,17 @@ def check_output_table(exe, identity, host_check, host_run, project_host_check, 
             args = host_check[1:]
         elif '--policy' in row['arguments']:
             args = configured_arguments(CONFIGURED)[1:]
-            if '--isolated' in row['arguments']:
-                args.append('--isolated')
-                if command == 'run':
-                    args.extend(['--input', answer])
+            if '--isolated' in row['arguments'] and command == 'run':
+                args.extend(['--input', answer])
         elif '--isolated' in row['arguments']:
             source = ['--project', project] if row['arguments'].startswith('--project ') else [answer]
-            args = [*source, '--isolated']
+            args = source
         elif row['arguments'].startswith('--project '):
             args = ['--project', project]
         else:
             args = sources.get(command, [])
+        if '--isolated' in row['arguments']:
+            args = [*args, '--isolated']
         for mode in row['formats']:
             option = mode['option']
             fixture_environment = {'BC_ENGINE_ADAPTER_FIXTURE': 'g'} if adapter_row else {}
@@ -221,7 +221,7 @@ def check_host_run(exe, check_args, args):
     print('PASS: configured host run, typed Result arms, exact matching, fail-closed replies and Fuel')
 
 
-def make_host_project(folder):
+def make_host_project(folder, *, bounded_transport=False):
     folder.mkdir()
     base = make_host_check(folder)
     app = folder / 'app.brc'
@@ -232,6 +232,9 @@ def make_host_project(folder):
     run = base[7]
     config = json.loads(run.read_bytes())
     config['entry'] = {'module': 'app', 'function': 'start'}
+    if bounded_transport:
+        # The broker reserves worst-case wire bytes for all admitted calls.
+        config['limits'].update(host_calls=1, host_request_bytes=14, host_response_bytes=12)
     run.write_text(json.dumps(config), encoding='utf-8')
     project.write_text(json.dumps({
         'schema': 'brownie.project/0.3', 'name': 'host-project', 'entry': config['entry'],
@@ -1051,7 +1054,7 @@ def main():
 
         host_check = make_host_check(Path(temp))
         host_run = make_host_run(host_check, Path(temp) / 'host-replies.json')
-        project_host_check, project_host_run = make_host_project(Path(temp) / 'host-project')
+        project_host_check, project_host_run = make_host_project(Path(temp) / 'host-project', bounded_transport=True)
         check_output_table(exe, identity, host_check, host_run, project_host_check, project_host_run, adapter)
         check_host_run(exe, host_check, host_run)
         if adapter:

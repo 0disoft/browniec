@@ -101,6 +101,8 @@ fn usize process_reply(ref procs::Route route,usize run,usize request,ptr u8 dat
     return length-63;
 }
 
+pub struct HostSelection { usize catalog_arg; usize reply_arg; usize adapter_arg; usize adapter_count; }
+
 struct Selection { render::Format format; bool run; usize fuel; usize source_bytes; usize modules; binary::Selection input; usize input_limit; usize input_deadline_ms; bool output; usize output_limit; usize output_file; bool output_text; }
 
 fn u32 validate_result(ptr u8 data,usize length,u32 run,ptr u8 bounds,usize count,u32 output,usize output_limit){
@@ -132,7 +134,10 @@ pub fn i32 execute(bool configured,bool input_file,bool host,bool external){
     }
     let binary::Selection input=binary::Selection{.argument=if(input_file){argc-1}else{0},.stdin=false};
     let configured::Selection settings=configured::Selection{.policy_file=4,.run_file=5,.output_file=0,.output_text=false};
-    return configured_project(ref path[..length],.JsonV2,run,input,settings,host,external);
+    let HostSelection routes=HostSelection{.catalog_arg=if(host){6}else{0},
+        .reply_arg=if(host && run && !external){7}else{0},.adapter_arg=if(external){7}else{0},
+        .adapter_count=if(external){(argc-7)/3}else{0}};
+    return configured_project(ref path[..length],.JsonV2,run,input,settings,routes);
 }
 
 @effects(console,filesystem)
@@ -148,17 +153,17 @@ pub fn i32 execute_managed(render::Format format,bool run,usize fuel){
 }
 
 @effects(console,filesystem)
-pub fn i32 execute_configured(render::Format format,bool run,configured::Selection settings,binary::Selection input){
+pub fn i32 execute_configured(render::Format format,bool run,configured::Selection settings,binary::Selection input,HostSelection routes){
     var u8[3072] path=[0;3072];
     let usize length=switch(process::arg(3,ref mut path)){
         case .ok(v):{v}case .err(_):{return render::selected_outcome(format,run,true,0,errors::absent(10,0),0);}
     };
-    return configured_project(ref path[..length],format,run,input,settings,false,false);
+    return configured_project(ref path[..length],format,run,input,settings,routes);
 }
 
 @effects(console,filesystem)
 fn i32 configured_project(ref u8[] path,render::Format format,bool run,binary::Selection input,
-    configured::Selection settings,bool host,bool external){
+    configured::Selection settings,HostSelection routes){
     let files::File policy_file=switch(files::open(settings.policy_file,json::byte_limit(),10)){
         case .ok(v):{v}case .err(e):{return render::selected_outcome(format,run,true,0,e,0);}
     };
@@ -173,6 +178,7 @@ fn i32 configured_project(ref u8[] path,render::Format format,bool run,binary::S
     let runs::RunConfig request=switch(configuration::parse_run(run_bytes,ref ceiling)){
         case .ok(v):{v}case .err(e):{return render::selected_outcome(format,run,true,0,e,0);}
     };
+    let bool host=routes.catalog_arg!=0;
     let bool output=if(host){runs::declares(ref request,b"brownie.output.emit") && runs::grants(ref request,b"brownie.output.emit")}
         else{wire::output_granted(ref request)};
     if(!host && !output && (runs::requires_count(ref request)!=0 || runs::grants_count(ref request)!=0)){
@@ -193,7 +199,7 @@ fn i32 configured_project(ref u8[] path,render::Format format,bool run,binary::S
         .output_file=settings.output_file,.output_text=settings.output_text};
     if(host){
         if(run && runtime.fuel!=fuel){return render::selected_outcome(format,run,true,0,errors::absent(11,0),0);}
-        return catalog_project(path,selected,ref worker,policy_bytes,run_bytes,request,external);
+        return catalog_project(path,selected,ref worker,policy_bytes,run_bytes,request,routes);
     }
     return acquire(path,selected,runs::module_name(ref request),runs::function_name(ref request),
         ref worker,policy_bytes,run_bytes,b"",.none,null,null,0);
@@ -201,24 +207,24 @@ fn i32 configured_project(ref u8[] path,render::Format format,bool run,binary::S
 
 @effects(console,filesystem)
 fn i32 process_project(ref u8[] path,Selection selected,ref u8[] worker,ref u8[] policy_bytes,
-    ref u8[] run_bytes,ref u8[] raw,ref runs::RunConfig run,ref catalog::Catalog imports){
-    let usize count=(process::arg_count()-7)/3;
+    ref u8[] run_bytes,ref u8[] raw,ref runs::RunConfig run,ref catalog::Catalog imports,HostSelection routes){
+    let usize count=routes.adapter_count;
     var vec::Vec<procs::Route> registered=vec::empty<procs::Route>();
     let usize slots=switch(vec::reserve<procs::Route>(ref mut registered,count)){
-        case .ok(v):{v}case .err(_):{return failure(true,errors::absent(15,0));}
+        case .ok(v):{v}case .err(_):{return selected_failure(selected,errors::absent(15,0));}
     };
     var bool[64] used=[false;64];
     var usize i=0;
     while(i<count){
-        let procs::Route route=switch(child::read(7+3*i,imports)){
-            case .ok(v):{v}case .err(e):{return failure(true,e);}
+        let procs::Route route=switch(child::read(routes.adapter_arg+3*i,imports)){
+            case .ok(v):{v}case .err(e):{return selected_failure(selected,e);}
         };
         let usize id=adapters::route_id(procs::signature(ref route));
         if(id>=64 || used[id] || !authorized_import(imports,run,id)){
-            return failure(true,errors::absent(11,0));
+            return selected_failure(selected,errors::absent(11,0));
         }
         used[id]=true;
-        if(!vec::push<procs::Route>(ref mut registered,route).is_ok){return failure(true,errors::absent(15,0));}
+        if(!vec::push<procs::Route>(ref mut registered,route).is_ok){return selected_failure(selected,errors::absent(15,0));}
         i+=1;
     }
     // Four native words per catalog ID. Route and path borrows stay live through invoke.
@@ -238,26 +244,26 @@ fn i32 process_project(ref u8[] path,Selection selected,ref u8[] worker,ref u8[]
 
 @effects(console,filesystem)
 fn i32 catalog_project(ref u8[] path,Selection selected,ref u8[] worker,ref u8[] policy_bytes,
-    ref u8[] run_bytes,runs::RunConfig run,bool external){
-    let files::File file=switch(files::open(6,catalog::byte_limit(),10)){
-        case .ok(v):{v}case .err(e):{return failure(selected.run,e);}
+    ref u8[] run_bytes,runs::RunConfig run,HostSelection routes){
+    let files::File file=switch(files::open(routes.catalog_arg,catalog::byte_limit(),10)){
+        case .ok(v):{v}case .err(e):{return selected_failure(selected,e);}
     };
     let ref u8[] raw=files::view(ref file);
     let catalog::Catalog imports=switch(catalog::parse(raw)){
-        case .ok(v):{v}case .err(e):{return failure(selected.run,configuration::catalog_failure(e));}
+        case .ok(v):{v}case .err(e):{return selected_failure(selected,configuration::catalog_failure(e));}
     };
     if(!selected.run){
         return acquire(path,selected,runs::module_name(ref run),runs::function_name(ref run),
-            worker,policy_bytes,run_bytes,raw,.none,null,null,0);
+            worker,policy_bytes,run_bytes,raw,.some(ref run),null,null,0);
     }
-    if(external){
-        return process_project(path,selected,worker,policy_bytes,run_bytes,raw,ref run,ref imports);
+    if(routes.adapter_arg!=0){
+        return process_project(path,selected,worker,policy_bytes,run_bytes,raw,ref run,ref imports,routes);
     }
     let u32[8] digest=switch(catalog::digest(ref imports)){
-        case .ok(v):{v}case .err(e):{return failure(true,configuration::catalog_failure(e));}
+        case .ok(v):{v}case .err(e):{return selected_failure(selected,configuration::catalog_failure(e));}
     };
-    let replies::Replies responses=switch(replies::read(7,ref imports,digest)){
-        case .ok(v):{v}case .err(e):{return failure(true,e);}
+    let replies::Replies responses=switch(replies::read(routes.reply_arg,ref imports,digest)){
+        case .ok(v):{v}case .err(e):{return selected_failure(selected,e);}
     };
     let Replay replay=Replay{.imports=imports,.run=run,.responses=responses};
     return acquire(path,selected,runs::module_name(ref replay.run),runs::function_name(ref replay.run),
@@ -291,7 +297,7 @@ fn i32 acquire(ref u8[] path,Selection selected,ref u8[] module_name,ref u8[] fu
     };
     let bool authorized=switch(host){
         case .some(route):{engine::project_host_authority(ref project,route)}
-        case .none:{imports.len!=0 || wire::project_authorized(ref project,selected.output)}
+        case .none:{wire::project_authorized(ref project,selected.output)}
     };
     if(!authorized || (worker.len!=0 &&
        (!bytes::equal(manifest::entry_module(ref project),module_name) ||

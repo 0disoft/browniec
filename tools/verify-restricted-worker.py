@@ -773,16 +773,24 @@ def verify_project_host(run, need, image, folder, env):
     write_compile_fixture(folder / 'catalog-compile.start', target, manifest, policy, config,
                           catalog_file.read_bytes())
 
-    def check(operation='run', expected_exit=0, kind=None, payload=None, expected_value=77):
+    def check(operation='run', expected_exit=0, kind=None, payload=None, expected_value=77, public=False):
         for path, value in ((project, manifest), (policy_file, policy), (config_file, config),
                             (replies_file, replies)):
             path.write_text(json.dumps(value), encoding='utf-8')
-        args = [image, '--internal-project-host-broker', operation, project, policy_file,
-                config_file, catalog_file]
-        if operation == 'run':
-            args.append(replies_file)
-        if payload is not None:
-            args.append(payload)
+        if public:
+            args = [image, operation, '--project', project, '--run', config_file, '--isolated',
+                    '--catalog', catalog_file, '--json-v2', '--policy', policy_file]
+            if operation == 'run':
+                args.extend(['--host-replies', replies_file])
+            if payload is not None:
+                args.extend(['--input', payload])
+        else:
+            args = [image, '--internal-project-host-broker', operation, project, policy_file,
+                    config_file, catalog_file]
+            if operation == 'run':
+                args.append(replies_file)
+            if payload is not None:
+                args.append(payload)
         data = json.loads(run(args, cwd=folder, env=env, expected_exit=expected_exit, no_stderr=True))
         need(data['schema'] == 'browniec.result/v2' and data['command'] == operation,
              f'Unexpected catalog project response: {data}')
@@ -799,8 +807,10 @@ def verify_project_host(run, need, image, folder, env):
         need(not list(Path(env['TEMP']).iterdir()), 'catalog project left staged resources')
 
     check('check')
+    check('check', public=True)
     policy['compile']['types'] = 3
     check()
+    check(public=True)
     policy['compile']['types'] = 2
     check(expected_exit=3, kind='compile_limit')
     policy['compile']['types'] = 3
@@ -851,6 +861,7 @@ def verify_project_host(run, need, image, folder, env):
     policy['compile']['depth'] = original_depth
     replies['replies'] = rows[:1]
     check(expected_exit=4, kind='unavailable')
+    check(expected_exit=4, kind='unavailable', public=True)
     replies['replies'] = rows
     config['grants'] = ['brownie.output.emit']
     check(expected_exit=4, kind='unavailable')
@@ -976,7 +987,7 @@ def verify_project_host(run, need, image, folder, env):
     source.write_bytes(original_source)
     policy['compile']['fuel'] = original_compile_fuel
     policy_file.write_text(json.dumps(policy), encoding='utf-8')
-    return 44
+    return 47
 
 
 def verify_process_console_cancel(run, need, args, folder, env):
@@ -1039,11 +1050,18 @@ def verify_project_process_command(run, need, image, adapter, folder, env):
     args = [image, '--internal-project-process-broker', 'run', manifest, policy_file, config_file, catalog]
 
     def check(expected_exit=0, kind=None, mode='o', import_id='0', revision='v1', path=adapter,
-              payload=None, output=b'before', routes=None):
+              payload=None, output=b'before', routes=None, public=False):
         runtime = dict(env, BC_TEST_RESTRICTED_PROCESS=mode)
-        command = [*args, *(routes if routes is not None else [import_id, revision, path])]
-        if payload is not None:
-            command.append(payload)
+        if public:
+            command = [image, 'run', '--project', manifest, '--run', config_file, '--isolated',
+                       '--catalog', catalog, '--host-adapter', import_id, revision, path,
+                       '--json-v2', '--policy', policy_file]
+            if payload is not None:
+                command.extend(['--input', payload])
+        else:
+            command = [*args, *(routes if routes is not None else [import_id, revision, path])]
+            if payload is not None:
+                command.append(payload)
         data = json.loads(run(command, cwd=folder, env=runtime,
                               expected_exit=expected_exit, no_stderr=True))
         need(data['schema'] == 'browniec.result/v2' and data['command'] == 'run',
@@ -1057,7 +1075,10 @@ def verify_project_process_command(run, need, image, adapter, folder, env):
         need(not list(Path(env['TEMP']).iterdir()), 'process command left staged resources')
 
     check()
+    check(public=True)
     check(4, 'unavailable', revision='v2')
+    check(4, 'unavailable', revision='v2', public=True)
+    check(4, 'unavailable', mode='w', public=True)
     check(4, 'unavailable', import_id='1')
     check(4, 'unavailable', path=adapter.name)
     check(4, 'unavailable', mode='w')
@@ -1122,7 +1143,7 @@ def verify_project_process_command(run, need, image, adapter, folder, env):
     config['limits']['input_bytes'] = len(binary_input)
     config_file.write_text(json.dumps(config), encoding='utf-8')
     check(mode='m', routes=zero + one, payload=payload, output=binary_input)
-    return 17
+    return 20
 
 
 def main():

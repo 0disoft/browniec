@@ -155,16 +155,26 @@ fn i32 main() {
         at += 1;
     }
     if(isolated){
-        if(eval || catalog_file!=0 ||
-            reply_file!=0 || adapter_arg!=0){
-            return command_failure(format,run,eval,11);
+        if(eval){return command_failure(format,run,true,11);}
+        let bool host=catalog_file!=0 || reply_file!=0 || adapter_arg!=0;
+        let project_broker::HostSelection routes=project_broker::HostSelection{
+            .catalog_arg=catalog_file,.reply_arg=reply_file,.adapter_arg=adapter_arg,
+            .adapter_count=if(adapter_arg==0){0}else{1}};
+        if(host){
+            if(!project){return fail(format,run,11);}
+            if(catalog_file==0 || settings.policy_file==0 || settings.run_file==0 ||
+                run!=(reply_file!=0 || adapter_arg!=0) || (reply_file!=0 && adapter_arg!=0) ||
+                fuel_seen || (settings.output_file!=0 && render::text_mode(format))){
+                return fail(format,run,10);
+            }
+            return project_broker::execute_configured(format,run,settings,payload,routes);
         }
         if(settings.policy_file!=0 || settings.run_file!=0){
             if(!project){return fail(format,run,11);}
             if(settings.policy_file==0 || settings.run_file==0 || fuel_seen || (run && render::text_mode(format))){
                 return fail(format,run,10);
             }
-            return project_broker::execute_configured(format,run,settings,payload);
+            return project_broker::execute_configured(format,run,settings,payload,routes);
         }
         if(payload.stdin || payload.argument!=0 || settings.output_file!=0){return fail(format,run,11);}
         if(project){return project_broker::execute_managed(format,run,fuel);}

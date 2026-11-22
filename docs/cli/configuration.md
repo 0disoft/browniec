@@ -112,7 +112,14 @@ output capability. Successful output is included as Base64 in the JSON result
 unless a file sink is selected. Use `--output FILE` for raw bytes or
 `--output-text FILE` to require valid UTF-8. The parent publishes the sealed
 file after accepting the result and reaping the worker. An existing destination
-is preserved. Catalog adapters remain unavailable in this route.
+is preserved.
+
+For projects with host imports, add `--catalog FILE` to select an explicit
+catalog. A run additionally selects `--host-replies FILE` or one
+`--host-adapter ID REVISION EXE`. The parent checks the project requirements
+against the run configuration before opening members and checks adapter
+grants before dispatch. The selected adapter executable runs in a separate
+Job in the trusted parent context. It owns any external effects it performs.
 
 ## Single-source host check
 

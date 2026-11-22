@@ -27,6 +27,9 @@
 | browniec run --project FILE --isolated | Execute the selected project in an AppContainer/Job worker | Windows, zero-argument i32 entry, empty requirements |
 | browniec check --project FILE --isolated --policy FILE --run FILE | Verify the project under explicit policy in a worker | Windows, zero-argument or shared-byte i32 entry |
 | browniec run --project FILE --isolated --policy FILE --run FILE [--input FILE or --stdin] [--output FILE or --output-text FILE] | Run under explicit policy and publish a validated result | Windows, JSON, optional binary input and granted binary or UTF-8 output |
+| browniec check --project FILE --catalog FILE --policy FILE --run FILE --isolated | Verify project host imports in the restricted worker | Windows, text or JSON |
+| browniec run --project FILE --catalog FILE --policy FILE --run FILE --host-replies FILE --isolated | Execute with explicitly supplied host replies | Windows, text or JSON and optional binary input and granted output |
+| browniec run --project FILE --catalog FILE --policy FILE --run FILE --host-adapter ID REVISION EXE --isolated | Execute with one registered parent-side process adapter | Windows, text or JSON and optional binary input and granted output |
 | browniec inspect SOURCE --ir | Compile/verify and emit bounded private IR diagnostics without executing | Implemented for the same public M1/M2 admission as check; optional --json |
 | browniec inspect SOURCE --limits --json | Report consumed and remaining compile capacity without executing | Implemented for the same public M1/M2 admission as check |
 | browniec worker | Broker-only restricted IPC endpoint | Windows, scalar protocol, no arguments |

@@ -734,6 +734,26 @@ emit with no file publication. Two concurrent runs against the same destination
 produced one complete file and exit codes 0 and 7. Both broker suites passed
 with zero net handles. Local receipt: `build/restricted-worker/20261122T093120686431Z/receipt.json`.
 
+### Isolated project host routes
+
+An isolated project check can use an explicit catalog with its policy and run
+configuration. A run can additionally select a reply fixture or a process
+adapter. The parent checks the manifest requirements against the run before
+collecting project members. The worker compiles against the admitted catalog.
+The parent retains the reply fixture or the adapter route and validates the
+request and response before returning the response to the worker.
+
+The configured transport reserves space for the declared number and size of
+host exchanges. The isolated CLI contract fixture exercises one call with
+14 request bytes and 12 response bytes. The unrestricted CLI checks retain
+the existing limits and include a 4,097-byte input case.
+
+Windows development and /O2 each passed 47 catalog and 20 process-adapter
+cases, including public catalog check and reply replay, a public process run,
+and rejection of incompatible adapter revisions and invalid replies. Both
+broker suites had zero net handles. Local receipt:
+`build/restricted-worker/20261122T094123698229Z/receipt.json`.
+
 ### Configured sealed output
 
 The configured project can declare `brownie.output.emit`. The policy must
