@@ -319,6 +319,26 @@ so final process commit cannot establish the number of live SDK allocations.
 Both profiles and all six reports are in
 `build/embed-memory-4t2_vl9u/receipt.json`.
 
+## Shipping-rule batch on Windows
+
+`python -B tools/bench-cli-test-i32.py --exe build/browniec.exe` compares
+1,000 individual `eval-i32` calls against one `test-i32` call using the
+same CLI and 256 Fuel per case. The fixture covers every order total from
+29,500 through 30,499, checking for 3,000 below the 30,000 threshold and 0
+from the threshold onward. All 1,000 individual results and batch checks
+matched the expected fees.
+
+| CLI path | Processes | Compilations | Program verifications | Guest evaluations | Measured CLI time |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Individual `eval-i32` | 1,000 | 1,000 | 1,000 | 1,000 | 108.355 s |
+| Batch `test-i32` | 1 | 1 | 1 | 1,000 | 0.131 s |
+
+Times for this single /O2 comparison cover subprocess launch, source and
+case I/O, execution, output capture and exit. CSV generation and Python
+result validation fall outside the measured intervals. A retained-build
+workload ran concurrently. The operation counts follow from the CLI and
+VM entry points. Local receipt: `build/cli-loc-8xxmqnwu/batch-bench.json`.
+
 ## Retained Windows CLI builds
 
 Run the retention check against an installed pinned compiler:
