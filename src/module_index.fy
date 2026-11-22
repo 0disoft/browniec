@@ -238,10 +238,14 @@ pub fn Result<ref u8[],Error> module_name(ref Index p,usize id){
 }
 // Embedding source identities are canonical module names in caller order.
 pub fn Result<usize,Error> match_source_names(ref Index p){
+    return match_source_names_until(p,0);
+}
+pub fn Result<usize,Error> match_source_names_until(ref Index p,usize deadline){
     let ref sources::Snapshot input=snapshot(p);
     let usize count=count(p);
     var usize row=0;
     while(row<count){
+        if(clock::expired(deadline)){return .err(timed_out());}
         let Module declared=module_at(p,row)?;
         let ref u8[] actual=module_name(p,row)?;
         let ref u8[] supplied=switch(sources::name(input,row)){
@@ -250,6 +254,7 @@ pub fn Result<usize,Error> match_source_names(ref Index p){
         if(!bytes::equal(actual,supplied)){return .err(error(.Kind,declared.path));}
         row+=1;
     }
+    if(clock::expired(deadline)){return .err(timed_out());}
     return .ok(count);
 }
 pub fn Result<usize,Error> find(ref Index p,ref u8[] path){

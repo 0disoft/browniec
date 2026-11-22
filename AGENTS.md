@@ -1,5 +1,5 @@
-- Latest runtime checkpoint (2026-11-22): [Native Engine verification](docs/engineering/runtime-engine.md#focused-verification)
-  passes both Windows profiles with the reviewed current compiler transport.
+- Latest runtime checkpoint (2026-11-22): [Catalog-backed embedding](docs/engineering/embed-preview.md#engine-admission-for-catalog-backed-embedding)
+  carries Engine compile Fuel and the deadline through source indexing and Program publication.
 
 # Brownie C agent guidance
 

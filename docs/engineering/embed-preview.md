@@ -335,6 +335,16 @@ referenced capabilities against the Engine policy. Preparing an Instance still
 requires a matching entry and explicit declarations and grants. The catalog
 alone provides no grant.
 
+Catalog-backed compilation applies the Engine's token and depth limits at
+indexing and checks declared function and record counts before lowering. The
+same compile Fuel balance and deadline cover lowering, independent proof,
+authority checks, and retention. Both Windows development and /O2 C hosts
+verified that one unit of compile Fuel rejects the first source and a
+one-function ceiling rejects a two-function source set. Both denials leave
+the Program handle empty. The fixture with the original policy still reaches
+the host and returns 77. Local DLL receipt:
+`build/embed-preview-imrbvskj/receipt.json`.
+
 The Windows Engine verifier passed development and /O2 with default stacks and
 zero live SDK allocations. It exercised policy denial, private entry rejection,
 missing run declaration rejection and a typed i32 reply that returned 77.

@@ -229,12 +229,14 @@ fn Result<usize,Error> prepay_retention(usize scope,usize name,usize deadline,re
 // Compilation binds the Engine ceiling and verified import set. Each Instance
 // must independently declare and receive the required capabilities at admission.
 pub fn Result<Program,Error> retain_for_entry(ref ir::Program code,catalog::Catalog imports,
-    ref policy::Policy ceiling,ref u8[] module_name,ref u8[] function_name,SourceMap map){
-    var usize fuel=budget::unlimited();
-    let Authority authority=inspect(code,ref imports,0,ref mut fuel)?;
+    ref policy::Policy ceiling,ref u8[] module_name,ref u8[] function_name,SourceMap map,
+    usize deadline,ref mut usize fuel){
+    let Authority authority=inspect(code,ref imports,deadline,fuel)?;
+    discard prepay(fuel,deadline)?;
     let usize one=1;
     var usize id=0;
     while(id<catalog::count(ref imports)){
+        if(clock::expired(deadline)){return .err(.Deadline);}
         if((authority.required&(one<<id))!=0){
             let ref u8[] cap=switch(catalog::capability(ref imports,id)){
                 case .ok(v):{v}case .err(_):{return .err(.Catalog);}
@@ -244,10 +246,12 @@ pub fn Result<Program,Error> retain_for_entry(ref ir::Program code,catalog::Cata
         id+=1;
     }
     if(authority.emits && !policy::contains_capability(ceiling,b"brownie.output.emit")){return .err(.Authority);}
+    discard prepay(fuel,deadline)?;
     let u32[8] digest=switch(catalog::digest(ref imports)){
         case .ok(v):{v}case .err(_):{return .err(.Catalog);}
     };
-    return publish(code,imports,digest,authority,module_name,function_name,map,0);
+    discard prepay_retention(module_name.len,function_name.len,deadline,fuel)?;
+    return publish(code,imports,digest,authority,module_name,function_name,map,deadline);
 }
 
 fn Result<Program,Error> publish(ref ir::Program code,catalog::Catalog imports,u32[8] digest,

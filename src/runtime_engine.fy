@@ -601,10 +601,11 @@ pub fn Result<usize,Error> compile_preview_host(ref mut Engine e,sources::Snapsh
     if(count==0){return .err(error(1));}
     if(count>limits.modules || sources::snapshot_bytes(ref snapshot)>limits.source_bytes){return .err(error(8));}
     let usize deadline=deadline_after(limits.deadline_ms)?;
-    let modules::Index index=switch(modules::build_host(snapshot,limits.tokens)){
+    let modules::Index index=switch(modules::build_metered(snapshot,true,limits.tokens,limits.depth,limits.fuel,deadline)){
         case .ok(v):{v}case .err(e):{return .err(host_binding_error(e));}
     };
-    switch(modules::match_source_names(ref index)){
+    if(modules::function_count(ref index)>limits.functions || modules::record_count(ref index)>limits.types){return .err(error(8));}
+    switch(modules::match_source_names_until(ref index,deadline)){
         case .ok(_):{}case .err(e):{return .err(host_binding_error(e));}
     };
     let usize selected=switch(modules::entry(ref index,module_name,function_name)){
@@ -616,14 +617,14 @@ pub fn Result<usize,Error> compile_preview_host(ref mut Engine e,sources::Snapsh
     discard check_compile_image(ref code,limits)?;
     if(clock::expired(deadline)){return .err(compile_timeout());}
     let host_program::SourceMap map=host_program::source_set(modules::snapshot(ref index));
-    let host_program::Program verified=verify_preview_host(e,ref code,imports,module_name,function_name,map)?;
+    let host_program::Program verified=verify_preview_host(e,ref code,imports,module_name,function_name,map,deadline,ref mut fuel)?;
     discard admit_host_types(ref verified,limits.types,deadline,ref mut fuel)?;
     return publish_verified_host(e,verified,deadline,ref mut fuel);
 }
 fn Result<host_program::Program,Error> verify_preview_host(ref Engine e,ref ir::Program code,host_catalog::Catalog imports,
-    ref u8[] module_name,ref u8[] function_name,host_program::SourceMap map){
+    ref u8[] module_name,ref u8[] function_name,host_program::SourceMap map,usize deadline,ref mut usize fuel){
     let Result<host_program::Program,host_program::Error> checked=host_program::retain_for_entry(code,imports,
-        vec::at<policy::Policy>(ref e.policy,0),module_name,function_name,map);
+        vec::at<policy::Policy>(ref e.policy,0),module_name,function_name,map,deadline,fuel);
     return host_verification(checked);
 }
 fn Error host_binding_error(modules::Error e){

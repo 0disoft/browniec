@@ -974,8 +974,31 @@ static void revision_two_host_exchange(uint32_t rules_index){
     sources[rules_index]=(bc_source){{rules_name,sizeof(rules_name)-1},{rules_text,sizeof(rules_text)-1}};
     bc_handle engine=0,program=0,one=0,many=0,cancelled=0,fatal=0,overflow=0,unhandled=0;
     bc_diagnostic diagnostic={.struct_size=sizeof(diagnostic)};
-    assert(bc_engine_create(BC_ABI_REVISION,policy,&engine,&diagnostic)==BC_OK);
     const bc_slice catalog_json={catalog,sizeof(catalog)-1};
+    if(rules_index==0){
+        assert(policy.len<sizeof(policy_data));
+        policy_data[policy.len]=0;
+        char *compile_fuel=strstr((char *)policy_data,"\"fuel\":10000000");
+        assert(compile_fuel);
+        compile_fuel+=sizeof("\"fuel\":")-1;
+        memcpy(compile_fuel,"       1",8);
+        assert(bc_engine_create(BC_ABI_REVISION,policy,&engine,&diagnostic)==BC_OK);
+        assert(bc_preview_compile_entry(engine,sources,2,catalog_json,name,function,&program,&diagnostic)==BC_COMPILE_ERROR);
+        assert(!program && diagnostic.source_index==0 && diagnostic.byte_start==0);
+        assert(bc_engine_destroy(engine)==BC_OK);
+        memcpy(compile_fuel,"10000000",8);
+
+        char *functions=strstr((char *)policy_data,"\"functions\":4096");
+        assert(functions);
+        functions+=sizeof("\"functions\":")-1;
+        memcpy(functions,"   1",4);
+        assert(bc_engine_create(BC_ABI_REVISION,policy,&engine,&diagnostic)==BC_OK);
+        assert(bc_preview_compile_entry(engine,sources,2,catalog_json,name,function,&program,&diagnostic)==BC_RESOURCE_LIMIT);
+        assert(!program && bc_engine_destroy(engine)==BC_OK);
+        memcpy(functions,"4096",4);
+        puts("PASS: catalog-backed compilation enforces indexed Fuel and function limits");
+    }
+    assert(bc_engine_create(BC_ABI_REVISION,policy,&engine,&diagnostic)==BC_OK);
     sources[rules_index].module=(bc_slice){(const uint8_t *)"other",5};
     assert(bc_preview_compile_entry(engine,sources,2,catalog_json,name,function,&program,&diagnostic)==BC_COMPILE_ERROR);
     assert(!program && diagnostic.source_index==rules_index);
