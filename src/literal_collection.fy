@@ -94,8 +94,14 @@ pub fn Result<Index,literals::Error> collect_scoped_raw(ref mut images::Builder 
     index.enabled=true;*builder=staged;return .ok(index);
 }
 pub fn Result<usize,errors::Error> find(ref Index index,usize begin,usize end){
+    var usize fuel=budget::unlimited();
+    return find_metered(index,begin,end,0,ref mut fuel);
+}
+pub fn Result<usize,errors::Error> find_metered(ref Index index,usize begin,usize end,
+    usize deadline,ref mut usize fuel){
     if(!index.enabled || index.count>16){return .err(errors::make(2,begin));}
     var usize i=0;while(i<index.count){
+        discard budget::visit(fuel,deadline,begin)?;
         if(index.begins[i]==begin && index.ends[i]==end){return .ok(i);}i+=1;
     }return .err(errors::make(3,begin));
 }

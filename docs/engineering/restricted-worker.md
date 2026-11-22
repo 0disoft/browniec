@@ -1261,6 +1261,25 @@ Windows development and /O2 each passed 106 configured, 34 catalog,
 five managed project and four compile-stop cases. All 456 verification
 input hashes matched. Local receipt: `build/restricted-worker/20261122T002345974063Z/receipt.json`.
 
+### Static view operand Fuel
+
+Configured output and budgeted reference arguments pass the enclosing
+deadline and Fuel into static view lowering. Literal row scans, lexical
+name scans, grouping, text conversion, range lookahead and both computed
+range endpoints use the same allowance. The range lookahead observes
+tokens and leaves endpoint evaluation to the lowering pass. Returned
+view calls forward the budget into captured-call lowering.
+
+The grouped text conversion and computed static range fixture emits C
+and returns 77 at 4,571,669 compile Fuel, up 128 units. The fixture
+emitting a named static view uses 4,781,225, up eight units. One unit
+less rejects each fixture with compile_limit and publishes neither
+the result nor the output.
+
+Windows development and /O2 each passed 108 configured, 34 catalog,
+five managed and four compile-stop cases. All 456 input hashes matched.
+Local receipt: `build/restricted-worker/20261122T003344751722Z/receipt.json`.
+
 ## Windows verification
 
 Run `python -B tools/verify-restricted-worker.py`. The development and optimized

@@ -7,6 +7,7 @@ import static_source as statics;
 import static_builders as builders;
 import errors as errors;
 import argument_name_work as names_work;
+import metadata_budget as budget;
 
 pub fn bool parameter(ref functions::Table signatures,usize at){
     return signatures.reference_calls && at<128 && signatures.param_slices[at] && signatures.param_slice_elements[at]==10;
@@ -32,13 +33,17 @@ pub fn Result<bool,errors::Error> image_argument_raw(ref u8[] source,ref lexer::
     let usize next=lexer::next(source,ref mut look)?;return .ok(look.kind==58);
 }
 pub fn Result<bool,errors::Error> image_argument(ref u8[] source,ref lexer::State s,ref locals::Table names){
+    var usize fuel=budget::unlimited();
+    return image_argument_metered(source,s,names,0,ref mut fuel);
+}
+pub fn Result<bool,errors::Error> image_argument_metered(ref u8[] source,ref lexer::State s,ref locals::Table names,usize deadline,ref mut usize fuel){
     if(s.kind!=2 || !lexer::equal(source[s.begin..s.end],b"ref")){return .ok(false);}
-    var lexer::State look=lexer::snapshot(s);let usize prefix=lexer::next(source,ref mut look)?;
+    var lexer::State look=lexer::snapshot(s);let usize prefix=lexer::next_metered(source,ref mut look,deadline,fuel)?;
     if(look.kind==3 || look.kind==4 || look.kind==40){return .ok(true);}
     if(look.kind!=2){return .ok(false);}
-    if(statics::binding(names,names_work::local(source,names,look.begin,look.end)?)){return .ok(true);}
+    if(statics::binding(names,names_work::local_metered(source,names,look.begin,look.end,deadline,fuel)?)){return .ok(true);}
     if(!lexer::equal(source[look.begin..look.end],b"text")){return .ok(false);}
-    let usize next=lexer::next(source,ref mut look)?;return .ok(look.kind==58);
+    let usize next=lexer::next_metered(source,ref mut look,deadline,fuel)?;return .ok(look.kind==58);
 }
 // Existing CALL builders own checked arity/register/aggregate construction. Only
 // a generic target changes opcode after the exact CALL has been emitted.
@@ -58,11 +63,15 @@ pub fn Result<bool,errors::Error> returned_atom_raw(ref u8[] source,ref lexer::S
     let usize next=lexer::next(source,ref mut look)?;return .ok(look.kind==40);
 }
 pub fn Result<bool,errors::Error> returned_atom(ref u8[] source,ref lexer::State s,ref locals::Table names,ref functions::Table signatures){
+    var usize fuel=budget::unlimited();
+    return returned_atom_metered(source,s,names,signatures,0,ref mut fuel);
+}
+pub fn Result<bool,errors::Error> returned_atom_metered(ref u8[] source,ref lexer::State s,ref locals::Table names,ref functions::Table signatures,usize deadline,ref mut usize fuel){
     var lexer::State look=lexer::snapshot(s);
-    if(look.kind==2 && lexer::equal(source[look.begin..look.end],b"ref")){let usize prefix=lexer::next(source,ref mut look)?;}
-    if((look.kind!=2 && look.kind!=5) || names_work::local(source,names,look.begin,look.end)?!=64){return .ok(false);}
+    if(look.kind==2 && lexer::equal(source[look.begin..look.end],b"ref")){let usize prefix=lexer::next_metered(source,ref mut look,deadline,fuel)?;}
+    if((look.kind!=2 && look.kind!=5) || names_work::local_metered(source,names,look.begin,look.end,deadline,fuel)?!=64){return .ok(false);}
     let usize f=names_work::target(source,signatures,look.begin,look.end)?;if(!result(signatures,f)){return .ok(false);}
-    let usize next=lexer::next(source,ref mut look)?;return .ok(look.kind==40);
+    let usize next=lexer::next_metered(source,ref mut look,deadline,fuel)?;return .ok(look.kind==40);
 }
 pub fn Result<bool,errors::Error> declaration(ref u8[] source,ref lexer::State s,ref locals::Table names,ref functions::Table signatures){
     if(!signatures.reference_returns){return .ok(false);}

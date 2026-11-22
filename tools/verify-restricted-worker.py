@@ -549,11 +549,19 @@ def verify_configured_project(run, need, image, folder, env):
     # The prior compiler needed 4,780,555 units. Admission now charges two
     # 16-row catalog scans, one literal row and two visits to each text byte.
     # The emit statement spends 13 token stages and one unit before IR emission.
-    text_fuel = 4780555 + 95 + 32 + 1 + 2 * len(text) + 14
+    # The named static view adds two three-stage lookups and two token stages.
+    text_fuel = 4780555 + 95 + 32 + 1 + 2 * len(text) + 14 + 8
     policy['compile']['fuel'] = text_fuel - 1
     check(3, 'compile_limit')
     policy['compile']['fuel'] = text_fuel
     check(value=77, output=text)
+    entry.write_bytes(b'module app;pub fn i32 start(){'
+                      b'output::emit(ref (text::bytes("ABCDE"))[1+1..4-1]);return 77;}')
+    static_range_fuel = 4571541 + 128
+    policy['compile']['fuel'] = static_range_fuel - 1
+    check(3, 'compile_limit')
+    policy['compile']['fuel'] = static_range_fuel
+    check(value=77, output=b'C')
     policy['compile']['fuel'] = compile_defaults['fuel']
     entry.write_bytes(original_entry)
     policy['compile']['source_bytes'] = source_limit

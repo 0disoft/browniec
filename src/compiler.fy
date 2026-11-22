@@ -326,53 +326,73 @@ fn Result<usize,errors::Error> static_read(ref u8[] source,ref mut lexer::State 
 fn Result<static_source::View,errors::Error> static_view(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
     usize depth,u8 result_type,usize structure,ref mut loops::State loop_state){
+    var usize fuel=metadata_budget::unlimited();
+    return static_view_metered(source,s,p,table,signatures,depth,result_type,structure,loop_state,0,ref mut fuel);
+}
+fn Result<static_source::View,errors::Error> static_view_metered(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
+    usize depth,u8 result_type,usize structure,ref mut loops::State loop_state,usize deadline,ref mut usize fuel){
     if(depth>signatures.semantic_depth){return .err(errors::make(4,s.begin));}
     let usize at=s.begin;var static_source::View value=static_source::View{.site=16,.kind=0,.owned=false};
-    if(word_is(source,s,b"ref")){let usize prefix=lexer::next(source,s)?;}
-    if(reference_calls::returned_atom(source,s,table,signatures)?){
-        let usize target=functions::find(source,signatures,s.begin,s.end);let usize name=lexer::next(source,s)?;
-        let usize made=call_value(source,s,p,table,signatures,target,240,at,depth,result_type,structure,loop_state)?;
+    if(word_is(source,s,b"ref")){let usize prefix=lexer::next_metered(source,s,deadline,fuel)?;}
+    if(reference_calls::returned_atom_metered(source,s,table,signatures,deadline,fuel)?){
+        let usize target=functions::find(source,signatures,s.begin,s.end);let usize name=lexer::next_metered(source,s,deadline,fuel)?;
+        let usize made=captured_call(source,s,p,table,signatures,target,240,at,depth,result_type,structure,loop_state,deadline,fuel)?;
         value=static_source::View{.site=made-192,.kind=1,.owned=true};
-    }else if(s.kind==40){let usize open=lexer::next(source,s)?;
-        value=static_view(source,s,p,table,signatures,depth+1,result_type,structure,loop_state)?;
-        let usize close=lexer::punctuation(source,s,41)?;
+    }else if(s.kind==40){let usize open=lexer::next_metered(source,s,deadline,fuel)?;
+        value=static_view_metered(source,s,p,table,signatures,depth+1,result_type,structure,loop_state,deadline,fuel)?;
+        let usize close=lexer::punctuation_metered(source,s,41,deadline,fuel)?;
     }else if(word_is(source,s,b"text")){
-        var lexer::State look=lexer::snapshot(s);let usize next=lexer::next(source,ref mut look)?;
-        if(look.kind==58){let usize module_name=lexer::next(source,s)?;
-            let usize colon=lexer::punctuation(source,s,58)?;let usize path=lexer::punctuation(source,s,58)?;
-            let usize method=lexer::word(source,s,b"bytes")?;let usize open=lexer::punctuation(source,s,40)?;
-            value=static_bytes_argument(source,s,p,table,signatures,at,depth+1,result_type,structure,loop_state)?;
-        }else{value=static_source::atom(source,s,p,table,ref signatures.literals,depth)?;}
-    }else{value=static_source::atom(source,s,p,table,ref signatures.literals,depth)?;}
-    return static_ranges(source,s,p,table,signatures,ref value,depth,result_type,structure,loop_state);
+        var lexer::State look=lexer::snapshot(s);let usize next=lexer::next_metered(source,ref mut look,deadline,fuel)?;
+        if(look.kind==58){let usize module_name=lexer::next_metered(source,s,deadline,fuel)?;
+            let usize colon=lexer::punctuation_metered(source,s,58,deadline,fuel)?;let usize path=lexer::punctuation_metered(source,s,58,deadline,fuel)?;
+            let usize method=lexer::word_metered(source,s,b"bytes",deadline,fuel)?;let usize open=lexer::punctuation_metered(source,s,40,deadline,fuel)?;
+            value=static_bytes_argument_metered(source,s,p,table,signatures,at,depth+1,result_type,structure,loop_state,deadline,fuel)?;
+        }else{value=static_source::atom_metered(source,s,p,table,ref signatures.literals,depth,deadline,fuel)?;}
+    }else{value=static_source::atom_metered(source,s,p,table,ref signatures.literals,depth,deadline,fuel)?;}
+    return static_ranges_metered(source,s,p,table,signatures,ref value,depth,result_type,structure,loop_state,deadline,fuel);
 }
 fn Result<static_source::View,errors::Error> static_bytes_argument(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
     usize at,usize depth,u8 result_type,usize structure,ref mut loops::State loop_state){
-    let static_source::View text=static_view(source,s,p,table,signatures,depth+1,result_type,structure,loop_state)?;
+    var usize fuel=metadata_budget::unlimited();
+    return static_bytes_argument_metered(source,s,p,table,signatures,at,depth,result_type,structure,loop_state,0,ref mut fuel);
+}
+fn Result<static_source::View,errors::Error> static_bytes_argument_metered(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
+    usize at,usize depth,u8 result_type,usize structure,ref mut loops::State loop_state,usize deadline,ref mut usize fuel){
+    let static_source::View text=static_view_metered(source,s,p,table,signatures,depth+1,result_type,structure,loop_state,deadline,fuel)?;
     if(text.kind!=2){return .err(errors::make(3,at));}
-    let usize close=lexer::punctuation(source,s,41)?;let usize made=static_builders::bytes(p,text.site,at)?;
+    let usize close=lexer::punctuation_metered(source,s,41,deadline,fuel)?;
+    discard metadata_budget::visit(fuel,deadline,at)?;
+    let usize made=static_builders::bytes(p,text.site,at)?;
     if(text.owned){let usize closed=static_builders::close(p,text.site,at)?;}
     return .ok(static_source::View{.site=made,.kind=1,.owned=true});
 }
 fn Result<static_source::View,errors::Error> static_ranges(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
     ref static_source::View parent,usize depth,u8 result_type,usize structure,ref mut loops::State loop_state){
+    var usize fuel=metadata_budget::unlimited();
+    return static_ranges_metered(source,s,p,table,signatures,parent,depth,result_type,structure,loop_state,0,ref mut fuel);
+}
+fn Result<static_source::View,errors::Error> static_ranges_metered(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
+    ref static_source::View parent,usize depth,u8 result_type,usize structure,ref mut loops::State loop_state,usize deadline,ref mut usize fuel){
     var static_source::View value=static_source::View{.site=parent.site,.kind=parent.kind,.owned=parent.owned};
-    while(static_source::range_follows(source,s)?){
+    while(static_source::range_follows_metered(source,s,deadline,fuel)?){
         if(value.kind!=1){return .err(errors::make(3,s.begin));}
-        let static_source::View next=if(value.owned){static_owned_range(source,s,p,table,signatures,value.site,depth,result_type,structure,loop_state)?}
-            else{static_range(source,s,p,table,signatures,value.site,depth,result_type,structure,loop_state)?};
+        let static_source::View next=if(value.owned){static_owned_range(source,s,p,table,signatures,value.site,depth,result_type,structure,loop_state,deadline,fuel)?}
+            else{static_range(source,s,p,table,signatures,value.site,depth,result_type,structure,loop_state,deadline,fuel)?};
         value=next;
     }return .ok(value);
 }
 fn Result<static_source::View,errors::Error> static_owned_range(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
-    usize parent,usize depth,u8 result_type,usize structure,ref mut loops::State loop_state){
+    usize parent,usize depth,u8 result_type,usize structure,ref mut loops::State loop_state,usize deadline,ref mut usize fuel){
     let usize at=s.begin;var locals::Table names=locals::snapshot(table);
     if(signatures.reference_returns){let usize roots=reference_results::publish(p,signatures,ref mut names,parent,at)?;}
     let usize hidden=locals::declare(ref mut names,at,at,192+parent,false)?;
-    let static_source::View child=static_range(source,s,p,ref names,signatures,parent,depth,result_type,structure,loop_state)?;
+    let static_source::View child=static_range(source,s,p,ref names,signatures,parent,depth,result_type,structure,loop_state,deadline,fuel)?;
     let usize closed=if(signatures.reference_returns){
         let usize keep=reference_results::owners(p,signatures,192+child.site,0,at)?;
         reference_results::release(p,ref names,table.count,keep,at)?
@@ -380,16 +400,18 @@ fn Result<static_source::View,errors::Error> static_owned_range(ref u8[] source,
 }
 fn Result<static_source::View,errors::Error> static_range(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
-    usize parent,usize depth,u8 result_type,usize structure,ref mut loops::State loop_state){
-    let usize at=s.begin;let usize open=lexer::punctuation(source,s,91)?;
+    usize parent,usize depth,u8 result_type,usize structure,ref mut loops::State loop_state,usize deadline,ref mut usize fuel){
+    let usize at=s.begin;let usize open=lexer::punctuation_metered(source,s,91,deadline,fuel)?;
     let usize lo=if(s.kind==46){ir::integer(p,0,12,at)?}
-        else{expression(source,s,p,table,signatures,1,depth+1,12,result_type,structure,loop_state)?};
+        else{assignment_operand(source,s,p,table,signatures,depth+1,12,result_type,structure,loop_state,deadline,fuel)?};
     if(p.types[lo]!=12){return .err(errors::make(3,at));}
-    let usize first=lexer::punctuation(source,s,46)?;let usize second=lexer::punctuation(source,s,46)?;
+    let usize first=lexer::punctuation_metered(source,s,46,deadline,fuel)?;let usize second=lexer::punctuation_metered(source,s,46,deadline,fuel)?;
     let usize hi=if(s.kind==93){static_builders::scalar(p,parent,0,true,at)?}
-        else{expression(source,s,p,table,signatures,1,depth+1,12,result_type,structure,loop_state)?};
+        else{assignment_operand(source,s,p,table,signatures,depth+1,12,result_type,structure,loop_state,deadline,fuel)?};
     if(p.types[hi]!=12){return .err(errors::make(3,at));}
-    let usize close=lexer::punctuation(source,s,93)?;let usize site=static_builders::range(p,parent,lo,hi,at)?;
+    let usize close=lexer::punctuation_metered(source,s,93,deadline,fuel)?;
+    discard metadata_budget::visit(fuel,deadline,at)?;
+    let usize site=static_builders::range(p,parent,lo,hi,at)?;
     return .ok(static_source::View{.site=site,.kind=1,.owned=true});
 }
 fn Result<usize,errors::Error> static_declaration(ref u8[] source,ref mut lexer::State s,
@@ -1174,11 +1196,11 @@ fn Result<usize,errors::Error> slice_actual(ref u8[] source,ref mut lexer::State
 fn Result<usize,errors::Error> reference_argument(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref mut locals::Table names,ref functions::Table signatures,
     usize parameter,usize depth,u8 result_type,usize structure,ref mut loops::State loop_state,usize deadline,ref mut usize fuel){
-    if(!reference_calls::image_argument(source,s,names)? && !reference_calls::returned_atom(source,s,names,signatures)?){
+    if(!reference_calls::image_argument_metered(source,s,names,deadline,fuel)? && !reference_calls::returned_atom_metered(source,s,names,signatures,deadline,fuel)?){
         return slice_argument(source,s,p,names,signatures,parameter,depth,result_type,structure,loop_state,deadline,fuel);
     }
-    let usize at=s.begin;let usize prefix=lexer::word(source,s,b"ref")?;
-    let static_source::View value=static_view(source,s,p,names,signatures,depth,result_type,structure,loop_state)?;
+    let usize at=s.begin;let usize prefix=lexer::word_metered(source,s,b"ref",deadline,fuel)?;
+    let static_source::View value=static_view_metered(source,s,p,names,signatures,depth,result_type,structure,loop_state,deadline,fuel)?;
     if(value.kind!=1 || (s.kind!=44 && s.kind!=41)){return .err(errors::make(3,at));}
     if(value.owned){
         if(signatures.reference_returns){let usize roots=reference_results::publish(p,signatures,names,value.site,at)?;}
@@ -2296,7 +2318,7 @@ fn Result<usize,errors::Error> output_statement(ref u8[] source,ref mut lexer::S
         static_source::binding(table,locals::find(source,table,s.begin,s.end)) ||
         reference_calls::returned_atom(source,s,table,signatures)?;
     if(image){
-        let static_source::View view=static_view(source,s,p,ref names,signatures,depth,result_type,structure,loop_state)?;
+        let static_source::View view=static_view_metered(source,s,p,ref names,signatures,depth,result_type,structure,loop_state,deadline,fuel)?;
         if(view.kind!=1){return .err(errors::make(3,at));}site=view.site;kind=1;
         if(view.owned){
             let usize roots=reference_results::publish(p,signatures,ref mut names,site,at)?;

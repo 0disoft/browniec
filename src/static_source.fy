@@ -5,6 +5,8 @@ import aggregate_probe_work as probes;
 import locals as locals;
 import ir as ir;
 import errors as errors;
+import metadata_budget as budget;
+import argument_name_work as names_work;
 import literal_collection as literals;
 import static_builders as builders;
 
@@ -37,33 +39,39 @@ pub fn Result<bool,errors::Error> candidate(ref u8[] source,ref lexer::State s,r
 }
 
 // Pure atoms stay separate from effectful endpoint parsing in compiler.
-pub fn Result<View,errors::Error> atom(ref u8[] source,ref mut lexer::State s,
-    ref mut ir::Program p,ref locals::Table names,ref literals::Index index,usize depth){
+pub fn Result<View,errors::Error> atom_metered(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref locals::Table names,ref literals::Index index,usize depth,usize deadline,ref mut usize fuel){
     let usize at=s.begin;if(depth>32 || !index.enabled){return .err(errors::make(4,at));}
     if(s.kind==3 || s.kind==4){
-        let usize row=literals::find(index,s.begin,s.end)?;
+        let usize row=literals::find_metered(index,s.begin,s.end,deadline,fuel)?;
+        discard budget::visit(fuel,deadline,at)?;
         let usize made=builders::open(p,index.literals[row],index.kinds[row],index.lengths[row],at)?;
-        let usize next=lexer::next(source,s)?;
+        let usize next=lexer::next_metered(source,s,deadline,fuel)?;
         return .ok(View{.site=made,.kind=index.kinds[row],.owned=true});
     }
-    if(word(source,s,b"ref")){let usize reference=lexer::next(source,s)?;}
+    if(word(source,s,b"ref")){let usize reference=lexer::next_metered(source,s,deadline,fuel)?;}
     if(s.kind!=2){return .err(errors::make(3,at));}
-    let usize local=locals::find(source,names,s.begin,s.end);
+    let usize local=names_work::local_metered(source,names,s.begin,s.end,deadline,fuel)?;
     if(!binding(names,local)){return .err(errors::make(3,at));}
-    let usize encoded=names.registers[local];let usize next=lexer::next(source,s)?;
+    let usize encoded=names.registers[local];let usize next=lexer::next_metered(source,s,deadline,fuel)?;
     return .ok(View{.site=site(encoded),.kind=kind(encoded),.owned=false});
 }
 // Lookahead never lowers/evaluates endpoints. Ignore dots in nested expressions.
 pub fn Result<bool,errors::Error> range_follows(ref u8[] source,ref lexer::State s){
+    var usize fuel=budget::unlimited();
+    return range_follows_metered(source,s,0,ref mut fuel);
+}
+pub fn Result<bool,errors::Error> range_follows_metered(ref u8[] source,ref lexer::State s,
+    usize deadline,ref mut usize fuel){
     if(s.kind!=91){return .ok(false);}
     var lexer::State look=lexer::snapshot(s);var usize brackets=1;var usize groups=0;
-    while(brackets!=0){let usize next=lexer::next(source,ref mut look)?;
+    while(brackets!=0){let usize next=lexer::next_metered(source,ref mut look,deadline,fuel)?;
         if(look.kind==0){return .err(errors::make(2,s.begin));}
         if(look.kind==91){brackets+=1;}else if(look.kind==93){brackets-=1;}
         else if(look.kind==40 || look.kind==123){groups+=1;}
         else if(look.kind==41 || look.kind==125){if(groups==0){return .err(errors::make(2,look.begin));}groups-=1;}
         else if(look.kind==46 && brackets==1 && groups==0){
-            let usize dot=lexer::next(source,ref mut look)?;if(look.kind==46){return .ok(true);}
+            let usize dot=lexer::next_metered(source,ref mut look,deadline,fuel)?;if(look.kind==46){return .ok(true);}
         }
     }return .ok(false);
 }

@@ -1,5 +1,5 @@
-- Latest runtime checkpoint (2026-11-22): [Catalog output statement Fuel](docs/engineering/restricted-worker.md#catalog-output-statement-fuel)
-  passes the enclosing compile budget through statement blocks and byte emit operands.
+- Latest runtime checkpoint (2026-11-22): [Static view operand Fuel](docs/engineering/restricted-worker.md#static-view-operand-fuel)
+  meters static view construction and range operands under configured output and budgeted reference arguments.
 
 # Brownie C agent guidance
 
