@@ -17,6 +17,10 @@ pub fn Result<Pattern,errors::Error> parse_result(ref u8[] source,ref mut lexer:
     var usize fuel=budget::unlimited();
     return parse_choice(source,s,false,0,ref mut fuel);
 }
+pub fn Result<Pattern,errors::Error> parse_result_metered(ref u8[] source,ref mut lexer::State s,
+    usize deadline,ref mut usize fuel){
+    return parse_choice(source,s,false,deadline,fuel);
+}
 pub fn Result<Pattern,errors::Error> parse_metered(ref u8[] source,ref mut lexer::State s,
     u8 tag,usize deadline,ref mut usize fuel){
     return parse_choice(source,s,tag<=4,deadline,fuel);

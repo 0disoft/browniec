@@ -102,5 +102,17 @@ pub fn Result<bool,errors::Error> advance(ref u8[] source,ref mut State w,ref mu
     return .err(errors::make(5,s.begin));
 }
 // Compatibility owners drain only this kernel; callers needing yields use advance.
-pub fn Result<State,errors::Error> inspect(ref u8[] source,lexer::State s,u8 mode){var State w=begin(s,mode);var budget::State meter=budget::empty();
-    while(!w.done){let usize allowance=budget::reset(ref mut meter,s.begin)?;let bool done=advance(source,ref mut w,ref mut meter)?;}return .ok(w);}
+pub fn Result<State,errors::Error> inspect(ref u8[] source,lexer::State s,u8 mode){
+    var usize fuel=budget::unlimited();
+    return inspect_metered(source,s,mode,0,ref mut fuel);
+}
+pub fn Result<State,errors::Error> inspect_metered(ref u8[] source,lexer::State s,u8 mode,
+    usize deadline,ref mut usize fuel){
+    var State w=begin(s,mode);var budget::State meter=budget::empty();
+    while(!w.done){
+        discard budget::visit(fuel,deadline,s.begin)?;
+        discard budget::reset(ref mut meter,s.begin)?;
+        discard advance(source,ref mut w,ref mut meter)?;
+    }
+    return .ok(w);
+}

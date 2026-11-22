@@ -1297,6 +1297,26 @@ Windows development and /O2 each passed 110 configured, 34 catalog,
 five managed and four compile-stop cases. All 456 input hashes matched.
 Local receipt: `build/restricted-worker/20261122T004301011863Z/receipt.json`.
 
+### Catalog value expression Fuel
+
+Catalog scalar declarations and returns pass their compile deadline and
+Fuel into raw expression lowering. Grouped if expressions and switch
+expressions reuse that balance through arm classification, grouped
+tokens, scalar tails, nested statements and reverse lexical cleanup.
+Both direct and saved host Result switches meter their patterns and
+binding lookup. Host invocation argument lowering retains its existing
+checkpoints.
+
+The fixture combines a saved Result in an if arm with a direct host
+Result switch in the return expression. At 3,232,708 compile Fuel it
+returns 77 and emits before. This is 487 units more than the previous
+compiler. At 3,232,707 it returns compile_limit and publishes neither
+the result nor the output.
+
+Windows development and /O2 each passed 110 configured, 36 catalog,
+five managed and four compile-stop cases. All 456 input hashes matched.
+Local receipt: `build/restricted-worker/20261122T005326875171Z/receipt.json`.
+
 ## Windows verification
 
 Run `python -B tools/verify-restricted-worker.py`. The development and optimized

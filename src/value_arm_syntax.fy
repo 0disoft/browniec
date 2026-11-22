@@ -135,13 +135,26 @@ pub fn Result<Conditional,errors::Error> conditional_atom_raw(ref u8[] source,re
 pub fn Result<bool,errors::Error> regular(ref u8[] source,ref lexer::State s){
     let work::State w=work::inspect(source,*s,4)?;return work::prepared(ref w);
 }
+pub fn Result<bool,errors::Error> regular_metered(ref u8[] source,ref lexer::State s,usize deadline,ref mut usize fuel){
+    let work::State w=work::inspect_metered(source,*s,4,deadline,fuel)?;return work::prepared(ref w);
+}
 pub fn Result<bool,errors::Error> constructor_atom(ref u8[] source,ref lexer::State s){
     let work::State w=work::inspect(source,*s,12)?;return work::prepared(ref w);
+}
+pub fn Result<bool,errors::Error> constructor_atom_metered(ref u8[] source,ref lexer::State s,usize deadline,ref mut usize fuel){
+    let work::State w=work::inspect_metered(source,*s,12,deadline,fuel)?;return work::prepared(ref w);
 }
 pub fn Result<bool,errors::Error> conditional_value(ref u8[] source,ref lexer::State s){
     let work::State w=work::inspect(source,*s,2)?;return work::prepared(ref w);
 }
+pub fn Result<bool,errors::Error> conditional_value_metered(ref u8[] source,ref lexer::State s,usize deadline,ref mut usize fuel){
+    let work::State w=work::inspect_metered(source,*s,2,deadline,fuel)?;return work::prepared(ref w);
+}
 pub fn Result<Conditional,errors::Error> conditional_atom(ref u8[] source,ref lexer::State s){
     let work::State w=work::inspect(source,*s,1)?;let bool valid=work::prepared(ref w)?;
+    return .ok(Conditional{.valid=valid,.groups=w.groups,.suffix=w.suffix});
+}
+pub fn Result<Conditional,errors::Error> conditional_atom_metered(ref u8[] source,ref lexer::State s,usize deadline,ref mut usize fuel){
+    let work::State w=work::inspect_metered(source,*s,1,deadline,fuel)?;let bool valid=work::prepared(ref w)?;
     return .ok(Conditional{.valid=valid,.groups=w.groups,.suffix=w.suffix});
 }

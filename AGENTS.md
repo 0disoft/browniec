@@ -1,5 +1,5 @@
-- Latest runtime checkpoint (2026-11-22): [Value expression arm Fuel](docs/engineering/restricted-worker.md#value-expression-arm-fuel)
-  passes the enclosing compile budget through staged if and switch arms.
+- Latest runtime checkpoint (2026-11-22): [Catalog value expression Fuel](docs/engineering/restricted-worker.md#catalog-value-expression-fuel)
+  passes the enclosing compile budget through catalog scalar declarations, returns and host Result value arms.
 
 # Brownie C agent guidance
 
