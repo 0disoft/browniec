@@ -828,7 +828,50 @@ def verify_project_host(run, need, image, folder, env):
     check(expected_exit=3, kind='compile_limit')
     policy['compile']['fuel'] = binding_fuel
     check()
+    source.write_bytes(original_source)
+    policy['compile']['fuel'] = original_compile_fuel
+    policy_file.write_text(json.dumps(policy), encoding='utf-8')
     return 43
+
+
+def verify_project_process_command(run, need, image, adapter, folder, env):
+    target = folder / 'catalog-project'
+    manifest = target / 'project.json'
+    policy_file = target / 'policy.json'
+    config_file = target / 'run.json'
+    catalog = target / 'catalog.json'
+    policy = json.loads(policy_file.read_bytes())
+    config = json.loads(config_file.read_bytes())
+    args = [image, '--internal-project-process-broker', 'run', manifest, policy_file, config_file, catalog]
+
+    def check(expected_exit=0, kind=None, mode='o', import_id='0', revision='v1', path=adapter):
+        runtime = dict(env, BC_TEST_RESTRICTED_PROCESS=mode)
+        data = json.loads(run([*args, import_id, revision, path], cwd=folder, env=runtime,
+                              expected_exit=expected_exit, no_stderr=True))
+        need(data['schema'] == 'browniec.result/v2' and data['command'] == 'run',
+             f'Unexpected process command result: {data}')
+        if kind:
+            need(data['error']['kind'] == kind and data['return_i32'] is None and 'output_b64' not in data,
+                 f'Failed process command published result or output: {data}')
+        else:
+            need(data['status'] == 'completed' and data['return_i32'] == 77 and data['error'] is None and
+                 base64.b64decode(data['output_b64'], validate=True) == b'before', f'Process route failed: {data}')
+        need(not list(Path(env['TEMP']).iterdir()), 'process command left staged resources')
+
+    check()
+    check(4, 'unavailable', revision='v2')
+    check(4, 'unavailable', import_id='1')
+    check(4, 'unavailable', path=adapter.name)
+    check(4, 'unavailable', mode='w')
+    config['grants'] = ['brownie.output.emit']
+    config_file.write_text(json.dumps(config), encoding='utf-8')
+    check(4, 'unavailable')
+    config['grants'] = config['requires']
+    config_file.write_text(json.dumps(config), encoding='utf-8')
+    policy['worker']['io_idle_ms'] = 1500
+    policy_file.write_text(json.dumps(policy), encoding='utf-8')
+    check(5, 'deadline', mode='s')
+    return 7
 
 
 def main():
@@ -853,6 +896,7 @@ def main():
              'native/restricted_worker_broker.c', 'native/restricted_worker_broker.h',
              'native/restricted_worker_stage.c', 'native/restricted_worker_stage.h',
              'native/restricted_worker_process_adapter.c', 'native/restricted_worker_process_adapter.h',
+             'native/restricted_worker_process_route.h',
              'native/host_adapter_process.c', 'native/host_adapter_process.h',
              'native/windows-scalar-worker.c', 'native/windows-scalar-worker.h',
              'native/runtime-engine/clock.inc',
@@ -929,6 +973,8 @@ def main():
                 managed_project_cases = verify_managed_project(run, helper.need, scalar, folder, stage_env)
                 configured_project_cases = verify_configured_project(run, helper.need, scalar, folder, stage_env)
                 project_host_cases = verify_project_host(run, helper.need, scalar, folder, stage_env)
+                project_process_cases = verify_project_process_command(
+                    run, helper.need, scalar, child, folder, stage_env)
                 command.append(scalar)
             evidence = json.loads(run(command, cwd=folder, env=runtime_env))
             helper.need({key: value for key, value in evidence.items()
@@ -952,6 +998,7 @@ def main():
                 receipt['profiles'][-1]['managedProjectCases'] = managed_project_cases
                 receipt['profiles'][-1]['configuredProjectCases'] = configured_project_cases
                 receipt['profiles'][-1]['projectHostCases'] = project_host_cases
+                receipt['profiles'][-1]['projectProcessCommandCases'] = project_process_cases
             print(f'PASS {profile}: {evidence}', flush=True)
         helper.need(all(helper.sha((ROOT / i['path']).read_bytes()) == i['sha256'] for i in receipt['inputs']),
                     'Inputs changed during verification')

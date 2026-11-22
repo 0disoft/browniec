@@ -594,6 +594,33 @@ restricted command still requires its catalog-backed route configuration.
 All 458 verification input hashes matched.
 Local receipt: `build/restricted-worker/20261122T020001685415Z/receipt.json`.
 
+### Restricted process adapter command
+
+The private parent command accepts one trusted Windows executable and
+explicit catalog import and revision.
+
+`browniec --internal-project-process-broker run PROJECT POLICY RUN CATALOG ID REVISION EXE [INPUT]`
+
+The parent loads the shared catalog and run configuration, checks the
+revision and declared grant, and matches manifest authority before
+launching the confined guest. No executable path is passed to the guest.
+The parent validates the received import ID and typed arguments before
+starting an adapter. The BCA1 frame binds a random nonzero run ID, the
+broker request correlation and the catalog digest. Both header and typed
+body are checked before a reply becomes eligible for guest delivery.
+The broker checks the combined guest and adapter wire allowance before
+launch and owns the adapter until its I/O and process are collected.
+
+The command remains private. It uses the existing staged output and
+JSON v2 publication gate. Public CLI selection and shared adapter
+resource accounting remain open.
+
+Windows development and /O2 each passed seven command cases and 43
+reply-table cases. The command cases cover two successful calls, revision
+and import rejection, relative path rejection, a crossed response, missing
+grant, and expiry during a partial reply. All 459 input hashes matched.
+Local receipt: `build/restricted-worker/20261122T021820510226Z/receipt.json`.
+
 ### Catalog guest host transfer stops
 
 A cancelled Engine Instance reports a run error with no source location.

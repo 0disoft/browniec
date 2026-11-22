@@ -18,6 +18,8 @@
     "worker_scalar_broker::validate_result",
     "worker_project_broker::validate_result",
     "worker_project_broker::respond_host",
+    "worker_project_broker::process_header",
+    "worker_project_broker::process_reply",
     "worker_scalar_command::compute",
     "runtime_engine::bind_inner",
     "runtime_engine::begin_inner",

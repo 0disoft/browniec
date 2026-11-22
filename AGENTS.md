@@ -1,5 +1,5 @@
-- Latest runtime checkpoint (2026-11-22): [Broker-owned process adapters](docs/engineering/restricted-worker.md#broker-owned-process-adapters)
-  connect real Windows adapter processes to deferred catalog host exchanges in the native harness.
+- Latest runtime checkpoint (2026-11-22): [Restricted process adapter command](docs/engineering/restricted-worker.md#restricted-process-adapter-command)
+  connects a parent-owned, catalog-validated process route to the confined project run.
 
 # Brownie C agent guidance
 

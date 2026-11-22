@@ -19,6 +19,9 @@ pub resource Route { adapter::Route signature; bytes::Buffer executable; cleanup
 // The host's slot owns the OS lease and must outlive this dispatch.
 pub resource Session { adapter::Dispatch request; ptr mut void slot; usize generation; cleanup { } }
 
+pub fn ref adapter::Route signature(ref Route route){return ref route.signature;}
+pub fn ref u8[] executable(ref Route route){return bytes::view(ref route.executable);}
+
 pub fn Result<Route,adapter::Error> register(ref catalog::Catalog imports,usize import_id,
     ref u8[] revision,ref u8[] executable){
     let ref u8[] required=switch(catalog::adapter_revision(imports,import_id)){

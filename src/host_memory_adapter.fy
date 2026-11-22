@@ -1,6 +1,7 @@
 module host_memory_adapter;
 
 import host_catalog as catalog;
+import host_exchange as host;
 import host_adapter_frame as frames;
 import host_program as programs;
 import host_wire as wire;
@@ -47,6 +48,31 @@ fn bool valid_request(ref Signature signature,ref u8[] expected){
     let Signature facts=*signature;
     return wire::decode_request(expected,ref facts.arguments[..facts.count],byte_limit()).is_ok;
 }
+pub fn usize route_id(ref Route route){return route.signature.import_id;}
+
+fn engine::HostRequestInfo broker_info(ref Route route,usize run,usize request,usize payload){
+    let Signature signature=route.signature;
+    return engine::HostRequestInfo{.run=run,.request=request,.import_id=signature.import_id,.payload_bytes=payload,
+        .catalog=host::Binding{.words=signature.digest},.deadline=0,.reply_limit=0};
+}
+pub fn Result<u8[64],Error> broker_header(ref Route route,usize run,usize request,ref u8[] payload){
+    if(!valid_request(ref route.signature,payload)){return .err(invalid());}
+    let engine::HostRequestInfo info=broker_info(route,run,request,payload.len);
+    return .ok(frames::header(ref info,0,payload.len));
+}
+pub fn Result<usize,Error> broker_reply_size(ref Route route,usize run,usize request,ref u8[] header,usize limit){
+    let engine::HostRequestInfo info=broker_info(route,run,request,0);
+    return switch(frames::reply_size(ref info,header,bounded_reply_limit(limit))){
+        case .ok(v):{.ok(v)}case .err(_):{.err(invalid())}
+    };
+}
+pub fn Result<u8,Error> broker_reply_kind(ref Route route,usize run,usize request,ref u8[] frame,usize limit){
+    let engine::HostRequestInfo info=broker_info(route,run,request,0);
+    return switch(frames::reply_kind(ref info,route.signature.result,frame,bounded_reply_limit(limit))){
+        case .ok(v):{.ok(v)}case .err(_):{.err(invalid())}
+    };
+}
+
 pub fn bool valid_pair(ref Route route,ref u8[] expected,u8 kind,ref u8[] response){
     let Signature signature=route.signature;
     return valid_request(ref signature,expected) && wire::decode_reply(kind,signature.result,response,byte_limit()).is_ok;

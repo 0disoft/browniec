@@ -1335,9 +1335,10 @@ static int process_fixture_child(wchar_t mode) {
     HANDLE input = GetStdHandle(STD_INPUT_HANDLE), output = GetStdHandle(STD_OUTPUT_HANDLE);
     uint8_t header[BC_ADAPTER_HEADER_BYTES], request[14], extra;
     static const uint8_t prefix[] = {1,0, 3,0,0,0, 4,0,0,0};
+    const uint8_t zero[8] = {0};
     DWORD count = 0;
     if (!child_read(input, header, sizeof(header)) || memcmp(header, "BCA1", 4) ||
-        header[4] || header[8] != 1 || (header[16] != 1 && header[16] != 2) || header[28] != 14 ||
+        header[4] || !memcmp(header + 8, zero, sizeof(zero)) || (header[16] != 1 && header[16] != 2) || header[28] != 14 ||
         !child_read(input, request, sizeof(request)) || memcmp(request, prefix, sizeof(prefix)) ||
         request[10] != 40 + header[16] ||
         ReadFile(input, &extra, 1, &count, NULL) || GetLastError() != ERROR_BROKEN_PIPE) return 30;
