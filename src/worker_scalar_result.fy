@@ -27,7 +27,8 @@ pub fn Outcome failed(errors::Error error){
 
 fn bool valid_error(errors::Error error, Expected expected){
     let u8 kind=error.kind;
-    if(kind==11 || kind==errors::deadline_kind() || (expected.run && kind==errors::memory_limit_kind())){
+    if(kind==11 || kind==errors::deadline_kind() ||
+        (expected.run && (kind==errors::memory_limit_kind() || kind==errors::cancelled_kind()))){
         return error.location==errors::absent_location() && error.offset==0;
     }
     if(!(kind>=1 && kind<=8 || kind>=12 && kind<=15 || kind==18 || (expected.run && expected.output && kind==20))){return false;}

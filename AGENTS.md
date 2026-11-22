@@ -1,5 +1,5 @@
-- Latest runtime checkpoint (2026-11-22): [Host transfer expiry](docs/engineering/restricted-worker.md#host-transfer-expiry)
-  verifies cancellation ordering and first-cause retention across live Windows request and reply frames.
+- Latest runtime checkpoint (2026-11-22): [Catalog guest host transfer stops](docs/engineering/restricted-worker.md#catalog-guest-host-transfer-stops)
+  admits the private cancelled run result so the broker can reap a stopped catalog guest without publishing its result or output.
 
 # Brownie C agent guidance
 

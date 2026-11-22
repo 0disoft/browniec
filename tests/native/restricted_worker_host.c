@@ -1094,6 +1094,96 @@ static void verify_project_compile_stop(const wchar_t *path, const wchar_t *dire
     bc_worker_pipes_close(&transport);
 }
 
+static size_t catalog_reply(void *context, uint64_t correlation, const uint8_t *request,
+    size_t length, uint8_t *reply, size_t capacity) {
+    static const uint8_t first_call[] = {0,0,0,0, 1,0, 3,0,0,0, 4,0,0,0, 41,0,0,0};
+    static const uint8_t first_reply[] = {0, 3,0,0,0, 4,0,0,0, 42,0,0,0};
+    unsigned *calls = context;
+    check(++*calls == 1 && correlation == 1 && length == sizeof(first_call) &&
+        !memcmp(request, first_call, length) && capacity >= sizeof(first_reply),
+        "dispatch only the first typed catalog request");
+    memcpy(reply, first_reply, sizeof(first_reply));
+    return sizeof(first_reply);
+}
+
+static void verify_catalog_host_stop(const wchar_t *path, const wchar_t *directory,
+    bool after_reply_header, bc_worker_gate_status cause) {
+    uint8_t start[4096], result[512] = {0}, request[18], reply[13];
+    FILE *file = NULL;
+    check(!fopen_s(&file, "catalog-compile.start", "rb"), "open catalog START fixture");
+    const size_t size = fread(start, 1, sizeof(start), file);
+    check(size && feof(file) && !ferror(file) && !fclose(file), "read catalog START fixture");
+
+    bc_worker_broker broker = {0};
+    const size_t wire = 5 * BC_WORKER_FRAME_BYTES + size + sizeof(result) + 1 +
+        2 * (2 * BC_WORKER_FRAME_BYTES + sizeof(request) + sizeof(reply));
+    const bc_worker_broker_amounts charge = {1,
+        sizeof(broker) + size + sizeof(result) + sizeof(request) + sizeof(reply),
+        commit_limit, wire};
+    bc_worker_broker_budget budget = {.limit = charge};
+    unsigned calls = 0;
+    wchar_t command[] = L"worker --internal-project-worker";
+    const bc_worker_broker_run run = {
+        .budget = &budget, .application = path, .command_line = command, .directory = directory,
+        .profile = profile, .commit_bytes = commit_limit, .cpu_ms = 2000,
+        .startup_ms = 4000, .io_idle_ms = 4000, .shutdown_grace_ms = 2500,
+        .deadline = clock_ticks() + 100000000ULL, .wire_limit = wire,
+        .request = start, .request_length = size, .result = result, .result_capacity = sizeof(result),
+        .validate = reject_callback,
+        .host = {catalog_reply, &calls, request, reply, sizeof(request), sizeof(reply), 2}
+    };
+    check(bc_worker_broker_start(&broker, &run) == ERROR_SUCCESS &&
+        same_charge(budget.reserved, charge), "launch catalog guest with exact broker reservation");
+    HANDLE witness = NULL;
+    check(DuplicateHandle(GetCurrentProcess(), broker.worker.process, GetCurrentProcess(),
+        &witness, SYNCHRONIZE | PROCESS_QUERY_LIMITED_INFORMATION, FALSE, 0),
+        "retain the catalog worker exit witness");
+    bool at_transfer = false;
+    while (broker.gate.status == BC_WORKER_GATE_PENDING && broker.phase != BC_WORKER_BROKER_FINISH) {
+        bc_worker_broker_step(&broker);
+        at_transfer = after_reply_header ?
+            broker.phase == BC_WORKER_BROKER_SEND_HOST_REPLY && broker.tx.sent == BC_WORKER_FRAME_BYTES :
+            broker.phase == BC_WORKER_BROKER_READ_RESULT && broker.rx.status == BC_WORKER_RX_BODY &&
+            broker.rx.received.kind == BC_WORKER_HOST_REQUEST;
+        if (at_transfer) break;
+        if (broker.io.pipe || broker.phase == BC_WORKER_BROKER_WAIT_EXIT) Sleep(1);
+    }
+    check(at_transfer && calls == (after_reply_header ? 1u : 0u),
+        "reach the requested transfer before settling the catalog guest");
+    if (cause == BC_WORKER_GATE_CANCELLED)
+        check(bc_worker_broker_cancel(&broker) == cause, "cancel the in-flight catalog transfer");
+    broker.phase_deadline = clock_ticks();
+    check(bc_worker_broker_step(&broker) == cause &&
+        bc_worker_broker_cancel(&broker) == cause, "preserve the first catalog transfer outcome");
+    const uint64_t reap_limit = clock_ticks() + 50000000ULL;
+    size_t drained = 0;
+    do {
+        if (broker.phase == BC_WORKER_BROKER_DRAIN_EOF && bc_worker_rx_frame(&broker.rx))
+            drained = broker.rx.received.length;
+        size_t length = 123;
+        check(!bc_worker_broker_take(&broker, &length) && length == 123 &&
+            clock_ticks() < reap_limit && broker.gate.status == cause &&
+            same_charge(budget.reserved, charge), "hold the cause and quota without publishing");
+        Sleep(1);
+    } while (!bc_worker_broker_close(&broker));
+
+    DWORD code = STILL_ACTIVE;
+    static const uint8_t prefix[] = {8, 16, 0, 0};
+    static const char cancelled[] = "{\"schema\":\"browniec.worker-result/v1\",\"status\":\"error\","
+        "\"kind\":33,\"location\":2,\"offset\":0}";
+    const bool exited = WaitForSingleObject(witness, 0) == WAIT_OBJECT_0 && GetExitCodeProcess(witness, &code);
+    if (!exited || code != 0)
+        fprintf(stderr, "catalog stop: after reply header=%d, cause=%d, exit=%lu, result=%.*s\n",
+            after_reply_header, cause, code, (int)sizeof(result) - 4, (const char *)result + 4);
+    check(exited && code == 0 && CloseHandle(witness), "catalog worker consumes CANCEL and exits cleanly");
+    check(drained == sizeof(prefix) + sizeof(cancelled) - 1 &&
+        !memcmp(result, prefix, sizeof(prefix)) &&
+        !memcmp(result + sizeof(prefix), cancelled, sizeof(cancelled) - 1) &&
+        calls == (after_reply_header ? 1u : 0u) &&
+        same_charge(budget.reserved, (bc_worker_broker_amounts){0}),
+        "drain only the cancelled outcome and refund the catalog session");
+}
+
 static void verify_parent_broker(const wchar_t *image, const wchar_t *directory,
     const wchar_t *name, const wchar_t *operation, const wchar_t *source,
     DWORD expected_exit, const char *expected_output) {
@@ -1274,6 +1364,10 @@ int wmain(int argc, wchar_t **argv) {
         verify_project_compile_stop(argv[2], directory, "configured-compile.start", true);
         verify_project_compile_stop(argv[2], directory, "catalog-compile.start", true);
         verify_project_compile_stop(argv[2], directory, "configured-compile.start", false);
+        verify_catalog_host_stop(argv[2], directory, false, BC_WORKER_GATE_CANCELLED);
+        verify_catalog_host_stop(argv[2], directory, true, BC_WORKER_GATE_CANCELLED);
+        verify_catalog_host_stop(argv[2], directory, false, BC_WORKER_GATE_EXPIRED);
+        verify_catalog_host_stop(argv[2], directory, true, BC_WORKER_GATE_EXPIRED);
     }
     check(CloseHandle(decoy), "close decoy");
     decoy = NULL;
@@ -1307,9 +1401,9 @@ int wmain(int argc, wchar_t **argv) {
            "\"ioLease\":true,\"brokerSessions\":6,\"hostBrokerCases\":11,\"sharedBudget\":true,"
            "\"phaseDeadlines\":true,\"gracefulCancelCases\":2,\"handleDelta\":0,\"staging\":true,"
            "\"scalarSessions\":%d,\"parentBrokerCases\":%d,\"projectWireRejections\":%d,"
-           "\"projectCompileStopCases\":%d,"
+           "\"projectCompileStopCases\":%d,\"catalogHostStopCases\":%d,"
            "\"parentColdHandleDelta\":%ld,\"coldHandleDelta\":%ld}\n",
            argc == 3 ? 5 : 0, argc == 3 ? 4 : 0, argc == 3 ? 2 : 0, argc == 3 ? 4 : 0,
-           parent_cold_delta, (long)final - (long)cold);
+           argc == 3 ? 4 : 0, parent_cold_delta, (long)final - (long)cold);
     return 0;
 }

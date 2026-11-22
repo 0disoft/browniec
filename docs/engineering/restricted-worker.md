@@ -558,6 +558,24 @@ Each profile passed the nine native host cases and the five managed and
 36 configured project cases using the freshly built executable. Local
 receipt: `build/restricted-worker/20261121T180147737119Z/receipt.json`.
 
+### Catalog guest host transfer stops
+
+A cancelled Engine Instance reports a run error with no source location.
+The private worker result codec accepts that error for runs with offset zero.
+Previously the worker rejected its own cancelled outcome and exited 4 before
+the broker could drain the terminal frame.
+
+The test launches the locked Brownie worker and runs a catalog-backed
+program that stages output and requests two typed host calls. It settles
+cancellation or an injected phase expiry just after the first request or
+reply header. In all four cases it checks the first cause, exact dispatch
+count, the drained cancelled frame with no output envelope, clean process
+exit, and refund after reaping. The parent result validator is never called.
+
+Windows development and /O2 each passed all four catalog stops. All
+456 input hashes matched. The native fixture reported zero net handles.
+Local receipt: `build/restricted-worker/20261122T014353196118Z/receipt.json`.
+
 ## Catalog-backed project execution
 
 The internal project host broker accepts an explicit catalog and, for run, a

@@ -939,7 +939,8 @@ def main():
                              phaseDeadlines=True, gracefulCancelCases=2, handleDelta=0, staging=True,
                              scalarSessions=5 if scalar else 0, parentBrokerCases=4 if scalar else 0,
                              projectWireRejections=2 if scalar else 0,
-                             projectCompileStopCases=4 if scalar else 0)
+                             projectCompileStopCases=4 if scalar else 0,
+                             catalogHostStopCases=4 if scalar else 0)
                         and type(evidence.get('coldHandleDelta')) is int
                         and evidence.get('parentColdHandleDelta') in ((0, 1) if scalar else (0,)),
                         f'Unexpected worker result: {evidence}')
