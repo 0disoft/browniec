@@ -1,5 +1,5 @@
-- Latest runtime checkpoint (2026-11-22): [Catalog host statement switch Fuel](docs/engineering/restricted-worker.md#catalog-host-statement-switch-fuel)
-  charges direct and saved host Result statement switches and their block dispatch to the enclosing compile budget.
+- Latest runtime checkpoint (2026-11-22): [Catalog host index token Fuel](docs/engineering/restricted-worker.md#catalog-host-index-token-fuel)
+  charges source scans and speculative qualified names while preparing the host call index.
 
 # Brownie C agent guidance
 

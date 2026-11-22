@@ -1350,6 +1350,21 @@ Windows development and /O2 each passed 110 configured, 39 catalog,
 five managed and four compile-stop cases. All 456 input hashes matched.
 Local receipt: `build/restricted-worker/20261122T011236301734Z/receipt.json`.
 
+### Catalog host index token Fuel
+
+The host call index uses the enclosing compile budget for its initial
+token, regular advances, and speculative qualified-name scans.
+An expired deadline or exhausted budget during speculation stops index
+preparation before it can fall back to ordinary scanning.
+
+The scalar fixture with a 192-byte comment inside a qualified host call
+returns 77 and emits before at 1,819,336 compile Fuel, up 164 units.
+One unit less returns compile_limit and publishes neither result nor output.
+
+Windows development and /O2 each passed 110 configured, 41 catalog,
+five managed and four compile-stop cases. All 456 input hashes matched.
+Local receipt: `build/restricted-worker/20261122T012019812286Z/receipt.json`.
+
 ## Windows verification
 
 Run `python -B tools/verify-restricted-worker.py`. The development and optimized

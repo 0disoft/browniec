@@ -217,8 +217,7 @@ fn Result<usize,errors::Error> collect_calls(ref u8[] source,ref mut lexer::Stat
             let usize mask=alias_mask(source,aliases,aliases.len,s.begin,s.end);
             if(absolute || mask!=0){
                 var lexer::State look=lexer::snapshot(s);
-                var usize name_fuel=budget::unlimited();
-                switch(raw_name(source,ref mut look,0,ref mut name_fuel)){
+                switch(raw_name(source,ref mut look,deadline,fuel)){
                 case .ok(item):{
                     let u8 id=import_id(source,item,imports,absolute,mask)?;
                     if(id==64){return .err(errors::make(3,item.begin));}
@@ -232,11 +231,11 @@ fn Result<usize,errors::Error> collect_calls(ref u8[] source,ref mut lexer::Stat
                     *s=look;
                     continue;
                 }
-                case .err(_):{}
+                case .err(e):{if(e.kind==4 || e.kind==errors::deadline_kind()){return .err(e);}}
                 };
             }
         }
-        discard lexer::next(source,s)?;
+        discard lexer::next_with_budget(source,s,deadline,fuel)?;
     }
     return .ok(count);
 }
@@ -264,7 +263,7 @@ fn Result<usize,errors::Error> module_calls(ref u8[] source,ref modules::Index i
         row+=1;
     }
     var lexer::State s=lexer::empty();
-    discard lexer::next(source,ref mut s)?;
+    discard lexer::next_with_budget(source,ref mut s,deadline,fuel)?;
     return collect_calls(source,ref mut s,code,imports,ref aliases[..used],base,calls,deadline,fuel);
 }
 
