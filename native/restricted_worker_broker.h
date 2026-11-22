@@ -106,6 +106,7 @@ typedef struct bc_worker_broker_run {
     DWORD startup_ms, io_idle_ms, shutdown_grace_ms;
     uint64_t deadline;
     size_t wire_limit;
+    size_t adapter_wire_bytes;
     const uint8_t *request;
     size_t request_length;
     uint8_t *result;
@@ -121,6 +122,8 @@ typedef struct bc_worker_broker_run {
    valid through close, along with the immutable validator expectation.
    Admission reserves a session, its control and span
    bytes, Job commit ceiling and wire envelope against the shared budget.
+   The trusted route supplies its additional process transport envelope in
+   adapter_wire_bytes. It shares the session wire limit and release condition.
    The absolute session deadline uses QueryInterruptTimePrecise ticks.
    Startup covers launch through READY; after READY each completed transfer
    renews the idle window within the session deadline.

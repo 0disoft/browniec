@@ -612,7 +612,7 @@ The broker checks the combined guest and adapter wire allowance before
 launch and owns the adapter until its I/O and process are collected.
 
 The command remains private. It uses the existing staged output and
-JSON v2 publication gate. Public CLI selection and shared adapter
+JSON v2 publication gate. Public CLI selection and further shared adapter
 resource accounting remain open.
 
 Windows development and /O2 each passed seven command cases and 43
@@ -627,6 +627,15 @@ adapter calls. A 13-byte limit returned `input_limit` with exit 5 and no
 published result or output. The staging directory was empty after both runs.
 All 459 verification input hashes matched.
 Local receipt: `build/restricted-worker/20261122T022321308639Z/receipt.json`.
+
+The native broker now charges the adapter transport envelope to the same
+session and shared wire budget as the guest transport. For the two-call
+fixture this adds 310 bytes, including two adapter headers, the bounded
+request and reply, and an EOF probe per call. Both Windows profiles reject
+either wire ceiling one byte below the combined charge before opening I/O,
+admit the exact charge, and refund after worker and adapter collection.
+All 459 input hashes matched, with zero net handles in both profiles.
+Local receipt: `build/restricted-worker/20261122T023158358295Z/receipt.json`.
 
 ### Catalog guest host transfer stops
 

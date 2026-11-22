@@ -110,6 +110,7 @@ typedef struct worker_exchange {
     bool project;
     bc_worker_broker_host host;
     const bc_worker_host_adapter *adapter;
+    size_t adapter_wire_bytes;
 } worker_exchange;
 
 typedef struct worker_limits {
@@ -138,6 +139,7 @@ static uint32_t run_broker(PSID sid, const wchar_t *image, const wchar_t *direct
         .profile = sid, .commit_bytes = limits->commit_bytes, .cpu_ms = limits->cpu_ms,
         .startup_ms = limits->startup_ms, .io_idle_ms = limits->idle_ms, .shutdown_grace_ms = limits->grace_ms,
         .deadline = deadline, .wire_limit = wire < limits->transport_bytes ? wire : limits->transport_bytes,
+        .adapter_wire_bytes = exchange->adapter_wire_bytes,
         .request = exchange->request, .request_length = exchange->request_length, .result = reply,
         .result_capacity = result_capacity, .validate = exchange->validate, .expectation = exchange->expectation,
         .host = exchange->host, .adapter = exchange->adapter
@@ -202,7 +204,7 @@ uint32_t bc_scalar_broker_invoke(const uint8_t *profile, size_t profile_length,
     put_le(request + 1, 4, fuel);
     memcpy(request + 5, source, source_length);
     const scalar_expectation expected = {run, source_length};
-    const worker_exchange exchange = {request, source_length + 5, validate_scalar, &expected, false, {0}, NULL};
+    const worker_exchange exchange = {request, source_length + 5, validate_scalar, &expected, false, {0}, NULL, 0};
     return invoke_broker(profile, profile_length, &exchange, &default_limits, reply, BC_SCALAR_RESULT_MAX, reply_length);
 }
 
@@ -241,7 +243,7 @@ uint32_t bc_project_broker_invoke(const uint8_t *request, size_t request_length,
         return 0;
     }
     const project_expectation expected = {run, lengths, count, output, output_limit};
-    worker_exchange exchange = {request, request_length, validate_project, &expected, true, {0}, NULL};
+    worker_exchange exchange = {request, request_length, validate_project, &expected, true, {0}, NULL, 0};
     worker_limits limits = default_limits;
     if (config_size && !read_worker_limits(configuration, config_size, &limits)) return 0;
     if (!context) return invoke_broker(NULL, 0, &exchange, &limits, reply, capacity, reply_length);
@@ -261,8 +263,9 @@ uint32_t bc_project_broker_invoke(const uint8_t *request, size_t request_length,
             calls > (limits.transport_bytes - fixed) / (per_call + adapter_wire) ||
             BCryptGenRandom(NULL, (uint8_t *)&codec.run, sizeof(codec.run),
                 BCRYPT_USE_SYSTEM_PREFERRED_RNG) < 0 || !codec.run) return 0;
+        exchange.adapter_wire_bytes = calls * adapter_wire;
         adapter = bc_worker_process_route_create(path, path_length, reply_cap - 1,
-            calls, calls * adapter_wire, &codec, encode_project_process, size_project_process_reply,
+            calls, exchange.adapter_wire_bytes, &codec, encode_project_process, size_project_process_reply,
             decode_project_process);
         if (!adapter) return 0;
         exchange.adapter = &bc_worker_process_callbacks;

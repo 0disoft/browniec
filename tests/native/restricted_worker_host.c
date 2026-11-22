@@ -1386,12 +1386,12 @@ static void verify_catalog_process(const wchar_t *path, const wchar_t *directory
     };
     bc_worker_broker broker = {0};
     const size_t wire = 5 * BC_WORKER_FRAME_BYTES + size + sizeof(result) + 1 +
-        2 * (2 * BC_WORKER_FRAME_BYTES + sizeof(request) + sizeof(reply));
+        2 * (2 * BC_WORKER_FRAME_BYTES + sizeof(request) + sizeof(reply) + adapter_wire);
     const bc_worker_broker_amounts charge = {1,
         sizeof(broker) + size + sizeof(result) + sizeof(request) + sizeof(reply), commit_limit, wire};
     bc_worker_broker_budget budget = {.limit = charge};
     wchar_t command[] = L"worker --internal-project-worker";
-    const bc_worker_broker_run run = {
+    bc_worker_broker_run run = {
         .budget = &budget, .application = path, .command_line = command, .directory = directory,
         .profile = profile, .commit_bytes = commit_limit, .cpu_ms = 2000,
         .startup_ms = 4000, .io_idle_ms = 4000, .shutdown_grace_ms = 2500,
@@ -1399,10 +1399,21 @@ static void verify_catalog_process(const wchar_t *path, const wchar_t *directory
         .request = start, .request_length = size, .result = result, .result_capacity = sizeof(result),
         .validate = success ? catalog_process_result : reject_callback,
         .host = {NULL, &adapter, request, reply, sizeof(request), sizeof(reply), 2},
-        .adapter = &bc_worker_process_callbacks
+        .adapter = &bc_worker_process_callbacks, .adapter_wire_bytes = 2 * adapter_wire
     };
+    --run.wire_limit;
+    check(bc_worker_broker_start(&broker, &run) == ERROR_NOT_ENOUGH_QUOTA &&
+        !broker.io.event && same_charge(budget.reserved, (bc_worker_broker_amounts){0}),
+        "reject a session wire limit one byte short of the combined envelope");
+    ++run.wire_limit;
+    --budget.limit.wire_bytes;
+    check(bc_worker_broker_start(&broker, &run) == ERROR_NOT_ENOUGH_QUOTA &&
+        !broker.io.event && same_charge(budget.reserved, (bc_worker_broker_amounts){0}),
+        "reject an aggregate wire limit one byte short of the combined envelope");
+    ++budget.limit.wire_bytes;
     check(SetEnvironmentVariableW(L"BC_TEST_RESTRICTED_PROCESS", mode) &&
-        !bc_worker_broker_start(&broker, &run), "launch catalog guest with process adapter");
+        !bc_worker_broker_start(&broker, &run) && same_charge(budget.reserved, charge),
+        "launch catalog guest at the exact combined wire limit");
     while (broker.gate.status == BC_WORKER_GATE_PENDING && broker.phase != BC_WORKER_BROKER_FINISH) {
         bc_worker_broker_step(&broker);
         if (stop && codec.headers == 1 && broker.phase == BC_WORKER_BROKER_WAIT_HOST) {
