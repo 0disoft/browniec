@@ -1,5 +1,5 @@
-- Latest runtime checkpoint (2026-11-22): [Large-source token Fuel](docs/engineering/restricted-worker.md#large-source-token-fuel)
-  uses the existing bounded scanner for metered tokens in larger source buffers.
+- Latest runtime checkpoint (2026-11-22): [Configured output statement Fuel](docs/engineering/restricted-worker.md#configured-output-statement-fuel)
+  shares the enclosing compile budget across token advances and slice endpoints.
 
 # Brownie C agent guidance
 

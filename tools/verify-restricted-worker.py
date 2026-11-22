@@ -535,12 +535,21 @@ def verify_configured_project(run, need, image, folder, env):
     check(5, 'zero_divisor', payload=payload)
     entry.write_bytes(b'module app; pub fn i32 start(){output::emit(ref b"Hi");return 77;}')
     check(value=77, output=b'Hi')
+    entry.write_bytes(b'module app;pub fn i32 start(){let u8[5] data=[65,66,67,68,69];'
+                      b'output::emit(ref data[1+1..4-1]);return 77;}')
+    # The statement adds 14 token/emission units and 97 slice and operand advances.
+    range_fuel = 5005760 + 14 + 97
+    policy['compile']['fuel'] = range_fuel - 1
+    check(3, 'compile_limit')
+    policy['compile']['fuel'] = range_fuel
+    check(value=77, output=b'C')
     text = b'A' * 255 + bytes.fromhex('f0908080') + b'Z'
     entry.write_bytes(b'module app;pub fn i32 start(){let ref str msg="' + text +
                       b'";let ref u8[] body=text::bytes(msg);output::emit(ref body);return 77;}')
     # The prior compiler needed 4,780,555 units. Admission now charges two
     # 16-row catalog scans, one literal row and two visits to each text byte.
-    text_fuel = 4780555 + 95 + 32 + 1 + 2 * len(text)
+    # The emit statement spends 13 token stages and one unit before IR emission.
+    text_fuel = 4780555 + 95 + 32 + 1 + 2 * len(text) + 14
     policy['compile']['fuel'] = text_fuel - 1
     check(3, 'compile_limit')
     policy['compile']['fuel'] = text_fuel

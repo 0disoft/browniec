@@ -2231,7 +2231,7 @@ fn Result<usize, errors::Error> statement(ref u8[] source, ref mut lexer::State 
     if (word_is(source, s, b"let") || word_is(source, s, b"var")) {
         return declaration(source,s,p,table,signatures,terminator,result_type,expr_depth,structure,loop_state);
     }
-    if(output_source::candidate(source,s,table,signatures)){return output_statement(source,s,p,table,signatures,terminator,result_type,expr_depth,structure,loop_state);}
+    if(output_source::candidate(source,s,table,signatures)){return output_statement(source,s,p,table,signatures,terminator,result_type,expr_depth,structure,loop_state,deadline,fuel);}
     if(arm_syntax::direct_call(source,s)?){return void_call_statement(source,s,p,table,signatures,terminator,result_type,expr_depth,structure,loop_state);}
     if (s.kind != 2 || locals::reserved(source[s.begin..s.end])) {
         return .err(errors::make(2, s.begin));
@@ -2285,14 +2285,14 @@ fn Result<usize,errors::Error> scalar_assignment(ref u8[] source,ref mut lexer::
 // The output observation itself neither captures nor closes a caller-owned view.
 fn Result<usize,errors::Error> output_statement(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
-    u8 terminator,u8 result_type,usize depth,usize structure,ref mut loops::State loop_state){
-    var usize operand_fuel=metadata_budget::unlimited();
+    u8 terminator,u8 result_type,usize depth,usize structure,ref mut loops::State loop_state,
+    usize deadline,ref mut usize fuel){
     if(signatures.scalar_host_calls){return host_output_statement(source,s,p,table,signatures,terminator,result_type);}
-    let usize at=output_source::head(source,s,signatures,terminator,result_type)?;
+    let usize at=output_source::head(source,s,signatures,terminator,result_type,deadline,fuel)?;
     var locals::Table names=locals::snapshot(table);
     var usize site=16;var u8 kind=2;
     // Pure lookahead; receiver, endpoints and helper calls are lowered once.
-    let bool image=output_source::image(source,s,table)? ||
+    let bool image=output_source::image(source,s,deadline,fuel)? ||
         static_source::binding(table,locals::find(source,table,s.begin,s.end)) ||
         reference_calls::returned_atom(source,s,table,signatures)?;
     if(image){
@@ -2304,10 +2304,12 @@ fn Result<usize,errors::Error> output_statement(ref u8[] source,ref mut lexer::S
         }
     }else{
         let u8 access=output_source::access(source,s,table,p);
-        let usize value=slice_actual(source,s,p,ref mut names,signatures,access,at,depth,result_type,structure,loop_state,0,ref mut operand_fuel)?;
+        let usize value=slice_actual(source,s,p,ref mut names,signatures,access,at,depth,result_type,structure,loop_state,deadline,fuel)?;
         if(value<160 || value>=176){return .err(errors::make(3,at));}site=value-160;
     }
-    let usize close=lexer::punctuation(source,s,41)?;let usize end=lexer::punctuation(source,s,59)?;
+    discard lexer::punctuation_metered(source,s,41,deadline,fuel)?;
+    discard lexer::punctuation_metered(source,s,59,deadline,fuel)?;
+    discard metadata_budget::visit(fuel,deadline,at)?;
     let usize emitted=output_ir::emit(p,site,kind,at)?;
     let usize released=arrays::release_from(ref names,p,table.count,at)?;return .ok(64);
 }

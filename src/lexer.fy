@@ -217,6 +217,18 @@ pub fn Result<usize,errors::Error> next_metered(ref u8[] source,ref mut State s,
     return staged::next_metered(source,s,deadline,fuel);
 }
 
+pub fn Result<usize,errors::Error> punctuation_metered(ref u8[] source,ref mut State s,
+    u8 expected,usize deadline,ref mut usize fuel){
+    if(s.kind!=expected){return .err(errors::make(2,s.begin));}
+    return next_metered(source,s,deadline,fuel);
+}
+
+pub fn Result<usize,errors::Error> word_metered(ref u8[] source,ref mut State s,
+    ref u8[] expected,usize deadline,ref mut usize fuel){
+    if(s.kind!=2 || !equal(source[s.begin..s.end],expected)){return .err(errors::make(2,s.begin));}
+    return next_metered(source,s,deadline,fuel);
+}
+
 pub fn Result<usize, errors::Error> word(ref u8[] source, ref mut State s, ref u8[] expected) {
     if (s.kind != 2 || !equal(source[s.begin..s.end], expected)) {
         return .err(errors::make(2, s.begin));

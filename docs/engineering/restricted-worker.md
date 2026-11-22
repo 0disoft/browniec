@@ -1224,6 +1224,25 @@ Windows development and /O2. Its isolated build links the production clock
 companion so the fixture exercises the metered entry point. Both profiles
 passed and recorded their input hashes under build/lexer-work/.
 
+### Configured output statement Fuel
+
+The configured output statement spends the enclosing compile Fuel and
+checks its deadline while consuming the call prefix and delimiters, in
+the slice endpoint continuation, and before emitting output IR. Each
+token or operand continuation advances on the same compile balance.
+Static view construction and catalog output operand lowering retain
+their existing outer checks.
+
+A local byte array with computed range endpoints emits C and returns 77
+at 5,005,871 compile Fuel, up 111 units: 14 for the statement and 97
+for the slice and operands. A static byte view emits its original UTF-8
+payload at 4,781,217 compile Fuel, up 14 units. One unit less rejects
+each fixture with compile_limit and no guest result or output.
+
+Windows development and /O2 each passed 106 configured, 32 catalog,
+five managed project and four compile-stop cases. All 456 input hashes
+matched. Local receipt: `build/restricted-worker/20261122T001044778738Z/receipt.json`.
+
 ## Windows verification
 
 Run `python -B tools/verify-restricted-worker.py`. The development and optimized
