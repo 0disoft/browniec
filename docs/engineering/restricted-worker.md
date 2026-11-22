@@ -513,6 +513,26 @@ result. Both broker suites reported zero net handles. The /O2 CLI contract
 also verified the text and JSON output channels against all four language
 tables. Local receipt: `build/restricted-worker/20261122T085247354244Z/receipt.json`.
 
+### Isolated single-file aggregates
+
+The single-file worker admits the existing fixed-array and plain-record
+compiler profiles, including ordinary mutable slices. It uses the same
+verification and VM paths as an ordinary run and charges the same arena
+preparation and execution Fuel. The RESULT adds one profile byte before the
+existing scalar JSON payload and retains the 256-byte frame limit. The parent
+validates the profile and payload before rendering the result in the requested
+format. The project wire format is unchanged. Retained byte/text admission is
+a separate path.
+
+The Windows development and /O2 runs each matched 12 ordinary CLI outcomes
+across array read, array copy, mutable slices and records. Each example was
+checked in JSON v1, ran in JSON v2, and returned the same Fuel diagnostic at
+256 Fuel. The broker had zero net handles in each profile. The selected codec
+tests also passed two native groups per profile, including rejection of an
+out-of-range profile, truncation, and a checked result in a run. Local receipts:
+`build/restricted-worker/20261122T095251734346Z/receipt.json` and
+`build/worker-aggregate-codec/{development,release}/receipt.json`.
+
 ### Stops during managed staging
 
 The managed broker samples the same session deadline and console cancellation

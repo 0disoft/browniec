@@ -96,6 +96,6 @@ description: 公开 browniec 命令、退出码以及常见错误的快速排查
 ## 常见错误与解决方法
 
 1. <strong>在循环或数组程序中遇到 `fuel` 错误（退出码 `5`）</strong>：请记住，在 `main()` 运行之前，数组初始化就要消耗 `65,537` Fuel。请传入 `--fuel 100000` 或 `--fuel 1000000`。
-2. <strong>使用 `--isolated` 时返回 `unavailable`（退出码 `4`）</strong>：Windows 支持单文件标量 `check` 和 `run`。隔离准备失败或选项组合不受支持时，命令会停止。
+2. <strong>使用 `--isolated` 时返回 `unavailable`（退出码 `4`）</strong>：Windows 支持隔离运行使用标量、定长数组或普通记录的单文件 `check` 和 `run`。隔离准备失败或选项组合不受支持时，命令会停止。
 3. <strong>处理较大文件时出现 `compile_limit`（退出码 `3`）</strong>：公开 CLI 的输入上限为 `4096` 个 UTF-8 字节、`1024` 个 token、`16` 个函数以及 `256` 条指令。
 4. <strong>运行时陷阱（退出码 `5`）</strong>：结合 `--json` 查看 `error.kind` 和 `byte_offset`，定位 `overflow`、`zero_divisor` 或越界 `bounds` 错误。

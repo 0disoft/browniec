@@ -96,6 +96,6 @@ La tabla muestra la salida en caso de éxito. Un guion en la columna de opciones
 ## Errores frecuentes y soluciones
 
 1. **Error `fuel` (salida `5`) en bucles o arrays**: Recuerda que la inicialización de arrays cuesta `65 537` de Fuel antes de que se ejecute `main()`. Pasa `--fuel 100000` o `--fuel 1000000`.
-2. **`unavailable` (salida `4`) con `--isolated`**: Windows admite `check` y `run` escalares de un solo archivo. Los fallos de preparación y las combinaciones incompatibles detienen el comando.
+2. **`unavailable` (salida `4`) con `--isolated`**: Windows admite `check` y `run` para programas de un solo archivo con escalares, arrays de tamaño fijo o registros simples. Los fallos de preparación y las combinaciones incompatibles detienen el comando.
 3. **`compile_limit` (salida `3`) en archivos grandes**: La entrada de la CLI pública está limitada a `4096` bytes en UTF-8, `1024` tokens, `16` funciones y `256` instrucciones.
 4. **Trampa en tiempo de ejecución (salida `5`)**: Revisa `error.kind` y `byte_offset` con `--json` para localizar `overflow`, `zero_divisor` o `bounds` fuera de rango.

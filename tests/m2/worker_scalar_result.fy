@@ -51,6 +51,18 @@ fn void strict_scalar_result_contract(){
     assert(!accepts(b"{\"schema\":\"browniec.worker-result/v1\",\"status\":\"error\",\"kind\":2,\"location\":2,\"offset\":1}",check_case));
     let u8[257] oversized=[32;257];
     assert(!accepts(ref oversized,check_case));
+    assert(!worker::parse_profiled(ref oversized,check_case).is_ok);
+    assert(!worker::parse_profiled(b"\x07",check_case).is_ok);
+    assert(!worker::parse_profiled(b"\x08{\"schema\":\"browniec.worker-result/v1\",\"status\":\"checked\"}",check_case).is_ok);
+    let worker::Profiled record=worker::Profiled{.outcome=worker::checked(),.profile=7};
+    let bytes::Buffer framed=switch(worker::encode_profiled(record,check_case)){
+        case .ok(buffer):{buffer}case .err(_):{assert(false);bytes::empty()}
+    };
+    let worker::Profiled parsed=switch(worker::parse_profiled(bytes::view(ref framed),check_case)){
+        case .ok(value):{value}case .err(_):{assert(false);record}
+    };
+    assert(parsed.profile==7);
+    assert(!worker::parse_profiled(bytes::view(ref framed),run_case).is_ok);
 }
 
 @test

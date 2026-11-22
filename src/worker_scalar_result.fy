@@ -7,6 +7,7 @@ import std::num as num;
 
 pub enum Status { Checked; Completed; Failed; }
 pub struct Outcome { Status status; i64 value; errors::Error error; }
+pub struct Profiled { Outcome outcome; u8 profile; }
 pub struct Expected { bool run; bool output; usize source_bytes; usize instructions; }
 
 pub fn usize byte_limit(){return 256;}
@@ -114,13 +115,35 @@ pub fn Result<Outcome,json::Error> parse(ref u8[] source,Expected expected){
 
 pub fn Result<bytes::Buffer,json::Error> encode(Outcome out,Expected expected){
     if(!valid(out,expected)){return .err(json::error(.Relation,0));}
-    return switch(encode_bytes(out)){
+    return encode_payload(out,.none);
+}
+
+// The single-file worker prepends one public profile byte to the shared JSON.
+pub fn Result<Profiled,json::Error> parse_profiled(ref u8[] source,Expected expected){
+    if(source.len<2 || source.len>byte_limit() || source[0]>7){
+        return .err(json::error(.Relation,0));
+    }
+    let Outcome outcome=parse(source[1..source.len],expected)?;
+    return .ok(Profiled{.outcome=outcome,.profile=source[0]});
+}
+
+pub fn Result<bytes::Buffer,json::Error> encode_profiled(Profiled result,Expected expected){
+    if(result.profile>7 || !valid(result.outcome,expected)){return .err(json::error(.Relation,0));}
+    return encode_payload(result.outcome,.some(result.profile));
+}
+
+fn Result<bytes::Buffer,json::Error> encode_payload(Outcome out,Option<u8> profile){
+    return switch(encode_bytes(out,profile)){
         case .ok(buffer):{.ok(buffer)}case .err(_):{.err(json::error(.Allocation,0))}
     };
 }
 
-fn Result<bytes::Buffer,bytes::BufferError> encode_bytes(Outcome out){
+fn Result<bytes::Buffer,bytes::BufferError> encode_bytes(Outcome out,Option<u8> profile){
     var bytes::Buffer buffer=bytes::with_capacity(byte_limit())?;
+    switch(profile){
+        case .some(value):{discard bytes::append_byte(ref mut buffer,value)?;}
+        case .none:{}
+    };
     discard bytes::append(ref mut buffer,b"{\"schema\":\"browniec.worker-result/v1\",\"status\":")?;
     switch(out.status){
         case .Checked:{discard bytes::append(ref mut buffer,b"\"checked\"")?;}

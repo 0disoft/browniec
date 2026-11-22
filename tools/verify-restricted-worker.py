@@ -75,14 +75,11 @@ def verify_public_scalar(run, need, image, folder, env):
     need(text.returncode == 0 and not text.stdout and text.stderr == b'return_i32=77\n',
          f'Unexpected isolated text result: {text}')
 
-    array = folder / 'scalar-aggregate-denied.brc'
-    array.write_bytes(b'module main; fn i32 main() { let i32[2] a = [21; 2]; return a[0]; }')
     literal = folder / 'scalar-literal-denied.brc'
     literal.write_bytes(b'module main; fn i32 main() { let ref u8[] x = b"x"; return 77; }')
     cases = [
         ('run', answer, ['--fuel', '0'], 5, 'fuel'),
         ('check', folder / 'bad-source.brc', [], 3, 'lexical'),
-        ('run', array, [], 4, 'unavailable'),
         ('run', literal, [], 4, 'unavailable'),
         ('run', answer, ['--stdin'], 4, 'unavailable'),
         ('run', answer, ['--isolated'], 2, 'usage'),
@@ -103,6 +100,33 @@ def verify_public_scalar(run, need, image, folder, env):
          f'Unexpected restricted availability: {version}')
     need(not list(stage.iterdir()), 'isolated scalar runs left staged resources')
     return 3 + len(cases) + 2
+
+
+def verify_public_aggregates(run, need, image, folder, env):
+    common = dict(cwd=folder, env=env, no_stderr=True)
+    cases = [
+        ('array-read.brc', 'array-read', 42),
+        ('array-copy.brc', 'array-copy', 42),
+        ('mutable-slices.brc', 'array-write', 42),
+        ('helper-records.brc', 'struct-read', 77),
+    ]
+    for name, profile, value in cases:
+        source = ROOT / 'examples' / name
+        for op, flags, schema, status, result, code in [
+            ('check', ['--json'], 'v1', 'checked', None, 0),
+            ('run', ['--json-v2', '--fuel', '1000000'], 'v2', 'completed', value, 0),
+            ('run', ['--json-v2', '--fuel', '256'], 'v2', 'error', None, 5),
+        ]:
+            command = [image, op, source, *flags]
+            isolated = json.loads(run([*command, '--isolated'], expected_exit=code, **common))
+            ordinary = json.loads(run(command, expected_exit=code, **common))
+            need(isolated == ordinary and isolated['schema'] == f'browniec.result/{schema}'
+                 and isolated['profile'] == f'brownie.m2-{profile}/1'
+                 and isolated['status'] == status and isolated['return_i32'] == result
+                 and (code == 0 or isolated['error']['kind'] == 'fuel'),
+                 f'Isolated aggregate differs for {name}, {op}, {flags}: {isolated} vs {ordinary}')
+    need(not list(Path(env['TEMP']).iterdir()), 'isolated aggregate runs left staged resources')
+    return 3 * len(cases)
 
 
 def verify_managed_project(run, need, image, folder, env):
@@ -1178,6 +1202,8 @@ def main():
     c_sources = [path for path in paths if path.endswith('.c')]
     if scalar_images:
         paths.extend(['fairy.windows.json', 'fairy.toml', 'fairy.lock', 'examples/answer.brc',
+                      'examples/array-read.brc', 'examples/array-copy.brc',
+                      'examples/mutable-slices.brc', 'examples/helper-records.brc',
                       POLICY_EXAMPLE.relative_to(ROOT).as_posix()])
         paths.extend(path.relative_to(ROOT).as_posix() for path in sorted(HELLO_PROJECT.rglob('*'))
                      if path.is_file())
@@ -1252,6 +1278,7 @@ def main():
                             and not list(stage_temp.iterdir()), 'staging failure fell back or left files')
                 scalar_source_cases = verify_scalar_source_admission(run, helper.need, scalar, folder, stage_env)
                 public_scalar_cases = verify_public_scalar(run, helper.need, scalar, folder, stage_env)
+                aggregate_cases = verify_public_aggregates(run, helper.need, scalar, folder, stage_env)
                 managed_project_cases = verify_managed_project(run, helper.need, scalar, folder, stage_env)
                 configured_project_cases = verify_configured_project(run, helper.need, scalar, folder, stage_env)
                 project_host_cases = verify_project_host(run, helper.need, scalar, folder, stage_env)
@@ -1281,6 +1308,7 @@ def main():
                 receipt['profiles'][-1]['scalarWorker'] = helper.image(scalar)
                 receipt['profiles'][-1]['scalarSourceCases'] = scalar_source_cases
                 receipt['profiles'][-1]['publicScalarCases'] = public_scalar_cases
+                receipt['profiles'][-1]['publicAggregateCases'] = aggregate_cases
                 receipt['profiles'][-1]['managedProjectCases'] = managed_project_cases
                 receipt['profiles'][-1]['configuredProjectCases'] = configured_project_cases
                 receipt['profiles'][-1]['projectHostCases'] = project_host_cases

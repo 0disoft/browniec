@@ -1,5 +1,5 @@
-- Latest runtime checkpoint (2026-11-22): [Isolated project host routes](docs/engineering/restricted-worker.md#isolated-project-host-routes)
-  connect the public CLI to explicit catalogs, reply fixtures and parent-owned process adapters.
+- Latest runtime checkpoint (2026-11-22): [Isolated single-file aggregates](docs/engineering/restricted-worker.md#isolated-single-file-aggregates)
+  preserve public profiles, diagnostics and Fuel for fixed arrays, mutable slices and plain records.
 
 # Brownie C agent guidance
 

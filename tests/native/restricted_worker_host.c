@@ -1206,7 +1206,9 @@ static void verify_graceful_cancel(const wchar_t *path, const wchar_t *directory
 }
 
 static bool scalar_payload(const void *expectation, const uint8_t *body, size_t size) {
-    if (!expectation) return false;
+    if (!expectation || size < 2 || body[0] != 0) return false;
+    ++body;
+    --size;
     const char *expected_scalar_payload = expectation;
     const size_t expected = strlen(expected_scalar_payload);
     if (size < expected || memcmp(body, expected_scalar_payload, expected) || body[size - 1] != '}')
@@ -1248,7 +1250,7 @@ static void verify_guest_exchange(const wchar_t *path, const wchar_t *directory,
     size_t length = 0;
     if (accept && broker.gate.status != BC_WORKER_GATE_PENDING)
         fprintf(stderr, "scalar gate status %d, phase %d, body %.*s\n", broker.gate.status,
-            broker.phase, (int)broker.rx.used, (const char *)result);
+            broker.phase, broker.rx.used > 1 ? (int)(broker.rx.used - 1) : 0, (const char *)result + 1);
     if (accept) {
         check(bc_worker_broker_take(&broker, &length) == result && scalar_payload(expected, result, length) &&
             !bc_worker_broker_take(&broker, &length), "publish validated Brownie scalar outcome once");

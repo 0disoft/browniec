@@ -1,5 +1,6 @@
 module worker_scalar_command;
 
+import array_source as arrays;
 import compiler as compiler;
 import errors as errors;
 import source_features as features;
@@ -31,31 +32,35 @@ pub fn i32 execute(){
     return respond(wire[5..size],run,fuel);
 }
 
-fn result::Outcome compute(ref u8[] source,bool run,usize fuel){
+fn result::Profiled uncompiled(errors::Error error){
+    return result::Profiled{.outcome=result::failed(error),.profile=0};
+}
+
+fn result::Profiled compute(ref u8[] source,bool run,usize fuel){
     let bool retained=switch(features::retained(source)){
-        case .ok(v):{v}case .err(e):{return result::failed(e);}
+        case .ok(v):{v}case .err(e):{return uncompiled(e);}
     };
-    if(retained){return result::failed(errors::absent(11,0));}
+    if(retained){return uncompiled(errors::absent(11,0));}
     let ir::Program program=switch(compiler::compile(source)){
-        case .ok(v):{v}case .err(e):{return result::failed(e);}
+        case .ok(v):{v}case .err(e):{return uncompiled(e);}
     };
-    if(program.arrays.count!=0 || program.records.count!=0){
-        return result::failed(errors::absent(11,0));
-    }
-    if(!run){
-        return switch(verifier::verify(ref program)){
+    let u8 profile=arrays::profile(ref program);
+    let result::Outcome outcome=if(run){
+        switch(vm::run(ref program,fuel)){
+            case .ok(value):{result::completed(value)}case .err(e):{result::failed(e)}
+        }
+    }else{
+        switch(verifier::verify(ref program)){
             case .ok(_):{result::checked()}case .err(e):{result::failed(e)}
-        };
-    }
-    return switch(vm::run(ref program,fuel)){
-        case .ok(value):{result::completed(value)}case .err(e):{result::failed(e)}
+        }
     };
+    return result::Profiled{.outcome=outcome,.profile=profile};
 }
 
 fn i32 respond(ref u8[] source,bool run,usize fuel){
     let result::Expected expected=result::Expected{.run=run,.output=false,.source_bytes=source.len,.instructions=256};
-    let result::Outcome outcome=compute(source,run,fuel);
-    let bytes::Buffer payload=switch(result::encode(outcome,expected)){
+    let result::Profiled outcome=compute(source,run,fuel);
+    let bytes::Buffer payload=switch(result::encode_profiled(outcome,expected)){
         case .ok(v):{v}case .err(_):{return 4;}
     };
     let ref u8[] data=bytes::view(ref payload);

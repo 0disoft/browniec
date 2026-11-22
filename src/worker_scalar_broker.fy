@@ -17,7 +17,7 @@ fn u32 validate_result(ptr u8 data,usize length,u32 run,usize source_length){
     if(data==null || length==0 || length>result::byte_limit() || run>1 || source_length>4096){return 0;}
     let result::Expected expected=result::Expected{.run=run==1,.output=false,.source_bytes=source_length,.instructions=256};
     let ref u8[] payload=unsafe{byte_slice::from_raw_parts(ref expected,data,length)};
-    return if(result::parse(payload,expected).is_ok){1}else{0};
+    return if(result::parse_profiled(payload,expected).is_ok){1}else{0};
 }
 
 @effects(console,filesystem)
@@ -89,13 +89,14 @@ fn i32 invoke(ref u8[] profile,ref input::Source snapshot,render::Format format,
         return report(format,run,errors::absent(kind,0));
     }
     let result::Expected expected=result::Expected{.run=run,.output=false,.source_bytes=source.len,.instructions=256};
-    let result::Outcome outcome=switch(result::parse(ref reply[..length],expected)){
+    let result::Profiled profiled=switch(result::parse_profiled(ref reply[..length],expected)){
         case .ok(v):{v}case .err(_):{return report(format,run,errors::absent(11,0));}
     };
+    let result::Outcome outcome=profiled.outcome;
     return switch(outcome.status){
-        case .Checked:{render::selected_outcome(format,false,false,0,errors::absent(0,0),0)}
-        case .Completed:{render::selected_outcome(format,true,false,outcome.value,errors::absent(0,0),0)}
-        case .Failed:{report(format,run,outcome.error)}
+        case .Checked:{render::selected_outcome(format,false,false,0,errors::absent(0,0),profiled.profile)}
+        case .Completed:{render::selected_outcome(format,true,false,outcome.value,errors::absent(0,0),profiled.profile)}
+        case .Failed:{render::selected_outcome(format,run,true,0,outcome.error,profiled.profile)}
     };
 }
 
