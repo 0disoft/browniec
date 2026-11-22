@@ -2,7 +2,6 @@
 
 import re
 
-
 def project_layouts(t, c, *, host_compile=True):
     c['bindings']={}
     for number,tail in re.findall(r'bc_runtime_engine_binding\(UINT32_C\((\d+)\)\);(.*?)(?=bc_runtime_engine_binding|\Z)',t,re.S):
@@ -135,7 +134,8 @@ def project_layouts(t, c, *, host_compile=True):
     assert arg(26,10)==c['callMetadataType']
     assert re.fullmatch(r'\s*'+re.escape(c['callMetadataType'])+r'\s*\*\s*fy_l_\d+\s*',decl(26).split('(',1)[1].split(',')[10])
     c['transactionType']=field_type(c['machineType'],6)
-    c['preparationType']=field_type(c['programVariants']['output']['stored'],4)
+    # The retained emit flag precedes the cached preparation data.
+    c['preparationType']=field_type(c['programVariants']['output']['stored'],5)
     c['capturePlanType']=field_type(c['preparationType'],8)
     types={k:c[k] for k in ['engineType','programType','instanceType','boundInputType','outputType','sourceIndexType','sourceIndexVectorType','programVectorType','snapshotType','snapshotVectorType','machineType','coreType','executionType','pendingVectorType','completionType','publishedVectorType','pendingMetaType','cursorType','outputCopyType','transactionType']}
     for variant,rows in c['programVariants'].items():types.update({variant+'_'+k:v for k,v in rows.items()})

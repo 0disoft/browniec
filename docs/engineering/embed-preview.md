@@ -8,6 +8,11 @@ The C API is declared in [`brownie_preview.h`](../../include/brownie_preview.h)
 and uses `BC_PREVIEW_REVISION`. The existing revision-2 bootstrap build remains
 separate.
 
+The native layout reader accounts for the stored output Program's retained
+emit flag before reading its cached preparation data. The Windows /O2 DLL
+and both C host fixtures passed with the updated layout reader.
+Local receipt: `build/embed-preview-v3i_7w1f/receipt.json`.
+
 Create an Engine with `bc_preview_engine_create`, then compile one UTF-8 source
 with `bc_preview_compile`. It must declare `module main;` and a public
 `fn i32 main()` entry. The source is limited to 4096 bytes and copied during
