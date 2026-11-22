@@ -1,5 +1,5 @@
-- Latest runtime checkpoint (2026-11-22): [Managed staging stops](docs/engineering/restricted-worker.md#stops-during-managed-staging)
-  observe cancellation and session expiry during the image copy and reclaim partial staging.
+- Latest runtime checkpoint (2026-11-22): [Broker-owned host staging](docs/engineering/restricted-worker.md#broker-owned-host-staging)
+  reserves request and reply storage before allocation and releases it after reaping.
 
 # Brownie C agent guidance
 

@@ -61,6 +61,7 @@ typedef size_t (*bc_worker_host_reply)(void *context, uint64_t correlation,
 typedef struct bc_worker_broker_host {
     bc_worker_host_reply respond;
     void *context;
+    /* Supply two disjoint spans, or leave both NULL for broker-owned staging. */
     uint8_t *request, *reply;
     size_t request_capacity, reply_capacity;
     uint32_t max_calls;
@@ -107,6 +108,7 @@ typedef struct bc_worker_broker {
     const void *expectation;
     size_t request_length, result_capacity;
     bc_worker_broker_host host;
+    uint8_t *host_staging;
     const bc_worker_host_adapter *adapter;
     size_t host_reply_length;
     uint32_t requests, replies;

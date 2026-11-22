@@ -278,6 +278,20 @@ own reservation. Both profiles reported zero net handles and matched all
 460 inputs. Local receipt:
 `build/restricted-worker/20261122T080458759008Z/receipt.json`.
 
+### Broker-owned host staging
+
+A host exchange can borrow two disjoint caller buffers or request one
+broker-owned allocation split into separate request and reply spans. The
+broker reserves both spans before allocating them, and releases the allocation
+only after it collects the last I/O and reaps the worker and adapter. Project
+host routes use the broker-owned form.
+
+Windows development and /O2 verified distinct buffers for two simultaneous
+process-backed sessions, denial one byte below the parent memory reservation,
+and cleanup after launch failure and session reaping. Both profiles reported
+zero net handles. Local receipt:
+`build/restricted-worker/20261122T082314651150Z/receipt.json`.
+
 ### Restricted adapter Job commit
 
 Private process-backed routes reserve a 64 MiB adapter Job commit ceiling

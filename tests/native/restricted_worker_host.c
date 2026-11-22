@@ -1563,10 +1563,10 @@ static void verify_shared_process_reaping(bc_worker_broker *first, const bc_work
     bc_worker_process_adapter adapter = *first_adapter;
     adapter.slot = (bc_adapter_slot){.budget = processes, .job_commit_bytes = adapter.slot.job_commit_bytes};
     adapter.codec = &codec;
-    uint8_t result[512], request[18], reply[13];
+    uint8_t result[512];
     bc_worker_broker_run next = *run;
     next.result = result;
-    next.host = (bc_worker_broker_host){NULL, &adapter, request, reply, sizeof(request), sizeof(reply), 2};
+    next.host.context = &adapter;
     next.deadline = clock_ticks() + 100000000ULL;
     --budget->limit.child_commit_bytes;
     check(bc_worker_broker_start(&second, &next) == ERROR_NOT_ENOUGH_QUOTA &&
@@ -1589,7 +1589,8 @@ static void verify_shared_process_reaping(bc_worker_broker *first, const bc_work
         "deny a second worker at the aggregate host reply byte ceiling");
     ++budget->limit.host_reply_bytes;
     check(bc_worker_broker_start(&second, &next) == ERROR_SUCCESS &&
-        same_charge(budget->reserved, both), "admit both process-backed workers at exact capacity");
+        first->host_staging && second.host_staging && first->host_staging != second.host_staging &&
+        same_charge(budget->reserved, both), "admit separate staging for both process-backed workers at exact capacity");
     while (!codec.headers && second.gate.status == BC_WORKER_GATE_PENDING) {
         bc_worker_broker_step(&second);
         Sleep(1);
@@ -1662,7 +1663,7 @@ static void verify_catalog_process(const wchar_t *path, const wchar_t *directory
         .deadline = clock_ticks() + 100000000ULL, .wire_limit = wire,
         .request = start, .request_length = size, .result = result, .result_capacity = sizeof(result),
         .validate = success ? catalog_process_result : reject_callback,
-        .host = {NULL, &route.adapter, request, reply, sizeof(request), sizeof(reply), 2},
+        .host = {NULL, &route.adapter, NULL, NULL, sizeof(request), sizeof(reply), 2},
         .adapter = &bc_worker_process_callbacks, .adapter_wire_bytes = 2 * adapter_wire,
         .adapter_parent_bytes = adapter_parent
     };
@@ -1696,9 +1697,9 @@ static void verify_catalog_process(const wchar_t *path, const wchar_t *directory
     ++budget.limit.handle_slots;
     --budget.limit.parent_bytes;
     check(bc_worker_broker_start(&broker, &run) == ERROR_NOT_ENOUGH_QUOTA &&
-        !broker.worker.process && !broker.io.event && !route.budget.launches &&
+        !broker.host_staging && !broker.worker.process && !broker.io.event && !route.budget.launches &&
         same_charge(budget.reserved, (bc_worker_broker_amounts){0}),
-        "reject a parent limit one byte short of the route and launch reservation");
+        "reject a parent limit one byte short of the route, staging and launch reservation");
     ++budget.limit.parent_bytes;
     run.adapter_parent_bytes = SIZE_MAX;
     check(bc_worker_broker_start(&broker, &run) == ERROR_NOT_ENOUGH_QUOTA &&
@@ -1710,6 +1711,12 @@ static void verify_catalog_process(const wchar_t *path, const wchar_t *directory
         !broker.io.event && same_charge(budget.reserved, (bc_worker_broker_amounts){0}),
         "reject overflowing combined Job commit before opening handles");
     run.commit_bytes = commit_limit;
+    run.application = L"relative.exe";
+    check(bc_worker_broker_start(&broker, &run) == ERROR_INVALID_PARAMETER &&
+        !broker.host_staging && broker.phase == BC_WORKER_BROKER_IDLE &&
+        !route.budget.launches && same_charge(budget.reserved, (bc_worker_broker_amounts){0}),
+        "release broker-owned staging after a failed launch");
+    run.application = path;
     check(SetEnvironmentVariableW(L"BC_TEST_RESTRICTED_PROCESS", mode) &&
         !bc_worker_broker_start(&broker, &run) && same_charge(budget.reserved, charge),
         "launch catalog guest at the exact combined wire limit");
@@ -1743,7 +1750,7 @@ static void verify_catalog_process(const wchar_t *path, const wchar_t *directory
     check(codec.requests == launches && codec.headers == launches && codec.replies == (success ? 2u : 0u) &&
         route.budget.launches == launches + (size_t)shared &&
         route.budget.wire == (launches + (size_t)shared) * adapter_wire &&
-        !route.budget.live && !route.adapter.slot.process &&
+        !broker.host_staging && !route.budget.live && !route.adapter.slot.process &&
         same_charge(budget.reserved, (bc_worker_broker_amounts){0}), "reap process and refund both live reservations");
 }
 

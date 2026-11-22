@@ -89,7 +89,7 @@ DWORD bc_worker_broker_start(bc_worker_broker *b, const bc_worker_broker_run *ru
     if (host.max_calls) {
         if ((host.respond != NULL) == (adapter != NULL) ||
             (adapter && (!adapter->begin || !adapter->poll || !adapter->close)) ||
-            !host.request || !host.reply || !host.request_capacity ||
+            (host.request == NULL) != (host.reply == NULL) || !host.request_capacity ||
             !host.reply_capacity || host.request_capacity > BC_WORKER_FRAME_PAYLOAD_MAX ||
             host.reply_capacity > BC_WORKER_FRAME_PAYLOAD_MAX) return ERROR_INVALID_PARAMETER;
     } else if (host.respond || adapter || host.request || host.reply || host.request_capacity ||
@@ -129,6 +129,14 @@ DWORD bc_worker_broker_start(bc_worker_broker *b, const bc_worker_broker_run *ru
 
     b->budget = run->budget;
     b->charge = charge;
+    if (host.max_calls && !host.request) {
+        b->host_staging = HeapAlloc(GetProcessHeap(), 0, host.request_capacity + host.reply_capacity);
+        if (!b->host_staging) {
+            refund(b);
+            *b = (bc_worker_broker){0};
+            return ERROR_NOT_ENOUGH_MEMORY;
+        }
+    }
     bc_worker_gate_begin(&b->gate, run->deadline);
     b->phase_deadline = bounded_deadline(now, (uint64_t)run->startup_ms * 10000, run->deadline);
     b->idle_ticks = (uint64_t)run->io_idle_ms * 10000;
@@ -141,6 +149,10 @@ DWORD bc_worker_broker_start(bc_worker_broker *b, const bc_worker_broker_run *ru
     b->validate = run->validate;
     b->expectation = run->expectation;
     b->host = host;
+    if (b->host_staging) {
+        b->host.request = b->host_staging;
+        b->host.reply = b->host_staging + host.request_capacity;
+    }
     b->adapter = adapter;
     DWORD status = bc_worker_io_open(&b->io);
     if (!status) status = bc_worker_io_open(&b->cancel_io);
@@ -471,6 +483,7 @@ bool bc_worker_broker_close(bc_worker_broker *b) {
     if (!adapter_reaped || !bc_restricted_worker_close(&b->worker) || bc_worker_io_close(&b->io) ||
         bc_worker_io_close(&b->cancel_io)) return false;
     bc_worker_pipes_close(&b->pipes);
+    if (b->host_staging && !HeapFree(GetProcessHeap(), 0, b->host_staging)) return false;
     refund(b);
     *b = (bc_worker_broker){0};
     return true;

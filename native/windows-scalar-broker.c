@@ -346,14 +346,8 @@ uint32_t bc_project_broker_invoke(const uint8_t *request, size_t request_length,
             decode_project_process)) return 0;
         exchange.adapter = &bc_worker_process_callbacks;
     }
-    uint8_t *staging = HeapAlloc(GetProcessHeap(), 0, request_cap + reply_cap);
-    uint32_t status = 0;
-    if (staging) {
-        exchange.host = (bc_worker_broker_host){routes ? NULL : respond_project_host,
-            routes ? (void *)&route.adapter : (void *)context,
-            staging, staging + request_cap, request_cap, reply_cap, calls};
-        status = invoke_broker(NULL, 0, &exchange, &limits, reply, capacity, reply_length);
-        HeapFree(GetProcessHeap(), 0, staging);
-    }
-    return status;
+    exchange.host = (bc_worker_broker_host){routes ? NULL : respond_project_host,
+        routes ? (void *)&route.adapter : (void *)context,
+        NULL, NULL, request_cap, reply_cap, calls};
+    return invoke_broker(NULL, 0, &exchange, &limits, reply, capacity, reply_length);
 }
