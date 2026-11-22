@@ -1,5 +1,5 @@
-- Latest runtime checkpoint (2026-11-22): [Stops during managed publication cleanup](docs/engineering/restricted-worker.md#stops-during-managed-publication-cleanup)
-  keep a reaped result private until staging cleanup and the final stop check succeed.
+- Latest runtime checkpoint (2026-11-22): [Synchronous reply context reservation](docs/engineering/restricted-worker.md#synchronous-reply-context-reservation)
+  charges the borrowed parent replay owner and its backing through reaping.
 
 # Brownie C agent guidance
 

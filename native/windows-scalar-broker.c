@@ -48,6 +48,8 @@ static size_t respond_project_host(void *context, uint64_t correlation,
 }
 
 enum { PROJECT_ROUTE_COUNT = 64, PROJECT_ROUTE_WORDS = 4 };
+typedef fy_private_type_776f726b65725f70726f6a6563745f62726f6b65723a3a5265706c6179 project_replay; /* worker_project_broker::Replay */
+typedef fy_private_type_636c695f686f73745f7265706c6965733a3a526f77 project_reply_row; /* cli_host_replies::Row */
 typedef fy_private_type_686f73745f70726f636573735f616461707465723a3a526f757465 project_route; /* host_process_adapter::Route */
 
 void bc_project_broker_store_route(void *table, size_t id, const void *route, const uint8_t *path,
@@ -135,7 +137,7 @@ typedef struct worker_exchange {
     bc_worker_broker_host host;
     const bc_worker_host_adapter *adapter;
     size_t adapter_wire_bytes;
-    size_t adapter_parent_bytes;
+    size_t host_parent_bytes;
 } worker_exchange;
 
 typedef struct worker_limits {
@@ -158,7 +160,7 @@ static uint32_t run_broker(PSID sid, const wchar_t *image, const wchar_t *direct
         .sessions = 1,
         .parent_bytes = sizeof(broker) + exchange->request_length + result_capacity +
             exchange->host.request_capacity + exchange->host.reply_capacity +
-            exchange->adapter_parent_bytes + bc_restricted_worker_launch_heap_bytes(),
+            exchange->host_parent_bytes + bc_restricted_worker_launch_heap_bytes(),
         .child_commit_bytes = limits->commit_bytes + (adapter ? adapter->child_commit_bytes : 0),
         .wire_bytes = limits->transport_bytes,
         .adapter_slots = adapter ? 1 : 0,
@@ -178,7 +180,7 @@ static uint32_t run_broker(PSID sid, const wchar_t *image, const wchar_t *direct
         .startup_ms = limits->startup_ms, .io_idle_ms = limits->idle_ms, .shutdown_grace_ms = limits->grace_ms,
         .deadline = deadline, .wire_limit = wire < limits->transport_bytes ? wire : limits->transport_bytes,
         .adapter_wire_bytes = exchange->adapter_wire_bytes,
-        .adapter_parent_bytes = exchange->adapter_parent_bytes,
+        .host_parent_bytes = exchange->host_parent_bytes,
         .request = exchange->request, .request_length = exchange->request_length, .result = reply,
         .result_capacity = result_capacity, .validate = exchange->validate, .expectation = exchange->expectation,
         .host = exchange->host, .adapter = exchange->adapter
@@ -336,8 +338,8 @@ uint32_t bc_project_broker_invoke(const uint8_t *request, size_t request_length,
     if (routes) {
         const uint8_t *path = NULL;
         size_t path_length = 0;
-        exchange.adapter_parent_bytes = process_parent_bytes(routes, route_slots, &path, &path_length);
-        if (!exchange.adapter_parent_bytes) return 0;
+        exchange.host_parent_bytes = process_parent_bytes(routes, route_slots, &path, &path_length);
+        if (!exchange.host_parent_bytes) return 0;
         const size_t fixed = 5 * BC_WORKER_FRAME_BYTES + request_length + capacity + 1;
         const size_t per_call = 2 * BC_WORKER_FRAME_BYTES + request_cap + reply_cap;
         const size_t adapter_wire = 128 + request_cap - 4 + reply_cap;
@@ -350,6 +352,12 @@ uint32_t bc_project_broker_invoke(const uint8_t *request, size_t request_length,
             calls, exchange.adapter_wire_bytes, &codec, encode_project_process, size_project_process_reply,
             decode_project_process)) return 0;
         exchange.adapter = &bc_worker_process_callbacks;
+    } else {
+        const size_t heap = (size_t)get_le(host_limits + 12, 4);
+        const size_t rows = (size_t)get_le(host_limits + 16, 4);
+        if (rows > 64 || heap > SIZE_MAX - sizeof(project_replay) - rows * sizeof(project_reply_row))
+            return 0;
+        exchange.host_parent_bytes = sizeof(project_replay) + heap + rows * sizeof(project_reply_row);
     }
     exchange.host = (bc_worker_broker_host){routes ? NULL : respond_project_host,
         routes ? (void *)&route.adapter : (void *)context,

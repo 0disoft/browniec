@@ -94,7 +94,8 @@ DWORD bc_worker_broker_start(bc_worker_broker *b, const bc_worker_broker_run *ru
             host.reply_capacity > BC_WORKER_FRAME_PAYLOAD_MAX) return ERROR_INVALID_PARAMETER;
     } else if (host.respond || adapter || host.request || host.reply || host.request_capacity ||
         host.reply_capacity) return ERROR_INVALID_PARAMETER;
-    if (!adapter && (run->adapter_wire_bytes || run->adapter_parent_bytes)) return ERROR_INVALID_PARAMETER;
+    if (!adapter && run->adapter_wire_bytes) return ERROR_INVALID_PARAMETER;
+    if (!host.max_calls && run->host_parent_bytes) return ERROR_INVALID_PARAMETER;
     size_t wire = 5 * BC_WORKER_FRAME_BYTES + run->request_length + run->result_capacity + 1;
     const size_t per_call = 2 * BC_WORKER_FRAME_BYTES + host.request_capacity + host.reply_capacity;
     if (wire > run->wire_limit || host.max_calls > (run->wire_limit - wire) / per_call)
@@ -106,7 +107,7 @@ DWORD bc_worker_broker_start(bc_worker_broker *b, const bc_worker_broker_run *ru
         host.request_capacity + host.reply_capacity;
     const size_t launch_heap = bc_restricted_worker_launch_heap_bytes();
     if (!launch_heap) return ERROR_INVALID_DATA;
-    if (launch_heap > SIZE_MAX - parent || run->adapter_parent_bytes > SIZE_MAX - parent - launch_heap)
+    if (launch_heap > SIZE_MAX - parent || run->host_parent_bytes > SIZE_MAX - parent - launch_heap)
         return ERROR_NOT_ENOUGH_QUOTA;
     const size_t adapter_commit = adapter ? adapter->child_commit_bytes : 0;
     if (adapter_commit > SIZE_MAX - run->commit_bytes) return ERROR_NOT_ENOUGH_QUOTA;
@@ -114,7 +115,7 @@ DWORD bc_worker_broker_start(bc_worker_broker *b, const bc_worker_broker_run *ru
     if (now >= run->deadline) return ERROR_TIMEOUT;
     const bc_worker_broker_amounts charge = {
         .sessions = 1,
-        .parent_bytes = parent + launch_heap + run->adapter_parent_bytes,
+        .parent_bytes = parent + launch_heap + run->host_parent_bytes,
         .child_commit_bytes = run->commit_bytes + adapter_commit,
         .wire_bytes = wire,
         .adapter_slots = adapter ? 1 : 0,

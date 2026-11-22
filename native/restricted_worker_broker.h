@@ -130,7 +130,7 @@ typedef struct bc_worker_broker_run {
     uint64_t deadline;
     size_t wire_limit;
     size_t adapter_wire_bytes;
-    size_t adapter_parent_bytes;
+    size_t host_parent_bytes;
     const uint8_t *request;
     size_t request_length;
     uint8_t *result;
@@ -156,7 +156,8 @@ typedef struct bc_worker_broker_run {
    The host payload allowances are reserved by direction for all allowed calls.
    The trusted route supplies its additional process transport envelope in
    adapter_wire_bytes. It shares the session wire limit and release condition.
-   adapter_parent_bytes covers route storage and peak launch heap until close.
+   host_parent_bytes covers a borrowed synchronous context or deferred
+   route storage and peak launch heap until close.
    The absolute session deadline uses QueryInterruptTimePrecise ticks.
    Startup covers launch through READY; after READY each completed transfer
    renews the idle window within the session deadline.

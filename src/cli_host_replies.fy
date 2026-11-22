@@ -15,6 +15,8 @@ resource Row {
     cleanup { }
 }
 pub resource Replies { bytes::Buffer wire; vec::Vec<Row> rows; cleanup { } }
+pub fn usize wire_capacity(ref Replies responses){return bytes::capacity(ref responses.wire);}
+pub fn usize row_capacity(ref Replies responses){return vec::capacity<Row>(ref responses.rows);}
 
 fn errors::Error usage(usize at){return errors::make(10,at);}
 fn errors::Error allocation(){return errors::absent(15,0);}

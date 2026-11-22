@@ -292,6 +292,23 @@ and cleanup after launch failure and session reaping. Both profiles reported
 zero net handles. Local receipt:
 `build/restricted-worker/20261122T082314651150Z/receipt.json`.
 
+### Synchronous reply context reservation
+
+A catalog-backed worker with host calls enabled borrows one parent replay
+context through the broker session. The parent charges the native context
+size, the allocated catalog and run string capacities, and the reply byte
+and row backing capacities. The byte and row charges use capacity even
+when only part of the backing is initialized. The same parent memory
+ceiling covers host staging and the deferred process route. Close returns
+the charge after the broker releases the borrowed context.
+
+Windows development and /O2 each verified 11 native host broker cases with
+the added context charge. An exact ceiling admitted the session, one byte
+less denied it before launch, and reaping returned the reservation after
+success, cancellation and expiry. Each profile also passed 47 catalog and
+20 process-adapter cases with zero net handles. Local receipt:
+`build/restricted-worker/20261122T102756639677Z/receipt.json`.
+
 ### Restricted adapter Job commit
 
 Private process-backed routes reserve a 64 MiB adapter Job commit ceiling

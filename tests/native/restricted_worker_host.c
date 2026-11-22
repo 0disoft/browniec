@@ -974,7 +974,7 @@ static void verify_host_broker(const wchar_t *path, const wchar_t *directory,
     const size_t wire = 5 * BC_WORKER_FRAME_BYTES + start_length + 2 +
         max_calls * (2 * BC_WORKER_FRAME_BYTES + sizeof(request) + sizeof(reply));
     const bc_worker_broker_amounts charge = {1, sizeof(broker) + start_length + 1 +
-        sizeof(request) + sizeof(reply) + worker_launch_heap, commit_limit, wire, 0, 2, worker_pipe_buffers,
+        sizeof(request) + sizeof(reply) + sizeof(calls) + worker_launch_heap, commit_limit, wire, 0, 2, worker_pipe_buffers,
         max_calls * sizeof(request), max_calls * sizeof(reply), 12};
     bc_worker_broker_budget budget = {.limit = charge};
     bc_worker_broker_run run = {
@@ -984,6 +984,7 @@ static void verify_host_broker(const wchar_t *path, const wchar_t *directory,
         .deadline = clock_ticks() + 100000000ULL, .wire_limit = wire - 1,
         .request = start, .request_length = start_length, .result = &result, .result_capacity = 1,
         .validate = expected == BC_WORKER_GATE_DELIVERED ? fixture_result : reject_callback,
+        .host_parent_bytes = sizeof(calls),
         .host = {reply_fixture, &calls, &request, reply, sizeof(request), sizeof(reply), max_calls}
     };
     check(bc_worker_broker_start(&broker, &run) == ERROR_NOT_ENOUGH_QUOTA &&
@@ -1001,6 +1002,12 @@ static void verify_host_broker(const wchar_t *path, const wchar_t *directory,
         same_charge(budget.reserved, (bc_worker_broker_amounts){0}),
         "short host reply quota denies admission without dispatch");
     ++budget.limit.host_reply_bytes;
+    --budget.limit.parent_bytes;
+    check(bc_worker_broker_start(&broker, &run) == ERROR_NOT_ENOUGH_QUOTA &&
+        !broker.worker.process && !broker.io.event && !calls &&
+        same_charge(budget.reserved, (bc_worker_broker_amounts){0}),
+        "one byte short of synchronous context storage denies admission");
+    ++budget.limit.parent_bytes;
     check(bc_worker_broker_start(&broker, &run) == ERROR_SUCCESS &&
         same_charge(budget.reserved, charge), "reserve host spans and wire at exact limits");
     HANDLE exit_witness = NULL;
@@ -1706,7 +1713,7 @@ static void verify_catalog_process(const wchar_t *path, const wchar_t *directory
         .validate = success ? catalog_process_result : reject_callback,
         .host = {NULL, &route.adapter, NULL, NULL, sizeof(request), sizeof(reply), 2},
         .adapter = &bc_worker_process_callbacks, .adapter_wire_bytes = 2 * adapter_wire,
-        .adapter_parent_bytes = adapter_parent
+        .host_parent_bytes = adapter_parent
     };
     --run.wire_limit;
     check(bc_worker_broker_start(&broker, &run) == ERROR_NOT_ENOUGH_QUOTA &&
@@ -1742,11 +1749,11 @@ static void verify_catalog_process(const wchar_t *path, const wchar_t *directory
         same_charge(budget.reserved, (bc_worker_broker_amounts){0}),
         "reject a parent limit one byte short of the route, staging and launch reservation");
     ++budget.limit.parent_bytes;
-    run.adapter_parent_bytes = SIZE_MAX;
+    run.host_parent_bytes = SIZE_MAX;
     check(bc_worker_broker_start(&broker, &run) == ERROR_NOT_ENOUGH_QUOTA &&
         same_charge(budget.reserved, (bc_worker_broker_amounts){0}),
         "reject an overflowing parent charge");
-    run.adapter_parent_bytes = adapter_parent;
+    run.host_parent_bytes = adapter_parent;
     run.commit_bytes = SIZE_MAX;
     check(bc_worker_broker_start(&broker, &run) == ERROR_NOT_ENOUGH_QUOTA &&
         !broker.io.event && same_charge(budget.reserved, (bc_worker_broker_amounts){0}),

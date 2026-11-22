@@ -47,6 +47,9 @@ pub fn Result<RunConfig,j::Error> parse(ref u8[] source,ref policy::Policy p){
     }
     return .ok(RunConfig{.strings=strings,.entry=selected,.requires=requires,.grants=grants,.limits=requested});
 }
+pub fn usize heap_bytes(ref RunConfig c){
+    return bytes::capacity(ref c.strings)+j::heap_bytes(ref c.requires)+j::heap_bytes(ref c.grants);
+}
 pub fn ref u8[] module_name(ref RunConfig c){return j::view(ref c.strings,c.entry.scope);}
 pub fn ref u8[] function_name(ref RunConfig c){return j::view(ref c.strings,c.entry.function);}
 pub fn limits::RunLimits run_limits(ref RunConfig c){return c.limits;}
