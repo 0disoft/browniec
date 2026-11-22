@@ -189,8 +189,8 @@ its full proof remain atomic.
 
 `runtime_setup_work` initializes at most 1024 buffer bytes or 64 vector entries
 per fresh stage, then authenticates the selected place prefix. Input windows
-use their own 16-cell stages. Their sole owner is now a Buffer with the former
-24576-byte reservation; 768 fixed 24-byte cells occupy 18432 initialized bytes.
+use their own 16-cell stages. Their sole owner is a Buffer with an exact 18,432-byte reservation
+for 768 fixed 24-byte cells.
 The captured mutable address never moves or escapes its owner. Public Buffer
 append/reserve ABI barriers replace unavailable mutable Vec projections; no
 private SDK declarations or compiler changes are used.

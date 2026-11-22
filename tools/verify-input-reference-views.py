@@ -69,7 +69,7 @@ def seams(profiles):
     write(project / 'src/main.fy', main)
     run([compiler, 'check'], cwd=project)
     emitted = run([compiler, 'experimental', 'emit-workspace-c', '--target', 'x86_64-windows-msvc', '--locked'], cwd=project).decode()
-    # Assert the exact generated nominal Cell and Vec descriptor, not a model.
+    # Assert the exact generated nominal Cell layout, not a model.
     cell = re.findall(r'typedef struct \{\s*uintptr_t f_0;\s*uintptr_t f_1;\s*int32_t f_2;\s*\} (fy_struct_\d+);', emitted)
     assert len(cell)==1, 'Generated Cell shape missing or ambiguous'
     name = cell[0]
@@ -91,10 +91,10 @@ def seams(profiles):
     write(out / 'runtime.c', '\n'.join(runtime))
     header = (ROOT / 'probes/m2-buffer-failure/allocator_probe.h').read_text()
     assert header.count('320')==2
-    write(out / 'allocator.h', header.replace('320','24576'))
+    write(out / 'allocator.h', header.replace('320','18432'))
     receipt.update(adapterSha256=sha(adapter.encode()), generatedSha256=sha(emitted.encode()),
-        cellStride=24, cellOffsets=[0,8,16], reserveCapacity=1024, initializedCells=768,
-        allocatorSeam='Existing allocator_probe.h; target 320 replaced by 24576; explicit /FI')
+        cellStride=24, cellOffsets=[0,8,16], reserveCapacity=768, initializedCells=768,
+        allocatorSeam='Existing allocator_probe.h; target 320 replaced by 18432; explicit /FI')
     for profile in profiles:
         flag = '/O2' if profile=='release' else '/Od'
         for name in ['probe','runtime']:
@@ -107,7 +107,7 @@ def seams(profiles):
         pe=helper.image(exe)
         normal=json.loads(run([exe]))
         assert normal['live']==0 and normal['attempts']==normal['frees']==8 and normal['failures']==0, normal
-        oom=json.loads(run([exe,'inject'],env=dict(os.environ,BROWNIE_BUFFER_FAIL_BYTES='24576')))
+        oom=json.loads(run([exe,'inject'],env=dict(os.environ,BROWNIE_BUFFER_FAIL_BYTES='18432')))
         assert oom['live']==0 and oom['targetAttempts']==2 and oom['failures']==1 and oom['attempts']==2 and oom['frees']==1, oom
         receipt['profiles'].append(dict(profile=profile,image=pe,normal=normal,oom=oom))
         print('PASS '+profile+': generated Cell layout, exactly 8 opens / 8 allocations, OOM rollback, default stack',flush=True)

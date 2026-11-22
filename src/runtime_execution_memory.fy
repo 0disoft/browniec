@@ -3,6 +3,7 @@ import ir as ir;
 import errors as errors;
 import array_list_vm as lists;
 import place_dispatch as places;
+import input_reference_views as windows;
 
 // SDK-requested heap payload for the pinned private Windows x64 runtime:
 // word/i64 = 8, input Cell = 24, Published = 72. Inline/native-stack state,
@@ -59,7 +60,7 @@ pub fn Result<usize,errors::Error> scratch_bytes(ref lists::Requirement list,ref
     scratch=add(scratch,vector_bytes(list.length)?)?;
     scratch=add(scratch,list.bytes)?;
     scratch=add(scratch,place_bytes(place)?)?;
-    // Input ABI always prepares Vec<Cell>: 768 initialized, capacity 1024.
-    if(input){scratch=add(scratch,24576)?;}
+    // Input metadata reserves the exact byte span for all windows.
+    if(input){scratch=add(scratch,windows::storage_bytes())?;}
     return .ok(scratch);
 }

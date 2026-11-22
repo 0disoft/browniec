@@ -220,13 +220,13 @@ fn void zero_heap_scalar(){
 }
 pub fn void four_modes_and_layouts_exact_and_one_less(){
     clean();zero_heap_scalar();clean();
-    assert(measured(0,0,0)==0);assert(measured(1,0,0)==24576);
-    assert(measured(2,0,64)==616+64);assert(measured(3,0,64)==24576+616+64);
+    assert(measured(0,0,0)==0);assert(measured(1,0,0)==18432);
+    assert(measured(2,0,64)==616+64);assert(measured(3,0,64)==18432+616+64);
     // Nine i32 operands: 65536-byte arena, Vec16<i64>, 36 encoded bytes.
     let usize array_bytes=65536+128+36;
-    assert(measured(0,1,0)==array_bytes);assert(measured(1,1,0)==array_bytes+24576);
+    assert(measured(0,1,0)==array_bytes);assert(measured(1,1,0)==array_bytes+18432);
     assert(measured(2,1,64)==array_bytes+616+64);
-    assert(measured(3,1,64)==array_bytes+24576+616+64);
+    assert(measured(3,1,64)==array_bytes+18432+616+64);
     var u32 mode=0;while(mode<4){var u32 shape=if(mode==0){1}else{0};while(shape<3){
         instance_boundary(mode,shape,true);clean();instance_boundary(mode,shape,false);clean();shape+=1;
     }mode+=1;}

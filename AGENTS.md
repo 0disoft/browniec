@@ -1,5 +1,5 @@
-- Latest runtime checkpoint (2026-11-22): [Configured byte transform benchmark](docs/engineering/03-performance-budget.md#configured-byte-transform-on-windows-2026-11-22)
-  measures the direct and isolated CLI with exact output checks in both Windows builds.
+- Latest runtime checkpoint (2026-11-22): [Exact input view backing](docs/engineering/input-reference-views.md)
+  saves 6,144 accounted bytes per input-bearing invocation in both Windows profiles.
 
 # Brownie C agent guidance
 

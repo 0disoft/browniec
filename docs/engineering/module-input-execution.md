@@ -55,9 +55,9 @@ These add to existing dispatch, static operations and canonical native
 entry/leave costs. Complete native entry/copies and preparation are preflighted
 before allocating the input map or entering the root frame. Every instruction
 prepays its new metadata work before publication/read. Metadata cleanup remains
-available when guest Fuel reaches zero. The actual pinned Vec allocation rounds
-to 1024 cells/24576 bytes; this ownership is separate from input payload and any
-65536-byte array backing. Full Engine accounting and R03/deadlines remain open.
+available when guest Fuel reaches zero. The [current input metadata Buffer](input-reference-views.md) reserves 18,432
+bytes for the 768 cells. This ownership is separate from input payload and any
+65,536-byte array backing. Full Engine accounting and R03/deadlines remain open.
 
 ## Native validation
 

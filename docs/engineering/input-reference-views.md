@@ -31,8 +31,13 @@ payload bytes and never uses the 4096-byte static descriptor codec.
 Frames are 1..31, sites 0..15, arguments 0..7. The 512 site cells use
 `frame * 16 + site`; the 256 formal cells use `512 + frame * 8 + argument`.
 Frame-zero entries remain inaccessible. State/Cell fields are module-private.
-The pinned SDK rounds reserved capacity to 1024 cells (24576 allocation bytes);
-exactly 768 cells are initialized and addressable internally.
+The Buffer reserves exactly 18,432 bytes for 768 cells. Allocation and
+Engine scratch accounting use the same size. This saves 6,144 bytes per
+input-bearing invocation compared with the former 1,024-cell reservation.
+The allocator seam and integrated Engine passed development and /O2 with
+zero live SDK allocations at exit. The Engine checked actual heap and ledger
+charges together, including exact and one-byte-short admission. Integrated
+receipt: `build/runtime-engine/20261122T113635144337Z/receipt.json`.
 Failures use error kind 5 for invalid state/index/span/size, 14 for crop range
 endpoints or overflow, and 15 for allocation failure. Caller offsets survive;
 `open` has no source-offset parameter and uses zero.
@@ -55,7 +60,7 @@ are Main-owned charges, not a dependency or implementation in this module.
 After successful open this module performs no heap operation until resource
 destruction; it only accesses existing cells. The pinned compiler forbids mutable
 resource-field projection, so open captures the first cell's pointer through a
-local `vec::at_mut` borrow. Private writes serialize start/length and active into
+local mutable Buffer view. Private writes serialize start/length and active into
 that fixed allocation. This relies on pinned Windows AMD64 little-endian Cell
 layout: stride24, usize offsets0/8, bool offset16. Initial inactive bools are
 zero; writes change its low byte and leave the remaining representation zero.
@@ -75,7 +80,7 @@ MAX arithmetic and marker equality. These are metadata tests, not payload IO or
 VM integration evidence. The allocator test's OOM route needs the existing
 explicit native allocator helper; ordinary native tests exercise its success
 route. The wrapper then automatically runs the existing explicit allocator
-helper with only its target size adapted from320 to24576 via a generated /FI
+helper with only its target size adapted from 320 to 18432 via a generated /FI
 header. The instrumented process executes all six groups with exactly8
 allocations/frees for8 successful opens, proving disabled operations allocate
 nothing and post-open operations do not allocate. A separate process fails one

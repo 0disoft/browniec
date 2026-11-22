@@ -28,12 +28,12 @@ fn ir::Program list(u8 tag,usize length){
 fn void empty_variants_keep_input_metadata_and_reserved_output_independent(){
     let ir::Program p=ir::empty();
     planned(ref p,false,false,0,0,0,0);
-    planned(ref p,true,false,0,24576,0,24576);
+    planned(ref p,true,false,0,18432,0,18432);
     planned(ref p,false,true,0,0,616,616);
     planned(ref p,false,true,1,0,617,617);
     planned(ref p,false,true,1048576,0,1049192,1049192);
-    planned(ref p,true,true,0,24576,616,25192);
-    planned(ref p,true,true,1048576,24576,1049192,1073768);
+    planned(ref p,true,true,0,18432,616,19048);
+    planned(ref p,true,true,1048576,18432,1049192,1067624);
     assert(p.count==0 && p.arrays.count==0 && p.records.count==0 && p.list_used==0);
 }
 
@@ -49,8 +49,8 @@ fn void declared_arrays_and_records_share_one_arena_without_per_owner_or_depth_h
     p.records.count=16;p.arrays.count=16;
     var usize i=0;while(i<16){p.arrays.elements[i]=10;p.arrays.lengths[i]=1;i+=1;}
     p.function_count=16;p.call_count=32;
-    planned(ref p,true,false,0,90112,0,90112);
-    planned(ref p,true,true,1,90112,617,90729);
+    planned(ref p,true,false,0,83968,0,83968);
+    planned(ref p,true,true,1,83968,617,84585);
 }
 
 @test
@@ -101,9 +101,9 @@ fn void mixed_places_use_one_selected_format_and_all_maximum_components_overlap(
     p.code[8]=83;p.code[9]=0;p.code[12]=4;
     p.code[16]=83;p.code[17]=15;
     planned(ref p,false,false,0,262144,0,262144);
-    planned(ref p,true,false,0,286720,0,286720);
+    planned(ref p,true,false,0,280576,0,280576);
     planned(ref p,false,true,1048576,262144,1049192,1311336);
-    planned(ref p,true,true,1048576,286720,1049192,1335912);
+    planned(ref p,true,true,1048576,280576,1049192,1329768);
     assert(p.count==3 && p.code[9]==0 && p.code[17]==15 && p.list_used==4096);
 }
 

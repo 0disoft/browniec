@@ -9,7 +9,8 @@ import metadata_budget as budget;
 struct Cell { usize start; usize length; bool active; }
 pub resource State { bytes::Buffer cells; ptr mut u8 data; usize length; usize descriptor_limit; usize live_sites; cleanup { } }
 pub fn State disabled(){return State{.cells=bytes::empty(),.data=null,.length=0,.descriptor_limit=512,.live_sites=0};}
-pub fn bool enabled(ref State state){return bytes::view(ref state.cells).len==18432;}
+pub fn usize storage_bytes(){return 768*24;}
+pub fn bool enabled(ref State state){return bytes::view(ref state.cells).len==storage_bytes();}
 // Bounds-only preflight for unpublished child-frame grants; no cell access.
 pub fn bool accepts(ref State state,views::Span span){
     return enabled(state) && span.start<=state.length && span.length<=state.length-span.start;
@@ -25,8 +26,7 @@ pub fn Result<State,errors::Error> reserve(usize length){
 }
 pub fn Result<State,errors::Error> reserve_with_limit(usize length,usize limit){
     if(length>1048576 || limit==0 || limit>512){return .err(invalid(0));}
-    // Vec<Cell>::reserve(768) formerly rounded to 1024 cells (24576 bytes).
-    var bytes::Buffer cells=switch(bytes::with_capacity(24576)){
+    var bytes::Buffer cells=switch(bytes::with_capacity(storage_bytes())){
         case .ok(v):{v}case .err(_):{return .err(errors::make(15,0));}};
     let ptr mut u8 data=unsafe {bytes::view_mut(ref mut cells) as ptr mut u8};
     if(data==null){return .err(invalid(0));}
@@ -40,27 +40,27 @@ fn usize reserved_cells(ref State state){return bytes::capacity(ref state.cells)
 pub fn Result<bool,errors::Error> initialize_chunk(ref mut State state,ref mut budget::State allowance){
     if(allowance.last!=0){return .ok(false);}
     let usize length=initialized_cells(state);
-    if(length>18432 || length%24!=0 || reserved_cells(state)<24576 || state.length>1048576){return .err(invalid(0));}
-    if(length==18432){if(state.data==null){return .err(invalid(0));}return .ok(true);}
+    if(length>storage_bytes() || length%24!=0 || reserved_cells(state)<storage_bytes() || state.length>1048576){return .err(invalid(0));}
+    if(length==storage_bytes()){if(state.data==null){return .err(invalid(0));}return .ok(true);}
     if(state.data==null){return .err(invalid(0));}
     if(!budget::admit(allowance,4096,0)?){return .ok(false);}
     // At most 16 cells: 384 initialized scratch bytes and 384 appended bytes,
     // leaving room for owning Cursor/frame visits. This bounds logical entries,
     // without a CPU, wall-time or peak-stack claim.
-    let usize count=if(18432-length<384){18432-length}else{384};
+    let usize count=if(storage_bytes()-length<384){storage_bytes()-length}else{384};
     let u8[384] zero=[0;384];let ref u8[] chunk=ref zero[..count];
     assert(unsafe {append_cells_raw(state as ptr mut void,chunk as ptr u8,count)}==0);
     assert(unsafe {validate_cells_raw(state as ptr mut void,0)}==0);
-    return .ok(length+count==18432);
+    return .ok(length+count==storage_bytes());
 }
 
 // Automatic resource destruction releases the entire unpublished vector on any
 // failure. No partially initialized State escapes, including for empty input.
 pub fn Result<State,errors::Error> open(usize length){
     if(length>1048576){return .err(invalid(0));}
-    var bytes::Buffer cells=switch(bytes::with_capacity(24576)){
+    var bytes::Buffer cells=switch(bytes::with_capacity(storage_bytes())){
         case .ok(v):{v}case .err(_):{return .err(errors::make(15,0));}};
-    if(!bytes::resize_zeroed(ref mut cells,18432).is_ok){return .err(errors::make(15,0));}
+    if(!bytes::resize_zeroed(ref mut cells,storage_bytes()).is_ok){return .err(errors::make(15,0));}
     let ptr mut u8 data=unsafe {bytes::view_mut(ref mut cells) as ptr mut u8};
     assert(data!=null);
     return .ok(State{.cells=cells,.data=data,.length=length,.descriptor_limit=512,.live_sites=0});
@@ -104,7 +104,7 @@ fn void word(ref mut u8[] bytes,usize at,usize value){
     }
 }
 fn void save(ref mut State state,usize at,Cell value){
-    let ref mut u8[] slots=unsafe {byte_slice::from_raw_parts_mut(state,state.data,18432)};
+    let ref mut u8[] slots=unsafe {byte_slice::from_raw_parts_mut(state,state.data,storage_bytes())};
     word(slots,at*24,value.start);word(slots,at*24+8,value.length);
     slots[at*24+16]=if(value.active){1}else{0};
 }

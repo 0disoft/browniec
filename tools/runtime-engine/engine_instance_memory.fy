@@ -33,7 +33,7 @@ fn void physical(ref Heap before,usize blocks,usize size){
 fn usize transport(){return 320;}
 fn usize maximum(usize a,usize b){return if(a>b){a}else{b};}
 fn usize execution_bound(u32 mode,usize limit){
-    let usize scratch=if(mode==1 || mode==3){24576}else{0};
+    let usize scratch=if(mode==1 || mode==3){18432}else{0};
     return scratch+if(mode==2 || mode==3){616+limit}else{0};
 }
 fn usize id(Result<usize,engine::Error> result){return switch(result){
@@ -250,7 +250,7 @@ fn void aggregate_boundary(bool short){
             assert(added.program_bytes>stored.program_bytes && added.external_bytes==2*size);
             ledger(ref e,2*size,ceiling,false);release(ref mut e,extra);
             assert(programs(ref e).program_bytes==stored.program_bytes);
-            assert(execution(ref e,p,1,0)==24576);
+            assert(execution(ref e,p,1,0)==18432);
             execution_quota_preserves_ready(ref mut e,second);
             assert(event(engine::cancel_ready(ref mut e,second)).kind==3);
             destroy(ref mut e,second);ledger(ref e,size,ceiling,false);

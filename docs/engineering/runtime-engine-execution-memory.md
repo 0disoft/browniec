@@ -17,7 +17,7 @@ For C(n)=0 when n=0, otherwise the first 8*2^k capacity at least n:
 
 ```text
 S = optional 65536-byte array/record arena + 8*C(list_elements)
-    + list_encoded_bytes + 8*C(place_words) + optional 24576 input metadata
+    + list_encoded_bytes + 8*C(place_words) + optional 18432 input metadata
 ordinary/input transient = S
 output/input-output transient = S + 576 + 40 + output_limit
 ```
@@ -25,7 +25,7 @@ output/input-output transient = S + 576 + 40 + output_limit
 Only one selected place Vec exists. With w=max place ID+1, its initialized count
 is zero for w=0, otherwise array `32*(9*w+1)`, slice `1+32*(14*w+1)`, record
 `2+32*(14*w+1)` or aggregate `3+32*(18*w+1)`. Input descriptors initialize 768
-24-byte Cells in a capacity-1024 Vec even for empty input. List element and byte
+24-byte Cells in an exact-size Buffer even for empty input. List element and byte
 maxima can originate from different instructions and must coexist.
 
 The Engine caches S when publishing each immutable Program. Budget lookup at
