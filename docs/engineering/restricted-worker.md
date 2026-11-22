@@ -166,6 +166,16 @@ it after cleanup and returned to zero on close. Windows development and
 All 459 input hashes matched.
 Local receipt: `build/restricted-worker/20261122T024426011213Z/receipt.json`.
 
+The same admission budget caps overlapped I/O owners. A worker reserves two
+slots for the normal transfer and the cancellation write. A process-backed
+route reserves one more for the adapter's serial pipe operations. Each
+slot covers the completion event and its outstanding operation through
+collection. Two overlapping workers fit at four slots and fail admission
+at three. A process-backed run fits at three and fails at two, before
+either broker event opens. Both checks passed in Windows development and
+/O2, with zero net handles and all 459 input hashes matched.
+Local receipt: `build/restricted-worker/20261122T025308849465Z/receipt.json`.
+
 ### Phase deadlines
 
 The broker starts the startup window before opening handles and requires

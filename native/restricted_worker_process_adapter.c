@@ -59,4 +59,4 @@ static bool process_close(void *context) {
     return !adapter || bc_adapter_slot_close(&adapter->slot);
 }
 
-const bc_worker_host_adapter bc_worker_process_callbacks = {process_begin, process_poll, process_close};
+const bc_worker_host_adapter bc_worker_process_callbacks = {process_begin, process_poll, process_close, 1};

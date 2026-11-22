@@ -32,7 +32,11 @@ typedef struct bc_worker_broker_amounts {
     size_t child_commit_bytes;
     size_t wire_bytes;
     size_t adapter_slots;
+    size_t io_slots;
 } bc_worker_broker_amounts;
+
+/* The ordinary transfer and the graceful cancellation write each own a slot. */
+enum { BC_WORKER_BROKER_IO_SLOTS = 2 };
 
 /* Initialize the limits and zero the reservations. The owner serializes
    all sessions using this budget and keeps it alive through their close. */
@@ -69,6 +73,8 @@ typedef struct bc_worker_host_adapter {
         size_t length, uint64_t deadline);
     bc_worker_host_progress (*poll)(void *context, uint8_t *reply, size_t capacity, size_t *length);
     bool (*close)(void *context);
+    /* Maximum simultaneous overlapped I/O owners, including startup and reaping. */
+    uint32_t io_slots;
 } bc_worker_host_adapter;
 
 typedef struct bc_worker_broker {
@@ -125,6 +131,7 @@ typedef struct bc_worker_broker_run {
    bytes, Job commit ceiling and wire envelope against the shared budget.
    A deferred route also reserves one adapter slot before launch. The slot
    stays reserved across sequential requests and through final cleanup.
+   Each I/O slot covers one event and its outstanding overlapped operation.
    The trusted route supplies its additional process transport envelope in
    adapter_wire_bytes. It shares the session wire limit and release condition.
    The absolute session deadline uses QueryInterruptTimePrecise ticks.
