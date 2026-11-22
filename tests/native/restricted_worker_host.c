@@ -889,6 +889,106 @@ static void verify_host_broker(const wchar_t *path, const wchar_t *directory,
         "no dispatch after settlement and refund host reservation exactly once");
 }
 
+typedef struct deferred_fixture {
+    const uint8_t *request;
+    unsigned begins, polls, closes;
+    bool hold_close;
+} deferred_fixture;
+
+static bool deferred_begin(void *context, uint64_t correlation, const uint8_t *request,
+    size_t size, uint64_t deadline) {
+    deferred_fixture *f = context;
+    check(!f->request && ++f->begins == correlation && size == 1 && request[0] == 41 &&
+        deadline > clock_ticks(), "admit one complete request with the phase deadline");
+    f->request = request;
+    return true;
+}
+
+static bc_worker_host_progress deferred_poll(void *context, uint8_t *reply, size_t capacity, size_t *size) {
+    deferred_fixture *f = context;
+    check(f->request && f->request[0] == 41, "retain immutable request across adapter polls");
+    if (++f->polls % 2) return BC_WORKER_HOST_PENDING;
+    unsigned calls = f->begins - 1;
+    *size = reply_fixture(&calls, f->begins, f->request, 1, reply, capacity);
+    return *size ? BC_WORKER_HOST_READY : BC_WORKER_HOST_REJECTED;
+}
+
+static bool deferred_close(void *context) {
+    deferred_fixture *f = context;
+    check(f->request && f->request[0] == 41, "retain the borrowed request through adapter close");
+    if (f->hold_close) return false;
+    f->request = NULL;
+    ++f->closes;
+    return true;
+}
+
+static void verify_deferred_adapter(const wchar_t *path, const wchar_t *directory,
+    bc_worker_gate_status expected) {
+    const bool success = expected == BC_WORKER_GATE_DELIVERED;
+    const bool expires = expected == BC_WORKER_GATE_EXPIRED;
+    const uint8_t start = 41;
+    uint8_t request = 0, result = 0, reply[long_request_bytes];
+    const uint32_t calls = success ? 2 : 1;
+    const size_t wire = 5 * BC_WORKER_FRAME_BYTES + 3 +
+        calls * (2 * BC_WORKER_FRAME_BYTES + sizeof(request) + sizeof(reply));
+    bc_worker_broker broker = {0};
+    deferred_fixture fixture = {.hold_close = !success};
+    const bc_worker_broker_amounts charge = {1, sizeof(broker) + 3 + sizeof(reply), commit_limit, wire};
+    bc_worker_broker_budget budget = {.limit = charge};
+    const bc_worker_host_adapter adapter = {deferred_begin, deferred_poll, deferred_close};
+    wchar_t command[256];
+    check(swprintf_s(command, _countof(command), L"worker %ls %llx",
+        success ? L"--child-host-ok" : L"--child-host-cancel-rx",
+        (unsigned long long)(ULONG_PTR)decoy) > 0, "format deferred adapter fixture command");
+    const bc_worker_broker_run run = {
+        .budget = &budget, .application = path, .command_line = command, .directory = directory,
+        .profile = profile, .commit_bytes = commit_limit, .cpu_ms = cpu_limit,
+        .startup_ms = 4000, .io_idle_ms = 4000, .shutdown_grace_ms = 2500,
+        .deadline = clock_ticks() + 100000000ULL, .wire_limit = wire,
+        .request = &start, .request_length = 1, .result = &result, .result_capacity = 1,
+        .validate = success ? fixture_result : reject_callback,
+        .host = {NULL, &fixture, &request, reply, sizeof(request), sizeof(reply), calls},
+        .adapter = &adapter
+    };
+    check(!bc_worker_broker_start(&broker, &run) && same_charge(budget.reserved, charge),
+        "start deferred adapter session at exact reservation");
+    while (broker.gate.status == BC_WORKER_GATE_PENDING && broker.phase != BC_WORKER_BROKER_FINISH) {
+        bc_worker_broker_step(&broker);
+        if ((!success && !expires && broker.phase == BC_WORKER_BROKER_WAIT_HOST && fixture.polls == 1) ||
+            (expires && broker.phase == BC_WORKER_BROKER_REAP_HOST)) {
+            if (!expires) check(bc_worker_broker_cancel(&broker) == expected, "cancel pending adapter");
+            broker.phase_deadline = clock_ticks();
+            check(bc_worker_broker_step(&broker) == expected &&
+                bc_worker_broker_cancel(&broker) == expected, "preserve first deferred adapter outcome");
+            break;
+        }
+        if (broker.io.pipe || broker.phase == BC_WORKER_BROKER_WAIT_EXIT) Sleep(1);
+    }
+    size_t length = 123;
+    const uint8_t *published = bc_worker_broker_take(&broker, &length);
+    check(broker.gate.status == expected && fixture.begins == calls,
+        "observe one dispatch per completed request");
+    if (success) {
+        check(published == &result && length == 1 && result == 42 &&
+            fixture.polls == 4 && fixture.closes == 2, "publish after both deferred replies were reaped");
+    } else {
+        check(!published && length == 123, "stopped adapter cannot publish");
+        const uint64_t limit = clock_ticks() + 50000000ULL;
+        do {
+            check(!bc_worker_broker_close(&broker) && clock_ticks() < limit &&
+                same_charge(budget.reserved, charge) && broker.gate.status == expected,
+                "adapter residual work retains the broker reservation");
+            Sleep(1);
+        } while (WaitForSingleObject(broker.worker.process, 0) == WAIT_TIMEOUT ||
+            broker.phase != BC_WORKER_BROKER_REAPING);
+        check(result == 42 && fixture.closes == 0 && fixture.polls == (expires ? 2u : 1u),
+            "drain late RESULT without any more adapter polls");
+        fixture.hold_close = false;
+    }
+    check(bc_worker_broker_close(&broker) && fixture.closes == calls &&
+        same_charge(budget.reserved, (bc_worker_broker_amounts){0}), "refund after adapter cleanup");
+}
+
 static void verify_graceful_cancel(const wchar_t *path, const wchar_t *directory, bool ignore) {
     bc_worker_broker broker = {0};
     wchar_t command[256];
@@ -1355,6 +1455,9 @@ int wmain(int argc, wchar_t **argv) {
     verify_host_broker(argv[1], directory, L"--child-host-cancel-tx", 2, BC_WORKER_GATE_EXPIRED, 1);
     verify_host_broker(argv[1], directory, L"--child-peer-ok", 2, BC_WORKER_GATE_DELIVERED, 2);
     verify_host_broker(argv[1], directory, L"--child-peer-cancel", 2, BC_WORKER_GATE_CANCELLED, 0);
+    verify_deferred_adapter(argv[1], directory, BC_WORKER_GATE_DELIVERED);
+    verify_deferred_adapter(argv[1], directory, BC_WORKER_GATE_CANCELLED);
+    verify_deferred_adapter(argv[1], directory, BC_WORKER_GATE_EXPIRED);
     verify_graceful_cancel(argv[1], directory, false);
     verify_graceful_cancel(argv[1], directory, true);
     if (argc == 3) {
@@ -1398,7 +1501,7 @@ int wmain(int argc, wchar_t **argv) {
            "\"commitDenied\":true,\"cpuTermination\":true,\"privatePipeAcl\":true,"
            "\"framedExchange\":true,\"headerMutationsRejected\":48,"
            "\"boundedStream\":true,\"pipeEof\":true,\"publicationGate\":true,"
-           "\"ioLease\":true,\"brokerSessions\":6,\"hostBrokerCases\":11,\"sharedBudget\":true,"
+           "\"ioLease\":true,\"brokerSessions\":6,\"hostBrokerCases\":11,\"deferredAdapterCases\":3,\"sharedBudget\":true,"
            "\"phaseDeadlines\":true,\"gracefulCancelCases\":2,\"handleDelta\":0,\"staging\":true,"
            "\"scalarSessions\":%d,\"parentBrokerCases\":%d,\"projectWireRejections\":%d,"
            "\"projectCompileStopCases\":%d,\"catalogHostStopCases\":%d,"

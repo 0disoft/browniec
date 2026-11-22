@@ -1,5 +1,5 @@
-- Latest runtime checkpoint (2026-11-22): [Catalog guest host transfer stops](docs/engineering/restricted-worker.md#catalog-guest-host-transfer-stops)
-  admits the private cancelled run result so the broker can reap a stopped catalog guest without publishing its result or output.
+- Latest runtime checkpoint (2026-11-22): [Deferred host adapters](docs/engineering/restricted-worker.md#deferred-host-adapters)
+  let the broker cancel a pending adapter and retain session reservations until adapter cleanup completes.
 
 # Brownie C agent guidance
 

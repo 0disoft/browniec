@@ -558,6 +558,23 @@ Each profile passed the nine native host cases and the five managed and
 36 configured project cases using the freshly built executable. Local
 receipt: `build/restricted-worker/20261121T180147737119Z/receipt.json`.
 
+### Deferred host adapters
+
+The broker can drive an opted-in adapter through bounded begin, poll and
+close operations. It starts each complete request once and passes the
+phase deadline. It queues the reply only after the adapter finishes
+cleanup and the phase remains live. Cancellation or expiry stops adapter
+polls and sends CANCEL without publishing any staged reply. Worker and
+pipe cleanup can continue while the adapter still holds its request.
+The broker refunds its reservation only after all three owners finish.
+
+Windows development and /O2 passed three AppContainer cases with a
+controlled adapter: two successful replies, cancellation while pending,
+and expiry while a ready reply awaited adapter cleanup. Both stop cases
+drained a late RESULT without validating or publishing it and retained
+the exact reservation after worker exit. Zero net handles remained.
+All 23 input hashes matched. Local receipt: `build/restricted-worker/20261122T014859499793Z/receipt.json`.
+
 ### Catalog guest host transfer stops
 
 A cancelled Engine Instance reports a run error with no source location.

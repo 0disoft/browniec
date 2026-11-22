@@ -67,11 +67,14 @@ DWORD bc_worker_broker_start(bc_worker_broker *b, const bc_worker_broker_run *ru
         !run->validate || run->request_length > BC_WORKER_FRAME_PAYLOAD_MAX ||
         run->result_capacity > BC_WORKER_FRAME_PAYLOAD_MAX) return ERROR_INVALID_PARAMETER;
     const bc_worker_broker_host host = run->host;
+    const bc_worker_host_adapter *adapter = run->adapter;
     if (host.max_calls) {
-        if (!host.respond || !host.request || !host.reply || !host.request_capacity ||
+        if ((host.respond != NULL) == (adapter != NULL) ||
+            (adapter && (!adapter->begin || !adapter->poll || !adapter->close)) ||
+            !host.request || !host.reply || !host.request_capacity ||
             !host.reply_capacity || host.request_capacity > BC_WORKER_FRAME_PAYLOAD_MAX ||
             host.reply_capacity > BC_WORKER_FRAME_PAYLOAD_MAX) return ERROR_INVALID_PARAMETER;
-    } else if (host.respond || host.request || host.reply || host.request_capacity ||
+    } else if (host.respond || adapter || host.request || host.reply || host.request_capacity ||
         host.reply_capacity) return ERROR_INVALID_PARAMETER;
     size_t wire = 5 * BC_WORKER_FRAME_BYTES + run->request_length + run->result_capacity + 1;
     const size_t per_call = 2 * BC_WORKER_FRAME_BYTES + host.request_capacity + host.reply_capacity;
@@ -103,6 +106,7 @@ DWORD bc_worker_broker_start(bc_worker_broker *b, const bc_worker_broker_run *ru
     b->validate = run->validate;
     b->expectation = run->expectation;
     b->host = host;
+    b->adapter = adapter;
     DWORD status = bc_worker_io_open(&b->io);
     if (!status) status = bc_worker_io_open(&b->cancel_io);
     if (!status) status = bc_worker_pipes_open(&b->pipes);
@@ -144,18 +148,55 @@ static void expect_worker(bc_worker_broker *b, bool allow_request) {
     }
 }
 
-static bool begin_host_reply(bc_worker_broker *b, const bc_worker_frame *request) {
-    if (!request->length) return false;
-    ++b->requests;
-    const size_t length = b->host.respond(b->host.context, request->correlation, b->rx.body,
-        request->length, b->host.reply, b->host.reply_capacity);
-    if (!phase_live(b, now_ticks())) return false;
+static bool queue_host_reply(bc_worker_broker *b, size_t length) {
     if (!length || length > b->host.reply_capacity) return false;
     bc_worker_frame reply = header(b, BC_WORKER_HOST_REPLY, 3ULL + b->replies, length);
-    reply.correlation = request->correlation;
+    reply.correlation = b->rx.received.correlation;
     if (!bc_worker_tx_begin(&b->tx, &reply, b->host.reply)) return false;
     b->phase = BC_WORKER_BROKER_SEND_HOST_REPLY;
     return true;
+}
+
+static bool dispatch_host_request(bc_worker_broker *b) {
+    const bc_worker_frame *request = &b->rx.received;
+    if (!request->length) return false;
+    ++b->requests;
+    if (b->adapter) {
+        b->adapter_active = true;
+        b->phase = BC_WORKER_BROKER_WAIT_HOST;
+        const bool started = b->adapter->begin(b->host.context, request->correlation,
+            b->rx.body, request->length, b->phase_deadline);
+        return phase_live(b, now_ticks()) && started;
+    }
+    const size_t length = b->host.respond(b->host.context, request->correlation, b->rx.body,
+        request->length, b->host.reply, b->host.reply_capacity);
+    return phase_live(b, now_ticks()) && queue_host_reply(b, length);
+}
+
+static bool close_host_adapter(bc_worker_broker *b) {
+    if (b->adapter_active && b->adapter->close(b->host.context)) b->adapter_active = false;
+    return !b->adapter_active;
+}
+
+static void step_host(bc_worker_broker *b) {
+    if (b->phase == BC_WORKER_BROKER_WAIT_HOST) {
+        size_t length = 0;
+        const bc_worker_host_progress progress = b->adapter->poll(b->host.context,
+            b->host.reply, b->host.reply_capacity, &length);
+        const uint64_t now = now_ticks();
+        if (!phase_live(b, now) || progress == BC_WORKER_HOST_PENDING) return;
+        if (progress != BC_WORKER_HOST_READY || !length || length > b->host.reply_capacity) {
+            bc_worker_gate_stdout_end(&b->gate, false, now);
+            return;
+        }
+        b->host_reply_length = length;
+        b->phase = BC_WORKER_BROKER_REAP_HOST;
+        return;
+    }
+    if (!close_host_adapter(b)) return;
+    const uint64_t now = now_ticks();
+    if (phase_live(b, now) && !queue_host_reply(b, b->host_reply_length))
+        bc_worker_gate_stdout_end(&b->gate, false, now);
 }
 
 static void step_tx(bc_worker_broker *b) {
@@ -234,7 +275,7 @@ static void step_rx(bc_worker_broker *b) {
         renew_idle(b, now);
         b->phase = BC_WORKER_BROKER_SEND_START;
     } else if (b->rx.received.kind == BC_WORKER_HOST_REQUEST) {
-        if (!begin_host_reply(b, &b->rx.received))
+        if (!dispatch_host_request(b))
             bc_worker_gate_stdout_end(&b->gate, false, now_ticks());
     } else {
         bc_worker_gate_stage(&b->gate, &b->rx, b->validate, b->expectation, now);
@@ -251,6 +292,8 @@ bc_worker_gate_status bc_worker_broker_step(bc_worker_broker *b) {
     case BC_WORKER_BROKER_SEND_HELLO:
     case BC_WORKER_BROKER_SEND_START:
     case BC_WORKER_BROKER_SEND_HOST_REPLY: step_tx(b); break;
+    case BC_WORKER_BROKER_WAIT_HOST:
+    case BC_WORKER_BROKER_REAP_HOST: step_host(b); break;
     case BC_WORKER_BROKER_READ_READY:
     case BC_WORKER_BROKER_READ_RESULT:
     case BC_WORKER_BROKER_READ_EOF: step_rx(b); break;
@@ -308,7 +351,8 @@ static void begin_shutdown(bc_worker_broker *b, uint64_t now) {
                 if (begin_cancel_frame(b)) return;
             }
         }
-        if ((b->phase == BC_WORKER_BROKER_READ_RESULT || b->phase == BC_WORKER_BROKER_READ_EOF) &&
+        if ((b->phase == BC_WORKER_BROKER_WAIT_HOST || b->phase == BC_WORKER_BROKER_REAP_HOST ||
+             b->phase == BC_WORKER_BROKER_READ_RESULT || b->phase == BC_WORKER_BROKER_READ_EOF) &&
             begin_cancel_frame(b)) return;
         if (b->phase == BC_WORKER_BROKER_WAIT_EXIT) {
             b->phase = BC_WORKER_BROKER_DRAIN_EXIT;
@@ -376,6 +420,7 @@ static bool shutdown_step(bc_worker_broker *b) {
 bool bc_worker_broker_close(bc_worker_broker *b) {
     if (b->phase == BC_WORKER_BROKER_IDLE) return true;
     if (!b->shutdown_deadline) begin_shutdown(b, now_ticks());
+    const bool adapter_reaped = close_host_adapter(b);
     if (b->phase != BC_WORKER_BROKER_REAPING) {
         if (shutdown_step(b)) return false;
         if (b->worker.job && now_ticks() >= b->shutdown_deadline)
@@ -388,7 +433,7 @@ bool bc_worker_broker_close(bc_worker_broker *b) {
     DWORD count;
     if (b->io.pipe && bc_worker_io_poll(&b->io, &count) == ERROR_IO_PENDING) return false;
     if (b->cancel_io.pipe && bc_worker_io_poll(&b->cancel_io, &count) == ERROR_IO_PENDING) return false;
-    if (!bc_restricted_worker_close(&b->worker) || bc_worker_io_close(&b->io) ||
+    if (!adapter_reaped || !bc_restricted_worker_close(&b->worker) || bc_worker_io_close(&b->io) ||
         bc_worker_io_close(&b->cancel_io)) return false;
     bc_worker_pipes_close(&b->pipes);
     refund(b);
