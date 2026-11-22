@@ -625,10 +625,21 @@ pub fn Result<ScalarEvent,ScalarError> receive_scalar_reply(ref mut Exchange e,u
     let u8 tag=result_tag(e);
     if(current.phase==1){
         if(offset!=0){return .err(.Rejected);}
-        if(total>wire::payload_limit()){discard stop(e,4,now);return .ok(scalar_event(e));}
-        let bool valid=if(complete){wire::decode_reply(kind,tag,chunk,total).is_ok}
-            else{wire::reply_prefix(kind,tag,chunk,total).is_ok};
-        if(!valid){return .err(.Rejected);}
+        if(complete){
+            if(!wire::decode_reply(kind,tag,chunk,total).is_ok){return .err(.Rejected);}
+        }else{
+            switch(wire::reply_prefix(kind,tag,chunk,total)){
+                case .ok(_):{}
+                case .err(reason):{
+                    let bool limit=switch(reason){
+                        case .Limit:{true}case .Type:{false}case .Count:{false}case .Header:{false}
+                        case .Length:{false}case .Value:{false}case .Reply:{false}
+                    };
+                    if(!limit){return .err(.Rejected);}
+                    discard stop(e,4,now);return .ok(scalar_event(e));
+                }
+            };
+        }
         if(!reply_budget(e,total,total,now).is_ok){return .ok(scalar_event(e));}
         var bytes::Buffer prepared=switch(bytes::with_capacity(total)){
             case .ok(v):{v}case .err(_):{return .err(.Allocation);}

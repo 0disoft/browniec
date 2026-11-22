@@ -1,5 +1,5 @@
-- Latest runtime checkpoint (2026-11-22): [Synchronous reply context reservation](docs/engineering/restricted-worker.md#synchronous-reply-context-reservation)
-  charges the borrowed parent replay owner and its backing through reaping.
+- Latest runtime checkpoint (2026-11-22): [Oversized reply validation](docs/engineering/embed-preview.md#oversized-reply-validation)
+  preserves the live request and Fuel on malformed oversized replies.
 
 # Brownie C agent guidance
 

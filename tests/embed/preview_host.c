@@ -1203,7 +1203,7 @@ static void revision_two_large_host_reply(void){
         "\"capability\":\"host.example.check\",\"adapter_revision\":\"v1\"}]}";
     const uint8_t answer[]={3,0,0,0,4,0,0,0,42,0,0,0};
     const uint8_t error[]={5,0,0,0,4,0,0,0,1,0,0,0};
-    enum {body_size=8193};
+    enum {body_size=8193, oversize=1048577};
     uint8_t payload[8+body_size]={7,0,0,0,1,32,0,0};
     for(size_t i=0;i<body_size;++i){payload[8+i]=(uint8_t)(i%251);}
     uint8_t policy_data[4096],run_data[1024];
@@ -1211,7 +1211,7 @@ static void revision_two_large_host_reply(void){
     const bc_slice config={run_data,read_fixture("run-host.json",run_data,sizeof(run_data))};
     const bc_slice empty={0};
     const bc_source source={{main_name,sizeof(main_name)-1},{text,sizeof(text)-1}};
-    bc_handle engine=0,program=0,done=0,cancelled=0,rejected=0;
+    bc_handle engine=0,program=0,done=0,cancelled=0,rejected=0,limited=0;
     bc_diagnostic diag={.struct_size=sizeof(diag)};
     assert(bc_engine_create(BC_ABI_REVISION,policy,&engine,&diag)==BC_OK);
     const uint32_t compiled=bc_compile(engine,&source,1,(bc_slice){catalog,sizeof(catalog)-1},&program,&diag);
@@ -1223,9 +1223,28 @@ static void revision_two_large_host_reply(void){
     assert(bc_instance_create(engine,program,empty,config,&done,&diag)==BC_OK);
     assert(bc_instance_create(engine,program,empty,config,&cancelled,&diag)==BC_OK);
     assert(bc_instance_create(engine,program,empty,config,&rejected,&diag)==BC_OK);
+    assert(bc_instance_create(engine,program,empty,config,&limited,&diag)==BC_OK);
     assert(bc_program_release(engine,program)==BC_OK);
     bc_event first=next_host_event(done,64),second=next_host_event(cancelled,64);
     assert(first.kind==BC_HOST_REQUEST && second.kind==BC_HOST_REQUEST);
+    uint8_t *oversized=HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,oversize);
+    assert(oversized);
+    const bc_slice long_reply={oversized,oversize};
+    assert(bc_host_reply(done,first.request_id,BC_REPLY_OK,long_reply,&diag)==BC_BAD_ARGUMENT);
+    assert(bc_host_reply(done,first.request_id,BC_REPLY_FATAL,long_reply,&diag)==BC_BAD_ARGUMENT);
+    const bc_event waiting=next_host_event(done,64);
+    assert(waiting.kind==BC_WAIT && waiting.request_id==first.request_id && waiting.fuel_used==first.fuel_used);
+    oversized[0]=7;
+    oversized[4]=249;
+    oversized[5]=255;
+    oversized[6]=15;
+    const bc_event at_limit=next_host_event(limited,64);
+    assert(at_limit.kind==BC_HOST_REQUEST);
+    assert(bc_host_reply(limited,at_limit.request_id,BC_REPLY_OK,long_reply,&diag)==BC_RUN_TERMINATED);
+    const bc_event denied=next_host_event(limited,64);
+    assert(denied.kind==BC_FAILED && denied.diagnostic.code==15 && denied.fuel_used==at_limit.fuel_used);
+    assert(HeapFree(GetProcessHeap(),0,oversized));
+    assert(bc_instance_destroy(limited)==BC_OK);
     assert(bc_host_reply(done,first.request_id,BC_REPLY_OK,(bc_slice){payload,sizeof(payload)},&diag)==BC_OK);
     assert(bc_host_reply(cancelled,second.request_id,BC_REPLY_OK,(bc_slice){payload,sizeof(payload)},&diag)==BC_OK);
     memset(payload,0,sizeof(payload));

@@ -361,6 +361,21 @@ missing run declaration rejection and a typed i32 reply that returned 77.
 
 ## Revision-2 host requests and replies
 
+### Oversized reply validation
+
+Reply admission validates the TLV header and fixed scalar widths before
+applying the absolute 1 MiB envelope limit. An invalid oversized reply or
+nonempty fatal reply returns `BC_BAD_ARGUMENT` with the Instance still
+waiting on the same request. A structurally valid Buffer reply over the
+envelope limit terminates the run before copying any body bytes.
+
+Windows development and /O2 passed the C host fixture. For a 1,048,577-byte
+malformed reply and a nonempty fatal reply of the same size, the reply
+ID and Fuel stayed fixed and a subsequent 8193-byte reply completed.
+A separate Instance rejected a structurally valid 1,048,577-byte envelope
+with `BC_RUN_TERMINATED` and no Fuel debit. Local receipt:
+`build/embed-preview-fsp9lbns/receipt.json`.
+
 ### Catalog-backed trap locations
 
 Catalog-backed Programs retain the source lengths in caller order and reuse
