@@ -371,8 +371,28 @@ incremental-link files. The retained executable occupied 11,158,528 bytes.
 The deliberate compile failure exited 6, reclaimed its scratch and preserved
 that executable. Its 930 samples observed up to 47,795,251 scratch bytes.
 Local evidence: `build/retained-builds-uatqzqer/receipt.json`.
-The 100-edit run, machine-wide compiler cache size and eviction, and full
-toolchain installation size remain unverified.
+### Windows compiler installation and cache
+
+The pinned compiler installation in `build/toolchain` occupies 18,591,935
+bytes: the 18,591,232-byte executable and its 703-byte setup receipt. This
+scope excludes the separately installed Go bootstrap, MSVC and Windows SDK.
+
+The pinned Fairy C source defines two per-user native object stores under
+`%LOCALAPPDATA%/fairyc`. A read-only snapshot on 2026-11-23 measured:
+
+| Store | Observed files | Observed bytes | Generation limit | Generation byte limit | Per-record limit |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| `native-runtime-v1` | 64 | 1,192,452 | 64 | 64 MiB | 16 MiB |
+| `native-unit-v1` | 2 | 2,898 | 2 | 4 MiB | 2 MiB |
+
+The generated-unit store is used by the optimized MSVC path. Fairy C's
+`internal/packagecache/disk.go` at pin `801c5d8c` evicts generations in
+modification-time order until both thresholds hold, breaking ties by path.
+Its sweep also checks temporary files against a 24-hour age limit. The snapshot
+found zero temporary files in either store. The observed file lengths include
+records from other Fairy C work by the same Windows user. The sweep thresholds
+apply to retained generations. The 100-edit result, isolated eviction evidence
+and footprint of shared prerequisites remain pending.
 
 ## Configured byte transform on Windows (2026-11-22)
 
