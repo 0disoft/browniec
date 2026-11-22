@@ -80,20 +80,21 @@ pub fn Result<pending_output::Published,errors::Error> seal_pending_output(ref m
     return switch(vec::pop<pending_output::Published>(ref mut outgoing)){case .some(v):{.ok(v)}case .none:{.err(errors::make(5,0))}};
 }
 fn u32 pending_advance_inner(ref output_programs::Program p,ref input_bytes::Snapshot input,
-    ref mut machines::Meta m,ref mut pending_frames::Frames bindings,ref mut pending_runtime::State state,ref pending_sites::Sites sites,
-    ref u8[] origins,ref mut usize[] live,ref mut u32[] words,ref mut i64[] registers,ref mut pending_call_metadata::State call_metadata,ref mut copy_plans::State copy_plan,
+    ref mut machines::Meta m,ref mut pending_frames::Frames bindings,ref mut pending_runtime::State state,
+    ref mut usize[] live,ref mut u32[] words,ref mut i64[] registers,ref mut pending_call_metadata::State call_metadata,ref mut copy_plans::State copy_plan,
     ref mut pending_bytes::Buffer payload,ref mut vec::Vec<i64> cells,ref mut pending_bytes::Buffer scratch,
     ref mut vec::Vec<usize> places,ref mut pending_windows::State windows,ref mut pending_output::Transaction staged,u32 operation,usize quantum){
-    return switch(pending_advance_impl(p,input,m,bindings,state,sites,origins,live,words,registers,call_metadata,copy_plan,payload,cells,scratch,places,windows,staged,operation,quantum)){case .ok(_):{0}case .err(_):{5}};
+    return switch(pending_advance_impl(p,input,m,bindings,state,live,words,registers,call_metadata,copy_plan,payload,cells,scratch,places,windows,staged,operation,quantum)){case .ok(_):{0}case .err(_):{5}};
 }
 fn Result<usize,errors::Error> pending_advance_impl(ref output_programs::Program p,ref input_bytes::Snapshot input,
-    ref mut machines::Meta m,ref mut pending_frames::Frames bindings,ref mut pending_runtime::State state,ref pending_sites::Sites sites,
-    ref u8[] origins,ref mut usize[] live,ref mut u32[] words,ref mut i64[] registers,ref mut pending_call_metadata::State call_metadata,ref mut copy_plans::State copy_plan,
+    ref mut machines::Meta m,ref mut pending_frames::Frames bindings,ref mut pending_runtime::State state,
+    ref mut usize[] live,ref mut u32[] words,ref mut i64[] registers,ref mut pending_call_metadata::State call_metadata,ref mut copy_plans::State copy_plan,
     ref mut pending_bytes::Buffer payload,ref mut vec::Vec<i64> cells,ref mut pending_bytes::Buffer scratch,
     ref mut vec::Vec<usize> places,ref mut pending_windows::State windows,ref mut pending_output::Transaction staged,u32 operation,usize quantum){
     if(operation>1 || (operation==0 && m.phase!=0) || (operation==1 && (m.phase!=1 || !pending_cursors::valid_quantum(quantum)))){return .err(errors::make(5,0));}
     let ref pending_ir::Program body=ref output_programs::code(p).body;
     let ref output_programs::Preparation prepared=output_programs::preparation(p);
+    let ref pending_sites::Sites sites=ref prepared.sites;
     let ref u8[] guest=input_bytes::view(input);
     if(m.lifecycle.phase>=7){let u32 status=finish_stage(m,state,ref mut call_metadata.metadata,places,staged,quantum);return .ok(0);}
     var usize remaining=m.remaining;var pending_cursors::Cursor cursor=m.cursor;var pending_cursors::Stats statistics=m.stats;
@@ -119,7 +120,7 @@ fn Result<usize,errors::Error> pending_advance_impl(ref output_programs::Program
         if(operation==1){let usize recorded=pending_cursors::finish(ref mut statistics,1,true)?;m.stats=statistics;}
     }else{
         let Result<Option<pending_execution::Scalar>,errors::Error> progressed=pending_execution::step_output_cached_staged(body,ref prepared.parameters,bindings,state,pending_bytes::view_mut(payload),sites,
-            pending_images::payload(output_programs::literals(p)),cells,scratch,places,windows,guest,origins,
+            pending_images::payload(output_programs::literals(p)),cells,scratch,places,windows,guest,ref prepared.origins,
             ref mut remaining,staged,ref mut cursor,live,words,registers,quantum,ref mut statistics,ref output_programs::preparation(p).calls,call_metadata,copy_plan);
         m.remaining=remaining;m.cursor=cursor;m.stats=statistics;
         switch(progressed){case .ok(progress):{switch(progress){case .none:{return .ok(0);}
@@ -167,14 +168,13 @@ fn u32 pending_setup_inner(ref output_programs::Program p,ref input_bytes::Snaps
             m.cursor.active=false;let pending_output::Observation dropped=pending_output::fail(staged);return 0;}};
     return 5;
 }
-fn u32 pending_core_setup_inner(ref output_programs::Program p,ref mut machines::Meta m,ref mut machines::Core core,usize quantum){
+fn u32 pending_core_setup_inner(ref mut machines::Meta m,ref mut machines::Core core,usize quantum){
     var pending_cursors::Cursor cursor=m.cursor;var pending_cursors::Stats statistics=m.stats;
     if(m.phase!=1 || m.lifecycle.phase!=3 || m.lifecycle.index>=49){return 5;}
     if(!pending_cursors::begin(ref mut statistics,quantum).is_ok){return 5;}reset_counters(ref mut cursor);
     if(!metadata_budget::reset(ref mut cursor.metadata,0).is_ok){return 5;}
     if(!metadata_budget::admit(ref mut cursor.metadata,4096,0).is_ok){return 5;}
-    let ref output_programs::Preparation prepared=output_programs::preparation(p);
-    if(machines::initialize_staged(core,m.lifecycle.index,m.lifecycle.setup.plan.payload,ref prepared.sites,ref prepared.origins,cursor.limits)){m.lifecycle.phase=4;}
+    if(machines::initialize_staged(core,m.lifecycle.index,m.lifecycle.setup.plan.payload,cursor.limits)){m.lifecycle.phase=4;}
     m.lifecycle.index+=1;assert(pending_cursors::finish(ref mut statistics,1,true).is_ok);
     m.cursor=cursor;m.stats=statistics;return 0;
 }
@@ -256,7 +256,6 @@ fn void retain_advance_types(ref output_programs::Program p,ref input_bytes::Sna
     };
     var machines::Meta m=machines::observe(ref owner);m.phase=0;m.remaining=0;m.cursor=pending_cursors::empty();
     var pending_runtime::State state=pending_runtime::empty(0);var pending_frames::Frames bindings=pending_frames::empty(ref state);
-    let pending_sites::Sites sites=pending_sites::empty();let u8[16] origins=[0;16];
     var usize[32] live=[0;32];var u32[512] words=[0;512];var i64[4096] registers=[0;4096];
     var pending_call_metadata::State call_metadata=pending_call_metadata::empty();var copy_plans::State copy_plan=copy_plans::empty();
     var pending_bytes::Buffer payload=pending_bytes::empty();var vec::Vec<i64> cells=vec::empty<i64>();
@@ -265,18 +264,18 @@ fn void retain_advance_types(ref output_programs::Program p,ref input_bytes::Sna
     var pending_bytes::Buffer core_storage=pending_bytes::empty();
     unsafe{binding_raw(34)};discard pending_setup_inner(p,input,ref mut m,ref mut core_storage,ref mut payload,
         ref mut cells,ref mut scratch,ref mut places,ref mut windows,ref mut staged,1);
-    unsafe{binding_raw(26)};discard pending_advance_inner(p,input,ref mut m,ref mut bindings,ref mut state,ref sites,ref origins,
+    unsafe{binding_raw(26)};discard pending_advance_inner(p,input,ref mut m,ref mut bindings,ref mut state,
         ref mut live,ref mut words,ref mut registers,ref mut call_metadata,ref mut copy_plan,ref mut payload,ref mut cells,ref mut scratch,ref mut places,ref mut windows,ref mut staged,0,0);
     var vec::Vec<pending_output::Published> outgoing=vec::empty<pending_output::Published>();
     unsafe{binding_raw(27)};discard pending_maintenance_inner(ref mut m,ref mut state,ref payload,ref mut places,ref mut staged,ref mut outgoing,0,ref mut call_metadata.metadata);
 }
 
-pub fn void retain_core_setup(ref output_programs::Program p,ref mut machines::Meta m,ref mut machines::Core core){
-    unsafe{binding_raw(35)};discard pending_core_setup_inner(p,m,core,1);
+pub fn void retain_core_setup(ref mut machines::Meta m,ref mut machines::Core core){
+    unsafe{binding_raw(35)};discard pending_core_setup_inner(m,core,1);
 }
 
 fn void retain_core_setup_types(ref output_programs::Program p,ref input_bytes::Snapshot input){
     var machines::Core core=machines::cold_core();let machines::Machine owner=switch(prepare_pending_output(p,input,16000000,0,true)){
         case .ok(v):{v}case .err(_):{return;}};
-    var machines::Meta m=machines::observe(ref owner);retain_core_setup(p,ref mut m,ref mut core);
+    var machines::Meta m=machines::observe(ref owner);retain_core_setup(ref mut m,ref mut core);
 }

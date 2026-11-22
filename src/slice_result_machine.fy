@@ -40,8 +40,6 @@ pub struct Meta {
 pub struct Core {
     slice_result_frames::Frames bindings;
     slice_result_runtime::State runtime;
-    static_ir::Sites sites;
-    u8[16] origins;
     usize[32] static_live;
     u32[512] static_words;
     i64[4096] registers;
@@ -143,10 +141,10 @@ fn Result<Machine,errors::Error> open_selected(ref ir::Program body,ref static_i
         .list_scratch=list_scratch,.place_state=place_state,.windows=windows,.staged=staged,
         .meta=Meta{.cursor=slice_result_cursor::empty(),.stats=slice_result_cursor::stats(),
             .remaining=remaining,.phase=0,.value=0,.failure=errors::make(0,0),.lifecycle=lifecycle::empty()}};
-    let u32 initialized_core=unsafe{initialize_raw(ref mut machine as ptr mut void,ref state as ptr void,sites as ptr void,origins as ptr u8,origins.len)};
+    let u32 initialized_core=unsafe{initialize_raw(ref mut machine as ptr mut void,ref state as ptr void)};
     assert(initialized_core==0);return .ok(machine);
 }
-@link_name("bc_runtime_pending_initialize") unsafe extern C fn u32 initialize_raw(ptr mut void owner,ptr void state,ptr void sites,ptr u8 origins,usize length);
+@link_name("bc_runtime_pending_initialize") unsafe extern C fn u32 initialize_raw(ptr mut void owner,ptr void state);
 @link_name("bc_runtime_pending_core_stride") unsafe extern C fn usize native_size_raw();
 fn usize native_size(){return unsafe{native_size_raw()};}
 pub fn Meta observe(ref Machine machine){return machine.meta;}
@@ -165,11 +163,10 @@ pub fn usize core_heap_bytes(ref Machine machine,usize stride){
 }
 // Typed private transport helpers. The C shim only projects live addresses;
 // initialization and metadata decisions remain here in Fairy.
-pub fn void initialize_native(ref Machine owner,ref mut Core core,ref slice_result_runtime::State state,ref static_ir::Sites sites,ref u8[] origins){
+pub fn void initialize_native(ref Machine owner,ref mut Core core,ref slice_result_runtime::State state){
     unsafe{binding_raw(29)};
-    core.runtime=*state;slice_result_frames::initialize(ref mut core.bindings,state);core.sites=*sites;
+    core.runtime=*state;slice_result_frames::initialize(ref mut core.bindings,state);
     core.call_metadata=call_metadata::empty();core.copy_plan=copy_plans::empty();
-    var usize i=0;while(i<16){core.origins[i]=origins[i];i+=1;}
     unsafe{binding_raw(28)};discard storage_identity(owner,core);
 }
 fn usize storage_identity(ref Machine owner,ref Core core){return bytes::capacity(ref owner.core);}
@@ -180,15 +177,14 @@ fn usize storage_identity(ref Machine owner,ref Core core){return bytes::capacit
 // value is ever materialized on the actual initialization/execution stack.
 pub fn void retain_native_initialization(){if(native_size()==0){retain_core_types();}}
 fn void retain_core_types(){
-    let slice_result_runtime::State state=slice_result_runtime::empty(0);let static_ir::Sites sites=static_ir::empty();
-    let u8[16] origins=[0;16];
-    var Core core=Core{.bindings=slice_result_frames::empty(ref state),.runtime=state,.sites=sites,
-        .origins=[0;16],.static_live=[0;32],.static_words=[0;512],.registers=[0;4096],.call_metadata=call_metadata::empty(),.copy_plan=copy_plans::empty()};
+    let slice_result_runtime::State state=slice_result_runtime::empty(0);
+    var Core core=Core{.bindings=slice_result_frames::empty(ref state),.runtime=state,
+        .static_live=[0;32],.static_words=[0;512],.registers=[0;4096],.call_metadata=call_metadata::empty(),.copy_plan=copy_plans::empty()};
     let Machine owner=Machine{.core=bytes::empty(),.payload=bytes::empty(),.list_cells=vec::empty<i64>(),
         .list_scratch=bytes::empty(),.place_state=vec::empty<usize>(),.windows=input_reference_views::disabled(),
         .staged=runtime_output::disabled(),.meta=Meta{.cursor=slice_result_cursor::empty(),.stats=slice_result_cursor::stats(),
         .remaining=0,.phase=0,.value=0,.failure=errors::make(0,0),.lifecycle=lifecycle::empty()}};
-    initialize_native(ref owner,ref mut core,ref state,ref sites,ref origins);
+    initialize_native(ref owner,ref mut core,ref state);
 }
 
 // Reserve storage during admission; every linear initialization loop is resumed.
@@ -223,18 +219,18 @@ fn Result<bytes::Buffer,errors::Error> reserve_bytes(usize count){
 // All Core bytes are zero before entering here. Inactive work banks deliberately
 // stay zero-cold: their begin APIs initialize every used field before reading it.
 // No empty() constructor materializes a second large metadata/catalog bank.
-pub fn bool initialize_staged(ref mut Core core,usize index,usize capacity,ref static_ir::Sites sites,ref u8[] origins,slice_result_cursor::Limits limits){
-    assert(index<49 && origins.len==16);
+pub fn bool initialize_staged(ref mut Core core,usize index,usize capacity,slice_result_cursor::Limits limits){
+    assert(index<49);
     if(index<31){authority::reset_cleanup_entry(ref mut core.runtime.runtime.authority,index);return false;}
     if(index==31){core.runtime.runtime.pool=slices::empty_with_slots(if(limits.descriptors>16){16}else{limits.descriptors});
         core.runtime.runtime.owners=owners::empty_with_slots(capacity,limits.owners as usize);
-        core.sites=*sites;var usize i=0;while(i<16){core.origins[i]=origins[i];i+=1;}return false;}
+        return false;}
     slice_result_frames::initialize_chunk(ref mut core.bindings,index-32);return index==48;
 }
 
 pub fn Core cold_core(){
     let slice_result_runtime::State state=slice_result_runtime::empty(0);
-    return Core{.bindings=slice_result_frames::empty(ref state),.runtime=state,.sites=static_ir::empty(),
-        .origins=[0;16],.static_live=[0;32],.static_words=[0;512],.registers=[0;4096],
+    return Core{.bindings=slice_result_frames::empty(ref state),.runtime=state,
+        .static_live=[0;32],.static_words=[0;512],.registers=[0;4096],
         .call_metadata=call_metadata::empty(),.copy_plan=copy_plans::empty()};
 }

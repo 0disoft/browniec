@@ -117,15 +117,15 @@ def project_layouts(t, c, *, host_compile=True):
     c['callCopyType']=field_type(c['cursorType'],4)
     c['returnWorkType']=field_type(c['cursorType'],5)
     c['metadataBudgetType']=field_type(c['cursorType'],6)
-    c['callMetadataType']=field_type(c['coreType'],7)
+    c['callMetadataType']=field_type(c['coreType'],5)
     c['callContextWorkType']=field_type(c['callMetadataType'],8)
     c['callArgumentWorkType']=field_type(c['callContextWorkType'],0)
     c['callOwnedWorkType']=field_type(c['callContextWorkType'],1)
     c['returnPreparationType']=field_type(c['callMetadataType'],9)
     c['returnRecordPlanType']=field_type(c['returnPreparationType'],0)
     c['returnCatalogWorkType']=field_type(c['returnRecordPlanType'],0)
-    c['callCopyPlanType']=field_type(c['coreType'],8)
-    assert arg(26,11)==c['callCopyPlanType']
+    c['callCopyPlanType']=field_type(c['coreType'],6)
+    assert arg(26,9)==c['callCopyPlanType']
     c['returnMetadataType']=field_type(c['cursorType'],9)
     c['lifecycleType']=field_type(c['pendingMetaType'],6)
     c['setupWorkType']=field_type(c['lifecycleType'],0)
@@ -136,10 +136,10 @@ def project_layouts(t, c, *, host_compile=True):
     assert field_type(c['inputWindowsType'],0)==c['storageBufferType']
     c['runtimeMetadataType']=field_type(c['callMetadataType'],1)
     c['cleanupRuntimeType']=field_type(c['runtimeMetadataType'],0)
-    assert arg(27,7)==c['runtimeMetadataType'] and arg(34,2)==c['pendingMetaType'] and arg(35,2)==c['coreType']
+    assert arg(27,7)==c['runtimeMetadataType'] and arg(34,2)==c['pendingMetaType'] and arg(35,1)==c['coreType']
 
-    assert arg(26,10)==c['callMetadataType']
-    assert re.fullmatch(r'\s*'+re.escape(c['callMetadataType'])+r'\s*\*\s*fy_l_\d+\s*',decl(26).split('(',1)[1].split(',')[10])
+    assert arg(26,8)==c['callMetadataType']
+    assert re.fullmatch(r'\s*'+re.escape(c['callMetadataType'])+r'\s*\*\s*fy_l_\d+\s*',decl(26).split('(',1)[1].split(',')[8])
     c['transactionType']=field_type(c['machineType'],6)
     c['preparationType']=field_type(c['programVariants']['output']['stored'],OUTPUT_PREPARATION_FIELD)
     c['capturePlanType']=field_type(c['preparationType'],8)

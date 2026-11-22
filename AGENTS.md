@@ -1,5 +1,5 @@
-- Latest runtime checkpoint (2026-11-22): [Exact input view backing](docs/engineering/input-reference-views.md)
-  saves 6,144 accounted bytes per input-bearing invocation in both Windows profiles.
+- Latest runtime checkpoint (2026-11-22): [Pending Instance metadata reuse](docs/engineering/03-performance-budget.md#pending-instance-metadata-reuse-on-windows)
+  saves 1,248 accounted bytes per pending Instance in both Windows profiles.
 
 # Brownie C agent guidance
 

@@ -307,20 +307,20 @@ uint32_t bc_runtime_pending_advance(void *raw,const void *program,const void *in
  if(operation==1 && owner->f_7.f_6.f_3<=2)
   return B34(program,input,&owner->f_7,&owner->f_0,&owner->f_1,&owner->f_2,&owner->f_3,&owner->f_4,&owner->f_5,&owner->f_6,quantum);
  bc_pending_core *c=owner->f_0.f_0;
- if(operation==1 && owner->f_7.f_6.f_3==3)return B35(program,&owner->f_7,c,quantum);
- return B26(program,input,&owner->f_7,&c->f_0,&c->f_1,&c->f_2,
-  (fy_byte_slice){c->f_3.data,16},(fy_mut_usize_slice){c->f_4.data,32},
-  (fy_mut_u32_slice){c->f_5.data,512},(fy_mut_i64_slice){c->f_6.data,4096},&c->f_7,&c->f_8,
+ if(operation==1 && owner->f_7.f_6.f_3==3)return B35(&owner->f_7,c,quantum);
+ return B26(program,input,&owner->f_7,&c->f_0,&c->f_1,
+  (fy_mut_usize_slice){c->f_2.data,32},(fy_mut_u32_slice){c->f_3.data,512},
+  (fy_mut_i64_slice){c->f_4.data,4096},&c->f_5,&c->f_6,
   &owner->f_1,&owner->f_2,&owner->f_3,&owner->f_4,&owner->f_5,&owner->f_6,operation,quantum);
 }
 uint32_t bc_runtime_pending_maintenance(void *raw,uint32_t operation,void *outgoing){
  bc_pending_machine *owner=raw;bc_pending_core *c=owner->f_0.f_0;
- return B27(&owner->f_7,&c->f_1,&owner->f_1,&owner->f_4,&owner->f_6,outgoing,operation,&c->f_7.f_1);
+ return B27(&owner->f_7,&c->f_1,&owner->f_1,&owner->f_4,&owner->f_6,outgoing,operation,&c->f_5.f_1);
 }
 
-uint32_t bc_runtime_pending_initialize(void *raw,const void *state,const void *sites,const uint8_t *origins,uintptr_t length){
+uint32_t bc_runtime_pending_initialize(void *raw,const void *state){
  bc_pending_machine *owner=raw;bc_pending_core *c=owner->f_0.f_0;
- B29(owner,c,state,sites,(fy_byte_slice){origins,length});return 0;
+ B29(owner,c,state);return 0;
 }
 uint32_t bc_runtime_engine_step_output(void *raw,const void *program,const void *input,uintptr_t quantum,uintptr_t deadline){
  bc_engine_output *owner=raw;

@@ -16,7 +16,7 @@ conditions and the build ID that produced each binary.
 | --- | --- | --- |
 | Reused small Instance setup | p95 at or below 1 ms | Met for one Windows embedding workload |
 | 10 KiB pure source compile plus verify | p95 at or below 10 ms | Unmeasured |
-| Empty Instance accounted memory | at or below 32 KiB | Missed: 187,688 bytes with no input or output |
+| Empty Instance accounted memory | at or below 32 KiB | Missed: 186,440 bytes with no input or output |
 | Warm scalar loop heap allocation | zero | Met for SDK heap across steps of the measured Windows loop |
 | 100 retained edit builds | at or below 32 MiB project output, excluding explicit debug/toolchain artifacts | Unmeasured |
 
@@ -162,6 +162,31 @@ python -B tools/verify-embed-loop-allocations.py build/embed-preview-io6zkobo
 ```
 
 The local allocation reports are in `build/embed-allocations-ofhf_qw8`.
+
+## Pending Instance metadata reuse on Windows
+
+Pending execution reads static sites and selected return origins directly
+from the immutable, pinned Program. The Instance Core still owns mutable
+static bindings, registers, and work state. Removing the two metadata copies
+reduces the Windows x64 Core from 172,416 to 171,168 bytes. The same Core
+stride determines both the allocation and its Engine memory charge.
+
+The empty and scalar loop benchmarks each ran 201 Instances per Windows
+profile with the SDK heap observer. Both peaked at 186,440 accounted bytes
+per Instance, down 1,248 bytes from the baseline above. Results remained 77
+and 2016, with 345,090 and 345,930 Fuel respectively. The loop took 308 steps
+at quantum 64 and 1,136 at quantum 1, one fewer setup batch at each quantum.
+Both workloads made zero SDK allocations during steps and left zero live
+SDK allocations after Engine destruction. The empty Instance still exceeds
+the 32 KiB target by 153,672 bytes.
+
+The native Engine suite passed both profiles, including exact admission and
+one-byte-short refusal, preparation allocation rollback, and output after
+the caller releases its Program handle. The embedding C hosts also passed
+both profiles. Local evidence is in
+`build/runtime-engine/20261122T120431926885Z/receipt.json`,
+`build/embed-preview-cdl9wkrx/receipt.json`, and
+`build/embed-allocations-0u99y3ad`.
 
 ## Configured byte transform on Windows (2026-11-22)
 

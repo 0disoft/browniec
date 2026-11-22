@@ -518,7 +518,7 @@ def main():
                        ('23', 1, 'programVectorType'), ('23', 5, 'snapshotType'),
                        ('24', 2, 'outputVectorType'), ('25', 0, 'programType'),
                        ('28',0,'machineType'),('28',1,'coreType'),
-                       ('29',0,'machineType'),('29',1,'coreType'),('26',10,'callMetadataType')]
+                       ('29',0,'machineType'),('29',1,'coreType'),('26',8,'callMetadataType')]
         projections.extend([('30',0,'outputType'),('38',2,'hostProgramVectorType'),('39',3,'outputVectorType'),('39',4,'policyVectorType'),('39',5,'hostRunConfigType'),
                             ('40',1,'programVectorType'),('40',3,'outputVectorType'),('40',4,'outputVectorType'),
                             ('41',0,'hostExchangeVectorType'),('41',7,'hostTransitionType')])
@@ -569,15 +569,15 @@ def main():
                                 ('executionType',0,'completionType'),('executionType',1,'publishedVectorType'),
                                 ('machineType',0,'storageBufferType'),('machineType',5,'inputWindowsType'),('inputWindowsType',0,'storageBufferType'),('machineType',6,'transactionType'),('machineType',7,'pendingMetaType'),
                                 ('pendingMetaType',6,'lifecycleType'),('lifecycleType',0,'setupWorkType'),('lifecycleType',1,'preparationWorkType'),('lifecycleType',2,'cleanupWorkType'),('callMetadataType',1,'runtimeMetadataType'),('runtimeMetadataType',0,'cleanupRuntimeType'),('pendingMetaType',0,'cursorType'),('cursorType',2,'outputCopyType'),('cursorType',3,'arrayFillType'),('cursorType',4,'callCopyType'),('cursorType',5,'returnWorkType'),
-                                ('cursorType',6,'metadataBudgetType'),('coreType',7,'callMetadataType'),('coreType',8,'callCopyPlanType'),('callMetadataType',8,'callContextWorkType'),('callContextWorkType',0,'callArgumentWorkType'),('callContextWorkType',1,'callOwnedWorkType'),('callMetadataType',9,'returnPreparationType'),('returnPreparationType',0,'returnRecordPlanType'),('returnRecordPlanType',0,'returnCatalogWorkType'),('cursorType',9,'returnMetadataType')]:
+                                ('cursorType',6,'metadataBudgetType'),('coreType',5,'callMetadataType'),('coreType',6,'callCopyPlanType'),('callMetadataType',8,'callContextWorkType'),('callContextWorkType',0,'callArgumentWorkType'),('callContextWorkType',1,'callOwnedWorkType'),('callMetadataType',9,'returnPreparationType'),('returnPreparationType',0,'returnRecordPlanType'),('returnRecordPlanType',0,'returnCatalogWorkType'),('cursorType',9,'returnMetadataType')]:
             member=re.search(r'\b(fy_(?:struct|resource)_\d+) f_'+str(field)+r';',contract['reviewedLayouts'][owner])
             need(member is not None and member.group(1)==contract[key],f'Output field projection differs: {owner}/{field}')
         advance_args=contract['reviewedDeclarations']['26'].split('(',1)[1].split(',')
-        need(re.fullmatch(r'\s*'+re.escape(contract['callMetadataType'])+r'\s*\*\s*fy_l_\d+\s*',advance_args[10]) is not None,
+        need(re.fullmatch(r'\s*'+re.escape(contract['callMetadataType'])+r'\s*\*\s*fy_l_\d+\s*',advance_args[8]) is not None,
              'Pending CALL metadata argument must be a mutable pointer')
-        need(re.fullmatch(r'\s*'+re.escape(contract['callCopyPlanType'])+r'\s*\*\s*fy_l_\d+\s*',advance_args[11]) is not None,
+        need(re.fullmatch(r'\s*'+re.escape(contract['callCopyPlanType'])+r'\s*\*\s*fy_l_\d+\s*',advance_args[9]) is not None,
              'Pending CALL copy plan argument must be a mutable pointer')
-        for binding,argument,key in [('27',7,'runtimeMetadataType'),('34',2,'pendingMetaType'),('35',2,'coreType')]:
+        for binding,argument,key in [('27',7,'runtimeMetadataType'),('34',2,'pendingMetaType'),('35',1,'coreType')]:
             declaration=contract['reviewedDeclarations'][binding].split('(',1)[1].split(')',1)[0].split(',')[argument]
             need(re.fullmatch(r'\s*'+re.escape(contract[key])+r'\s*\*\s*fy_l_\d+\s*',declaration) is not None,
                  f'Lifecycle mutable projection differs: {binding}/{argument}')
@@ -588,11 +588,11 @@ def main():
              'Pending Machine control metadata differs')
         core_layout=contract['reviewedLayouts']['coreType']
         advance_args=contract['reviewedDeclarations']['26'].split('(',1)[1].split(',')
-        for field,argument in [(0,3),(1,4),(2,5)]:
+        for field,argument in [(0,3),(1,4)]:
             member=re.search(r'\b(fy_(?:struct|resource)_\d+) f_'+str(field)+r';',core_layout)
             need(member is not None and member.group(1) in advance_args[argument],
                  f'Pending Core field/argument differs: {field}/{argument}')
-        for field,ctype,length in [(3,'uint8_t',16),(4,'uintptr_t',32),(5,'uint32_t',512),(6,'int64_t',4096)]:
+        for field,ctype,length in [(2,'uintptr_t',32),(3,'uint32_t',512),(4,'int64_t',4096)]:
             member=re.search(r'\b(fy_array_\w+) f_'+str(field)+r';',core_layout)
             need(member is not None,'Pending bank missing')
             array=re.search(r'typedef struct \{[^}]*\} '+re.escape(member.group(1))+r';',generated.decode('utf-8'))
