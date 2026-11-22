@@ -1333,6 +1333,23 @@ Windows development and /O2 each passed 110 configured, 36 catalog,
 five managed and four compile-stop cases. All 456 input hashes matched.
 Local receipt: `build/restricted-worker/20261122T010359723763Z/receipt.json`.
 
+### Catalog host statement switch Fuel
+
+Direct and saved host Result switches now meter the statement form's
+scrutinee, delimiters, pattern tokens, arm entry, and binding lookup.
+Nested catalog blocks also check the deadline and charge dispatch for
+each statement and the token advances at the block boundaries.
+
+One fixture switches on a saved Result to assign a local, then switches
+directly on the second host call. It returns 77 for the successful reply
+and 0 for a typed guest error, both with the sealed output before. The
+success threshold is 3,121,840 compile Fuel, up 141 units. At 3,121,839
+the broker returns compile_limit with no guest result or output.
+
+Windows development and /O2 each passed 110 configured, 39 catalog,
+five managed and four compile-stop cases. All 456 input hashes matched.
+Local receipt: `build/restricted-worker/20261122T011236301734Z/receipt.json`.
+
 ## Windows verification
 
 Run `python -B tools/verify-restricted-worker.py`. The development and optimized

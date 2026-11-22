@@ -1,5 +1,5 @@
-- Latest runtime checkpoint (2026-11-22): [Catalog host invocation Fuel](docs/engineering/restricted-worker.md#catalog-host-invocation-fuel)
-  charges call lookup, name tokens, scalar and byte operands, and argument packing to the enclosing compile budget.
+- Latest runtime checkpoint (2026-11-22): [Catalog host statement switch Fuel](docs/engineering/restricted-worker.md#catalog-host-statement-switch-fuel)
+  charges direct and saved host Result statement switches and their block dispatch to the enclosing compile budget.
 
 # Brownie C agent guidance
 

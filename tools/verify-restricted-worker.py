@@ -643,7 +643,7 @@ def verify_project_host(run, need, image, folder, env):
     write_compile_fixture(folder / 'catalog-compile.start', target, manifest, policy, config,
                           catalog_file.read_bytes())
 
-    def check(operation='run', expected_exit=0, kind=None, payload=None):
+    def check(operation='run', expected_exit=0, kind=None, payload=None, expected_value=77):
         for path, value in ((project, manifest), (policy_file, policy), (config_file, config),
                             (replies_file, replies)):
             path.write_text(json.dumps(value), encoding='utf-8')
@@ -660,7 +660,7 @@ def verify_project_host(run, need, image, folder, env):
             need(data['error']['kind'] == kind and data['return_i32'] is None and 'output_b64' not in data,
                  f'Catalog project published a failed result: {data}')
         elif operation == 'run':
-            need(data['status'] == 'completed' and data['return_i32'] == 77 and data['error'] is None
+            need(data['status'] == 'completed' and data['return_i32'] == expected_value and data['error'] is None
                  and base64.b64decode(data['output_b64'], validate=True) == b'before',
                  f'Catalog project failed to resume and seal its output: {data}')
         else:
@@ -784,7 +784,7 @@ def verify_project_host(run, need, image, folder, env):
     source.write_bytes(b'module app; import host::example as api; pub fn i32 start(ref u8[] data){'
                        b'{output::emit(ref data);} let i32 a=api::check(41); return a+api::check(42);}')
     # The nested emit spends 14 token stages, two lookup stages and one IR unit.
-    nested_fuel = 1892630 + 17 + 12 + 55
+    nested_fuel = 1892630 + 17 + 12 + 55 + 10
     policy['compile']['fuel'] = nested_fuel - 1
     check(expected_exit=3, kind='compile_limit', payload=payload)
     policy['compile']['fuel'] = nested_fuel
@@ -793,12 +793,23 @@ def verify_project_host(run, need, image, folder, env):
                        b'output::emit(b"before");let Result<i32,u32> reply=api::check(41);'
                        b'let i32 a=(if(true){switch(reply){case .ok(v):{v}case .err(_):{0}}}else{0});'
                        b'return a+switch(api::check(42)){case .ok(v):{v}case .err(_):{0}};}')
-    arm_fuel = 3232221 + 487 + 55
+    arm_fuel = 3232221 + 487 + 55 + 4
     policy['compile']['fuel'] = arm_fuel - 1
     check(expected_exit=3, kind='compile_limit')
     policy['compile']['fuel'] = arm_fuel
     check()
-    return 36
+    source.write_bytes(b'module app; import host::example as api; pub fn i32 start(){'
+                       b'output::emit(b"before");let Result<i32,u32> reply=api::check(41);'
+                       b'var i32 a=0;switch(reply){case .ok(v):{a=v;}case .err(_):{return 0;}}'
+                       b'switch(api::check(42)){case .ok(v):{return a+v;}case .err(e):{return 0;}}}')
+    statement_fuel = 3_121_699 + 141
+    policy['compile']['fuel'] = statement_fuel - 1
+    check(expected_exit=3, kind='compile_limit')
+    policy['compile']['fuel'] = statement_fuel
+    check()
+    replies['replies'] = [rows[0], rows[1] | dict(kind=1, reply_hex='050000000400000001000000')]
+    check(expected_value=0)
+    return 39
 
 
 def main():

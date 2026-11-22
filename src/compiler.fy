@@ -2650,16 +2650,17 @@ fn Result<usize, errors::Error> checked_post(ref u8[] source, ref mut lexer::Sta
 
 fn Result<bool, errors::Error> block(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref mut locals::Table table, ref functions::Table signatures, u8 result_type, usize depth, usize expr_depth, ref mut loops::State loop_state,usize deadline,ref mut usize fuel) {
     if(depth>signatures.semantic_depth){return .err(errors::make(4,s.begin));}
-    let usize open = lexer::punctuation(source, s, 123)?;
+    let usize open=if(signatures.scalar_host_calls){lexer::punctuation_with_budget(source,s,123,deadline,fuel)?}else{lexer::punctuation(source,s,123)?};
     let usize outer = table.count;
     var bool terminal = false;
     while (s.kind != 125) {
         if (s.kind == 0 || terminal) { return .err(errors::make(2, s.begin)); }
+        if(signatures.scalar_host_calls){discard metadata_budget::visit(fuel,deadline,s.begin)?;}
         terminal = control(source,s,p,table,signatures,result_type,depth,expr_depth,loop_state,deadline,fuel)?;
     }
     if (!terminal) { let usize dropped = arrays::release_from(table, p, outer, s.begin)?; }
     table.count = outer;
-    let usize close = lexer::next(source, s)?;
+    let usize close=if(signatures.scalar_host_calls){lexer::next_with_budget(source,s,deadline,fuel)?}else{lexer::next(source,s)?};
     return .ok(terminal);
 }
 // Keep unrelated statement scratch out of recursive dispatcher frames.
@@ -2702,13 +2703,14 @@ fn Result<bool, errors::Error> control_transfer(ref u8[] source, ref mut lexer::
 
 fn Result<bool, errors::Error> control_switch(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref mut locals::Table table, ref functions::Table signatures, u8 result_type, usize depth, usize expr_depth, ref mut loops::State loop_state,usize deadline,ref mut usize fuel) {
     let usize at = s.begin;
-    let usize keyword=lexer::next(source,s)?;
-    let usize open=lexer::punctuation(source,s,40)?;
+    let usize keyword=if(signatures.scalar_host_calls){lexer::next_with_budget(source,s,deadline,fuel)?}else{lexer::next(source,s)?};
+    let usize open=if(signatures.scalar_host_calls){lexer::punctuation_with_budget(source,s,40,deadline,fuel)?}else{lexer::punctuation(source,s,40)?};
     if(signatures.scalar_host_calls && host_source::qualified(source,s,p,deadline,fuel)?){
         var joins::Join unused=joins::empty(0,false);
         return host_switch(source,s,p,table,signatures,ref mut unused,false,result_type,depth,expr_depth,loop_state,deadline,fuel);
     }
-    let usize subject=expression(source,s,p,table,signatures,1,expr_depth,0,result_type,depth,loop_state)?;
+    let usize subject=if(signatures.scalar_host_calls){raw_expression(source,s,p,table,signatures,1,expr_depth,0,result_type,depth,loop_state,deadline,fuel)?}
+        else{expression(source,s,p,table,signatures,1,expr_depth,0,result_type,depth,loop_state)?};
     if(signatures.scalar_host_calls && host_source::is_saved(p,subject)){
         var joins::Join unused=joins::empty(0,false);
         let host_source::Branch route=host_source::branch_saved(p,subject,at)?;
@@ -2775,18 +2777,18 @@ fn Result<bool,errors::Error> host_switch_arms(ref u8[] source,ref mut lexer::St
     u8 result_type,usize structure,usize depth,ref mut loops::State flow,ref host_source::Branch route,usize deadline,ref mut usize fuel){
     let usize at=s.begin;
     if(depth>30 || structure>30){return .err(errors::make(4,at));}
-    let usize close=if(value_mode){lexer::punctuation_with_budget(source,s,41,deadline,fuel)?}else{lexer::punctuation(source,s,41)?};
-    let usize brace=if(value_mode){lexer::punctuation_with_budget(source,s,123,deadline,fuel)?}else{lexer::punctuation(source,s,123)?};
+    let usize close=lexer::punctuation_with_budget(source,s,41,deadline,fuel)?;
+    let usize brace=lexer::punctuation_with_budget(source,s,123,deadline,fuel)?;
     let usize outer=table.count;
-    let patterns::Pattern first=if(value_mode){patterns::parse_result_metered(source,s,deadline,fuel)?}else{patterns::parse_result(source,s)?};
+    let patterns::Pattern first=patterns::parse_result_metered(source,s,deadline,fuel)?;
     let bool first_stops=host_switch_arm(source,s,p,table,signatures,join,value_mode,result_type,structure,depth,flow,ref first,route,deadline,fuel)?;
     table.count=outer;
     let usize skip=if(first_stops){256}else{ir::raw(p,19,0,0,0,at)?};
-    let patterns::Pattern second=if(value_mode){patterns::parse_result_metered(source,s,deadline,fuel)?}else{patterns::parse_result(source,s)?};
+    let patterns::Pattern second=patterns::parse_result_metered(source,s,deadline,fuel)?;
     if(second.variant==first.variant){return .err(errors::make(3,second.begin));}
     let bool second_stops=host_switch_arm(source,s,p,table,signatures,join,value_mode,result_type,structure,depth,flow,ref second,route,deadline,fuel)?;
     table.count=outer;
-    let usize end=if(value_mode){lexer::punctuation_with_budget(source,s,125,deadline,fuel)?}else{lexer::punctuation(source,s,125)?};
+    let usize end=lexer::punctuation_with_budget(source,s,125,deadline,fuel)?;
     if(!first_stops){let usize target=p.count;let usize patched=ir::patch(p,skip,target,at)?;}
     return .ok(first_stops && second_stops);
 }
@@ -2794,10 +2796,10 @@ fn Result<bool,errors::Error> host_switch_arms(ref u8[] source,ref mut lexer::St
 fn Result<bool,errors::Error> host_switch_arm(ref u8[] source,ref mut lexer::State s,ref mut ir::Program p,
     ref mut locals::Table table,ref functions::Table signatures,ref mut joins::Join join,bool value_mode,
     u8 result_type,usize structure,usize depth,ref mut loops::State flow,ref patterns::Pattern pattern,ref host_source::Branch route,usize deadline,ref mut usize fuel){
+    discard metadata_budget::visit(fuel,deadline,s.begin)?;
     let usize payload=host_source::enter_arm(p,route,pattern.variant,pattern.binding,s.begin)?;
     if(pattern.binding){
-        let usize existing=if(value_mode){argument_names::local_metered(source,table,pattern.begin,pattern.end,deadline,fuel)?}
-            else{locals::find(source,table,pattern.begin,pattern.end)};
+        let usize existing=argument_names::local_metered(source,table,pattern.begin,pattern.end,deadline,fuel)?;
         if(existing!=64){return .err(errors::make(3,pattern.begin));}
         let usize binding=locals::declare(table,pattern.begin,pattern.end,payload,false)?;
     }
