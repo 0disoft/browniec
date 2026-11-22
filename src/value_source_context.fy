@@ -21,6 +21,15 @@ pub fn Value owned(usize exact,usize value){return Value{.exact=exact,.value=val
 pub fn Value bottom(){return Value{.exact=64,.value=256,.typed=false,.nothing=false,.bottom=true,.binding=64};}
 pub fn Value nothing(){return Value{.exact=64,.value=256,.typed=false,.nothing=true,.bottom=false,.binding=64};}
 
+// A bottom receiver supplies no type or value. Admit only a plain property
+// already supported by the value compiler.
+pub fn Result<usize,errors::Error> terminal_property(ref u8[] source,ref lexer::State s,usize at){
+    if(s.kind!=2){return .err(errors::make(2,s.begin));}
+    if(!word(source,s,b"len") && !word(source,s,b"is_some") &&
+        !word(source,s,b"is_none") && !word(source,s,b"is_ok") &&
+        !word(source,s,b"is_err")){return .err(wrong(at));}
+    return .ok(0);
+}
 
 pub fn u8 byte(usize value){var u8 b=0;var usize i=0;while(i<value){b+=1;i+=1;}return b;}
 pub fn Result<usize,errors::Error> intern(ref mut values::Program unit,u8 kind,u8 first,u8 second,usize at){

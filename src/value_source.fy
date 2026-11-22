@@ -965,8 +965,15 @@ fn Result<context::Value,errors::Error> raw_cast_suffix(ref u8[] source,ref mut 
 fn Result<context::Value,errors::Error> raw_postfix_suffix(ref u8[] source,ref mut lexer::State s,ref mut values::Program unit,ref mut bindings::State state,ref signatures::Table table,ref functions::Plan plan,ref mut vec::Vec<bindings::Snapshot> paths,ref mut looping::State flow,context::Value input,usize depth,bool staged){
     var context::Value value=input;
     while(s.kind==46 || s.kind==63 || s.kind==91){
-        if(value.bottom){return .err(wrong(s.begin));}
         if(s.kind==46 && view_source::range_ahead_raw(source,s)?){break;}
+        if(value.bottom){
+            let usize at=s.begin;
+            if(s.kind!=46){return .err(wrong(at));}
+            let usize dot=lexer::punctuation(source,s,46)?;
+            discard context::terminal_property(source,s,at)?;
+            let usize member=lexer::next(source,s)?;
+            return .ok(value);
+        }
         if(s.kind==91){value=view_index(source,s,unit,state,table,plan,paths,flow,value,depth,staged)?;}
         else if(s.kind==46){value=if(view_source::reference(value)){view_source::length_raw(source,s,unit,state,value)?}
             else{context::predicate(source,s,unit,state,value)?};}

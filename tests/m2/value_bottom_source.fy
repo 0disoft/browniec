@@ -68,6 +68,36 @@ fn usize count(ref values::Program p,u8 op){let ref ir::Program body=ref p.body;
     value(b"module main;fn i32 never(Buffer b,i32 n){return 0;}fn i32 main(){return never(bytes::empty(),if(true){return 42;}else{return 0;});}");
     value(b"module main;fn i32 never(ref u8[] v,i32 n){return 0;}fn i32 main(){return never(ref bytes::view(ref bytes::empty()),if(true){return 42;}else{return 0;});}");
 }
+fn void terminal_property(ref u8[] input,bool raw,usize expected_drops){
+    let values::Program p=switch(if(raw){source::compile_raw(input)}else{source::compile(input)}){
+        case .ok(v):{v}case .err(_):{assert(false);compiled(input)}
+    };
+    assert(count(ref p,98)==0 && count(ref p,110)==0 && count(ref p,8)==2);
+    assert(count(ref p,90)==expected_drops);
+    assert(verifier::inspect_values(ref p).is_ok);
+    let growth::Limits limits=growth::Limits{.object=4096,.instance=1048576,.engine=1048576};
+    assert(switch(vm::run_values(ref p,10000000,0,limits)){case .ok(v):{v==42}case .err(_):{false}});
+}
+
+@test fn void final_properties_of_terminal_receivers_validate_without_reading_values(){
+    var usize i=0;
+    while(i<2){
+        terminal_property(b"module main;fn i32 main(){let b=bytes::empty();let dead=(if(true){return 42;}else{return 0;}).len;}",i==0,2);
+        terminal_property(b"module main;fn i32 main(){let dead=(if(false){return 0;}else{return 42;}).is_ok;}",i==0,0);
+        terminal_property(b"module main;fn i32 main(){let dead=(if(true){return 42;}else{return 0;}).is_err;}",i==0,0);
+        terminal_property(b"module main;fn i32 main(){let dead=(if(true){return 42;}else{return 0;}).is_some;}",i==0,0);
+        terminal_property(b"module main;fn i32 main(){let dead=(if(false){return 0;}else{return 42;}).is_none;}",i==0,0);
+        i+=1;
+    }
+    rejected(b"module main;fn i32 main(){let dead=(if(true){return 42;}else{return 0;}).oops;}");
+    rejected(b"module main;fn i32 main(){let dead=(if(true){return 42;}else{return 0;}).;}");
+    rejected(b"module main;fn i32 main(){let dead=(if(true){return 42;}else{return 0;}).is_ok();}");
+    rejected(b"module main;fn i32 main(){let dead=(if(true){return 42;}else{return 0;}).len.is_some;}");
+    rejected(b"module main;fn i32 main(){let dead=(if(true){return 42;}else{return 0;})[0];}");
+    rejected(b"module main;fn i32 main(){let dead=(if(true){return 42;}else{return 0;})?;}");
+    rejected(b"module main;fn void run(){}fn i32 main(){let dead=run().len;return 42;}");
+}
+
 @test fn void short_circuit_bottom_keeps_skip_edge_and_never_replays_effects(){
     value(b"module main;fn i32 main(){var n=0;let c=false && if(true){n+=1;return 0;}else{return 0;};if(!c && n==0){return 42;}return 0;}");
     value(b"module main;fn i32 main(){var n=0;let c=true || if(true){n+=1;return 0;}else{return 0;};if(c && n==0){return 42;}return 0;}");

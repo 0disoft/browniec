@@ -64,9 +64,10 @@ pub fn Result<bool,errors::Error> advance(ref u8[] source,ref mut lexer::State s
     if(phase==40){return ask(w,7,41);}
     if(phase==41){let usize expected=if(w.number==1){64}else{exact};return child(w,3,expected,1,depth,42);}
     if(phase==42){w.left=w.child;w.phase=43;return .ok(false);}
-    if(phase==43){if(s.kind!=46 && s.kind!=63 && s.kind!=91){let context::Value result=w.left;return finish(w,result);}if(w.left.bottom){return .err(errors::make(3,s.begin));}
+    if(phase==43){if(s.kind!=46 && s.kind!=63 && s.kind!=91){let context::Value result=w.left;return finish(w,result);}
         if(s.kind==46){return ask(w,13,44);}w.phase=44;w.number=0;return .ok(false);}
     if(phase==44){if(s.kind==46 && w.number==1){let context::Value result=w.left;return finish(w,result);}
+        if(w.left.bottom){if(s.kind!=46){return .err(errors::make(3,s.begin));}w.at=s.begin;return take(s,w,scratch,46,52);}
         if(s.kind==91){return ask(w,14,45);}if(s.kind==46){return ask(w,15,45);}w.at=s.begin;return take(s,w,scratch,0,46);}
     if(phase==45){w.left=w.child;w.phase=43;return .ok(false);}
     if(phase==46){if(w.left.nothing || !w.left.typed){return .err(errors::make(3,w.at));}return ask(w,17,47);}
@@ -74,6 +75,8 @@ pub fn Result<bool,errors::Error> advance(ref u8[] source,ref mut lexer::State s
     if(phase==48){if(unit.catalog.nodes[w.expanded.exact].kind==1){return ask(w,18,49);}w.left=context::owned(w.expanded.exact,w.expanded.payload);w.phase=43;return .ok(false);}
     if(phase==49){w.a=w.number;return ask(w,19,51);}
     if(phase==51){w.left=context::scalar(w.expanded.exact,w.a);w.phase=43;return .ok(false);}
+    if(phase==52){discard context::terminal_property(source,s,w.at)?;return take(s,w,scratch,2,53);}
+    if(phase==53){let context::Value result=w.left;return finish(w,result);}
     if(phase==60){if(word(source,s,b"ref")){return take(s,w,scratch,0,64);}if(s.kind==40){return take(s,w,scratch,0,61);}
         if(s.kind==45 || s.kind==33 || s.kind==126){w.operation=s.kind;return take(s,w,scratch,0,66);}return ask(w,5,73);}
     if(phase==61){return child(w,0,exact,1,depth+1,62);}

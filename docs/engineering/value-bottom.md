@@ -42,13 +42,20 @@ proof. Independent canonical IR verification still rejects forged return values.
 No verifier, VM opcode, existing price, public admission gate, native frame or
 native stack setting changes. Public Fuel default 256 and ceiling 16000000 remain.
 
+Both source lowerers accept a final `.len`, `.is_some`, `.is_none`, `.is_ok`
+or `.is_err` on a terminal receiver. They validate the property name and
+propagate the already established terminal control. No length read, tag test,
+result slot or extra cleanup is emitted. Ordinary void calls keep their existing
+type error. Unknown properties, method-call spelling and chained postfixes
+after the terminal property still reject.
+
 ## Deliberate remaining limits
 
 This is a bounded bottom-expression increment. The
 [terminal-operand successor](value-terminal-operands.md) now propagates final
 Buffer/view operands, including sole len/copy/view receivers, final byte arguments,
 view indices and range upper endpoints. Bottom in control conditions or switch
-subjects, postfix receivers, nonfinal byte operands/range lower endpoints, a
+subjects, index and propagation receivers, nonfinal byte operands/range lower endpoints, a
 binary left operand followed by more operators and non-final CALL arguments
 still rejects. Classic for headers retain their existing pure-expression restriction.
 The [void-bottom successor](value-void-bottom.md) now admits private
@@ -80,6 +87,15 @@ executes the formerly rejected guest; Result and lifetime rejection rules remain
 All 227 union inputs match checkout and Git raw bytes; all
 216 production modules are LF. The full admitted32/rejected33 source fixture
 is byte-identical to `8757f40` and ran in both profiles. See [focused evidence](../evidence/value-bottom-windows-20261107.json).
+
+For terminal receiver properties, the Windows development and /O2 fixture
+executables ran four groups in fresh processes with default stacks. The new
+group executes all five properties through both lowerers and checks exact
+return and Buffer drop counts, zero tag tests and zero view length reads.
+It also rejects seven invalid forms. The other groups cover terminal operands,
+unreachable source rejection and the combined 32/33 conditional-depth fixture.
+The fixtures use locked mirrors and the production Windows clock companion.
+Local receipts: `build/value-bottom-properties-7ug15y53/{development,release}/receipt.json`.
 
 This increment does not establish full bottom syntax, public CLI admission,
 Linux/macOS, restricted execution, embedding or the remaining runtime/host work.
