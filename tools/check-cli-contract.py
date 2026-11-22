@@ -171,6 +171,8 @@ def check_output_table(exe, identity, host_check, host_run, project_host_check, 
             args = ['--project', project] if row['arguments'].startswith('--project ') else sources[command]
         elif row['arguments'].startswith('--project '):
             args = ['--project', project]
+            if '--source-manifest' in row['arguments']:
+                args.append('--source-manifest')
         else:
             args = sources.get(command, [])
         if '--isolated' in row['arguments']:
@@ -1083,6 +1085,60 @@ def check_project_input_entry(exe, folder):
     print('PASS: project shared-byte entry compiled without input acquisition or guest execution')
 
 
+def check_source_manifest(exe, folder):
+    app = b'module app;import util::math as math;pub fn i32 start(){return math::divide(0);}\r\n'
+    math = b'module util::math;pub fn i32 divide(i32 by){return 42/by;} // x\r\n'
+    rows = [{'module': 'app', 'path': 'src/app.brc'},
+            {'module': 'util::math', 'path': 'src/math.brc'}]
+    config = {'schema': 'brownie.project/0.3', 'name': 'manifest',
+              'entry': {'module': 'app', 'function': 'start'}, 'sources': rows, 'requires': []}
+    projects = []
+    for index, name in enumerate(('first', 'relocated')):
+        root = folder / name
+        (root / 'src').mkdir(parents=True)
+        (root / 'src/app.brc').write_bytes(app)
+        (root / 'src/math.brc').write_bytes(math)
+        manifest = root / 'project.json'
+        manifest.write_text(json.dumps(config | {'sources': rows[::1 if index == 0 else -1]}),
+                            encoding='utf-8')
+        projects.append(manifest)
+
+    def read(project, *flags):
+        args = ['check', '--project', project, '--source-manifest', '--json', *flags]
+        observed = invoke(exe, args, 0)
+        assert not observed.stderr and observed.stdout.endswith(b'\n'), observed
+        assert len(observed.stdout.splitlines()) == 1, observed
+        return observed.stdout, json.loads(observed.stdout)
+
+    expected = {'schema': 'browniec.source-manifest/v1', 'command': 'check', 'status': 'checked',
+                'sources': [row | {'sha256': hashlib.sha256(source).hexdigest()}
+                            for row, source in zip(rows, (app, math))]}
+    original, record = read(projects[0])
+    assert record == expected and read(projects[1])[0] == original
+    assert check_json(exe, ['run', '--project', projects[0], '--fuel', 16000000],
+                      5)['kind'] == 'zero_divisor'
+
+    member = projects[1].parent / 'src/math.brc'
+    modified = math.replace(b'// x', b'// y')
+    member.write_bytes(modified)
+    expected['sources'][1]['sha256'] = hashlib.sha256(modified).hexdigest()
+    assert read(projects[1])[1] == expected
+    member.write_bytes(b'module util::math;pub fn i32 divide(i32 by){return true;}')
+    args = ['check', '--project', projects[1], '--source-manifest']
+    assert check_json(exe, args, 3)['kind'] == 'type'
+    member.unlink()
+    assert check_json(exe, args, 7)['kind'] == 'input_io'
+
+    (projects[0].parent / 'src/app.brc').write_bytes(
+        b'module app;pub fn i32 start(ref u8[] data){return data[0] as i32;}')
+    assert read(projects[0], '--entry-input')[1]['sources'][0]['sha256'] == hashlib.sha256(
+        (projects[0].parent / 'src/app.brc').read_bytes()).hexdigest()
+    for flags in ([], ['--isolated'], ['--policy', 'missing.json'], ['--source-manifest']):
+        assert b'browniec: usage' in invoke(exe, [*args, *flags], 2).stderr
+    assert check_json(exe, args, 2, version=2)['kind'] == 'usage'
+    print('PASS: checked source manifest is deterministic, hashes original bytes and omits failed projects')
+
+
 def inspect_json(exe, source, *options, exit_code=0, schema='browniec.limits/v1'):
     ran = invoke(exe, ['inspect', source, *options], exit_code)
     assert not ran.stderr and len(ran.stdout.splitlines()) == 1 and ran.stdout.endswith(b'\n'), ran
@@ -1241,6 +1297,7 @@ def main():
         check_project(exe, Path(temp))
         check_project_input(exe, Path(temp))
         check_project_input_entry(exe, Path(temp))
+        check_source_manifest(exe, Path(temp))
         check_source_input(exe, Path(temp))
         check_configured_output(exe, Path(temp))
         check_unframe_example(exe, Path(temp))

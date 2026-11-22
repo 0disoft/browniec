@@ -18,6 +18,7 @@ La CLI pública procesa un archivo fuente a la vez. `check` verifica sin ejecuta
 | `browniec check SOURCE --isolated` | — | `stderr` | — |
 | `browniec check SOURCE --isolated` | `--json` | `stdout` | `browniec.result/v1` |
 | `browniec check SOURCE --isolated` | `--json-v2` | `stdout` | `browniec.result/v2` |
+| `browniec check --project FILE --source-manifest` | `--json` | `stdout` | `browniec.source-manifest/v1` |
 | `browniec check --project FILE --isolated` | — | `stderr` | — |
 | `browniec check --project FILE --isolated` | `--json` | `stdout` | `browniec.result/v1` |
 | `browniec check --project FILE --isolated` | `--json-v2` | `stdout` | `browniec.result/v2` |

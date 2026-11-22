@@ -52,6 +52,9 @@ pub enum Format { Text; Json; JsonV2; }
 pub fn bool text_mode(Format format){
     return switch(format){case .Text:{true}case .Json:{false}case .JsonV2:{false}};
 }
+pub fn bool legacy_json(Format format){
+    return switch(format){case .Text:{false}case .Json:{true}case .JsonV2:{false}};
+}
 fn bool v2(Format format){
     return switch(format){case .Text:{false}case .Json:{false}case .JsonV2:{true}};
 }

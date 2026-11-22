@@ -11,6 +11,7 @@ import module_index as modules;
 import module_input_program as input_programs;
 import module_input_entry as input_entries;
 import cli_project_input as binary;
+import cli_source_manifest as source_manifest;
 import cli_configured_project as configured;
 import runtime_input as input;
 import source_snapshot as sources;
@@ -33,7 +34,7 @@ pub fn bool selected(){
     return size==9 && bytes::equal(ref flag,b"--project");
 }
 @effects(console,filesystem)
-pub fn i32 execute(render::Format format,bool run,usize fuel,binary::Selection selection,bool entry_input){
+pub fn i32 execute(render::Format format,bool run,usize fuel,binary::Selection selection,bool entry_input,bool show_sources){
     var u8[3072] path=[0;3072];
     let usize size=switch(process::arg(3,ref mut path)){
         case .ok(v):{v}case .err(_):{return failure(format,run,errors::absent(10,0),0);}
@@ -42,9 +43,9 @@ pub fn i32 execute(render::Format format,bool run,usize fuel,binary::Selection s
         case .ok(v):{v}case .err(e):{return failure(format,run,e,0);}
     };
     if(entry_input || selection.stdin || selection.argument!=0){
-        return execute_with_input(ref project,format,run,fuel,selection);
+        return execute_with_input(ref project,format,run,fuel,selection,show_sources);
     }
-    return execute_project(ref project,format,run,fuel);
+    return execute_project(ref project,format,run,fuel,show_sources);
 }
 @effects(console,filesystem)
 pub fn i32 execute_configured(render::Format format,bool run,configured::Selection settings,binary::Selection selection){
@@ -101,25 +102,26 @@ pub fn Result<manifest::Project,errors::Error> parse_manifest(ref anchored::Root
     };
 }
 @effects(console)
-fn i32 execute_project(ref ProjectInput project,render::Format format,bool run,usize fuel){
+fn i32 execute_project(ref ProjectInput project,render::Format format,bool run,usize fuel,bool show_sources){
     let ref sources::Snapshot snapshot=ref project.snapshot;
     // Keep the original bytes available if binding or compilation consumes its input.
     let entries::Entry entry=switch(binding::select(ref project.metadata,sources::duplicate(snapshot))){
         case .ok(v):{v}
         case .err(e):{return binding_failure(format,run,snapshot,e);}
     };
-    return execute_entry(entry,snapshot,format,run,fuel);
+    return execute_entry(entry,project,format,run,fuel,show_sources);
 }
 @effects(console)
 fn i32 failure(render::Format format,bool run,errors::Error error,u8 profile){
     return render::selected_outcome(format,run,true,0,error,profile);
 }
 @effects(console)
-fn i32 execute_entry(entries::Entry entry,ref sources::Snapshot snapshot,render::Format format,bool run,usize fuel){
+fn i32 execute_entry(entries::Entry entry,ref ProjectInput project,render::Format format,bool run,usize fuel,bool show_sources){
     let programs::Program program=switch(programs::compile(entry,images::metadata_charge()+images::byte_limit())){
-        case .ok(v):{v}case .err(e):{return render::project_failure(format,run,e.code,snapshot,e.at,0);}
+        case .ok(v):{v}case .err(e):{return render::project_failure(format,run,e.code,ref project.snapshot,e.at,0);}
     };
     let u8 profile=programs::profile(ref program);
+    if(show_sources){return source_manifest::publish(ref project.metadata,programs::snapshot(ref program));}
     if(!run){return render::selected_outcome(format,false,false,0,errors::absent(0,0),profile);}
     return switch(programs::run(ref program,fuel)){
         case .ok(v):{render::selected_outcome(format,true,false,v,errors::absent(0,0),profile)}
@@ -132,7 +134,7 @@ fn i32 binding_failure(render::Format format,bool run,ref sources::Snapshot snap
     return render::project_failure(format,run,diagnostics::binding(e),snapshot,e.at,0);
 }
 @effects(console,filesystem)
-fn i32 execute_with_input(ref ProjectInput project,render::Format format,bool run,usize fuel,binary::Selection selection){
+fn i32 execute_with_input(ref ProjectInput project,render::Format format,bool run,usize fuel,binary::Selection selection,bool show_sources){
     let ref sources::Snapshot snapshot=ref project.snapshot;
     let input_entries::InputEntry entry=switch(binding::select_input(ref project.metadata,sources::duplicate(snapshot))){
         case .ok(v):{v}case .err(e):{return binding_failure(format,run,snapshot,e);}
@@ -140,6 +142,7 @@ fn i32 execute_with_input(ref ProjectInput project,render::Format format,bool ru
     let input_programs::Program program=switch(input_programs::compile(entry,images::metadata_charge()+images::byte_limit())){
         case .ok(v):{v}case .err(e):{return render::project_failure(format,run,e.code,snapshot,e.at,0);}
     };
+    if(show_sources){return source_manifest::publish(ref project.metadata,input_programs::snapshot(ref program));}
     if(!run){return render::selected_outcome(format,false,false,0,errors::absent(0,0),8);}
     let input::Snapshot payload=switch(binary::read_with_limit(selection,input::hard_limit(),30000)){
         case .ok(v):{v}case .err(e):{return failure(format,true,e,8);}

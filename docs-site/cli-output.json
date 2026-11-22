@@ -59,6 +59,17 @@
   },
   {
     "command": "check",
+    "arguments": "--project FILE --source-manifest",
+    "formats": [
+      {
+        "option": "--json",
+        "channel": "stdout",
+        "schema": "browniec.source-manifest/v1"
+      }
+    ]
+  },
+  {
+    "command": "check",
     "arguments": "--project FILE --isolated",
     "formats": [
       {

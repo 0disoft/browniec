@@ -246,6 +246,14 @@ public `i32(ref u8[])` entry. Check returns immediately after compilation
 without opening guest input or executing the VM. Configured and isolated
 project checks accept their existing option sets.
 
+To record the source files verified by a project check, use
+`browniec check --project FILE --source-manifest --json`. The
+`browniec.source-manifest/v1` result lists each module, relative path and
+lowercase SHA-256 digest of the original file bytes, sorted by relative path
+in byte order. The report uses the compiled Program's immutable source
+snapshot. It can also be combined with `--entry-input`. A failed check
+emits the ordinary JSON v1 diagnostic and no source list.
+
 Select one of `--input FILE` or `--stdin` on project run to use a public
 `i32(ref u8[])` entry. Select a local file by its absolute drive path or a path
 relative to the process working directory. On Windows, `--stdin` accepts a
