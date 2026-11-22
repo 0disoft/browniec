@@ -747,13 +747,15 @@ def verify_project_host(run, need, image, folder, env):
     original_compile_fuel = policy['compile']['fuel']
     policy['compile']['fuel'] = 1
     check('check', expected_exit=3, kind='compile_limit')
-    # The 401 lowering batches leave no Fuel for the independent proof.
+    # The 400 lowering batches leave no Fuel for the independent proof.
     # The literal emit spends 15 token stages and two IR emission units.
     # The raw declaration and return expressions spend another 12 units.
     # Host names, scalar argument lowering and argument packing add 54 units.
     # Host index token advances add 152 units.
     # Import rows, aliases and name comparisons add 36 units.
-    lowering_fuel = 255 + 401 * 4096 + 17 + 12 + 54 + 152 + 36
+    signature_fuel = 1 + len(entry['parameters'])
+    signature_delta = signature_fuel - 4096
+    lowering_fuel = 255 + 400 * 4096 + 17 + 12 + 54 + 152 + 36 + signature_fuel
     policy['compile']['fuel'] = lowering_fuel
     check('check', expected_exit=3, kind='compile_limit')
     # Verification itself needs 28 more batches from the same balance.
@@ -787,7 +789,7 @@ def verify_project_host(run, need, image, folder, env):
     source.write_bytes(b'module app; import host::example as api; pub fn i32 start(ref u8[] data){'
                        b'{output::emit(ref data);} let i32 a=api::check(41); return a+api::check(42);}')
     # The nested emit spends 14 token stages, two lookup stages and one IR unit.
-    nested_fuel = 1892630 + 17 + 12 + 55 + 10 + 164 + 43
+    nested_fuel = 1892630 + 17 + 12 + 55 + 10 + 164 + 43 + signature_delta
     policy['compile']['fuel'] = nested_fuel - 1
     check(expected_exit=3, kind='compile_limit', payload=payload)
     policy['compile']['fuel'] = nested_fuel
@@ -796,7 +798,7 @@ def verify_project_host(run, need, image, folder, env):
                        b'output::emit(b"before");let Result<i32,u32> reply=api::check(41);'
                        b'let i32 a=(if(true){switch(reply){case .ok(v):{v}case .err(_):{0}}}else{0});'
                        b'return a+switch(api::check(42)){case .ok(v):{v}case .err(_):{0}};}')
-    arm_fuel = 3232221 + 487 + 55 + 4 + 298 + 66
+    arm_fuel = 3232221 + 487 + 55 + 4 + 298 + 66 + signature_delta
     policy['compile']['fuel'] = arm_fuel - 1
     check(expected_exit=3, kind='compile_limit')
     policy['compile']['fuel'] = arm_fuel
@@ -805,7 +807,7 @@ def verify_project_host(run, need, image, folder, env):
                        b'output::emit(b"before");let Result<i32,u32> reply=api::check(41);'
                        b'var i32 a=0;switch(reply){case .ok(v):{a=v;}case .err(_):{return 0;}}'
                        b'switch(api::check(42)){case .ok(v):{return a+v;}case .err(e):{return 0;}}}')
-    statement_fuel = 3_121_699 + 141 + 290 + 66
+    statement_fuel = 3_121_699 + 141 + 290 + 66 + signature_delta
     policy['compile']['fuel'] = statement_fuel - 1
     check(expected_exit=3, kind='compile_limit')
     policy['compile']['fuel'] = statement_fuel
@@ -815,7 +817,7 @@ def verify_project_host(run, need, image, folder, env):
     replies['replies'] = rows
     source.write_bytes(original_source.replace(
         b'api::check(41)', b'api /*' + b'x' * 192 + b'*/ ::check(41)'))
-    index_fuel = 1_819_172 + 164 + 36
+    index_fuel = 1_819_172 + 164 + 36 + signature_delta
     policy['compile']['fuel'] = index_fuel - 1
     check(expected_exit=3, kind='compile_limit')
     policy['compile']['fuel'] = index_fuel
@@ -824,7 +826,7 @@ def verify_project_host(run, need, image, folder, env):
     source.write_bytes(original_source.replace(b' as api;', b' as ' + alias + b';')
                        .replace(b'api::check(41)', alias + b'::check(41)')
                        .replace(b'api::check(42)', b'host /* scope */ :: example::check(42)'))
-    binding_fuel = 1_794_714 + 44
+    binding_fuel = 1_794_714 + 44 + signature_delta
     policy['compile']['fuel'] = binding_fuel - 1
     check(expected_exit=3, kind='compile_limit')
     policy['compile']['fuel'] = binding_fuel

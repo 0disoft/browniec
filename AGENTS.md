@@ -1,5 +1,5 @@
-- Latest runtime checkpoint (2026-11-22): [Multiple process routes](docs/engineering/restricted-worker.md#multiple-process-routes)
-  select registered catalog imports within one private broker session.
+- Latest runtime checkpoint (2026-11-22): [Catalog signature preparation Fuel](docs/engineering/restricted-worker.md#catalog-signature-preparation-fuel)
+  charges and checks for a stop at each signature row and parameter.
 
 # Brownie C agent guidance
 

@@ -169,27 +169,31 @@ fn u8 small(usize value){
 }
 
 // Binding is advisory: the retaining verifier rechecks the exact catalog.
-fn Result<usize,errors::Error> prepare_signatures(ref mut ir::Program code,ref catalog::Catalog imports){
+fn Result<usize,errors::Error> prepare_signatures(ref mut ir::Program code,ref catalog::Catalog imports,
+    usize deadline,ref mut usize fuel){
     if(code.list_used!=0){return .err(errors::make(5,0));}
-    code.list_used=scratch_bytes();
     var usize i=0;
     while(i<catalog::count(imports)){
+        discard budget::visit(fuel,deadline,0)?;
         let usize at=i*34;
         let usize argc=switch(catalog::parameter_count(imports,i)){case .ok(v):{v}case .err(_):{assert(false);0}};
         let u8 tag=switch(catalog::result_tag(imports,i)){case .ok(v):{v}case .err(_):{assert(false);0}};
         code.list_operands[at]=small(argc);code.list_operands[at+1]=wire::register_tag(tag);
         var usize j=0;
         while(j<argc){
+            discard budget::visit(fuel,deadline,0)?;
             let u8 parameter=switch(catalog::parameter_tag(imports,i,j)){case .ok(v):{v}case .err(_):{assert(false);0}};
             code.list_operands[at+2+j]=wire::register_tag(parameter);j+=1;
         }
         i+=1;
     }
+    code.list_used=scratch_bytes();
     return .ok(i);
 }
 
 pub fn Result<usize,errors::Error> prepare(ref u8[] source,ref mut ir::Program code,ref catalog::Catalog imports,usize token_limit){
-    discard prepare_signatures(code,imports)?;
+    var usize fuel=budget::unlimited();
+    discard prepare_signatures(code,imports,0,ref mut fuel)?;
     var lexer::State s=lexer::empty();
     let usize first=lexer::next(source,ref mut s)?;
     let usize module_word=lexer::word(source,ref mut s,b"module")?;
@@ -197,7 +201,6 @@ pub fn Result<usize,errors::Error> prepare(ref u8[] source,ref mut ir::Program c
     let usize module_end=lexer::punctuation(source,ref mut s,59)?;
     var Alias[64] aliases=[Alias{.begin=0,.end=0,.imports=0};64];
     var usize aliases_used=0;
-    var usize fuel=budget::unlimited();
     while(word(source,ref s,b"import")){
         if(aliases_used==64){return .err(errors::make(4,s.begin));}
         let Alias item=read_alias(source,ref mut s,imports,ref mut fuel)?;
@@ -298,8 +301,7 @@ fn Result<usize,errors::Error> scope_mask(ref catalog::Catalog imports,ref u8[] 
 pub fn Result<usize,errors::Error> prepare_project(ref modules::Index index,ref mut ir::Program code,
     ref catalog::Catalog imports,ref mut usize active,usize deadline,ref mut usize fuel){
     if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
-    discard budget::prepay(fuel,0)?;
-    discard prepare_signatures(code,imports)?;
+    discard prepare_signatures(code,imports,deadline,fuel)?;
     let ref sources::Snapshot snapshot=modules::snapshot(index);
     var usize base=0;var usize file=0;var usize count=0;
     while(file<modules::count(index)){

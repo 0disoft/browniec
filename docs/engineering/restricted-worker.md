@@ -1651,6 +1651,22 @@ Windows development and /O2 each passed 110 configured, 43 catalog,
 five managed and four compile-stop cases. All 456 input hashes matched.
 Local receipt: `build/restricted-worker/20261122T012924043548Z/receipt.json`.
 
+### Catalog signature preparation Fuel
+
+Catalog lowering charges one unit per signature row and one per parameter
+before copying the corresponding metadata. Each charge also checks for a
+compile stop. The scratch table becomes available to later lowering only
+after all rows complete. The preparation stage charges at most 2,112 units
+for 64 signatures with 32 parameters each. The one-import, one-parameter
+fixture uses two units, down from the previous 4,096-unit batch.
+
+Windows development and /O2 both ran the two-call project at 1,753,616
+compile Fuel and returned 77 with sealed output. One unit less returned
+`compile_limit` with no result or output. Both profiles passed 43 catalog,
+110 configured, and 17 process-command cases with zero net handles.
+All 460 verification input hashes matched.
+Local receipt: `build/restricted-worker/20261122T042756517801Z/receipt.json`.
+
 ## Windows verification
 
 Run `python -B tools/verify-restricted-worker.py`. The development and optimized
