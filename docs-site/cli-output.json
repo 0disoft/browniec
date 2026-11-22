@@ -369,7 +369,7 @@
   },
   {
     "command": "run",
-    "arguments": "--project FILE --isolated --policy FILE --run FILE [--input FILE|--stdin]",
+    "arguments": "--project FILE --isolated --policy FILE --run FILE [--input FILE|--stdin] [--output FILE|--output-text FILE]",
     "formats": [
       {
         "option": "--json",

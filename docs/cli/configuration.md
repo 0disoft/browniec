@@ -108,8 +108,11 @@ or redirected stdin for an entry with a shared-byte parameter. A pipe must send
 EOF within the run file's deadline for the input phase. Timeout or cancellation
 during input ends the command before the worker starts. The worker applies the
 policy and run configuration and can emit bytes when explicitly granted the
-output capability. Successful output is included as Base64 in the JSON result.
-Catalog adapters and file output sinks remain unavailable in this route.
+output capability. Successful output is included as Base64 in the JSON result
+unless a file sink is selected. Use `--output FILE` for raw bytes or
+`--output-text FILE` to require valid UTF-8. The parent publishes the sealed
+file after accepting the result and reaping the worker. An existing destination
+is preserved. Catalog adapters remain unavailable in this route.
 
 ## Single-source host check
 

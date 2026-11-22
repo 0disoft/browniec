@@ -1,5 +1,5 @@
-- Latest runtime checkpoint (2026-11-22): [Isolated project stdin](docs/engineering/restricted-worker.md#isolated-project-stdin)
-  bounds pipe input before worker launch and preserves cancellation and timeout.
+- Latest runtime checkpoint (2026-11-22): [Isolated project file output](docs/engineering/restricted-worker.md#isolated-project-file-output)
+  publishes validated worker bytes through the shared no-replace sink after reaping.
 
 # Brownie C agent guidance
 

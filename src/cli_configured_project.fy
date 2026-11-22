@@ -96,18 +96,26 @@ fn i32 complete(render::Format format,ref mut engine::Engine owner,usize program
 
 @effects(console,filesystem)
 pub fn i32 publish(render::Format format,i64 value,ref engine::Output output,Selection selected,u8 profile){
-    if(selected.output_file!=0){
-        let ref u8[] payload=if(engine::output_available(output)){engine::output_view(output)}else{b""};
-        if(selected.output_text && !text::validate_utf8(payload).is_ok){
-            return failure(format,true,errors::absent(errors::output_encoding_kind(),0),profile);
-        }
-        if(!files::write_output(selected.output_file,payload)){
-            return failure(format,true,errors::absent(errors::output_io_kind(),0),profile);
-        }
-    }else if(engine::output_available(output)){
-        return render::published_output_profile(format,value,engine::output_view(output),profile);
+    let bool available=engine::output_available(output);
+    if(available || selected.output_file!=0){
+        let ref u8[] payload=if(available){engine::output_view(output)}else{b""};
+        return publish_payload(format,value,payload,selected.output_file,selected.output_text,profile);
     }
     return render::selected_outcome(format,true,false,value,errors::absent(0,0),profile);
+}
+
+@effects(console,filesystem)
+pub fn i32 publish_payload(render::Format format,i64 value,ref u8[] payload,usize output_file,bool output_text,u8 profile){
+    if(output_file!=0){
+        if(output_text && !text::validate_utf8(payload).is_ok){
+            return failure(format,true,errors::absent(errors::output_encoding_kind(),0),profile);
+        }
+        if(!files::write_output(output_file,payload)){
+            return failure(format,true,errors::absent(errors::output_io_kind(),0),profile);
+        }
+        return render::selected_outcome(format,true,false,value,errors::absent(0,0),profile);
+    }
+    return render::published_output_profile(format,value,payload,profile);
 }
 
 fn bool dispose(ref mut engine::Engine owner,usize program,usize instance){

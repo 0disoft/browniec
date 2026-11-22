@@ -721,6 +721,19 @@ mismatches, check-only behavior, the input Program's instruction ceiling
 and a clean staging directory after every case. Local receipt:
 `build/restricted-worker/20261121T173313253515Z/receipt.json`.
 
+### Isolated project file output
+
+A configured isolated project can direct granted output to a binary or UTF-8
+file after the broker has accepted the result and reaped the worker. The
+parent reuses the local CLI publisher, including UTF-8 validation, staged
+writes and a no-replace rename. The worker receives no destination path.
+
+Windows development and /O2 verified exact binary and UTF-8 content, rejection
+of invalid UTF-8, preservation of an existing destination and a trap after
+emit with no file publication. Two concurrent runs against the same destination
+produced one complete file and exit codes 0 and 7. Both broker suites passed
+with zero net handles. Local receipt: `build/restricted-worker/20261122T093120686431Z/receipt.json`.
+
 ### Configured sealed output
 
 The configured project can declare `brownie.output.emit`. The policy must

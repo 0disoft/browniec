@@ -626,30 +626,44 @@ def check_configured_output(exe, folder):
     output_error = {'kind': 'output_io', 'location': {'kind': 'none'}}
     assert check_json(exe, [*args, '--output', sink], 7, version=2, profile=profile) == output_error
     assert sink.read_bytes() == b'A\x00'
-    contested = folder / 'contested.bin'
+    isolated = [*args, '--isolated']
+    isolated_sink = project / 'isolated.bin'
+    assert check_json(exe, [*isolated, '--input', payload, '--output', isolated_sink],
+                      0, value=77, version=2, profile=profile) is None
+    assert isolated_sink.read_bytes() == b'A\x00'
+    assert check_json(exe, [*isolated, '--input', payload, '--output', isolated_sink],
+                      7, version=2, profile=profile) == output_error
+    assert isolated_sink.read_bytes() == b'A\x00'
     other = folder / 'other-project'
     shutil.copytree(CONFIGURED, other)
-    def contender(root, data):
-        incoming = root / 'contender.bin'
-        incoming.write_bytes(data)
-        command = [str(exe), *map(str, [*configured_arguments(root), '--input', incoming,
-                                       '--output', contested, '--json-v2'])]
+    destinations = folder / 'contested-output'
+    destinations.mkdir()
+    first_input = project / 'contender.bin'
+    second_input = other / 'contender.bin'
+    first_input.write_bytes(b'A\x00')
+    second_input.write_bytes(b'B\xff')
+
+    def contender(root, incoming, destination, flags):
+        command = [str(exe), *map(str, [*configured_arguments(root), *flags, '--input', incoming,
+                                       '--output', destination, '--json-v2'])]
         return subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-    with contender(project, b'A\x00') as first:
-        with contender(other, b'B\xff') as second:
-            candidates = [(first, b'A\x00'), (second, b'B\xff')]
-            codes = []
-            for guest, data in candidates:
-                stdout, stderr = guest.communicate(timeout=10)
-                assert not stderr and len(stdout.splitlines()) == 1, (stdout, stderr)
-                result = json.loads(stdout)
-                codes.append(guest.returncode)
-                if guest.returncode == 0:
-                    assert result['return_i32'] == 77 and contested.read_bytes() == data, result
-                else:
-                    assert result['error'] == output_error, result
-            assert sorted(codes) == [0, 7], codes
+    for name, flags in [('contested.bin', []), ('isolated-contested.bin', ['--isolated'])]:
+        contested = destinations / name
+        with contender(project, first_input, contested, flags) as first:
+            with contender(other, second_input, contested, flags) as second:
+                candidates = [(first, b'A\x00'), (second, b'B\xff')]
+                codes = []
+                for guest, data in candidates:
+                    stdout, stderr = guest.communicate(timeout=10)
+                    assert not stderr and len(stdout.splitlines()) == 1, (stdout, stderr)
+                    result = json.loads(stdout)
+                    codes.append(guest.returncode)
+                    if guest.returncode == 0:
+                        assert result['return_i32'] == 77 and contested.read_bytes() == data, result
+                    else:
+                        assert result['error'] == output_error, (flags, guest.args, result)
+                assert sorted(codes) == [0, 7], (flags, codes)
     assert not list(folder.rglob('.browniec-*'))
     assert check_json(exe, [*args, '--output', folder / 'missing' / 'result.bin'],
                       7, version=2, profile=profile) == output_error
@@ -661,6 +675,16 @@ def check_configured_output(exe, folder):
     assert check_json(exe, [*args, '--stdin', '--output-text', text_sink], 0, value=77,
                       version=2, profile=profile, input_bytes=utf8) is None
     assert text_sink.read_bytes() == utf8
+    isolated_text = project / 'isolated.txt'
+    assert check_json(exe, [*isolated, '--stdin', '--output-text', isolated_text], 0, value=77,
+                      version=2, profile=profile, input_bytes=utf8) is None
+    assert isolated_text.read_bytes() == utf8
+    invalid_isolated = project / 'isolated-invalid.txt'
+    assert check_json(exe, [*isolated, '--stdin', '--output-text', invalid_isolated], 7,
+                      version=2, profile=profile, input_bytes=b'\xff') == {
+        'kind': 'output_encoding', 'location': {'kind': 'none'},
+    }
+    assert not invalid_isolated.exists()
     assert check_json(exe, [*args, '--output-text', text_sink], 7,
                       version=2, profile=profile) == output_error
     assert text_sink.read_bytes() == utf8
@@ -704,6 +728,8 @@ def check_configured_output(exe, folder):
     assert check_json(exe, check, 0, version=2, profile=profile) is None
     error = check_json(exe, [*args, '--input', payload], 5, version=2, profile=profile)
     assert error['kind'] == 'zero_divisor' and error['location']['path'] == 'app.brc', error
+    assert check_json(exe, [*file_run, '--isolated'], 5, version=2, profile=profile) == error
+    assert not unpublished.exists()
     assert check_json(exe, file_run, 5, version=2, profile=profile) == error
     assert not unpublished.exists()
 
