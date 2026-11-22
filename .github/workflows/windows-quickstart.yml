@@ -19,6 +19,8 @@ on:
       - 'fairy.toml'
       - 'fairy.windows.json'
       - 'native/windows-runtime-engine.c'
+      - 'native/windows-scalar-*'
+      - 'native/restricted_worker*'
       - 'native/runtime-engine/bridge.inc'
       - 'native/runtime-engine/clock.inc'
       - 'native/abi_thread_identity.c'
