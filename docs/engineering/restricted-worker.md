@@ -176,6 +176,18 @@ either broker event opens. Both checks passed in Windows development and
 /O2, with zero net handles and all 459 input hashes matched.
 Local receipt: `build/restricted-worker/20261122T025308849465Z/receipt.json`.
 
+The concurrent reaping test keeps two AppContainer READY reads outstanding
+and settles cancellation on one session and phase expiry on the other.
+Windows signals both cancelled I/O operations while their owners still
+hold the leases. With room for a third session in the other dimensions,
+the four-slot I/O ceiling denies it until one completion is collected and
+its worker is reaped. The replacement then starts while the first lease
+is still held. Completion readiness is represented by one event per lease,
+so an uncollected notification consumes the same reserved slot. Windows
+development and /O2 each passed the native case with zero net handles and
+all 28 fixture input hashes matched.
+Local receipt: `build/restricted-worker/20261122T025725864286Z/receipt.json`.
+
 ### Phase deadlines
 
 The broker starts the startup window before opening handles and requires

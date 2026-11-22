@@ -647,8 +647,9 @@ static bool same_charge(bc_worker_broker_amounts a, bc_worker_broker_amounts b) 
         a.adapter_slots == b.adapter_slots && a.io_slots == b.io_slots;
 }
 
-static void verify_shared_budget(bc_worker_broker_budget *budget, const bc_worker_broker_run *run,
+static void verify_shared_budget(bc_worker_broker *first, const bc_worker_broker_run *run,
     bc_worker_broker_amounts one) {
+    bc_worker_broker_budget *budget = run->budget;
     bc_worker_broker second = {0};
     bc_worker_broker_run other = *run;
     wchar_t command[256];
@@ -685,12 +686,55 @@ static void verify_shared_budget(bc_worker_broker_budget *budget, const bc_worke
     check(bc_worker_broker_start(&second, &other) == ERROR_SUCCESS &&
         same_charge(budget->reserved, both), "admit a second worker at all exact aggregate limits");
     const uint64_t deadline = clock_ticks() + 50000000ULL;
+    while (!second.io.pipe && second.gate.status == BC_WORKER_GATE_PENDING) {
+        check(clock_ticks() < deadline, "wait for the second worker's pending read");
+        bc_worker_broker_step(&second);
+    }
+    check(second.phase == BC_WORKER_BROKER_READ_READY && second.io.pipe,
+        "both workers own a pending READY read");
+    second.phase_deadline = clock_ticks();
+    check(bc_worker_broker_step(&second) == BC_WORKER_GATE_EXPIRED &&
+        bc_worker_broker_cancel(&second) == BC_WORKER_GATE_EXPIRED &&
+        first->gate.status == BC_WORKER_GATE_CANCELLED,
+        "keep independent stop causes for the two workers");
+
+    check(bc_worker_io_cancel(&first->io) == ERROR_SUCCESS &&
+        bc_worker_io_cancel(&second.io) == ERROR_SUCCESS &&
+        WaitForSingleObject(first->io.event, 5000) == WAIT_OBJECT_0 &&
+        WaitForSingleObject(second.io.event, 5000) == WAIT_OBJECT_0 &&
+        first->io.pipe && second.io.pipe && same_charge(budget->reserved, both),
+        "signaled completions still own both I/O leases until collected");
+    bc_worker_broker third = {0};
+    bc_worker_broker_run next = other;
+    const uint8_t next_request = 41;
+    uint8_t next_result = 0;
+    next.request = &next_request;
+    next.result = &next_result;
+    next.deadline = clock_ticks() + 100000000ULL;
+    budget->limit = (bc_worker_broker_amounts){
+        3, 3 * one.parent_bytes, 3 * one.child_commit_bytes, 3 * one.wire_bytes, 0, both.io_slots
+    };
+    check(bc_worker_broker_start(&third, &next) == ERROR_NOT_ENOUGH_QUOTA &&
+        !third.worker.process && !third.io.event && same_charge(budget->reserved, both),
+        "deny a third worker at the I/O limit while completions await collection");
+    size_t length = 123;
+    check(!bc_worker_broker_take(&second, &length) && length == 123,
+        "the expired worker publishes no result");
     while (!bc_worker_broker_close(&second)) {
         check(clock_ticks() < deadline && same_charge(budget->reserved, both),
             "second worker keeps its charge through reaping");
         Sleep(1);
     }
-    check(same_charge(budget->reserved, one), "first worker's reservation survives second teardown");
+    check(first->io.pipe && same_charge(budget->reserved, one),
+        "first worker's uncollected lease survives second teardown");
+    check(bc_worker_broker_start(&third, &next) == ERROR_SUCCESS && same_charge(budget->reserved, both),
+        "reuse only the collected worker's admission slots");
+    while (!bc_worker_broker_close(&third)) {
+        check(clock_ticks() < deadline && same_charge(budget->reserved, both),
+            "keep both charges through replacement worker close");
+        Sleep(1);
+    }
+    check(same_charge(budget->reserved, one), "refund the replacement without touching the first worker");
 }
 
 static void verify_broker(const wchar_t *path, const wchar_t *directory,
@@ -764,7 +808,7 @@ static void verify_broker(const wchar_t *path, const wchar_t *directory,
         check(pending && broker.phase == wait_phase && terminal == expected,
             "stop begins with a live outstanding read");
         if (expected == BC_WORKER_GATE_CANCELLED) {
-            verify_shared_budget(&budget, &run, charge);
+            verify_shared_budget(&broker, &run, charge);
             broker.phase_deadline = clock_ticks();
             check(bc_worker_broker_cancel(&broker) == BC_WORKER_GATE_CANCELLED,
                 "expiry during cleanup cannot overwrite the cancelled outcome");
@@ -1715,6 +1759,7 @@ int wmain(int argc, wchar_t **argv) {
            "\"framedExchange\":true,\"headerMutationsRejected\":48,"
            "\"boundedStream\":true,\"pipeEof\":true,\"publicationGate\":true,"
            "\"ioLease\":true,\"brokerSessions\":6,\"hostBrokerCases\":11,\"deferredAdapterCases\":3,\"sharedBudget\":true,"
+           "\"sharedReapCases\":1,"
            "\"phaseDeadlines\":true,\"gracefulCancelCases\":2,\"handleDelta\":0,\"staging\":true,"
            "\"scalarSessions\":%d,\"parentBrokerCases\":%d,\"projectWireRejections\":%d,"
            "\"projectCompileStopCases\":%d,\"catalogHostStopCases\":%d,\"catalogProcessCases\":%d,"
