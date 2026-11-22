@@ -1,5 +1,5 @@
-- Latest delivery checkpoint (2026-11-22): [Binary payload example](docs/cli/configuration.md#validate-and-unwrap-a-binary-payload)
-  verifies binary input validation and exact output in Windows development and /O2.
+- Latest runtime checkpoint (2026-11-22): [Scalar reply comparisons](docs/engineering/embed-preview.md#scalar-reply-comparisons)
+  verifies exact scalar boundary replies and unchanged pending state on malformed input in both Windows builds.
 
 # Brownie C agent guidance
 

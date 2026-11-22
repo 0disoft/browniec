@@ -851,6 +851,12 @@ fn void dispatch_scalar(ref mut u8[] data,u8 op,usize dst,usize a,usize b,usize 
         let i64 payload=if(pair){reg(data,a+1)}else{0};
         return_scalar(data,value,pair,payload);return;
     }
+    if(op==11 || op==12){
+        // The verifier requires equal operand types. Packed scalar cells have
+        // a unique representation, including the upper usize domain.
+        let bool equal=reg(data,a)==reg(data,b);
+        set_reg(data,dst,if(equal==(op==11)){1}else{0});data[80]+=1;return;
+    }
     let i64 value=if(op==1){if(wide(data)){wide_cell(data,3168+a*8)}else{load_cell(data,at+4,1)}}else{
         assert(op==2 || op==7);
         let i64 right=if(op==7){0}else{reg(data,b)};

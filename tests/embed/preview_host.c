@@ -1131,6 +1131,74 @@ static void revision_two_host_exchange(uint32_t rules_index){
     assert(bc_engine_destroy(engine)==BC_OK);
 }
 
+static void revision_two_scalar_replies(void){
+    static const uint8_t name[]="main";
+    static const uint8_t request[]={0,0};
+    const struct scalar_case {
+        const char *type;
+        const char *predicate;
+        uint8_t wire[16];
+        size_t width;
+    } cases[]={
+        {"bool","v",{1,0,0,0,1,0,0,0,1},1},
+        {"u8","v != 254",{2,0,0,0,1,0,0,0,255},1},
+        {"i64","v == -9223372036854775808",{4,0,0,0,8,0,0,0,0,0,0,0,0,0,0,128},8},
+        {"u32","v == 4294967295",{5,0,0,0,4,0,0,0,255,255,255,255},4},
+        {"usize","v == 18446744073709551615",{6,0,0,0,8,0,0,0,255,255,255,255,255,255,255,255},8}
+    };
+    uint8_t policy_data[4096],run_data[1024];
+    const bc_slice policy={policy_data,read_fixture("policy-host.json",policy_data,sizeof(policy_data))};
+    const bc_slice run={run_data,read_fixture("run-host.json",run_data,sizeof(run_data))};
+    const bc_slice empty={0};
+    bc_handle engine=0;
+    bc_diagnostic diag={.struct_size=sizeof(diag)};
+    assert(bc_engine_create(BC_ABI_REVISION,policy,&engine,&diag)==BC_OK);
+    for(size_t i=0;i<sizeof(cases)/sizeof(cases[0]);++i){
+        const struct scalar_case *test=&cases[i];
+        uint8_t text[512],catalog[512];
+        int source_size=snprintf((char *)text,sizeof(text),
+            "module main; import host::example as api; pub fn i32 main(){"
+            "switch(api::check()){case .ok(v):{if(%s){return 77;}return 1;}case .err(_):{return 0;}}}",
+            test->predicate);
+        int catalog_size=snprintf((char *)catalog,sizeof(catalog),
+            "{\"schema\":\"brownie.catalog/1\",\"imports\":["
+            "{\"id\":0,\"module\":\"host::example\",\"symbol\":\"check\",\"parameters\":[],"
+            "\"result\":\"Result<%s,u32>\",\"effect\":\"read\","
+            "\"capability\":\"host.example.check\",\"adapter_revision\":\"v1\"}]}",
+            test->type);
+        assert(source_size>0 && (size_t)source_size<sizeof(text));
+        assert(catalog_size>0 && (size_t)catalog_size<sizeof(catalog));
+        const bc_source source={{name,sizeof(name)-1},{text,(size_t)source_size}};
+        const bc_slice catalog_json={catalog,(size_t)catalog_size};
+        bc_handle program=0,instance=0;
+        uint32_t compiled=bc_compile(engine,&source,1,catalog_json,&program,&diag);
+        if(compiled!=BC_OK){
+            fprintf(stderr,"%s reply fixture compile status %" PRIu32 ": %s at %" PRIu32 "..%" PRIu32 "\n",
+                test->type,compiled,diag.message,diag.byte_start,diag.byte_end);
+        }
+        assert(compiled==BC_OK && bc_instance_create(engine,program,empty,run,&instance,&diag)==BC_OK);
+        assert(bc_program_release(engine,program)==BC_OK);
+        const bc_event pending=next_host_event(instance,64);
+        assert(pending.kind==BC_HOST_REQUEST && pending.request_id && pending.import_id==0);
+        assert(pending.payload.len==sizeof(request) && memcmp(pending.payload.data,request,sizeof(request))==0);
+        uint8_t invalid[sizeof(test->wire)];
+        memcpy(invalid,test->wire,sizeof(invalid));
+        if(i==0){invalid[8]=2;}
+        else{invalid[1]=1;}
+        const size_t reply_size=8+test->width;
+        assert(bc_host_reply(instance,pending.request_id,BC_REPLY_OK,(bc_slice){invalid,reply_size},&diag)==BC_BAD_ARGUMENT);
+        const bc_event waiting=next_host_event(instance,1);
+        assert(waiting.kind==BC_WAIT && waiting.request_id==pending.request_id && waiting.fuel_used==pending.fuel_used);
+        assert(bc_host_reply(instance,pending.request_id,BC_REPLY_OK,(bc_slice){test->wire,reply_size},&diag)==BC_OK);
+        const bc_event done=finish_revision_two(instance,64);
+        assert(done.kind==BC_DONE && done.return_i32==77 && done.diagnostic.code==0 && done.payload.len==0);
+        assert(bc_instance_destroy(instance)==BC_OK);
+        assert(bc_host_reply(instance,pending.request_id,BC_REPLY_OK,(bc_slice){test->wire,reply_size},&diag)==BC_INVALID_HANDLE);
+    }
+    assert(bc_engine_destroy(engine)==BC_OK);
+    puts("PASS: bool, u8, i64, u32 and usize replies validate and preserve the compiled scalar value");
+}
+
 static void revision_two_host_owner_limit(bc_handle engine,bc_slice catalog){
     static const uint8_t main_name[]="main";
     static const uint8_t text[]="module main; import host::example as api; pub fn i32 main(){"
@@ -1336,6 +1404,7 @@ int main(void){
     puts("PASS: catalog-backed traps preserve original spans in both source orders");
     puts("PASS: unhandled Result error produces a stable host failure and no guest output");
     puts("PASS: malformed and foreign-thread host calls leave the original request and Fuel intact");
+    revision_two_scalar_replies();
     revision_two_large_host_reply();
     printf("PASS: quanta 1/64 return 77 and consume %" PRIu64 " fuel; cancellation and ownership verified\n",a.fuel_used);
     puts("PASS: four owner threads independently compiled, stepped, and destroyed their Engines without retries");

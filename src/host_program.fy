@@ -136,7 +136,7 @@ fn Result<Authority,Error> inspect(ref ir::Program code,ref catalog::Catalog imp
         }else if(op==2){
             let usize dst=code.code[at+1] as usize;
             if(dst>=code.registers || code.types[dst]!=1){return .err(.Code);}
-        }else if(op!=1 && op!=7 && op!=8 && op!=19 && op!=20 && op!=21 && op!=22){
+        }else if(op!=1 && op!=7 && op!=8 && op!=11 && op!=12 && op!=19 && op!=20 && op!=21 && op!=22){
             return .err(.Code);
         }
         pc+=1;

@@ -361,6 +361,21 @@ missing run declaration rejection and a typed i32 reply that returned 77.
 
 ## Revision-2 host requests and replies
 
+### Scalar reply comparisons
+
+Catalog-backed guest code can compare verified scalar values using `==` and
+`!=`. The verifier proves both operands have the same scalar type and the
+destination is bool. The host dispatcher compares the canonical register
+cells, including the packed upper `usize` domain, at one work unit and one Fuel
+per comparison.
+
+The Windows development and /O2 C hosts passed `bool`, maximum `u8`,
+minimum `i64`, maximum `u32`, and maximum `usize` success replies. Each
+fixture refused a malformed reply without changing the pending request or Fuel,
+then returned 77 from the valid reply. Replies using a destroyed Instance
+handle returned `BC_INVALID_HANDLE`. Local DLL receipt:
+`build/embed-preview-cu50yy18/receipt.json`.
+
 ### Oversized reply validation
 
 Reply admission validates the TLV header and fixed scalar widths before
