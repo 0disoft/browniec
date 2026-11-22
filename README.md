@@ -107,6 +107,14 @@ Try the shipping-fee rule with a decimal i32 order total:
 
 The results are 3000 and 0, respectively.
 
+Check both results with one compilation:
+
+```powershell
+./build/browniec.exe test-i32 examples/shipping-fee.brc examples/shipping-fee.csv
+```
+
+The command exits 0 and reports `test-i32: 2 cases passed` on stderr.
+
 ## Current implementation (2026-11-07)
 
 Private [Buffer view copying](docs/engineering/value-view-copy.md) now accepts

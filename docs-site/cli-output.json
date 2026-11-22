@@ -489,6 +489,17 @@
     ]
   },
   {
+    "command": "test-i32",
+    "arguments": "SOURCE CASES [--fuel N]",
+    "formats": [
+      {
+        "option": "",
+        "channel": "stderr",
+        "schema": null
+      }
+    ]
+  },
+  {
     "command": "inspect",
     "arguments": "SOURCE --ir",
     "formats": [

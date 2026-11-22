@@ -63,9 +63,12 @@ def check_output_table(exe, identity, host_check, host_run, project_host_check, 
                    check=True, timeout=10)
     answer = ROOT / 'examples/answer.brc'
     project = ROOT / 'examples/projects/hello/project.json'
-    sources = {'check': [answer], 'run': [answer], 'eval-i32': [identity, 41]}
+    shipping = ROOT / 'examples/shipping-fee.brc'
+    sources = {'check': [answer], 'run': [answer], 'eval-i32': [identity, 41],
+               'test-i32': [shipping, shipping.with_suffix('.csv')]}
     tokens = {'--version': b'Brownie C experimental:', 'check': b'checked',
               'run': b'return_i32=77', 'eval-i32': b'return_i32=41',
+              'test-i32': b'test-i32: 2 cases passed',
               'inspect': b'Brownie C private IR diagnostics;'}
     rows = json.loads((ROOT / 'docs-site/cli-output.json').read_bytes())
     for row in rows:
@@ -1048,6 +1051,53 @@ def check_source_input(exe, folder):
     print('PASS: source-mode binary file and pipe input, empty input and compile-first diagnostics')
 
 
+def check_test_i32(exe, directory, identity, shipping):
+    path = directory / 'scalar-cases.csv'
+    args = ['test-i32', identity, path]
+
+    def batch(cases, code, expected, *options, command=args):
+        path.write_bytes(cases)
+        ran = invoke(exe, [*command, *options], code)
+        assert not ran.stdout and ran.stderr.splitlines() == [expected], ran
+
+    batch(b'-2147483648,-2147483648\r\n2147483647,2147483647', 0,
+          b'test-i32: 2 cases passed')
+    cases = b'29999,3000\n30000,0\n' * 500
+    shipping_args = ['test-i32', shipping, path]
+    batch(cases, 0, b'test-i32: 1000 cases passed', '--fuel', 16000, command=shipping_args)
+    batch(cases, 2, b'browniec: usage', '--fuel', 16001, command=shipping_args)
+    batch(b'1,1\n2,1\n3,3\n', 1, b'test-i32: row 2: expected 1, got 2')
+    for invalid in (b'', b'\n', b'2147483648,0', b'0,-2147483649', b'1,1,1',
+                    b'0,0\x00', b'0,0' + b'0' * 30):
+        batch(invalid, 2, b'test-i32: row 1: browniec: usage',
+              command=['test-i32', directory / 'missing.brc', path])
+    batch(b'1,1\n' * 1001, 2, b'test-i32: row 1001: browniec: usage')
+    batch(b'0' * 34001, 2, b'browniec: usage')
+
+    # Compare the exact guest exit and diagnostic across the first successful Fuel.
+    for fuel in range(10):
+        single = subprocess.run([str(exe), 'eval-i32', str(identity), '1', '--fuel', str(fuel)],
+                                capture_output=True, timeout=10)
+        if single.returncode == 0:
+            assert single.stderr.splitlines() == [b'return_i32=1'], single
+            batch(b'1,1\n2,2', 0, b'test-i32: 2 cases passed', '--fuel', fuel)
+            assert fuel > 0
+            break
+        assert single.returncode == 5 and single.stderr.startswith(b'browniec: fuel'), single
+        batch(b'1,1\n2,2', 5, b'test-i32: row 1: ' + single.stderr.rstrip(b'\r\n'),
+              '--fuel', fuel)
+    else:
+        raise AssertionError('identity rule did not complete within 9 Fuel')
+
+    trap = directory / 'scalar-trap.brc'
+    trap.write_bytes(b'module main; fn i32 evaluate(i32 x) { return 12 / x; }\n')
+    single = invoke(exe, ['eval-i32', trap, 0], 5)
+    assert single.stderr.startswith(b'browniec: zero_divisor'), single
+    batch(b'2,6\n0,0\n', 5, b'test-i32: row 2: ' + single.stderr.rstrip(b'\r\n'),
+          command=['test-i32', trap, path])
+    print('PASS: test-i32 batch, bounded CSV and Fuel, mismatches and guest diagnostics')
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--exe', type=Path, required=True)
@@ -1106,6 +1156,7 @@ def main():
         assert set(fuel) == {'kind', 'byte_offset'} and fuel['kind'] == 'fuel', fuel
         assert type(fuel['byte_offset']) is int and fuel['byte_offset'] >= 0, fuel
         print('PASS: eval-i32 shipping and i32 boundaries (0), invalid input (2), Fuel exhaustion (5)')
+        check_test_i32(exe, Path(temp), identity, shipping)
 
 
 if __name__ == '__main__':

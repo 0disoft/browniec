@@ -79,6 +79,7 @@ description: browniec 공개 명령어 사용법, 종료 코드, 그리고 자�
 | `browniec eval-i32 SOURCE N [--fuel N] --isolated` | — | `stderr` | — |
 | `browniec eval-i32 SOURCE N [--fuel N] --isolated` | `--json` | `stdout` | `browniec.result/v1` |
 | `browniec eval-i32 SOURCE N [--fuel N] --isolated` | `--json-v2` | `stdout` | `browniec.result/v2` |
+| `browniec test-i32 SOURCE CASES [--fuel N]` | — | `stderr` | — |
 | `browniec inspect SOURCE --ir` | — | `stdout` | — |
 | `browniec inspect SOURCE --ir` | `--json` | `stdout` | `browniec.ir/v1` |
 | `browniec inspect SOURCE --limits` | `--json` | `stdout` | `browniec.limits/v1` |

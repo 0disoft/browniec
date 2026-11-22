@@ -56,6 +56,37 @@ pub fn Result<i64, errors::Error> run(ref ir::Program p, usize fuel) {
 pub fn Result<i64,errors::Error> eval_i32(ref ir::Program p,i64 argument,usize fuel){
     if(argument< -2147483648 || argument>2147483647){return .err(errors::absent(10,0));}
     let usize checked=verifier::verify_eval_i32(p)?;
+    return eval_entry(p,argument,fuel);
+}
+
+pub struct EvalCase { i64 input; i64 expected; }
+pub struct EvalFailure { usize row; errors::Error error; i64 actual; }
+
+// Verify the immutable Program once. Each evaluation starts with new VM state.
+pub fn Result<usize,EvalFailure> test_i32(ref ir::Program p,ref EvalCase[] cases,usize fuel){
+    switch(verifier::verify_eval_i32(p)){
+        case .ok(_):{}
+        case .err(e):{return .err(EvalFailure{.row=0,.error=e,.actual=0});}
+    };
+    var usize i=0;
+    while(i<cases.len){
+        let i64 argument=cases[i].input;
+        if(argument< -2147483648 || argument>2147483647){
+            return .err(EvalFailure{.row=i+1,.error=errors::absent(10,0),.actual=0});
+        }
+        let i64 value=switch(eval_entry(p,argument,fuel)){
+            case .ok(v):{v}
+            case .err(e):{return .err(EvalFailure{.row=i+1,.error=e,.actual=0});}
+        };
+        if(value!=cases[i].expected){
+            return .err(EvalFailure{.row=i+1,.error=errors::absent(0,0),.actual=value});
+        }
+        i+=1;
+    }
+    return .ok(i);
+}
+
+fn Result<i64,errors::Error> eval_entry(ref ir::Program p,i64 argument,usize fuel){
     var array_vm::State arrays=array_vm::empty(0);
     var bytes::Buffer payload=bytes::empty();
     var slices::State loans=slices::empty();

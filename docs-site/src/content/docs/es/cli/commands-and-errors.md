@@ -79,6 +79,7 @@ La CLI pública procesa un archivo fuente a la vez. `check` verifica sin ejecuta
 | `browniec eval-i32 SOURCE N [--fuel N] --isolated` | — | `stderr` | — |
 | `browniec eval-i32 SOURCE N [--fuel N] --isolated` | `--json` | `stdout` | `browniec.result/v1` |
 | `browniec eval-i32 SOURCE N [--fuel N] --isolated` | `--json-v2` | `stdout` | `browniec.result/v2` |
+| `browniec test-i32 SOURCE CASES [--fuel N]` | — | `stderr` | — |
 | `browniec inspect SOURCE --ir` | — | `stdout` | — |
 | `browniec inspect SOURCE --ir` | `--json` | `stdout` | `browniec.ir/v1` |
 | `browniec inspect SOURCE --limits` | `--json` | `stdout` | `browniec.limits/v1` |

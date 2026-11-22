@@ -15,6 +15,7 @@
 | browniec run SOURCE --catalog FILE --policy FILE --run FILE --host-adapter ID REVISION EXE | Execute typed host calls using an explicitly registered executable | Windows, one catalog route, text or JSON |
 | browniec eval-i32 SOURCE N | Evaluate a scalar rule with one signed decimal i32 input | Implemented for `module main` sources with `fn i32 evaluate(i32 ...)` |
 | browniec eval-i32 SOURCE N --isolated | Evaluate a scalar rule in an AppContainer/Job worker | Windows, signed i32 input and return |
+| browniec test-i32 SOURCE CASES | Compare a scalar rule's results with a local file of input and expected value pairs | Windows, trusted source, one compile and verification per batch |
 | browniec check --project FILE | Check an explicit source map and its named entry | Windows, zero-argument i32 entry, empty requirements |
 | browniec run --project FILE [--input FILE or --stdin] | Run the checked named entry | Windows, zero-argument i32 entry or one shared-byte parameter with explicit input, empty requirements |
 | browniec check --project FILE --catalog FILE --policy FILE --run FILE | Verify a project and its typed host imports | Windows, public i32 entry, text or JSON |
@@ -39,6 +40,14 @@ The implemented grammar is `browniec check SOURCE [--json|--json-v2]` and
 `browniec run SOURCE [--input FILE or --stdin] [--fuel N] [--json|--json-v2]`, `browniec inspect SOURCE --ir [--json]`,
 `browniec inspect SOURCE --limits --json`, plus `--version [--json]` and `--help`.
 Scalar evaluation uses `browniec eval-i32 SOURCE N [--isolated] [--fuel N] [--json|--json-v2]`.
+Batch tests use `browniec test-i32 SOURCE CASES [--fuel N]`. Use 1–1,000
+lines of `input,expected`, with signed decimal i32 values, no header and no blank
+lines. Each row may use up to 32 bytes plus an LF or CRLF terminator. The
+final terminator is optional. The case file is limited to 34,000 bytes.
+The CLI validates the whole case file before compiling. Each row gets a fresh
+VM and the same Fuel allowance as a single evaluation. The sum of the
+row allowances must be at most 16,000,000. A mismatch or guest failure stops
+the batch at the first offending row.
 On Windows, check and run also accept `--project FILE` in place of `SOURCE`.
 Fuel defaults to 256 and accepts 0..16000000; duplicate/unknown options are errors.
 Unconfigured run grants no guest host capability. SOURCE selects one local disk file with a

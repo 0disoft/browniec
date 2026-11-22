@@ -8,6 +8,7 @@
 | Code | Meaning |
 | --- | --- |
 | 0 | Normal check, inspection or run completion, including a nonzero guest i32 |
+| 1 | A `test-i32` row returned a value different from its expected i32 |
 | 2 | Command or configuration shape error |
 | 3 | Source syntax, type, Flow, or compile-limit failure |
 | 4 | Policy, grant, entry, or host-binding rejection |
@@ -24,6 +25,11 @@ A source-file read failure uses code 7. Invalid or missing source main declarati
 failure is an internal code 6, not a guest trap. The direct-call slice adds
 frame_limit as a guest quota error (code 5). The source-array slice adds
 array_limit, bounds, and allocation errors, all with exit code 5.
+
+`test-i32` writes text to stderr. Success reports the case count. A mismatch
+reports the one-based row, expected result and actual result. A guest failure
+reports the row and the same diagnostic and exit code as `eval-i32`. Invalid
+case rows and batch allowance violations use exit 2.
 
 The private typed-source compiler additionally uses diagnostic kind 18,
 `must_use_result`, with the compile-error exit class 3. It identifies an unhandled
