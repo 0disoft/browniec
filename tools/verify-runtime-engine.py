@@ -541,7 +541,7 @@ def main():
             need(actual is not None and actual.group() == contract['entryTypes'][key],
                  f'Typed Entry projection differs from declaration: {binding}/{key}')
         layout_types = {key: contract[key] for key in ['engineType', 'programType', 'instanceType',
-                        'boundInputType', 'outputType', 'sourceIndexType', 'sourceIndexVectorType',
+                        'boundInputType', 'outputType', 'sourceIndexType', 'sourceIndexVectorType', 'sourceIndexStoredType',
                         'programVectorType', 'snapshotType', 'snapshotVectorType', 'machineType', 'coreType',
                         'executionType','pendingVectorType','completionType','publishedVectorType',
                         'pendingMetaType','cursorType','outputCopyType','transactionType','preparationType','arrayFillType','callCopyType','returnWorkType','capturePlanType',

@@ -260,6 +260,7 @@ uintptr_t bc_runtime_engine_program_layout(uint32_t kind){
 uintptr_t bc_runtime_engine_compile_fact(const void *source,uint32_t kind,uint32_t fact){
  if(kind>1)return 0;
  if(fact==0)return kind?sizeof(bc_input_entry):sizeof(bc_ordinary_entry);
+ if(fact==3)return 8*sizeof(bc_source_index_stored);
  if(!source)return 0;
  if(fact==2)return kind?((const bc_engine_input_entry *)source)->f_1:((const bc_engine_input *)source)->f_1;
  if(fact!=1)return 0;

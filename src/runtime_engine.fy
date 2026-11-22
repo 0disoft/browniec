@@ -955,7 +955,7 @@ pub fn Result<usize,Error> begin_compile_project_output(ref mut Engine e,ref pro
     if(compile_attached(e)){return .err(error(3));}
     let policy_limits::CompileLimits limits=configured_compile_limits(e)?;
     if(projects::count(metadata)>limits.modules){return .err(error(8));}
-    let usize deadline=compile_deadline(e,0)?;
+    let usize deadline=prepare_pending_project(e)?;
     let sources::Snapshot snapshot=load_project(e,metadata,root,deadline)?;
     let input_entries::InputEntry selected=configured_project_input(metadata,snapshot,limits,deadline)?;
     return begin_selected_input_compile(e,selected,image_limit,mode,deadline);
@@ -993,10 +993,23 @@ pub fn Result<usize,Error> begin_compile_anchored_project_output(ref mut Engine 
     if(compile_attached(e)){return .err(error(3));}
     let policy_limits::CompileLimits limits=configured_compile_limits(e)?;
     if(projects::count(metadata)>limits.modules){return .err(error(8));}
-    let usize deadline=compile_deadline(e,0)?;
+    let usize deadline=prepare_pending_project(e)?;
     let sources::Snapshot snapshot=project_snapshot(project_loader::load_from_until(metadata,root,source_byte_limit(e),deadline))?;
     let input_entries::InputEntry selected=configured_project_input(metadata,snapshot,limits,deadline)?;
     return begin_selected_input_compile(e,selected,image_limit,mode,deadline);
+}
+
+// File acquisition has no callbacks. Preview lowering admission against the
+// current ledger before opening members or allocating the owning Index.
+fn Result<usize,Error> prepare_pending_project(ref Engine e){
+    let usize deadline=compile_deadline(e,0)?;
+    let usize index=unsafe{compile_fact_raw(null,1,3)};
+    let usize candidate=unsafe{compile_candidate_width_raw()};
+    if(index==0 || candidate==0){return .err(error(7));}
+    if(candidate>18446744073709551615-index){return .err(error(8));}
+    var memory::Budget preview=e.meta.programs;
+    if(!memory::prepare_compile(ref mut preview,index+candidate).is_ok){return .err(error(8));}
+    return .ok(deadline);
 }
 
 pub fn Result<usize,Error> compile_granted_output(ref mut Engine e,modules::Index index,

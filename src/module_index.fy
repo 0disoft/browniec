@@ -200,6 +200,7 @@ fn Result<Index,Error> build_mode(sources::Snapshot snapshot,bool host,usize tok
     let usize capacity=switch(vec::reserve<Stored>(ref mut stored,1)){
         case .ok(v):{v}case .err(_):{return .err(error(.Allocation,sources::no_source()));}
     };
+    assert(capacity==8);
     let usize count=switch(vec::push<Stored>(ref mut stored,Stored{.sources=snapshot,.table=t,
         .semantic_depth=if(nesting_limit<32){nesting_limit}else{32}})){
         case .ok(v):{v}case .err(_):{return .err(error(.Allocation,sources::no_source()));}

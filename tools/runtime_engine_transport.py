@@ -45,6 +45,7 @@ def project_layouts(t, c, *, host_compile=True):
      return matches.pop()
     c['sourceIndexType']=field_type(c['entryTypes']['ordinary'],0)
     c['sourceIndexVectorType']=field_type(c['sourceIndexType'],0)
+    c['sourceIndexStoredType']=vector_element(c['sourceIndexVectorType'])
     c['boundInputType']=vector_element(arg(10,3))
     for variant,index in [('ordinary',3),('input',4),('output',5)]:
      program=vector_element(field_type(c['programType'],index))
@@ -77,7 +78,7 @@ def project_layouts(t, c, *, host_compile=True):
         assert re.fullmatch(r'\s*uintptr_t\s*\*\s*fy_l_\d+\s*',parameter), parameter
     assert arg(59,0)==arg(51,1)==field_type(c['compileCandidateType'],1)
     assert arg(61,0)==arg(62,0)==arg(50,0)==field_type(c['compileCandidateType'],0)
-    assert arg(61,4)==arg(62,3)==field_type(vector_element(c['sourceIndexVectorType']),0)
+    assert arg(61,4)==arg(62,3)==field_type(c['sourceIndexStoredType'],0)
     assert arg(61,5)==arg(50,4)
     assert arg(50,2)==arg(52,2)==arg(58,2)==c['compileProofType']
     assert arg(50,1)==arg(51,2)==arg(52,1)==arg(58,1)==c['compileProofImageType']
@@ -142,7 +143,7 @@ def project_layouts(t, c, *, host_compile=True):
     c['transactionType']=field_type(c['machineType'],6)
     c['preparationType']=field_type(c['programVariants']['output']['stored'],OUTPUT_PREPARATION_FIELD)
     c['capturePlanType']=field_type(c['preparationType'],8)
-    types={k:c[k] for k in ['engineType','programType','instanceType','boundInputType','outputType','sourceIndexType','sourceIndexVectorType','programVectorType','snapshotType','snapshotVectorType','machineType','coreType','executionType','pendingVectorType','completionType','publishedVectorType','pendingMetaType','cursorType','outputCopyType','transactionType']}
+    types={k:c[k] for k in ['engineType','programType','instanceType','boundInputType','outputType','sourceIndexType','sourceIndexVectorType','sourceIndexStoredType','programVectorType','snapshotType','snapshotVectorType','machineType','coreType','executionType','pendingVectorType','completionType','publishedVectorType','pendingMetaType','cursorType','outputCopyType','transactionType']}
     for variant,rows in c['programVariants'].items():types.update({variant+'_'+k:v for k,v in rows.items()})
     types.update({k+'_entry':v for k,v in c['entryTypes'].items()})
     types['preparationType']=c['preparationType']
@@ -160,12 +161,12 @@ def project_layouts(t, c, *, host_compile=True):
     for key in ['hostProgramVectorType','hostProgramType','hostIRType','hostExchangeVectorType','hostExchangeType','hostRunConfigType','hostTransitionType']:
         if key in c:types[key]=c[key]
     c['reviewedLayouts']={k:re.search(r'^typedef struct \{\n[^}]*\} '+re.escape(v)+';$',t,re.M).group() for k,v in types.items()}
-    assert len(c['bindings'])==63 and len(c['reviewedLayouts'])==51+host_compile
+    assert len(c['bindings'])==63 and len(c['reviewedLayouts'])==52+host_compile
     for key in ['lifecycleType','setupWorkType','preparationWorkType','cleanupWorkType','runtimeMetadataType','cleanupRuntimeType','inputWindowsType','storageBufferType']:
      c['reviewedLayouts'][key]=re.search(r'^typedef struct \{\n[^}]*\} '+re.escape(c[key])+';$',t,re.M).group()
     for key in ['compileWorkType','compileWorkVectorType','compileCandidateType','compileCandidateVectorType','compileProofType','compileProofVectorType','compileProofImageType','compileOutputProofType','compileOutputProofVectorType']:
      c['reviewedLayouts'][key]=re.search(r'^typedef struct \{\n[^}]*\} '+re.escape(c[key])+';$',t,re.M).group()
-    assert len(c['reviewedLayouts'])==68+host_compile
+    assert len(c['reviewedLayouts'])==69+host_compile
 
 
 def bindings_header(contract):
@@ -190,6 +191,7 @@ def bindings_header(contract):
     for key, name in contract['entryTypes'].items():
         bindings += f'typedef {name} bc_{key}_entry;\n'
     bindings += f'typedef {contract["policyType"]} bc_engine_policy;\n'
+    bindings += f'typedef {contract["sourceIndexStoredType"]} bc_source_index_stored;\n'
     bindings += f'typedef {contract["compileWorkType"]} bc_compile_work;\n'
     bindings += f'typedef {contract["compileCandidateType"]} bc_compile_candidate;\n'
     bindings += f'typedef {contract["compileProofType"]} bc_compile_proof;\n'

@@ -19,6 +19,7 @@ typedef fy_private_type_736c6963655f726573756c745f6d616368696e653a3a4d616368696e
 typedef fy_private_type_686f73745f70726f6772616d3a3a50726f6772616d bc_host_program; /* host_program::Program */
 typedef fy_private_type_69723a3a50726f6772616d bc_host_ir; /* ir::Program */
 typedef fy_private_type_686f73745f65786368616e67653a3a45786368616e6765 bc_host_exchange; /* host_exchange::Exchange */
+typedef fy_private_type_6d6f64756c655f696e6465783a3a53746f726564 bc_source_index_stored; /* module_index::Stored */
 typedef fy_private_type_6d6f64756c655f656e7472793a3a456e747279 bc_ordinary_entry; /* module_entry::Entry */
 typedef fy_private_type_6d6f64756c655f696e7075745f656e7472793a3a496e707574456e747279 bc_input_entry; /* module_input_entry::InputEntry */
 typedef fy_private_type_6d6f64756c655f70726f6772616d3a3a50726f6772616d bc_ordinary_program; /* module_program::Program */

@@ -717,6 +717,24 @@ source and Program ledgers and idle heap. Both processes exited 0 with zero
 live SDK allocations. Local receipt:
 `build/runtime-engine/20261122T071705815356Z/receipt.json`.
 
+### Project working allowance before source collection
+
+Rooted and anchored resumable jobs now preview the lowering reservation before
+collecting project members or allocating an Index. The preview uses the
+reviewed native widths of the Index backing and lowering candidate, plus the
+existing compiler scratch bound. It changes no live charge or high-water mark.
+The normal source, candidate and proof reservations still admit each owner at
+its allocation boundary.
+
+Windows development and /O2 measured the working peak of a successful job.
+A limit one byte below that peak rejected each entry path without starting an
+SDK allocation or changing the Engine ledger. The exact limit admitted the
+same anchor after the rejection, completed proof and released the Program.
+Both processes exited 0 with zero live SDK allocations, and all 404 inputs
+matched the receipt. The locked Windows release build returned 77 for the
+answer example. Local receipt:
+`build/runtime-engine/20261122T072956526277Z/receipt.json`.
+
 The development suite reproduced Windows exit `0xC00000FD` at output proof
 initialization. Initializing the proof and normalized scratch fields directly
 in the reserved heap slot removes the whole-value stack construction and Vec

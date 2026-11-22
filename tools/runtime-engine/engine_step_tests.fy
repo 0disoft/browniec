@@ -962,7 +962,46 @@ fn Result<usize,u8> project_output(){
     destroy(ref mut e,j);
     counts(ref mut e,0,0,0);
     same_heap(ref idle);
+    let usize working=retained(ref e).working_peak;
     close(ref mut e);
+    return project_output_memory(ref manifest,root,working);
+}
+fn Result<usize,u8> project_output_memory(ref projects::Project manifest,ref u8[] root,usize working){
+    var bytes::Buffer path=bytes::empty();
+    assert(bytes::append(ref mut path,root).is_ok);
+    assert(bytes::append(ref mut path,b"\\output.json").is_ok);
+    var u8[512] data=[0;512];
+    var anchored::Root anchor=switch(anchored::open_project(bytes::view(ref path),ref mut data[..])){
+        case .ok(v):{v}case .err(_):{return .err(4);}
+    };
+    var usize limit=working-1;
+    while(limit<=working){
+        var bytes::Buffer field=bytes::empty();
+        assert(bytes::append(ref mut field,b"\"working_bytes\":").is_ok);
+        assert(bytes::append_usize(ref mut field,limit).is_ok);
+        let policy::Policy ceiling=output_policy_with_limit(true,b"\"working_bytes\":67108864",bytes::view(ref field))?;
+        let configs::RunConfig granted=run_config(ref ceiling,0)?;
+        var engine::Engine owner=configured_engine(ceiling)?;
+        let Heap idle=heap();
+        if(limit<working){
+            let usize attempts=unsafe{probe_attempts()};
+            let usize handles=unsafe{bc_runtime_engine_test_handle_count()};
+            rejected_id(engine::begin_compile_project_output(ref mut owner,manifest,b"",ref granted,65536),8);
+            rejected_id(engine::begin_compile_anchored_project_output(ref mut owner,manifest,ref mut anchor,ref granted,65536),8);
+            assert(unsafe{probe_attempts()}==attempts && unsafe{bc_runtime_engine_test_handle_count()}==handles);
+            assert(retained(ref owner).working_peak==0 && retained(ref owner).compile_source_bytes==0);
+        }else{
+            let usize job=id(engine::begin_compile_anchored_project_output(ref mut owner,manifest,ref mut anchor,ref granted,65536));
+            let engine::CompileStatus done=finish_project_proof(ref mut owner,job)?;
+            assert(compile_state(done.state)==2 && done.program==1);
+            assert(retained(ref owner).working_peak==working);
+            release(ref mut owner,done.program);
+        }
+        counts(ref mut owner,0,0,0);
+        same_heap(ref idle);
+        close(ref mut owner);
+        limit+=1;
+    }
     return .ok(0);
 }
 fn Result<usize,u8> project_output_quota(ref projects::Project manifest,ref u8[] root,ref u8[] field,ref u8[] limit){

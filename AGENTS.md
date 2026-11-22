@@ -1,5 +1,5 @@
-- Latest runtime checkpoint (2026-11-22): [Configured project image quotas](docs/engineering/runtime-engine-compile-memory.md#configured-project-image-quotas)
-  reject inadmissible resumable compile images before Program retention.
+- Latest runtime checkpoint (2026-11-22): [Project working allowance](docs/engineering/runtime-engine-compile-memory.md#project-working-allowance-before-source-collection)
+  preflights resumable lowering before collecting rooted or anchored project sources.
 
 # Brownie C agent guidance
 
