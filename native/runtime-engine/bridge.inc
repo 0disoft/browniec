@@ -29,7 +29,7 @@ static int compile_has_input(const bc_engine *e){
 }
 uint32_t bc_runtime_engine_step_compile(void *raw,uintptr_t id){
  bc_engine *e=raw;bc_engine_ticket ticket;uint32_t s=admission(e,&ticket);if(s)return s;
- s=compile_has_input(e) ? B55(&e->f_0,&e->f_1,&e->f_9,&e->f_12,&e->f_11,id)
+ s=compile_has_input(e) ? B55(&e->f_0,&e->f_1,&e->f_9,&e->f_12,&e->f_11,&e->f_8,id)
                  : B42(&e->f_0,&e->f_1,&e->f_9,&e->f_10,&e->f_11,id);
  return finish(e,ticket,s);
 }

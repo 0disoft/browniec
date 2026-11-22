@@ -1,5 +1,5 @@
-- Latest runtime checkpoint (2026-11-22): [Resumable project output compilation](docs/engineering/runtime-engine-compile-memory.md#engine-owned-project-output-compile)
-  carries the remaining compile Fuel through lowering, proof and Program retention.
+- Latest runtime checkpoint (2026-11-22): [Configured project image quotas](docs/engineering/runtime-engine-compile-memory.md#configured-project-image-quotas)
+  reject inadmissible resumable compile images before Program retention.
 
 # Brownie C agent guidance
 

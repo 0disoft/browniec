@@ -1940,13 +1940,19 @@ fn u32 stop_compile_input(ref mut Meta m,ref mut CompileWork job,ref mut vec::Ve
     return 0;
 }
 fn u32 step_compile_input_inner(ref mut Meta m,ref mut vec::Vec<Program> programs,ref mut vec::Vec<CompileWork> jobs,
-    ref mut vec::Vec<input_entries::InputEntry> selected,ref mut vec::Vec<programs::Lowered> candidate,usize id){
+    ref mut vec::Vec<input_entries::InputEntry> selected,ref mut vec::Vec<programs::Lowered> candidate,
+    ref vec::Vec<policy::Policy> policies,usize id){
     if(vec::len<CompileWork>(jobs)!=1){return 7;}
     let ref mut CompileWork job=vec::at_mut<CompileWork>(jobs,0);
     if(id==0 || job.id!=id){return 2;}
     if(compile_terminal(job.state)){return 0;}
     if(clock::expired(job.deadline)){return stop_compile_input(m,job,selected,candidate,compile_timeout());}
     if(job.state==8){
+        if(job.output_mode>=2){
+            let policy_limits::CompileLimits limits=policy::compile_limits(vec::at<policy::Policy>(policies,0));
+            let u32 admitted=check_pending_project_image(m,job,vec::at<programs::Lowered>(candidate,0),limits);
+            if(admitted!=0){let Error cause=m.error;return stop_compile_input(m,job,selected,candidate,cause);}
+        }
         if(job.output_mode!=0){return finish_pending_input_output_compile(m,programs,job,selected,candidate);}
         return finish_pending_input_compile(m,programs,job,selected,candidate);
     }
@@ -1959,6 +1965,16 @@ fn u32 step_compile_input_inner(ref mut Meta m,ref mut vec::Vec<Program> program
         else{step_compile_source(m,job,index)};
     if(status!=0){let Error cause=m.error;return stop_compile_input(m,job,selected,candidate,cause);}
     return 0;
+}
+fn u32 check_pending_project_image(ref mut Meta m,ref mut CompileWork job,ref programs::Lowered lowered,
+    policy_limits::CompileLimits limits){
+    let ref compile_ir::Program code=programs::lowered_code(lowered);
+    if(!check_compile_image(ref code.body,limits).is_ok){return failed(m,8);}
+    let u8[16] kinds=programs::output_static_kinds(lowered);
+    return switch(compile_types::fits(ref code.body,ref code.results,ref kinds,limits.types,job.deadline,ref mut job.fuel)){
+        case .ok(fits):{if(fits){0}else{failed(m,8)}}
+        case .err(cause):{compile_error(m,diagnostics::absent(cause))}
+    };
 }
 fn u32 finish_pending_input_output_compile(ref mut Meta m,ref mut vec::Vec<Program> programs,ref mut CompileWork job,
     ref mut vec::Vec<input_entries::InputEntry> selected,ref mut vec::Vec<programs::Lowered> candidate){
@@ -3108,7 +3124,8 @@ fn void retain_compile_input_bindings(ref mut Meta m){
     var vec::Vec<input_entries::InputEntry> incoming=vec::empty<input_entries::InputEntry>();
     unsafe{binding_raw(54)};discard begin_compile_input_inner(m,ref mut jobs,ref mut selected,ref mut incoming,0,0,0);
     var vec::Vec<programs::Lowered> candidate=vec::empty<programs::Lowered>();
-    unsafe{binding_raw(55)};discard step_compile_input_inner(m,ref mut programs,ref mut jobs,ref mut selected,ref mut candidate,0);
+    let vec::Vec<policy::Policy> policies=vec::empty<policy::Policy>();
+    unsafe{binding_raw(55)};discard step_compile_input_inner(m,ref mut programs,ref mut jobs,ref mut selected,ref mut candidate,ref policies,0);
     unsafe{binding_raw(56)};discard end_compile_input_inner(m,ref mut jobs,ref mut selected,ref mut candidate,0,false);
     unsafe{binding_raw(57)};let vec::Vec<input_entries::InputEntry> cleared=reset_compile_input_storage(selected);
 }

@@ -108,7 +108,7 @@ def project_layouts(t, c, *, host_compile=True):
     assert arg(40,1)==c['programVectorType'] and arg(40,3)==arg(40,4)==c['outputVectorType']
     c['policyVectorType']=field_type(c['engineType'],8)
     c['policyType']=vector_element(c['policyVectorType'])
-    assert arg(37,0)==c['policyVectorType']
+    assert arg(37,0)==arg(55,5)==c['policyVectorType']
     c['pendingMetaType']=arg(26,2)
     c['cursorType']=field_type(c['pendingMetaType'],0)
     c['outputCopyType']=field_type(c['cursorType'],2)

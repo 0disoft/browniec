@@ -699,6 +699,24 @@ configured execution, deadline and cancellation fixtures and terminated with
 zero live SDK allocations. Local receipt:
 `build/runtime-engine/20261122T070532767757Z/receipt.json`.
 
+### Configured project image quotas
+
+After independent proof, the resumable job applies the Engine's instruction
+and function limits and per-function register limit to the lowered image. It
+checks distinct image types using the proof's static view kinds and the same
+remaining compile Fuel and deadline. The indexed function and record
+declaration ceilings are checked earlier, and the working ledger admits the
+source, candidate, literal payload and proof backing before each is held.
+An image quota failure releases the candidate and source before returning a
+terminal compile status.
+
+Windows development and /O2 independently set the instruction, register and
+type ceilings to 1 for the output project fixture. Each job finished proof,
+failed image admission with quota status and Program ID 0, and restored its
+source and Program ledgers and idle heap. Both processes exited 0 with zero
+live SDK allocations. Local receipt:
+`build/runtime-engine/20261122T071705815356Z/receipt.json`.
+
 The development suite reproduced Windows exit `0xC00000FD` at output proof
 initialization. Initializing the proof and normalized scratch fields directly
 in the reserved heap slot removes the whole-value stack construction and Vec
