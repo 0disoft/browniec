@@ -844,9 +844,13 @@ def verify_project_process_command(run, need, image, adapter, folder, env):
     config = json.loads(config_file.read_bytes())
     args = [image, '--internal-project-process-broker', 'run', manifest, policy_file, config_file, catalog]
 
-    def check(expected_exit=0, kind=None, mode='o', import_id='0', revision='v1', path=adapter):
+    def check(expected_exit=0, kind=None, mode='o', import_id='0', revision='v1', path=adapter,
+              payload=None, output=b'before'):
         runtime = dict(env, BC_TEST_RESTRICTED_PROCESS=mode)
-        data = json.loads(run([*args, import_id, revision, path], cwd=folder, env=runtime,
+        command = [*args, import_id, revision, path]
+        if payload is not None:
+            command.append(payload)
+        data = json.loads(run(command, cwd=folder, env=runtime,
                               expected_exit=expected_exit, no_stderr=True))
         need(data['schema'] == 'browniec.result/v2' and data['command'] == 'run',
              f'Unexpected process command result: {data}')
@@ -855,7 +859,7 @@ def verify_project_process_command(run, need, image, adapter, folder, env):
                  f'Failed process command published result or output: {data}')
         else:
             need(data['status'] == 'completed' and data['return_i32'] == 77 and data['error'] is None and
-                 base64.b64decode(data['output_b64'], validate=True) == b'before', f'Process route failed: {data}')
+                 base64.b64decode(data['output_b64'], validate=True) == output, f'Process route failed: {data}')
         need(not list(Path(env['TEMP']).iterdir()), 'process command left staged resources')
 
     check()
@@ -871,7 +875,22 @@ def verify_project_process_command(run, need, image, adapter, folder, env):
     policy['worker']['io_idle_ms'] = 1500
     policy_file.write_text(json.dumps(policy), encoding='utf-8')
     check(5, 'deadline', mode='s')
-    return 7
+
+    source = target / 'src/main.brc'
+    original_source = source.read_bytes()
+    source.write_bytes(b'module app; import host::example as api; pub fn i32 start(ref u8[] data){'
+                       b'output::emit(ref data); let i32 a=api::check(41); return a+api::check(42);}')
+    payload = target / 'input.bin'
+    binary_input = b'process\x00\xffinput'
+    payload.write_bytes(binary_input)
+    config['limits']['input_bytes'] = len(binary_input)
+    config_file.write_text(json.dumps(config), encoding='utf-8')
+    check(payload=payload, output=binary_input)
+    config['limits']['input_bytes'] -= 1
+    config_file.write_text(json.dumps(config), encoding='utf-8')
+    check(5, 'input_limit', payload=payload)
+    source.write_bytes(original_source)
+    return 9
 
 
 def main():

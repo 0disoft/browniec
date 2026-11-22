@@ -621,6 +621,13 @@ and import rejection, relative path rejection, a crossed response, missing
 grant, and expiry during a partial reply. All 459 input hashes matched.
 Local receipt: `build/restricted-worker/20261122T021820510226Z/receipt.json`.
 
+The optional input file also passed in both profiles. A 14-byte binary input
+at the configured limit was emitted byte for byte with result 77 after two
+adapter calls. A 13-byte limit returned `input_limit` with exit 5 and no
+published result or output. The staging directory was empty after both runs.
+All 459 verification input hashes matched.
+Local receipt: `build/restricted-worker/20261122T022321308639Z/receipt.json`.
+
 ### Catalog guest host transfer stops
 
 A cancelled Engine Instance reports a run error with no source location.
