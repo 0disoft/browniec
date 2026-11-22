@@ -187,13 +187,19 @@ def verify_configured_project(run, need, image, folder, env):
 
     cases = 0
 
-    def check(expected_exit=0, kind=None, operation='run', payload=None, value=42, output=None):
+    def check(expected_exit=0, kind=None, operation='run', payload=None, value=42, output=None, public=False):
         nonlocal cases
         policy_file.write_text(json.dumps(policy), encoding='utf-8')
         run_file.write_text(json.dumps(config), encoding='utf-8')
-        args = [image, '--internal-project-broker', operation, project, policy_file, run_file]
-        if payload is not None:
-            args.append(payload)
+        if public:
+            args = [image, operation, '--project', project, '--run', run_file, '--isolated',
+                    '--json-v2', '--policy', policy_file]
+            if payload is not None:
+                args[4:4] = ['--input', payload]
+        else:
+            args = [image, '--internal-project-broker', operation, project, policy_file, run_file]
+            if payload is not None:
+                args.append(payload)
         data = json.loads(run(args, cwd=folder, env=env, expected_exit=expected_exit, no_stderr=True))
         status = 'checked' if operation == 'check' else 'completed'
         expected = value if operation == 'run' else None
@@ -211,11 +217,15 @@ def verify_configured_project(run, need, image, folder, env):
         return data
 
     check()
+    check(public=True)
+    check(operation='check', public=True)
     policy['compile']['source_bytes'] -= 1
     check(3, 'compile_limit')
+    check(3, 'compile_limit', public=True)
     policy['compile']['source_bytes'] += 1
     config['limits']['fuel'] = 1
     check(5, 'fuel')
+    check(5, 'fuel', public=True)
     config['limits']['fuel'] = policy['run']['fuel'] + 1
     check(4, 'unavailable')
     config['limits']['fuel'] = policy['run']['fuel']
@@ -610,6 +620,7 @@ def verify_configured_project(run, need, image, folder, env):
     depth = policy['compile']['depth']
     policy['compile']['depth'] = 2
     check(payload=payload, value=255)
+    check(payload=payload, value=255, public=True)
     policy['compile']['depth'] = 1
     location = check(3, 'compile_limit', 'check')['error']['location']
     offset = entry.read_bytes().index(b'ref u8[]')
@@ -656,12 +667,15 @@ def verify_configured_project(run, need, image, folder, env):
     check(operation='check')
     config['limits']['output_bytes'] = len(binary)
     check(payload=payload, value=77, output=binary)
+    check(payload=payload, value=77, output=binary, public=True)
     config['limits']['output_bytes'] -= 1
     check(5, 'output_limit', payload=payload)
+    check(5, 'output_limit', payload=payload, public=True)
     config['limits']['output_bytes'] = policy['run']['output_bytes']
     entry.write_bytes(b'module app; pub fn i32 start(ref u8[] data){output::emit(ref data);'
                       b'var i32 zero=0; return 1/zero;}')
     check(5, 'zero_divisor', payload=payload)
+    check(5, 'zero_divisor', payload=payload, public=True)
     entry.write_bytes(b'module app; pub fn i32 start(){output::emit(ref b"Hi");return 77;}')
     check(value=77, output=b'Hi')
     entry.write_bytes(b'module app;pub fn i32 start(){let u8[5] data=[65,66,67,68,69];'

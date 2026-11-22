@@ -1,5 +1,5 @@
-- Latest runtime checkpoint (2026-11-22): [Public project isolation](docs/engineering/restricted-worker.md#public-project-isolation)
-  routes projects with empty requirements through the managed Windows worker.
+- Latest runtime checkpoint (2026-11-22): [Configured project isolation](docs/engineering/restricted-worker.md#configured-project-isolation)
+  applies explicit Engine policy, file input and validated JSON output in the Windows worker route.
 
 # Brownie C agent guidance
 

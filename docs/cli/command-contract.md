@@ -25,6 +25,8 @@
 | browniec run SOURCE --isolated | Compile, verify and execute in an AppContainer/Job worker | Windows, one scalar source file |
 | browniec check --project FILE --isolated | Compile and verify the selected project in an AppContainer/Job worker | Windows, zero-argument i32 entry, empty requirements |
 | browniec run --project FILE --isolated | Execute the selected project in an AppContainer/Job worker | Windows, zero-argument i32 entry, empty requirements |
+| browniec check --project FILE --isolated --policy FILE --run FILE | Verify the project under explicit policy in a worker | Windows, zero-argument or shared-byte i32 entry |
+| browniec run --project FILE --isolated --policy FILE --run FILE [--input FILE] | Run under explicit policy and publish a validated result | Windows, JSON, optional binary input and granted output |
 | browniec inspect SOURCE --ir | Compile/verify and emit bounded private IR diagnostics without executing | Implemented for the same public M1/M2 admission as check; optional --json |
 | browniec inspect SOURCE --limits --json | Report consumed and remaining compile capacity without executing | Implemented for the same public M1/M2 admission as check |
 | browniec worker | Broker-only restricted IPC endpoint | Windows, scalar protocol, no arguments |

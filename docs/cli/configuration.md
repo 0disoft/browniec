@@ -95,9 +95,20 @@ requirements list can run in a managed AppContainer/Job worker:
 The parent anchors the manifest and member reads at the selected directory.
 The worker compiles the snapshots and returns source-local diagnostics.
 Text, JSON v1 and JSON v2 use the ordinary project result contract. The worker
-uses the selected Fuel when running. Explicit policy, catalogs, input and
-output flags remain outside this route. If worker setup fails, the command
+uses the selected Fuel when running. If worker setup fails, the command
 returns exit 4.
+
+A project can also supply explicit policy and run files:
+
+    browniec check --project FILE --isolated --policy POLICY --run RUN --json-v2
+    browniec run --project FILE --isolated --policy POLICY --run RUN --input INPUT --json
+
+Configured runs require JSON and take Fuel from the run file. Supply a binary
+input file when the entry has a shared-byte parameter. The worker checks the
+policy and run configuration and can emit bytes when explicitly granted
+the output capability. Successful output is included as Base64 in the JSON
+result. The configured isolated route currently accepts file input and JSON
+output. Catalog adapters, stdin, and file output sinks remain unavailable.
 
 ## Single-source host check
 

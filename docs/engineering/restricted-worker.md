@@ -594,6 +594,22 @@ policy's Job memory and user CPU ceilings, one-process limit, transport
 ceiling, startup and idle windows, shutdown grace and absolute session
 deadline into the existing broker. The deadline starts before managed
 staging. Job limits and result gating remain under the parent's control.
+### Configured project isolation
+
+Project `check/run --isolated` accepts explicit policy and run files. The
+broker resolves those files and optional binary input by the CLI's parsed
+argument positions. It sends the bounded snapshots to the worker, which applies
+Engine policy and its run Fuel. Granted output is published as Base64 only after
+the existing broker result gate accepts the frame and cleanup succeeds.
+
+Windows development and /O2 passed 119 configured project checks each,
+including eight through the public command. Those checked explicit policy
+and Fuel limits, file input, exact output capacity, one-byte-short denial
+and a guest trap after emit. The trap and denial published no guest value
+or output. Both broker suites reported zero net handles, and the /O2 CLI
+contract matched the four language output tables. Local receipt:
+`build/restricted-worker/20261122T091134375789Z/receipt.json`.
+
 ### Engine policy inside the worker
 
 Configured START uses operation 4 (check) or 5 (run). Two additional
