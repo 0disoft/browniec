@@ -1,7 +1,7 @@
 module project_sources;
 import project_manifest as project;
 import source_snapshot as sources;
-import runtime_clock as clock;
+import metadata_budget as budget;
 import module_index as modules;
 import module_entry as entries;
 import module_input_entry as input_entries;
@@ -11,7 +11,8 @@ import std::bytes as bytes;
 // selection proves neither filesystem origin nor grants/executable bodies.
 fn usize no_mapping(){return 32;}
 fn modules::Error error(modules::Failure kind,sources::Span at){return modules::Error{.kind=kind,.at=at};}
-fn Result<usize,modules::Error> file_map(ref project::Project map,ref sources::Snapshot snapshot,ref mut usize[] order,usize deadline){
+fn Result<usize,modules::Error> file_map(ref project::Project map,ref sources::Snapshot snapshot,
+    ref mut usize[] order,usize deadline,ref mut usize fuel){
     let usize count=project::count(map);
     if(count>sources::file_limit()){return .err(error(.Limit,sources::no_source()));}
     if(count!=sources::count(snapshot) || order.len!=sources::file_limit()){
@@ -19,7 +20,6 @@ fn Result<usize,modules::Error> file_map(ref project::Project map,ref sources::S
     }
     var usize id=0;
     while(id<count){
-        if(clock::expired(deadline)){return .err(error(.Deadline,sources::no_source()));}
         let sources::Span at=switch(sources::whole(snapshot,id)){
             case .ok(v):{v}case .err(_):{return .err(error(.Missing,sources::no_source()));}
         };
@@ -28,6 +28,7 @@ fn Result<usize,modules::Error> file_map(ref project::Project map,ref sources::S
         };
         var usize found=no_mapping();var usize row=0;
         while(row<count){
+            discard modules::binding_visit(fuel,deadline,at)?;
             let ref u8[] path=switch(project::path(map,row)){
                 case .ok(v):{v}case .err(_):{return .err(error(.Bounds,at));}
             };
@@ -38,14 +39,15 @@ fn Result<usize,modules::Error> file_map(ref project::Project map,ref sources::S
     }
     return .ok(count);
 }
-fn Result<usize,modules::Error> headers(ref project::Project map,ref modules::Index index,ref usize[] order,usize deadline){
+fn Result<usize,modules::Error> headers(ref project::Project map,ref modules::Index index,ref usize[] order,
+    usize deadline,ref mut usize fuel){
     let usize count=modules::count(index);var usize id=0;
     while(id<count){
-        if(clock::expired(deadline)){return .err(error(.Deadline,sources::no_source()));}
         let usize row=order[id];
         let modules::Module declaration=switch(modules::module_at(index,id)){
             case .ok(v):{v}case .err(e):{return .err(e);}
         };
+        discard modules::binding_visit(fuel,deadline,declaration.path)?;
         let ref u8[] expected=switch(project::module_name(map,row)){
             case .ok(v):{v}case .err(_):{return .err(error(.Kind,declaration.path));}
         };
@@ -60,9 +62,10 @@ fn Result<usize,modules::Error> headers(ref project::Project map,ref modules::In
 // every matching canonical header, then select the named public i32() entry.
 // Existing Index checks all imports/declarations; body admission follows later.
 fn Result<modules::Index,modules::Error> build_index(ref project::Project map,sources::Snapshot snapshot){
-    var usize[16] order=[32;16];let usize mapped=file_map(map,ref snapshot,ref mut order,0)?;
+    var usize fuel=budget::unlimited();
+    var usize[16] order=[32;16];let usize mapped=file_map(map,ref snapshot,ref mut order,0,ref mut fuel)?;
     let modules::Index index=modules::build(snapshot)?;
-    let usize checked=headers(map,ref index,ref order,0)?;
+    let usize checked=headers(map,ref index,ref order,0,ref mut fuel)?;
     return .ok(index);
 }
 pub fn Result<entries::Entry,modules::Error> select(ref project::Project map,sources::Snapshot snapshot){
@@ -73,21 +76,27 @@ pub fn Result<entries::Entry,modules::Error> select(ref project::Project map,sou
 }
 
 pub fn Result<modules::Index,modules::Error> index_limited(ref project::Project map,sources::Snapshot snapshot,
-    bool host,usize tokens,usize functions,usize records,usize nesting_limit,usize fuel,usize deadline){
+    bool host,usize tokens,usize functions,usize records,usize nesting_limit,usize fuel,usize deadline,
+    ref mut usize selected){
     var usize[16] order=[32;16];
-    discard file_map(map,ref snapshot,ref mut order,deadline)?;
-    let modules::Index index=modules::build_metered(snapshot,host,tokens,nesting_limit,fuel,deadline)?;
+    var usize remaining=fuel;
+    discard file_map(map,ref snapshot,ref mut order,deadline,ref mut remaining)?;
+    var modules::Index index=modules::build_metered(snapshot,host,tokens,nesting_limit,remaining,deadline)?;
     if(modules::function_count(ref index)>functions || modules::record_count(ref index)>records){
         return .err(error(.Limit,sources::no_source()));
     }
-    discard headers(map,ref index,ref order,deadline)?;
-    if(clock::expired(deadline)){return .err(error(.Deadline,sources::no_source()));}
+    remaining=modules::compile_fuel(ref index);
+    discard headers(map,ref index,ref order,deadline,ref mut remaining)?;
+    let usize symbol=modules::bind_entry(ref mut index,project::entry_module(map),
+        project::entry_function(map),deadline,remaining)?;
+    *selected=symbol;
     return .ok(index);
 }
 pub fn Result<modules::Index,modules::Error> index_host(ref project::Project map,sources::Snapshot snapshot,usize token_limit){
-    var usize[16] order=[32;16];let usize mapped=file_map(map,ref snapshot,ref mut order,0)?;
+    var usize fuel=budget::unlimited();
+    var usize[16] order=[32;16];let usize mapped=file_map(map,ref snapshot,ref mut order,0,ref mut fuel)?;
     let modules::Index index=modules::build_host(snapshot,token_limit)?;
-    let usize checked=headers(map,ref index,ref order,0)?;
+    let usize checked=headers(map,ref index,ref order,0,ref mut fuel)?;
     return .ok(index);
 }
 pub fn Result<input_entries::InputEntry,modules::Error> select_input(ref project::Project map,sources::Snapshot snapshot){
@@ -98,8 +107,9 @@ pub fn Result<input_entries::InputEntry,modules::Error> select_input(ref project
 // Recheck independently selected native entries before project admission.
 pub fn Result<usize,modules::Error> verify(ref project::Project map,ref entries::Entry selected){
     let ref modules::Index index=entries::index(selected);var usize[16] order=[32;16];
-    let usize mapped=file_map(map,modules::snapshot(index),ref mut order,0)?;
-    let usize checked=headers(map,index,ref order,0)?;
+    var usize fuel=budget::unlimited();
+    let usize mapped=file_map(map,modules::snapshot(index),ref mut order,0,ref mut fuel)?;
+    let usize checked=headers(map,index,ref order,0,ref mut fuel)?;
     let usize expected=modules::entry(index,project::entry_module(map),project::entry_function(map))?;
     if(expected!=entries::selected(selected)){return .err(error(.Kind,entries::signature_span(selected)));}
     return .ok(expected);

@@ -1738,6 +1738,24 @@ configured, 44 catalog and 17 process-command cases with zero net handles.
 All 460 input hashes matched.
 Local receipt: `build/restricted-worker/20261122T051821271447Z/receipt.json`.
 
+### Project binding Fuel
+
+Configured and catalog-backed worker sessions share the compile Fuel and
+deadline from project path matching through source indexing, header matching
+and public entry lookup. Each path comparison, header comparison, and module
+or symbol candidate costs one Fuel and checks the deadline. Lowering reuses the
+selected symbol and remaining balance. The two-source tests spend seven
+additional units: three path comparisons, two header comparisons, one module
+candidate and one symbol candidate.
+
+The configured project returned 42 at 3,535,615 compile Fuel. The catalog
+project passed admission at 1,753,947. One unit below each boundary returned
+`compile_limit` without guest output. A budget that stops at the entry's final
+symbol reports the original `start` span in `src/main.brc`.
+Development and /O2 each passed 111 configured, 44 catalog and 17 process
+command cases with zero net handles and 460 matching input hashes.
+Local receipt: `build/restricted-worker/20261122T063532582920Z/receipt.json`.
+
 ## Windows verification
 
 Run `python -B tools/verify-restricted-worker.py`. The development and optimized

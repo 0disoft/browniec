@@ -129,18 +129,27 @@ def verify_configured_project(run, need, image, folder, env):
     retention_fuel = 1 + 137 + 244
     # Indexing prepays each source byte and one unit per scanner advance,
     # including each file's EOF. There are 44 non-EOF tokens in two files.
+    # Three path comparisons, two header checks and the first module/symbol.
+    binding_fuel = 3 + 2 + 1 + 1
     index_fuel = policy['compile']['source_bytes'] + 44 + len(manifest['sources'])
-    policy['compile']['fuel'] = index_fuel
+    policy['compile']['fuel'] = index_fuel + binding_fuel
     before_lowering = check(3, 'compile_limit', 'check')['error']
     need(before_lowering['location']['kind'] == 'none',
          f'Exact index Fuel should reach the lowering gate: {before_lowering}')
-    policy['compile']['fuel'] = index_fuel - 1
+    policy['compile']['fuel'] = index_fuel + binding_fuel - 1
+    entry_error = check(3, 'compile_limit', 'check')['error']['location']
+    main_source = (target / 'src/main.brc').read_bytes()
+    start = main_source.index(b'start')
+    need(entry_error['source_index'] == 0 and entry_error['offset'] == start and
+         entry_error['end_offset'] == start + len(b'start'),
+         f'Entry binding Fuel did not stop at the original symbol: {entry_error}')
+    policy['compile']['fuel'] = 3 + index_fuel - 1
     fuel_error = check(3, 'compile_limit', 'check')['error']
     need(fuel_error['location']['source_index'] == 1,
          f'Index Fuel reset between source members: {fuel_error}')
     # 863 prepaid batches after the 179-unit index, including independent proof,
     # plus 151 semantic transitions and two 16-row literal catalog passes.
-    proof_fuel = index_fuel + 863 * 4096 + 151 + 32
+    proof_fuel = index_fuel + binding_fuel + 863 * 4096 + 151 + 32
     policy['compile']['fuel'] = proof_fuel
     preparation_error = check(3, 'compile_limit', 'check')['error']
     need(preparation_error['location']['kind'] == 'none',
@@ -184,7 +193,8 @@ def verify_configured_project(run, need, image, folder, env):
     math_file = target / 'src/math.brc'
     original_source = math_file.read_bytes()
     math_file.write_bytes(b'module util::math;pub fn i32 answer(){let i32 price=20+22;return price;}')
-    policy['compile'] = dict(compile_defaults, source_bytes=4096, fuel=3944712 + 208 + retention_fuel - 1)
+    policy['compile'] = dict(compile_defaults, source_bytes=4096,
+                             fuel=3944712 + 208 + retention_fuel + binding_fuel - 1)
     check(3, 'compile_limit')
     policy['compile']['fuel'] += 1
     check()
@@ -272,7 +282,7 @@ def verify_configured_project(run, need, image, folder, env):
                          b'switch(pick){case .some(v):{return v;}case .none:{return 0;}}}return 0;}')
     # 242 control Pratt advances and 42 assignment Pratt advances, plus two
     # post passes and a rewind of three registers and four 8-byte instructions.
-    control_fuel = 9069509 + 242 + 42 + 2 + 3 + 4 * 8 + retention_fuel
+    control_fuel = 9069509 + 242 + 42 + 2 + 3 + 4 * 8 + retention_fuel + binding_fuel
     policy['compile'] = dict(compile_defaults, source_bytes=4096, fuel=control_fuel - 1)
     check(3, 'compile_limit')
     policy['compile']['fuel'] = control_fuel
@@ -285,7 +295,7 @@ def verify_configured_project(run, need, image, folder, env):
                           b'let Option<i32> pick=.some(n);'
                           b'return switch(pick){case .some(v):{v}case .none:{0}};}')
     # The shared balance now covers the nested value and statement continuations.
-    value_arm_fuel = 6968500 + 477 + retention_fuel
+    value_arm_fuel = 6968500 + 477 + retention_fuel + binding_fuel
     policy['compile'] = dict(compile_defaults, source_bytes=4096, fuel=value_arm_fuel - 1)
     check(3, 'compile_limit')
     policy['compile']['fuel'] = value_arm_fuel
@@ -299,7 +309,7 @@ def verify_configured_project(run, need, image, folder, env):
                           b'var Pair p=Pair{.value=10};p.value+=1+1;((p).value)+=1+1;'
                           b'return a[1]+p.value;}')
     # Eight operands and both record targets add Pratt and path advances.
-    place_fuel = 10232871 + 245 + 167 + retention_fuel
+    place_fuel = 10232871 + 245 + 167 + retention_fuel + binding_fuel
     policy['compile'] = dict(compile_defaults, source_bytes=4096, fuel=place_fuel - 1)
     check(3, 'compile_limit')
     policy['compile']['fuel'] = place_fuel
@@ -312,7 +322,7 @@ def verify_configured_project(run, need, image, folder, env):
                           b'var b=[0,0];b=([a[0]+a[1]-5;2]);'
                           b'return b[0]+b[1];}')
     # Literal classification, five operands and two list-pool passes add 494 units.
-    array_assignment_fuel = 8459031 + 494 + retention_fuel
+    array_assignment_fuel = 8459031 + 494 + retention_fuel + binding_fuel
     policy['compile'] = dict(compile_defaults, source_bytes=4096, fuel=array_assignment_fuel - 1)
     check(3, 'compile_limit')
     policy['compile']['fuel'] = array_assignment_fuel
@@ -328,7 +338,7 @@ def verify_configured_project(run, need, image, folder, env):
                           b'let Outer q=p;p.child=(q).child;'
                           b'return p.child.value+p.extra;}')
     # Grouped destination, plain destination and aggregate source paths.
-    record_assignment_fuel = 9688554 + 274 + 10 + retention_fuel
+    record_assignment_fuel = 9688554 + 274 + 10 + retention_fuel + binding_fuel
     policy['compile'] = dict(compile_defaults, source_bytes=4096, fuel=record_assignment_fuel - 1)
     check(3, 'compile_limit')
     policy['compile']['fuel'] = record_assignment_fuel
@@ -344,7 +354,7 @@ def verify_configured_project(run, need, image, folder, env):
                           b'var Pair p=Pair{.value=0};p=pair(a,4+2);'
                           b'return a[0]+p.value;}')
     # Captured CALL and scalar argument advances share the compile balance.
-    aggregate_call_fuel = 12055640 + 224 + 13 + retention_fuel
+    aggregate_call_fuel = 12055640 + 224 + 13 + retention_fuel + binding_fuel
     policy['compile'] = dict(compile_defaults, source_bytes=4096, fuel=aggregate_call_fuel - 1)
     check(3, 'compile_limit')
     policy['compile']['fuel'] = aggregate_call_fuel
@@ -359,7 +369,7 @@ def verify_configured_project(run, need, image, folder, env):
                           b'out=gather(Box{.value=4+6},[3+5],[7+4;2],ref input[0+0..1+0]);'
                           b'return out[0];}')
     # Constructor, array literal and slice endpoint preparation use the caller's balance.
-    aggregate_actual_fuel = 11138028 + 344 + 8 + retention_fuel
+    aggregate_actual_fuel = 11138028 + 344 + 8 + retention_fuel + binding_fuel
     policy['compile'] = dict(compile_defaults, source_bytes=4096, fuel=aggregate_actual_fuel - 1)
     check(3, 'compile_limit')
     policy['compile']['fuel'] = aggregate_actual_fuel
@@ -374,7 +384,7 @@ def verify_configured_project(run, need, image, folder, env):
                           b'var Box box=Box{.value=20};var out=[0];'
                           b'out=sum(((base)),a,(box));return out[0];}')
     # Grouped immutable lookup and mutable array and record snapshots.
-    owner_capture_fuel = 9819007 + 40 + retention_fuel
+    owner_capture_fuel = 9819007 + 40 + retention_fuel + binding_fuel
     policy['compile'] = dict(compile_defaults, source_bytes=4096, fuel=owner_capture_fuel - 1)
     check(3, 'compile_limit')
     policy['compile']['fuel'] = owner_capture_fuel
@@ -556,7 +566,7 @@ def verify_configured_project(run, need, image, folder, env):
     entry.write_bytes(b'module app;pub fn i32 start(){let u8[5] data=[65,66,67,68,69];'
                       b'output::emit(ref data[1+1..4-1]);return 77;}')
     # The statement adds 14 token/emission units and 97 slice and operand advances.
-    range_fuel = 5005760 + 14 + 97 + retention_fuel
+    range_fuel = 5005760 + 14 + 97 + retention_fuel + binding_fuel
     policy['compile']['fuel'] = range_fuel - 1
     check(3, 'compile_limit')
     policy['compile']['fuel'] = range_fuel
@@ -568,14 +578,14 @@ def verify_configured_project(run, need, image, folder, env):
     # 16-row catalog scans, one literal row and two visits to each text byte.
     # The emit statement spends 13 token stages and one unit before IR emission.
     # The named static view adds two three-stage lookups and two token stages.
-    text_fuel = 4780555 + 95 + 32 + 1 + 2 * len(text) + 14 + 8 + retention_fuel
+    text_fuel = 4780555 + 95 + 32 + 1 + 2 * len(text) + 14 + 8 + retention_fuel + binding_fuel
     policy['compile']['fuel'] = text_fuel - 1
     check(3, 'compile_limit')
     policy['compile']['fuel'] = text_fuel
     check(value=77, output=text)
     entry.write_bytes(b'module app;pub fn i32 start(){'
                       b'output::emit(ref (text::bytes("ABCDE"))[1+1..4-1]);return 77;}')
-    static_range_fuel = 4571541 + 128 + retention_fuel
+    static_range_fuel = 4571541 + 128 + retention_fuel + binding_fuel
     policy['compile']['fuel'] = static_range_fuel - 1
     check(3, 'compile_limit')
     policy['compile']['fuel'] = static_range_fuel
@@ -759,7 +769,8 @@ def verify_project_host(run, need, image, folder, env):
     # Import rows, aliases and name comparisons add 36 units.
     signature_fuel = 1 + len(entry['parameters'])
     signature_delta = signature_fuel - 4096
-    lowering_fuel = 255 + 400 * 4096 + 17 + 12 + 54 + 152 + 36 + signature_fuel
+    project_binding_fuel = 3 + 2 + 1 + 1
+    lowering_fuel = 255 + 400 * 4096 + 17 + 12 + 54 + 152 + 36 + signature_fuel + project_binding_fuel
     policy['compile']['fuel'] = lowering_fuel
     check('check', expected_exit=3, kind='compile_limit')
     # Verification needs 28 more batches. Retention reserves three owners and
@@ -805,7 +816,7 @@ def verify_project_host(run, need, image, folder, env):
     source.write_bytes(b'module app; import host::example as api; pub fn i32 start(ref u8[] data){'
                        b'{output::emit(ref data);} let i32 a=api::check(41); return a+api::check(42);}')
     # The nested emit spends 14 token stages, two lookup stages and one IR unit.
-    nested_fuel = 1892630 + 17 + 12 + 55 + 10 + 164 + 43 + signature_delta + retention_fuel
+    nested_fuel = 1892630 + 17 + 12 + 55 + 10 + 164 + 43 + signature_delta + retention_fuel + project_binding_fuel
     policy['compile']['fuel'] = nested_fuel - 1
     check(expected_exit=3, kind='compile_limit', payload=payload)
     policy['compile']['fuel'] = nested_fuel
@@ -814,7 +825,7 @@ def verify_project_host(run, need, image, folder, env):
                        b'output::emit(b"before");let Result<i32,u32> reply=api::check(41);'
                        b'let i32 a=(if(true){switch(reply){case .ok(v):{v}case .err(_):{0}}}else{0});'
                        b'return a+switch(api::check(42)){case .ok(v):{v}case .err(_):{0}};}')
-    arm_fuel = 3232221 + 487 + 55 + 4 + 298 + 66 + signature_delta + retention_fuel
+    arm_fuel = 3232221 + 487 + 55 + 4 + 298 + 66 + signature_delta + retention_fuel + project_binding_fuel
     policy['compile']['fuel'] = arm_fuel - 1
     check(expected_exit=3, kind='compile_limit')
     policy['compile']['fuel'] = arm_fuel
@@ -823,7 +834,7 @@ def verify_project_host(run, need, image, folder, env):
                        b'output::emit(b"before");let Result<i32,u32> reply=api::check(41);'
                        b'var i32 a=0;switch(reply){case .ok(v):{a=v;}case .err(_):{return 0;}}'
                        b'switch(api::check(42)){case .ok(v):{return a+v;}case .err(e):{return 0;}}}')
-    statement_fuel = 3_121_699 + 141 + 290 + 66 + signature_delta + retention_fuel
+    statement_fuel = 3_121_699 + 141 + 290 + 66 + signature_delta + retention_fuel + project_binding_fuel
     policy['compile']['fuel'] = statement_fuel - 1
     check(expected_exit=3, kind='compile_limit')
     policy['compile']['fuel'] = statement_fuel
@@ -833,7 +844,7 @@ def verify_project_host(run, need, image, folder, env):
     replies['replies'] = rows
     source.write_bytes(original_source.replace(
         b'api::check(41)', b'api /*' + b'x' * 192 + b'*/ ::check(41)'))
-    index_fuel = 1_819_172 + 164 + 36 + signature_delta + retention_fuel
+    index_fuel = 1_819_172 + 164 + 36 + signature_delta + retention_fuel + project_binding_fuel
     policy['compile']['fuel'] = index_fuel - 1
     check(expected_exit=3, kind='compile_limit')
     policy['compile']['fuel'] = index_fuel
@@ -842,7 +853,7 @@ def verify_project_host(run, need, image, folder, env):
     source.write_bytes(original_source.replace(b' as api;', b' as ' + alias + b';')
                        .replace(b'api::check(41)', alias + b'::check(41)')
                        .replace(b'api::check(42)', b'host /* scope */ :: example::check(42)'))
-    binding_fuel = 1_794_714 + 44 + signature_delta + retention_fuel
+    binding_fuel = 1_794_714 + 44 + signature_delta + retention_fuel + project_binding_fuel
     policy['compile']['fuel'] = binding_fuel - 1
     check(expected_exit=3, kind='compile_limit')
     policy['compile']['fuel'] = binding_fuel

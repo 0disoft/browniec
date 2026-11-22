@@ -1,5 +1,5 @@
-- Latest runtime checkpoint (2026-11-22): [Embedding entry binding](docs/engineering/module-index.md#lookup-and-visibility)
-  charges Engine compile Fuel for source, module and symbol lookups before lowering.
+- Latest runtime checkpoint (2026-11-22): [Restricted project binding](docs/engineering/restricted-worker.md#project-binding-fuel)
+  carries one compile Fuel balance and deadline through path, header and entry lookup.
 
 # Brownie C agent guidance
 

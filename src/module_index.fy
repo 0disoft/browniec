@@ -241,7 +241,7 @@ pub fn Result<usize,Error> match_source_names(ref Index p){
     var usize fuel=budget::unlimited();
     return match_source_names_metered(p,0,ref mut fuel);
 }
-fn Result<usize,Error> binding_visit(ref mut usize fuel,usize deadline,sources::Span at){
+pub fn Result<usize,Error> binding_visit(ref mut usize fuel,usize deadline,sources::Span at){
     return switch(budget::visit(fuel,deadline,at.start)){
         case .ok(v):{.ok(v)}
         case .err(e):{.err(if(e.kind==errors::deadline_kind()){timed_out()}else{error(.Limit,at)})}
@@ -320,6 +320,12 @@ fn Result<usize,Error> entry_metered(ref Index p,ref u8[] path,ref u8[] name,usi
 pub fn Result<usize,Error> bind_preview_entry(ref mut Index p,ref u8[] path,ref u8[] name,usize deadline){
     var usize remaining=compile_fuel(p);
     discard match_source_names_metered(p,deadline,ref mut remaining)?;
+    return bind_entry(p,path,name,deadline,remaining);
+}
+
+pub fn Result<usize,Error> bind_entry(ref mut Index p,ref u8[] path,ref u8[] name,usize deadline,usize fuel){
+    if(fuel>compile_fuel(p)){return .err(error(.Limit,sources::no_source()));}
+    var usize remaining=fuel;
     let usize selected=entry_metered(p,path,name,deadline,ref mut remaining)?;
     if(clock::expired(deadline)){return .err(timed_out());}
     p.fuel=remaining;
