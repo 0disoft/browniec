@@ -8,7 +8,9 @@ typedef struct bc_adapter_process bc_adapter_process;
 
 enum {
     BC_ADAPTER_HEADER_BYTES = 64,
-    BC_ADAPTER_BODY_LIMIT = 4096
+    BC_ADAPTER_BODY_LIMIT = 4096,
+    BC_ADAPTER_PIPE_BUFFER_BYTES = 8192,
+    BC_ADAPTER_PIPE_BUFFER_RESERVATION = 2 * 2 * BC_ADAPTER_PIPE_BUFFER_BYTES
 };
 
 /* Initialize the ceilings before use. All other fields start at zero.

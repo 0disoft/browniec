@@ -4,7 +4,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-enum { pipe_buffer_bytes = 4096 };
 static const DWORD client_write = (FILE_GENERIC_WRITE & ~FILE_CREATE_PIPE_INSTANCE) |
     FILE_READ_ATTRIBUTES;
 static const DWORD client_read = FILE_GENERIC_READ;
@@ -57,7 +56,7 @@ static DWORD open_pair(SECURITY_ATTRIBUTES *security, BOOL send, HANDLE *broker,
     HANDLE server = CreateNamedPipeW(name, (send ? PIPE_ACCESS_OUTBOUND : PIPE_ACCESS_INBOUND) |
         FILE_FLAG_OVERLAPPED | FILE_FLAG_FIRST_PIPE_INSTANCE,
         PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT | PIPE_REJECT_REMOTE_CLIENTS,
-        1, pipe_buffer_bytes, pipe_buffer_bytes, 0, security);
+        1, BC_WORKER_PIPE_BUFFER_BYTES, BC_WORKER_PIPE_BUFFER_BYTES, 0, security);
     if (server == INVALID_HANDLE_VALUE) return GetLastError();
     *broker = server;
     HANDLE client = CreateFileW(name, send ? client_read : client_write, 0, NULL,

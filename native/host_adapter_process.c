@@ -56,7 +56,7 @@ static int pipe_pair(HANDLE *server, HANDLE *client, int send, HANDLE event) {
     *server = CreateNamedPipeW(name, (send ? PIPE_ACCESS_OUTBOUND : PIPE_ACCESS_INBOUND) |
         FILE_FLAG_OVERLAPPED | FILE_FLAG_FIRST_PIPE_INSTANCE,
         PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT | PIPE_REJECT_REMOTE_CLIENTS,
-        1, 8192, 8192, 0, NULL);
+        1, BC_ADAPTER_PIPE_BUFFER_BYTES, BC_ADAPTER_PIPE_BUFFER_BYTES, 0, NULL);
     if (*server == INVALID_HANDLE_VALUE) return 0;
     SECURITY_ATTRIBUTES inherit = {sizeof(inherit), NULL, TRUE};
     *client = CreateFileW(name, send ? GENERIC_READ : GENERIC_WRITE, 0, &inherit, OPEN_EXISTING,

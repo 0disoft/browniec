@@ -5,6 +5,10 @@
 #include "restricted_worker_frame.h"
 
 enum { BC_WORKER_STDIN, BC_WORKER_STDOUT, BC_WORKER_STDERR, BC_WORKER_PIPE_COUNT };
+enum {
+    BC_WORKER_PIPE_BUFFER_BYTES = 4096,
+    BC_WORKER_PIPE_BUFFER_RESERVATION = BC_WORKER_PIPE_COUNT * 2 * BC_WORKER_PIPE_BUFFER_BYTES
+};
 
 typedef struct bc_worker_pipes {
     HANDLE broker[BC_WORKER_PIPE_COUNT];

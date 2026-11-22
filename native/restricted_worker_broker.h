@@ -33,6 +33,7 @@ typedef struct bc_worker_broker_amounts {
     size_t wire_bytes;
     size_t adapter_slots;
     size_t io_slots;
+    size_t pipe_buffer_bytes;
 } bc_worker_broker_amounts;
 
 /* The ordinary transfer and the graceful cancellation write each own a slot. */
@@ -75,6 +76,8 @@ typedef struct bc_worker_host_adapter {
     bool (*close)(void *context);
     /* Maximum simultaneous overlapped I/O owners, including startup and reaping. */
     uint32_t io_slots;
+    /* Sum of buffer sizes requested for all pipes in one adapter slot. */
+    uint32_t pipe_buffer_bytes;
 } bc_worker_host_adapter;
 
 typedef struct bc_worker_broker {
@@ -133,6 +136,7 @@ typedef struct bc_worker_broker_run {
    A deferred route also reserves one adapter slot before launch. The slot
    stays reserved across sequential requests and through final cleanup.
    Each I/O slot covers one event and its outstanding overlapped operation.
+   Pipe buffer reservations account for requested Win32 buffer sizes.
    The trusted route supplies its additional process transport envelope in
    adapter_wire_bytes. It shares the session wire limit and release condition.
    adapter_parent_bytes covers route storage and peak launch heap until close.

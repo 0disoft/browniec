@@ -18,6 +18,7 @@
 #include "../../native/runtime-engine/clock.inc"
 
 enum { commit_limit = 128 * 1024 * 1024, cpu_limit = 500 };
+enum { worker_pipe_buffers = 3 * 2 * 4096, process_pipe_buffers = worker_pipe_buffers + 2 * 2 * 8192 };
 static const DWORD status_quota_exceeded = 0xc0000044;
 static wchar_t profile_name[64];
 static PSID profile;
@@ -646,7 +647,8 @@ static void verify_clean_publication(const wchar_t *path, const wchar_t *directo
 static bool same_charge(bc_worker_broker_amounts a, bc_worker_broker_amounts b) {
     return a.sessions == b.sessions && a.parent_bytes == b.parent_bytes &&
         a.child_commit_bytes == b.child_commit_bytes && a.wire_bytes == b.wire_bytes &&
-        a.adapter_slots == b.adapter_slots && a.io_slots == b.io_slots;
+        a.adapter_slots == b.adapter_slots && a.io_slots == b.io_slots &&
+        a.pipe_buffer_bytes == b.pipe_buffer_bytes;
 }
 
 static void verify_shared_budget(bc_worker_broker *first, const bc_worker_broker_run *run,
@@ -663,14 +665,16 @@ static void verify_shared_budget(bc_worker_broker *first, const bc_worker_broker
     other.request = &request;
     other.result = &result;
     const bc_worker_broker_amounts both = {
-        2, 2 * one.parent_bytes, 2 * one.child_commit_bytes, 2 * one.wire_bytes, 0, 4
+        2, 2 * one.parent_bytes, 2 * one.child_commit_bytes, 2 * one.wire_bytes, 0, 4,
+        2 * one.pipe_buffer_bytes
     };
     const bc_worker_broker_amounts limits[] = {
-        {1, both.parent_bytes, both.child_commit_bytes, both.wire_bytes, 0, both.io_slots},
-        {2, both.parent_bytes - 1, both.child_commit_bytes, both.wire_bytes, 0, both.io_slots},
-        {2, both.parent_bytes, both.child_commit_bytes - 1, both.wire_bytes, 0, both.io_slots},
-        {2, both.parent_bytes, both.child_commit_bytes, both.wire_bytes - 1, 0, both.io_slots},
-        {2, both.parent_bytes, both.child_commit_bytes, both.wire_bytes, 0, both.io_slots - 1}
+        {1, both.parent_bytes, both.child_commit_bytes, both.wire_bytes, 0, both.io_slots, both.pipe_buffer_bytes},
+        {2, both.parent_bytes - 1, both.child_commit_bytes, both.wire_bytes, 0, both.io_slots, both.pipe_buffer_bytes},
+        {2, both.parent_bytes, both.child_commit_bytes - 1, both.wire_bytes, 0, both.io_slots, both.pipe_buffer_bytes},
+        {2, both.parent_bytes, both.child_commit_bytes, both.wire_bytes - 1, 0, both.io_slots, both.pipe_buffer_bytes},
+        {2, both.parent_bytes, both.child_commit_bytes, both.wire_bytes, 0, both.io_slots - 1, both.pipe_buffer_bytes},
+        {2, both.parent_bytes, both.child_commit_bytes, both.wire_bytes, 0, both.io_slots, both.pipe_buffer_bytes - 1}
     };
     for (size_t i = 0; i < _countof(limits); ++i) {
         budget->limit = limits[i];
@@ -714,11 +718,17 @@ static void verify_shared_budget(bc_worker_broker *first, const bc_worker_broker
     next.result = &next_result;
     next.deadline = clock_ticks() + 100000000ULL;
     budget->limit = (bc_worker_broker_amounts){
-        3, 3 * one.parent_bytes, 3 * one.child_commit_bytes, 3 * one.wire_bytes, 0, both.io_slots
+        3, 3 * one.parent_bytes, 3 * one.child_commit_bytes, 3 * one.wire_bytes, 0, both.io_slots,
+        3 * one.pipe_buffer_bytes
     };
     check(bc_worker_broker_start(&third, &next) == ERROR_NOT_ENOUGH_QUOTA &&
         !third.worker.process && !third.io.event && same_charge(budget->reserved, both),
         "deny a third worker at the I/O limit while completions await collection");
+    budget->limit.io_slots = 3 * one.io_slots;
+    budget->limit.pipe_buffer_bytes = both.pipe_buffer_bytes;
+    check(bc_worker_broker_start(&third, &next) == ERROR_NOT_ENOUGH_QUOTA &&
+        !third.worker.process && !third.io.event && same_charge(budget->reserved, both),
+        "deny a third worker at the pipe buffer limit while completions await collection");
     size_t length = 123;
     check(!bc_worker_broker_take(&second, &length) && length == 123,
         "the expired worker publishes no result");
@@ -748,7 +758,8 @@ static void verify_broker(const wchar_t *path, const wchar_t *directory,
     const uint8_t request = 41;
     uint8_t result = 0;
     const size_t wire = 5 * BC_WORKER_FRAME_BYTES + 3;
-    const bc_worker_broker_amounts charge = {1, sizeof(broker) + 2 + worker_launch_heap, commit_limit, wire, 0, 2};
+    const bc_worker_broker_amounts charge = {1, sizeof(broker) + 2 + worker_launch_heap,
+        commit_limit, wire, 0, 2, worker_pipe_buffers};
     bc_worker_broker_budget budget = {.limit = charge};
     const bool idle_expiry = !wcscmp(mode, L"--child-stalled-result");
     const bool cancel_at_expiry = expected == BC_WORKER_GATE_EXPIRED && !idle_expiry;
@@ -880,7 +891,7 @@ static void verify_host_broker(const wchar_t *path, const wchar_t *directory,
     const size_t wire = 5 * BC_WORKER_FRAME_BYTES + start_length + 2 +
         max_calls * (2 * BC_WORKER_FRAME_BYTES + sizeof(request) + sizeof(reply));
     const bc_worker_broker_amounts charge = {1, sizeof(broker) + start_length + 1 +
-        sizeof(request) + sizeof(reply) + worker_launch_heap, commit_limit, wire, 0, 2};
+        sizeof(request) + sizeof(reply) + worker_launch_heap, commit_limit, wire, 0, 2, worker_pipe_buffers};
     bc_worker_broker_budget budget = {.limit = charge};
     bc_worker_broker_run run = {
         .budget = &budget, .application = path, .command_line = command, .directory = directory,
@@ -989,9 +1000,9 @@ static void verify_deferred_adapter(const wchar_t *path, const wchar_t *director
     bc_worker_broker broker = {0};
     deferred_fixture fixture = {.hold_close = !success};
     const bc_worker_broker_amounts charge = {1, sizeof(broker) + 3 + sizeof(reply) + worker_launch_heap,
-        commit_limit, wire, 1, 2};
+        commit_limit, wire, 1, 2, worker_pipe_buffers};
     bc_worker_broker_budget budget = {.limit = charge};
-    const bc_worker_host_adapter adapter = {deferred_begin, deferred_poll, deferred_close, 0};
+    const bc_worker_host_adapter adapter = {deferred_begin, deferred_poll, deferred_close, 0, 0};
     wchar_t command[256];
     check(swprintf_s(command, _countof(command), L"worker %ls %llx",
         success ? L"--child-host-ok" : L"--child-host-cancel-rx",
@@ -1049,7 +1060,8 @@ static void verify_deferred_adapter(const wchar_t *path, const wchar_t *director
         next_run.host.reply = next_reply;
         next_run.deadline = clock_ticks() + 100000000ULL;
         budget.limit = (bc_worker_broker_amounts){
-            2, 2 * charge.parent_bytes, 2 * charge.child_commit_bytes, 2 * charge.wire_bytes, 1, 4
+            2, 2 * charge.parent_bytes, 2 * charge.child_commit_bytes, 2 * charge.wire_bytes, 1, 4,
+            2 * charge.pipe_buffer_bytes
         };
         check(bc_worker_broker_start(&next, &next_run) == ERROR_NOT_ENOUGH_QUOTA &&
             !next.worker.process && !next.io.event && same_charge(budget.reserved, charge),
@@ -1084,7 +1096,7 @@ static void verify_graceful_cancel(const wchar_t *path, const wchar_t *directory
     const size_t request_length = ignore ? 1 : sizeof(request);
     const size_t wire = 5 * BC_WORKER_FRAME_BYTES + request_length + 2;
     const bc_worker_broker_amounts charge = {1, sizeof(broker) + request_length + 1 + worker_launch_heap,
-        commit_limit, wire, 0, 2};
+        commit_limit, wire, 0, 2, worker_pipe_buffers};
     bc_worker_broker_budget budget = {.limit = charge};
     const bc_worker_broker_run run = {
         .budget = &budget, .application = path, .command_line = command, .directory = directory,
@@ -1152,7 +1164,8 @@ static void verify_guest_exchange(const wchar_t *path, const wchar_t *directory,
     uint8_t result[256];
     const size_t wire = 5 * BC_WORKER_FRAME_BYTES + request_length + sizeof(result) + 1;
     const bc_worker_broker_amounts charge = {
-        1, sizeof(broker) + request_length + sizeof(result) + worker_launch_heap, commit_limit, wire, 0, 2
+        1, sizeof(broker) + request_length + sizeof(result) + worker_launch_heap,
+        commit_limit, wire, 0, 2, worker_pipe_buffers
     };
     bc_worker_broker_budget budget = {.limit = charge};
     wchar_t scalar_command[] = L"worker --internal-scalar-worker";
@@ -1304,7 +1317,7 @@ static void verify_catalog_host_stop(const wchar_t *path, const wchar_t *directo
         2 * (2 * BC_WORKER_FRAME_BYTES + sizeof(request) + sizeof(reply));
     const bc_worker_broker_amounts charge = {1,
         sizeof(broker) + size + sizeof(result) + sizeof(request) + sizeof(reply) + worker_launch_heap,
-        commit_limit, wire, 0, 2};
+        commit_limit, wire, 0, 2, worker_pipe_buffers};
     bc_worker_broker_budget budget = {.limit = charge};
     unsigned calls = 0;
     wchar_t command[] = L"worker --internal-project-worker";
@@ -1461,7 +1474,8 @@ static void verify_shared_process_reaping(bc_worker_broker *first, const bc_work
     const bc_worker_process_adapter *first_adapter = run->host.context;
     bc_adapter_budget *processes = first_adapter->slot.budget;
     const bc_worker_broker_amounts both = {
-        2, 2 * one.parent_bytes, 2 * one.child_commit_bytes, 2 * one.wire_bytes, 2, 6
+        2, 2 * one.parent_bytes, 2 * one.child_commit_bytes, 2 * one.wire_bytes, 2, 6,
+        2 * one.pipe_buffer_bytes
     };
     budget->limit = both;
     processes->live_limit = 2;
@@ -1538,7 +1552,7 @@ static void verify_catalog_process(const wchar_t *path, const wchar_t *directory
         2 * (2 * BC_WORKER_FRAME_BYTES + sizeof(request) + sizeof(reply) + adapter_wire);
     const bc_worker_broker_amounts charge = {1,
         sizeof(broker) + size + sizeof(result) + sizeof(request) + sizeof(reply) + worker_launch_heap + adapter_parent,
-        commit_limit, wire, 1, 3};
+        commit_limit, wire, 1, 3, process_pipe_buffers};
     bc_worker_broker_budget budget = {.limit = charge};
     wchar_t command[] = L"worker --internal-project-worker";
     bc_worker_broker_run run = {
@@ -1568,6 +1582,12 @@ static void verify_catalog_process(const wchar_t *path, const wchar_t *directory
         same_charge(budget.reserved, (bc_worker_broker_amounts){0}),
         "reject a process-backed run without the third I/O slot");
     ++budget.limit.io_slots;
+    --budget.limit.pipe_buffer_bytes;
+    check(bc_worker_broker_start(&broker, &run) == ERROR_NOT_ENOUGH_QUOTA &&
+        !broker.worker.process && !broker.io.event && !route.budget.launches &&
+        same_charge(budget.reserved, (bc_worker_broker_amounts){0}),
+        "reject a process-backed run one byte below its combined pipe buffer reservation");
+    ++budget.limit.pipe_buffer_bytes;
     --budget.limit.parent_bytes;
     check(bc_worker_broker_start(&broker, &run) == ERROR_NOT_ENOUGH_QUOTA &&
         !broker.worker.process && !broker.io.event && !route.budget.launches &&

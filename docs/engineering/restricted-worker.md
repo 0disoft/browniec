@@ -231,6 +231,21 @@ The standalone adapter verification passed eight process cases, three
 launch rejections, and one aggregate case per profile.
 Local receipt: `build/host-adapter-process/20261122T033031874368Z/receipt.json`.
 
+The shared budget now accounts for the buffer sizes requested when opening
+Windows named pipes. One worker reserves 24,576 bytes for three pipe
+instances. A process adapter adds 32,768 bytes for its two instances, for
+a combined reservation of 57,344 bytes. The broker holds the reservation
+through I/O collection and process reaping. These values sum the requested
+sizes. Windows can round or grow the actual kernel buffers.
+[CreateNamedPipeW documentation](https://learn.microsoft.com/en-us/windows/win32/api/namedpipeapi/nf-namedpipeapi-createnamedpipew)
+
+Both Windows profiles denied admission one byte below the pipe buffer
+reservation and admitted at the exact limit. With two worker reservations
+still held, a third was denied even when the other quotas had room.
+Closing one worker made its reservation available to the replacement.
+All 460 input hashes matched, with zero net handles in both profiles.
+Local receipt: `build/restricted-worker/20261122T033733298329Z/receipt.json`.
+
 ### Phase deadlines
 
 The broker starts the startup window before opening handles and requires
