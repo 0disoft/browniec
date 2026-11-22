@@ -138,8 +138,18 @@ Both compile calls accept an i32 return with either no parameters or one
 `ref u8[]` parameter. Provide up to 16,384 bytes of
 `brownie.catalog/1` JSON to resolve host imports under the Engine policy.
 The caller can reuse the source and catalog storage when compilation returns.
-The Engine applies its configured deadline, working-memory limit and Program
-retention limits.
+Without a catalog, the Engine starts the compile deadline before indexing the
+source set. Indexing applies the Engine's token, depth and Fuel limits. The
+remaining Fuel and the same deadline carry through lowering, verification and
+Program retention. Both the zero-argument and shared-byte entry profiles apply
+the type, instruction, per-function register, working-memory and Program
+retention limits before publishing a handle.
+
+The Windows development and /O2 C hosts verified three separate denials.
+Compile Fuel 1 stops indexing at source row 0, a function ceiling of 1 rejects
+two declarations, and a type ceiling of 1 rejects the shared-byte entry.
+Each returns `BC_RESOURCE_LIMIT`, clears the Program handle and allows Engine
+destruction. Local receipt: `build/embed-preview-8nt6or4b/receipt.json`.
 
 Initialize the diagnostic's exact `struct_size`. The call zeros the output
 handle on entry and publishes a Program only after compilation and handle

@@ -430,6 +430,41 @@ pub fn Result<usize,Error> compile_output(ref mut Engine e,entries::Entry select
     return retain_entry(e,selected,image_limit,2,0);
 }
 
+pub fn Result<usize,Error> compile_preview_output(ref mut Engine e,sources::Snapshot snapshot,
+    ref u8[] module_name,ref u8[] function_name,usize image_limit){
+    let u32 access=unsafe{control_access_raw(e as ptr void)};
+    if(access!=0){return .err(error(access));}
+    if(!e.meta.configured){return .err(error(5));}
+    let policy_limits::CompileLimits limits=configured_compile_limits(e)?;
+    if(sources::count(ref snapshot)>limits.modules ||
+        sources::snapshot_bytes(ref snapshot)>limits.source_bytes){return .err(error(8));}
+    let usize deadline=deadline_after(limits.deadline_ms)?;
+    let modules::Index index=switch(modules::build_metered(snapshot,false,limits.tokens,limits.depth,limits.fuel,deadline)){
+        case .ok(v):{v}case .err(e):{return .err(preview_binding_error(e));}
+    };
+    switch(modules::match_source_names_until(ref index,deadline)){
+        case .ok(_):{}case .err(e):{return .err(preview_binding_error(e));}
+    };
+    if(modules::function_count(ref index)>limits.functions ||
+        modules::record_count(ref index)>limits.types){return .err(error(8));}
+    if(input_entries::has_i32_input(ref index,module_name,function_name)){
+        let input_entries::InputEntry selected=switch(input_entries::select_i32_input(index,module_name,function_name)){
+            case .ok(v):{v}case .err(e):{return .err(preview_binding_error(e));}
+        };
+        return retain_input_entry(e,selected,image_limit,1,deadline);
+    }
+    let entries::Entry selected=switch(entries::select_i32(index,module_name,function_name)){
+        case .ok(v):{v}case .err(e):{return .err(preview_binding_error(e));}
+    };
+    return retain_entry(e,selected,image_limit,2,deadline);
+}
+
+fn Error preview_binding_error(modules::Error reason){
+    let Error failure=host_binding_error(reason);
+    return Error{.status=if(failure.diagnostic.code.kind==15){6}else if(failure.diagnostic.code.kind==4){8}else{4},
+        .diagnostic=failure.diagnostic};
+}
+
 // The worker owns this snapshot and never reopens the project's members.
 pub fn Result<usize,Error> compile_project_snapshot_output(ref mut Engine e,ref projects::Project project,
     sources::Snapshot snapshot,ref run_config::RunConfig run,usize image_limit){
@@ -2079,13 +2114,13 @@ fn u32 compile_input_output_inner(ref mut Meta m,ref mut vec::Vec<Program> v,ref
     let EntryBinding entry=switch(bind_entry(m.configured,vec::at<input_entries::InputEntry>(incoming,0))){
         case .ok(v):{v}case .err(status):{return failed(m,status);}
     };
-    let usize types=if(mode>=4){policy::compile_limits(vec::at<policy::Policy>(policies,0)).types}else{4096};
+    let usize types=if(m.configured){policy::compile_limits(vec::at<policy::Policy>(policies,0)).types}else{4096};
     let Result<output_programs::Program,diagnostics::Error> built=bounded::compile_input_output_until(pop_input_entry(incoming),limit,ref mut plan,ref mut work,deadline,types);
     assert(memory::record_compile(ref mut m.programs,ref work).is_ok);
     assert(memory::record(ref mut m.programs,ref plan).is_ok);
     return switch(built){
         case .ok(code):{
-            if(mode>=4){
+            if(m.configured){
                 let policy_limits::CompileLimits limits=policy::compile_limits(vec::at<policy::Policy>(policies,0));
                 if(!check_output_compile_image(ref code,limits).is_ok){return failed(m,8);}
             }

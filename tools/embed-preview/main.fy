@@ -2,7 +2,6 @@ module main;
 
 import abi_bootstrap as abi;
 import module_entry as entries;
-import module_input_entry as input_entries;
 import module_index as modules;
 import runtime_engine as engine;
 import source_snapshot as sources;
@@ -88,20 +87,16 @@ fn Result<Compiled,engine::Error> compile(ref mut engine::Engine owner,ptr void 
     let ref u8[] module_name=unsafe{byte_slice::from_raw_parts(ref module_size,module_data,module_size)};
     let ref u8[] function_name=unsafe{byte_slice::from_raw_parts(ref function_size,function_data,function_size)};
     let sources::Snapshot snapshot=source_snapshot(owner,rows,count)?;
-    let modules::Index index=switch(modules::build(snapshot)){
-        case .ok(v):{v}case .err(e):{return .err(binding_failure(e));}
-    };
-    switch(modules::match_source_names(ref index)){
-        case .ok(_):{}case .err(e):{return .err(binding_failure(e));}
-    };
-    let bool input=configured && input_entries::has_i32_input(ref index,module_name,function_name);
     let usize image_limit=images::metadata_charge()+images::byte_limit();
-    let usize program=if(input){
-        let input_entries::InputEntry selected=switch(input_entries::select_i32_input(index,module_name,function_name)){
+    let usize program=if(configured){
+        engine::compile_preview_output(owner,snapshot,module_name,function_name,image_limit)?
+    }else{
+        let modules::Index index=switch(modules::build(snapshot)){
             case .ok(v):{v}case .err(e):{return .err(binding_failure(e));}
         };
-        engine::compile_input_output(owner,selected,image_limit)?
-    }else{
+        switch(modules::match_source_names(ref index)){
+            case .ok(_):{}case .err(e):{return .err(binding_failure(e));}
+        };
         let entries::Entry selected=switch(entries::select_i32(index,module_name,function_name)){
             case .ok(v):{v}case .err(e):{return .err(binding_failure(e));}
         };

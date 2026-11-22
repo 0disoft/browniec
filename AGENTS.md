@@ -1,5 +1,5 @@
-- Latest runtime checkpoint (2026-11-22): [Catalog-backed embedding](docs/engineering/embed-preview.md#engine-admission-for-catalog-backed-embedding)
-  carries Engine compile Fuel and the deadline through source indexing and Program publication.
+- Latest runtime checkpoint (2026-11-22): [Scalar embedding](docs/engineering/embed-preview.md#revision-2-scalar-programs)
+  applies Engine compile policy to catalog-free zero-argument and shared-byte Programs.
 
 # Brownie C agent guidance
 

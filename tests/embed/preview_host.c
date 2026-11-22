@@ -529,6 +529,47 @@ static void revision_two_source_limit(uint8_t *policy,size_t length){
     assert(bc_engine_destroy(engine)==BC_OK);
 }
 
+static void revision_two_compile_limits(uint8_t *policy,size_t length){
+    static const uint8_t module[]="main";
+    static const uint8_t scalar[]="module main; pub fn i32 main(){return 77;}";
+    static const uint8_t helpers[]="module main; fn i32 value(){return 77;} "
+        "pub fn i32 main(){return value();}";
+    static const uint8_t input[]="module main; "
+        "pub fn i32 main(ref u8[] data){return data[0] as i32;}";
+    struct compile_case {
+        const char *key;
+        const char *original;
+        const char *limited;
+        bc_slice source;
+        uint32_t source_index;
+    };
+    const struct compile_case cases[]={
+        {"\"fuel\": ", "10000000", "       1", {scalar,sizeof(scalar)-1},0},
+        {"\"functions\": ", "4096", "   1", {helpers,sizeof(helpers)-1},UINT32_MAX},
+        {"\"types\": ", "4096", "   1", {input,sizeof(input)-1},UINT32_MAX},
+    };
+    for(size_t i=0;i<sizeof(cases)/sizeof(cases[0]);++i){
+        const struct compile_case *test=&cases[i];
+        char *value=strstr((char *)policy,test->key);
+        assert(value);
+        value+=strlen(test->key);
+        const size_t digits=strlen(test->original);
+        assert(memcmp(value,test->original,digits)==0 && strlen(test->limited)==digits);
+        memcpy(value,test->limited,digits);
+        bc_handle engine=0,program=UINT64_MAX;
+        bc_diagnostic diagnostic={.struct_size=sizeof(diagnostic)};
+        assert(bc_engine_create(2,(bc_slice){policy,length},&engine,&diagnostic)==BC_OK);
+        memcpy(value,test->original,digits);
+        const bc_source source={{module,sizeof(module)-1},test->source};
+        assert(bc_compile(engine,&source,1,(bc_slice){0},&program,&diagnostic)==BC_RESOURCE_LIMIT);
+        assert(program==0);
+        assert(diagnostic.code==BC_RESOURCE_LIMIT && diagnostic.source_index==test->source_index);
+        assert(diagnostic.byte_start==0 && diagnostic.byte_end==0 && diagnostic.message[0]!=0);
+        assert(bc_engine_destroy(engine)==BC_OK);
+    }
+    puts("PASS: catalog-free compilation applies Engine Fuel, function and shared-byte type limits");
+}
+
 static void revision_two_modules(bc_handle engine,bc_slice policy){
     static const uint8_t main[]="main";
     static const uint8_t rates[]="pricing::rates";
@@ -872,6 +913,7 @@ static void revision_two_engines(void){
     revision_two_object_bytes(handle);
     revision_two_output(handle);
     revision_two_source_limit(policy,length);
+    revision_two_compile_limits(policy,length);
     memset(policy,0,sizeof(policy));
     HANDLE thread=CreateThread(NULL,0,foreign_engine_destroy,&handle,0,NULL);
     DWORD status=0;
