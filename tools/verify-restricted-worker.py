@@ -275,6 +275,19 @@ def verify_configured_project(run, need, image, folder, env):
     policy['compile'] = compile_defaults
     math_file.write_bytes(original_source)
 
+    math_file.write_bytes(b'module util::math;pub fn i32 answer(){'
+                          b'let i32 n=(if(true){var i32 a=30;a+=5;a+7}else{0});'
+                          b'let Option<i32> pick=.some(n);'
+                          b'return switch(pick){case .some(v):{v}case .none:{0}};}')
+    # The shared balance now covers the nested value and statement continuations.
+    value_arm_fuel = 6968500 + 477
+    policy['compile'] = dict(compile_defaults, source_bytes=4096, fuel=value_arm_fuel - 1)
+    check(3, 'compile_limit')
+    policy['compile']['fuel'] = value_arm_fuel
+    check()
+    policy['compile'] = compile_defaults
+    math_file.write_bytes(original_source)
+
     math_file.write_bytes(b'module util::math;struct Pair{i32 value;}pub fn i32 answer(){'
                           b'var a=[10,20];a[0+1]+=1+1;((a)[1])+=1+1;'
                           b'{let ref mut i32[] view=ref mut a;view[0+1]+=2+2;}'

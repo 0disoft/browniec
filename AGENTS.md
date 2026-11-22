@@ -1,5 +1,5 @@
-- Latest runtime checkpoint (2026-11-22): [Static view operand Fuel](docs/engineering/restricted-worker.md#static-view-operand-fuel)
-  meters static view construction and range operands under configured output and budgeted reference arguments.
+- Latest runtime checkpoint (2026-11-22): [Value expression arm Fuel](docs/engineering/restricted-worker.md#value-expression-arm-fuel)
+  passes the enclosing compile budget through staged if and switch arms.
 
 # Brownie C agent guidance
 

@@ -1482,7 +1482,7 @@ fn Result<usize, errors::Error> expression(ref u8[] source, ref mut lexer::State
 
 fn Result<usize,errors::Error> complete_operand_in_environment(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref locals::Table names,ref functions::Table signatures,u8 result_type,
-    usize structure,ref mut loops::State flow,ref mut expression_work::Bank bank,ref mut expression_work::State w){
+    usize structure,ref mut loops::State flow,ref mut expression_work::Bank bank,ref mut expression_work::State w,usize deadline,ref mut usize fuel){
     if(w.done || !w.waiting){return .err(errors::make(5,s.begin));}
     let expression_work::Frame f=expression_work::current(w);
     if(w.request==2){let usize initial=w.value;return expression_work::tail(w,bank,*s,initial,result_type);}
@@ -1501,7 +1501,7 @@ fn Result<usize,errors::Error> complete_operand_in_environment(ref u8[] source,r
         return expression_work::array_operand(w,bank,groups,expected,lane==8,binding,s.begin);}
     if(lane==10){return .err(errors::make(3,s.begin));}
     let usize at=s.begin;var usize initial=0;
-    if(lane==5 || arm_syntax::operand_kind(source,s)!=0){initial=conditional_operand_staged(source,s,p,names,signatures,f.depth,context,result_type,structure,flow,bank,w.used==1 && f.environment==34)?;}
+    if(lane==5 || arm_syntax::operand_kind(source,s)!=0){initial=conditional_operand_staged(source,s,p,names,signatures,f.depth,context,result_type,structure,flow,bank,w.used==1 && f.environment==34,deadline,fuel)?;}
     else if(lane==6){initial=record_expression_read_staged(source,s,p,names,signatures,at,f.depth,result_type,structure,flow)?;}
     else if(lane==7){initial=array_grouped_projection(source,s,p,names,signatures,at,f.depth,result_type,structure,flow)?;}
     else if(lane==8){let array_locals::Projection plan=array_locals::Projection{.groups=aggregate.result.groups,.kind=aggregate.result.suffix};
@@ -1516,7 +1516,7 @@ fn Result<usize,errors::Error> complete_operand_in_environment(ref u8[] source,r
 // bank and expression frames survive children without native recursive drivers.
 fn Result<usize,errors::Error> complete_captured_operand(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref locals::Table names,ref functions::Table signatures,u8 result_type,
-    usize structure,ref mut loops::State flow,ref mut expression_work::Bank bank,ref mut expression_work::State w){
+    usize structure,ref mut loops::State flow,ref mut expression_work::Bank bank,ref mut expression_work::State w,usize deadline,ref mut usize fuel){
     var usize operand_fuel=metadata_budget::unlimited();
     let expression_work::Frame f=expression_work::current(w);var locals::Table active=locals::empty();
     if(w.request==3){let usize i=w.used-1;let usize copied=expression_work::names_into(bank,i,ref mut active)?;
@@ -1533,16 +1533,16 @@ fn Result<usize,errors::Error> complete_captured_operand(ref u8[] source,ref mut
         return expression_work::captured_argument(w,bank,ref active,value,prefix);
     }
     let usize copied=expression_work::environment_into(w,bank,ref mut active)?;
-    return complete_operand_in_environment(source,s,p,ref active,signatures,result_type,structure,flow,bank,w);
+    return complete_operand_in_environment(source,s,p,ref active,signatures,result_type,structure,flow,bank,w,deadline,fuel);
 }
 
 // No captured lexical table is retained by the ordinary scalar/conditional path.
 fn Result<usize,errors::Error> complete_expression_operand(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref locals::Table names,ref functions::Table signatures,u8 result_type,
-    usize structure,ref mut loops::State flow,ref mut expression_work::Bank bank,ref mut expression_work::State w){
+    usize structure,ref mut loops::State flow,ref mut expression_work::Bank bank,ref mut expression_work::State w,usize deadline,ref mut usize fuel){
     let expression_work::Frame f=expression_work::current(w);
-    if(w.request!=3 && f.environment==34){return complete_operand_in_environment(source,s,p,names,signatures,result_type,structure,flow,bank,w);}
-    return complete_captured_operand(source,s,p,names,signatures,result_type,structure,flow,bank,w);
+    if(w.request!=3 && f.environment==34){return complete_operand_in_environment(source,s,p,names,signatures,result_type,structure,flow,bank,w,deadline,fuel);}
+    return complete_captured_operand(source,s,p,names,signatures,result_type,structure,flow,bank,w,deadline,fuel);
 }
 
 pub fn Result<usize,errors::Error> expression_staged(ref u8[] source,ref mut lexer::State s,
@@ -1568,7 +1568,7 @@ fn Result<usize,errors::Error> expression_in_bank(ref u8[] source,ref mut lexer:
         discard metadata_budget::visit(fuel,deadline,0)?;
         let usize allowance=metadata_budget::reset(ref mut meter,s.begin)?;
         let bool done=expression_work::advance(source,s,p,table,signatures,bank,w,ref mut meter)?;
-        if(w.waiting){let usize completed=complete_expression_operand(source,s,p,table,signatures,result_type,structure,flow,bank,w)?;}
+        if(w.waiting){let usize completed=complete_expression_operand(source,s,p,table,signatures,result_type,structure,flow,bank,w,deadline,fuel)?;}
     }return expression_work::prepared(w);
 }
 
@@ -2426,13 +2426,13 @@ fn Result<bool,errors::Error> conditional_arm(ref u8[] source,ref mut lexer::Sta
         if(control(source,s,p,table,signatures,result_type,structure,depth,loop_state,0,ref mut fuel)?){
             let usize close=lexer::punctuation(source,s,125)?;return .ok(true);}
     }
-    let bool terminal=conditional_tail(source,s,p,table,signatures,join,depth,result_type,structure,loop_state)?;
+    let bool terminal=conditional_tail(source,s,p,table,signatures,join,depth,result_type,structure,loop_state,0,ref mut fuel)?;
     if(!terminal){let usize dropped=arrays::release_from(table,p,outer,s.begin)?;}
     let usize close=lexer::punctuation(source,s,125)?;return .ok(terminal);
 }
 fn Result<bool,errors::Error> conditional_tail(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
-    ref mut joins::Join join,usize depth,u8 result_type,usize structure,ref mut loops::State loop_state){
+    ref mut joins::Join join,usize depth,u8 result_type,usize structure,ref mut loops::State loop_state,usize deadline,ref mut usize fuel){
     let usize at=s.begin;let arm_syntax::Conditional atom=arm_syntax::conditional_atom(source,s)?;
     if(word_is(source,s,b"ref")){return .err(errors::make(3,at));}
     if(atom.valid && atom.suffix==125){
@@ -2447,16 +2447,14 @@ fn Result<bool,errors::Error> conditional_tail(ref u8[] source,ref mut lexer::St
     let record_expressions::Plan record=record_expressions::inspect(source,s,p,table,signatures)?;
     if(record.kind!=0 && record.tag==0 && record.suffix==125){
         let usize destination=joins::record_target(join,record.record);
-        var usize fuel=metadata_budget::unlimited();
-        let record_expressions::Value value=record_value_into(source,s,p,table,signatures,join.mutable,at,depth,result_type,structure,loop_state,destination,0,ref mut fuel)?;
+        let record_expressions::Value value=record_value_into(source,s,p,table,signatures,join.mutable,at,depth,result_type,structure,loop_state,destination,deadline,fuel)?;
         let usize accepted=joins::accept_record(p,join,table.function,ref value,at)?;return .ok(false);
     }
     let array_expressions::Plan array=array_expressions::inspect(source,s,p,table,signatures)?;
     if(array.kind!=0 && array.suffix==125){
         let u8 expected=if(join.kind==2){join.tag}else{0};let usize length=if(join.kind==2){join.size}else{0};
         let usize destination=if(join.kind==2 && join.value!=256){join.value-128}else{16};
-        var usize fuel=metadata_budget::unlimited();
-        let array_expressions::Value value=array_value_into(source,s,p,table,signatures,expected,length,join.mutable,at,depth,result_type,structure,loop_state,destination,0,ref mut fuel)?;
+        let array_expressions::Value value=array_value_into(source,s,p,table,signatures,expected,length,join.mutable,at,depth,result_type,structure,loop_state,destination,deadline,fuel)?;
         let usize accepted=joins::accept_array(p,join,table.function,value.id,value.owned,at)?;return .ok(false);
     }
     let u8 expected=if(join.kind==0 || join.kind==1){join.tag}else{0};
@@ -2485,42 +2483,48 @@ fn Result<bool,errors::Error> constructor_tail(ref u8[] source,ref mut lexer::St
 // These owners drain actual child kernels; no child is charged as one body stage.
 fn Result<bool,errors::Error> value_control_staged(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref mut locals::Table names,ref functions::Table signatures,u8 result_type,
-    usize structure,usize depth,ref mut loops::State flow){
+    usize structure,usize depth,ref mut loops::State flow,usize deadline,ref mut usize fuel){
     var body_work::State w=body_work::statement(structure);var metadata_budget::State meter=metadata_budget::empty();
-    while(!w.done){let usize allowance=metadata_budget::reset(ref mut meter,s.begin)?;
+    while(!w.done){
+        discard metadata_budget::visit(fuel,deadline,s.begin)?;
+        let usize allowance=metadata_budget::reset(ref mut meter,s.begin)?;
         let bool done=body_work::advance_limited(source,s,p,names,flow,ref mut w,ref mut meter,signatures.semantic_depth)?;
-        if(w.request!=0){let usize completed=complete_body_child(source,s,p,names,signatures,result_type,depth,flow,ref mut w)?;}
+        if(w.request!=0){let usize completed=complete_body_child_metered(source,s,p,names,signatures,result_type,depth,flow,ref mut w,deadline,fuel)?;}
     }return body_work::prepared(ref w);
 }
 fn Result<Yield,errors::Error> if_value_staged(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref locals::Table names,ref functions::Table signatures,
-    usize depth,u8 expected,u8 result_type,usize structure,ref mut loops::State flow,ref mut expression_work::Bank bank,bool reuse){
+    usize depth,u8 expected,u8 result_type,usize structure,ref mut loops::State flow,ref mut expression_work::Bank bank,bool reuse,usize deadline,ref mut usize fuel){
     let usize at=s.begin;var joins::Join join=joins::empty(expected,false);
     var scratch_vec::Vec<value_work::State> scratch=conditional_scratch(names,depth,structure,result_type,s.begin)?;let ref mut value_work::State w=scratch_vec::at_mut<value_work::State>(ref mut scratch,0);var metadata_budget::State meter=metadata_budget::empty();
-    while(!w.done){let usize allowance=metadata_budget::reset(ref mut meter,s.begin)?;
+    while(!w.done){
+        discard metadata_budget::visit(fuel,deadline,s.begin)?;
+        let usize allowance=metadata_budget::reset(ref mut meter,s.begin)?;
         let bool done=value_work::advance(source,s,p,signatures,ref mut join,w,ref mut meter)?;
         let u8 request=w.request;let usize child_structure=w.child_structure;let usize child_depth=w.child_depth;var usize value=0;var bool stopped=false;
         if(request==1 || request==4){value=if(reuse){
-            var usize fuel=metadata_budget::unlimited();
-            expression_in_bank(source,s,p,ref w.names,signatures,1,w.child_depth,w.expected,result_type,w.child_structure,flow,bank,0,ref mut fuel)?
-        }else{expression_staged(source,s,p,ref w.names,signatures,1,w.child_depth,w.expected,result_type,w.child_structure,flow)?};}
-        else if(request==2){stopped=value_control_staged(source,s,p,ref mut w.names,signatures,result_type,child_structure,child_depth,flow)?;}
-        else if(request==3){stopped=conditional_tail(source,s,p,ref w.names,signatures,ref mut join,w.child_depth,result_type,w.child_structure,flow)?;}
-        else if(request==5){w.pattern=patterns::parse(source,s,w.expected)?;}
+            expression_in_bank(source,s,p,ref w.names,signatures,1,w.child_depth,w.expected,result_type,w.child_structure,flow,bank,deadline,fuel)?
+        }else{expression_metered(source,s,p,ref w.names,signatures,1,w.child_depth,w.expected,result_type,w.child_structure,flow,deadline,fuel)?};}
+        else if(request==2){stopped=value_control_staged(source,s,p,ref mut w.names,signatures,result_type,child_structure,child_depth,flow,deadline,fuel)?;}
+        else if(request==3){stopped=conditional_tail(source,s,p,ref w.names,signatures,ref mut join,w.child_depth,result_type,w.child_structure,flow,deadline,fuel)?;}
+        else if(request==5){w.pattern=patterns::parse_metered(source,s,w.expected,deadline,fuel)?;}
         if(request!=0){let usize resumed=value_work::resume(w,request,value,stopped)?;}
     }
     if(value_work::prepared(w)?){return .ok(Yield{.value=0,.terminal=true});}
+    if(clock::expired(deadline)){return .err(errors::absent(errors::deadline_kind(),0));}
     let usize value=joins::finish(p,ref join,at)?;return .ok(Yield{.value=value,.terminal=false});
 }
 fn Result<usize,errors::Error> conditional_operand_staged(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
-    usize depth,u8 expected,u8 result_type,usize structure,ref mut loops::State loop_state,ref mut expression_work::Bank bank,bool reuse){
+    usize depth,u8 expected,u8 result_type,usize structure,ref mut loops::State loop_state,ref mut expression_work::Bank bank,bool reuse,usize deadline,ref mut usize fuel){
     let usize at=s.begin;var usize groups=0;
     while(s.kind==40){if(depth>signatures.semantic_depth || groups>=signatures.semantic_depth-depth){return .err(errors::make(4,s.begin));}
-        let usize next=lexer::next(source,s)?;groups+=1;}
-    let Yield result=if_value_staged(source,s,p,table,signatures,depth+groups,expected,result_type,structure,loop_state,bank,reuse)?;
+        discard lexer::next_metered(source,s,deadline,fuel)?;groups+=1;}
+    let Yield result=if_value_staged(source,s,p,table,signatures,depth+groups,expected,result_type,structure,loop_state,bank,reuse,deadline,fuel)?;
     if(result.terminal){return .err(errors::make(3,at));}
-    let usize close=array_expressions::close(source,s,groups)?;let usize value=result.value;
+    var usize left=groups;
+    while(left!=0){discard lexer::punctuation_metered(source,s,41,deadline,fuel)?;left-=1;}
+    let usize value=result.value;
     if(value<128){return .ok(value);}
     if(value<144){return array_temporary_read(source,s,p,table,signatures,value-128,at,depth+groups,result_type,structure,loop_state);}
     if(value<160){let usize id=value-144;let usize record=p.records.records[id] as usize;
@@ -3053,7 +3057,7 @@ fn Result<usize,errors::Error> statement_in_bank(ref u8[] source,ref mut lexer::
         discard metadata_budget::visit(fuel,deadline,0)?;
         let usize allowance=metadata_budget::reset(ref mut meter,s.begin)?;
         let bool done=semantic_work::advance(source,s,p,names,signatures,bank,ref mut w,ref mut meter)?;
-        if(w.request==1){let usize completed=complete_expression_operand(source,s,p,names,signatures,result_type,structure,flow,bank,ref mut w.expression)?;
+        if(w.request==1){let usize completed=complete_expression_operand(source,s,p,names,signatures,result_type,structure,flow,bank,ref mut w.expression,deadline,fuel)?;
             let usize continued=semantic_work::continue_operand(ref mut w)?;
         }else if(w.request==2){let usize value=statement(source,s,p,names,signatures,terminator,result_type,expr_depth,structure,flow,deadline,fuel)?;
             let usize completed=semantic_work::resume(ref mut w,2,value,false)?;}
@@ -3085,7 +3089,7 @@ fn Result<bool,errors::Error> return_in_bank(ref u8[] source,ref mut lexer::Stat
         discard metadata_budget::visit(fuel,deadline,0)?;
         let usize allowance=metadata_budget::reset(ref mut meter,s.begin)?;
         let bool done=semantic_work::advance(source,s,p,names,signatures,bank,ref mut w,ref mut meter)?;
-        if(w.request==1){let usize completed=complete_expression_operand(source,s,p,names,signatures,result_type,depth,flow,bank,ref mut w.expression)?;
+        if(w.request==1){let usize completed=complete_expression_operand(source,s,p,names,signatures,result_type,depth,flow,bank,ref mut w.expression,deadline,fuel)?;
             let usize continued=semantic_work::continue_operand(ref mut w)?;
         }else if(w.request==2){let bool stopped=control_return(source,s,p,names,signatures,result_type,depth,expr_depth,flow)?;
             let usize completed=semantic_work::resume(ref mut w,2,0,stopped)?;}

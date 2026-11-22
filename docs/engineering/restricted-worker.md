@@ -1280,6 +1280,23 @@ Windows development and /O2 each passed 108 configured, 34 catalog,
 five managed and four compile-stop cases. All 456 input hashes matched.
 Local receipt: `build/restricted-worker/20261122T003344751722Z/receipt.json`.
 
+### Value expression arm Fuel
+
+Budgeted expression lowering passes the enclosing deadline and Fuel
+through staged if and switch expressions. The same balance pays for
+conditional and arm continuations, nested statement dispatch, scalar
+heads and tails, switch pattern tokens, and aggregate tail lowering.
+The legacy catalog value-expression driver retains its outer checks.
+
+The grouped if fixture updates a local in one arm and passes its value
+to an Option switch expression. It returns 42 at 6,968,977 compile Fuel,
+up 477 units. One unit less returns compile_limit with no guest result
+or output.
+
+Windows development and /O2 each passed 110 configured, 34 catalog,
+five managed and four compile-stop cases. All 456 input hashes matched.
+Local receipt: `build/restricted-worker/20261122T004301011863Z/receipt.json`.
+
 ## Windows verification
 
 Run `python -B tools/verify-restricted-worker.py`. The development and optimized
