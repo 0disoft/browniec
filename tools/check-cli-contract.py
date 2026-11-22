@@ -555,6 +555,20 @@ def check_host_project_output(exe, folder, adapter):
     print('PASS: catalog project emits across host suspension, with exact file/JSON output and failure rollback')
 
 
+def check_unframe_example(exe, folder):
+    args = ['run', '--project', CONFIGURED / 'unframe.json', '--policy', CONFIGURED / 'policy.json',
+            '--run', CONFIGURED / 'run.json']
+    profile = 'brownie.m2-reference/1'
+    assert check_json(exe, ['check', *args[1:]], 0, version=2, profile=profile) is None
+    source = folder / 'unframe-input.bin'
+    for data, value, output in ((b'\x01\x00\xff\x0a', 1, 'AP8K'), (b'', 0, ''),
+                                (b'\x01', 0, ''), (b'\x02\x00\xff\x0a', 0, '')):
+        source.write_bytes(data)
+        assert check_json(exe, [*args, '--input', source], 0, version=2, value=value,
+                          profile=profile, output_b64=output) is None
+    print('PASS: unframe example strips the version byte and rejects incomplete or unsupported frames')
+
+
 def check_configured_output(exe, folder):
     project = folder / 'configured'
     shutil.copytree(CONFIGURED, project)
@@ -1068,6 +1082,7 @@ def main():
         check_project_input(exe, Path(temp))
         check_source_input(exe, Path(temp))
         check_configured_output(exe, Path(temp))
+        check_unframe_example(exe, Path(temp))
         check_inspection_limits(exe, Path(temp))
         check_diagnostic(exe, source_zero, 3, 'lexical',
                          {'kind': 'source_byte', 'offset': 0}, b'browniec: lexical at byte 0')

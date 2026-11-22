@@ -1,5 +1,5 @@
-- Latest runtime checkpoint (2026-11-22): [Scalar loop benchmark](docs/engineering/03-performance-budget.md#scalar-rule-loop-on-windows-2026-11-22)
-  verifies identical result, Fuel and accounted peak at quanta 1 and 64, with zero SDK allocations during stepping.
+- Latest delivery checkpoint (2026-11-22): [Binary payload example](docs/cli/configuration.md#validate-and-unwrap-a-binary-payload)
+  verifies binary input validation and exact output in Windows development and /O2.
 
 # Brownie C agent guidance
 

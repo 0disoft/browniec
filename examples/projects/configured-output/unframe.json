@@ -1,0 +1,17 @@
+{
+  "schema": "brownie.project/0.3",
+  "name": "unframe",
+  "entry": {
+    "module": "app",
+    "function": "transform"
+  },
+  "sources": [
+    {
+      "module": "app",
+      "path": "unframe.brc"
+    }
+  ],
+  "requires": [
+    "brownie.output.emit"
+  ]
+}

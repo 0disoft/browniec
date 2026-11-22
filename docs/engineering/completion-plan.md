@@ -671,8 +671,9 @@ and the inventory completion conditions remain open.
    to actual OS input. [Guest output](module-output-execution.md) and its
    [Engine binding](runtime-engine-outputs.md) now connect verified emit, actual
    shared Fuel and success-only publication. Complete immutable policy/grants,
-   accounting, bounded resumability, public controls and sinks. Deliver a useful
-   user-facing input -> validation/transform -> output example.
+   accounting, bounded resumability, public controls and sinks. The
+   [unframe example](../cli/configuration.md#validate-and-unwrap-a-binary-payload)
+   validates a versioned input and strips its header before publishing the payload.
 5. **Authority and host exchange: H01-H04, C01-C02/C04.** Add strict bounded
    project/policy/catalog/run loaders, source identities, ceilings/declarations/
    grants, typed TLV and a resumable host request/reply state machine. Start with

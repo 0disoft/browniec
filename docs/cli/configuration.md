@@ -366,6 +366,25 @@ $project = 'examples/projects/configured-output'
 The command returns 77 in `return_i32` and encodes the exact bytes passed to
 the entry in `output_b64`.
 
+### Validate and unwrap a binary payload
+
+The [unframe example](../../examples/projects/configured-output/unframe.brc)
+accepts a leading version byte of 1 followed by a nonempty payload. It emits
+just the payload and returns 1. An empty input, a missing payload or a different
+version returns 0 with empty output. Both results have process exit code 0,
+so check `return_i32` when deciding whether to accept the payload.
+
+```powershell
+$project = 'examples/projects/configured-output'
+$inputFile = Join-Path $env:TEMP ('brownie-frame-' + [guid]::NewGuid() + '.bin')
+[IO.File]::WriteAllBytes($inputFile, [byte[]](1, 0, 255, 10))
+./build/browniec.exe run --project "$project/unframe.json" --policy "$project/policy.json" --run "$project/run.json" --input $inputFile --json-v2
+Remove-Item -LiteralPath $inputFile
+```
+
+The successful result has `return_i32: 1` and `output_b64: "AP8K"`,
+which decodes to `00 FF 0A`.
+
 `inspect SOURCE --ir [--json]` uses the same explicit source selection and public
 admission as check. `--ir` is required once; Fuel and guest-input options do not
 apply. It never executes the Program or loads policy/catalog/grants. See
