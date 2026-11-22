@@ -230,6 +230,11 @@ fn Result<Program,diagnostics::Error> finish_verified(ref sources::Snapshot sour
     if(clock::expired(deadline)){return .err(absent(errors::absent(errors::deadline_kind(),0)));}
     let places::Requirement place=switch(places::requirement_with_compile_fuel(ref code.body,deadline,fuel)){case .ok(v):{v}case .err(e):{return .err(absent(e));}};
     if(clock::expired(deadline)){return .err(absent(errors::absent(errors::deadline_kind(),0)));}
+    let usize arity=code.body.arities[code.body.entry];
+    // One entry header and one formal visit in each of the record and array scans.
+    switch(budget::charge(fuel,1+2*arity,0)){
+        case .ok(_):{}case .err(e):{return .err(absent(e));}
+    };
     let usize work=switch(owned_calls::cost(ref code.body,code.body.entry,0)){case .ok(v):{v}case .err(e):{return .err(absent(e));}};
     if(clock::expired(deadline)){return .err(absent(errors::absent(errors::deadline_kind(),0)));}
     let bool aggregates=code.body.arrays.count!=0 || code.body.records.count!=0;
@@ -242,7 +247,7 @@ fn Result<Program,diagnostics::Error> finish_verified(ref sources::Snapshot sour
         case .ok(v):{v}case .err(e):{return .err(absent(e));}
     };
     let Preparation prepared=Preparation{.sites=proof.ordinary.statics,.origins=proof.ordinary.recipes.site_origins,.list=list,.place=place,
-        .work=work+code.body.arities[code.body.entry],.capacity=if(aggregates){65536}else{0},.scratch=scratch,.parameters=proof.parameters,.calls=calls};
+        .work=work+arity,.capacity=if(aggregates){65536}else{0},.scratch=scratch,.parameters=proof.parameters,.calls=calls};
     return retain(sources,code,image,input,emits,ref prepared,deadline,fuel);
 }
 fn Result<Program,diagnostics::Error> retain(ref sources::Snapshot sources,ref candidates::Program code,

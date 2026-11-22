@@ -2030,6 +2030,23 @@ Development and /O2 each passed 111 configured, 44 catalog and 17 process
 command cases with zero net handles and 460 matching input hashes.
 Local receipt: `build/restricted-worker/20261122T063532582920Z/receipt.json`.
 
+### Entry cost preparation Fuel
+
+After list and place preparation, configured output Programs reserve one
+compile Fuel unit for the verified entry header and two per formal for the
+record and array cost scans. The deadline check precedes the charge, and
+insufficient compile Fuel stops preparation before the scans and before
+retention. The cached guest execution price is unchanged.
+
+The zero-argument configured fixtures use one additional compile Fuel unit.
+For the shared-byte `unframe` entry, both Windows profiles returned 1 and
+sealed the input body at 4,494,400 compile Fuel, three more than the previous
+optimized build. At 4,494,399 each returned `compile_limit` without output.
+Both profiles passed 119 configured project, 47 catalog and 20 process
+command cases with zero net handles. Local receipts:
+`build/restricted-worker/20261122T134311521381Z/receipt.json` and
+`build/entry-plan-fuel-4jtc9xfc/receipt.json`.
+
 ## Windows verification
 
 Run `python -B tools/verify-restricted-worker.py`. The development and optimized
