@@ -1685,6 +1685,25 @@ without guest result or output. Windows development and /O2 each passed
 handles. All 460 verification input hashes matched.
 Local receipt: `build/restricted-worker/20261122T043706149659Z/receipt.json`.
 
+### Configured Program retention Fuel
+
+Configured scalar and shared-byte project compilation now prepays one
+unit for reserving the retained slot and one unit per 64-byte block of
+each fixed-width copy. The native layout query supplies the widths of the
+source snapshot and the stored Program, including its preparation
+metadata. The compiler checks for a stop before allocation and after
+each ownership operation. If a stop occurs, the unpublished owner is
+discarded.
+
+The Windows x64 reservation costs 382 Fuel: one slot reservation, 137
+blocks for the source snapshot copy, and 244 blocks for the stored Program
+copy. The two-module example returned 42 at 3,535,608 total compile Fuel.
+At 3,535,607 it returned `compile_limit` without guest result or output.
+Windows development and /O2 each passed 110 configured, 43 catalog, and
+17 process-command cases with zero net handles. All 460 verification
+input hashes matched.
+Local receipt: `build/restricted-worker/20261122T044713062925Z/receipt.json`.
+
 ## Windows verification
 
 Run `python -B tools/verify-restricted-worker.py`. The development and optimized

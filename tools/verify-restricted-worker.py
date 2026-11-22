@@ -125,6 +125,8 @@ def verify_configured_project(run, need, image, folder, env):
     policy['compile']['working_bytes'] = working
 
     compile_defaults = policy['compile'].copy()
+    # Windows x64 reserves one Vec and copies 137 snapshot and 244 Stored blocks.
+    retention_fuel = 1 + 137 + 244
     # Indexing prepays each source byte and one unit per scanner advance,
     # including each file's EOF. There are 44 non-EOF tokens in two files.
     index_fuel = policy['compile']['source_bytes'] + 44 + len(manifest['sources'])
@@ -151,7 +153,7 @@ def verify_configured_project(run, need, image, folder, env):
     capture_fuel = scratch_fuel + 4
     policy['compile']['fuel'] = capture_fuel
     check(3, 'compile_limit', 'check')
-    full_fuel = capture_fuel + 4
+    full_fuel = capture_fuel + 4 + retention_fuel
     policy['compile']['fuel'] = full_fuel - 1
     check(3, 'compile_limit')
     policy['compile']['fuel'] = full_fuel
@@ -182,7 +184,7 @@ def verify_configured_project(run, need, image, folder, env):
     math_file = target / 'src/math.brc'
     original_source = math_file.read_bytes()
     math_file.write_bytes(b'module util::math;pub fn i32 answer(){let i32 price=20+22;return price;}')
-    policy['compile'] = dict(compile_defaults, source_bytes=4096, fuel=3944712 + 208 - 1)
+    policy['compile'] = dict(compile_defaults, source_bytes=4096, fuel=3944712 + 208 + retention_fuel - 1)
     check(3, 'compile_limit')
     policy['compile']['fuel'] += 1
     check()
@@ -270,7 +272,7 @@ def verify_configured_project(run, need, image, folder, env):
                          b'switch(pick){case .some(v):{return v;}case .none:{return 0;}}}return 0;}')
     # 242 control Pratt advances and 42 assignment Pratt advances, plus two
     # post passes and a rewind of three registers and four 8-byte instructions.
-    control_fuel = 9069509 + 242 + 42 + 2 + 3 + 4 * 8
+    control_fuel = 9069509 + 242 + 42 + 2 + 3 + 4 * 8 + retention_fuel
     policy['compile'] = dict(compile_defaults, source_bytes=4096, fuel=control_fuel - 1)
     check(3, 'compile_limit')
     policy['compile']['fuel'] = control_fuel
@@ -283,7 +285,7 @@ def verify_configured_project(run, need, image, folder, env):
                           b'let Option<i32> pick=.some(n);'
                           b'return switch(pick){case .some(v):{v}case .none:{0}};}')
     # The shared balance now covers the nested value and statement continuations.
-    value_arm_fuel = 6968500 + 477
+    value_arm_fuel = 6968500 + 477 + retention_fuel
     policy['compile'] = dict(compile_defaults, source_bytes=4096, fuel=value_arm_fuel - 1)
     check(3, 'compile_limit')
     policy['compile']['fuel'] = value_arm_fuel
@@ -297,7 +299,7 @@ def verify_configured_project(run, need, image, folder, env):
                           b'var Pair p=Pair{.value=10};p.value+=1+1;((p).value)+=1+1;'
                           b'return a[1]+p.value;}')
     # Eight operands and both record targets add Pratt and path advances.
-    place_fuel = 10232871 + 245 + 167
+    place_fuel = 10232871 + 245 + 167 + retention_fuel
     policy['compile'] = dict(compile_defaults, source_bytes=4096, fuel=place_fuel - 1)
     check(3, 'compile_limit')
     policy['compile']['fuel'] = place_fuel
@@ -310,7 +312,7 @@ def verify_configured_project(run, need, image, folder, env):
                           b'var b=[0,0];b=([a[0]+a[1]-5;2]);'
                           b'return b[0]+b[1];}')
     # Literal classification, five operands and two list-pool passes add 494 units.
-    array_assignment_fuel = 8459031 + 494
+    array_assignment_fuel = 8459031 + 494 + retention_fuel
     policy['compile'] = dict(compile_defaults, source_bytes=4096, fuel=array_assignment_fuel - 1)
     check(3, 'compile_limit')
     policy['compile']['fuel'] = array_assignment_fuel
@@ -326,7 +328,7 @@ def verify_configured_project(run, need, image, folder, env):
                           b'let Outer q=p;p.child=(q).child;'
                           b'return p.child.value+p.extra;}')
     # Grouped destination, plain destination and aggregate source paths.
-    record_assignment_fuel = 9688554 + 274 + 10
+    record_assignment_fuel = 9688554 + 274 + 10 + retention_fuel
     policy['compile'] = dict(compile_defaults, source_bytes=4096, fuel=record_assignment_fuel - 1)
     check(3, 'compile_limit')
     policy['compile']['fuel'] = record_assignment_fuel
@@ -342,7 +344,7 @@ def verify_configured_project(run, need, image, folder, env):
                           b'var Pair p=Pair{.value=0};p=pair(a,4+2);'
                           b'return a[0]+p.value;}')
     # Captured CALL and scalar argument advances share the compile balance.
-    aggregate_call_fuel = 12055640 + 224 + 13
+    aggregate_call_fuel = 12055640 + 224 + 13 + retention_fuel
     policy['compile'] = dict(compile_defaults, source_bytes=4096, fuel=aggregate_call_fuel - 1)
     check(3, 'compile_limit')
     policy['compile']['fuel'] = aggregate_call_fuel
@@ -357,7 +359,7 @@ def verify_configured_project(run, need, image, folder, env):
                           b'out=gather(Box{.value=4+6},[3+5],[7+4;2],ref input[0+0..1+0]);'
                           b'return out[0];}')
     # Constructor, array literal and slice endpoint preparation use the caller's balance.
-    aggregate_actual_fuel = 11138028 + 344 + 8
+    aggregate_actual_fuel = 11138028 + 344 + 8 + retention_fuel
     policy['compile'] = dict(compile_defaults, source_bytes=4096, fuel=aggregate_actual_fuel - 1)
     check(3, 'compile_limit')
     policy['compile']['fuel'] = aggregate_actual_fuel
@@ -372,7 +374,7 @@ def verify_configured_project(run, need, image, folder, env):
                           b'var Box box=Box{.value=20};var out=[0];'
                           b'out=sum(((base)),a,(box));return out[0];}')
     # Grouped immutable lookup and mutable array and record snapshots.
-    owner_capture_fuel = 9819007 + 40
+    owner_capture_fuel = 9819007 + 40 + retention_fuel
     policy['compile'] = dict(compile_defaults, source_bytes=4096, fuel=owner_capture_fuel - 1)
     check(3, 'compile_limit')
     policy['compile']['fuel'] = owner_capture_fuel
@@ -554,7 +556,7 @@ def verify_configured_project(run, need, image, folder, env):
     entry.write_bytes(b'module app;pub fn i32 start(){let u8[5] data=[65,66,67,68,69];'
                       b'output::emit(ref data[1+1..4-1]);return 77;}')
     # The statement adds 14 token/emission units and 97 slice and operand advances.
-    range_fuel = 5005760 + 14 + 97
+    range_fuel = 5005760 + 14 + 97 + retention_fuel
     policy['compile']['fuel'] = range_fuel - 1
     check(3, 'compile_limit')
     policy['compile']['fuel'] = range_fuel
@@ -566,14 +568,14 @@ def verify_configured_project(run, need, image, folder, env):
     # 16-row catalog scans, one literal row and two visits to each text byte.
     # The emit statement spends 13 token stages and one unit before IR emission.
     # The named static view adds two three-stage lookups and two token stages.
-    text_fuel = 4780555 + 95 + 32 + 1 + 2 * len(text) + 14 + 8
+    text_fuel = 4780555 + 95 + 32 + 1 + 2 * len(text) + 14 + 8 + retention_fuel
     policy['compile']['fuel'] = text_fuel - 1
     check(3, 'compile_limit')
     policy['compile']['fuel'] = text_fuel
     check(value=77, output=text)
     entry.write_bytes(b'module app;pub fn i32 start(){'
                       b'output::emit(ref (text::bytes("ABCDE"))[1+1..4-1]);return 77;}')
-    static_range_fuel = 4571541 + 128
+    static_range_fuel = 4571541 + 128 + retention_fuel
     policy['compile']['fuel'] = static_range_fuel - 1
     check(3, 'compile_limit')
     policy['compile']['fuel'] = static_range_fuel

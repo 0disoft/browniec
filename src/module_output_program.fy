@@ -96,6 +96,8 @@ unsafe extern C fn u32 step_proof_raw(ptr mut void candidate,ptr void snapshot,p
 unsafe extern C fn u32 finish_proof_raw(ptr mut void candidate,ptr void snapshot,usize deadline,ptr mut void outgoing,ptr mut void failure);
 @link_name("bc_runtime_engine_binding")
 unsafe extern C fn void binding_raw(u32 number);
+@link_name("bc_runtime_engine_program_layout")
+unsafe extern C fn usize retention_layout_raw(u32 kind);
 
 pub fn usize proof_storage_bytes(ref ordinary::Lowered lowered){return unsafe{proof_storage_raw(lowered as ptr void)};}
 pub fn Result<usize,diagnostics::Error> begin_proof(ref mut ordinary::Lowered lowered,usize image_limit,bool input){
@@ -238,14 +240,26 @@ fn Result<Program,diagnostics::Error> finish_verified(ref sources::Snapshot sour
     };
     let Preparation prepared=Preparation{.sites=proof.ordinary.statics,.origins=proof.ordinary.recipes.site_origins,.list=list,.place=place,
         .work=work+code.body.arities[code.body.entry],.capacity=if(aggregates){65536}else{0},.scratch=scratch,.parameters=proof.parameters,.calls=calls};
-    if(clock::expired(deadline)){return .err(absent(errors::absent(errors::deadline_kind(),0)));}
-    return retain(sources,code,image,input,emits,ref prepared);
+    return retain(sources,code,image,input,emits,ref prepared,deadline,fuel);
 }
-fn Result<Program,diagnostics::Error> retain(ref sources::Snapshot sources,ref candidates::Program code,images::Image image,bool input,bool emits,ref Preparation prepared){
+fn Result<Program,diagnostics::Error> retain(ref sources::Snapshot sources,ref candidates::Program code,
+    images::Image image,bool input,bool emits,ref Preparation prepared,usize deadline,ref mut usize fuel){
+    if(clock::expired(deadline)){return .err(absent(errors::absent(errors::deadline_kind(),0)));}
+    // Charge one allocation and each 64-byte block of both fixed-width copies.
+    let usize snapshot_width=unsafe{retention_layout_raw(6)};
+    let usize stored_width=unsafe{retention_layout_raw(4)};
+    if(snapshot_width==0 || stored_width<snapshot_width){return .err(absent(errors::absent(5,0)));}
+    let usize work=1+(snapshot_width-1)/64+1+(stored_width-1)/64+1;
+    switch(budget::charge(fuel,work,0)){
+        case .ok(_):{}case .err(e):{return .err(absent(errors::absent(e.kind,0)));}
+    };
     var vec::Vec<Stored> retained=vec::empty<Stored>();
     if(!vec::reserve<Stored>(ref mut retained,1).is_ok){return .err(absent(errors::make(15,0)));}
+    if(clock::expired(deadline)){return .err(absent(errors::absent(errors::deadline_kind(),0)));}
     let sources::Snapshot snapshot=sources::duplicate(sources);
+    if(clock::expired(deadline)){return .err(absent(errors::absent(errors::deadline_kind(),0)));}
     if(!vec::push<Stored>(ref mut retained,Stored{.sources=snapshot,.code=*code,.image=image,.input=input,.emits=emits,.prepared=*prepared}).is_ok){return .err(absent(errors::make(15,0)));}
+    if(clock::expired(deadline)){return .err(absent(errors::absent(errors::deadline_kind(),0)));}
     return .ok(Program{.stored=retained});
 }
 fn ref Stored stored(ref Program p){return vec::at<Stored>(ref p.stored,0);}

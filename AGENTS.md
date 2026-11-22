@@ -1,5 +1,5 @@
-- Latest runtime checkpoint (2026-11-22): [Type quota scan Fuel](docs/engineering/restricted-worker.md#type-quota-scan-fuel)
-  charges and checks for a stop at each visited type metadata row.
+- Latest runtime checkpoint (2026-11-22): [Configured Program retention Fuel](docs/engineering/restricted-worker.md#configured-program-retention-fuel)
+  prepays the retained allocation and copies before publishing the Program.
 
 # Brownie C agent guidance
 
