@@ -8,6 +8,25 @@ Promote a known artifact through a deliberate release sequence and report what w
 
 Project-wide decisions: docs/ops/00-operational-contract.md
 
+## Local Windows CLI candidate
+
+Build the locked Windows release first. Assemble a candidate from that binary:
+
+```powershell
+python -B tools/package-windows.py --exe build/browniec.exe --output build/browniec-windows-x64.zip
+```
+
+The ZIP contains the x64 executable, `examples/answer.brc`, and
+`SHA256SUMS.txt`. The assembler reads back the archived files, checks each
+digest, and runs `check` and `run` from a fresh extraction. Both commands
+must exit 0 with empty stderr, and the run must return 77. The subprocesses
+receive only Windows system directories on PATH. The assembler prints the
+ZIP SHA-256 after the checks pass.
+
+This checks local execution on the packaging machine. Clean-machine
+verification and the license/dependency notices are separate delivery
+requirements. Candidate assembly uploads nothing.
+
 ## Required Decisions
 
 - Release unit: UNDECIDED. Define the version, artifact identity, included changes, destination, and owner of the promotion decision.

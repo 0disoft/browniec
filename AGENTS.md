@@ -1,5 +1,5 @@
-- Latest runtime checkpoint (2026-11-22): [Empty Instance baseline](docs/engineering/03-performance-budget.md#empty-instance-on-windows-2026-11-22)
-  measures 187,688 peak accounted bytes in Windows development and /O2.
+- Latest delivery checkpoint (2026-11-22): [Local Windows CLI candidate](docs/ops/release.md#local-windows-cli-candidate)
+  verifies the archived executable and quickstart result before publishing the ZIP locally.
 
 # Brownie C agent guidance
 
