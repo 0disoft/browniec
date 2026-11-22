@@ -1,5 +1,5 @@
-- Latest runtime checkpoint (2026-11-22): [Scalar reply comparisons](docs/engineering/embed-preview.md#scalar-reply-comparisons)
-  verifies exact scalar boundary replies and unchanged pending state on malformed input in both Windows builds.
+- Latest runtime checkpoint (2026-11-22): [Configured byte transform benchmark](docs/engineering/03-performance-budget.md#configured-byte-transform-on-windows-2026-11-22)
+  measures the direct and isolated CLI with exact output checks in both Windows builds.
 
 # Brownie C agent guidance
 

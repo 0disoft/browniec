@@ -162,3 +162,32 @@ python -B tools/verify-embed-loop-allocations.py build/embed-preview-io6zkobo
 ```
 
 The local allocation reports are in `build/embed-allocations-ofhf_qw8`.
+
+## Configured byte transform on Windows (2026-11-22)
+
+The [unframe project](../cli/configuration.md#validate-and-unwrap-a-binary-payload)
+checks a version byte and emits the 4,098-byte payload. The rejected case
+passes a different version with the same payload size and receives empty
+output. Each benchmark invocation ran 41 fresh CLI processes per case.
+Three invocations per profile used the same Windows host as above and the
+development and /O2 executables from the restricted worker verification
+receipt `build/restricted-worker/20261122T104554561349Z/receipt.json`.
+All 984 processes exited 0, wrote no stderr, and produced the expected JSON
+and output bytes.
+
+| Process | Development median | Development p95 | /O2 median | /O2 p95 |
+| --- | ---: | ---: | ---: | ---: |
+| Check | 60.121–60.600 | 70.068–77.327 | 49.477–50.286 | 63.342–66.065 |
+| Reject version | 62.462–63.695 | 72.734–77.684 | 52.472–52.963 | 60.624–63.624 |
+| Transform | 62.409–63.499 | 75.136–76.232 | 48.990–51.111 | 58.942–63.068 |
+| Isolated transform | 325.070–330.765 | 368.691–398.774 | 257.176–263.596 | 282.913–308.417 |
+
+Times are milliseconds, measured from before process creation to receipt of
+stdout/stderr and process exit. The OS cache remains warm. The isolated row
+includes Windows isolation setup, child startup, IPC, guest execution, output
+publication and reaping. Per-phase latency and process memory require separate
+probes.
+
+```powershell
+python -B tools/bench-cli-unframe.py --exe build/browniec.exe
+```
