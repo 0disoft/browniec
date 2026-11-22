@@ -63,6 +63,23 @@ fn ref str location_name(u8 location){
     if(location!=errors::absent_location()){return "source_byte";}
     return "none";
 }
+fn ref str scalar_type_name(u8 tag){
+    if(tag==1){return "i32";}
+    if(tag==2){return "bool";}
+    if(tag==9){return "i64";}
+    if(tag==10){return "u8";}
+    if(tag==11){return "u32";}
+    return "usize";
+}
+fn Result<usize,bytes::BufferError> encode_argument_types(ref mut bytes::Buffer out,errors::Error error){
+    discard bytes::append(out,b",\"expected_type\":\"")?;
+    discard bytes::append(out,text::as_bytes(scalar_type_name(error.expected)))?;
+    discard bytes::append(out,b"\",\"actual_type\":\"")?;
+    discard bytes::append(out,text::as_bytes(scalar_type_name(error.actual)))?;
+    discard bytes::append(out,b"\",\"related_location\":{\"kind\":\"source_byte\",\"offset\":")?;
+    discard bytes::append_usize(out,errors::related_offset(error))?;
+    return bytes::append(out,b"}");
+}
 fn Result<usize,bytes::BufferError> encode_location(ref mut bytes::Buffer output,Format format,errors::Error error,
     ref u8[] path,sources::Span span,sources::Position position){
     if(!v2(format)){
@@ -122,6 +139,7 @@ fn Result<bytes::Buffer, bytes::BufferError> encode(Format format,bool run,bool 
     if (failed) {
         let usize a = bytes::append(ref mut output, text::as_bytes(kind(error.kind)))?;
         let usize location=encode_location(ref mut output,format,error,path,span,position)?;
+        if(v2(format) && error.expected!=0){discard encode_argument_types(ref mut output,error)?;}
         let usize d = bytes::append(ref mut output, b"}")?;
     } else if (run) {
         let usize a = bytes::append_i64(ref mut output, value)?;
@@ -162,6 +180,13 @@ fn i32 command_outcome(Format format,bool run,bool eval,bool failed,i64 value,er
             let ref str label=if(instruction){" at instruction "}else{" at byte "};
             if(!io::write_stderr(label).is_ok || !io::write_stderr_usize(error.offset).is_ok){return 7;}
         }
+        if(error.expected!=0 &&
+            (!io::write_stderr(", expected ").is_ok ||
+             !io::write_stderr(scalar_type_name(error.expected)).is_ok ||
+             !io::write_stderr(", got ").is_ok ||
+             !io::write_stderr(scalar_type_name(error.actual)).is_ok ||
+             !io::write_stderr(", parameter declared at byte ").is_ok ||
+             !io::write_stderr_usize(errors::related_offset(error)).is_ok)){return 7;}
         if(!io::write_stderr("\n").is_ok){return 7;}
     } else if (run) {
         if (!io::write_stderr("return_i32=").is_ok || !io::write_stderr_i64(value).is_ok ||

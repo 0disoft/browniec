@@ -57,6 +57,34 @@ def check_diagnostic(exe, path, code, kind, location, text):
         assert type(v2['location']['offset']) is int, v2
 
 
+def check_argument_types(exe, directory):
+    path = directory / 'argument-types.brc'
+    declaration = b'module main;\nfn i32 price(i32 cents) { return cents; }\n'
+    for command, entry in (('check', b'main()'), ('eval-i32', b'evaluate(i32 ignored)')):
+        args = [command, path, *([0] if command == 'eval-i32' else [])]
+        body = b'fn i32 ' + entry + b' { let u32 cost = 1; return price(cost); }\n'
+        source = declaration + body
+        path.write_bytes(source)
+        call = source.index(b'price(cost)')
+        formal = source.index(b'cents')
+        ran = invoke(exe, args, 3)
+        assert not ran.stdout and ran.stderr.splitlines() == [
+            f'browniec: type at byte {call}, expected i32, got u32, parameter declared at byte {formal}'.encode()
+        ], ran
+        assert check_json(exe, args, 3) == {'kind': 'type', 'byte_offset': call}
+        assert check_json(exe, args, 3, version=2) == {
+            'kind': 'type', 'location': {'kind': 'source_byte', 'offset': call},
+            'expected_type': 'i32', 'actual_type': 'u32',
+            'related_location': {'kind': 'source_byte', 'offset': formal},
+        }
+
+    source = declaration + b'fn i32 main() { return price(); }\n'
+    path.write_bytes(source)
+    error = check_json(exe, ['check', path], 3, version=2)
+    assert error == {'kind': 'type', 'location': {'kind': 'source_byte', 'offset': source.index(b'price()')}}
+    print('PASS: scalar call argument types and declaration in text and JSON v2 with JSON v1 compatibility')
+
+
 def check_output_table(exe, identity, host_check, host_run, project_host_check, project_host_run,
                        adapter):
     subprocess.run([sys.executable, '-B', str(ROOT / 'tools/sync-cli-output.py'), '--check'],
@@ -1139,6 +1167,7 @@ def main():
         check_diagnostic(exe, missing, 7, 'input_io',
                          {'kind': 'none'}, b'browniec: input_io')
         print('PASS: source byte zero and absent location in text, JSON v1 and JSON v2')
+        check_argument_types(exe, Path(temp))
 
         for source, number, expected in (
             (shipping, 29999, 3000), (shipping, 30000, 0),

@@ -246,7 +246,15 @@ pub fn Result<bool,errors::Error> advance(ref u8[] source,ref mut lexer::State s
         if(w.used>=34){return .err(errors::make(4,s.begin));}
         let usize next=w.used;let u8 tag=if(f.count<f.arity){w.parameters[i*8+f.count]}else{0};
         w.frames[i].phase=23;w.frames[next]=frame(f.depth+1,1,tag);w.frames[next].environment=f.environment;w.used+=1;return .ok(false);}
-    if(f.phase==23){if(f.count>=f.arity || p.types[value]!=w.parameters[i*8+f.count]){return .err(errors::make(3,f.operand_at));}
+    if(f.phase==23){
+        if(f.count>=f.arity){return .err(errors::make(3,f.operand_at));}
+        let u8 expected=w.parameters[i*8+f.count];let u8 actual=p.types[value];
+        if(actual!=expected){
+            if(signatures.context.modules==0 && types::scalar(expected) && types::scalar(actual)){
+                return .err(errors::argument_type(f.operand_at,expected,actual,signatures.param_begins[f.target*8+f.count]));
+            }
+            return .err(errors::make(3,f.operand_at));
+        }
         w.arguments[i*8+f.count]=value;w.frames[i].count=f.count+1;w.frames[i].phase=24;return .ok(false);}
     if(f.phase==24){if(s.kind==41){w.frames[i].phase=27;return .ok(false);}return take(w,s,44,25);}
     if(f.phase==25){if(s.kind==41){return .err(errors::make(2,s.begin));}w.frames[i].phase=22;return .ok(false);}

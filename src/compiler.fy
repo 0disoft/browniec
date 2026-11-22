@@ -1263,7 +1263,14 @@ fn Result<usize,errors::Error> scalar_call(ref u8[] source,ref mut lexer::State 
         if(arity>=8){return .err(errors::make(4,s.begin));}
         let u8 tag=if(arity<signatures.arities[target]){signatures.param_types[target*8+arity]}else{0};
         arguments[arity]=expression(source,s,p,table,signatures,1,depth+1,tag,result_type,structure,loop_state)?;
-        if(arity>=signatures.arities[target] || p.types[arguments[arity]]!=tag){return .err(errors::make(3,at));}
+        if(arity>=signatures.arities[target]){return .err(errors::make(3,at));}
+        let u8 actual=p.types[arguments[arity]];
+        if(actual!=tag){
+            if(signatures.context.modules==0 && types::scalar(tag) && types::scalar(actual)){
+                return .err(errors::argument_type(at,tag,actual,signatures.param_begins[target*8+arity]));
+            }
+            return .err(errors::make(3,at));
+        }
         arity+=1;if(s.kind==41){break;}
         let usize comma=lexer::punctuation(source,s,44)?;if(s.kind==41){return .err(errors::make(2,s.begin));}
     }
