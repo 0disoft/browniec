@@ -121,14 +121,18 @@ pub fn Result<Span,Error> subspan(ref Snapshot p,Span parent,usize start,usize e
     if(start>end || end>parent.end-parent.start){return .err(.Bounds);}
     return .ok(Span{.source=parent.source,.start=parent.start+start,.end=parent.start+end});
 }
+// The prefix ends immediately before the position being reported.
+pub fn Position prefix_position(ref u8[] prefix){
+    var usize line=1;var usize column=1;var usize at=0;
+    while(at<prefix.len){if(prefix[at]==10){line+=1;column=1;}else{column+=1;}at+=1;}
+    return Position{.line=line,.byte_column=column};
+}
 // Positions count original UTF-8 bytes, not Unicode scalars. LF completes a
 // line break; CR in CRLF remains part of the previous line until that LF.
 pub fn Result<Position,Error> position(ref Snapshot p,Span span){
     let usize begin=selected(p,span)?;let ref Builder b=sources(p);
     let ref u8[] data=ref b.data;
-    var usize line=1;var usize column=1;var usize at=b.starts[span.source];
-    while(at<begin){if(data[at]==10){line+=1;column=1;}else{column+=1;}at+=1;}
-    return .ok(Position{.line=line,.byte_column=column});
+    return .ok(prefix_position(data[b.starts[span.source]..begin]));
 }
 
 // Explicit immutable copy, preserving original identities/bytes without retaining

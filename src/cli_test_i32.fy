@@ -105,7 +105,7 @@ fn i32 run_cases(ref vm::EvalCase[] cases,usize fuel){
     };
     let ref u8[] view=ref source.data;
     let program=switch(compiler::compile_eval_i32(view[..source.length])){
-        case .ok(v):{v} case .err(e):{return fail(e);}
+        case .ok(v):{v} case .err(e):{return render::source_failure(.Text,true,true,e,view[..source.length]);}
     };
     return switch(vm::test_i32(ref program,cases,fuel)){
         case .ok(count):{

@@ -62,20 +62,33 @@ def check_argument_types(exe, directory):
     declaration = b'module main;\nfn i32 price(i32 cents) { return cents; }\n'
     for command, entry in (('check', b'main()'), ('eval-i32', b'evaluate(i32 ignored)')):
         args = [command, path, *([0] if command == 'eval-i32' else [])]
-        body = b'fn i32 ' + entry + b' { let u32 cost = 1; return price(cost); }\n'
+        body = b'fn i32 ' + entry + ' { let u32 cost = 1; return /* 배송 */ price(cost); }\n'.encode()
         source = declaration + body
+        if command == 'eval-i32':
+            source = source.replace(b'\n', b'\r\n')
         path.write_bytes(source)
         call = source.index(b'price(cost)')
         formal = source.index(b'cents')
+        def position(offset):
+            return {
+                'line': source.count(b'\n', 0, offset) + 1,
+                'byte_column': offset - source.rfind(b'\n', 0, offset),
+            }
+
+        def described(offset):
+            point = position(offset)
+            return f"byte {offset} (line {point['line']}, byte column {point['byte_column']})"
+
         ran = invoke(exe, args, 3)
         assert not ran.stdout and ran.stderr.splitlines() == [
-            f'browniec: type at byte {call}, expected i32, got u32, parameter declared at byte {formal}'.encode()
+            (f'browniec: type at {described(call)}, expected i32, got u32, '
+             f'parameter declared at {described(formal)}').encode()
         ], ran
         assert check_json(exe, args, 3) == {'kind': 'type', 'byte_offset': call}
         assert check_json(exe, args, 3, version=2) == {
-            'kind': 'type', 'location': {'kind': 'source_byte', 'offset': call},
+            'kind': 'type', 'location': {'kind': 'source_byte', 'offset': call, **position(call)},
             'expected_type': 'i32', 'actual_type': 'u32',
-            'related_location': {'kind': 'source_byte', 'offset': formal},
+            'related_location': {'kind': 'source_byte', 'offset': formal, **position(formal)},
         }
 
     source = declaration + b'fn i32 main() { return price(); }\n'

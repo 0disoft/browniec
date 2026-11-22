@@ -91,9 +91,10 @@ labels source bytes and instruction indices explicitly and omits absent location
 
 For an ordinary single-file scalar call with the wrong scalar argument type,
 text diagnostics show the expected and actual types and the parameter
-declaration byte offset. JSON v2 adds `expected_type`, `actual_type` and
+declaration location. JSON v2 adds `expected_type`, `actual_type` and
 `related_location` to the error object. The primary location points to the
 call, and the related location points to the parameter name in that file.
+Both include a zero-based byte offset and one-based line and byte column.
 JSON v1 preserves the original `type` error and call byte offset.
 
 For check/run/eval-i32, text mode leaves stdout empty and writes checked status, return_i32, or diagnostics

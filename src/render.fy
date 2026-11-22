@@ -71,13 +71,26 @@ fn ref str scalar_type_name(u8 tag){
     if(tag==11){return "u32";}
     return "usize";
 }
-fn Result<usize,bytes::BufferError> encode_argument_types(ref mut bytes::Buffer out,errors::Error error){
+struct Positions { sources::Position primary; sources::Position related; }
+fn Positions no_positions(){
+    let sources::Position absent=sources::Position{.line=0,.byte_column=0};
+    return Positions{.primary=absent,.related=absent};
+}
+fn Result<usize,bytes::BufferError> encode_position(ref mut bytes::Buffer out,sources::Position position){
+    if(position.line==0){return .ok(0);}
+    discard bytes::append(out,b",\"line\":")?;
+    discard bytes::append_usize(out,position.line)?;
+    discard bytes::append(out,b",\"byte_column\":")?;
+    return bytes::append_usize(out,position.byte_column);
+}
+fn Result<usize,bytes::BufferError> encode_argument_types(ref mut bytes::Buffer out,errors::Error error,sources::Position related){
     discard bytes::append(out,b",\"expected_type\":\"")?;
     discard bytes::append(out,text::as_bytes(scalar_type_name(error.expected)))?;
     discard bytes::append(out,b"\",\"actual_type\":\"")?;
     discard bytes::append(out,text::as_bytes(scalar_type_name(error.actual)))?;
     discard bytes::append(out,b"\",\"related_location\":{\"kind\":\"source_byte\",\"offset\":")?;
     discard bytes::append_usize(out,errors::related_offset(error))?;
+    discard encode_position(out,related)?;
     return bytes::append(out,b"}");
 }
 fn Result<usize,bytes::BufferError> encode_location(ref mut bytes::Buffer output,Format format,errors::Error error,
@@ -98,17 +111,14 @@ fn Result<usize,bytes::BufferError> encode_location(ref mut bytes::Buffer output
             discard bytes::append_usize(output,span.source)?;
             discard bytes::append(output,b",\"end_offset\":")?;
             discard bytes::append_usize(output,span.end)?;
-            discard bytes::append(output,b",\"line\":")?;
-            discard bytes::append_usize(output,position.line)?;
-            discard bytes::append(output,b",\"byte_column\":")?;
-            discard bytes::append_usize(output,position.byte_column)?;
         }
+        discard encode_position(output,position)?;
         return bytes::append(output,b"}");
     }
     return bytes::append(output,b"\"}");
 }
 fn Result<bytes::Buffer, bytes::BufferError> encode(Format format,bool run,bool eval,bool failed,i64 value,
-    errors::Error error,u8 arrays,ref u8[] path,sources::Span span,sources::Position position,
+    errors::Error error,u8 arrays,ref u8[] path,sources::Span span,Positions positions,
     bool with_output,ref u8[] payload){
     let usize encoded=base64::encoded_bytes(payload.len);
     var bytes::Buffer output=bytes::with_capacity(512+encoded)?;
@@ -138,8 +148,8 @@ fn Result<bytes::Buffer, bytes::BufferError> encode(Format format,bool run,bool 
         else { b",\"status\":\"checked\",\"return_i32\":null,\"error\":null" })?;
     if (failed) {
         let usize a = bytes::append(ref mut output, text::as_bytes(kind(error.kind)))?;
-        let usize location=encode_location(ref mut output,format,error,path,span,position)?;
-        if(v2(format) && error.expected!=0){discard encode_argument_types(ref mut output,error)?;}
+        let usize location=encode_location(ref mut output,format,error,path,span,positions.primary)?;
+        if(v2(format) && error.expected!=0){discard encode_argument_types(ref mut output,error,positions.related)?;}
         let usize d = bytes::append(ref mut output, b"}")?;
     } else if (run) {
         let usize a = bytes::append_i64(ref mut output, value)?;
@@ -160,25 +170,43 @@ pub fn i32 outcome(bool json, bool run, bool failed, i64 value, errors::Error er
 }
 @effects(console)
 pub fn i32 selected_outcome(Format format, bool run, bool failed, i64 value, errors::Error error, u8 arrays) {
-    return command_outcome(format,run,false,failed,value,error,arrays);
+    return command_outcome(format,run,false,failed,value,error,arrays,no_positions());
 }
 @effects(console)
 pub fn i32 eval_outcome(Format format,bool failed,i64 value,errors::Error error){
-    return command_outcome(format,true,true,failed,value,error,0);
+    return command_outcome(format,true,true,failed,value,error,0,no_positions());
 }
 @effects(console)
-fn i32 command_outcome(Format format,bool run,bool eval,bool failed,i64 value,errors::Error error,u8 arrays){
+pub fn i32 source_failure(Format format,bool run,bool eval,errors::Error error,ref u8[] source){
+    var Positions positions=no_positions();
+    if(v2(format) || text_mode(format)){
+        let usize related=errors::related_offset(error);
+        if(error.expected!=0 && error.offset<=source.len && related<=source.len){
+            positions.primary=sources::prefix_position(source[..error.offset]);
+            positions.related=sources::prefix_position(source[..related]);
+        }
+    }
+    return command_outcome(format,run,eval,true,0,error,0,positions);
+}
+@effects(console)
+fn bool write_position(sources::Position position){
+    return position.line==0 || (io::write_stderr(" (line ").is_ok &&
+        io::write_stderr_usize(position.line).is_ok && io::write_stderr(", byte column ").is_ok &&
+        io::write_stderr_usize(position.byte_column).is_ok && io::write_stderr(")").is_ok);
+}
+@effects(console)
+fn i32 command_outcome(Format format,bool run,bool eval,bool failed,i64 value,errors::Error error,u8 arrays,Positions positions){
     let i32 code = if (failed) { exit_code(error.kind) } else { 0 };
     if (!text_mode(format)) {
-        return json_outcome(format,run,eval,failed,value,error,arrays,b"",sources::no_source(),
-            sources::Position{.line=0,.byte_column=0});
+        return json_outcome(format,run,eval,failed,value,error,arrays,b"",sources::no_source(),positions);
     }
     if (failed) {
         if(!io::write_stderr("browniec: ").is_ok || !io::write_stderr(kind(error.kind)).is_ok){return 7;}
         if(has_location(error.location)){
             let bool instruction=error.location==errors::instruction_location();
             let ref str label=if(instruction){" at instruction "}else{" at byte "};
-            if(!io::write_stderr(label).is_ok || !io::write_stderr_usize(error.offset).is_ok){return 7;}
+            if(!io::write_stderr(label).is_ok || !io::write_stderr_usize(error.offset).is_ok ||
+                !write_position(positions.primary)){return 7;}
         }
         if(error.expected!=0 &&
             (!io::write_stderr(", expected ").is_ok ||
@@ -186,7 +214,8 @@ fn i32 command_outcome(Format format,bool run,bool eval,bool failed,i64 value,er
              !io::write_stderr(", got ").is_ok ||
              !io::write_stderr(scalar_type_name(error.actual)).is_ok ||
              !io::write_stderr(", parameter declared at byte ").is_ok ||
-             !io::write_stderr_usize(errors::related_offset(error)).is_ok)){return 7;}
+             !io::write_stderr_usize(errors::related_offset(error)).is_ok ||
+             !write_position(positions.related))){return 7;}
         if(!io::write_stderr("\n").is_ok){return 7;}
     } else if (run) {
         if (!io::write_stderr("return_i32=").is_ok || !io::write_stderr_i64(value).is_ok ||
@@ -197,8 +226,8 @@ fn i32 command_outcome(Format format,bool run,bool eval,bool failed,i64 value,er
 
 @effects(console)
 fn i32 json_outcome(Format format,bool run,bool eval,bool failed,i64 value,errors::Error error,u8 arrays,
-    ref u8[] path,sources::Span span,sources::Position position){
-    let bytes::Buffer output=switch(encode(format,run,eval,failed,value,error,arrays,path,span,position,false,b"")){
+    ref u8[] path,sources::Span span,Positions positions){
+    let bytes::Buffer output=switch(encode(format,run,eval,failed,value,error,arrays,path,span,positions,false,b"")){
         case .ok(v):{v}case .err(_):{return 7;}
     };
     return write_result(ref output,if(failed){exit_code(error.kind)}else{0});
@@ -223,7 +252,7 @@ pub fn i32 published_output_profile(Format format,i64 value,ref u8[] payload,u8 
     if(text_mode(format)){return selected_outcome(format,true,true,0,errors::absent(10,0),profile);}
     if(payload.len>output_limits::hard_limit()){return 7;}
     let bytes::Buffer output=switch(encode(format,true,false,false,value,errors::absent(0,0),profile,b"",
-        sources::no_source(),sources::Position{.line=0,.byte_column=0},true,payload)){
+        sources::no_source(),no_positions(),true,payload)){
         case .ok(v):{v}case .err(_):{return 7;}
     };
     return write_result(ref output,0);
@@ -257,7 +286,10 @@ pub fn i32 project_failure(Format format,bool run,errors::Error error,ref source
     // Canonical member spellings exclude delimiters, terminal controls and newlines.
     if(!names::member_path(path)){return selected_outcome(format,run,true,0,absent,arrays);}
     let errors::Error located=errors::make(error.kind,span.start);
-    if(v2(format)){return json_outcome(format,run,false,true,0,located,arrays,path,span,position);}
+    if(v2(format)){
+        var Positions positions=no_positions();positions.primary=position;
+        return json_outcome(format,run,false,true,0,located,arrays,path,span,positions);
+    }
     if(!text_mode(format)){return selected_outcome(format,run,true,0,located,arrays);}
     let bytes::Buffer output=switch(project_message(path,located,position)){
         case .ok(v):{v}case .err(_):{return 7;}

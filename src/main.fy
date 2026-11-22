@@ -221,7 +221,7 @@ fn i32 main() {
 @effects(console)
 fn i32 legacy_source(ref u8[] source,render::Format format,bool run,usize fuel){
     let program=switch(compiler::compile(source)){
-        case .ok(v):{v}case .err(e):{return render::selected_outcome(format,run,true,0,e,0);}
+        case .ok(v):{v}case .err(e):{return render::source_failure(format,run,false,e,source);}
     };
     let u8 profile=arrays::profile(ref program);
     if(!run){
@@ -272,7 +272,7 @@ fn i32 evaluate(i64 argument,render::Format format,usize fuel){
     };
     let ref u8[] view=ref source.data;
     let ir::Program p=switch(compiler::compile_eval_i32(view[..source.length])){
-        case .ok(v):{v}case .err(e):{return render::eval_outcome(format,true,0,e);}
+        case .ok(v):{v}case .err(e):{return render::source_failure(format,true,true,e,view[..source.length]);}
     };
     return switch(vm::eval_i32(ref p,argument,fuel)){
         case .ok(v):{render::eval_outcome(format,false,v,errors::absent(0,0))}
