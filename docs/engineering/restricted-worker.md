@@ -210,6 +210,15 @@ the session, and the concurrent case returned the two charges independently.
 All 459 input hashes matched, with zero net handles in both profiles.
 Local receipt: `build/restricted-worker/20261122T030843004759Z/receipt.json`.
 
+Every broker session also reserves the Windows attribute list used to
+launch its AppContainer worker. Admission and launch use the same sizing
+query for the security capabilities, inherited handles, and Job attributes.
+The reservation is held through session close. Windows development and
+/O2 each denied admission one byte below the combined parent charge before
+opening handles, admitted the exact charge, and returned it on close. Both
+profiles reported zero net handles, and all 459 input hashes matched.
+Local receipt: `build/restricted-worker/20261122T031730614162Z/receipt.json`.
+
 ### Phase deadlines
 
 The broker starts the startup window before opening handles and requires

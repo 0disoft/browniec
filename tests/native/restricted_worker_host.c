@@ -23,6 +23,7 @@ static PSID profile;
 static bc_worker_pipes pipes;
 static HANDLE decoy;
 static bc_restricted_worker worker;
+static SIZE_T worker_launch_heap;
 
 static void check(BOOL ok, const char *what) {
     if (!ok) {
@@ -746,7 +747,7 @@ static void verify_broker(const wchar_t *path, const wchar_t *directory,
     const uint8_t request = 41;
     uint8_t result = 0;
     const size_t wire = 5 * BC_WORKER_FRAME_BYTES + 3;
-    const bc_worker_broker_amounts charge = {1, sizeof(broker) + 2, commit_limit, wire, 0, 2};
+    const bc_worker_broker_amounts charge = {1, sizeof(broker) + 2 + worker_launch_heap, commit_limit, wire, 0, 2};
     bc_worker_broker_budget budget = {.limit = charge};
     const bool idle_expiry = !wcscmp(mode, L"--child-stalled-result");
     const bool cancel_at_expiry = expected == BC_WORKER_GATE_EXPIRED && !idle_expiry;
@@ -766,6 +767,12 @@ static void verify_broker(const wchar_t *path, const wchar_t *directory,
     check(bc_worker_broker_start(&broker, &run) == ERROR_NOT_ENOUGH_QUOTA &&
         !broker.worker.process && !broker.io.event, "wire capacity one byte short rejects before launch");
     run.wire_limit = wire;
+    --budget.limit.parent_bytes;
+    check(bc_worker_broker_start(&broker, &run) == ERROR_NOT_ENOUGH_QUOTA &&
+        !broker.worker.process && !broker.io.event && !broker.cancel_io.event &&
+        same_charge(budget.reserved, (bc_worker_broker_amounts){0}),
+        "short worker launch heap quota denies admission before opening handles");
+    ++budget.limit.parent_bytes;
     const DWORD status = bc_worker_broker_start(&broker, &run);
     SetLastError(status);
     check(status == ERROR_SUCCESS && same_charge(budget.reserved, charge),
@@ -872,7 +879,7 @@ static void verify_host_broker(const wchar_t *path, const wchar_t *directory,
     const size_t wire = 5 * BC_WORKER_FRAME_BYTES + start_length + 2 +
         max_calls * (2 * BC_WORKER_FRAME_BYTES + sizeof(request) + sizeof(reply));
     const bc_worker_broker_amounts charge = {1, sizeof(broker) + start_length + 1 +
-        sizeof(request) + sizeof(reply), commit_limit, wire, 0, 2};
+        sizeof(request) + sizeof(reply) + worker_launch_heap, commit_limit, wire, 0, 2};
     bc_worker_broker_budget budget = {.limit = charge};
     bc_worker_broker_run run = {
         .budget = &budget, .application = path, .command_line = command, .directory = directory,
@@ -980,7 +987,8 @@ static void verify_deferred_adapter(const wchar_t *path, const wchar_t *director
         calls * (2 * BC_WORKER_FRAME_BYTES + sizeof(request) + sizeof(reply));
     bc_worker_broker broker = {0};
     deferred_fixture fixture = {.hold_close = !success};
-    const bc_worker_broker_amounts charge = {1, sizeof(broker) + 3 + sizeof(reply), commit_limit, wire, 1, 2};
+    const bc_worker_broker_amounts charge = {1, sizeof(broker) + 3 + sizeof(reply) + worker_launch_heap,
+        commit_limit, wire, 1, 2};
     bc_worker_broker_budget budget = {.limit = charge};
     const bc_worker_host_adapter adapter = {deferred_begin, deferred_poll, deferred_close, 0};
     wchar_t command[256];
@@ -1074,7 +1082,8 @@ static void verify_graceful_cancel(const wchar_t *path, const wchar_t *directory
     uint8_t result = 0;
     const size_t request_length = ignore ? 1 : sizeof(request);
     const size_t wire = 5 * BC_WORKER_FRAME_BYTES + request_length + 2;
-    const bc_worker_broker_amounts charge = {1, sizeof(broker) + request_length + 1, commit_limit, wire, 0, 2};
+    const bc_worker_broker_amounts charge = {1, sizeof(broker) + request_length + 1 + worker_launch_heap,
+        commit_limit, wire, 0, 2};
     bc_worker_broker_budget budget = {.limit = charge};
     const bc_worker_broker_run run = {
         .budget = &budget, .application = path, .command_line = command, .directory = directory,
@@ -1142,7 +1151,7 @@ static void verify_guest_exchange(const wchar_t *path, const wchar_t *directory,
     uint8_t result[256];
     const size_t wire = 5 * BC_WORKER_FRAME_BYTES + request_length + sizeof(result) + 1;
     const bc_worker_broker_amounts charge = {
-        1, sizeof(broker) + request_length + sizeof(result), commit_limit, wire, 0, 2
+        1, sizeof(broker) + request_length + sizeof(result) + worker_launch_heap, commit_limit, wire, 0, 2
     };
     bc_worker_broker_budget budget = {.limit = charge};
     wchar_t scalar_command[] = L"worker --internal-scalar-worker";
@@ -1293,7 +1302,7 @@ static void verify_catalog_host_stop(const wchar_t *path, const wchar_t *directo
     const size_t wire = 5 * BC_WORKER_FRAME_BYTES + size + sizeof(result) + 1 +
         2 * (2 * BC_WORKER_FRAME_BYTES + sizeof(request) + sizeof(reply));
     const bc_worker_broker_amounts charge = {1,
-        sizeof(broker) + size + sizeof(result) + sizeof(request) + sizeof(reply),
+        sizeof(broker) + size + sizeof(result) + sizeof(request) + sizeof(reply) + worker_launch_heap,
         commit_limit, wire, 0, 2};
     bc_worker_broker_budget budget = {.limit = charge};
     unsigned calls = 0;
@@ -1528,7 +1537,7 @@ static void verify_catalog_process(const wchar_t *path, const wchar_t *directory
     const size_t wire = 5 * BC_WORKER_FRAME_BYTES + size + sizeof(result) + 1 +
         2 * (2 * BC_WORKER_FRAME_BYTES + sizeof(request) + sizeof(reply) + adapter_wire);
     const bc_worker_broker_amounts charge = {1,
-        sizeof(broker) + size + sizeof(result) + sizeof(request) + sizeof(reply) + adapter_heap,
+        sizeof(broker) + size + sizeof(result) + sizeof(request) + sizeof(reply) + worker_launch_heap + adapter_heap,
         commit_limit, wire, 1, 3};
     bc_worker_broker_budget budget = {.limit = charge};
     wchar_t command[] = L"worker --internal-project-worker";
@@ -1670,6 +1679,9 @@ int wmain(int argc, wchar_t **argv) {
     if (argc == 3 && !wcscmp(argv[1], L"--child-peer-ok")) return production_peer(false);
     if (argc == 3 && !wcscmp(argv[1], L"--child-peer-cancel")) return production_peer(true);
     check((argc == 2 || argc == 3) && atexit(cleanup) == 0, "parent fixture arguments");
+    InitializeProcThreadAttributeList(NULL, 3, 0, &worker_launch_heap);
+    check(worker_launch_heap && worker_launch_heap == bc_restricted_worker_launch_heap_bytes(),
+        "reserve the Windows size of the worker's three launch attributes");
     verify_frames();
     verify_stream();
     DWORD cold = 0, baseline = 0, final = 0;

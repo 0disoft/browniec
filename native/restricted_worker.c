@@ -54,18 +54,25 @@ static DWORD worker_environment(wchar_t *block, DWORD capacity) {
     return ERROR_SUCCESS;
 }
 
+enum { worker_launch_attribute_count = 3 };
+
+SIZE_T bc_restricted_worker_launch_heap_bytes(void) {
+    SIZE_T size = 0;
+    InitializeProcThreadAttributeList(NULL, worker_launch_attribute_count, 0, &size);
+    return size;
+}
+
 static DWORD create_suspended(HANDLE job, PSID sid, HANDLE child[3],
     const wchar_t *application, wchar_t *command_line, const wchar_t *directory,
     PROCESS_INFORMATION *process) {
     wchar_t environment[8192];
     DWORD error = worker_environment(environment, _countof(environment));
     if (error) return error;
-    SIZE_T size = 0;
-    InitializeProcThreadAttributeList(NULL, 3, 0, &size);
+    SIZE_T size = bc_restricted_worker_launch_heap_bytes();
     if (!size) return GetLastError();
     LPPROC_THREAD_ATTRIBUTE_LIST attrs = HeapAlloc(GetProcessHeap(), 0, size);
     if (!attrs) return ERROR_NOT_ENOUGH_MEMORY;
-    const BOOL initialized = InitializeProcThreadAttributeList(attrs, 3, 0, &size);
+    const BOOL initialized = InitializeProcThreadAttributeList(attrs, worker_launch_attribute_count, 0, &size);
     SECURITY_CAPABILITIES capabilities = {.AppContainerSid = sid};
     STARTUPINFOEXW startup = {0};
     startup.StartupInfo.cb = sizeof(startup);

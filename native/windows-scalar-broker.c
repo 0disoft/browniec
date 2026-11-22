@@ -134,7 +134,7 @@ static uint32_t run_broker(PSID sid, const wchar_t *image, const wchar_t *direct
         limits->commit_bytes, limits->transport_bytes, exchange->adapter ? 1 : 0,
         BC_WORKER_BROKER_IO_SLOTS + (exchange->adapter ? (size_t)exchange->adapter->io_slots : 0)}};
     budget.limit.parent_bytes += exchange->host.request_capacity + exchange->host.reply_capacity +
-        exchange->adapter_parent_bytes;
+        exchange->adapter_parent_bytes + bc_restricted_worker_launch_heap_bytes();
     wchar_t scalar_command[] = L"browniec --internal-scalar-worker";
     wchar_t project_command[] = L"browniec --internal-project-worker";
     const bc_worker_broker_run config = {

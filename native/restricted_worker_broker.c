@@ -92,12 +92,15 @@ DWORD bc_worker_broker_start(bc_worker_broker *b, const bc_worker_broker_run *ru
     wire += run->adapter_wire_bytes;
     const size_t parent = sizeof(*b) + run->request_length + run->result_capacity +
         host.request_capacity + host.reply_capacity;
-    if (run->adapter_parent_bytes > SIZE_MAX - parent) return ERROR_NOT_ENOUGH_QUOTA;
+    const size_t launch_heap = bc_restricted_worker_launch_heap_bytes();
+    if (!launch_heap) return ERROR_INVALID_DATA;
+    if (launch_heap > SIZE_MAX - parent || run->adapter_parent_bytes > SIZE_MAX - parent - launch_heap)
+        return ERROR_NOT_ENOUGH_QUOTA;
     const uint64_t now = now_ticks();
     if (now >= run->deadline) return ERROR_TIMEOUT;
     const bc_worker_broker_amounts charge = {
         .sessions = 1,
-        .parent_bytes = parent + run->adapter_parent_bytes,
+        .parent_bytes = parent + launch_heap + run->adapter_parent_bytes,
         .child_commit_bytes = run->commit_bytes,
         .wire_bytes = wire,
         .adapter_slots = adapter ? 1 : 0,
