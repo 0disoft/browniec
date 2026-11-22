@@ -57,6 +57,13 @@ def main():
         raise RuntimeError('Pinned Fairy compiler differs from the Engine transport contract')
     out = Path(mkdtemp(prefix='embed-preview-', dir=ROOT / 'build'))
     print(f'Artifacts: {out}', flush=True)
+    headers = out / 'include'
+    headers.mkdir()
+    header_hashes = {}
+    for name in ('brownie.h', 'brownie_preview.h'):
+        data = (ROOT / 'include' / name).read_bytes()
+        (headers / name).write_bytes(data)
+        header_hashes[name] = hashlib.sha256(data).hexdigest()
 
     engine = out / 'engine'
     shutil.copytree(ROOT / 'src', engine / 'src')
@@ -93,7 +100,7 @@ def main():
 
     probe = load_tool('verify-runtime-store-probe')
     cl, env, _ = probe.native_environment(subprocess.check_output)
-    includes = ['/I' + str(path) for path in (ROOT, ROOT/'native', ROOT/'include',
+    includes = ['/I' + str(path) for path in (ROOT, ROOT/'native', headers,
                                              ROOT/'native/runtime-engine', out)]
     sources = [('preview', out/'preview.c', []), ('runtime', out/'runtime.c', []),
                ('registry', ROOT/'native/abi_registry.c', ['/Dfy_runtime_trap=bc_registry_trap',
@@ -104,6 +111,7 @@ def main():
                ('adapter', ROOT/'native/host_adapter_process.c', [])]
     profiles = ['development', 'optimized'] if args.profile == 'all' else [args.profile]
     results = {}
+    library_hashes = {}
     for profile in profiles:
         folder = out / profile
         folder.mkdir()
@@ -146,7 +154,13 @@ def main():
         for args in ([], ['incompatible']):
             subprocess.run([process_host, *args], cwd=folder, check=True, timeout=30)
         results[profile] = hashlib.sha256(dll.read_bytes()).hexdigest()
-    write(out / 'receipt.json', json.dumps({'compilerSha256': digest, 'dllSha256': results}, indent=2) + '\n')
+        library_hashes[profile] = hashlib.sha256((folder / 'brownie-preview.lib').read_bytes()).hexdigest()
+    write(out / 'receipt.json', json.dumps({
+        'compilerSha256': digest,
+        'dllSha256': results,
+        'importLibrarySha256': library_hashes,
+        'headerSha256': header_hashes,
+    }, indent=2) + '\n')
 
 
 if __name__ == '__main__':

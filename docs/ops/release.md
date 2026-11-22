@@ -24,12 +24,12 @@ receive only Windows system directories on PATH. The assembler prints the
 ZIP SHA-256 after the checks pass.
 
 To include the embedding preview, pass `--embed` with a profile directory
-produced by `python -B tools/build-embed-preview.py`. Use the matching local
-checkout for the C headers. The candidate adds the DLL, MSVC import library
-and both headers under `embed/`. The assembler checks the DLL against the
-build receipt and runs the profile's C host against the extracted DLL with
-the same system-only PATH. The host and its test configurations are local
-test inputs and stay outside the ZIP.
+produced by `python -B tools/build-embed-preview.py`. The candidate adds the DLL,
+MSVC import library and the exact header copies used to compile the DLL and
+its C host. The assembler checks all four files against the build receipt
+and runs the profile's C host against the extracted DLL with the same
+system-only PATH. Rebuild older profiles to get a receipt with all four
+hashes. The host and its test configurations stay outside the ZIP.
 
 This checks local execution on the packaging machine. Clean-machine
 verification and the license/dependency notices are separate delivery

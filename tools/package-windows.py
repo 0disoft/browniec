@@ -90,16 +90,22 @@ def smoke(directory):
 
 def embed_files(profile):
     receipt = json.loads((profile.parent / "receipt.json").read_bytes())
+    if "importLibrarySha256" not in receipt or "headerSha256" not in receipt:
+        raise ValueError("Rebuild the embedding preview to obtain a receipt for the import library and headers")
     dll = (profile / "brownie-preview.dll").read_bytes()
     require_windows_x64(dll, dll=True)
     if receipt["dllSha256"].get(profile.name) != sha256(dll):
         raise ValueError("Embedding DLL does not match its build receipt")
-    return {
-        "embed/brownie-preview.dll": dll,
-        "embed/brownie-preview.lib": (profile / "brownie-preview.lib").read_bytes(),
-        "embed/include/brownie.h": (ROOT / "include/brownie.h").read_bytes(),
-        "embed/include/brownie_preview.h": (ROOT / "include/brownie_preview.h").read_bytes(),
-    }
+    library = (profile / "brownie-preview.lib").read_bytes()
+    if receipt["importLibrarySha256"].get(profile.name) != sha256(library):
+        raise ValueError("Embedding import library does not match its build receipt")
+    files = {"embed/brownie-preview.dll": dll, "embed/brownie-preview.lib": library}
+    for name in ("brownie.h", "brownie_preview.h"):
+        header = (profile.parent / "include" / name).read_bytes()
+        if receipt["headerSha256"].get(name) != sha256(header):
+            raise ValueError(f"Embedding header {name} does not match its build receipt")
+        files[f"embed/include/{name}"] = header
+    return files
 
 
 def smoke_embed(profile, directory):
