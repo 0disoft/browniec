@@ -1,5 +1,6 @@
 module worker_scalar_broker;
 
+import anchored_source_loader as anchored;
 import cli_input as input;
 import errors as errors;
 import fuel as fuel;
@@ -37,10 +38,31 @@ pub fn i32 execute(bool external_profile){
         };
         if(profile_length==0){return report(run,errors::absent(11,0));}
     }
-    let input::Source source=switch(input::read_source(operation_at+1)){
+    let input::Source source=switch(read_source(operation_at+1)){
         case .ok(v):{v}case .err(e):{return report(run,e);}
     };
     return invoke(ref profile[..profile_length],ref source,run);
+}
+
+// Use the same explicit local-file acquisition as project manifests.
+fn Result<input::Source,errors::Error> read_source(usize argument){
+    var u8[3072] path=[0;3072];
+    let usize size=switch(process::arg(argument,ref mut path)){
+        case .ok(v):{v}case .err(_):{return .err(errors::absent(9,0));}
+    };
+    var input::Source source=input::Source{.data=[0;4096],.length=0};
+    let anchored::Root root=switch(anchored::open_project(ref path[..size],ref mut source.data[..])){
+        case .ok(v):{v}
+        case .err(e):{
+            return .err(switch(e){
+                case .Limit:{errors::make(4,4096)}
+                case .Allocation:{errors::absent(15,0)}
+                case .Input:{errors::absent(9,0)}
+            });
+        }
+    };
+    source.length=anchored::manifest_bytes(ref root);
+    return .ok(source);
 }
 
 @effects(console)

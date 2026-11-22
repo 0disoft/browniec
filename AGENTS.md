@@ -1,5 +1,5 @@
-- Latest runtime checkpoint (2026-11-22): [Broker-only scalar command](docs/engineering/restricted-worker.md#broker-only-scalar-command)
-  starts the scalar worker over confined IPC and rejects direct shell invocations.
+- Latest runtime checkpoint (2026-11-22): [Scalar source acquisition](docs/engineering/restricted-worker.md#scalar-source-acquisition)
+  snapshots a single regular local file before managed worker launch.
 
 # Brownie C agent guidance
 

@@ -457,6 +457,21 @@ result. The first ordinary parent launch added one handle to each fixture
 process; the remaining success and failure launches showed zero handle
 growth. Local receipt: `build/restricted-worker/20261121T162302104825Z/receipt.json`.
 
+### Scalar source acquisition
+
+The scalar parent uses the project manifest's anchored Windows file reader
+to snapshot an explicitly selected source before staging an image. The reader
+opens the leaf relative to its directory, requires a regular single-link
+file on a fixed NTFS volume, and checks identity and size through EOF.
+Only the source bytes travel to the worker, which validates and compiles them.
+
+Locked development and /O2 each returned 77 from a 4096-byte snapshot and
+rejected 4097 bytes with a compile-limit location at byte 4096. Both rejected
+a hard link and its original name, an alternate stream, a device name, and
+a directory with exit 7. Staging was empty after the checks and the native
+broker suites reported zero net handles. Local receipt:
+`build/restricted-worker/20261122T084233248178Z/receipt.json`.
+
 ### Managed scalar worker setup
 
 The private `--internal-scalar-broker check|run SOURCE` route provisions a

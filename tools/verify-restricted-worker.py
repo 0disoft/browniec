@@ -31,6 +31,33 @@ def write_compile_fixture(path, target, manifest, policy=None, config=None, impo
                      b''.join(len(file).to_bytes(2, 'little') for file in files) + b''.join(files))
 
 
+def verify_scalar_source_admission(run, need, image, folder, env):
+    command = [image, '--internal-scalar-broker', 'run']
+    stage = Path(env['TEMP'])
+    original = (folder / 'answer.brc').read_bytes()
+    at_limit = folder / 'scalar-boundary.brc'
+    at_limit.write_bytes(original.ljust(4096, b' '))
+    result = json.loads(run([*command, at_limit], cwd=folder, env=env, no_stderr=True))
+    need(result['return_i32'] == 77, f'4096-byte scalar snapshot failed: {result}')
+    at_limit.write_bytes(original.ljust(4097, b' '))
+    result = json.loads(run([*command, at_limit], cwd=folder, env=env,
+                            expected_exit=3, no_stderr=True))
+    need(result['error'] == dict(kind='compile_limit', byte_offset=4096),
+         f'Oversized scalar snapshot did not report its boundary: {result}')
+
+    named = folder / 'scalar-regular.brc'
+    linked = folder / 'scalar-alias.brc'
+    named.write_bytes(original)
+    os.link(named, linked)
+    for path in [named, linked, f'{named}:stream', 'NUL.brc', folder]:
+        result = json.loads(run([*command, path], cwd=folder, env=env,
+                                expected_exit=7, no_stderr=True))
+        need(result['return_i32'] is None and result['error']['kind'] == 'input_io',
+             f'Invalid scalar source was admitted: {path}: {result}')
+    need(not list(stage.iterdir()), 'scalar source admission left staged resources')
+    return 7
+
+
 def verify_managed_project(run, need, image, folder, env):
     target = folder / 'hello'
     shutil.copytree(HELLO_PROJECT, target)
@@ -1114,6 +1141,7 @@ def main():
                            cwd=folder, env=failure_env, expected_exit=4, no_stderr=True)
                 helper.need(json.loads(data).get('error', {}).get('kind') == 'unavailable'
                             and not list(stage_temp.iterdir()), 'staging failure fell back or left files')
+                scalar_source_cases = verify_scalar_source_admission(run, helper.need, scalar, folder, stage_env)
                 managed_project_cases = verify_managed_project(run, helper.need, scalar, folder, stage_env)
                 configured_project_cases = verify_configured_project(run, helper.need, scalar, folder, stage_env)
                 project_host_cases = verify_project_host(run, helper.need, scalar, folder, stage_env)
@@ -1141,6 +1169,7 @@ def main():
             receipt['profiles'].append(dict(profile=profile, exe=helper.image(exe), result=evidence))
             if scalar:
                 receipt['profiles'][-1]['scalarWorker'] = helper.image(scalar)
+                receipt['profiles'][-1]['scalarSourceCases'] = scalar_source_cases
                 receipt['profiles'][-1]['managedProjectCases'] = managed_project_cases
                 receipt['profiles'][-1]['configuredProjectCases'] = configured_project_cases
                 receipt['profiles'][-1]['projectHostCases'] = project_host_cases
