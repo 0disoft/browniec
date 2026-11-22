@@ -69,6 +69,31 @@ passed. Six rejection cases covered the wrong ZIP digest, wrong or absent
 embedding payload, changed member content, duplicate members and unexpected
 members. Evidence: `build/package-recheck-blwf0uqu/receipt.json`.
 
+## Check embedding consumer compatibility
+
+Run the same revision-2 C consumer against both recorded Windows x64 ZIPs:
+
+```powershell
+python -B tools/verify-embed-compatibility.py `
+  --previous $previousZip --previous-sha256 $previousSha256 `
+  --candidate $candidateZip --candidate-sha256 $candidateSha256
+```
+
+The check verifies each ZIP digest and member manifest. It compiles one
+consumer with the headers and import library from each ZIP. Each executable
+then runs unchanged against both DLLs in fresh processes with a system-only
+PATH and the same policy and run configuration. All four combinations must
+accept the revision-2 layouts, compile and run the rule, return 77, and release
+the Instance and Engine. The local optimized ZIP rehearsal passed all four
+combinations, including the previous consumer on the candidate DLL and the
+candidate consumer on the previous DLL. Evidence:
+`build/embed-compatibility-5dxjf8b0/receipt.json`.
+
+Use the application's own compatibility checks before switching a consumer
+that uses other features or a different configuration. The scalar rehearsal
+covers process restart with fresh handles and that fixture's policy and run
+configuration.
+
 ## Required Decisions
 
 - Public promotion: UNDECIDED. Define the version, destination, and owner of the promotion decision.
